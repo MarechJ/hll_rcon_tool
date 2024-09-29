@@ -45,8 +45,10 @@ const scores = [
 
 export function PlayerGameDetail({
   player,
+  isMobile,
 }: {
   player: Player | PlayerWithStatus;
+  isMobile?: boolean;
 }) {
   const killsBy = player
     ? Object.entries(player.weapons).map((entry) => ({
@@ -65,33 +67,37 @@ export function PlayerGameDetail({
   deathsBy.sort((a, b) => b.count - a.count);
 
   return (
-    <div className="divide-y md:sticky md:top-14 border md:border-l-0 pb-2">
-      <div className="flex justify-between items-center gap-1 px-2 h-12">
-        <div className="flex justify-center items-center gap-2 grow">
-          {isPlayerWithStatus(player) && player.is_online ? (
-            <Status player={player} className="animate-ping" />
-          ) : isPlayerWithStatus(player) ? (
-            <Status player={player} />
-          ) : null}
-          <h3 className="text-xl text-center">{player.player}</h3>
-        </div>
-        <div className="flex flex-row justify-center items-center">
-          <Button size={'icon'} variant={'outline'} asChild>
-            {isSteamPlayer(player) ? (
-              <Link href={getSteamProfileUrl(player.player_id)} target='_blank'>
-                <SimpleIcon
-                  icon={siSteam}
-                  size={20}
-                  className="dark:fill-current"
-                />
-              </Link>
-            ) : (
-              <Link href={getXboxProfileUrl(player.player)} target='_blank'>
-                <Gamepad2Icon />
-              </Link>
-            )}
-          </Button>
-          {/* <TooltipProvider>
+    <div className="divide-y pb-2 lg:sticky lg:top-14 border lg:border-l-0">
+      {!isMobile && (
+        <div className="flex justify-between items-center gap-1 px-2 h-12">
+          <div className="flex justify-center items-center gap-2 grow">
+            {isPlayerWithStatus(player) && player.is_online ? (
+              <Status player={player} className="animate-ping" />
+            ) : isPlayerWithStatus(player) ? (
+              <Status player={player} />
+            ) : null}
+            <h3 className="text-xl text-center">{player.player}</h3>
+          </div>
+          <div className="flex flex-row justify-center items-center">
+            <Button size={'icon'} variant={'outline'} asChild>
+              {isSteamPlayer(player) ? (
+                <Link
+                  href={getSteamProfileUrl(player.player_id)}
+                  target="_blank"
+                >
+                  <SimpleIcon
+                    icon={siSteam}
+                    size={20}
+                    className="dark:fill-current"
+                  />
+                </Link>
+              ) : (
+                <Link href={getXboxProfileUrl(player.player)} target="_blank">
+                  <Gamepad2Icon />
+                </Link>
+              )}
+            </Button>
+            {/* <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -107,8 +113,9 @@ export function PlayerGameDetail({
               </TooltipContent>
             </Tooltip>
           </TooltipProvider> */}
+          </div>
         </div>
-      </div>
+      )}
       <ScrollArea className="h-player-detail">
         <div className="divide-y">
           <section className="flex flex-row divide-x justify-around h-10">
@@ -172,7 +179,7 @@ function IconStatistic({
   return (
     <div className="flex flex-col justify-center items-center divide-y divide-foreground gap-1 p-2">
       <div className="flex flex-col items-center justify-center space-y">
-        <span className="p-1 md:p-2 rounded-md">{children}</span>
+        <span className="p-1 lg:p-2 rounded-md">{children}</span>
         <span className="text-xs">{text}</span>
       </div>
       <span className="w-10 text-center font-semibold">{stat}</span>
@@ -209,15 +216,15 @@ function CollapsibleSection({
   );
 }
 
-function isSteamPlayer(player: Player) {
+export function isSteamPlayer(player: Player) {
   const { player_id: id } = player;
   return id.length === 17 && !Number.isNaN(Number(id));
 }
 
-function getSteamProfileUrl(id: string) {
+export function getSteamProfileUrl(id: string) {
   return `https://steamcommunity.com/profiles/${id}`;
 }
 
-function getXboxProfileUrl(playerName: string) {
+export function getXboxProfileUrl(playerName: string) {
   return `https://xboxgamertag.com/search/${playerName}`;
 }

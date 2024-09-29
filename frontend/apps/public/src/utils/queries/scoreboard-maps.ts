@@ -1,16 +1,18 @@
-import {
-  queryOptions,
-  useSuspenseQuery,
-} from '@tanstack/react-query';
+import { queryOptions, useSuspenseQuery } from '@tanstack/react-query';
 import { getBaseURL } from '@shared/lib/getBaseURL';
-import { CRCON_Response, ScoreboardMap, ScoreboardMaps, ScoreboardMapStats } from './types';
+import {
+  CRCON_Response,
+  ScoreboardMaps,
+  ScoreboardMapStats,
+} from './types';
 
 const baseURL = getBaseURL();
 
 export async function fetchGames(page?: number, pageSize?: number) {
-  const path = new URL(`${baseURL}/api/get_scoreboard_maps`)
-  if (page !== undefined) path.searchParams.append("page", String(page));
-  if (pageSize !== undefined) path.searchParams.append("limit", String(pageSize));
+  const path = new URL(`${baseURL}/api/get_scoreboard_maps`);
+  if (page !== undefined) path.searchParams.append('page', String(page));
+  if (pageSize !== undefined)
+    path.searchParams.append('limit', String(pageSize));
 
   const response = await fetch(path);
 
@@ -34,6 +36,32 @@ export async function fetchGameDetail(gameId: number) {
 
   const data: CRCON_Response<ScoreboardMapStats> = await response.json();
 
+  const [major, minor, patch] = data.version
+    .slice(1)
+    .split('.')
+    .map((v) => Number(v));
+
+  if (major <= 10 && minor <= 4 && patch < 1) {
+    data.result.map = {
+      id: 'omahabeach_warfare',
+      map: {
+        id: 'omahabeach',
+        name: 'OMAHA BEACH',
+        tag: 'OMA',
+        pretty_name: 'Omaha Beach',
+        shortname: 'Omaha',
+        allies: { name: 'us', team: 'allies' },
+        axis: { name: 'ger', team: 'axis' },
+        orientation: 'horizontal',
+      },
+      game_mode: 'warfare',
+      attackers: null,
+      environment: 'day',
+      pretty_name: 'Omaha Beach Warfare',
+      image_name: 'omahabeach-day.webp',
+    };
+  }
+
   if (data && data.error) {
     throw new Error(data.error);
   }
@@ -42,10 +70,11 @@ export async function fetchGameDetail(gameId: number) {
 }
 
 export const gameQueries = {
-  list: (page?: number, pageSize?: number) => queryOptions({
-    queryKey: [{ queryIdentifier: 'scoreboard-maps', page, pageSize }],
-    queryFn: () => fetchGames(page ?? 1, pageSize ?? 50),
-  }),
+  list: (page?: number | undefined, pageSize?: number | undefined) =>
+    queryOptions({
+      queryKey: [{ queryIdentifier: 'scoreboard-maps', page, pageSize }],
+      queryFn: () => fetchGames(page ?? 1, pageSize ?? 50),
+    }),
   detail: (gameId: number) =>
     queryOptions({
       queryKey: [{ queryIdentifier: 'map-scoreboard', gameId }],
@@ -53,8 +82,8 @@ export const gameQueries = {
     }),
 };
 
-export function useGamesQuery() {
-  const query = useSuspenseQuery(gameQueries.list());
+export function useGamesQuery(page: number, pageSize: number) {
+  const query = useSuspenseQuery(gameQueries.list(page, pageSize));
 
   return [query.data.result, query] as const;
 }

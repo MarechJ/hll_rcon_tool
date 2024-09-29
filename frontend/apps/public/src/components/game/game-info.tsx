@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import { PublicInfo } from '../../utils/queries/types';
 import MapFigure from './map-figure';
 import GameOverview from './game-overview';
@@ -34,11 +33,13 @@ export default function LiveGameInfo({ game }: { game: PublicInfo }) {
             text={'Now'}
             src={`/maps/${game.current_map.map.image_name}`}
             name={game.current_map.map.pretty_name}
+            className='w-1/2 h-10 xl:h-full'
           />
           <MapFigure
             text={'Up next'}
             src={`/maps/${game.next_map.map.image_name}`}
             name={game.next_map.map.pretty_name}
+            className='w-1/2 h-10 xl:h-full'
             muted
           />
         </aside>

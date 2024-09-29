@@ -7,6 +7,7 @@ import { Footer } from '../components/footer/footer';
 import { Metadata, Viewport } from 'next';
 import { fetchPublicInfo } from '../utils/queries/public-info';
 import { Header } from '../components/header/header';
+import { TailwindIndicator } from '@shared/components/tailwind-indicator'
 
 export async function generateMetadata(): Promise<Metadata> {
   const data = await fetchPublicInfo();
@@ -25,7 +26,7 @@ export const viewport: Viewport = {
     { media: "(prefers-color-scheme: dark)", color: "black" },
   ],
 }
-
+  
 const fontSans = FontSans({
   subsets: ['latin'],
   variable: '--font-sans',
@@ -55,6 +56,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
               <Footer />
             </div>
           </Providers>
+          <TailwindIndicator />
         </body>
       </html>
     </>

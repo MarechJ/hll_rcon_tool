@@ -8,6 +8,7 @@ import LocalizedFormat from 'dayjs/plugin/localizedFormat';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@shared/components/ui/button';
+import { getGameDuration } from './[id]/page';
 
 dayjs.extend(LocalizedFormat);
 
@@ -63,15 +64,13 @@ export const columns: ColumnDef<ScoreboardMap>[] = [
       `${row.result?.allied ?? '?'} - ${row.result?.axis ?? '?'}`,
   },
   {
+    header: 'Start',
     accessorKey: 'start',
     cell: ({ cell }) => dayjs(cell.getValue() as string).format('L LT'),
-    header: ({ column }) => (
-      <Header
-        header="Start"
-        onClick={() => {
-          column.toggleSorting(column.getIsSorted() === 'asc');
-        }}
-      />
-    ),
   },
+  {
+    header: 'Duration',
+    accessorKey: 'duration',
+    cell: ({ row }) => getGameDuration(row.original.start, row.original.end),
+  }
 ];

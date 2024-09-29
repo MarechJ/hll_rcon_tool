@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { MapTeam, MatchMode, MatchScore } from '../../utils/queries/types';
+import { MapTeam, MatchMode } from '../../utils/queries/types';
 
 type GameOverviewProps = {
   time: string;
@@ -26,7 +26,7 @@ export default function GameOverview({
   score,
 }: GameOverviewProps) {
   return (
-    <section className="flex flex-col w-full xl:w-2/3 pt-1">
+    <section className="flex flex-col w-full lg:w-2/3 pt-1">
       <div className="text-sm text-center">{time}</div>
       <div className="flex flex-row justify-center items-center lg:px-2">
         <div className="flex flex-row justify-between basis-full">
