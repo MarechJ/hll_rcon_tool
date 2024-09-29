@@ -6,36 +6,10 @@ import { Player, PlayerWithStatus } from './types';
 import { IconHeader as Header } from './column-header';
 import { isPlayerWithStatus, Status } from './player-status';
 
-const threeDigitsWidth = 60
-const fourDigitsWidth = 75
+const threeDigitsWidth = 40;
+const fourDigitsWidth = 50;
 
-export const columns = (
-  handlePlayerClick: (id: string) => void
-): ColumnDef<Player | PlayerWithStatus>[] => [
-  {
-    accessorKey: 'player',
-    header: () => <div>Player</div>,
-    cell: ({ row }) => {
-      const name = String(row.getValue('player'));
-      const id = String(row.getValue('player_id'));
-      const player = row.original;
-
-      return (
-        <div className="flex flex-row items-center gap-1">
-          {isPlayerWithStatus(player) && <Status player={player} />}
-          <Button
-            variant={'link'}
-            className="pl-0"
-            onClick={() => {
-              handlePlayerClick(id);
-            }}
-          >
-            {name}
-          </Button>
-        </div>
-      );
-    },
-  },
+const pointColumns: ColumnDef<Player | PlayerWithStatus>[] = [
   {
     accessorKey: 'kills',
     size: threeDigitsWidth,
@@ -114,7 +88,66 @@ export const columns = (
       />
     ),
   },
-  {
-    accessorKey: 'player_id',
+];
+
+const playerColumn = (
+  handlePlayerClick: (id: string) => void
+): ColumnDef<Player | PlayerWithStatus> => ({
+  accessorKey: 'player',
+  header: () => <div>Player</div>,
+  cell: ({ row }) => {
+    const name = String(row.getValue('player'));
+    const id = String(row.original.player_id);
+
+    return (
+      <div className="flex flex-row items-center gap-1">
+        <Button
+          variant={'link'}
+          className="pl-0"
+          onClick={() => {
+            handlePlayerClick(id);
+          }}
+        >
+          {name}
+        </Button>
+      </div>
+    );
   },
+});
+
+const statusColumn: ColumnDef<Player | PlayerWithStatus> = {
+  accessorKey: 'is_online',
+  meta: {
+    filterVariant: 'select',
+  },
+  header: () => <div className="sr-only">Status</div>,
+  size: 20,
+  filterFn: (row, columnId, filterValue) => {
+    if (!filterValue || filterValue === 'all') {
+      return true;
+    }
+    const cellValue = row.getValue(columnId) ? 'online' : 'offline';
+    return cellValue === filterValue;
+  },
+  cell: ({ row }) => {
+    const player = row.original;
+    return isPlayerWithStatus(player) ? (
+      <Status player={player} className="block" />
+    ) : null;
+  },
+};
+
+export const getLiveGameColumns = (
+  handlePlayerClick: (id: string) => void
+): ColumnDef<Player | PlayerWithStatus>[] => [
+  statusColumn,
+  playerColumn(handlePlayerClick),
+  ...pointColumns
+];
+
+export const getCompletedGameColumns = (
+  handlePlayerClick: (id: string) => void
+): ColumnDef<Player | PlayerWithStatus>[] => [
+  playerColumn(handlePlayerClick),
+  ...pointColumns
 ];
