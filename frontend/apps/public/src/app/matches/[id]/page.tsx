@@ -42,6 +42,7 @@ export default async function MatchDetailPage({ params }: Params) {
   }
 
   const gameOverviewProps = {
+    map: game.map,
     time: getGameDuration(game.start, game.end),
     axis: game.map.map.axis,
     allies: game.map.map.allies,

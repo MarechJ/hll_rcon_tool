@@ -19,6 +19,7 @@ export default function LiveGameInfo({ game }: { game: PublicInfo }) {
       <h2 className="sr-only">Game Info</h2>
       <div className="flex flex-col-reverse xl:flex-row divide-y xl:divide-y-0">
         <GameOverview
+          map={game.current_map.map}
           allies={allies}
           axis={axis}
           alliesCount={game.player_count_by_team.allied}
