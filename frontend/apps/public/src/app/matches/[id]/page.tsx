@@ -4,6 +4,7 @@ import GameOverview from 'apps/public/src/components/game/game-overview';
 import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import MapFigure from 'apps/public/src/components/game/map-figure';
+import { getCompletedGameColumns } from 'apps/public/src/components/game/game-columns';
 
 dayjs.extend(localizedFormat);
 
@@ -65,7 +66,7 @@ export default async function MatchDetailPage({ params }: Params) {
           />
         </aside>
       </div>
-      <GameStats stats={game.player_stats} />
+      <GameStats stats={game.player_stats} getColumns={getCompletedGameColumns} />
     </>
   );
 }

@@ -5,6 +5,7 @@ import GameStats from '../components/game/game-stats';
 import { liveSessionStatsOptions } from '../utils/queries/live-session-stats';
 import { useSuspenseQueries } from '@tanstack/react-query';
 import { PlayerWithStatus } from '../components/game/types';
+import { getLiveGameColumns } from '../components/game/game-columns';
 
 export default function LiveGameStats() {
   const liveStats: { data: PlayerWithStatus[]; pending: boolean } =
@@ -26,5 +27,5 @@ export default function LiveGameStats() {
       },
     });
 
-  return <GameStats stats={liveStats.data.filter(player => player.time_seconds > 30)} />;
+  return <GameStats stats={liveStats.data.filter(player => player.time_seconds > 30)} getColumns={getLiveGameColumns} />;
 }

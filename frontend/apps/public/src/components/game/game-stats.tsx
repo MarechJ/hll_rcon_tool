@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { DataTable } from './live-table';
-import { columns as liveColumns } from './live-columns';
+import { DataTable } from './game-table';
+import { getLiveGameColumns } from './game-columns';
 import { getSteamProfileUrl, getXboxProfileUrl, isSteamPlayer, PlayerGameDetail } from './player-game-detail';
 import { Player, PlayerWithStatus } from './types';
 import {
@@ -22,11 +22,14 @@ import { siSteam } from 'simple-icons';
 import Link from 'next/link';
 import { Gamepad2Icon } from 'lucide-react';
 import useMediaQuery from '@shared/lib/hooks/useMediaQuery'
+import { ColumnDef } from '@tanstack/react-table';
 
 export default function GameStats({
   stats,
+  getColumns,
 }: {
   stats: Player[] | PlayerWithStatus[];
+  getColumns: (handlePlayerClick: (id: string) => void) => ColumnDef<Player | PlayerWithStatus>[]
 }) {
   const [selectedPlayerId, setSelectedPlayerId] = useState<
     string | undefined
@@ -49,7 +52,7 @@ export default function GameStats({
       <h2 className="sr-only">End of game statistics</h2>
       <div className="relative flex flex-col-reverse lg:flex-row">
         <article className="w-full lg:w-2/3">
-          <DataTable columns={liveColumns(handlePlayerClick)} data={stats} />
+          <DataTable columns={getColumns(handlePlayerClick)} data={stats} />
         </article>
         <aside className="hidden w-full lg:block lg:w-1/3 min-h-32">
           {selectedPlayer ? (
