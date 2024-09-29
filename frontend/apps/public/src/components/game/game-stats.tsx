@@ -95,7 +95,7 @@ function MobilePlayerGameDetail({
   return (
     <Drawer open={open} onOpenChange={(open) => setOpen(open)}>
       <DrawerContent>
-        <div className="mx-auto w-full max-w-sm">
+        <div className="mx-auto w-full">
           <DrawerHeader>
             <DrawerTitle>
               <div className="flex justify-center items-center gap-2 grow">
