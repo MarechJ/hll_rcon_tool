@@ -438,4 +438,7 @@ class RconUser(User):
             ("can_change_blacklists", "Can change blacklists"),
             ("can_delete_blacklists", "Can delete blacklists"),
             ("can_change_game_layout", "Can change game layout"),
+            ("can_view_message_templates", "Can view shared message templates"),
+            ("can_add_message_templates", "Can add new shared message templates"),
+            ("can_delete_message_templates", "Can delete shared message templates"),
         )
