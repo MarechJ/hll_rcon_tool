@@ -194,8 +194,9 @@ GROUPS = [
             "can_change_blacklists",
             "can_delete_blacklists",
             "can_change_game_layout",
-            "can_view_seed_vip_config",
-            "can_change_seed_vip_config",
+            "can_view_message_templates",
+            "can_add_message_templates",
+            "can_delete_message_templates",
         ),
     ),
     (
@@ -380,8 +381,9 @@ GROUPS = [
             "can_change_blacklists",
             "can_delete_blacklists",
             "can_change_game_layout",
-            "can_view_seed_vip_config",
-            "can_change_seed_vip_config",
+            "can_view_message_templates",
+            "can_add_message_templates",
+            "can_delete_message_templates",
         ),
     ),
     (
@@ -468,6 +470,7 @@ GROUPS = [
             "can_view_votemap_config",
             "can_view_votemap_status",
             "can_view_welcome_message",
+            "can_view_message_templates",
         ),
     ),
     (
@@ -540,6 +543,7 @@ GROUPS = [
             "can_view_votemap_config",
             "can_view_votemap_status",
             "can_view_welcome_message",
+            "can_view_message_templates",
         ),
     ),
 ]
