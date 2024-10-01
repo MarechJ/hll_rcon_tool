@@ -1,30 +1,17 @@
-import { fetchGameDetail } from 'apps/public/src/utils/queries/scoreboard-maps';
-import GameStats from 'apps/public/src/components/game/game-stats';
-import GameOverview from 'apps/public/src/components/game/game-overview';
+import GameOverview from '../../../components/game/game-overview';
 import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
-import MapFigure from 'apps/public/src/components/game/map-figure';
-import { getCompletedGameColumns } from 'apps/public/src/components/game/game-columns';
+import MapFigure from '../../../components/game/map-figure';
+import { getCompletedGameColumns } from '../../../components/game/game-columns';
+import { fetchGameDetail } from '../../../utils/queries/scoreboard-maps';
+import GameStats from '../../../components/game/game-stats';
+import { getGameDuration } from '../utils';
 
 dayjs.extend(localizedFormat);
 
 type Params = {
   params: { id: string };
 };
-
-export function getGameDuration(start: string, end: string) {
-  const totalSeconds = dayjs(end).diff(dayjs(start), 'seconds');
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  // Format the result as hh:mm:ss
-  const formattedTime = `${String(hours).padStart(2, '0')}:${String(
-    minutes
-  ).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-
-  return formattedTime;
-}
 
 export default async function MatchDetailPage({ params }: Params) {
   const { id: matchId } = params;
