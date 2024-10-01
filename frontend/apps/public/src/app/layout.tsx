@@ -9,6 +9,8 @@ import { fetchPublicInfo } from '../utils/queries/public-info';
 import { Header } from '../components/header/header';
 import { TailwindIndicator } from '@shared/components/tailwind-indicator'
 
+export const dynamic = 'force-dynamic';
+
 export async function generateMetadata(): Promise<Metadata> {
   const data = await fetchPublicInfo();
   const name = data?.result.name.name ?? "Hell Let Loose"

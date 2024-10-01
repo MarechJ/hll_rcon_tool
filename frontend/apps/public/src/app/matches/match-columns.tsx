@@ -1,14 +1,13 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
-import { Header } from './../../components/game/column-header';
 import { MatchMap, ScoreboardMap } from '../../utils/queries/types';
 import dayjs from 'dayjs';
 import LocalizedFormat from 'dayjs/plugin/localizedFormat';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@shared/components/ui/button';
-import { getGameDuration } from './[id]/page';
+import { getGameDuration } from './utils';
 
 dayjs.extend(LocalizedFormat);
 
