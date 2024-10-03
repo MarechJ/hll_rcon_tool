@@ -254,16 +254,8 @@ class Rcon(ServerCtl):
         players_by_id = detailed_players["players"]
         fail_count = detailed_players["fail_count"]
 
-        logger.debug("Getting VIP list")
-        try:
-            vips = set(v[PLAYER_ID] for v in super().get_vip_ids())
-        except Exception:
-            logger.exception("Failed to get VIPs")
-            vips = set()
-
         for player in players_by_id.values():
             player_id = player[PLAYER_ID]
-            player["is_vip"] = player_id in vips
 
             teams.setdefault(player.get("team"), {}).setdefault(
                 player.get("unit_name"), {}
