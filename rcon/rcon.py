@@ -467,6 +467,7 @@ class Rcon(ServerCtl):
         Level: 34
 
         """
+        # Add VIP Status
         player_data = parse_raw_player_info(raw, player_name)
         vip_player_ids = set(v[PLAYER_ID] for v in super().get_vip_ids())
         player_data["is_vip"] = player_data["player_id"] in vip_player_ids
