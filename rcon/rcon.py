@@ -254,12 +254,6 @@ class Rcon(ServerCtl):
         players_by_id = detailed_players["players"]
         fail_count = detailed_players["fail_count"]
 
-        logger.debug("Getting DB profiles")
-        steam_profiles = {
-            profile[PLAYER_ID]: profile
-            for profile in get_profiles(list(players_by_id.keys()))
-        }
-
         logger.debug("Getting VIP list")
         try:
             vips = set(v[PLAYER_ID] for v in super().get_vip_ids())
@@ -269,8 +263,6 @@ class Rcon(ServerCtl):
 
         for player in players_by_id.values():
             player_id = player[PLAYER_ID]
-            profile = steam_profiles.get(player.get(PLAYER_ID), {}) or {}
-            player["profile"] = profile
             player["is_vip"] = player_id in vips
 
             teams.setdefault(player.get("team"), {}).setdefault(
