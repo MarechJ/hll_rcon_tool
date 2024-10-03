@@ -192,7 +192,7 @@ def expose_api_endpoint(
     @wraps(func)
     def wrapper(request: HttpRequest):
         parameters = inspect.signature(func).parameters
-        aliases = getattr(func, '_parameter_aliases', {})
+        aliases = getattr(func, "_parameter_aliases", {})
         arguments = {}
         failure = False
         others = None
@@ -361,9 +361,12 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.add_map_to_votemap_whitelist: "api.can_add_map_to_whitelist",
     rcon_api.add_maps_to_rotation: "api.can_add_maps_to_rotation",
     rcon_api.add_maps_to_votemap_whitelist: "api.can_add_maps_to_whitelist",
+    rcon_api.add_message_template: "can_add_message_templates",
     rcon_api.add_vip: "api.can_add_vip",
     rcon_api.ban_profanities: "api.can_ban_profanities",
     rcon_api.clear_cache: "api.can_clear_crcon_cache",
+    rcon_api.delete_message_template: "can_delete_message_templates",
+    rcon_api.edit_message_template: "can_edit_message_templates",
     rcon_api.flag_player: "api.can_flag_player",
     rcon_api.kick: "api.can_kick_players",
     rcon_api.message_player: "api.can_message_players",
@@ -428,6 +431,10 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.get_votemap_whitelist: "api.can_view_map_whitelist",
     rcon_api.get_map: "api.can_view_current_map",
     rcon_api.get_maps: "api.can_view_all_maps",
+    rcon_api.get_message_templates: "can_view_message_templates",
+    rcon_api.get_message_template_categories: "can_view_message_templates",
+    rcon_api.get_message_template: "can_view_message_templates",
+    rcon_api.get_all_message_templates: "can_view_message_templates",
     rcon_api.get_max_ping_autokick: "api.can_view_max_ping_autokick",
     rcon_api.get_name_kick_config: "api.can_view_name_kick_config",
     rcon_api.get_name: "api.can_view_server_name",
@@ -589,7 +596,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     },
     rcon_api.get_objective_row: "api.can_view_current_map",
     rcon_api.get_objective_rows: "api.can_view_current_map",
-    rcon_api.set_game_layout: "api.can_change_game_layout"
+    rcon_api.set_game_layout: "api.can_change_game_layout",
 }
 
 PREFIXES_TO_EXPOSE = [
@@ -615,9 +622,12 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.add_map_to_votemap_whitelist: ["POST"],
     rcon_api.add_maps_to_rotation: ["POST"],
     rcon_api.add_maps_to_votemap_whitelist: ["POST"],
+    rcon_api.add_message_template: ["POST"],
     rcon_api.add_vip: ["POST"],
     rcon_api.ban_profanities: ["POST"],
     rcon_api.clear_cache: ["POST"],
+    rcon_api.delete_message_template: ["POST"],
+    rcon_api.edit_message_template: ["POST"],
     rcon_api.flag_player: ["POST"],
     rcon_api.get_admin_groups: ["GET"],
     rcon_api.get_admin_ids: ["GET"],
@@ -657,6 +667,10 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.get_map: ["GET"],
     rcon_api.get_maps: ["GET"],
     rcon_api.get_max_ping_autokick: ["GET"],
+    rcon_api.get_message_templates: ["GET"],
+    rcon_api.get_message_template_categories: ["GET"],
+    rcon_api.get_message_template: ["GET"],
+    rcon_api.get_all_message_templates: ["GET"],
     rcon_api.get_name_kick_config: ["GET"],
     rcon_api.get_name: ["GET"],
     rcon_api.get_next_map: ["GET"],
@@ -866,7 +880,8 @@ if not os.getenv("HLL_MAINTENANCE_CONTAINER"):
             )
         except:
             logger.exception(
-                "Failed to initialized endpoint for %r - Most likely bad configuration", func
+                "Failed to initialized endpoint for %r - Most likely bad configuration",
+                func,
             )
             raise
     logger.info("Done Initializing endpoints")

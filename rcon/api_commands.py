@@ -5,6 +5,15 @@ from datetime import datetime, timedelta
 from logging import getLogger
 from typing import Any, Dict, Iterable, Literal, Optional, Sequence, Type
 
+from rcon.message_templates import (
+    get_all_message_templates,
+    get_message_template,
+    get_message_template_categories,
+    get_message_templates,
+    add_message_template,
+    edit_message_template,
+    delete_message_template,
+)
 from rcon import blacklist, game_logs, maps, player_history
 from rcon.audit import ingame_mods, online_mods
 from rcon.cache_utils import RedisCached, get_redis_pool
@@ -31,6 +40,12 @@ from rcon.types import (
     PlayerProfileTypeEnriched,
     ServerInfoType,
     VoteMapStatusType,
+)
+from rcon.models import enter_session, MessageTemplate
+from rcon.types import (
+    MessageTemplateCategory,
+    MessageTemplateType,
+    AllMessageTemplateTypes,
 )
 from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
 from rcon.user_config.auto_kick import AutoVoteKickUserConfig
@@ -81,8 +96,9 @@ CTL: Optional["RconAPI"] = None
 def parameter_aliases(alias_to_param: Dict[str, str]):
     """Specify parameter aliases of a function. This might be useful to preserve backwards
     compatibility or to handle parameters named after a Python reserved keyword.
-    
+
     Takes a mapping of aliases to their parameter name."""
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -90,10 +106,12 @@ def parameter_aliases(alias_to_param: Dict[str, str]):
                 if alias in kwargs:
                     kwargs[param] = kwargs.pop(alias)
             return func(*args, **kwargs)
-        
+
         wrapper._parameter_aliases = alias_to_param
         return wrapper
+
     return decorator
+
 
 def get_rcon_api(credentials: ServerInfoType | None = None) -> "RconAPI":
     """Return a initialized Rcon connection to the game server
@@ -578,9 +596,11 @@ class RconAPI(Rcon):
     def get_ingame_mods(self) -> list[AdminUserType]:
         return ingame_mods()
 
-    @parameter_aliases({
-        "from": "from_",
-    })
+    @parameter_aliases(
+        {
+            "from": "from_",
+        }
+    )
     def get_historical_logs(
         self,
         player_name: str | None = None,
@@ -1769,3 +1789,47 @@ class RconAPI(Rcon):
 
     def get_objective_row(self, row: int):
         return super().get_objective_row(int(row))
+
+    def get_message_templates(
+        self, category: MessageTemplateCategory
+    ) -> list[MessageTemplateType]:
+        """Get all possible message type categories"""
+        return get_message_templates(category=category)
+
+    def get_message_template_categories(self) -> list[MessageTemplateCategory]:
+        return get_message_template_categories()
+
+    def get_message_template(self, id: int) -> MessageTemplateType | None:
+        """Return the message template for the specified record if it exists"""
+        res = get_message_template(id=id)
+
+        return res.to_dict() if res else None
+
+    def get_all_message_templates(self) -> AllMessageTemplateTypes:
+        """Get all message templates by category"""
+        return get_all_message_templates()
+
+    def add_message_template(
+        self, title: str, content: str, category: str | MessageTemplateCategory, by: str
+    ) -> int:
+        """Add a new message template and return the ID of the new record"""
+        return add_message_template(
+            title=title, content=content, category=category, author=by
+        )
+
+    def delete_message_template(self, id: int) -> bool:
+        """Delete a specific message template"""
+        return delete_message_template(id=id)
+
+    def edit_message_template(
+        self,
+        id: int,
+        title: str | None,
+        content: str | None,
+        category: str | MessageTemplateCategory | None,
+        by: str,
+    ) -> None:
+        """Add a new message template and return the ID of the new record"""
+        return edit_message_template(
+            id=id, title=title, content=content, category=category, author=by
+        )
