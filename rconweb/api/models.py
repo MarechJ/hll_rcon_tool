@@ -451,4 +451,5 @@ class RconUser(User):
             ("can_view_message_templates", "Can view shared message templates"),
             ("can_add_message_templates", "Can add new shared message templates"),
             ("can_delete_message_templates", "Can delete shared message templates"),
+            ("can_edit_message_templates", "Can edit shared message templates"),
         )

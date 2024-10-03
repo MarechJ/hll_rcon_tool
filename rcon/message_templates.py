@@ -17,7 +17,9 @@ def get_message_templates(
 ) -> list[MessageTemplateType]:
     """Get all messgae templates for a specific category"""
     with enter_session() as session:
-        stmt = select(MessageTemplate).where(MessageTemplate.category == category)
+        stmt = select(MessageTemplate).where(
+            MessageTemplate.category == category.upper()
+        )
         res = session.scalars(stmt).all()
         return [msg.to_dict() for msg in res]
 
@@ -54,12 +56,29 @@ def get_all_message_templates() -> AllMessageTemplateTypes:
         return messages_by_cat
 
 
-def add_message_template(
-    title: str, content: str, category: str | MessageTemplateCategory, author: str
-) -> int:
-    """Add a new message template and return the ID of the new record"""
+def _convert_category(
+    category: str | MessageTemplateCategory,
+) -> MessageTemplateCategory:
     if isinstance(category, str):
         category = category.upper()
+
+    try:
+        return MessageTemplateCategory[category]
+
+    except KeyError:
+        raise ValueError(
+            f"Category must be one of {[msg.value for msg in MessageTemplateCategory]}"
+        )
+
+
+def add_message_template(
+    title: str,
+    content: str,
+    category: str | MessageTemplateCategory,
+    author: str = "CRCON",
+) -> int:
+    """Add a new message template and return the ID of the new record"""
+    category = _convert_category(category=category)
 
     try:
         MessageTemplateCategory[category]
@@ -88,3 +107,24 @@ def delete_message_template(id: int) -> bool:
             return True
 
     return False
+
+
+def edit_message_template(
+    id: int,
+    title: str | None,
+    content: str | None,
+    category: str | MessageTemplateCategory | None,
+    author: str = "CRCON",
+) -> None:
+    with enter_session() as session:
+        stmt = select(MessageTemplate).where(MessageTemplate.id == id)
+        res = session.scalars(stmt).one_or_none()
+        if res:
+            if title:
+                res.title = title
+            if content:
+                res.content = content
+            if category:
+                res.category = _convert_category(category=category)
+
+            res.updated_by = author
