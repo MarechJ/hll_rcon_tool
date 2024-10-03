@@ -11,6 +11,7 @@ from rcon.message_templates import (
     get_message_template_categories,
     get_message_templates,
     add_message_template,
+    edit_message_template,
     delete_message_template,
 )
 from rcon import blacklist, game_logs, maps, player_history
@@ -1819,3 +1820,16 @@ class RconAPI(Rcon):
     def delete_message_template(self, id: int) -> bool:
         """Delete a specific message template"""
         return delete_message_template(id=id)
+
+    def edit_message_template(
+        self,
+        id: int,
+        title: str | None,
+        content: str | None,
+        category: str | MessageTemplateCategory | None,
+        by: str,
+    ) -> None:
+        """Add a new message template and return the ID of the new record"""
+        return edit_message_template(
+            id=id, title=title, content=content, category=category, author=by
+        )

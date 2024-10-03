@@ -195,6 +195,8 @@ GROUPS = [
             "can_view_message_templates",
             "can_add_message_templates",
             "can_delete_message_templates",
+            "can_edit_message_templates",
+            
         ),
     ),
     (
@@ -380,6 +382,7 @@ GROUPS = [
             "can_view_message_templates",
             "can_add_message_templates",
             "can_delete_message_templates",
+            "can_edit_message_templates",
         ),
     ),
     (
