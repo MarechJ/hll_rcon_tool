@@ -469,8 +469,8 @@ class Rcon(ServerCtl):
         """
         player_data = parse_raw_player_info(raw, player_name)
         vip_player_ids = set(v[PLAYER_ID] for v in super().get_vip_ids())
-        players_data["is_vip"] = player_data["player_id"] in vip_player_ids
-        return players_data
+        player_data["is_vip"] = player_data["player_id"] in vip_player_ids
+        return player_data
 
     @ttl_cache(ttl=60 * 10)
     def get_admin_ids(self) -> list[AdminType]:
