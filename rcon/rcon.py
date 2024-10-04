@@ -16,7 +16,7 @@ from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import SUCCESS, CommandFailedError, ServerCtl, VipId
 from rcon.maps import UNKNOWN_MAP_NAME, Layer, is_server_loading_map, parse_layer
 from rcon.models import PlayerID, PlayerVIP, enter_session
-from rcon.player_history import get_profiles, safe_save_player_action, save_player
+from rcon.player_history import get_profiles, safe_save_player_action, save_player, get_player_profile
 from rcon.settings import SERVER_INFO
 from rcon.types import (
     AdminType,
@@ -457,8 +457,8 @@ class Rcon(ServerCtl):
         player_data["is_vip"] = player_data["player_id"] in vip_player_ids
 
         # Add Profile
-        profile = get_profiles([player_data["player_id"]])
-        player_data["profile"] = profile[0]
+        profile = get_player_profile(player_data["player_id"], 1)
+        player_data["profile"] = profile
         return player_data
 
     @ttl_cache(ttl=60 * 10)
