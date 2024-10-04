@@ -280,6 +280,15 @@ def login_required():
                     failed=True,
                     status_code=403,
                 )
+            except json.JSONDecodeError as e:
+                error = f"JSON Decode Error: {e.args[0]}"
+                return api_response(
+                    result=None,
+                    failed=True,
+                    arguments=None,
+                    error=error,
+                    status_code=405,
+                )
             except Exception as e:
                 logger.exception("Unexpected error in %s", func.__name__)
                 return api_response(

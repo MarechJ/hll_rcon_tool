@@ -1,9 +1,8 @@
 import logging
 from functools import wraps
 
-from django.views.decorators.http import (
-    require_http_methods as django_require_http_methods,
-)
+from .utils import _get_data
+
 
 logger = logging.getLogger("rconweb")
 
@@ -11,6 +10,9 @@ ENDPOINT_HTTP_METHODS: dict[str, list[str]] = {}
 
 
 def require_http_methods(request_method_list: list[str]):
+    # avoid circular imports
+    from .auth import api_response
+
     def decorator(
         func,
     ):  # -> _Wrapped[Callable[..., Any], Any, Callable[..., Any], Any]:  # -> _Wrapped[Callable[..., Any], Any, Callable[..., Any], Any]:  # -> _Wrapped[Callable[..., Any], Any, Callable[..., Any], Any]:
@@ -20,9 +22,20 @@ def require_http_methods(request_method_list: list[str]):
         ENDPOINT_HTTP_METHODS[func.__name__] = request_method_list
 
         @wraps(func)
-        @django_require_http_methods(request_method_list)
-        def inner(*args, **kwargs):
-            return func(*args, **kwargs)
+        def inner(request, *args, **kwargs):
+            if request.method not in request_method_list:
+                # No longer using django.views.decorators.http.require_http_methods
+                # so we can return the same style response across the board
+                data = _get_data(request)
+                error = f"Method Not Allowed {request.method}: {request.path}"
+
+                return api_response(
+                    result=None,
+                    failed=True,
+                    arguments=data,
+                    error=error,
+                    status_code=405,
+                )
 
         return inner
 

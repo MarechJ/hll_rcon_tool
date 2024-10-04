@@ -192,7 +192,7 @@ def expose_api_endpoint(
     @wraps(func)
     def wrapper(request: HttpRequest):
         parameters = inspect.signature(func).parameters
-        aliases = getattr(func, '_parameter_aliases', {})
+        aliases = getattr(func, "_parameter_aliases", {})
         arguments = {}
         failure = False
         others = None
@@ -203,7 +203,15 @@ def expose_api_endpoint(
 
         json_invalid_content_type_error = f"InvalidContentType: {request.method} {request.path} was called with {request.content_type}, expected one of {','.join(['application/json'])}"
         if request.method not in endpoint_allowed_http_methods[func]:
-            return HttpResponseNotAllowed([request.method])
+            error = f"{HttpResponseNotAllowed([request.method])!r}"
+            return api_response(
+                result=None,
+                command=command_name,
+                arguments=data,
+                failed=True,
+                error=error,
+                status_code=200,
+            )
         # There's nothing in RconAPI that will accept file uploads or any other weird content types
         # but if we added that we would have to update this
         elif request.method == "POST" and request.content_type != "application/json":
@@ -235,8 +243,12 @@ def expose_api_endpoint(
                         logger.error(
                             f"Bad request for {request.method} {request.path} {pname=} {param=}"
                         )
-                        return HttpResponseBadRequest(
-                            f"Missing mandatory parameter: {pname}"
+                        return api_response(
+                            result=None,
+                            command=command_name,
+                            arguments=data,
+                            failed=True,
+                            error=f"{HttpResponseBadRequest(f'Missing mandatory parameter: {pname}')}",
                         )
 
         try:
@@ -284,7 +296,7 @@ def expose_api_endpoint(
 
         # Handle all the special cases of forwarding commands here so we don't
         # have to pass in HTTP requests, sessionids, auth headers, etc. to RconAPI
-        # using forward_command and not forward_request so that the `forwarded`parameter
+        # using forward_command and not forward_request so that the `forwarded` parameter
         # is passed to avoid infinite loops of forwarding
         config = RconServerSettingsUserConfig.load_from_db()
         if config.broadcast_unbans and func == rcon_api.unban:
@@ -589,7 +601,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     },
     rcon_api.get_objective_row: "api.can_view_current_map",
     rcon_api.get_objective_rows: "api.can_view_current_map",
-    rcon_api.set_game_layout: "api.can_change_game_layout"
+    rcon_api.set_game_layout: "api.can_change_game_layout",
 }
 
 PREFIXES_TO_EXPOSE = [
@@ -866,7 +878,8 @@ if not os.getenv("HLL_MAINTENANCE_CONTAINER"):
             )
         except:
             logger.exception(
-                "Failed to initialized endpoint for %r - Most likely bad configuration", func
+                "Failed to initialized endpoint for %r - Most likely bad configuration",
+                func,
             )
             raise
     logger.info("Done Initializing endpoints")
