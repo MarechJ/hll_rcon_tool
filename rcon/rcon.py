@@ -457,7 +457,8 @@ class Rcon(ServerCtl):
         player_data["is_vip"] = player_data["player_id"] in vip_player_ids
 
         # Add Profile
-        player_data["profile"] = get_profiles([player_data["player_id"]])
+        profile = get_profiles([player_data["player_id"]])
+        player_data["profile"] = profile[0]
         return player_data
 
     @ttl_cache(ttl=60 * 10)
