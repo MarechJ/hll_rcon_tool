@@ -31,7 +31,6 @@ from rcon.types import (
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.utils import InvalidKeysConfigurationError
 from rcon.utils import MapsHistory, get_server_number
-from rcon.vote_map import VoteMap
 from rconweb.settings import TAG_VERSION
 
 from .audit_log import auto_record_audit, record_audit
@@ -192,7 +191,7 @@ def expose_api_endpoint(
     @wraps(func)
     def wrapper(request: HttpRequest):
         parameters = inspect.signature(func).parameters
-        aliases = getattr(func, '_parameter_aliases', {})
+        aliases = getattr(func, "_parameter_aliases", {})
         arguments = {}
         failure = False
         others = None
@@ -411,6 +410,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.get_camera_discord_webhooks_config: "api.can_view_camera_discord_webhooks_config",
     rcon_api.get_camera_notification_config: "api.can_view_camera_config",
     rcon_api.get_chat_commands_config: "api.can_view_chat_commands_config",
+    rcon_api.get_rcon_chat_commands_config: "api.can_view_rcon_chat_commands_config",
     rcon_api.get_chat_discord_webhooks_config: "api.can_view_chat_discord_webhooks_config",
     rcon_api.get_current_map_sequence: "api.can_view_current_map_sequence",
     rcon_api.get_detailed_player_info: "api.can_view_detailed_player_info",
@@ -500,6 +500,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.set_camera_discord_webhooks_config: "api.can_change_camera_discord_webhooks_config",
     rcon_api.set_camera_notification_config: "api.can_change_camera_config",
     rcon_api.set_chat_commands_config: "api.can_change_chat_commands_config",
+    rcon_api.set_rcon_chat_commands_config: "api.can_change_rcon_chat_commands_config",
     rcon_api.set_chat_discord_webhooks_config: "api.can_change_chat_discord_webhooks_config",
     rcon_api.set_expired_vip_config: "api.can_change_expired_vip_config",
     rcon_api.set_idle_autokick_time: "api.can_change_idle_autokick_time",
@@ -550,6 +551,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.validate_camera_discord_webhooks_config: "api.can_change_camera_discord_webhooks_config",
     rcon_api.validate_camera_notification_config: "api.can_change_camera_config",
     rcon_api.validate_chat_commands_config: "api.can_change_chat_commands_config",
+    rcon_api.validate_rcon_chat_commands_config: "api.can_change_rcon_chat_commands_config",
     rcon_api.validate_chat_discord_webhooks_config: "api.can_change_chat_discord_webhooks_config",
     rcon_api.validate_expired_vip_config: "api.can_change_expired_vip_config",
     rcon_api.validate_kills_discord_webhooks_config: "api.can_change_kills_discord_webhooks_config",
@@ -589,7 +591,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     },
     rcon_api.get_objective_row: "api.can_view_current_map",
     rcon_api.get_objective_rows: "api.can_view_current_map",
-    rcon_api.set_game_layout: "api.can_change_game_layout"
+    rcon_api.set_game_layout: "api.can_change_game_layout",
 }
 
 PREFIXES_TO_EXPOSE = [
@@ -636,6 +638,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.get_camera_discord_webhooks_config: ["GET"],
     rcon_api.get_camera_notification_config: ["GET"],
     rcon_api.get_chat_commands_config: ["GET"],
+    rcon_api.get_rcon_chat_commands_config: ["GET"],
     rcon_api.get_chat_discord_webhooks_config: ["GET"],
     rcon_api.get_current_map_sequence: ["GET"],
     rcon_api.get_detailed_player_info: ["GET"],
@@ -732,6 +735,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.set_camera_discord_webhooks_config: ["POST"],
     rcon_api.set_camera_notification_config: ["POST"],
     rcon_api.set_chat_commands_config: ["POST"],
+    rcon_api.set_rcon_chat_commands_config: ["POST"],
     rcon_api.set_chat_discord_webhooks_config: ["POST"],
     rcon_api.set_expired_vip_config: ["POST"],
     rcon_api.set_game_layout: ["POST"],
@@ -784,6 +788,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.validate_camera_discord_webhooks_config: ["POST"],
     rcon_api.validate_camera_notification_config: ["POST"],
     rcon_api.validate_chat_commands_config: ["POST"],
+    rcon_api.validate_rcon_chat_commands_config: ["POST"],
     rcon_api.validate_chat_discord_webhooks_config: ["POST"],
     rcon_api.validate_expired_vip_config: ["POST"],
     rcon_api.validate_kills_discord_webhooks_config: ["POST"],
@@ -866,7 +871,8 @@ if not os.getenv("HLL_MAINTENANCE_CONTAINER"):
             )
         except:
             logger.exception(
-                "Failed to initialized endpoint for %r - Most likely bad configuration", func
+                "Failed to initialized endpoint for %r - Most likely bad configuration",
+                func,
             )
             raise
     logger.info("Done Initializing endpoints")

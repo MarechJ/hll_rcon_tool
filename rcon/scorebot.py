@@ -5,10 +5,10 @@ import pathlib
 import sys
 import time
 from contextlib import contextmanager
+from datetime import timedelta
 from typing import Callable, Generator
 from urllib.parse import urljoin
 
-from datetime import timedelta
 import requests
 from requests.exceptions import ConnectionError, RequestException
 from sqlalchemy import create_engine, select

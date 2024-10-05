@@ -7,7 +7,6 @@ from typing_extensions import Annotated
 from rcon.types import Roles
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
-
 ANNOUNCE_MESSAGE = "This server is under level thresholds control.\n\n{min_level_msg}{max_level_msg}{level_thresholds_msg}\nThanks for understanding."
 FORCEKICK_MESSAGE = "You violated level thresholds rules on this server: {violation}."
 MIN_LEVEL_MESSAGE = "Access to this server is not allowed under level {level}"
@@ -132,7 +131,11 @@ class AutoModLevelUserConfig(BaseUserConfig):
 
     @staticmethod
     def save_to_db(values: AutoModLevelType, dry_run=False):
-        key_check(AutoModLevelType.__required_keys__, values.keys())
+        key_check(
+            AutoModLevelType.__required_keys__,
+            AutoModLevelType.__optional_keys__,
+            values.keys(),
+        )
 
         validated_conf = AutoModLevelUserConfig(
             enabled=values.get("enabled"),

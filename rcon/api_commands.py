@@ -46,6 +46,7 @@ from rcon.user_config.gtx_server_name import GtxServerNameChangeUserConfig
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
 from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.user_config.name_kicks import NameKickUserConfig
+from rcon.user_config.rcon_chat_commands import RConChatCommandsUserConfig
 from rcon.user_config.rcon_connection_settings import RconConnectionSettingsUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
@@ -81,8 +82,9 @@ CTL: Optional["RconAPI"] = None
 def parameter_aliases(alias_to_param: Dict[str, str]):
     """Specify parameter aliases of a function. This might be useful to preserve backwards
     compatibility or to handle parameters named after a Python reserved keyword.
-    
+
     Takes a mapping of aliases to their parameter name."""
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -90,10 +92,12 @@ def parameter_aliases(alias_to_param: Dict[str, str]):
                 if alias in kwargs:
                     kwargs[param] = kwargs.pop(alias)
             return func(*args, **kwargs)
-        
+
         wrapper._parameter_aliases = alias_to_param
         return wrapper
+
     return decorator
+
 
 def get_rcon_api(credentials: ServerInfoType | None = None) -> "RconAPI":
     """Return a initialized Rcon connection to the game server
@@ -578,9 +582,11 @@ class RconAPI(Rcon):
     def get_ingame_mods(self) -> list[AdminUserType]:
         return ingame_mods()
 
-    @parameter_aliases({
-        "from": "from_",
-    })
+    @parameter_aliases(
+        {
+            "from": "from_",
+        }
+    )
     def get_historical_logs(
         self,
         player_name: str | None = None,
@@ -1705,6 +1711,41 @@ class RconAPI(Rcon):
             command_name=inspect.currentframe().f_code.co_name,  # type: ignore
             by=by,
             model=ChatCommandsUserConfig,
+            data=config or kwargs,
+            dry_run=True,
+            reset_to_default=reset_to_default,
+        )
+
+    def get_rcon_chat_commands_config(self):
+        return RConChatCommandsUserConfig.load_from_db()
+
+    def set_rcon_chat_commands_config(
+        self,
+        by: str,
+        config: dict[str, Any] | BaseUserConfig | None = None,
+        reset_to_default: bool = False,
+        **kwargs,
+    ) -> bool:
+        return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
+            model=RConChatCommandsUserConfig,
+            data=config or kwargs,
+            dry_run=False,
+            reset_to_default=reset_to_default,
+        )
+
+    def validate_rcon_chat_commands_config(
+        self,
+        by: str,
+        config: dict[str, Any] | BaseUserConfig | None = None,
+        reset_to_default: bool = False,
+        **kwargs,
+    ) -> bool:
+        return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
+            model=RConChatCommandsUserConfig,
             data=config or kwargs,
             dry_run=True,
             reset_to_default=reset_to_default,

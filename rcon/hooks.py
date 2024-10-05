@@ -1,5 +1,6 @@
 import logging
 import re
+import shlex
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from functools import wraps
@@ -14,15 +15,10 @@ from rcon.blacklist import (
     apply_blacklist_punishment,
     blacklist_or_ban,
     is_player_blacklisted,
-    synchronize_ban,
 )
 from rcon.cache_utils import invalidates
 from rcon.commands import CommandFailedError, HLLServerError
-from rcon.discord import (
-    dict_to_discord,
-    get_prepared_discord_hooks,
-    send_to_discord_audit,
-)
+from rcon.discord import get_prepared_discord_hooks, send_to_discord_audit
 from rcon.game_logs import (
     on_camera,
     on_chat,
@@ -33,7 +29,7 @@ from rcon.game_logs import (
 )
 from rcon.maps import UNKNOWN_MAP_NAME, parse_layer
 from rcon.message_variables import format_message_string, populate_message_variables
-from rcon.models import enter_session
+from rcon.models import PlayerID, enter_session
 from rcon.player_history import (
     _get_set_player,
     get_player,
@@ -41,7 +37,7 @@ from rcon.player_history import (
     save_player,
     save_start_player_session,
 )
-from rcon.rcon import Rcon, StructuredLogLineWithMetaData
+from rcon.rcon import Rcon, StructuredLogLineWithMetaData, do_run_commands
 from rcon.recent_actions import get_recent_actions
 from rcon.types import (
     MessageVariableContext,
@@ -54,11 +50,17 @@ from rcon.types import (
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.chat_commands import (
     MESSAGE_VAR_RE,
+    BaseChatCommand,
+    ChatCommand,
     ChatCommandsUserConfig,
     chat_contains_command_word,
     is_command_word,
     is_description_word,
     is_help_word,
+)
+from rcon.user_config.rcon_chat_commands import (
+    RConChatCommand,
+    RConChatCommandsUserConfig,
 )
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
@@ -74,6 +76,7 @@ from rcon.vote_map import VoteMap
 from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
 
 logger = logging.getLogger(__name__)
+arg_re = re.compile("\$(\d+)")
 
 
 @on_chat
@@ -86,7 +89,7 @@ def count_vote(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
         )
 
 
-def initialise_vote_map(rcon: Rcon, struct_log):
+def initialise_vote_map(struct_log):
     logger.info("New match started initializing vote map. %s", struct_log)
     try:
         vote_map = VoteMap()
@@ -94,14 +97,21 @@ def initialise_vote_map(rcon: Rcon, struct_log):
         vote_map.gen_selection()
         vote_map.reset_last_reminder_time()
         vote_map.apply_results()
-    except:
-        logger.exception("Something went wrong in vote map init")
+    except Exception as ex:
+        logger.exception("Something went wrong in vote map init", ex)
 
 
 @on_chat
 def chat_commands(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
-    config = ChatCommandsUserConfig.load_from_db()
-    if not config.enabled:
+    chat_config = ChatCommandsUserConfig.load_from_db()
+    rcon_config = RConChatCommandsUserConfig.load_from_db()
+
+    words: list[BaseChatCommand] = []
+    if chat_config.enabled:
+        words.extend(chat_config.command_words)
+    if rcon_config.enabled:
+        words.extend(rcon_config.command_words)
+    if len(words) == 0:
         return
 
     chat_message = struct_log["sub_content"]
@@ -115,7 +125,24 @@ def chat_commands(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
 
     player_cache = event_cache.get(player_id, MostRecentEvents())
     chat_words = set(chat_message.split())
-    for command in config.command_words:
+    ctx = {
+        MessageVariableContext.player_name.value: struct_log["player_name_1"],
+        MessageVariableContext.player_id.value: player_id,
+        MessageVariableContext.last_victim_player_id.value: player_cache.last_victim_player_id,
+        MessageVariableContext.last_victim_name.value: player_cache.last_victim_name,
+        MessageVariableContext.last_victim_weapon.value: player_cache.last_victim_weapon,
+        MessageVariableContext.last_nemesis_player_id.value: player_cache.last_nemesis_player_id,
+        MessageVariableContext.last_nemesis_name.value: player_cache.last_nemesis_name,
+        MessageVariableContext.last_nemesis_weapon.value: player_cache.last_nemesis_weapon,
+        MessageVariableContext.last_tk_nemesis_player_id.value: player_cache.last_tk_nemesis_player_id,
+        MessageVariableContext.last_tk_nemesis_name.value: player_cache.last_tk_nemesis_name,
+        MessageVariableContext.last_tk_nemesis_weapon.value: player_cache.last_tk_nemesis_weapon,
+        MessageVariableContext.last_tk_victim_player_id.value: player_cache.last_tk_victim_player_id,
+        MessageVariableContext.last_tk_victim_name.value: player_cache.last_tk_victim_name,
+        MessageVariableContext.last_tk_victim_weapon.value: player_cache.last_tk_victim_weapon,
+    }
+
+    for command in words:
         if not (
             triggered_word := chat_contains_command_word(
                 chat_words, command.words, command.help_words
@@ -123,73 +150,124 @@ def chat_commands(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
         ):
             continue
 
-        if is_command_word(triggered_word):
-            message_vars: list[str] = re.findall(MESSAGE_VAR_RE, command.message)
-            populated_variables = populate_message_variables(
-                vars=message_vars, player_id=player_id
-            )
-            formatted_message = format_message_string(
-                command.message,
-                populated_variables=populated_variables,
-                context={
-                    MessageVariableContext.player_name.value: struct_log[
-                        "player_name_1"
-                    ],
-                    MessageVariableContext.player_id.value: player_id,
-                    MessageVariableContext.last_victim_player_id.value: player_cache.last_victim_player_id,
-                    MessageVariableContext.last_victim_name.value: player_cache.last_victim_name,
-                    MessageVariableContext.last_victim_weapon.value: player_cache.last_victim_weapon,
-                    MessageVariableContext.last_nemesis_player_id.value: player_cache.last_nemesis_player_id,
-                    MessageVariableContext.last_nemesis_name.value: player_cache.last_nemesis_name,
-                    MessageVariableContext.last_nemesis_weapon.value: player_cache.last_nemesis_weapon,
-                    MessageVariableContext.last_tk_nemesis_player_id.value: player_cache.last_tk_nemesis_player_id,
-                    MessageVariableContext.last_tk_nemesis_name.value: player_cache.last_tk_nemesis_name,
-                    MessageVariableContext.last_tk_nemesis_weapon.value: player_cache.last_tk_nemesis_weapon,
-                    MessageVariableContext.last_tk_victim_player_id.value: player_cache.last_tk_victim_player_id,
-                    MessageVariableContext.last_tk_victim_name.value: player_cache.last_tk_victim_name,
-                    MessageVariableContext.last_tk_victim_weapon.value: player_cache.last_tk_victim_weapon,
-                },
-            )
-            rcon.message_player(
-                player_id=struct_log["player_id_1"],
-                message=formatted_message,
-                save_message=False,
-            )
-        # Help words describe a specific command
-        elif is_help_word(triggered_word):
-            description = command.description
-            if description:
-                rcon.message_player(
-                    player_id=struct_log["player_id_1"],
-                    message=description,
-                    save_message=False,
-                )
-            else:
-                rcon.message_player(
-                    player_id=struct_log["player_id_1"],
-                    message="Command description not set, let the admins know!",
-                    save_message=False,
-                )
-                logger.warning(
-                    "No descriptions set for chat command word(s), %s",
-                    ", ".join(command.words),
-                )
+        if is_command_word(triggered_word) and isinstance(command, ChatCommand):
+            chat_message_command(rcon, command, ctx)
+        if (
+            is_command_word(triggered_word)
+            and isinstance(command, RConChatCommand)
+            and command.enabled
+        ):
+            chat_rcon_command(rcon, command, ctx, triggered_word, chat_message)
+        if is_help_word(triggered_word):
+            # Help words describe a specific command
+            chat_help_command(rcon, command, ctx)
 
     # Description words trigger the entire help menu, test outside the loop
     # since these are global help words
-    if is_description_word(chat_words, config.describe_words):
-        description = config.describe_chat_commands()
+    if is_description_word(chat_words, chat_config.describe_words):
+        description = chat_config.describe_chat_commands()
         if description:
             rcon.message_player(
-                player_id=struct_log["player_id_1"],
+                player_id=player_id,
                 message="\n".join(description),
                 save_message=False,
             )
         else:
             logger.warning(
                 "No descriptions set for command words, %s",
-                ", ".join(config.describe_words),
+                ", ".join(chat_config.describe_words),
             )
+
+
+def chat_message_command(rcon: Rcon, command: ChatCommand, ctx: dict[str, str]):
+    player_id = ctx[MessageVariableContext.player_id.value]
+    message_vars: list[str] = re.findall(MESSAGE_VAR_RE, command.message)
+    populated_variables = populate_message_variables(
+        vars=message_vars, player_id=player_id
+    )
+    formatted_message = format_message_string(
+        command.message,
+        populated_variables=populated_variables,
+        context=ctx,
+    )
+    rcon.message_player(
+        player_id=player_id,
+        message=formatted_message,
+        save_message=False,
+    )
+
+
+def chat_rcon_command(
+    rcon: Rcon,
+    command: RConChatCommand,
+    ctx: dict[str, str],
+    triggering_word: str,
+    msg: str,
+):
+    player_id = ctx[MessageVariableContext.player_id.value]
+    player: PlayerID
+    with enter_session() as session:
+        player = (
+            session.query(PlayerID)
+            .filter(PlayerID.player_id == player_id)
+            .one_or_none()
+        )
+        if player is None:
+            logger.debug(
+                "player executed a command but does not exist in database: %s",
+                player_id,
+            )
+        if not command.conditions_fulfilled(rcon, player, ctx):
+            return
+
+        arguments = msg[msg.find(triggering_word) + len(triggering_word) + 1 :]
+        args = shlex.split(arguments)
+        expected_argument_count = 0
+        for _, params in command.commands.items():
+            for _, v in params.items():
+                for a in arg_re.findall(v):
+                    if int(a) > expected_argument_count:
+                        expected_argument_count = int(a)
+        if len(args) != expected_argument_count:
+            logger.info(
+                "provided message does not have expected number of arguments. Expected %d, got %d. Message: %s, Command: %s",
+                expected_argument_count,
+                len(args),
+                msg,
+                triggering_word,
+            )
+            return
+
+        commands: dict[str, dict[str, str]] = {}
+        for name, params in command.commands.items():
+            commands[name] = {}
+            for k, v in params.items():
+                for i, a in enumerate(args):
+                    v = v.replace(f"${i + 1}", a)
+                commands[name][k] = format_message_string(v, context=ctx)
+
+        do_run_commands(rcon, commands)
+
+
+def chat_help_command(rcon: Rcon, command: BaseChatCommand, ctx: dict[str, str]):
+    player_id = ctx[MessageVariableContext.player_id.value]
+    description = command.description
+    if description:
+        rcon.message_player(
+            player_id=player_id,
+            message=description,
+            save_message=False,
+        )
+    else:
+        rcon.message_player(
+            player_id=player_id,
+            message="Command description not set, let the admins know!",
+            save_message=False,
+        )
+        logger.warning(
+            "No descriptions set for chat command word(s), %s",
+            ", ".join(command.words),
+        )
 
 
 @on_match_end
@@ -221,7 +299,9 @@ def handle_new_match_start(rcon: Rcon, struct_log):
         # Check that the log is less than 5min old
         if (datetime.utcnow() - log_time).total_seconds() < 5 * 60:
             # then we use the current map to be more accurate
-            if current_map.map.name.lower() == log_map_name.lower().removesuffix(" night"):
+            if current_map.map.name.lower() == log_map_name.lower().removesuffix(
+                " night"
+            ):
                 map_name_to_save = current_map
                 guessed = False
             else:
@@ -251,7 +331,7 @@ def handle_new_match_start(rcon: Rcon, struct_log):
     except:
         raise
     finally:
-        initialise_vote_map(rcon, struct_log)
+        initialise_vote_map(struct_log)
         try:
             record_stats_worker(MapsHistory()[1])
         except Exception:

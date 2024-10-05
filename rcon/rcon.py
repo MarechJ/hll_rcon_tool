@@ -2,6 +2,7 @@ import logging
 import os
 import random
 import re
+import time
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from functools import cached_property
@@ -37,6 +38,7 @@ from rcon.types import (
 )
 from rcon.user_config.rcon_connection_settings import RconConnectionSettingsUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
+from rcon.user_config.utils import BaseUserConfig
 from rcon.utils import (
     ALL_ROLES,
     ALL_ROLES_KEY_INDEX_MAP,
@@ -44,7 +46,6 @@ from rcon.utils import (
     default_player_info_dict,
     get_server_number,
     parse_raw_player_info,
-    strtobool,
 )
 
 PLAYER_ID = "player_id"
@@ -53,6 +54,8 @@ ROLE = "role"
 
 TEMP_BAN = "temp"
 PERMA_BAN = "perma"
+
+USER_CONFIG_NAME_PATTERN = re.compile(r"set_.*_config")
 
 # The base level of actions that will always show up in the Live view
 # actions filter from the call to `get_recent_logs`
@@ -107,6 +110,41 @@ def get_rcon(credentials: ServerInfoType | None = None):
     if CTL is None:
         CTL = Rcon(credentials)
     return CTL
+
+
+def do_run_commands(rcon, commands):
+    for command, params in commands.items():
+        try:
+            logger.info("Applying %s %s", command, params)
+
+            # Allow people to apply partial changes to a user config to make
+            # auto settings less gigantic
+            if is_user_config_func(command):
+                # super dirty we should probably make an actual look up table
+                # but all the names are consistent
+                get_config_command = f"g{command[1:]}"
+                config: BaseUserConfig = rcon.__getattribute__(get_config_command)()
+                # get the existing config, override anything set in params
+                merged_params = config.model_dump() | params
+
+                if "by" not in merged_params:
+                    merged_params["by"] = "AutoSettings"
+
+                rcon.__getattribute__(command)(**merged_params)
+            else:
+                # Non user config settings
+                rcon.__getattribute__(command)(**params)
+        except AttributeError as e:
+            logger.exception(
+                "%s is not a valid command, double check the name!", command
+            )
+        except Exception as e:
+            logger.exception("Unable to apply %s %s: %s", command, params, e)
+        time.sleep(5)  # go easy on the server
+
+
+def is_user_config_func(name: str) -> bool:
+    return re.match(USER_CONFIG_NAME_PATTERN, name) is not None
 
 
 class Rcon(ServerCtl):
@@ -1321,21 +1359,22 @@ class Rcon(ServerCtl):
             super().remove_map_from_rotation(current[0], 1)
 
         return self.get_map_rotation()
-    
+
     @ttl_cache(ttl=10)
     def get_objective_row(self, row: int):
         return super().get_objective_row(row)
-    
-    def get_objective_rows(self) -> List[List[str]]:
-        return [
-            self.get_objective_row(row)
-            for row in range(5)
-        ]
 
-    def set_game_layout(self, objectives: Sequence[str | int | None], random_constraints: GameLayoutRandomConstraints = 0):
+    def get_objective_rows(self) -> List[List[str]]:
+        return [self.get_objective_row(row) for row in range(5)]
+
+    def set_game_layout(
+        self,
+        objectives: Sequence[str | int | None],
+        random_constraints: GameLayoutRandomConstraints = 0,
+    ):
         if len(objectives) != 5:
             raise ValueError("5 objectives must be provided")
-        
+
         obj_rows = self.get_objective_rows()
         parsed_objs: list[str] = []
         for row, (obj, obj_row) in enumerate(zip(objectives, obj_rows)):
@@ -1350,12 +1389,17 @@ class Rcon(ServerCtl):
                 elif obj in ("right", "bottom"):
                     parsed_objs.append(obj_row[2])
                 else:
-                    raise ValueError("Objective %s does not exist in row %s" % (obj, row))
-            
+                    raise ValueError(
+                        "Objective %s does not exist in row %s" % (obj, row)
+                    )
+
             elif isinstance(obj, int):
                 # Use index of the objective
                 if not (0 <= obj <= 2):
-                    raise ValueError("Objective index %s is out of range 0-2 in row %s" % (obj, row + 1))
+                    raise ValueError(
+                        "Objective index %s is out of range 0-2 in row %s"
+                        % (obj, row + 1)
+                    )
                 parsed_objs.append(obj_row[obj])
 
             elif obj is None:
@@ -1385,7 +1429,7 @@ class Rcon(ServerCtl):
                     neighbors.append(obj_rows[row - 1].index(parsed_objs[row - 1]))
                 if row < 4 and parsed_objs[row + 1] is not None:
                     neighbors.append(obj_rows[row + 1].index(parsed_objs[row + 1]))
-                
+
                 # Skip this row for now if neither of its neighbors had their objective determined yet
                 if not neighbors:
                     continue
@@ -1404,7 +1448,7 @@ class Rcon(ServerCtl):
                     if random_constraints & GameLayoutRandomConstraints.ALWAYS_DIAGONAL:
                         # Cannot have two objectives in a straight row
                         obj_choices[neighbor_idx] = None
-                
+
                 # Pick an objective. If none are viable, discard constraints.
                 parsed_objs[row] = random.choice(
                     [c for c in obj_choices if c is not None] or obj_row

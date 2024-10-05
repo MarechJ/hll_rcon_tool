@@ -17,6 +17,7 @@ from rcon.user_config.gtx_server_name import GtxServerNameChangeUserConfig
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
 from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.user_config.name_kicks import NameKickUserConfig
+from rcon.user_config.rcon_chat_commands import RConChatCommandsUserConfig
 from rcon.user_config.rcon_connection_settings import RconConnectionSettingsUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
@@ -436,6 +437,19 @@ def describe_chat_commands_config(request):
 
     return api_response(
         result=ChatCommandsUserConfig.model_json_schema(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@require_http_methods(["GET"])
+def describe_rcon_chat_commands_config(request):
+    command_name = "describe_chat_commands_config"
+
+    return api_response(
+        result=RConChatCommandsUserConfig.model_json_schema(),
         command=command_name,
         failed=False,
     )

@@ -62,6 +62,7 @@ class Orientation(str, Enum):
     HORIZONTAL = "horizontal"
     VERTICAL = "vertical"
 
+
 class GameMode(str, Enum):
     WARFARE = "warfare"
     OFFENSIVE = "offensive"

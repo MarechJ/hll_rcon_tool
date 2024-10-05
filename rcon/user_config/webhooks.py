@@ -88,7 +88,11 @@ class BaseMentionWebhookUserConfig(BaseUserConfig):
         _listType(values=raw_hooks)
 
         for obj in raw_hooks:
-            key_check(WebhookMentionType.__required_keys__, obj.keys())
+            key_check(
+                WebhookMentionType.__required_keys__,
+                WebhookMentionType.__optional_keys__,
+                obj.keys(),
+            )
 
         validated_hooks = parse_raw_mention_hooks(raw_hooks)
         validated_conf = cls(hooks=validated_hooks)
@@ -107,7 +111,9 @@ class BaseWebhookUserConfig(BaseUserConfig):
         _listType(values=raw_hooks)
 
         for obj in raw_hooks:
-            key_check(WebhookType.__required_keys__, obj.keys())
+            key_check(
+                WebhookType.__required_keys__, WebhookType.__optional_keys__, obj.keys()
+            )
 
         validated_hooks = [DiscordWebhook(url=obj.get("url")) for obj in raw_hooks]
         validated_conf = cls(hooks=validated_hooks)
@@ -145,7 +151,11 @@ class AdminPingWebhooksUserConfig(BaseMentionWebhookUserConfig):
         _listType(values=raw_hooks)
 
         for obj in raw_hooks:
-            key_check(WebhookMentionType.__required_keys__, obj.keys())
+            key_check(
+                WebhookMentionType.__required_keys__,
+                WebhookMentionType.__optional_keys__,
+                obj.keys(),
+            )
 
         validated_hooks = parse_raw_mention_hooks(raw_hooks)
         validated_conf = AdminPingWebhooksUserConfig(
@@ -166,7 +176,9 @@ class ChatWebhooksUserConfig(BaseWebhookUserConfig):
         _listType(values=raw_hooks)
 
         for obj in raw_hooks:
-            key_check(WebhookType.__required_keys__, obj.keys())
+            key_check(
+                WebhookType.__required_keys__, WebhookType.__optional_keys__, obj.keys()
+            )
 
         validated_hooks = [DiscordWebhook(url=obj.get("url")) for obj in raw_hooks]
         validated_conf = ChatWebhooksUserConfig(
@@ -192,7 +204,9 @@ class KillsWebhooksUserConfig(BaseWebhookUserConfig):
         _listType(values=raw_hooks)
 
         for obj in raw_hooks:
-            key_check(WebhookType.__required_keys__, obj.keys())
+            key_check(
+                WebhookType.__required_keys__, WebhookType.__optional_keys__, obj.keys()
+            )
 
         validated_hooks = [DiscordWebhook(url=obj.get("url")) for obj in raw_hooks]
         validated_conf = KillsWebhooksUserConfig(

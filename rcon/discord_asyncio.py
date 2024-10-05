@@ -1,10 +1,9 @@
 import asyncio
 import logging
-import time
 import threading
-from discord_webhook import DiscordWebhook
-from discord_webhook import AsyncDiscordWebhook
+import time
 
+from discord_webhook import AsyncDiscordWebhook, DiscordWebhook
 
 logger = logging.getLogger(__name__)
 
