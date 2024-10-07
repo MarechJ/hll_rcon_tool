@@ -148,7 +148,7 @@ export const navMenus = [
       },
       {
         name: "Messages",
-        to: "/settings/messages/standard",
+        to: "/settings/messages/message",
         icon: <LibraryBooksIcon />,
       },
       {

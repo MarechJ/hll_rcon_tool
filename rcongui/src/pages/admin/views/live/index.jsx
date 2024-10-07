@@ -28,7 +28,7 @@ import { Header } from "@/components/game/Header";
 import { extractPlayers, extractTeamState } from "@/utils/extractPlayers";
 // import teamData from "./data.json"
 
-const StyledToggleButtonGroup = styled(ToggleButtonGroup)(({ theme }) => ({
+export const StyledToggleButtonGroup = styled(ToggleButtonGroup)(({ theme }) => ({
   [`& .${toggleButtonGroupClasses.grouped}`]: {
     margin: theme.spacing(0.5),
     border: 0,

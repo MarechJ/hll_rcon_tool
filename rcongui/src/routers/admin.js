@@ -202,22 +202,15 @@ const router = createBrowserRouter([
                         path: 'messages',
                         handle: { crumb: () => <span>Messages</span> },
                         element: <MessagesSettings />,
-                        errorElement: <SharedErrorElement />,
                         children: [
                             {
                                 path: ':type',
                                 handle: { crumb: () => <span>Detail</span> },
                                 loader: messagesLoader,
                                 action: messagesAction,
+                                errorElement: <SharedErrorElement />,
                                 element: <MessagesDetail />,
                             },
-                            {
-                                path: 'broadcast',
-                                handle: { crumb: () => <span>Broadcast</span> },
-                                loader: messagesLoader,
-                                action: messagesAction,
-                                element: <BroadcastMessages />,
-                            }
                         ]
                     },
                 ]

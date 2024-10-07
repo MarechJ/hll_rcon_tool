@@ -4,7 +4,7 @@ import { MenuItem, Select } from "@mui/material";
 import { useState } from "react";
 
 export const MessageField = ({ control, errors, setValue, ...props }) => {
-  const { value: storedMessages } = useStoredTexts("messages");
+  const { value: storedMessages } = useStoredTexts("message");
   const [selectedMessage, setSelectedMessage] = useState("");
   const error = errors["message"];
   const hasError = !!error;

@@ -4,7 +4,7 @@ import { useStoredTexts } from "@/hooks/useStoredTexts";
 import { useState } from "react";
 
 export const ReasonField = ({ control, errors, setValue, ...props }) => {
-  const { value: storedMessages } = useStoredTexts("punishments");
+  const { value: storedMessages } = useStoredTexts("reason");
   const [selectedMessage, setSelectedMessage] = useState("");
   const error = errors["reason"];
   const hasError = !!error;
