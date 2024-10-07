@@ -23,7 +23,7 @@ def test_no_mentions():
     embed = handler.create_chat_message(
         log={
             "sub_content": "test message",
-            "player": "some dude",
+            "player_name_1": "some dude",
             "player_id_1": "1234",
             "action": "CHAT[Allies][Team]",
         }
@@ -45,7 +45,7 @@ def test_chat_mentions_are_escaped():
     embed = handler.create_chat_message(
         log={
             "sub_content": "test message @here",
-            "player": "some dude",
+            "player_name_1": "some dude",
             "player_id_1": "1234",
             "action": "CHAT[Allies][Team]",
         }
@@ -60,7 +60,7 @@ def test_admin_ping_mentions_always_escaped():
     embed = handler.create_chat_embed(
         log={
             "sub_content": "test message @here",
-            "player": "some dude",
+            "player_name_1": "some dude",
             "player_id_1": "1234",
             "action": "CHAT[Allies][Team]",
         },
@@ -84,7 +84,7 @@ def test_mentions_are_not_escaped():
     embed = handler.create_chat_message(
         log={
             "sub_content": "test message @here",
-            "player": "some dude",
+            "player_name_1": "some dude",
             "player_id_1": "1234",
             "action": "CHAT[Allies][Team]",
         }
@@ -107,7 +107,7 @@ def test_admin_pings_mention_start():
     content, embed, triggered = handler.create_admin_ping_message(
         log={
             "sub_content": "!admin test @here",
-            "player": "some dude",
+            "player_name_1": "some dude",
             "player_id_1": "1234",
             "action": "CHAT[Allies][Team]",
         }
@@ -132,7 +132,7 @@ def test_admin_pings_mention_middle():
     content, embed, triggered = handler.create_admin_ping_message(
         log={
             "sub_content": "test !admin @here",
-            "player": "some dude",
+            "player_name_1": "some dude",
             "player_id_1": "1234",
             "action": "CHAT[Allies][Team]",
         }
@@ -157,7 +157,7 @@ def test_admin_pings_contains_numbers():
     content, embed, triggered = handler.create_admin_ping_message(
         log={
             "sub_content": "testword123 test @here",
-            "player": "some dude",
+            "player_name_1": "some dude",
             "player_id_1": "1234",
             "action": "CHAT[Allies][Team]",
         }
@@ -180,7 +180,7 @@ def test_kill_message():
     embed = handler.create_kill_message(
         log={
             "action": "KILL",
-            "player": "EL MONO LOKO",
+            "player_name_1": "EL MONO LOKO",
             "player_id_1": "76561198823171234",
             "player_name_2": "zerothreeOG",
             "player_id_2": "76561199371581234",
@@ -212,7 +212,7 @@ def test_team_kill_message():
     embed = handler.create_kill_message(
         log={
             "action": "TEAM KILL",
-            "player": "EL MONO LOKO",
+            "player_name_1": "EL MONO LOKO",
             "player_id_1": "76561198823171234",
             "player_name_2": "zerothreeOG",
             "player_id_2": "76561199371581234",
