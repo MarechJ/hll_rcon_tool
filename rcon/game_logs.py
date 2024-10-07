@@ -845,12 +845,20 @@ def auto_ban_if_tks_right_after_connection(
                 logger.info(
                     "Banning player %s for TEAMKILL after connect %s", player_name, log
                 )
+                if config.ban_duration.total_seconds > 0:
+                    expires_at = (
+                        datetime.datetime.now() + config.ban_duration.as_timedelta
+                    )
+                else:
+                    expires_at = None
+
                 result = blacklist_or_ban(
                     rcon=rcon,
                     blacklist_id=config.blacklist_id,
                     player_id=player_id,
                     reason=reason,
                     admin_name=author,
+                    expires_at=expires_at,
                 )
                 logger.info(
                     "Banned player %s for TEAMKILL after connect %s", player_name, log
