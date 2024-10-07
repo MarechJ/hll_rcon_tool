@@ -7,7 +7,6 @@ from typing import List, Mapping, Optional, TypedDict
 from pydantic import HttpUrl
 from pydantic.dataclasses import dataclass
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -82,7 +81,7 @@ class PunishPlayer:
     name: str
     squad: str
     team: str
-    flags: List[Flag]
+    flags: List[Flag] = field(default_factory=list)
     role: str = None
     lvl: int = None
     details: PunishDetails = None
