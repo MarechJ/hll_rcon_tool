@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, Outlet } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import {
   Avatar,
   Box,
@@ -12,14 +12,14 @@ import {
 } from "@mui/material";
 import DevicesRoundedIcon from "@mui/icons-material/DevicesRounded";
 
-const messageTypes = [
+const categories = [
   {
-    name: "Standard",
-    href: "/settings/messages/standard",
+    name: "Message",
+    href: "/settings/messages/message",
   },
   {
-    name: "Punishments",
-    href: "/settings/messages/punishments",
+    name: "Reason",
+    href: "/settings/messages/reason",
   },
   {
     name: "Welcome",
@@ -32,19 +32,14 @@ const messageTypes = [
 ];
 
 const MessagesRoot = () => {
-  const [value, setValue] = React.useState("Standard");
-
-  const handleChange = (event) => {
-    setValue(event.target.value);
-  };
+  const location = useLocation()
 
   return (
     <Box>
       <Select
         labelId="messages-select"
         id="messages-simple-select"
-        value={value}
-        onChange={handleChange}
+        value={location.pathname}
         displayEmpty
         inputProps={{ "aria-label": "Select messages" }}
         fullWidth
@@ -72,11 +67,11 @@ const MessagesRoot = () => {
           },
         }}
       >
-        <ListSubheader sx={{ pt: 0 }}>Messages</ListSubheader>
-        {messageTypes?.map((type) => (
+        <ListSubheader sx={{ pt: 0 }}>Categories</ListSubheader>
+        {categories?.map((type) => (
           <MenuItem
             key={type.name}
-            value={type.name}
+            value={type.href}
             component={Link}
             href={type.href}
             to={type.href}

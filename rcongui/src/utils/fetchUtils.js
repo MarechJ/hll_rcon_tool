@@ -4,6 +4,15 @@ import { toast } from "react-toastify";
 
 const CRCON_API = `${process.env.REACT_APP_API_URL}`
 
+export const cmd = {
+  ADD_MESSAGE_TEMPLATE: 'add_message_template',
+  EDIT_MESSAGE_TEMPLATE: 'edit_message_template',
+  GET_MESSAGE_TEMPLATE: 'get_message_templates',
+  DELETE_MESSAGE_TEMPLATE: 'delete_message_template',
+  GET_ALL_MESSAGE_TEMPLATES: 'get_all_message_templates',
+  GET_MESSAGE_TEMPLATES: 'get_message_templates',
+}
+
 export function execute(command, data) {
   return postData(CRCON_API + command, data)
 }
