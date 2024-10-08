@@ -2,7 +2,6 @@ import logging
 import os
 from datetime import datetime, timedelta
 
-from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon.maps import parse_layer, safe_get_map_name
@@ -76,7 +75,7 @@ def get_scoreboard_maps(request):
                     end=r["end"],
                     server_number=r["server_number"],
                     player_stats=r["player_stats"],
-                    result=r['result']
+                    result=r["result"],
                 )
             )
 
