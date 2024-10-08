@@ -2,14 +2,13 @@ import json
 import logging
 from functools import wraps
 
-from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
 from sqlalchemy import and_, or_
 
 from rcon.models import AuditLog, enter_session
 
 from .auth import api_response, login_required
-from .decorators import require_http_methods
+from .decorators import require_http_methods, permission_required
 from .utils import _get_data
 
 logger = logging.getLogger("rconweb")
