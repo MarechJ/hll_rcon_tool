@@ -22,8 +22,7 @@ def permission_required(
 ):
     def decorator(
         func,
-    ):  # -> _Wrapped[Callable[..., Any], Any, Callable[..., Any], Any]:  # -> _Wrapped[Callable[..., Any], Any, Callable[..., Any], Any]:  # -> _Wrapped[Callable[..., Any], Any, Callable[..., Any], Any]:
-
+    ):
         if isinstance(perm, str):
             ENDPOINT_PERMISSIONS_LOOKUP[func.__name__] = [perm]
         else:
@@ -44,7 +43,7 @@ def permission_required(
 def require_http_methods(request_method_list: list[str]):
     def decorator(
         func,
-    ):  # -> _Wrapped[Callable[..., Any], Any, Callable[..., Any], Any]:  # -> _Wrapped[Callable[..., Any], Any, Callable[..., Any], Any]:  # -> _Wrapped[Callable[..., Any], Any, Callable[..., Any], Any]:
+    ):
         if func.__name__ in ENDPOINT_HTTP_METHODS:
             raise ValueError(f"{func.__name__} already added to ENDPOINT_HTTP_METHODS")
 
