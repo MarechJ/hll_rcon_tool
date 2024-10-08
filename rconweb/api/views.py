@@ -8,7 +8,6 @@ from subprocess import PIPE, run
 from typing import Any, Callable
 
 import pydantic
-from django.contrib.auth.decorators import permission_required
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -36,7 +35,7 @@ from rconweb.settings import TAG_VERSION
 
 from .audit_log import auto_record_audit, record_audit
 from .auth import AUTHORIZATION, RconJsonResponse, api_response, login_required
-from .decorators import require_content_type, require_http_methods
+from .decorators import require_content_type, require_http_methods, permission_required
 from .multi_servers import forward_command
 from .utils import _get_data
 
@@ -192,7 +191,7 @@ def expose_api_endpoint(
     @wraps(func)
     def wrapper(request: HttpRequest):
         parameters = inspect.signature(func).parameters
-        aliases = getattr(func, '_parameter_aliases', {})
+        aliases = getattr(func, "_parameter_aliases", {})
         arguments = {}
         failure = False
         others = None
@@ -589,7 +588,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     },
     rcon_api.get_objective_row: "api.can_view_current_map",
     rcon_api.get_objective_rows: "api.can_view_current_map",
-    rcon_api.set_game_layout: "api.can_change_game_layout"
+    rcon_api.set_game_layout: "api.can_change_game_layout",
 }
 
 PREFIXES_TO_EXPOSE = [
@@ -866,7 +865,8 @@ if not os.getenv("HLL_MAINTENANCE_CONTAINER"):
             )
         except:
             logger.exception(
-                "Failed to initialized endpoint for %r - Most likely bad configuration", func
+                "Failed to initialized endpoint for %r - Most likely bad configuration",
+                func,
             )
             raise
     logger.info("Done Initializing endpoints")
