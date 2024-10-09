@@ -60,6 +60,7 @@ from rcon.user_config.chat_commands import (
     is_description_word,
     is_help_word,
 )
+from rcon.user_config.message_on_connect import MessageOnConnectUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
@@ -94,7 +95,7 @@ def initialise_vote_map(rcon: Rcon, struct_log):
         vote_map.gen_selection()
         vote_map.reset_last_reminder_time()
         vote_map.apply_results()
-    except:
+    except Exception:
         logger.exception("Something went wrong in vote map init")
 
 
@@ -221,7 +222,9 @@ def handle_new_match_start(rcon: Rcon, struct_log):
         # Check that the log is less than 5min old
         if (datetime.utcnow() - log_time).total_seconds() < 5 * 60:
             # then we use the current map to be more accurate
-            if current_map.map.name.lower() == log_map_name.lower().removesuffix(" night"):
+            if current_map.map.name.lower() == log_map_name.lower().removesuffix(
+                " night"
+            ):
                 map_name_to_save = current_map
                 guessed = False
             else:
@@ -248,7 +251,7 @@ def handle_new_match_start(rcon: Rcon, struct_log):
             guessed=guessed,
             start_timestamp=int(struct_log["timestamp_ms"] / 1000),
         )
-    except:
+    except Exception:
         raise
     finally:
         initialise_vote_map(rcon, struct_log)
@@ -388,7 +391,7 @@ def ban_if_has_vac_bans(rcon: Rcon, player_id: str, name: str):
                 admin_name="VAC BOT",
             )
             logger.info(
-                "Player %s was banned due VAC history, last ban: %s days ago",
+                "Player '%s' was banned due VAC history, " "last ban: %s days ago",
                 str(player),
                 bans.get("DaysSinceLastBan"),
             )
@@ -730,7 +733,7 @@ def _set_real_vips(rcon: Rcon, struct_log):
     min_vip_slot = config.minimum_number_vip_slots
     vip_count = rcon.get_vips_count()
 
-    remaining_vip_slots = max(desired_nb_vips - vip_count, max(min_vip_slot, 0))
+    remaining_vip_slots = max(desired_nb_vips - vip_count, min_vip_slot, 0)
     rcon.set_vip_slots_num(remaining_vip_slots)
     logger.info("Real VIP set slots to %s", remaining_vip_slots)
 
@@ -771,3 +774,46 @@ def notify_camera(rcon: Rcon, struct_log):
 
     if config.welcome:
         temporary_welcome(rcon, struct_log["message"], 60)
+
+
+def _message_on_connect(rcon: Rcon, struct_log, player_name, player_id):
+    config = MessageOnConnectUserConfig.load_from_db()
+    if not config.enabled:
+        return  # Feature is disabled
+
+    message_on_connect_txt = config.non_seed_time_text
+
+    players_count_request = rcon.get_gamestate()
+    players_count = (
+        players_count_request["num_allied_players"]
+        + players_count_request["num_axis_players"]
+    )
+    if players_count < config.seed_limit:
+        message_on_connect_txt = config.seed_time_text
+
+    def send_message_on_connect():
+        try:
+            rcon.message_player(
+                player_id=player_id,
+                message=message_on_connect_txt,
+                by="Message_on_connect",
+                save_message=False,
+            )
+        except Exception as e:
+            logger.error(
+                "Could not send MessageOnConnect to player '%s' (%s) : %s",
+                player_name,
+                player_id,
+                e,
+            )
+
+    # The player might not yet have finished connecting in order to send messages.
+    t = Timer(10, send_message_on_connect)
+    pendingTimers[player_id].append((RconInvalidNameActionType.warn, t))
+    t.start()
+
+
+@on_connected()
+@inject_player_ids
+def message_on_connect(rcon: Rcon, struct_log, player_name, player_id):
+    _message_on_connect(rcon, struct_log, player_name, player_id)

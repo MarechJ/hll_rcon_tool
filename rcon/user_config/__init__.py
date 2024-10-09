@@ -20,6 +20,7 @@ if not os.getenv("HLL_MAINTENANCE_CONTAINER"):
         gtx_server_name,
         log_line_webhooks,
         log_stream,
+        message_on_connect,
         name_kicks,
         rcon_connection_settings,
         rcon_server_settings,

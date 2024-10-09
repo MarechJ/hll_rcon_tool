@@ -558,6 +558,66 @@ export const NameKicks = ({
   );
 };
 
+export const MessageOnConnect = ({
+  description,
+  getEndpoint,
+  setEndpoint,
+  validateEndpoint,
+  describeEndpoint,
+}) => {
+  const notes = `
+    {
+        /*
+            Any player that enters the server will receive this message.
+            Could be useful to :
+            - remind basic rules,
+            - give your team Discord url,
+            - (whatever)
+            
+            You can either set two messages :
+            - one will be sent if the server is in seed
+            - the other when the server is seeded
+
+            If you want the same message to be sent whatever the seed
+            condition, you can set "seed_limit" to "1" :
+            the "seed_time_text" will always be the one to be sent.
+        */
+
+        /*
+            Feature enabled ('true') or disabled ('false')
+        */
+        "enabled": false,
+
+        /*
+            The number of players that need to be online to end the seed time
+            min = 0, default = 40, max = 100
+        */
+        "seed_limit": 40,
+
+        /*
+            The message that will be sent during seed time
+        */
+        "seed_time_text": "Welcome !\\nThe server is seeding\\n\\n[ All time rules ]\\nStay fun, be polite, communicate.\\nNo teamkill, follow officers orders.\\n\\n[ + Seed time rules ]\\nDo not capture the 4th point\\nDo not destroy garries in red zone\\n\\nHave a good game !",
+
+        /*
+            The message that will be sent when NOT in seed
+        */
+        "non_seed_time_text": "Welcome !\\n[ All time rules ]\\nStay fun, be polite, communicate.\\nNo teamkill, follow officers orders.\\n\\nHave a good game !",
+    }
+    `;
+
+  return (
+    <UserSetting
+      description={description}
+      getEndpoint={getEndpoint}
+      setEndpoint={setEndpoint}
+      validateEndpoint={validateEndpoint}
+      describeEndpoint={describeEndpoint}
+      notes={notes}
+    />
+  );
+};
+
 export const ExpiredVIP = ({
   description,
   getEndpoint,

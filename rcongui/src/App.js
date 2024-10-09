@@ -50,6 +50,7 @@ import {
   VacGameBans,
   TeamKillBanOnConnect,
   NameKicks,
+  MessageOnConnect,
   ExpiredVIP,
   GTXNameChange,
   ChatCommands,
@@ -432,7 +433,9 @@ function App() {
                 <LiveSessionScore classes={classes} />
               </Route>
               <Route
-                path={process.env.REACT_APP_PUBLIC_BUILD ? "/" : "/livegamescore"}
+                path={
+                  process.env.REACT_APP_PUBLIC_BUILD ? "/" : "/livegamescore"
+                }
                 default={process.env.REACT_APP_PUBLIC_BUILD}
                 exact
               >
@@ -684,6 +687,17 @@ function App() {
                           setEndpoint="set_name_kick_config"
                           validateEndpoint="validate_name_kick_config"
                           describeEndpoint="describe_name_kick_config"
+                        />
+                      </Grid>
+                    </Route>
+                    <Route path="/settings/message-on-connect">
+                      <Grid container spacing={2}>
+                        <MessageOnConnect
+                          description="Message on connect"
+                          getEndpoint="get_message_on_connect_config"
+                          setEndpoint="set_message_on_connect_config"
+                          validateEndpoint="validate_message_on_connect_config"
+                          describeEndpoint="describe_message_on_connect_config"
                         />
                       </Grid>
                     </Route>

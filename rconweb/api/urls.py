@@ -9,13 +9,13 @@ from . import (
     audit_log,
     auth,
     auto_settings,
+    history,
     multi_servers,
     scoreboards,
     services,
     user_settings,
     views,
     vips,
-    history,
 )
 from .auth import api_response
 from .decorators import ENDPOINT_HTTP_METHODS
@@ -80,6 +80,8 @@ def get_api_documentation(request):
 
 # Each explicitly exposed API endpoint and auto-exposed Rcon endpoints
 endpoints: list[tuple[str, Callable]] = [
+    ("get_audit_logs", audit_log.get_audit_logs),
+    ("get_audit_logs_autocomplete", audit_log.get_audit_logs_autocomplete),
     ("login", auth.do_login),
     ("logout", auth.do_logout),
     ("get_historical_logs_csv", history.get_historical_logs_csv),
@@ -194,6 +196,10 @@ endpoints: list[tuple[str, Callable]] = [
     ("get_all_discord_webhooks_config", user_settings.get_all_discord_webhooks_config),
     ("get_all_standard_message_config", user_settings.get_all_standard_message_config),
     ("reconnect_gameserver", views.restart_gunicorn),
+    (
+        "describe_message_on_connect_config",
+        user_settings.describe_message_on_connect_config,
+    ),
 ] + [(name, func) for name, func in views.commands]
 
 # Expose endpoints though Django

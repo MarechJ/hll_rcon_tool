@@ -192,6 +192,8 @@ GROUPS = [
             "can_change_blacklists",
             "can_delete_blacklists",
             "can_change_game_layout",
+            "can_view_message_on_connect_config",
+            "can_change_message_on_connect_config",
         ),
     ),
     (
@@ -374,6 +376,8 @@ GROUPS = [
             "can_change_blacklists",
             "can_delete_blacklists",
             "can_change_game_layout",
+            "can_view_message_on_connect_config",
+            "can_change_message_on_connect_config",
         ),
     ),
     (

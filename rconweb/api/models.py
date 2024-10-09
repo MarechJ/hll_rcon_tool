@@ -438,4 +438,12 @@ class RconUser(User):
             ("can_change_blacklists", "Can change blacklists"),
             ("can_delete_blacklists", "Can delete blacklists"),
             ("can_change_game_layout", "Can change game layout"),
+            (
+                "can_view_message_on_connect_config",
+                "Can view message on connect config",
+            ),
+            (
+                "can_change_message_on_connect_config",
+                "Can change message on connect config",
+            ),
         )
