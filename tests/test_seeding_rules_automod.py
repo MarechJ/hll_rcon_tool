@@ -15,7 +15,7 @@ from rcon.automods.models import (
     WatchStatus,
 )
 from rcon.automods.seeding_rules import SeedingRulesAutomod
-from rcon.types import GameState, StructuredLogLineWithMetaData
+from rcon.types import GameStateType, StructuredLogLineWithMetaData
 from rcon.user_config.auto_mod_seeding import (
     AutoModSeedingUserConfig,
     DisallowedRoles,
@@ -164,7 +164,7 @@ def team_view():
     }
 
 
-game_state: GameState = {
+game_state: GameStateType = {
     "allied_score": 3,
     "axis_score": 2,
     "current_map": {

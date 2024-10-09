@@ -12,6 +12,7 @@ from sqlalchemy import func as pg_func
 from sqlalchemy import select, text, update
 
 import rcon.expiring_vips.service
+import rcon.seed_vip.service
 import rcon.user_config
 import rcon.user_config.utils
 from rcon import auto_settings, broadcast, game_logs, routines
@@ -31,6 +32,7 @@ from rcon.settings import SERVER_INFO
 from rcon.steam_utils import enrich_db_users
 from rcon.user_config.auto_settings import AutoSettingsConfig
 from rcon.user_config.log_stream import LogStreamUserConfig
+from rcon.user_config.seed_vip import SeedVIPUserConfig
 from rcon.user_config.webhooks import (
     BaseMentionWebhookUserConfig,
     BaseUserConfig,
@@ -124,6 +126,15 @@ def run_routines():
 @cli.command(name="expiring_vips")
 def run_expiring_vips():
     rcon.expiring_vips.service.run()
+
+
+@cli.command(name="seed_vip")
+def run_seed_vip():
+    config = SeedVIPUserConfig.load_from_db()
+    if config.enabled:
+        rcon.seed_vip.service.run()
+    else:
+        logger.info("Seed VIP is not enabled")
 
 
 @cli.command(name="automod")

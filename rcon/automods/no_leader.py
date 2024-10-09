@@ -23,9 +23,8 @@ from rcon.automods.models import (
     WatchStatus,
 )
 from rcon.automods.num_or_inf import num_or_inf
-from rcon.types import GameState
+from rcon.types import GameStateType
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
-
 
 LEADER_WATCH_RESET_SECS = 120
 AUTOMOD_USERNAME = "NoLeaderWatch"
@@ -137,7 +136,7 @@ class NoLeaderAutomod:
         squad_name: str,
         team: Literal["axis", "allies"],
         squad: dict,
-        game_state: GameState,
+        game_state: GameStateType,
     ) -> PunitionsToApply:
         """
         Observe all squads/players

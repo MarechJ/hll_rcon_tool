@@ -192,7 +192,7 @@ def expose_api_endpoint(
     @wraps(func)
     def wrapper(request: HttpRequest):
         parameters = inspect.signature(func).parameters
-        aliases = getattr(func, '_parameter_aliases', {})
+        aliases = getattr(func, "_parameter_aliases", {})
         arguments = {}
         failure = False
         others = None
@@ -589,7 +589,10 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     },
     rcon_api.get_objective_row: "api.can_view_current_map",
     rcon_api.get_objective_rows: "api.can_view_current_map",
-    rcon_api.set_game_layout: "api.can_change_game_layout"
+    rcon_api.set_game_layout: "api.can_change_game_layout",
+    rcon_api.get_seed_vip_config: "api.can_view_seed_vip_config",
+    rcon_api.set_seed_vip_config: "api.can_change_seed_vip_config",
+    rcon_api.validate_seed_vip_config: "api.can_change_seed_vip_config",
 }
 
 PREFIXES_TO_EXPOSE = [
@@ -678,6 +681,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.get_recent_logs: ["GET", "POST"],
     rcon_api.get_round_time_remaining: ["GET"],
     rcon_api.get_scorebot_config: ["GET"],
+    rcon_api.get_seed_vip_config: ["GET"],
     rcon_api.get_server_name_change_config: ["GET"],
     rcon_api.get_server_settings: ["GET"],
     rcon_api.get_slots: ["GET"],
@@ -751,6 +755,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.set_rcon_server_settings_config: ["POST"],
     rcon_api.set_real_vip_config: ["POST"],
     rcon_api.set_scorebot_config: ["POST"],
+    rcon_api.set_seed_vip_config: ["POST"],
     rcon_api.set_server_name_change_config: ["POST"],
     rcon_api.set_server_name: ["POST"],
     rcon_api.set_standard_broadcast_messages: ["POST"],
@@ -794,6 +799,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.validate_rcon_server_settings_config: ["POST"],
     rcon_api.validate_real_vip_config: ["POST"],
     rcon_api.validate_scorebot_config: ["POST"],
+    rcon_api.validate_seed_vip_config: ["POST"],
     rcon_api.validate_server_name_change_config: ["POST"],
     rcon_api.validate_standard_broadcast_messages: ["POST"],
     rcon_api.validate_standard_punishments_messages: ["POST"],
@@ -866,7 +872,8 @@ if not os.getenv("HLL_MAINTENANCE_CONTAINER"):
             )
         except:
             logger.exception(
-                "Failed to initialized endpoint for %r - Most likely bad configuration", func
+                "Failed to initialized endpoint for %r - Most likely bad configuration",
+                func,
             )
             raise
     logger.info("Done Initializing endpoints")

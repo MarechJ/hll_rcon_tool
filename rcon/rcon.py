@@ -22,7 +22,7 @@ from rcon.types import (
     AdminType,
     GameLayoutRandomConstraints,
     GameServerBanType,
-    GameState,
+    GameStateType,
     GetDetailedPlayer,
     GetDetailedPlayers,
     GetPlayersType,
@@ -757,7 +757,7 @@ class Rcon(ServerCtl):
             )
         return res
 
-    def get_gamestate(self) -> GameState:
+    def get_gamestate(self) -> GameStateType:
         """
         Returns player counts, team scores, remaining match time and current/next map
 
@@ -1321,21 +1321,22 @@ class Rcon(ServerCtl):
             super().remove_map_from_rotation(current[0], 1)
 
         return self.get_map_rotation()
-    
+
     @ttl_cache(ttl=10)
     def get_objective_row(self, row: int):
         return super().get_objective_row(row)
-    
-    def get_objective_rows(self) -> List[List[str]]:
-        return [
-            self.get_objective_row(row)
-            for row in range(5)
-        ]
 
-    def set_game_layout(self, objectives: Sequence[str | int | None], random_constraints: GameLayoutRandomConstraints = 0):
+    def get_objective_rows(self) -> List[List[str]]:
+        return [self.get_objective_row(row) for row in range(5)]
+
+    def set_game_layout(
+        self,
+        objectives: Sequence[str | int | None],
+        random_constraints: GameLayoutRandomConstraints = 0,
+    ):
         if len(objectives) != 5:
             raise ValueError("5 objectives must be provided")
-        
+
         obj_rows = self.get_objective_rows()
         parsed_objs: list[str] = []
         for row, (obj, obj_row) in enumerate(zip(objectives, obj_rows)):
@@ -1350,12 +1351,17 @@ class Rcon(ServerCtl):
                 elif obj in ("right", "bottom"):
                     parsed_objs.append(obj_row[2])
                 else:
-                    raise ValueError("Objective %s does not exist in row %s" % (obj, row))
-            
+                    raise ValueError(
+                        "Objective %s does not exist in row %s" % (obj, row)
+                    )
+
             elif isinstance(obj, int):
                 # Use index of the objective
                 if not (0 <= obj <= 2):
-                    raise ValueError("Objective index %s is out of range 0-2 in row %s" % (obj, row + 1))
+                    raise ValueError(
+                        "Objective index %s is out of range 0-2 in row %s"
+                        % (obj, row + 1)
+                    )
                 parsed_objs.append(obj_row[obj])
 
             elif obj is None:
@@ -1385,7 +1391,7 @@ class Rcon(ServerCtl):
                     neighbors.append(obj_rows[row - 1].index(parsed_objs[row - 1]))
                 if row < 4 and parsed_objs[row + 1] is not None:
                     neighbors.append(obj_rows[row + 1].index(parsed_objs[row + 1]))
-                
+
                 # Skip this row for now if neither of its neighbors had their objective determined yet
                 if not neighbors:
                     continue
@@ -1404,7 +1410,7 @@ class Rcon(ServerCtl):
                     if random_constraints & GameLayoutRandomConstraints.ALWAYS_DIAGONAL:
                         # Cannot have two objectives in a straight row
                         obj_choices[neighbor_idx] = None
-                
+
                 # Pick an objective. If none are viable, discard constraints.
                 parsed_objs[row] = random.choice(
                     [c for c in obj_choices if c is not None] or obj_row

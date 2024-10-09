@@ -29,9 +29,8 @@ from rcon.cache_utils import get_redis_client
 from rcon.game_logs import on_match_start
 from rcon.maps import GameMode, parse_layer
 from rcon.rcon import StructuredLogLineType
-from rcon.types import GameState, GetDetailedPlayer, Roles
+from rcon.types import GameStateType, GetDetailedPlayer, Roles
 from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig
-
 
 SEEDING_RULES_RESET_SECS = 120
 AUTOMOD_USERNAME = "SeedingRulesAutomod"
@@ -296,7 +295,7 @@ class SeedingRulesAutomod:
         squad_name: str,
         team: Literal["axis", "allies"],
         squad: dict,
-        game_state: GameState,
+        game_state: GameStateType,
     ) -> PunitionsToApply:
         """
         Observe all squads/players

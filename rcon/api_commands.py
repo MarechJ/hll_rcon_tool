@@ -50,6 +50,7 @@ from rcon.user_config.rcon_connection_settings import RconConnectionSettingsUser
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.user_config.scorebot import ScorebotUserConfig
+from rcon.user_config.seed_vip import SeedVIPUserConfig
 from rcon.user_config.standard_messages import (
     StandardBroadcastMessagesUserConfig,
     StandardPunishmentMessagesUserConfig,
@@ -81,8 +82,9 @@ CTL: Optional["RconAPI"] = None
 def parameter_aliases(alias_to_param: Dict[str, str]):
     """Specify parameter aliases of a function. This might be useful to preserve backwards
     compatibility or to handle parameters named after a Python reserved keyword.
-    
+
     Takes a mapping of aliases to their parameter name."""
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -90,10 +92,12 @@ def parameter_aliases(alias_to_param: Dict[str, str]):
                 if alias in kwargs:
                     kwargs[param] = kwargs.pop(alias)
             return func(*args, **kwargs)
-        
+
         wrapper._parameter_aliases = alias_to_param
         return wrapper
+
     return decorator
+
 
 def get_rcon_api(credentials: ServerInfoType | None = None) -> "RconAPI":
     """Return a initialized Rcon connection to the game server
@@ -578,9 +582,11 @@ class RconAPI(Rcon):
     def get_ingame_mods(self) -> list[AdminUserType]:
         return ingame_mods()
 
-    @parameter_aliases({
-        "from": "from_",
-    })
+    @parameter_aliases(
+        {
+            "from": "from_",
+        }
+    )
     def get_historical_logs(
         self,
         player_name: str | None = None,
@@ -1005,6 +1011,43 @@ class RconAPI(Rcon):
             command_name=inspect.currentframe().f_code.co_name,  # type: ignore
             by=by,
             model=RealVipUserConfig,
+            data=config or kwargs,
+            dry_run=False,
+            reset_to_default=reset_to_default,
+        )
+
+    def get_seed_vip_config(
+        self,
+    ) -> SeedVIPUserConfig:
+        return SeedVIPUserConfig.load_from_db()
+
+    def validate_seed_vip_config(
+        self,
+        by: str,
+        config: dict[str, Any] | BaseUserConfig | None = None,
+        reset_to_default: bool = False,
+        **kwargs,
+    ) -> bool:
+        return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
+            model=SeedVIPUserConfig,
+            data=config or kwargs,
+            dry_run=True,
+            reset_to_default=reset_to_default,
+        )
+
+    def set_seed_vip_config(
+        self,
+        by: str,
+        config: dict[str, Any] | BaseUserConfig | None = None,
+        reset_to_default: bool = False,
+        **kwargs,
+    ) -> bool:
+        return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
+            model=SeedVIPUserConfig,
             data=config or kwargs,
             dry_run=False,
             reset_to_default=reset_to_default,
