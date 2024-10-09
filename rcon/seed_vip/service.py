@@ -73,16 +73,18 @@ def run():
             online_players = get_online_players(rcon=rcon_api)
             if online_players is None:
                 logger.debug(
-                    f"Did not receive a usable result from `get_online_players`, continuing"
+                    f"Did not receive a usable result from `get_online_players`, sleeping {config.poll_time_seeding} seconds"
                 )
+                sleep(config.poll_time_seeding)
                 continue
 
             gamestate = get_gamestate(rcon=rcon_api)
 
             if gamestate is None:
                 logger.debug(
-                    f"Did not receive a usable result from `get_gamestate`, continuing"
+                    f"Did not receive a usable result from `get_gamestate`, sleeping {config.poll_time_seeding} seconds"
                 )
+                sleep(config.poll_time_seeding)
                 continue
 
             total_players = gamestate.num_allied_players + gamestate.num_axis_players
