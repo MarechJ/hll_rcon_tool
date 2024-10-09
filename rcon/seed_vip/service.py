@@ -53,6 +53,10 @@ def run():
             # Reload the config each loop to catch changes to the config
             config = SeedVIPUserConfig.load_from_db()
 
+            if not config.enabled:
+                logger.info("Seed VIP is not enabled")
+                break
+
             try:
                 if current_lang != config.language:
                     logger.info(f"Deactivating language={current_lang}")
