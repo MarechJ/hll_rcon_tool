@@ -21,10 +21,14 @@
     "@emoji-mart/react": "^1.1.1",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.0",
+    "@fontsource/montserrat": "^5.1.0",
     "@fontsource/roboto": "^5.0.14",
     "@fortawesome/free-brands-svg-icons": "^6.6.0",
     "@fortawesome/free-solid-svg-icons": "^6.6.0",
     "@fortawesome/react-fontawesome": "^0.2.2",
+    "@jsonforms/core": "^3.4.0",
+    "@jsonforms/material-renderers": "^3.4.0",
+    "@jsonforms/react": "^3.4.0",
     "@monaco-editor/react": "^4.2.2",
     "@mui/icons-material": "^6.0.2",
     "@mui/lab": "^6.0.0-beta.9",
@@ -59,12 +63,11 @@
     "react-hook-form": "^7.53.0",
     "react-router-dom": "^6.26.1",
     "react-toastify": "^10.0.5",
-    "tiny-invariant": "^1.2.0",
-    "@jsonforms/core": "^3.4.0",
-    "@jsonforms/react": "^3.4.0",
-    "@jsonforms/material-renderers": "^3.4.0"
+    "react-window": "^1.8.10",
+    "tiny-invariant": "^1.2.0"
   },
   "devDependencies": {
+    "@types/react-window": "^1.8.8",
     "@vitejs/plugin-react": "^4.2.1",
     "prettier": "^2.8.8",
     "vite": "^5.4.3"

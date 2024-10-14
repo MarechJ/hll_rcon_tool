@@ -13,30 +13,17 @@ import { Form, useSubmit, useActionData } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import { createTheme, ThemeProvider, styled } from '@mui/material/styles';
 import { redirect } from "react-router-dom";
-import { execute, get } from "@/utils/fetchUtils";
+import { cmd } from "@/utils/fetchUtils";
 import getDashboardTheme from "@/themes/getDashboardTheme"
 import { useStorageState } from "@/hooks/useStorageState"
 
 export const loader = async () => {
-  const response = await get("is_logged_in");
-  if (!response.ok) {
-    let message = response.statusText;
-
-    if (response.status === 504) {
-      message += ". Your server is not responding.";
-    }
-
-    throw new Response(message, { status: response.status });
-  }
-
-  const json = await response.json();
-  const authenticated = json.result.authenticated;
-
-  if (authenticated) {
+  const user = await cmd.IS_AUTHENTICATED();
+  if (user.authenticated) {
     return redirect("/");
   }
 
-  return { authenticated };
+  return { authenticated: user.authenticated };
 };
 
 export const action = async ({ request }) => {
@@ -44,31 +31,13 @@ export const action = async ({ request }) => {
   let isAuth = false;
 
   try {
-    // this throws if 401
-    const response = await execute("login", {
+    const { result } = await cmd.AUTHENTICATE({ payload: {
       username: username,
       password: password,
-    });
-
-    // this can also catch backend downtime
-    if (!response.ok) {
-      let message = response.statusText;
-
-      if (response.status === 504) {
-        message += ". Your server is not responding.";
-      }
-
-      return {
-        error: response.status,
-        message: message,
-      };
-    }
-
-    const data = await response.json();
-    isAuth = data.result;
+    } })
+    isAuth = result;
   } catch (error) {
-    // in case of 401
-    if (error?.name === "InvalidLogin") {
+    if (error.status === 401) {
       return {
         error: error.name,
         message: "Invalid login credentials. Try it again.",
@@ -81,7 +50,6 @@ export const action = async ({ request }) => {
     };
   }
 
-  // success, redirect to the home page
   if (isAuth) {
     return redirect("/");
   }

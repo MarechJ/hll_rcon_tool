@@ -1,40 +1,19 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
-import Tabs from "@mui/material/Tabs";
-import Tab from "@mui/material/Tab";
+import { Form, json, useActionData, useLoaderData } from "react-router-dom";
 import {
-  Form,
-  json,
-  Link,
-  Outlet,
-  useActionData,
-  useLoaderData,
-  useNavigate,
-} from "react-router-dom";
-import {
-  Avatar,
   Button,
-  Divider,
-  IconButton,
   InputBase,
   List,
   ListItem,
-  ListItemAvatar,
   ListItemButton,
   ListItemText,
-  ListSubheader,
-  MenuItem,
   Paper,
-  Select,
-  selectClasses,
   Stack,
   styled,
   TextField,
 } from "@mui/material";
-import DevicesRoundedIcon from "@mui/icons-material/DevicesRounded";
-import AddCircleIcon from "@mui/icons-material/AddCircle";
-import { cmd, execute, get, handleHttpError } from "@/utils/fetchUtils";
-import { CustomizedDividers, StyledToggleButtonGroup } from "../../views/live";
+import { cmd } from "@/utils/fetchUtils";
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
 import CancelIcon from "@mui/icons-material/Cancel";
@@ -44,6 +23,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import SaveAsIcon from "@mui/icons-material/SaveAs";
 import dayjs from "dayjs";
 import debounce from "lodash/debounce";
+import { BroadcastFields } from "@/components/shared/BroadcastFields";
 
 const MODE = {
   READ: 0,
@@ -65,23 +45,13 @@ const initialState = {
 };
 
 export const loader = async ({ params }) => {
-  const { type: category } = params;
-  const response = await get(`get_message_templates?category=${category}`);
-  handleHttpError(response);
-  try {
-    const data = await response.json();
-    const messages = data.result;
-    messages.reverse(); // sort desc by updated_by
-    return {
-      category,
-      messages,
-    };
-  } catch (error) {
-    return {
-      category,
-      messages: [],
-    };
-  }
+  const { category } = params;
+  const messages = await cmd.GET_MESSAGE_TEMPLATES({ params });
+  messages.reverse(); // sort desc by updated_by
+  return {
+    category,
+    messages,
+  };
 };
 
 export const action = async ({ request }) => {
@@ -95,35 +65,7 @@ export const action = async ({ request }) => {
   const hasTitle = !!title?.trim()?.length;
   const hasContent = !!content?.trim()?.length;
 
-  const handleResponse = async (response) => {
-    handleHttpError(response);
-    if (!response || !response.ok) {
-      throw json(
-        {
-          message: "Something went wrong",
-          error: "Form error",
-          command: intent,
-        },
-        { status: 400 }
-      );
-    }
-    const cmdResult = await response.json();
-    if (!cmdResult || cmdResult.failed) {
-      {
-        throw json(
-          {
-            message: "Action failed",
-            error: cmdResult?.error,
-            command: cmdResult?.command,
-          },
-          { status: 400 }
-        );
-      }
-    }
-    return { result: cmdResult.result, arguments: cmdResult.arguments };
-  };
-
-  let response, data;
+  let data;
 
   switch (intent) {
     case INTENT.CREATE:
@@ -137,12 +79,13 @@ export const action = async ({ request }) => {
           { status: 400 }
         );
       }
-      response = await execute(cmd.ADD_MESSAGE_TEMPLATE, {
-        title,
-        content,
-        category,
+      data = await cmd.ADD_MESSAGE_TEMPLATE({
+        payload: {
+          title,
+          content,
+          category,
+        },
       });
-      data = await handleResponse(response);
       return json({ intent, message: { ...data.arguments, id: data.result } });
 
     case INTENT.UPDATE:
@@ -156,13 +99,14 @@ export const action = async ({ request }) => {
           { status: 400 }
         );
       }
-      response = await execute(cmd.EDIT_MESSAGE_TEMPLATE, {
-        id,
-        title,
-        content,
-        category,
+      data = await cmd.EDIT_MESSAGE_TEMPLATE({
+        payload: {
+          id,
+          title,
+          content,
+          category,
+        },
       });
-      data = await handleResponse(response);
       return json({ intent, message: data.arguments });
 
     case INTENT.DELETE:
@@ -176,8 +120,7 @@ export const action = async ({ request }) => {
           { status: 400 }
         );
       }
-      response = await execute(cmd.DELETE_MESSAGE_TEMPLATE, { id });
-      data = await handleResponse(response);
+      data = await cmd.DELETE_MESSAGE_TEMPLATE({ payload: { id } });
       return json({ intent, message: data.arguments });
 
     default:
@@ -197,24 +140,6 @@ const StyledTextField = styled(TextField)((theme) => ({
     borderRadius: 0,
   },
 }));
-
-const unpackBroadcastMessage = (message) =>
-  message.length
-    ? message.split("\n").map((line) => {
-        const regex = /(\d+)\s+(.*)/;
-        const match = line.match(regex);
-        if (!match) return { time: "", message: "" };
-        const [_, time, content] = match;
-        return { time, message: content };
-      })
-    : [];
-
-const parseBroadcastMessages = (messages) =>
-  messages.reduce((acc, msg, index, arr) => {
-    let str = acc + `${msg.time} ${msg.message}`;
-    str += index !== arr.length - 1 ? "\n" : "";
-    return str;
-  }, "");
 
 function EditorActions({ editor, actions }) {
   const canBeSaved = editor.title.trim() && editor.content.trim();
@@ -300,85 +225,7 @@ function EditorActions({ editor, actions }) {
   );
 }
 
-function BroadcastFields({ editor, onChange }) {
-  const rows = unpackBroadcastMessage(editor.content);
-
-  const handleAddRow = () => {
-    onChange({
-      content: parseBroadcastMessages([...rows, { time: "", message: "" }]),
-    });
-  };
-
-  const handleDeleteRow = (index) => {
-    onChange({
-      content: parseBroadcastMessages(
-        rows.slice(0, index).concat(rows.slice(index + 1))
-      ),
-    });
-  };
-
-  const handleRowChange = (lineIndex, key) => (event) => {
-    onChange({
-      content: parseBroadcastMessages(
-        rows.map((line, i) =>
-          lineIndex === i ? { ...line, [key]: event.target.value } : line
-        )
-      ),
-    });
-  };
-
-  return (
-    <>
-      <textarea
-        name="content"
-        value={editor.content}
-        disabled={editor.mode === MODE.READ}
-        required
-        readOnly
-        hidden
-      />
-      {rows.map(({ time, message }, index) => (
-        <Stack key={"line" + index} direction={"row"}>
-          <StyledTextField
-            required
-            value={time}
-            onChange={handleRowChange(index, "time")}
-            placeholder="Time"
-            sx={{ width: "100px" }}
-            slotProps={{
-              input: {
-                type: "number",
-                min: 1,
-                max: 999,
-              },
-            }}
-            disabled={editor.mode === MODE.READ}
-          />
-          <StyledTextField
-            required
-            fullWidth
-            value={message}
-            onChange={handleRowChange(index, "message")}
-            placeholder="Message"
-            disabled={editor.mode === MODE.READ}
-          />
-          {editor.mode !== MODE.READ && (
-            <IconButton color="error" onClick={() => handleDeleteRow(index)}>
-              <DeleteIcon />
-            </IconButton>
-          )}
-        </Stack>
-      ))}
-      {editor.mode !== MODE.READ && (
-        <Button onClick={handleAddRow} startIcon={<AddIcon />}>
-          Add
-        </Button>
-      )}
-    </>
-  );
-}
-
-function EditorFields({ editor, category, onChange, onInputChange }) {
+function EditorFields({ editor, category, onBroadcastChange, onInputChange }) {
   return (
     <>
       <input name="id" value={editor.id} hidden readOnly />
@@ -393,7 +240,7 @@ function EditorFields({ editor, category, onChange, onInputChange }) {
         disabled={editor.mode === MODE.READ}
       />
       {category === "broadcast" ? (
-        <BroadcastFields editor={editor} onChange={onChange} />
+        <BroadcastFields message={editor.content} disabled={editor.mode === MODE.READ} onChange={onBroadcastChange} />
       ) : (
         <StyledTextField
           name="content"
@@ -476,7 +323,9 @@ const MessagesDetailPage = () => {
         break;
       case INTENT.CREATE:
       case INTENT.UPDATE:
-        let msg = messages.find((msg) => Number(msg.id) === Number(action.message.id));
+        let msg = messages.find(
+          (msg) => Number(msg.id) === Number(action.message.id)
+        );
         if (msg) {
           setEditor({
             mode: MODE.READ,
@@ -504,10 +353,10 @@ const MessagesDetailPage = () => {
     }));
   };
 
-  const handleOnChange = (obj) => {
+  const handleOnChange = (value) => {
     setEditor((prev) => ({
       ...prev,
-      ...obj,
+      content: value,
     }));
   };
 
@@ -533,7 +382,8 @@ const MessagesDetailPage = () => {
   const handleCancelUpdate = () => {
     setEditor((prev) => {
       return {
-        ...(messages.find((msg) => Number(msg.id) === Number(prev.id)) ?? initialState),
+        ...(messages.find((msg) => Number(msg.id) === Number(prev.id)) ??
+          initialState),
         mode: MODE.READ,
       };
     });
@@ -550,7 +400,7 @@ const MessagesDetailPage = () => {
   const filteredMessages = messages.filter(({ title, id, updated_by }) => {
     return `${id} ${title} ${updated_by}`
       .toLowerCase()
-      .includes(searchValue.toLocaleLowerCase());
+      .includes(searchValue.toLowerCase());
   });
 
   return (
@@ -597,7 +447,7 @@ const MessagesDetailPage = () => {
           editor={editor}
           category={category}
           onInputChange={handleOnInputChange}
-          onChange={handleOnChange}
+          onBroadcastChange={handleOnChange}
         />
       </Box>
     </Stack>

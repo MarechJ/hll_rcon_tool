@@ -10,24 +10,31 @@ import {
   Select,
   selectClasses,
 } from "@mui/material";
-import DevicesRoundedIcon from "@mui/icons-material/DevicesRounded";
+import ChatIcon from '@mui/icons-material/Chat';
+import WavingHandIcon from '@mui/icons-material/WavingHand';
+import AnnouncementIcon from '@mui/icons-material/Announcement';
+import PodcastsIcon from '@mui/icons-material/Podcasts';
 
 const categories = [
   {
     name: "Message",
-    href: "/settings/messages/message",
+    href: "/settings/templates/message",
+    icon: <ChatIcon />,
   },
   {
     name: "Reason",
-    href: "/settings/messages/reason",
+    href: "/settings/templates/reason",
+    icon: <AnnouncementIcon />,
   },
   {
     name: "Welcome",
-    href: "/settings/messages/welcome",
+    href: "/settings/templates/welcome",
+    icon: <WavingHandIcon />,
   },
   {
     name: "Broadcast",
-    href: "/settings/messages/broadcast",
+    href: "/settings/templates/broadcast",
+    icon: <PodcastsIcon />,
   },
 ];
 
@@ -78,7 +85,7 @@ const MessagesRoot = () => {
           >
             <ListItemAvatar>
               <Avatar alt={type.name}>
-                <DevicesRoundedIcon sx={{ fontSize: "1rem" }} />
+                {type.icon}
               </Avatar>
             </ListItemAvatar>
             <ListItemText

@@ -44,23 +44,34 @@ import ServicesSettings from "../pages/admin/settings/services"
 import { loader as servicesLoader } from "../pages/admin/settings/services"
 import { action as servicesAction } from "../pages/admin/settings/services"
 
-import MessagesSettings from "../pages/admin/settings/messages"
-import { loader as messagesLoader } from "../pages/admin/settings/messages/detail"
-import { action as messagesAction } from "../pages/admin/settings/messages/detail"
-import BroadcastMessages from "../pages/admin/settings/messages/broadcast"
-import MessagesDetail from "../pages/admin/settings/messages/detail"
+import TemplatesSettings from "../pages/admin/settings/templates"
+import { loader as templatesLoader } from "../pages/admin/settings/templates/detail"
+import { action as templatesAction } from "../pages/admin/settings/templates/detail"
+import TemplatesDetail from "../pages/admin/settings/templates/detail"
 
 import AutoSettings from "../pages/admin/settings/autosettings"
 import { loader as autosettingsLoader } from "../pages/admin/settings/autosettings"
 import { action as autosettingsAction } from "../pages/admin/settings/autosettings"
 
-import AdminRecords from "../pages/admin/records/admin"
-import { loader as adminRecordsLoader } from "../pages/admin/records/admin"
-import { action as adminRecordsAction } from "../pages/admin/records/admin"
+import WelcomeMessageSettings from "../pages/admin/settings/welcome-message"
+import { loader as welcomeMessageLoader } from "../pages/admin/settings/welcome-message"
+import { action as welcomeMessageAction } from "../pages/admin/settings/welcome-message"
 
-import VipRecords from "../pages/admin/records/vip"
-import { loader as vipRecordsLoader } from "../pages/admin/records/vip"
-import { action as vipRecordsAction } from "../pages/admin/records/vip"
+import BroadcastMessageSettings from "../pages/admin/settings/broadcast-message"
+import { loader as broadcastMessageLoader } from "../pages/admin/settings/broadcast-message"
+import { action as broadcastMessageAction } from "../pages/admin/settings/profanity-filter"
+
+import ProfanityFilterSettings from "../pages/admin/settings/profanity-filter"
+import { loader as profanityFilterLoader } from "../pages/admin/settings/profanity-filter"
+import { action as profanityFilterAction } from "../pages/admin/settings/profanity-filter"
+
+import ConsoleAdminSettings from "../pages/admin/settings/console-admins"
+import { loader as consoleAdminSettingsLoader } from "../pages/admin/settings/console-admins"
+import { action as consoleaAdminSettingsAction } from "../pages/admin/settings/console-admins"
+
+import VipSettings from "../pages/admin/settings/vip"
+import { loader as vipSettingsLoader } from "../pages/admin/settings/vip"
+import { action as vipSettingsAction } from "../pages/admin/settings/vip"
 
 const router = createBrowserRouter([
     {
@@ -131,20 +142,6 @@ const router = createBrowserRouter([
                         handle: { crumb: () => <Link to={'/records/audit-log'}>Audit Logs</Link> },
                         element: <AuditLogsRecords />,
                     },
-                    {
-                        path: 'vip',
-                        handle: { crumb: () => <Link to={'/records/vip'}>Vip</Link> },
-                        element: <VipRecords />,
-                        loader: vipRecordsLoader,
-                        action: vipRecordsAction,
-                    },
-                    {
-                        path: 'admin',
-                        handle: { crumb: () => <Link to={'/records/admin'}>Admin</Link> },
-                        element: <AdminRecords />,
-                        loader: adminRecordsLoader,
-                        action: adminRecordsAction,
-                    },
                 ],
             },
             {
@@ -163,6 +160,41 @@ const router = createBrowserRouter([
                         element: <ServicesSettings />,
                         loader: servicesLoader,
                         action: servicesAction,
+                    },
+                    {
+                        path: 'vip',
+                        handle: { crumb: () => <Link to={'/settings/vip'}>Vip</Link> },
+                        element: <VipSettings />,
+                        loader: vipSettingsLoader,
+                        action: vipSettingsAction,
+                    },
+                    {
+                        path: 'console-admins',
+                        handle: { crumb: () => <Link to={'/settings/console-admins'}>Console Admins</Link> },
+                        element: <ConsoleAdminSettings />,
+                        loader: consoleAdminSettingsLoader,
+                        action: consoleaAdminSettingsAction,
+                    },
+                    {
+                        path: 'profanity-filter',
+                        handle: { crumb: () => <span>Profanity Filter</span> },
+                        element: <ProfanityFilterSettings />,
+                        loader: profanityFilterLoader,
+                        action: profanityFilterAction,
+                    },
+                    {
+                        path: 'welcome-message',
+                        handle: { crumb: () => <span>Welcome Message</span> },
+                        element: <WelcomeMessageSettings />,
+                        loader: welcomeMessageLoader,
+                        action: welcomeMessageAction,
+                    },
+                    {
+                        path: 'broadcast-message',
+                        handle: { crumb: () => <span>Broadcast Message</span> },
+                        element: <BroadcastMessageSettings />,
+                        loader: broadcastMessageLoader,
+                        action: broadcastMessageAction,
                     },
                     {
                         path: 'autosettings',
@@ -199,17 +231,17 @@ const router = createBrowserRouter([
                         ]
                     },
                     {
-                        path: 'messages',
-                        handle: { crumb: () => <span>Messages</span> },
-                        element: <MessagesSettings />,
+                        path: 'templates',
+                        handle: { crumb: () => <span>Templates</span> },
+                        element: <TemplatesSettings />,
                         children: [
                             {
-                                path: ':type',
+                                path: ':category',
                                 handle: { crumb: () => <span>Detail</span> },
-                                loader: messagesLoader,
-                                action: messagesAction,
+                                loader: templatesLoader,
+                                action: templatesAction,
                                 errorElement: <SharedErrorElement />,
-                                element: <MessagesDetail />,
+                                element: <TemplatesDetail />,
                             },
                         ]
                     },
