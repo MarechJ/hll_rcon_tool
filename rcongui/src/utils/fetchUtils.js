@@ -2,55 +2,246 @@ import React from "react";
 import { json } from "react-router-dom";
 import { toast } from "react-toastify";
 
-const CRCON_API = `${process.env.REACT_APP_API_URL}`
+const CRCON_API = `${process.env.REACT_APP_API_URL}`;
+const withCRCON = (path) => `${CRCON_API}${path}`;
+
+function GET_Factory(cmd) {
+  return async ({ params } = {}) => {
+    let location = cmd;
+    let data;
+
+    if (params) {
+      location += "?" + new URLSearchParams(params).toString();
+    }
+    const response = await fetch(withCRCON(location), {
+      method: "GET", // *GET, POST, PUT, DELETE, etc.
+      mode: "cors", // no-cors, *cors, same-origin
+      cache: "default", // *default, no-cache, reload, force-cache, only-if-cached
+      credentials: "include", // include, *same-origin, omit
+      redirect: "follow", // manual, *follow, error
+      referrerPolicy: "origin", // no-referrer, *client
+    });
+
+    try {
+      data = await response.json();
+    } catch (error) {
+      throw new NotJSONResponseError("The server did not return JSON.");
+    }
+
+    if (!response.ok) {
+      switch (response.status) {
+        case 401:
+          throw new AuthError("You are not authenticated.", cmd);
+        case 403:
+          throw new PermissionError("You are not authorized.", cmd);
+        case 504:
+          throw new CRCONServerDownError(
+            "There was a problem connection to your CRCON server."
+          );
+        default:
+          throw new UnknownError(data.error, data.command);
+      }
+    }
+
+    if (data.failed) {
+      throw new CommandFailedError(data.error, data.command);
+    }
+
+    return data.result;
+  };
+}
+
+function POST_Factory(cmd) {
+  return async ({ params, payload = {} } = {}) => {
+    let location = cmd;
+    let data;
+
+    if (params) {
+      location += "?" + new URLSearchParams(params).toString();
+    }
+    const response = await fetch(withCRCON(location), {
+      method: "POST", // *GET, POST, PUT, DELETE, etc.
+      mode: "cors", // no-cors, *cors, same-origin
+      cache: "default", // *default, no-cache, reload, force-cache, only-if-cached
+      credentials: "include", // include, *same-origin, omit
+      headers: {
+        "Content-Type": "application/json",
+      },
+      redirect: "follow", // manual, *follow, error
+      referrerPolicy: "origin", // no-referrer, *client
+      body: JSON.stringify(payload), // body data type must match "Content-Type" header
+    });
+
+    try {
+      data = await response.json();
+    } catch (error) {
+      throw new NotJSONResponseError("The server did not return JSON.");
+    }
+
+    if (!response.ok) {
+      switch (response.status) {
+        case 401:
+          throw new AuthError("You are not authenticated.", cmd);
+        case 403:
+          throw new PermissionError("You are not authorized.", cmd);
+        case 504:
+          throw new CRCONServerDownError(
+            "There was a problem connection to your CRCON server."
+          );
+        default:
+          throw new UnknownError(data.error, data.command);
+      }
+    }
+
+    if (data.failed) {
+      throw new CommandFailedError(data.error, data.command);
+    }
+
+    return { result: data.result, arguments: data.arguments };
+  };
+}
 
 export const cmd = {
-  ADD_MESSAGE_TEMPLATE: 'add_message_template',
-  EDIT_MESSAGE_TEMPLATE: 'edit_message_template',
-  GET_MESSAGE_TEMPLATE: 'get_message_templates',
-  DELETE_MESSAGE_TEMPLATE: 'delete_message_template',
-  GET_ALL_MESSAGE_TEMPLATES: 'get_all_message_templates',
-  GET_MESSAGE_TEMPLATES: 'get_message_templates',
-}
+  ADD_MESSAGE_TEMPLATE: POST_Factory("add_message_template"),
+  EDIT_MESSAGE_TEMPLATE: POST_Factory("edit_message_template"),
+  GET_MESSAGE_TEMPLATE: GET_Factory("get_message_templates"),
+  DELETE_MESSAGE_TEMPLATE: POST_Factory("delete_message_template"),
+  GET_ALL_MESSAGE_TEMPLATES: GET_Factory("get_all_message_templates"),
+  GET_MESSAGE_TEMPLATES: GET_Factory("get_message_templates"),
+  GET_SERVICES: GET_Factory("get_services"),
+  TOGGLE_SERVICE: POST_Factory("do_service"),
+  GET_AUTOSETTINGS: GET_Factory("get_auto_settings"),
+  SET_AUTOSETTINGS: POST_Factory("set_auto_settings"),
+  GET_PROFANITIES: GET_Factory("get_profanities"),
+  SET_PROFANITIES: POST_Factory("set_profanities"),
+  GET_CONSOLE_ADMINS: GET_Factory("get_admin_ids"),
+  ADD_CONSOLE_ADMIN: POST_Factory("add_admin"),
+  DELETE_CONSOLE_ADMIN: POST_Factory("remove_admin"),
+  GET_CONSOLE_ADMIN_GROUPS: GET_Factory("get_admin_groups"),
+  GET_PLAYER: GET_Factory("get_player_profile"),
+  GET_VIPS: GET_Factory("get_vip_ids"),
+  ADD_VIP: POST_Factory("add_vip"),
+  DELETE_VIP: POST_Factory("remove_vip"),
+  AUTHENTICATE: POST_Factory("login"),
+  IS_AUTHENTICATED: GET_Factory("is_logged_in"),
+  GET_WELCOME_MESSAGE: GET_Factory("get_welcome_message"),
+  SET_WELCOME_MESSAGE: POST_Factory("set_welcome_message"),
+  GET_BROADCAST_MESSAGE: GET_Factory("get_broadcast_message"),
+  GET_BROADCAST_CONFIG: GET_Factory("get_auto_broadcasts_config"),
+  SET_BROADCAST_CONFIG: POST_Factory("set_auto_broadcasts_config"),
+};
 
 export function execute(command, data) {
-  return postData(CRCON_API + command, data)
+  return postData(CRCON_API + command, data);
 }
 
-export const handleHttpError = (error) => {
+// used for React Router loaders
+export function handleHttpError(error) {
+  let errorObject, init;
+
   switch (error.name) {
     case "PermissionError":
-      throw json(
-        {
-          message: "You don't have permissions to do that!",
-          error: error?.name,
-          command: error?.command,
-        },
-        { status: 403 }
-      );        
-    case "AuthError":
-      throw json(
-        {
-          message: "You are not authenticated!",
-          error: error?.name,
-          command: error?.command,
-        },
-        { status: 401 }
-      );        
-    default:
+      errorObject = {
+        message: "You don't have permissions to do that!",
+        error: error?.name,
+        command: error?.command,
+      };
+      init = { status: 403 };
       break;
+    case "AuthError":
+      errorObject = {
+        message: "You are not authenticated!",
+        error: error?.name,
+        command: error?.command,
+      };
+      init = { status: 401 };
+      break;
+    case "CommandFailedError":
+      errorObject = {
+        message: error?.message,
+        error: error?.name,
+        command: error?.command,
+      };
+      init = { status: 404 };
+      break;
+    case "CRCONServerDownError":
+      errorObject = {
+        message: error?.message,
+        error: error?.name,
+        command: error?.command,
+      };
+      init = { status: 504 };
+      break;
+    default:
+      errorObject = {
+        message: error?.message ?? "Something went wrong",
+        error: error?.name,
+        command: error?.command,
+      };
+      init = { status: 400 };
+      break;
+  }
+
+  throw json(errorObject, init);
+}
+
+class AuthError extends Error {
+  constructor(message) {
+    super(message ?? "You are not authenticated.");
+    this.name = "AuthError";
+    this.status = 401;
   }
 }
 
-function AuthError(message) {
-  this.message = message;
-  this.name = "AuthError";
+class PermissionError extends Error {
+  constructor(message, command) {
+    super(message ?? "You are not authorized.");
+    this.command = command;
+    this.name = "PermissionError";
+    this.status = 403;
+  }
 }
 
-function PermissionError(message, command) {
-  this.message = message;
-  this.command = command;
-  this.name = "PermissionError";
+class CommandFailedError extends Error {
+  constructor(message, command) {
+    super(message);
+    this.command = command;
+    this.name = "CommandFailedError";
+    this.status = 404;
+  }
+}
+
+class ConnectionError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "ConnectionError";
+    this.status = 504;
+  }
+}
+
+class CRCONServerDownError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "CRCONServerDownError";
+    this.status = 504;
+  }
+}
+
+class NotJSONResponseError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "NotJSONResponseError";
+    this.status = 500;
+  }
+}
+
+class UnknownError extends Error {
+  constructor(message, command) {
+    super(message);
+    this.command = command;
+    this.name = "UnknownError";
+    this.status = 400;
+  }
 }
 
 async function handle_response_status(response) {
@@ -62,6 +253,12 @@ async function handle_response_status(response) {
     throw new PermissionError(
       "You are not authorized to do this!",
       response.url.slice(response.url.indexOf("/api/") + "/api/".length)
+    );
+  }
+
+  if (response.status === 504) {
+    throw new CRCONServerDownError(
+      response.statusText + ". Your server is not responding."
     );
   }
 
@@ -211,31 +408,38 @@ async function addPlayerToBlacklist({
   blacklistId,
   playerId,
   expiresAt,
-  reason
+  reason,
 }) {
   try {
-    const response = await postData(`${process.env.REACT_APP_API_URL}add_blacklist_record`, {
-      blacklist_id: blacklistId,
-      player_id: playerId,
-      expires_at: expiresAt || null,
-      reason
-    })
+    const response = await postData(
+      `${process.env.REACT_APP_API_URL}add_blacklist_record`,
+      {
+        blacklist_id: blacklistId,
+        player_id: playerId,
+        expires_at: expiresAt || null,
+        reason,
+      }
+    );
 
-    return showResponse(response, `Player ID ${playerId} was blacklisted`, true)
+    return showResponse(
+      response,
+      `Player ID ${playerId} was blacklisted`,
+      true
+    );
   } catch (error) {
-    handle_http_errors(error)
+    handle_http_errors(error);
   }
 }
 
 async function getBlacklists() {
   try {
-    const response = await get("get_blacklists")
-    const data = await showResponse(response, "get_blacklists", false)
+    const response = await get("get_blacklists");
+    const data = await showResponse(response, "get_blacklists", false);
     if (data.result) {
       return data.result;
-    }    
+    }
   } catch (error) {
-    handle_http_errors(error)
+    handle_http_errors(error);
   }
 }
 
@@ -245,9 +449,9 @@ async function getServerStatus() {
     const data = await response.json();
     if (data.result) {
       return data.result;
-    }    
+    }
   } catch (error) {
-    handle_http_errors(error)
+    handle_http_errors(error);
   }
 }
 
@@ -257,9 +461,9 @@ async function getGameState() {
     const data = await response.json();
     if (data.result) {
       return data.result;
-    }    
+    }
   } catch (error) {
-    handle_http_errors(error)
+    handle_http_errors(error);
   }
 }
 
@@ -269,153 +473,159 @@ async function getVips() {
     const data = await response.json();
     if (data.result) {
       return data.result;
-    }    
+    }
   } catch (error) {
-    handle_http_errors(error)
+    handle_http_errors(error);
   }
 }
 
 async function addPlayerVip(player) {
   try {
     const response = await execute("add_vip", player);
-    const data = await showResponse(response, "add_vip", true)
+    const data = await showResponse(response, "add_vip", true);
     if (data.result) {
       return data.result;
-    }    
+    }
   } catch (error) {
-    handle_http_errors(error)
+    handle_http_errors(error);
   }
 }
 
 async function removePlayerVip(player) {
   try {
     const response = await execute("remove_vip", player);
-    const data = await showResponse(response, "remove_vip", true)
+    const data = await showResponse(response, "remove_vip", true);
     if (data.result) {
       return data.result;
-    }    
+    }
   } catch (error) {
-    handle_http_errors(error)
+    handle_http_errors(error);
   }
 }
 
 async function resetVotemapState() {
   try {
     const response = await execute("reset_votemap_state");
-    const data = await showResponse(response, "reset_votemap_state", true)
+    const data = await showResponse(response, "reset_votemap_state", true);
     if (data.result) {
       return data.result;
     }
   } catch (error) {
-    handle_http_errors(error)
+    handle_http_errors(error);
   }
 }
 
 async function updateVotemapConfig(config) {
   try {
     const response = await execute("set_votemap_config", config);
-    const data = await showResponse(response, "set_votemap_config", true)
+    const data = await showResponse(response, "set_votemap_config", true);
     if (data.result) {
       return data.result;
-    }    
+    }
   } catch (error) {
-    handle_http_errors(error)
+    handle_http_errors(error);
   }
 }
 
 async function getVotemapStatus() {
   try {
-    const response = await get("get_votemap_status")
-    const data = await response.json()
+    const response = await get("get_votemap_status");
+    const data = await response.json();
     if (data.result) {
       return data.result;
-    }    
+    }
   } catch (error) {
-    handle_http_errors(error)
+    handle_http_errors(error);
   }
 }
 
 async function getVotemapConfig() {
   try {
-    const response = await get("get_votemap_config")
-    const data = await response.json()
+    const response = await get("get_votemap_config");
+    const data = await response.json();
     if (data.result) {
       return data.result;
-    }    
+    }
   } catch (error) {
-    handle_http_errors(error)
+    handle_http_errors(error);
   }
 }
 
 async function changeMap(mapId) {
   try {
     const response = await execute("set_map", { map_name: mapId });
-    const data = await showResponse(response, `Map changed to ${mapId}`, true)
+    const data = await showResponse(response, `Map changed to ${mapId}`, true);
     if (data.result) {
       return data.result;
-    }    
+    }
   } catch (error) {
-    handle_http_errors(error)
+    handle_http_errors(error);
   }
 }
 
 async function changeGameLayout(payload) {
   try {
     const response = await execute("set_game_layout", payload);
-    const data = await showResponse(response, "set_game_layout", true)
+    const data = await showResponse(response, "set_game_layout", true);
     if (data.result) {
       return data.result;
-    }    
+    }
   } catch (error) {
-    handle_http_errors(error)
+    handle_http_errors(error);
   }
 }
 
 async function getMapObjectives() {
   try {
-    const response = await get("get_objective_rows")
-    const data = await response.json()
+    const response = await get("get_objective_rows");
+    const data = await response.json();
     if (data.result) {
       return data.result;
-    }    
+    }
   } catch (error) {
-    handle_http_errors(error)
+    handle_http_errors(error);
   }
 }
 
 async function getVotemapWhitelist() {
   try {
-    const response = await get("get_votemap_whitelist")
-    const data = await response.json()
+    const response = await get("get_votemap_whitelist");
+    const data = await response.json();
     if (data.result) {
       return data.result;
-    }    
+    }
   } catch (error) {
-    handle_http_errors(error)
+    handle_http_errors(error);
   }
 }
 
 async function setVotemapWhitelist(payload) {
   try {
-    const response = await execute("set_votemap_whitelist", { map_names: payload });
-    const data = await showResponse(response, "set_votemap_whitelist", true)
+    const response = await execute("set_votemap_whitelist", {
+      map_names: payload,
+    });
+    const data = await showResponse(response, "set_votemap_whitelist", true);
     if (data) {
       return data?.arguments?.map_names;
-    }    
+    }
   } catch (error) {
-    handle_http_errors(error)
+    handle_http_errors(error);
   }
 }
 
 async function resetVotemapWhitelist() {
   try {
     const response = await execute("reset_map_votemap_whitelist", {});
-    const data = await showResponse(response, "reset_map_votemap_whitelist", true)
+    const data = await showResponse(
+      response,
+      "reset_map_votemap_whitelist",
+      true
+    );
     if (data.result) {
       return data.result;
-    }    
+    }
   } catch (error) {
-    handle_http_errors(error)
+    handle_http_errors(error);
   }
 }
 

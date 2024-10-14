@@ -1,22 +1,22 @@
 import { ControlledTextInput } from "@/components/form/core/ControlledTextInput";
 import { MenuItem, Select } from "@mui/material";
-import { useStoredTexts } from "@/hooks/useStoredTexts";
+import { useTemplates } from "@/hooks/useTemplates";
 import { useState } from "react";
 
 export const ReasonField = ({ control, errors, setValue, ...props }) => {
-  const { value: storedMessages } = useStoredTexts("reason");
-  const [selectedMessage, setSelectedMessage] = useState("");
+  const { value: templates } = useTemplates("reason");
+  const [selectedTemplate, setSelectedTemplate] = useState("");
   const error = errors["reason"];
   const hasError = !!error;
 
   const handleOnSelectChange = (event) => {
     const value = event.target.value ?? "";
     if (value === "") {
-      setSelectedMessage(value);
+      setSelectedTemplate(value);
     } else {
-      const message = storedMessages[value];
-      setSelectedMessage(String(value));
-      setValue("reason", message.content, { shouldTouch: true });
+      const template = templates[value];
+      setSelectedTemplate(String(value));
+      setValue("reason", template.content, { shouldTouch: true });
     }
   };
 
@@ -38,7 +38,7 @@ export const ReasonField = ({ control, errors, setValue, ...props }) => {
       />
       <Select
         id="saved-reasons-select"
-        value={selectedMessage}
+        value={selectedTemplate}
         onChange={handleOnSelectChange}
         inputProps={{ "aria-label": "Saved Reasons" }}
         fullWidth
@@ -47,10 +47,10 @@ export const ReasonField = ({ control, errors, setValue, ...props }) => {
         <MenuItem value="">
           <em>Saved Reasons</em>
         </MenuItem>
-        {storedMessages.map((message, i) => {
+        {templates.map((template, i) => {
           return (
-            <MenuItem key={message.title + i} value={String(i)}>
-              {message.title}
+            <MenuItem key={template.id} value={String(i)}>
+              {template.title}
             </MenuItem>
           );
         })}

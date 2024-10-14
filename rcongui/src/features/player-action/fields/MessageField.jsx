@@ -1,22 +1,23 @@
 import { ControlledTextInput } from "@/components/form/core/ControlledTextInput";
-import { useStoredTexts } from "@/hooks/useStoredTexts";
+import { useTemplates } from "@/hooks/useTemplates";
+import { useTabContext } from "@mui/lab";
 import { MenuItem, Select } from "@mui/material";
 import { useState } from "react";
 
 export const MessageField = ({ control, errors, setValue, ...props }) => {
-  const { value: storedMessages } = useStoredTexts("message");
-  const [selectedMessage, setSelectedMessage] = useState("");
+  const { value: templates } = useTemplates("message");
+  const [selectedTemplate, setSelectedTemplate] = useState("");
   const error = errors["message"];
   const hasError = !!error;
 
   const handleOnSelectChange = (event) => {
     const value = event.target.value ?? '';
     if (value === '') {
-      setSelectedMessage(value)
+      setSelectedTemplate(value)
     } else {
-      const message = storedMessages[value]
-      setSelectedMessage(String(value))
-      setValue('message', message.content, { shouldTouch: true })
+      const template = templates[value]
+      setSelectedTemplate(String(value))
+      setValue('message', template.content, { shouldTouch: true })
     }
   }
 
@@ -38,7 +39,7 @@ export const MessageField = ({ control, errors, setValue, ...props }) => {
       />
       <Select
         id="saved-messages-select"
-        value={selectedMessage}
+        value={selectedTemplate}
         onChange={handleOnSelectChange}
         inputProps={{ "aria-label": "Saved Messages" }}
         fullWidth
@@ -47,10 +48,10 @@ export const MessageField = ({ control, errors, setValue, ...props }) => {
         <MenuItem value="">
           <em>Saved Messages</em>
         </MenuItem>
-        {storedMessages.map((message, i) => {
+        {templates.map((template, i) => {
           return (
-            <MenuItem key={message.title + i} value={String(i)}>
-              {message.title}
+            <MenuItem key={template.id} value={String(i)}>
+              {template.title}
             </MenuItem>
           );
         })}
