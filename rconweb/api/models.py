@@ -32,7 +32,9 @@ class SteamPlayer(models.Model):
     """Associate a players in game ID (steam or windows) with their Django user"""
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    steam_id_64 = models.CharField(max_length=100, verbose_name="Player ID")
+    steam_id_64 = models.CharField(
+        max_length=100, verbose_name="Player ID", blank=True, default=""
+    )
     default_permissions = ()
 
 
