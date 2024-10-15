@@ -308,6 +308,9 @@ export function ErrorElement() {
   const error = useRouteError();
   const location = useLocation();
 
+  console.log(error)
+  console.log(isRouteErrorResponse(error))
+
   if (
     isRouteErrorResponse(error) &&
     error.status >= 400 &&
@@ -318,9 +321,9 @@ export function ErrorElement() {
     return (
       <Stack spacing={2} alignItems={"center"} justifyContent={"center"}>
         <Typography variant="h3">{error.status}</Typography>
-        <Typography variant="h4">{error.data.command}</Typography>
-        <Typography>{error.data.message}</Typography>
-        <Typography>{error.data.error}</Typography>
+        <Typography variant="h4">{error.data.text ?? error.data.message}</Typography>
+        <Typography>{error.data.command}</Typography>
+        <Typography>{error.data.name ?? error.data.error}</Typography>
         <Button variant="contained" LinkComponent={Link} to={location.pathname}>
           Try again!
         </Button>

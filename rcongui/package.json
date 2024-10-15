@@ -67,6 +67,7 @@
     "tiny-invariant": "^1.2.0"
   },
   "devDependencies": {
+    "@types/lodash": "^4.17.10",
     "@types/react-window": "^1.8.8",
     "@vitejs/plugin-react": "^4.2.1",
     "prettier": "^2.8.8",

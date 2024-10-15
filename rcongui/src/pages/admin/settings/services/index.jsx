@@ -52,7 +52,7 @@ const Services = () => {
   const services = useLoaderData();
 
   return (
-    <Stack>
+    <Stack sx={{ maxWidth: (theme) => theme.breakpoints.values.md }}>
       <Alert
         sx={{ mb: 2 }}
         severity="info"

@@ -24,6 +24,7 @@ import SaveAsIcon from "@mui/icons-material/SaveAs";
 import dayjs from "dayjs";
 import debounce from "lodash/debounce";
 import { BroadcastFields } from "@/components/shared/BroadcastFields";
+import { parseBroadcastMessages, unpackBroadcastMessage } from "@/utils/lib";
 
 const MODE = {
   READ: 0,
@@ -46,12 +47,17 @@ const initialState = {
 
 export const loader = async ({ params }) => {
   const { category } = params;
-  const messages = await cmd.GET_MESSAGE_TEMPLATES({ params });
-  messages.reverse(); // sort desc by updated_by
-  return {
-    category,
-    messages,
-  };
+  try {
+    const messages = await cmd.GET_MESSAGE_TEMPLATES({ params });
+    messages.reverse(); // sort desc by updated_by
+    return {
+      category,
+      messages,
+    };
+  } catch (error) {
+    console.log(error)
+    throw json(error, { status: error.status })
+  }
 };
 
 export const action = async ({ request }) => {
@@ -240,7 +246,7 @@ function EditorFields({ editor, category, onBroadcastChange, onInputChange }) {
         disabled={editor.mode === MODE.READ}
       />
       {category === "broadcast" ? (
-        <BroadcastFields message={editor.content} disabled={editor.mode === MODE.READ} onChange={onBroadcastChange} />
+        <BroadcastFields messages={unpackBroadcastMessage(editor.content ?? "")} disabled={editor.mode === MODE.READ} onChange={onBroadcastChange} />
       ) : (
         <StyledTextField
           name="content"
@@ -353,10 +359,10 @@ const MessagesDetailPage = () => {
     }));
   };
 
-  const handleOnChange = (value) => {
+  const handleOnBroadcastChange = (value) => {
     setEditor((prev) => ({
       ...prev,
-      content: value,
+      content: parseBroadcastMessages(value),
     }));
   };
 
@@ -447,7 +453,7 @@ const MessagesDetailPage = () => {
           editor={editor}
           category={category}
           onInputChange={handleOnInputChange}
-          onBroadcastChange={handleOnChange}
+          onBroadcastChange={handleOnBroadcastChange}
         />
       </Box>
     </Stack>

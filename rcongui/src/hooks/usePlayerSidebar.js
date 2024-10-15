@@ -24,7 +24,7 @@ export const PlayerSidebarProvider = ({ children }) => {
       if (!playerId) return;
       setOpen(true);
       setIsFetching(true);
-      const player = await cmd.GET_PLAYER({ player_id: playerId });
+      const player = await cmd.GET_PLAYER({ params: { player_id: playerId } });
       if (player) {
         setPlayer(player);
         setIsFetching(false);

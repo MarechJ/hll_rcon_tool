@@ -14,7 +14,7 @@ import MenuList from '@mui/material/MenuList';
  * @param {{ name, buttonProps: {} }[]} options
  * @returns 
  */
-export default function SplitButton({ options }) {
+export default function SplitButton({ options, disabled }) {
   const [open, setOpen] = React.useState(false);
   const anchorRef = React.useRef(null);
   const [selectedIndex, setSelectedIndex] = React.useState(0);
@@ -53,6 +53,7 @@ export default function SplitButton({ options }) {
           aria-label="select merge strategy"
           aria-haspopup="menu"
           onClick={handleToggle}
+          disabled={disabled ?? false}
         >
           <ArrowDropDownIcon />
         </Button>

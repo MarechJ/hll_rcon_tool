@@ -9,16 +9,31 @@ import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
 import Footer from "./footer";
 import { Alert, Stack } from "@mui/material";
-import { Form, useSubmit, useActionData } from "react-router-dom";
+import {
+  Form,
+  useSubmit,
+  useActionData,
+  useLoaderData,
+} from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
-import { createTheme, ThemeProvider, styled } from '@mui/material/styles';
+import { createTheme, ThemeProvider, styled } from "@mui/material/styles";
 import { redirect } from "react-router-dom";
 import { cmd } from "@/utils/fetchUtils";
-import getDashboardTheme from "@/themes/getDashboardTheme"
-import { useStorageState } from "@/hooks/useStorageState"
+import getDashboardTheme from "@/themes/getDashboardTheme";
+import { useStorageState } from "@/hooks/useStorageState";
 
 export const loader = async () => {
-  const user = await cmd.IS_AUTHENTICATED();
+  let user;
+
+  try {
+    user = await cmd.IS_AUTHENTICATED();
+  } catch (error) {
+    return {
+      error: error,
+      message: error?.text,
+    };
+  }
+
   if (user.authenticated) {
     return redirect("/");
   }
@@ -31,10 +46,12 @@ export const action = async ({ request }) => {
   let isAuth = false;
 
   try {
-    const { result } = await cmd.AUTHENTICATE({ payload: {
-      username: username,
-      password: password,
-    } })
+    const { result } = await cmd.AUTHENTICATE({
+      payload: {
+        username: username,
+        password: password,
+      },
+    });
     isAuth = result;
   } catch (error) {
     if (error.status === 401) {
@@ -96,7 +113,7 @@ const MainWrapper = styled(Stack)(({ theme }) => ({
 
 export default function Login() {
   const [loading, setLoading] = React.useState(false);
-  const [mode] = useStorageState('mode', 'dark')
+  const [mode] = useStorageState("mode", "dark");
 
   const {
     handleSubmit,
@@ -110,6 +127,7 @@ export default function Login() {
   });
 
   const authError = useActionData();
+  const data = useLoaderData();
 
   const submit = useSubmit();
 
@@ -146,11 +164,15 @@ export default function Login() {
               <Typography component="h1" variant="h5">
                 Sign in
               </Typography>
-              {authError && !loading && (
+              {data.error ? (
+                <Box sx={{ py: 2, width: "100%" }}>
+                  <Alert severity="error">{data.message}</Alert>
+                </Box>
+              ) : authError && !loading ? (
                 <Box sx={{ py: 2, width: "100%" }}>
                   <Alert severity="error">{authError.message}</Alert>
                 </Box>
-              )}
+              ) : null}
               <Form method="POST" onSubmit={handleSubmit(onSubmit)}>
                 <Controller
                   control={control}

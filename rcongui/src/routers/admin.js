@@ -59,7 +59,7 @@ import { action as welcomeMessageAction } from "../pages/admin/settings/welcome-
 
 import BroadcastMessageSettings from "../pages/admin/settings/broadcast-message"
 import { loader as broadcastMessageLoader } from "../pages/admin/settings/broadcast-message"
-import { action as broadcastMessageAction } from "../pages/admin/settings/profanity-filter"
+import { action as broadcastMessageAction } from "../pages/admin/settings/broadcast-message"
 
 import ProfanityFilterSettings from "../pages/admin/settings/profanity-filter"
 import { loader as profanityFilterLoader } from "../pages/admin/settings/profanity-filter"
