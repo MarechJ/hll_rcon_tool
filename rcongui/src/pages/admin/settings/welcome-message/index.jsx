@@ -1,12 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  Await,
-  defer,
-  Link,
-  useLoaderData,
-  useNavigate,
-  useSubmit,
-} from "react-router-dom";
+import { Await, defer, Link, useLoaderData, useSubmit } from "react-router-dom";
 import { cmd } from "@/utils/fetchUtils";
 import { ErrorSection } from "@/components/shared/ErrorSection";
 import {
@@ -16,10 +9,8 @@ import {
   Paper,
   Skeleton,
   Stack,
-  styled,
   TextField,
 } from "@mui/material";
-import { amber, brown } from "@mui/material/colors";
 import "@fontsource/montserrat";
 import SplitButton from "@/components/shared/SplitButton";
 import AddCommentIcon from "@mui/icons-material/AddComment";
@@ -35,7 +26,7 @@ export const loader = async () => {
   const templates = cmd.GET_MESSAGE_TEMPLATES({
     params: { category: TEMPLATE_CATEGORY.WELCOME },
   });
-  return defer({ message, templates });
+  return defer({ message: message ?? "", templates });
 };
 
 export const action = async ({ request }) => {
@@ -46,26 +37,15 @@ export const action = async ({ request }) => {
 
 const TemplateSkeleton = () => <Skeleton height={80} />;
 
-const StyledTextField = styled(TextField)(() => ({
-  "& .MuiOutlinedInput-root, & .MuiOutlinedInput-notchedOutline": {
-    borderRadius: 0,
-    borderStyle: "double",
-    borderWidth: 4,
-    borderColor: brown["800"],
-    fontFamily: "Montserrat, Arial, sans-serif",
-    fontWeight: 600,
-    color: "black",
-  },
-}));
-
 const WelcomeMessagePage = () => {
   const data = useLoaderData();
   const submit = useSubmit();
-  const navigate = useNavigate();
-  const [message, setMessage] = useState(data.message ?? "");
+  const [message, setMessage] = useState(data.message);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setMessage(data.message);
+    setLoading(false);
   }, [data.message]);
 
   const handleOnChange = (event) => {
@@ -73,11 +53,11 @@ const WelcomeMessagePage = () => {
   };
 
   const handleApplyClick = (intent) => (e) => {
-    const payload = { forward: false };
-    if (intent === INTENT.APPLY_ALL) {
-      payload.forward = true;
-    }
-    payload.message = message;
+    const payload = {
+      forward: intent === INTENT.APPLY_ALL,
+      // if only space chars, send null
+      message: !message.trim() ? null : message,
+    };
     submit(payload, { method: "post", encType: "application/json" });
   };
 
@@ -89,6 +69,8 @@ const WelcomeMessagePage = () => {
     () => message !== data.message,
     [message, data.message]
   );
+
+  const applyDisabled = loading || !hasChanges;
 
   return (
     <Box sx={{ maxWidth: (theme) => theme.breakpoints.values.md }}>
@@ -109,26 +91,27 @@ const WelcomeMessagePage = () => {
           Create Template
         </Button>
         <SplitButton
+          disabled={applyDisabled}
           options={[
             {
-              name: "Apply",
+              name: loading ? "Loading" : "Apply",
               buttonProps: {
-                disabled: !hasChanges,
+                disabled: applyDisabled,
                 onClick: handleApplyClick(INTENT.APPLY_SINGLE),
               },
             },
             {
-              name: "Apply all servers",
+              name: loading ? "Loading" : "Apply all servers",
               buttonProps: {
-                disabled: !hasChanges,
+                disabled: applyDisabled,
                 onClick: handleApplyClick(INTENT.APPLY_ALL),
               },
             },
           ]}
         />
       </Stack>
-      <Box sx={{ background: amber["100"], mb: 2 }}>
-        <StyledTextField
+      <Box sx={{ mb: 2 }}>
+        <TextField
           name="message"
           value={message ?? ""}
           onChange={handleOnChange}

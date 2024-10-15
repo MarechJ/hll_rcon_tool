@@ -1,11 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  Await,
-  defer,
-  Link,
-  useLoaderData,
-  useSubmit,
-} from "react-router-dom";
+import { Await, defer, Link, useLoaderData, useSubmit } from "react-router-dom";
 import { cmd } from "@/utils/fetchUtils";
 import { ErrorSection } from "@/components/shared/ErrorSection";
 import {
@@ -15,133 +9,138 @@ import {
   Paper,
   Skeleton,
   Stack,
-  styled,
   TextField,
 } from "@mui/material";
-import { amber, brown } from "@mui/material/colors";
 import "@fontsource/montserrat";
-import SplitButton from "@/components/shared/SplitButton";
 import AddCommentIcon from "@mui/icons-material/AddComment";
-import { TEMPLATE_CATEGORY } from "@/utils/lib";
+import { TEMPLATE_CATEGORY, unpackBroadcastMessage } from "@/utils/lib";
 import { BroadcastFields } from "@/components/shared/BroadcastFields";
-
-const INTENT = {
-  APPLY_SINGLE: 0,
-  APPLY_ALL: 1,
-};
+import Padlock from "@/components/shared/Padlock";
+import isMatch from "lodash/isMatch";
+import isEqual from "lodash/eq";
 
 export const loader = async () => {
-  const message = await cmd.GET_BROADCAST_MESSAGE();
   const config = await cmd.GET_BROADCAST_CONFIG();
   const templates = cmd.GET_MESSAGE_TEMPLATES({
     params: { category: TEMPLATE_CATEGORY.BROADCAST },
   });
-  return defer({ message, config, templates });
+  return defer({ config, templates });
 };
 
 export const action = async ({ request }) => {
   const payload = await request.json();
-  console.log(payload);
-  return null;
-  //   const result = await cmd.SET_BROADCAST_CONFIG({ payload });
-  //   return result;
+  const result = await cmd.SET_BROADCAST_CONFIG({ payload });
+  return result;
 };
 
 const TemplateSkeleton = () => <Skeleton height={80} />;
 
-const StyledTextField = styled(TextField)(() => ({
-  "& .MuiOutlinedInput-root, & .MuiOutlinedInput-notchedOutline": {
-    borderRadius: 0,
-    borderStyle: "double",
-    borderWidth: 4,
-    borderColor: brown["800"],
-    fontFamily: "Montserrat, Arial, sans-serif",
-    fontWeight: 600,
-    color: "black",
-  },
-}));
-
-const WelcomeMessagePage = () => {
+const BroadcastMessagePage = () => {
   const data = useLoaderData();
   const submit = useSubmit();
-  const [message, setMessage] = useState(data.message ?? "");
   const [config, setConfig] = useState(data.config);
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    setMessage(data.message);
-    setConfig(data.config)
-  }, [data.message, data.config]);
+    setLoading(false);
+    setConfig(data.config);
+  }, [data.config]);
 
-  const handleOnChange = (event) => {
-    setMessage(event.target.value);
-  };
-
-  const handleApplyClick = (intent) => (e) => {
-    const payload = { forward: false };
-    if (intent === INTENT.APPLY_ALL) {
-      payload.forward = true;
-    }
-    payload.message = message;
+  const handleApplyClick = (e) => {
+    setLoading(true);
+    const payload = {
+      messages: config.messages,
+      randomize: config.randomize,
+      enabled: config.enabled,
+    };
     submit(payload, { method: "post", encType: "application/json" });
   };
 
   const handleTemplateChange = (e, message) => {
-    setMessage(message.content);
+    setConfig((prev) => ({
+      ...prev,
+      messages: message ? unpackBroadcastMessage(message.content) : data.config.messages,
+    }));
+  };
+
+  const handleMessagesChange = (messages) => {
+    setConfig((prev) => ({
+      ...prev,
+      messages,
+    }));
   };
 
   const hasChanges = useMemo(
-    () => message !== data.message,
-    [message, data.message]
+    () =>
+      // the config is not the same
+      !isMatch(config, data.config) ||
+      // OR the messages have diff length
+      config.messages.length !== data.config.messages.length ||
+      // OR some messages are not the same
+      config.messages.some(
+        (message, index) => !isEqual(message, data.config.messages[index])
+      ),
+    [config, data.config]
   );
+
+  const validMessages = useMemo(
+    () =>
+      config.messages.every(
+        (message) =>
+          // it has both fields, time_sec not negative and message is not only empty chars
+          message.time_sec && message.time_sec > 0 && message.message.trim()
+      ),
+    [config.messages]
+  );
+
+  const applyDisabled = loading || !hasChanges || !validMessages;
 
   return (
     <Box sx={{ maxWidth: (theme) => theme.breakpoints.values.md }}>
       <Stack
         component={Paper}
-        direction={"row"}
         sx={{ p: 1, mb: 1 }}
-        justifyContent={"end"}
-        alignItems={"center"}
+        direction={"row"}
+        justifyContent={"space-between"}
         gap={1}
       >
-        <Button
-          component={Link}
-          startIcon={<AddCommentIcon />}
-          variant="contained"
-          to={"/settings/templates/" + TEMPLATE_CATEGORY.BROADCAST.toLowerCase()}
-        >
-          Create Template
-        </Button>
-        <SplitButton
-          options={[
-            {
-              name: "Apply",
-              buttonProps: {
-                disabled: !hasChanges,
-                onClick: handleApplyClick(INTENT.APPLY_SINGLE),
-              },
-            },
-            {
-              name: "Apply all servers",
-              buttonProps: {
-                disabled: !hasChanges,
-                onClick: handleApplyClick(INTENT.APPLY_ALL),
-              },
-            },
-          ]}
-        />
+        <Stack direction={"row"} alignItems={"center"} gap={1}>
+          <Padlock
+            label={config.enabled ? "Enabled" : "Disabled"}
+            checked={config.enabled}
+            handleChange={(checked) =>
+              setConfig((prev) => ({ ...prev, enabled: checked }))
+            }
+          />
+          <Padlock
+            label={config.randomize ? "Random ON" : "Random OFF"}
+            checked={config.randomize}
+            handleChange={(checked) =>
+              setConfig((prev) => ({ ...prev, randomize: checked }))
+            }
+          />
+        </Stack>
+        <Stack direction={"row"} alignItems={"center"} gap={1}>
+          <Button
+            component={Link}
+            startIcon={<AddCommentIcon />}
+            variant="contained"
+            to={
+              "/settings/templates/" + TEMPLATE_CATEGORY.BROADCAST.toLowerCase()
+            }
+          >
+            Create Template
+          </Button>
+          <Button variant={"contained"} disabled={applyDisabled} onClick={handleApplyClick}>
+            {loading ? "Loading..." : "Apply"} 
+          </Button>
+        </Stack>
       </Stack>
-      <Box sx={{ background: amber["100"], mb: 2 }}>
-        <StyledTextField
-          name="message"
-          value={data.message ?? ""}
-          placeholder="Broadcast content"
-          fullWidth
-          slotProps={{ input: { readOnly: true } }}
-          required
-        />
-      </Box>
-      <BroadcastFields message={message ?? ""} onChange={(value) => setMessage(value)} sx={{ mb: 2 }} />
+      <BroadcastFields
+        messages={config.messages}
+        onChange={handleMessagesChange}
+        sx={{ mb: 2 }}
+      />
       <React.Suspense fallback={<TemplateSkeleton />}>
         <Await
           resolve={data.templates}
@@ -184,4 +183,4 @@ const WelcomeMessagePage = () => {
   );
 };
 
-export default WelcomeMessagePage;
+export default BroadcastMessagePage;

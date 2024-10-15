@@ -25,6 +25,9 @@ function GET_Factory(cmd) {
     try {
       data = await response.json();
     } catch (error) {
+      if (response.status === 502) {
+        throw new ConnectionError("There was an issue connecting to your CRCON server.")
+      }
       throw new NotJSONResponseError("The server did not return JSON.");
     }
 
@@ -75,6 +78,9 @@ function POST_Factory(cmd) {
     try {
       data = await response.json();
     } catch (error) {
+      if (response.status === 502) {
+        throw new ConnectionError("There was an issue connecting to your CRCON server.")
+      }
       throw new NotJSONResponseError("The server did not return JSON.");
     }
 
@@ -190,6 +196,7 @@ class AuthError extends Error {
     super(message ?? "You are not authenticated.");
     this.name = "AuthError";
     this.status = 401;
+    this.text = message;
   }
 }
 
@@ -199,6 +206,7 @@ class PermissionError extends Error {
     this.command = command;
     this.name = "PermissionError";
     this.status = 403;
+    this.text = message;
   }
 }
 
@@ -207,6 +215,7 @@ class CommandFailedError extends Error {
     super(message);
     this.command = command;
     this.name = "CommandFailedError";
+    this.text = message;
     this.status = 404;
   }
 }
@@ -216,6 +225,7 @@ class ConnectionError extends Error {
     super(message);
     this.name = "ConnectionError";
     this.status = 504;
+    this.text = message;
   }
 }
 
@@ -224,6 +234,7 @@ class CRCONServerDownError extends Error {
     super(message);
     this.name = "CRCONServerDownError";
     this.status = 504;
+    this.text = message;
   }
 }
 
@@ -232,6 +243,7 @@ class NotJSONResponseError extends Error {
     super(message);
     this.name = "NotJSONResponseError";
     this.status = 500;
+    this.text = message;
   }
 }
 
@@ -241,6 +253,7 @@ class UnknownError extends Error {
     this.command = command;
     this.name = "UnknownError";
     this.status = 400;
+    this.text = message;
   }
 }
 
@@ -294,7 +307,6 @@ async function handle_http_errors(error) {
       }
     );
   } else {
-    console.log(error.name, error.message);
     toast.error("Unable to connect to API " + error);
   }
 }
