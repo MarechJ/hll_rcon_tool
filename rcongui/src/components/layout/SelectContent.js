@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense } from 'react';
 import MuiAvatar from '@mui/material/Avatar';
 import MuiListItemAvatar from '@mui/material/ListItemAvatar';
 import MenuItem from '@mui/material/MenuItem';
@@ -8,7 +8,8 @@ import Select, { selectClasses } from '@mui/material/Select';
 import { styled } from '@mui/material/styles';
 import DevicesRoundedIcon from '@mui/icons-material/DevicesRounded';
 import { Await, useLoaderData } from 'react-router-dom';
-import { Skeleton } from '@mui/material';
+import { Box, Skeleton } from '@mui/material';
+import { ErrorSection } from '../shared/ErrorSection';
 
 const Avatar = styled(MuiAvatar)(({ theme }) => ({
   width: 28,
@@ -29,18 +30,9 @@ const SelectSkeleton = styled(Skeleton)(({ theme }) => ({
 }))
 
 export default function SelectContent() {
-  const { thisServer, otherServers } = useLoaderData();
-  const [selectedServer, setSelectedServer] = useState(0);
-  const [servers, setServers] = useState([]);
+  const data = useLoaderData();
 
-  useEffect(() => {
-    if (thisServer && otherServers) {
-      setServers([thisServer, ...otherServers])
-      setSelectedServer(thisServer.server_number)
-    }
-  }, [thisServer, otherServers])
-
-  const handleChange = (event) => {
+  const handleChange = (servers) => (event) => {
     const serverNumber = Number(event.target.value)
     const selectedServer = servers.find(server => server.server_number === serverNumber)
     if (!selectedServer) {
@@ -57,57 +49,62 @@ export default function SelectContent() {
     }
     window.location.replace(link)
   };
-  
+
   return (
-    <Suspense fallback={<SelectSkeleton />}>
-      <Await resolve={[thisServer, otherServers]}>
-        <Select
-          labelId="server-select"
-          id="server-simple-select"
-          value={selectedServer}
-          onChange={handleChange}
-          displayEmpty
-          inputProps={{ 'aria-label': 'Select server' }}
-          fullWidth
-          MenuProps={{
-            PaperProps: {
-              sx: {
-                '& .MuiMenuItem-root:not(:last-child)': {
-                  mb: 1,
+    <Suspense fallback={<Box sx={{ width: 215, height: 56, p: "8px" }}>"Loading..."</Box>}>
+      <Await errorElement={<ErrorSection />} resolve={Promise.all([data.thisServer, data.otherServers])}>
+        {([thisServer, otherServers]) => {
+          const servers = [thisServer, ...otherServers];
+          return (
+            <Select
+              labelId="server-select"
+              id="server-simple-select"
+              defaultValue={thisServer.server_number}
+              onChange={handleChange(servers)}
+              displayEmpty
+              inputProps={{ 'aria-label': 'Select server' }}
+              fullWidth
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    '& .MuiMenuItem-root:not(:last-child)': {
+                      mb: 1,
+                    },
+                  },
                 },
-              },
-            },
-          }}
-          sx={{
-            maxHeight: 56,
-            width: 215,
-            '&.MuiList-root': {
-              p: '8px',
-            },
-            [`& .${selectClasses.select}`]: {
-              display: 'flex',
-              alignItems: 'center',
-              gap: '2px',
-              pl: 1,
-            },
-          }}
-        >
-          <ListSubheader sx={{ pt: 0 }}>Servers</ListSubheader>
-          {servers?.map((server) => (
-            <MenuItem key={server.server_number} value={server.server_number}>
-              <ListItemAvatar>
-                <Avatar alt={server.name ?? "<server_name>"}>
-                  <DevicesRoundedIcon sx={{ fontSize: '1rem' }} />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText sx={{
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }} primary={server.name ?? "<server_name>"} secondary={`Server - ${server.server_number}` ?? "<server_number>"} />
-            </MenuItem>
-          ))}
-        </Select>
+              }}
+              sx={{
+                maxHeight: 56,
+                width: 215,
+                '&.MuiList-root': {
+                  p: '8px',
+                },
+                [`& .${selectClasses.select}`]: {
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '2px',
+                  pl: 1,
+                },
+              }}
+            >
+              <ListSubheader sx={{ pt: 0 }}>Servers</ListSubheader>
+              {servers?.map((server) => (
+                <MenuItem key={server.server_number} value={server.server_number}>
+                  <ListItemAvatar>
+                    <Avatar alt={server.name ?? "<server_name>"}>
+                      <DevicesRoundedIcon sx={{ fontSize: '1rem' }} />
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText sx={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }} primary={server.name ?? "<server_name>"} secondary={`Server - ${server.server_number}` ?? "<server_number>"} />
+                </MenuItem>
+              ))}
+            </Select>
+          )
+        }}
       </Await>
     </Suspense>
   );

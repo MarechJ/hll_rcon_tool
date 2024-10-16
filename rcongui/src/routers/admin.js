@@ -73,10 +73,16 @@ import VipSettings from "../pages/admin/settings/vip"
 import { loader as vipSettingsLoader } from "../pages/admin/settings/vip"
 import { action as vipSettingsAction } from "../pages/admin/settings/vip"
 
+import { AuthProvider } from "@/hooks/useAuth";
+
 const router = createBrowserRouter([
     {
         path: '/',
-        element: <Root />,
+        element: (
+            <AuthProvider>
+                <Root />
+            </AuthProvider>
+        ),
         errorElement: <ErrorPage />,
         action: rootAction,
         loader: rootLoader,
@@ -281,6 +287,6 @@ const router = createBrowserRouter([
         action: loginAction,
         loader: loginLoader,
     },
-]);
+]); 
 
 export default router;

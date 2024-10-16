@@ -3,138 +3,122 @@ import { json } from "react-router-dom";
 import { toast } from "react-toastify";
 
 const CRCON_API = `${process.env.REACT_APP_API_URL}`;
-const withCRCON = (path) => `${CRCON_API}${path}`;
+const usingCRCON = (path) => `${CRCON_API}${path}`;
 
-function GET_Factory(cmd) {
-  return async ({ params } = {}) => {
-    let location = cmd;
-    let data;
+async function requestFactory({
+  method = "GET",
+  cmd,
+  params = {},
+  payload = {},
+  throwRouteError = true,
+  headers = { "Content-Type": "application/json" },
+} = {}) {
+  let url = cmd;
 
-    if (params) {
-      location += "?" + new URLSearchParams(params).toString();
-    }
-    const response = await fetch(withCRCON(location), {
-      method: "GET", // *GET, POST, PUT, DELETE, etc.
-      mode: "cors", // no-cors, *cors, same-origin
-      cache: "default", // *default, no-cache, reload, force-cache, only-if-cached
-      credentials: "include", // include, *same-origin, omit
-      redirect: "follow", // manual, *follow, error
-      referrerPolicy: "origin", // no-referrer, *client
+  if (params && method === "GET") {
+    url += "?" + new URLSearchParams(params).toString();
+  }
+
+  try {
+    const response = await fetch(usingCRCON(url), {
+      method,
+      mode: "cors",
+      cache: "default",
+      credentials: "include",
+      headers,
+      redirect: "follow",
+      referrerPolicy: "origin",
+      body: method !== "GET" ? JSON.stringify(payload) : null,
     });
 
-    try {
-      data = await response.json();
-    } catch (error) {
-      if (response.status === 502) {
-        throw new ConnectionError("There was an issue connecting to your CRCON server.")
-      }
-      throw new NotJSONResponseError("The server did not return JSON.");
+    return await handleFetchResponse(response, method);
+  } catch (error) {
+    if (throwRouteError) {
+      throw json(error, { status: error.status, statusText: error.message || error.text });
     }
-
-    if (!response.ok) {
-      switch (response.status) {
-        case 401:
-          throw new AuthError("You are not authenticated.", cmd);
-        case 403:
-          throw new PermissionError("You are not authorized.", cmd);
-        case 504:
-          throw new CRCONServerDownError(
-            "There was a problem connection to your CRCON server."
-          );
-        default:
-          throw new UnknownError(data.error, data.command);
-      }
-    }
-
-    if (data.failed) {
-      throw new CommandFailedError(data.error, data.command);
-    }
-
-    return data.result;
-  };
+    throw error;
+  }
 }
 
-function POST_Factory(cmd) {
-  return async ({ params, payload = {} } = {}) => {
-    let location = cmd;
-    let data;
-
-    if (params) {
-      location += "?" + new URLSearchParams(params).toString();
-    }
-    const response = await fetch(withCRCON(location), {
-      method: "POST", // *GET, POST, PUT, DELETE, etc.
-      mode: "cors", // no-cors, *cors, same-origin
-      cache: "default", // *default, no-cache, reload, force-cache, only-if-cached
-      credentials: "include", // include, *same-origin, omit
-      headers: {
-        "Content-Type": "application/json",
-      },
-      redirect: "follow", // manual, *follow, error
-      referrerPolicy: "origin", // no-referrer, *client
-      body: JSON.stringify(payload), // body data type must match "Content-Type" header
-    });
-
-    try {
-      data = await response.json();
-    } catch (error) {
-      if (response.status === 502) {
-        throw new ConnectionError("There was an issue connecting to your CRCON server.")
-      }
-      throw new NotJSONResponseError("The server did not return JSON.");
-    }
-
-    if (!response.ok) {
-      switch (response.status) {
-        case 401:
-          throw new AuthError("You are not authenticated.", cmd);
-        case 403:
-          throw new PermissionError("You are not authorized.", cmd);
-        case 504:
-          throw new CRCONServerDownError(
-            "There was a problem connection to your CRCON server."
-          );
-        default:
-          throw new UnknownError(data.error, data.command);
-      }
-    }
-
-    if (data.failed) {
-      throw new CommandFailedError(data.error, data.command);
-    }
-
+async function handleFetchResponse(response, method) {
+  handleServerErrors(response);
+  const data = await parseJsonResponse(response);
+  handleClientErrors(response, data);
+  if (method === "GET") {
+    return data.result
+  } else if (method === "POST") {
     return { result: data.result, arguments: data.arguments };
-  };
+  }
+  return data;
+}
+
+function handleServerErrors(response) {
+  if (!response.ok && response.status >= 500) {
+    switch (response.status) {
+      case 504:
+        throw new CRCONServerDownError("There was a problem connecting to your CRCON server.");
+      default:
+        throw new UnknownError(response.statusText, response.status);
+    }
+  }
+}
+
+function handleClientErrors(response, data) {
+  if (!response.ok) {
+    switch (response.status) {
+      case 401:
+        throw new AuthError("You are not authenticated.", data.command);
+      case 403:
+        throw new PermissionError("You are not authorized.", data.command);
+      default:
+        throw new UnknownError(data.error, data.command);
+    }
+  }
+  if (data.failed) {
+    throw new CommandFailedError(data.error, data.command);
+  }
+}
+
+async function parseJsonResponse(response) {
+  try {
+    return await response.json();
+  } catch {
+    throw new NotJSONResponseError("The server did not return valid JSON.");
+  }
 }
 
 export const cmd = {
-  ADD_MESSAGE_TEMPLATE: POST_Factory("add_message_template"),
-  EDIT_MESSAGE_TEMPLATE: POST_Factory("edit_message_template"),
-  GET_MESSAGE_TEMPLATE: GET_Factory("get_message_templates"),
-  DELETE_MESSAGE_TEMPLATE: POST_Factory("delete_message_template"),
-  GET_ALL_MESSAGE_TEMPLATES: GET_Factory("get_all_message_templates"),
-  GET_MESSAGE_TEMPLATES: GET_Factory("get_message_templates"),
-  GET_SERVICES: GET_Factory("get_services"),
-  TOGGLE_SERVICE: POST_Factory("do_service"),
-  GET_AUTOSETTINGS: GET_Factory("get_auto_settings"),
-  SET_AUTOSETTINGS: POST_Factory("set_auto_settings"),
-  GET_PROFANITIES: GET_Factory("get_profanities"),
-  SET_PROFANITIES: POST_Factory("set_profanities"),
-  GET_CONSOLE_ADMINS: GET_Factory("get_admin_ids"),
-  ADD_CONSOLE_ADMIN: POST_Factory("add_admin"),
-  DELETE_CONSOLE_ADMIN: POST_Factory("remove_admin"),
-  GET_CONSOLE_ADMIN_GROUPS: GET_Factory("get_admin_groups"),
-  GET_PLAYER: GET_Factory("get_player_profile"),
-  GET_VIPS: GET_Factory("get_vip_ids"),
-  ADD_VIP: POST_Factory("add_vip"),
-  DELETE_VIP: POST_Factory("remove_vip"),
-  AUTHENTICATE: POST_Factory("login"),
-  IS_AUTHENTICATED: GET_Factory("is_logged_in"),
-  GET_WELCOME_MESSAGE: GET_Factory("get_welcome_message"),
-  SET_WELCOME_MESSAGE: POST_Factory("set_welcome_message"),
-  GET_BROADCAST_MESSAGE: GET_Factory("get_broadcast_message"),
-  GET_BROADCAST_CONFIG: GET_Factory("get_auto_broadcasts_config"),
-  SET_BROADCAST_CONFIG: POST_Factory("set_auto_broadcasts_config"),
+  ADD_MESSAGE_TEMPLATE: (params) => requestFactory({ method: "POST", cmd: "add_message_template", ...params }),
+  EDIT_MESSAGE_TEMPLATE: (params) => requestFactory({ method: "POST", cmd: "edit_message_template", ...params }),
+  GET_MESSAGE_TEMPLATE: (params) => requestFactory({ method: "GET", cmd: "get_message_templates", ...params }),
+  DELETE_MESSAGE_TEMPLATE: (params) => requestFactory({ method: "POST", cmd: "delete_message_template", ...params }),
+  GET_ALL_MESSAGE_TEMPLATES: (params) => requestFactory({ method: "GET", cmd: "get_all_message_templates", ...params }),
+  GET_MESSAGE_TEMPLATES: (params) => requestFactory({ method: "GET", cmd: "get_message_templates", ...params }),
+  GET_SERVICES: (params) => requestFactory({ method: "GET", cmd: "get_services", ...params }),
+  TOGGLE_SERVICE: (params) => requestFactory({ method: "POST", cmd: "do_service", ...params }),
+  GET_AUTOSETTINGS: (params) => requestFactory({ method: "GET", cmd: "get_auto_settings", ...params }),
+  SET_AUTOSETTINGS: (params) => requestFactory({ method: "POST", cmd: "set_auto_settings", ...params }),
+  GET_PROFANITIES: (params) => requestFactory({ method: "GET", cmd: "get_profanities", ...params }),
+  SET_PROFANITIES: (params) => requestFactory({ method: "POST", cmd: "set_profanities", ...params }),
+  GET_CONSOLE_ADMINS: (params) => requestFactory({ method: "GET", cmd: "get_admin_ids", ...params }),
+  ADD_CONSOLE_ADMIN: (params) => requestFactory({ method: "POST", cmd: "add_admin", ...params }),
+  DELETE_CONSOLE_ADMIN: (params) => requestFactory({ method: "POST", cmd: "remove_admin", ...params }),
+  GET_CONSOLE_ADMIN_GROUPS: (params) => requestFactory({ method: "GET", cmd: "get_admin_groups", ...params }),
+  GET_PLAYER: (params) => requestFactory({ method: "GET", cmd: "get_player_profile", ...params }),
+  GET_VIPS: (params) => requestFactory({ method: "GET", cmd: "get_vip_ids", ...params }),
+  ADD_VIP: (params) => requestFactory({ method: "POST", cmd: "add_vip", ...params }),
+  DELETE_VIP: (params) => requestFactory({ method: "POST", cmd: "remove_vip", ...params }),
+  AUTHENTICATE: (params) => requestFactory({ method: "POST", cmd: "login", ...params }),
+  IS_AUTHENTICATED: (params) => requestFactory({ method: "GET", cmd: "is_logged_in", ...params }),
+  LOGOUT: (params) => requestFactory({ method: "GET", cmd: "logout", ...params }),
+  GET_WELCOME_MESSAGE: (params) => requestFactory({ method: "GET", cmd: "get_welcome_message", ...params }),
+  SET_WELCOME_MESSAGE: (params) => requestFactory({ method: "POST", cmd: "set_welcome_message", ...params }),
+  GET_BROADCAST_MESSAGE: (params) => requestFactory({ method: "GET", cmd: "get_broadcast_message", ...params }),
+  GET_BROADCAST_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_auto_broadcasts_config", ...params }),
+  SET_BROADCAST_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_auto_broadcasts_config", ...params }),
+  GET_PERMISSIONS: (params) => requestFactory({ method: "GET", cmd: "get_own_user_permissions", ...params }),
+  GET_GAME_SERVER_CONNECTION: (params) => requestFactory({ method: "GET", cmd: "get_connection_info", ...params }),
+  GET_GAME_SERVER_LIST: (params) => requestFactory({ method: "GET", cmd: "get_server_list", ...params }),
 };
 
 export function execute(command, data) {
@@ -248,11 +232,11 @@ class NotJSONResponseError extends Error {
 }
 
 class UnknownError extends Error {
-  constructor(message, command) {
+  constructor(message, command, status) {
     super(message);
     this.command = command;
     this.name = "UnknownError";
-    this.status = 400;
+    this.status = status ?? 400;
     this.text = message;
   }
 }

@@ -30,9 +30,9 @@ export function ErrorSection({ title }) {
         </IconButton>
       }
     >
-      <AlertTitle>{title} could not be displayed</AlertTitle>
+      <AlertTitle>{title ?? "Section"} could not be displayed</AlertTitle>
       <Typography>
-        {error?.name} - {error?.message}
+        {error?.name} - {error?.message ?? error.statusText}
       </Typography>
     </Alert>
   );
