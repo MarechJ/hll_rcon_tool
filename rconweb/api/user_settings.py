@@ -1,6 +1,5 @@
 from logging import getLogger
 
-from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
@@ -41,7 +40,7 @@ from rcon.user_config.webhooks import (
 )
 
 from .auth import api_response, login_required
-from .decorators import require_http_methods
+from .decorators import require_http_methods, permission_required
 
 logger = getLogger(__name__)
 

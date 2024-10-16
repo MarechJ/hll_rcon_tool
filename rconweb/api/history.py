@@ -2,13 +2,12 @@ from .auth import api_csv_response
 from rcon.api_commands import get_rcon_api
 
 from dateutil import parser
-from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
 from .decorators import require_http_methods
 
 
 from .auth import api_csv_response, login_required
-from .decorators import require_content_type
+from .decorators import require_content_type, permission_required
 from .utils import _get_data
 
 

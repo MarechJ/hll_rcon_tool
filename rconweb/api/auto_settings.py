@@ -1,14 +1,13 @@
 import json
 import os
 
-from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon.user_config.auto_settings import AutoSettingsConfig
 
 from .audit_log import record_audit
 from .auth import api_response, login_required
-from .decorators import require_content_type, require_http_methods
+from .decorators import require_content_type, require_http_methods, permission_required
 from .multi_servers import forward_request
 from .services import get_supervisor_client
 from .utils import _get_data
