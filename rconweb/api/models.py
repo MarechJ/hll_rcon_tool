@@ -438,4 +438,6 @@ class RconUser(User):
             ("can_change_blacklists", "Can change blacklists"),
             ("can_delete_blacklists", "Can delete blacklists"),
             ("can_change_game_layout", "Can change game layout"),
+            ("can_view_seed_vip_config", "Can view the Seed VIP config"),
+            ("can_change_seed_vip_config", "Can change the Seed VIP config"),
         )

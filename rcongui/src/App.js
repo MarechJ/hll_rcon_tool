@@ -54,6 +54,7 @@ import {
   GTXNameChange,
   ChatCommands,
   LogStream,
+  SeedVIP,
 } from "./components/UserSettings/miscellaneous";
 import BlacklistRecords from "./components/Blacklist/BlacklistRecords";
 import BlacklistLists from "./components/Blacklist/BlacklistLists";
@@ -432,7 +433,9 @@ function App() {
                 <LiveSessionScore classes={classes} />
               </Route>
               <Route
-                path={process.env.REACT_APP_PUBLIC_BUILD ? "/" : "/livegamescore"}
+                path={
+                  process.env.REACT_APP_PUBLIC_BUILD ? "/" : "/livegamescore"
+                }
                 default={process.env.REACT_APP_PUBLIC_BUILD}
                 exact
               >
@@ -717,6 +720,17 @@ function App() {
                           setEndpoint="set_log_stream_config"
                           validateEndpoint="validate_log_stream_config"
                           describeEndpoint="describe_log_stream_config"
+                        />
+                      </Grid>
+                    </Route>
+                    <Route path="/settings/seed-vip">
+                      <Grid container spacing={2}>
+                        <SeedVIP
+                          description="Seed VIP"
+                          getEndpoint="get_seed_vip_config"
+                          setEndpoint="set_seed_vip_config"
+                          validateEndpoint="validate_seed_vip_config"
+                          describeEndpoint="describe_seed_vip_config"
                         />
                       </Grid>
                     </Route>
