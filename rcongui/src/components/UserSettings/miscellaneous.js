@@ -461,6 +461,19 @@ export const TeamKillBanOnConnect = ({
         "message": "Your first action on the server was a TEAM KILL you were banned as a result",
         "author_name": "HATERS GONNA HATE",
         
+        /* The ID of the blacklist to add these bans to */
+        "blacklist_id": 0,
+
+        /* The cumulative amount of time to ban the player for, set all to 0 for a permanent ban */
+        "ban_duration": {
+        "minutes": 0,
+        "hours": 0,
+        "days": 0,
+        "weeks": 0,
+        "years": 0
+      },
+
+
         /*
             Exlude TK with certain weapons from triggering the ban, weapon names can be found at: https://gist.github.com/timraay/5634d85eab552b5dfafb9fd61273dc52#available-weapons
         */
