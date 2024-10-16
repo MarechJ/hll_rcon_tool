@@ -47,17 +47,12 @@ const initialState = {
 
 export const loader = async ({ params }) => {
   const { category } = params;
-  try {
-    const messages = await cmd.GET_MESSAGE_TEMPLATES({ params });
-    messages.reverse(); // sort desc by updated_by
-    return {
-      category,
-      messages,
-    };
-  } catch (error) {
-    console.log(error)
-    throw json(error, { status: error.status })
-  }
+  const messages = await cmd.GET_MESSAGE_TEMPLATES({ params });
+  messages.reverse(); // sort desc by updated_by
+  return {
+    category,
+    messages,
+  };
 };
 
 export const action = async ({ request }) => {

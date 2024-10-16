@@ -308,9 +308,6 @@ export function ErrorElement() {
   const error = useRouteError();
   const location = useLocation();
 
-  console.log(error)
-  console.log(isRouteErrorResponse(error))
-
   if (
     isRouteErrorResponse(error) &&
     error.status >= 400 &&

@@ -26,7 +26,7 @@ export const loader = async () => {
   let user;
 
   try {
-    user = await cmd.IS_AUTHENTICATED();
+    user = await cmd.IS_AUTHENTICATED({ throwRouteError: false });
   } catch (error) {
     return {
       error: error,
@@ -51,9 +51,11 @@ export const action = async ({ request }) => {
         username: username,
         password: password,
       },
+      throwRouteError: false,
     });
     isAuth = result;
   } catch (error) {
+    console.log(error)
     if (error.status === 401) {
       return {
         error: error.name,
