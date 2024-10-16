@@ -22,9 +22,8 @@ from rcon.automods.models import (
     WatchStatus,
 )
 from rcon.automods.num_or_inf import num_or_inf
-from rcon.types import GameState, GetDetailedPlayer
+from rcon.types import GameStateType, GetDetailedPlayer
 from rcon.user_config.auto_mod_level import AutoModLevelUserConfig, Roles
-
 
 LEVEL_THRESHOLDS_RESET_SECS = 120
 AUTOMOD_USERNAME = "LevelThresholdsAutomod"
@@ -178,7 +177,8 @@ class LevelThresholdsAutomod:
         watch_status = self.red.get(redis_key)
         if watch_status:
             watch_status = pickle.loads(watch_status)
-        else:  # No punishments so far, starting a fresh one
+        # No punishments so far, starting a fresh one
+        else:
             watch_status = WatchStatus()
 
         try:
@@ -260,7 +260,7 @@ class LevelThresholdsAutomod:
         squad_name: str,
         team: Literal["axis", "allies"],
         squad: dict,
-        game_state: GameState,
+        game_state: GameStateType,
     ) -> PunitionsToApply:
         """
         Observe all squads/players
@@ -290,8 +290,6 @@ class LevelThresholdsAutomod:
 
         with self.watch_state(team, squad_name) as watch_status:
 
-            # if squad_name is None or squad is None:
-            #     raise NoLevelViolation()
 
             author = AUTOMOD_USERNAME + ("-DryRun" if self.config.dry_run else "")
 
@@ -321,7 +319,14 @@ class LevelThresholdsAutomod:
 
                 # Server min level threshold check
                 min_level = self.config.min_level
-                if min_level > 0 and aplayer.lvl < min_level:
+                if (
+                    min_level > 0
+                    and aplayer.lvl < min_level
+                    and not any(
+                        flag_entry.flag in self.config.whitelist_flags
+                        for flag_entry in aplayer.flags
+                    )
+                ):
                     message = self.config.min_level_message
                     try:
                         message = message.format(level=min_level)
@@ -335,8 +340,13 @@ class LevelThresholdsAutomod:
 
                 # Server max level threshold check
                 max_level = self.config.max_level
-                # if max_level > 0 and aplayer.lvl > max_level:
-                if aplayer.lvl > max_level > 0:
+                if (
+                    aplayer.lvl > max_level > 0
+                    and not any(
+                        flag_entry.flag in self.config.whitelist_flags
+                        for flag_entry in aplayer.flags
+                    )
+                ):
                     message = self.config.max_level_message
                     try:
                         message = message.format(level=max_level)

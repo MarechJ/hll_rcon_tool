@@ -83,7 +83,7 @@ const Header = () => {
                     onClose={handleCloseMenu(menu.name)}
                     PaperProps={{
                       style: {
-                        minWidth: '20ch',
+                        minWidth: "20ch",
                       },
                     }}
                   >

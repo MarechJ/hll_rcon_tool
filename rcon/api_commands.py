@@ -65,6 +65,7 @@ from rcon.user_config.rcon_connection_settings import RconConnectionSettingsUser
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.user_config.scorebot import ScorebotUserConfig
+from rcon.user_config.seed_vip import SeedVIPUserConfig
 from rcon.user_config.standard_messages import (
     StandardBroadcastMessagesUserConfig,
     StandardPunishmentMessagesUserConfig,
@@ -1025,6 +1026,43 @@ class RconAPI(Rcon):
             command_name=inspect.currentframe().f_code.co_name,  # type: ignore
             by=by,
             model=RealVipUserConfig,
+            data=config or kwargs,
+            dry_run=False,
+            reset_to_default=reset_to_default,
+        )
+
+    def get_seed_vip_config(
+        self,
+    ) -> SeedVIPUserConfig:
+        return SeedVIPUserConfig.load_from_db()
+
+    def validate_seed_vip_config(
+        self,
+        by: str,
+        config: dict[str, Any] | BaseUserConfig | None = None,
+        reset_to_default: bool = False,
+        **kwargs,
+    ) -> bool:
+        return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
+            model=SeedVIPUserConfig,
+            data=config or kwargs,
+            dry_run=True,
+            reset_to_default=reset_to_default,
+        )
+
+    def set_seed_vip_config(
+        self,
+        by: str,
+        config: dict[str, Any] | BaseUserConfig | None = None,
+        reset_to_default: bool = False,
+        **kwargs,
+    ) -> bool:
+        return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
+            model=SeedVIPUserConfig,
             data=config or kwargs,
             dry_run=False,
             reset_to_default=reset_to_default,

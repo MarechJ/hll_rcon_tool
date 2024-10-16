@@ -195,8 +195,9 @@ GROUPS = [
             "can_view_message_templates",
             "can_add_message_templates",
             "can_delete_message_templates",
-            "can_edit_message_templates",
-            
+            "can_edit_message_templates",            
+            "can_view_seed_vip_config",
+            "can_change_seed_vip_config",
         ),
     ),
     (
@@ -383,6 +384,8 @@ GROUPS = [
             "can_add_message_templates",
             "can_delete_message_templates",
             "can_edit_message_templates",
+            "can_view_seed_vip_config",
+            "can_change_seed_vip_config",
         ),
     ),
     (

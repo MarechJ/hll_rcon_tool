@@ -5,7 +5,7 @@ from pytest import fixture
 
 from rcon.automods.models import PunishPlayer, PunishStepState, WatchStatus
 from rcon.automods.no_solotank import NoSoloTankAutomod
-from rcon.types import GameState
+from rcon.types import GameStateType
 from rcon.user_config.auto_mod_solo_tank import AutoModNoSoloTankUserConfig
 
 
@@ -377,7 +377,7 @@ def team_view():
     }
 
 
-game_state: GameState = {
+game_state: GameStateType = {
     "allied_score": 3,
     "axis_score": 2,
     "current_map": {
