@@ -1,6 +1,5 @@
 import React from "react";
 import {
-  Grid,
   TextField,
   List,
   ListItem,
@@ -11,12 +10,13 @@ import {
   InputLabel,
   Select,
   MenuItem,
-} from "@material-ui/core";
-import DeleteIcon from "@material-ui/icons/Delete";
-import AddIcon from "@material-ui/icons/Add";
+} from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import AddIcon from "@mui/icons-material/Add";
+import Grid from "@mui/material/Grid2";
 
-const AdminRole = ({ classes, role, setRole, roles }) => (
-  <FormControl className={classes.formControl}>
+const AdminRole = ({ role, setRole, roles }) => (
+  <FormControl >
     <InputLabel shrink>Role</InputLabel>
     <Select value={role} onChange={(e) => setRole(e.target.value)} displayEmpty>
       {roles.map((r) => (
@@ -27,7 +27,6 @@ const AdminRole = ({ classes, role, setRole, roles }) => (
 );
 
 const AddAdminItem = ({
-  classes,
   name,
   setName,
   playerId,
@@ -39,7 +38,7 @@ const AddAdminItem = ({
 }) => (
   <ListItem>
     <Grid container>
-      <Grid item xs={4} className={classes.paddingRight}>
+      <Grid size={4} >
         <TextField
           InputLabelProps={{
             shrink: true,
@@ -49,7 +48,7 @@ const AddAdminItem = ({
           onChange={(e) => setName(e.target.value)}
         />
       </Grid>
-      <Grid item xs={4} className={classes.paddingLeft}>
+      <Grid size={4} >
         <TextField
           InputLabelProps={{
             shrink: true,
@@ -59,9 +58,9 @@ const AddAdminItem = ({
           onChange={(e) => setPlayerId(e.target.value)}
         />
       </Grid>
-      <Grid item xs={4} className={classes.paddingLeft}>
+      <Grid size={4} >
         <AdminRole
-          classes={classes}
+          
           role={role}
           setRole={setRole}
           roles={roles}
@@ -79,7 +78,7 @@ const AddAdminItem = ({
             setRole("");
           })
         }
-      >
+        size="large">
         <AddIcon />
       </IconButton>
     </ListItemSecondaryAction>
@@ -87,7 +86,6 @@ const AddAdminItem = ({
 );
 
 const AdminsEditableList = ({
-  classes,
   peopleList,
   roles,
   onDelete,
@@ -98,10 +96,10 @@ const AdminsEditableList = ({
   const [role, setRole] = React.useState("");
 
   return (
-    <React.Fragment>
+    (<React.Fragment>
       <List dense>
         <AddAdminItem
-          classes={classes}
+          
           name={name}
           setName={setName}
           playerId={playerId}
@@ -122,14 +120,14 @@ const AdminsEditableList = ({
                 edge="end"
                 aria-label="delete"
                 onClick={() => onDelete(obj.name, obj.player_id, obj.role)}
-              >
+                size="large">
                 <DeleteIcon />
               </IconButton>
             </ListItemSecondaryAction>
           </ListItem>
         ))}
         <AddAdminItem
-          classes={classes}
+          
           name={name}
           setName={setName}
           playerId={playerId}
@@ -140,7 +138,7 @@ const AdminsEditableList = ({
           onAdd={onAdd}
         />
       </List>
-    </React.Fragment>
+    </React.Fragment>)
   );
 };
 

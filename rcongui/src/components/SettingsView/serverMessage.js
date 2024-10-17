@@ -1,13 +1,13 @@
 import React from "react";
-import { Grid, TextField } from "@material-ui/core";
-import Autocomplete from "@material-ui/lab/Autocomplete";
+import { TextField } from "@mui/material";
+import Autocomplete from '@mui/material/Autocomplete';
 import SplitButton from "../splitButton";
 import TextHistory from "../textHistory";
 import { getSharedMessages } from "../../utils/fetchUtils";
 import { ForwardCheckBox } from "../commonComponent";
+import Grid from "@mui/material/Grid2";
 
 const ServerMessage = ({
-  classes,
   type,
   autocompleteKey,
   value,
@@ -23,14 +23,14 @@ const ServerMessage = ({
   }, [autocompleteKey]);
 
   return (
-    <Grid
-      container
-      xs={12}
-      alignItems="center"
-      alignContent="center"
-      justify="center"
-    >
-      <Grid item xs={12} className={classes.paddingBottom}>
+    (<Grid
+          container
+          alignItems="center"
+          alignContent="center"
+          justifyContent="center"
+          size={12}
+        >
+      <Grid size={12} >
         <Autocomplete
           freeSolo
           options={sharedMessages.concat(textHistory.getTexts())}
@@ -39,8 +39,7 @@ const ServerMessage = ({
           renderInput={(params) => (
             <TextField
               multiline
-              rows={4}
-              rowsMax={40}
+              rows={5}
               {...params}
               label={type}
               margin="normal"
@@ -50,10 +49,10 @@ const ServerMessage = ({
           )}
         />
       </Grid>
-      <Grid item>
+      <Grid>
         <ForwardCheckBox bool={forward} onChange={onForwardChange} />
       </Grid>
-      <Grid item>
+      <Grid>
         <SplitButton
           options={[
             `Set ${type}`,
@@ -71,7 +70,7 @@ const ServerMessage = ({
           buttonProps={{ variant: "outlined" }}
         />
       </Grid>
-    </Grid>
+    </Grid>)
   );
 };
 

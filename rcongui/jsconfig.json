@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    // use `import` and `export`
+    "target": "ES6",
+    "module": "ES6",
+    // using "node" mode resolution to
+    // map index files like /MyComponent/index.jsx
+    // so import from "/MyComponent" works
+    "moduleResolution": "node",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}

@@ -352,11 +352,18 @@ def get_own_user_permissions(request):
         }
         for permission, description in unique_permissions
     ]
+    try:
+        player_id = request.user.steamplayer.steam_id_64
+    except SteamPlayer.DoesNotExist as e:
+        logger.info(f"{request.user} does not have a player ID set on the admin site")
+        player_id = None
 
     result: DjangoUserPermissions = {
+        "is_superuser": request.user.is_superuser,
+        "user_name": request.user.get_username(),
+        "player_id": player_id,
         "permissions": trimmed_permissions,
         "groups": trimmed_groups,
-        "is_superuser": request.user.is_superuser,
     }
 
     return api_response(

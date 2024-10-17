@@ -1,7 +1,6 @@
 import React from "react";
 import { List as iList, Map } from "immutable";
 import {
-  Grid,
   AppBar,
   Link,
   Avatar,
@@ -16,16 +15,13 @@ import {
   Divider,
   IconButton,
   TextField,
-} from "@material-ui/core";
-import Autocomplete from "@material-ui/lab/Autocomplete";
-import { makeStyles } from "@material-ui/core/styles";
-import AddIcon from "@material-ui/icons/Add";
-import RemoveIcon from "@material-ui/icons/Remove";
-import { pure } from "recompose";
+} from "@mui/material";
+import Grid from "@mui/material/Grid2";
+import Autocomplete from '@mui/material/Autocomplete';
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
 import { PlayerStatProfile } from "./PlayerStatProfile";
-import MUIDataTable from "mui-datatables";
-import { Button } from "@material-ui/core";
-import { fromJS } from "immutable";
+import { Button } from "@mui/material";
 import { toPairs, sortBy } from "lodash";
 
 export const safeGetSteamProfile = (scoreObj) =>
@@ -35,7 +31,7 @@ export const safeGetSteamProfile = (scoreObj) =>
       : new Map()
     : new Map();
 
-const PlayerItem = pure(({ score, rank, postProcess, statKey, onClick }) => {
+const PlayerItem = ({ score, rank, postProcess, statKey, onClick }) => {
   const steamProfile = safeGetSteamProfile(score);
   const avatarUrl = steamProfile ? steamProfile.get("avatar", null) : null;
 
@@ -64,9 +60,9 @@ const PlayerItem = pure(({ score, rank, postProcess, statKey, onClick }) => {
       </ListItem>
     </React.Fragment>
   );
-});
+};
 
-const TopList = pure(
+const TopList = 
   ({
     iconUrl,
     scores,
@@ -95,7 +91,7 @@ const TopList = pure(
     }, [top, playersFilter, scores, reversed, statKey]);
 
     return (
-      <List>
+      (<List>
         <React.Fragment>
           <ListItem>
             <ListItemAvatar style={{ visibility: "visible" }}>
@@ -133,19 +129,18 @@ const TopList = pure(
           </ListItemAvatar>
           <ListItemText primary={<Link onClick={toggle}>{show}</Link>} />
           <ListItemSecondaryAction>
-            <IconButton onClick={toggle} color="secondary">
+            <IconButton onClick={toggle} color="secondary" size="large">
               {showButton}
             </IconButton>
           </ListItemSecondaryAction>
         </ListItem>
-      </List>
+      </List>)
     );
   }
-);
+;
 
-const RankBoard = pure(
+const RankBoard = 
   ({
-    classes,
     iconUrl,
     scores,
     title,
@@ -162,7 +157,7 @@ const RankBoard = pure(
           <Typography
             variant="h2"
             align="center"
-            className={classes.grow}
+            
             display="block"
           >
             {title}
@@ -183,15 +178,10 @@ const RankBoard = pure(
       </Paper>
     </React.Fragment>
   )
-);
+;
 
-const useStyles = makeStyles((theme) => ({
-  black: {
-    backgroundColor: theme.palette.primary.main,
-  },
-}));
 
-const RawScores = pure(({ classes, scores }) => {
+const RawScores = ({ scores }) => {
   const lastState = window.localStorage.getItem("rawStats");
   const [show, setShow] = React.useState(
     lastState !== null
@@ -277,8 +267,8 @@ const RawScores = pure(({ classes, scores }) => {
     },
   ]);
   return (
-    <Grid container spacing={2} className={classes.gridContainer}>
-      <Grid item xs={12}>
+    (<Grid container spacing={2} >
+      <Grid size={12}>
         <Button
           onClick={() => {
             window.localStorage.setItem("rawStats", show === 0 ? 1 : 0);
@@ -290,8 +280,9 @@ const RawScores = pure(({ classes, scores }) => {
         </Button>
       </Grid>{" "}
       {show ? (
-        <Grid item xs={12}>
-          <MUIDataTable
+        <Grid size={12}>
+          {"Scores Table"}
+          {/* <MUIDataTable
             options={{
               filter: false,
               rowsPerPage: rowsPerPage,
@@ -330,14 +321,14 @@ const RawScores = pure(({ classes, scores }) => {
             }}
             data={scores ? scores.toJS() : []}
             columns={columns}
-          />
+          /> */}
         </Grid>
       ) : (
         ""
       )}
-    </Grid>
+    </Grid>)
   );
-});
+};
 
 function commaSeperatedListRenderer(value) {
   const pairs = toPairs(value);
@@ -346,7 +337,7 @@ function commaSeperatedListRenderer(value) {
     .join(", ");
 }
 
-const Scores = pure(({ classes, scores, durationToHour, type }) => {
+const Scores = ({ scores, durationToHour, type }) => {
   const [highlight, setHighlight] = React.useState(null);
   const doHighlight = (playerScore) => {
     setHighlight(playerScore);
@@ -354,10 +345,9 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
   };
   const [playersFilter, setPlayersFilter] = React.useState(new iList());
   const undoHighlight = () => setHighlight(null);
-  const styles = useStyles();
 
   return (
-    <React.Fragment>
+    (<React.Fragment>
       {highlight ? (
         <PlayerStatProfile playerScore={highlight} onClose={undoHighlight} />
       ) : (
@@ -368,17 +358,16 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
           {process.env.REACT_APP_PUBLIC_BUILD ? (
             ""
           ) : (
-            <Grid item xs={12}>
-              <RawScores scores={scores} classes={classes} />{" "}
+            <Grid size={12}>
+              <RawScores scores={scores}  />{" "}
             </Grid>
           )}
 
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Grid container>
               <Grid
-                item
-                xs={12}
-                className={`${styles.black} ${classes.doublePadding}`}
+                
+                size={12}
               >
                 <Paper>
                   <Autocomplete
@@ -403,15 +392,21 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
               </Grid>
             </Grid>
           </Grid>
-          <Grid item xs={12} className={classes.doublePadding}>
+          <Grid size={12} >
             <Typography variant="caption">
               You can click on a player to see their details
             </Typography>
           </Grid>
 
-          <Grid item xs={12} md={6} lg={3} xl={2}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6,
+              lg: 3,
+              xl: 2
+            }}>
             <RankBoard
-              classes={classes}
+              
               iconUrl={"icons/bomb.png"}
               scores={scores}
               title="TOP KILLERS"
@@ -422,9 +417,15 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
               reversed
             />
           </Grid>
-          <Grid item xs={12} md={6} lg={3} xl={2}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6,
+              lg: 3,
+              xl: 2
+            }}>
             <RankBoard
-              classes={classes}
+              
               iconUrl={"icons/invincible.webp"}
               scores={scores}
               title="TOP RATIO"
@@ -435,9 +436,15 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
               reversed
             />
           </Grid>
-          <Grid item xs={12} md={6} lg={3} xl={2}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6,
+              lg: 3,
+              xl: 2
+            }}>
             <RankBoard
-              classes={classes}
+              
               iconUrl={"icons/efficiency.png"}
               scores={scores}
               title="TOP PERF."
@@ -448,9 +455,15 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
               reversed
             />
           </Grid>
-          <Grid item xs={12} md={6} lg={3} xl={2}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6,
+              lg: 3,
+              xl: 2
+            }}>
             <RankBoard
-              classes={classes}
+              
               iconUrl={"icons/tryhard.png"}
               scores={scores}
               title="TRY HARDERS"
@@ -461,9 +474,15 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
               reversed
             />
           </Grid>
-          <Grid item xs={12} md={6} lg={3} xl={2}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6,
+              lg: 3,
+              xl: 2
+            }}>
             <RankBoard
-              classes={classes}
+              
               iconUrl={"icons/stamina.png"}
               scores={scores}
               title="TOP STAMINA"
@@ -474,9 +493,15 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
               reversed
             />
           </Grid>
-          <Grid item xs={12} md={6} lg={3} xl={2}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6,
+              lg: 3,
+              xl: 2
+            }}>
             <RankBoard
-              classes={classes}
+              
               iconUrl={"icons/streak_line.png"}
               scores={scores}
               title="TOP KILL STREAK"
@@ -487,9 +512,15 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
               reversed
             />
           </Grid>
-          <Grid item xs={12} md={6} lg={3} xl={2}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6,
+              lg: 3,
+              xl: 2
+            }}>
             <RankBoard
-              classes={classes}
+              
               iconUrl={"icons/nevergiveup.png"}
               scores={scores}
               title="I NEVER GIVE UP"
@@ -500,9 +531,15 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
               reversed
             />
           </Grid>
-          <Grid item xs={12} md={6} lg={3} xl={2}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6,
+              lg: 3,
+              xl: 2
+            }}>
             <RankBoard
-              classes={classes}
+              
               iconUrl={"icons/patience.png"}
               scores={scores}
               title="MOST PATIENT"
@@ -513,9 +550,15 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
               reversed
             />
           </Grid>
-          <Grid item xs={12} md={6} lg={3} xl={2}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6,
+              lg: 3,
+              xl: 2
+            }}>
             <RankBoard
-              classes={classes}
+              
               iconUrl={"icons/clumsy.png"}
               scores={scores}
               title="YES I'M CLUMSY"
@@ -526,9 +569,15 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
               reversed
             />
           </Grid>
-          <Grid item xs={12} md={6} lg={3} xl={2}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6,
+              lg: 3,
+              xl: 2
+            }}>
             <RankBoard
-              classes={classes}
+              
               iconUrl={"icons/glasses.png"}
               scores={scores}
               title="I NEED GLASSES"
@@ -539,9 +588,15 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
               reversed
             />
           </Grid>
-          <Grid item xs={12} md={6} lg={3} xl={2}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6,
+              lg: 3,
+              xl: 2
+            }}>
             <RankBoard
-              classes={classes}
+              
               iconUrl={"icons/vote.ico"}
               scores={scores}
               title="I ❤ VOTING"
@@ -552,9 +607,15 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
               reversed
             />
           </Grid>
-          <Grid item xs={12} md={6} lg={3} xl={2}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6,
+              lg: 3,
+              xl: 2
+            }}>
             <RankBoard
-              classes={classes}
+              
               iconUrl={"icons/sleep.png"}
               scores={scores}
               title="What is a break?"
@@ -567,9 +628,15 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
             />
           </Grid>
           <React.Fragment>
-            <Grid item xs={12} md={6} lg={3} xl={2}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6,
+                lg: 3,
+                xl: 2
+              }}>
               <RankBoard
-                classes={classes}
+                
                 iconUrl={"icons/survivor.png"}
                 scores={scores}
                 title="SURVIVOR"
@@ -581,9 +648,15 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
                 reversed
               />
             </Grid>
-            <Grid item xs={12} md={6} lg={3} xl={2}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6,
+                lg: 3,
+                xl: 2
+              }}>
               <RankBoard
-                classes={classes}
+                
                 iconUrl={"icons/early.png"}
                 scores={scores}
                 title="U'R STILL A MAN"
@@ -594,9 +667,15 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
                 playersFilter={playersFilter}
               />
             </Grid>
-            <Grid item xs={12} md={6} lg={3} xl={2}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6,
+                lg: 3,
+                xl: 2
+              }}>
               <RankBoard
-                classes={classes}
+                
                 iconUrl={"icons/early.png"}
                 scores={scores}
                 title="COMBAT SCORE"
@@ -607,9 +686,15 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
                 reversed
               />
             </Grid>
-            <Grid item xs={12} md={6} lg={3} xl={2}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6,
+                lg: 3,
+                xl: 2
+              }}>
               <RankBoard
-                classes={classes}
+                
                 iconUrl={"icons/early.png"}
                 scores={scores}
                 title="ATTACK SCORE"
@@ -620,9 +705,15 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
                 reversed
               />
             </Grid>
-            <Grid item xs={12} md={6} lg={3} xl={2}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6,
+                lg: 3,
+                xl: 2
+              }}>
               <RankBoard
-                classes={classes}
+                
                 iconUrl={"icons/early.png"}
                 scores={scores}
                 title="DEFENSE SCORE"
@@ -633,9 +724,15 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
                 reversed
               />
             </Grid>
-            <Grid item xs={12} md={6} lg={3} xl={2}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6,
+                lg: 3,
+                xl: 2
+              }}>
               <RankBoard
-                classes={classes}
+                
                 iconUrl={"icons/early.png"}
                 scores={scores}
                 title="SUPPORT SCORE"
@@ -647,8 +744,8 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
               />
             </Grid>
             {process.env.REACT_APP_PUBLIC_BUILD ? (
-              <Grid item xs={12}>
-                <RawScores scores={scores} classes={classes} />{" "}
+              <Grid size={12}>
+                <RawScores scores={scores}  />{" "}
               </Grid>
             ) : (
               ""
@@ -656,12 +753,12 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
           </React.Fragment>
         </React.Fragment>
       ) : (
-        <Grid item xs={12}>
+        <Grid size={12}>
           <Typography variant="h4">No stats available yet</Typography>
         </Grid>
       )}
-    </React.Fragment>
+    </React.Fragment>)
   );
-});
+};
 
 export default Scores;

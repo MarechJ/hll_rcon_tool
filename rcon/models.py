@@ -24,6 +24,7 @@ from sqlalchemy.schema import UniqueConstraint
 
 from rcon.types import (
     AuditLogType,
+    MessageTemplateType,
     BlacklistRecordType,
     BlacklistRecordWithBlacklistType,
     BlacklistRecordWithPlayerType,
@@ -50,6 +51,7 @@ from rcon.types import (
     SteamPlayerSummaryType,
     StructuredLogLineWithMetaData,
     WatchListType,
+    MessageTemplateCategory,
 )
 from rcon.utils import (
     SafeStringFormat,
@@ -514,13 +516,19 @@ class Maps(Base):
             "end": self.end,
             "server_number": self.server_number,
             "map_name": self.map_name,
-            "result": {
-                "axis": self.result.get("Axis"),
-                "allied": self.result.get("Allied"),
-            } if self.result is not None and self.result.get('Allied') is not None else None,
-            "player_stats": []
-            if not with_stats or not self.player_stats
-            else [s.to_dict() for s in self.player_stats],
+            "result": (
+                {
+                    "axis": self.result.get("Axis"),
+                    "allied": self.result.get("Allied"),
+                }
+                if self.result is not None and self.result.get("Allied") is not None
+                else None
+            ),
+            "player_stats": (
+                []
+                if not with_stats or not self.player_stats
+                else [s.to_dict() for s in self.player_stats]
+            ),
         }
 
 
@@ -955,3 +963,32 @@ class LogLineWebHookField(pydantic.BaseModel):
                 raise ValueError(f"Invalid Discord role {role_or_user}")
 
         return values
+
+
+class MessageTemplate(Base):
+    __tablename__ = "message_template"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column()
+    content: Mapped[str]
+    category: Mapped[MessageTemplateCategory] = mapped_column(
+        Enum(MessageTemplateCategory)
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), default=datetime.utcnow
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), default=datetime.utcnow
+    )
+    updated_by: Mapped[str]
+
+    def to_dict(self) -> MessageTemplateType:
+        return {
+            "id": self.id,
+            "title": self.title,
+            "content": self.content,
+            "category": self.category,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "updated_by": self.updated_by,
+        }
