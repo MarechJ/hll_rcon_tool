@@ -130,11 +130,11 @@ def run_expiring_vips():
 
 @cli.command(name="seed_vip")
 def run_seed_vip():
-    config = SeedVIPUserConfig.load_from_db()
-    if config.enabled:
+    try:
         rcon.seed_vip.service.run()
-    else:
-        logger.info("Seed VIP is not enabled")
+    except:
+        logger.exception("seed VIP stopped")
+        sys.exit(1)
 
 
 @cli.command(name="automod")
