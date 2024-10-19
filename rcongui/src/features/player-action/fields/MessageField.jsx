@@ -1,11 +1,10 @@
 import { ControlledTextInput } from "@/components/form/core/ControlledTextInput";
 import { useTemplates } from "@/hooks/useTemplates";
-import { useTabContext } from "@mui/lab";
 import { MenuItem, Select } from "@mui/material";
 import { useState } from "react";
 
 export const MessageField = ({ control, errors, setValue, ...props }) => {
-  const { value: templates } = useTemplates("message");
+  const templates = useTemplates("message");
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const error = errors["message"];
   const hasError = !!error;

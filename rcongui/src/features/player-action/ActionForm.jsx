@@ -12,7 +12,8 @@ const ACTION_STATUS = {
 
 const initRecipients = (recipients) =>
   recipients.map((recipient) => {
-    let removedClanName = recipient.name.replace(/^\[([^\]]*)\]/, ''); // remove `[clantags]`
+    recipient.name = recipient?.name ?? recipient?.names[0]?.name;
+    let removedClanName = recipient.name.replace(/^\[([^\]]*)\]/, '').trim(); // remove `[clantags]`
     let shortedName = removedClanName.substring(0, 8);
     let label = removedClanName.length > 6 ? shortedName + '...' : shortedName;
     return ({
@@ -53,7 +54,6 @@ export const ActionForm = ({
   }, [])
 
   const onSubmit = React.useCallback(async (data) => {
-    console.log({data})
     let allSuccess = true;
     setLoading(true)
     // get list of all selected players and ids

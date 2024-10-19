@@ -2,7 +2,7 @@ import React from "react";
 import Grid from "@mui/material/Grid2";
 import PlayerView from "@/components/PlayerView";
 import GameLogs from "@/components/LiveLogs";
-import { execute, get, handleHttpError } from "@/utils/fetchUtils";
+import { cmd, execute, get, handleHttpError } from "@/utils/fetchUtils";
 import { styled } from "@mui/material/styles";
 import FormatAlignLeftIcon from "@mui/icons-material/FormatAlignLeft";
 import FormatAlignCenterIcon from "@mui/icons-material/FormatAlignCenter";
@@ -26,23 +26,27 @@ import { columns } from "./columns";
 import { useAsyncInterval, useInterval } from "@/hooks/useInterval";
 import { Header } from "@/components/game/Header";
 import { extractPlayers, extractTeamState } from "@/utils/extractPlayers";
+import { useLoaderData } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 // import teamData from "./data.json"
 
-export const StyledToggleButtonGroup = styled(ToggleButtonGroup)(({ theme }) => ({
-  [`& .${toggleButtonGroupClasses.grouped}`]: {
-    margin: theme.spacing(0.5),
-    border: 0,
-    borderRadius: theme.shape.borderRadius,
-    [`&.${toggleButtonGroupClasses.disabled}`]: {
+export const StyledToggleButtonGroup = styled(ToggleButtonGroup)(
+  ({ theme }) => ({
+    [`& .${toggleButtonGroupClasses.grouped}`]: {
+      margin: theme.spacing(0.5),
       border: 0,
+      borderRadius: theme.shape.borderRadius,
+      [`&.${toggleButtonGroupClasses.disabled}`]: {
+        border: 0,
+      },
     },
-  },
-  [`& .${toggleButtonGroupClasses.middleButton},& .${toggleButtonGroupClasses.lastButton}`]:
-    {
-      marginLeft: -1,
-      borderLeft: "1px solid transparent",
-    },
-}));
+    [`& .${toggleButtonGroupClasses.middleButton},& .${toggleButtonGroupClasses.lastButton}`]:
+      {
+        marginLeft: -1,
+        borderLeft: "1px solid transparent",
+      },
+  })
+);
 
 export function CustomizedDividers() {
   const [alignment, setAlignment] = React.useState("left");
@@ -66,7 +70,7 @@ export function CustomizedDividers() {
           flexWrap: "wrap",
         })}
       >
-        <Box sx={{ p: '10px', display: 'grid', alignItems: 'center' }}>
+        <Box sx={{ p: "10px", display: "grid", alignItems: "center" }}>
           <SearchIcon />
         </Box>
         <InputBase
@@ -121,69 +125,66 @@ export function CustomizedDividers() {
 }
 
 export const loader = async () => {
-  const response = await execute("get_recent_logs", {
-    end: 100,
-    filter_action: [],
-    filter_player: [],
-    inclusive_filter: true,
+  const logs = await cmd.GET_LIVE_LOGS({
+    params: {
+      end: 100,
+      filter_action: [],
+      filter_player: [],
+      inclusive_filter: true,
+    },
   });
 
-  handleHttpError(response);
+  const teams = await cmd.GET_LIVE_TEAMS();
 
-  const data = await response.json();
-  const initialLogsView = data.result;
-
-  return { initialLogsView };
+  return { initialLogsView: logs, initialTeamView: teams };
 };
 
-const interval = 30;
-
-const getTeamView = () => get('get_team_view');
-const getGameState = () => get('get_gamestate');
-
 const Live = () => {
-  const [mdSize, setMdSize] = React.useState(6);
-  const [direction, setDirection] = React.useState("");
-  const [open, setOpen] = React.useState(false);
-  const { data: teamData } = useAsyncInterval(getTeamView, interval * 1000);
-  const { data: gameState } = useAsyncInterval(getGameState, interval * 1000);
+  const { initialLogsView, initialTeamView } = useLoaderData();
+
+  const { data: teamData } = useQuery({
+    queryKey: ["live-teams"],
+    queryFn: cmd.GET_LIVE_TEAMS,
+    staleTime: 5 * 1000,
+    refetchInterval: 15 * 1000,
+    initialData: initialTeamView,
+  });
+
+  const { data: gameState } = useQuery({
+    queryKey: ["game-state"],
+    queryFn: cmd.GET_GAME_STATE,
+    staleTime: 5 * 1000,
+    refetchInterval: 15 * 1000,
+  });
+
+  const rows = React.useMemo(() => {
+    if (!teamData) return [];
+    const players = extractPlayers(teamData);
+    return players.map(playerToRow);
+  }, [teamData]);
 
   const gameStateProp = React.useMemo(() => {
     if (gameState && teamData) {
       return {
-        ...gameState.result,
-        allies: extractTeamState(teamData?.result?.allies ?? {}),
-        axis: extractTeamState(teamData?.result?.axis ?? {}),
+        ...gameState,
+        allies: extractTeamState(teamData?.allies ?? {}),
+        axis: extractTeamState(teamData?.axis ?? {}),
       };
     }
-
     return null;
   }, [gameState, teamData]);
 
-  const rows = React.useMemo(() => {
-    if (!teamData) return [];
-    const players = extractPlayers(teamData.result);
-    return players.map(playerToRow)
-  }, [teamData]);
-
-  const toggleDrawer = (newOpen) => () => {
-    setOpen(newOpen);
-  };
-  const isFullScreen = () => mdSize !== 6 ? 12 : 6;
-  const toggleMdSize = () => (isFullScreen() ? setMdSize(6) : setMdSize(12));
-
   return (
     <Grid container spacing={1}>
-      {/* <Grid size={12}>
-        <Header teamData={teamData?.result} gameState={gameStateProp} />
-      </Grid> */}
+      <Grid size={12}>
+        <Header teamData={teamData} gameState={gameStateProp} />
+      </Grid>
       <Grid
         size={{
           sm: 12,
           md: "auto",
         }}
       >
-        <CustomizedDividers />
         <PlayersTable columns={columns} rows={rows} data={teamData ?? {}} />
       </Grid>
       <Grid
@@ -192,7 +193,7 @@ const Live = () => {
           md: "grow",
         }}
       >
-        <GameLogs />
+        <GameLogs initialLogsView={initialLogsView} />
       </Grid>
     </Grid>
   );

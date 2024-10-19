@@ -1,24 +1,19 @@
 import { PlayerDetailDrawer } from "@/components/PlayerProfileDrawer";
 import { cmd } from "@/utils/fetchUtils";
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
+import { useGlobalStore } from "./useGlobalState";
+import dayjs from "dayjs";
 
 export const SidebarContext = React.createContext();
 
-// TODO
-// Make this fetch the player's data based on playerId
-// Introduce loading state so the sidebar does not open until some data are present
-// It should update the player's data periodically including comments etc
 export const PlayerSidebarProvider = ({ children }) => {
   const [open, setOpen] = React.useState(false);
   const [player, setPlayer] = React.useState(null);
   const [playerId, setPlayerId] = React.useState("");
   const [isFetching, setIsFetching] = React.useState(false);
+  const serverStatus = useGlobalStore((state) => state.status);
+  const onlinePlayers = useGlobalStore((state) => state.onlinePlayers);
 
-  // 1. Set Steam ID
-  // 2. useInterval to get_player
-  // 3. Open sidebar with loading state
-  //    - Use loading state inside the sidebar to create Skeleton UI
-  // 4. On loaded data, set player state and set loading state to false
   useEffect(() => {
     const getPlayer = async () => {
       if (!playerId) return;
@@ -26,23 +21,66 @@ export const PlayerSidebarProvider = ({ children }) => {
       setIsFetching(true);
       const player = await cmd.GET_PLAYER({ params: { player_id: playerId } });
       if (player) {
-        setPlayer(player);
+        setPlayer({
+          ...player,
+          isOnline: onlinePlayers.some(
+            (aPlayer) => aPlayer.player_id === player.player_id
+          ),
+        });
         setIsFetching(false);
       } else {
         setTimeout(() => {
-          setPlayer(null)
+          setPlayer(null);
           setIsFetching(false);
         }, 2000);
       }
     };
     getPlayer();
   }, [playerId]);
+/*
+[
+    {
+        "server_number": 2,
+        "expiration": "2024-10-19T13:47:06+00:00"
+    },
+    {
+        "server_number": 1,
+        "expiration": "3000-01-01T00:00:00+00:00"
+    }
+]
+*/
+  const extendedPlayer = useMemo(() => {
+    let is_online = false;
+    let is_vip = false;
+    if (player && onlinePlayers.length) {
+      // check online status
+      if (
+        onlinePlayers.some((aPlayer) => aPlayer.player_id === player.player_id)
+      ) {
+        is_online = true;
+      }
+      // check vip status
+      if (player?.profile?.vips?.length) {
+        const vip = player.profile.vips.find(vip => vip.server_number === serverStatus?.server_number);
+        if (vip && dayjs().isBefore(vip.expiration)) {
+          is_vip = true;
+        }
+      }
+
+      return {
+        ...player,
+        is_online,
+        is_vip,
+      };
+    }
+    return player;
+  }, [player, onlinePlayers, serverStatus]);
 
   const contextValue = React.useMemo(
     () => ({
       open,
       setOpen,
-      player,
+      player: extendedPlayer,
       setPlayer,
       playerId,
       setPlayerId,

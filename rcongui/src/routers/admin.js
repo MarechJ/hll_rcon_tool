@@ -74,12 +74,14 @@ import { loader as vipSettingsLoader } from "../pages/admin/settings/vip"
 import { action as vipSettingsAction } from "../pages/admin/settings/vip"
 
 import { AuthProvider } from "@/hooks/useAuth";
+import { GlobalState } from "@/hooks/useGlobalState";
 
 const router = createBrowserRouter([
     {
         path: '/',
         element: (
             <AuthProvider>
+                <GlobalState />
                 <Root />
             </AuthProvider>
         ),

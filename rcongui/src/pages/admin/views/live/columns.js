@@ -177,23 +177,23 @@ export const columns = [
       )
     },
   },
-  {
-    field: 'current_playtime_seconds',
-    headerName: 'Playtime',
-    type: 'number',
-    valueGetter: (value) => Math.floor(value / 60),
-    width: 75,
-  },
-  {
-    field: 'sessions_count',
-    headerName: '# Visits',
-    type: 'number',
-    width: 75,
-  },
-  {
-    field: 'player_id',
-    headerName: 'ID',
-  },
+  // {
+  //   field: 'current_playtime_seconds',
+  //   headerName: 'Playtime',
+  //   type: 'number',
+  //   valueGetter: (value) => Math.floor(value / 60),
+  //   width: 75,
+  // },
+  // {
+  //   field: 'sessions_count',
+  //   headerName: '# Visits',
+  //   type: 'number',
+  //   width: 75,
+  // },
+  // {
+  //   field: 'player_id',
+  //   headerName: 'ID',
+  // },
   // {
   //   field: 'punish_times',
   //   headerName: '# Punish',

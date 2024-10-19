@@ -268,17 +268,19 @@ export const PlayerDetailDrawer = () => {
 
   const { openDialog } = useActionDialog();
 
-  const { open, setOpen, player, isFetching } = usePlayerSidebar();
+  const { open, setOpen, player: playerObj, isFetching } = usePlayerSidebar();
 
   const [comments, setComments] = React.useState([]);
   const [bans, setBans] = React.useState([]);
+
+  const player = playerObj && "profile" in playerObj ? playerObj.profile : playerObj;
 
   // TODO
   // Move up to the sidebar provider
   useEffect(() => {
     const fetchComments = async () => {
       const response = await get(
-        "get_player_comment?player_id=" + player.player_id
+        "get_player_comments?player_id=" + player.player_id
       );
       const json = await response.json();
       const comments = json.result;
@@ -303,7 +305,7 @@ export const PlayerDetailDrawer = () => {
     open && player && fetchBans();
   }, [player, open]);
 
-  let receivedActions = player?.profile?.received_actions;
+  let receivedActions = player?.received_actions;
 
   if (receivedActions && comments.length > 0) {
     const ACTION_COMMENT_CREATION_GAP = 200;
@@ -327,15 +329,15 @@ export const PlayerDetailDrawer = () => {
   };
   // TODO
   // Move this also to the sidebar provider?
-  const isOnline = player?.profile?.sessions?.[0]?.end ?? false;
+  const isOnline = playerObj?.is_online;
+  const playerVip = playerObj?.is_vip;
   const isWatched =
-    player?.profile?.watchlist && player?.profile?.watchlist?.is_watched;
+    player?.watchlist && player?.watchlist?.is_watched;
   const isBlacklisted =
-    player?.profile?.blacklist && player?.profile?.blacklist?.is_blacklisted;
+    player?.blacklist && player?.blacklist?.is_blacklisted;
   const isBanned = bans.length > 0;
+
   const actionList = isOnline ? playerGameActions : playerProfileActions;
-  // TODO
-  const playerVip = false;
 
   return (
     <ResponsiveDrawer
@@ -376,8 +378,8 @@ export const PlayerDetailDrawer = () => {
               variant="dot"
               isOnline={isOnline}
             >
-              <Avatar src={player.profile?.steaminfo?.profile?.avatar ?? player?.steaminfo?.profile?.avatar}>
-                {player?.names[0]?.name[0] ?? player?.profile?.names[0]?.name[0] ?? "?"}
+              <Avatar src={player?.steaminfo?.profile?.avatar ?? player?.steaminfo?.profile?.avatar}>
+                {player?.names[0]?.name[0] ?? player?.names[0]?.name[0] ?? "?"}
               </Avatar>
             </OnlineStatusBadge>
             <Box sx={{ flexGrow: 1 }}>
@@ -386,7 +388,7 @@ export const PlayerDetailDrawer = () => {
                 variant="h6"
                 sx={{ textOverflow: "ellipsis" }}
               >
-                {player?.names[0]?.name ?? player?.profile?.names[0]?.name ?? "Unknown"}
+                {player?.names[0]?.name ?? player?.names[0]?.name ?? "Unknown"}
               </Typography>
               <Typography variant="subtitle2">
                 ID: {player.player_id}
@@ -445,11 +447,11 @@ export const PlayerDetailDrawer = () => {
             <TabPanel value="1">
               <BasicProfileDetails
                 country={player.country}
-                firstSeen={player?.profile?.created ?? player.created}
-                lastSeen={player?.profile?.names[0]?.last_seen ?? player?.names[0]?.last_seen}
-                sessionCount={player?.profile?.sessions_count ?? player?.sessions_count}
-                flags={player?.profile?.flags ?? player?.flags}
-                totalPlaytime={player?.profile?.total_playtime_seconds ?? player?.total_playtime_seconds}
+                firstSeen={player?.created ?? player.created}
+                lastSeen={player?.names[0]?.last_seen ?? player?.names[0]?.last_seen}
+                sessionCount={player?.sessions_count ?? player?.sessions_count}
+                flags={player?.flags ?? player?.flags}
+                totalPlaytime={player?.total_playtime_seconds ?? player?.total_playtime_seconds}
                 vip={playerVip}
               />
             </TabPanel>
@@ -459,10 +461,10 @@ export const PlayerDetailDrawer = () => {
                   Penalties
                 </Typography>
                 <Penalties
-                  punish={player?.profile?.penalty_count["PUNISH"]}
-                  kick={player?.profile?.penalty_count["KICK"]}
-                  tempBan={player?.profile?.penalty_count["TEMPBAN"]}
-                  parmaBan={player?.profile?.penalty_count["PERMABAN"]}
+                  punish={player?.penalty_count["PUNISH"]}
+                  kick={player?.penalty_count["KICK"]}
+                  tempBan={player?.penalty_count["TEMPBAN"]}
+                  parmaBan={player?.penalty_count["PERMABAN"]}
                 />
               </Box>
               <Box component={"section"}>
@@ -478,7 +480,7 @@ export const PlayerDetailDrawer = () => {
                   Messages
                 </Typography>
                 <Messages
-                  messages={player?.profile?.received_actions.filter(
+                  messages={player?.received_actions.filter(
                     (action) => action.action_type === "MESSAGE"
                   )}
                 />
