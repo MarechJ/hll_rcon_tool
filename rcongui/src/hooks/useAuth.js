@@ -1,46 +1,63 @@
-import { cmd } from '@/utils/fetchUtils';
-import { Box, CircularProgress, Typography } from '@mui/material';
-import React, { createContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Settings as SettingsIcon } from '@mui/icons-material';
+import React, { createContext, useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import { Box, CircularProgress, Typography } from "@mui/material";
+import SettingsIcon from "@mui/icons-material/Settings";
+import { AuthError, cmd } from "@/utils/fetchUtils";
+import { useQuery } from "@tanstack/react-query";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const auth = await cmd.IS_AUTHENTICATED();
-        if (auth.authenticated) {
-          const userDetails = await cmd.GET_PERMISSIONS();
-          setUser(userDetails);
-        } else {
-          navigate("/login"); // Redirect if not authenticated
-        }
-      } catch (error) {
-        console.error("Authentication error", error);
-        navigate("/login");
-      } finally {
-        setTimeout(() => {setLoading(false)}, 1250)
+  // Step 1: First, fetch the authentication status
+  const {
+    data: user,
+    isLoading: isAuthLoading,
+    isError: isAuthError,
+    isSuccess: isAuthSuccess,
+  } = useQuery({
+    queryKey: ["user", "auth"],
+    queryFn: async () => {
+      const aUser = await cmd.IS_AUTHENTICATED();
+      if (!aUser.authenticated) {
+        throw new AuthError(); // Custom error for failed auth
       }
-    };
+      return aUser;
+    },
+    refetchOnWindowFocus: false, // Disable refetching on window focus
+    retry: 1,
+  });
 
-    checkAuth();
-  }, [navigate]);
+  // Step 2: Fetch permissions, only if authentication is successful
+  const {
+    data: permissions,
+    isLoading: isPermissionsLoading,
+    error: permissionsError,
+  } = useQuery({
+    queryKey: ["user", "permissions"],
+    queryFn: cmd.GET_PERMISSIONS,
+    enabled: isAuthSuccess && user?.authenticated, // Fetch only if authenticated
+    refetchOnWindowFocus: false,
+  });
 
-  if (loading) {
+  // Handle loading state
+  const isLoading = isAuthLoading || isPermissionsLoading;
+
+  // Handle error state
+  if (isAuthError) {
+    navigate("/login"); // Redirect if authentication fails
+  }
+
+  if (isLoading) {
     return (
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-          flexDirection: 'column'
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          flexDirection: "column",
         }}
       >
         <SettingsIcon sx={{ fontSize: 50 }} />
@@ -49,14 +66,15 @@ export const AuthProvider = ({ children }) => {
         </Typography>
         <CircularProgress sx={{ mt: 2 }} />
       </Box>
-    )
+    );
   }
 
   return (
-    <AuthContext.Provider value={{ user }}>
+    <AuthContext.Provider value={{ user, permissions }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => React.useContext(AuthContext);
+// Custom hook to use the AuthContext
+export const useAuth = () => useContext(AuthContext);

@@ -15,13 +15,7 @@ import { ActionDialogProvider } from "@/hooks/useActionDialog";
 import { PlayerSidebarProvider } from "@/hooks/usePlayerSidebar";
 
 export const loader = async () => {
-  const thisServer = cmd.GET_GAME_SERVER_CONNECTION()
-  const otherServers = cmd.GET_GAME_SERVER_LIST()
-
-  return defer({
-    thisServer,
-    otherServers,
-  });
+  return null;
 };
 
 export const action = async ({ request }) => {

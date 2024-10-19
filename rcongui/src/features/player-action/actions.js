@@ -24,7 +24,6 @@ import { AddCommentFormFields } from '@/features/player-action/forms/AddCommentF
 import { BlacklistPlayerFormFields } from '@/features/player-action/forms/BlacklistPlayerFields';
 
 const executeAction = (command) => async (payload) => {
-    console.log(payload)
     // In the UI, it does not make sense to ask for a reason and message
     // at the same time as they are the same thing. However, the API
     // expects both in the payload.

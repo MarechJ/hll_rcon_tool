@@ -81,10 +81,7 @@ const limitOptions = [
 
 const interval = 5 * 1000; // 30 seconds
 
-const getLogs = (filters) => execute("get_recent_logs", filters);
-
-const LiveLogs = () => {
-  const { initialLogsView } = useLoaderData();
+const LiveLogs = ({ initialLogsView }) => {
   // Using custom hook that synchronizes the components state
   // and the browser's local storage
   const [logsConfig, setLogsConfig] = useStorageState("logs-config", {
@@ -102,7 +99,7 @@ const LiveLogs = () => {
     error,
     isLoading,
   } = useQuery({
-    queryKey: ["logs-view"],
+    queryKey: ["logs", "live"],
     queryFn: async () => {
       const response = await execute("get_recent_logs", {
         end: logsConfig.limit,

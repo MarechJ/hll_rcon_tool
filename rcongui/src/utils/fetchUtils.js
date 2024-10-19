@@ -90,7 +90,7 @@ async function parseJsonResponse(response) {
 export const cmd = {
   ADD_MESSAGE_TEMPLATE: (params) => requestFactory({ method: "POST", cmd: "add_message_template", ...params }),
   EDIT_MESSAGE_TEMPLATE: (params) => requestFactory({ method: "POST", cmd: "edit_message_template", ...params }),
-  GET_MESSAGE_TEMPLATE: (params) => requestFactory({ method: "GET", cmd: "get_message_templates", ...params }),
+  GET_MESSAGE_TEMPLATE: (params) => requestFactory({ method: "GET", cmd: "get_message_template", ...params }),
   DELETE_MESSAGE_TEMPLATE: (params) => requestFactory({ method: "POST", cmd: "delete_message_template", ...params }),
   GET_ALL_MESSAGE_TEMPLATES: (params) => requestFactory({ method: "GET", cmd: "get_all_message_templates", ...params }),
   GET_MESSAGE_TEMPLATES: (params) => requestFactory({ method: "GET", cmd: "get_message_templates", ...params }),
@@ -119,6 +119,13 @@ export const cmd = {
   GET_PERMISSIONS: (params) => requestFactory({ method: "GET", cmd: "get_own_user_permissions", ...params }),
   GET_GAME_SERVER_CONNECTION: (params) => requestFactory({ method: "GET", cmd: "get_connection_info", ...params }),
   GET_GAME_SERVER_LIST: (params) => requestFactory({ method: "GET", cmd: "get_server_list", ...params }),
+  GET_GAME_STATE: (params) => requestFactory({ method: "GET", cmd: "get_gamestate", ...params }),
+  GET_STATUS: (params) => requestFactory({ method: "GET", cmd: "get_status", ...params }),
+  GET_INGAME_MODS: (params) => requestFactory({ method: "GET", cmd: "get_ingame_mods", ...params }),
+  GET_CRCON_MODS: (params) => requestFactory({ method: "GET", cmd: "get_online_mods", ...params }),
+  GET_ONLINE_PLAYERS: (params) => requestFactory({ method: "GET", cmd: "get_players", ...params }),
+  GET_LIVE_TEAMS: (params) => requestFactory({ method: "GET", cmd: "get_team_view", ...params }),
+  GET_LIVE_LOGS: (params) => requestFactory({ method: "GET", cmd: "get_recent_logs", ...params }),
 };
 
 export function execute(command, data) {

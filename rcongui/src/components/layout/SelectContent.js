@@ -1,15 +1,12 @@
-import { Suspense } from 'react';
-import MuiAvatar from '@mui/material/Avatar';
-import MuiListItemAvatar from '@mui/material/ListItemAvatar';
-import MenuItem from '@mui/material/MenuItem';
-import ListItemText from '@mui/material/ListItemText';
-import ListSubheader from '@mui/material/ListSubheader';
-import Select, { selectClasses } from '@mui/material/Select';
-import { styled } from '@mui/material/styles';
-import DevicesRoundedIcon from '@mui/icons-material/DevicesRounded';
-import { Await, useLoaderData } from 'react-router-dom';
-import { Box, Skeleton } from '@mui/material';
-import { ErrorSection } from '../shared/ErrorSection';
+import MuiAvatar from "@mui/material/Avatar";
+import MuiListItemAvatar from "@mui/material/ListItemAvatar";
+import MenuItem from "@mui/material/MenuItem";
+import ListItemText from "@mui/material/ListItemText";
+import ListSubheader from "@mui/material/ListSubheader";
+import Select, { selectClasses } from "@mui/material/Select";
+import { styled } from "@mui/material/styles";
+import DevicesRoundedIcon from "@mui/icons-material/DevicesRounded";
+import { useGlobalStore } from "@/hooks/useGlobalState";
 
 const Avatar = styled(MuiAvatar)(({ theme }) => ({
   width: 28,
@@ -24,19 +21,17 @@ const ListItemAvatar = styled(MuiListItemAvatar)({
   marginRight: 12,
 });
 
-const SelectSkeleton = styled(Skeleton)(({ theme }) => ({
-  height: 56,
-  width: 215,
-}))
-
 export default function SelectContent() {
-  const data = useLoaderData();
+  const thisServer = useGlobalStore((state) => state.serverState);
+  const otherServers = useGlobalStore((state) => state.servers);
 
   const handleChange = (servers) => (event) => {
-    const serverNumber = Number(event.target.value)
-    const selectedServer = servers.find(server => server.server_number === serverNumber)
+    const serverNumber = Number(event.target.value);
+    const selectedServer = servers.find(
+      (server) => server.server_number === serverNumber
+    );
     if (!selectedServer) {
-      return
+      return;
     }
     let link = "";
     if (selectedServer.link) {
@@ -47,65 +42,83 @@ export default function SelectContent() {
         window.location.href.replace(regex, `:${selectedServer.port}`)
       );
     }
-    window.location.replace(link)
+    window.location.replace(link);
   };
 
+  const servers = thisServer ? [thisServer, ...otherServers] : null;
+
   return (
-    <Suspense fallback={<Box sx={{ width: 215, height: 56, p: "8px" }}>"Loading..."</Box>}>
-      <Await errorElement={<ErrorSection />} resolve={Promise.all([data.thisServer, data.otherServers])}>
-        {([thisServer, otherServers]) => {
-          const servers = [thisServer, ...otherServers];
-          return (
-            <Select
-              labelId="server-select"
-              id="server-simple-select"
-              defaultValue={thisServer.server_number}
-              onChange={handleChange(servers)}
-              displayEmpty
-              inputProps={{ 'aria-label': 'Select server' }}
-              fullWidth
-              MenuProps={{
-                PaperProps: {
-                  sx: {
-                    '& .MuiMenuItem-root:not(:last-child)': {
-                      mb: 1,
-                    },
-                  },
-                },
-              }}
+    <Select
+      labelId="server-select"
+      id="server-simple-select"
+      value={thisServer?.server_number ?? ""}
+      onChange={handleChange(servers)}
+      displayEmpty
+      inputProps={{ "aria-label": "Select server" }}
+      fullWidth
+      MenuProps={{
+        PaperProps: {
+          sx: {
+            "& .MuiMenuItem-root:not(:last-child)": {
+              mb: 1,
+            },
+          },
+        },
+      }}
+      sx={{
+        maxHeight: 56,
+        width: 215,
+        "&.MuiList-root": {
+          p: "8px",
+        },
+        [`& .${selectClasses.select}`]: {
+          display: "flex",
+          alignItems: "center",
+          gap: "2px",
+          pl: 1,
+        },
+      }}
+    >
+      <ListSubheader sx={{ pt: 0 }}>Servers</ListSubheader>
+      {servers ? (
+        servers.map((server) => (
+          <MenuItem key={server.server_number} value={server.server_number}>
+            <ListItemAvatar>
+              <Avatar alt={server.name ?? "<server_name>"}>
+                <DevicesRoundedIcon sx={{ fontSize: "1rem" }} />
+              </Avatar>
+            </ListItemAvatar>
+            <ListItemText
               sx={{
-                maxHeight: 56,
-                width: 215,
-                '&.MuiList-root': {
-                  p: '8px',
-                },
-                [`& .${selectClasses.select}`]: {
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '2px',
-                  pl: 1,
-                },
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
               }}
-            >
-              <ListSubheader sx={{ pt: 0 }}>Servers</ListSubheader>
-              {servers?.map((server) => (
-                <MenuItem key={server.server_number} value={server.server_number}>
-                  <ListItemAvatar>
-                    <Avatar alt={server.name ?? "<server_name>"}>
-                      <DevicesRoundedIcon sx={{ fontSize: '1rem' }} />
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText sx={{
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }} primary={server.name ?? "<server_name>"} secondary={`Server - ${server.server_number}` ?? "<server_number>"} />
-                </MenuItem>
-              ))}
-            </Select>
-          )
-        }}
-      </Await>
-    </Suspense>
+              primary={server.name ?? "<server_name>"}
+              secondary={
+                `Server - ${server.server_number}` ?? "<server_number>"
+              }
+            />
+          </MenuItem>
+        ))
+      ) : (
+        <MenuItem value={""}>
+          <ListItemAvatar>
+            <Avatar alt={"?"}>
+              <DevicesRoundedIcon sx={{ fontSize: "1rem" }} />
+            </Avatar>
+          </ListItemAvatar>
+          <ListItemText
+            sx={{
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+            primary={"Loading..."}
+            secondary={"..."}
+          />
+        </MenuItem>
+      )}
+    </Select>
   );
 }

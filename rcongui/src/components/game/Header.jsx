@@ -2,7 +2,7 @@ import React from 'react';
 import { Board } from './Board';
 import Grid from "@mui/material/Grid2"
 import { TeamDesktop, TeamMobile } from './Team';
-import { styled } from '@mui/styles';
+import { styled } from '@mui/material';
 import { Skeleton } from '@mui/material';
 
 const MobileHeaderWrapper = styled(Grid)(({ theme }) => ({
@@ -16,7 +16,7 @@ const MobileHeaderWrapper = styled(Grid)(({ theme }) => ({
 const DesktopHeaderWrapper = styled(Grid)(({ theme }) => ({
   minHeight: '10rem',
   marginBottom: theme.spacing(1),
-  [theme.breakpoints.down('md')]: {
+  [theme.breakpoints.down("md")]: {
     display: 'none',
   },
 }));
@@ -30,7 +30,7 @@ const DesktopHeader = ({ teamData, boardData }) => {
   return (
     <DesktopHeaderWrapper container component={'header'}>
       <Grid
-        xs={4}
+        size={4}
         sx={{
           pr: 1,
           borderRight: '1px solid',
@@ -39,11 +39,11 @@ const DesktopHeader = ({ teamData, boardData }) => {
       >
         {teamData ? <TeamDesktop data={teamData.allies} /> : <StyledSkeleton />}
       </Grid>
-      <Grid xs={4}>
+      <Grid size={4}>
         {boardData ? <Board data={boardData} /> : <StyledSkeleton />}
       </Grid>
       <Grid
-        xs={4}
+        size={4}
         sx={{
           pl: 1,
           borderLeft: '1px solid',
@@ -59,17 +59,17 @@ const DesktopHeader = ({ teamData, boardData }) => {
 const MobileHeader = ({ teamData, boardData }) => {
   return (
     <MobileHeaderWrapper container component={'header'}>
-      <Grid xs={12}>
+      <Grid size={12}>
         {boardData ? <Board data={boardData} /> : <StyledSkeleton />}
       </Grid>
-      <Grid xs={6}>
+      <Grid size={6}>
         {teamData ? (
           <TeamMobile data={teamData.allies} align={'start'} />
         ) : (
           <StyledSkeleton />
         )}
       </Grid>
-      <Grid xs={6}>
+      <Grid size={6}>
         {teamData ? (
           <TeamMobile data={teamData.axis} align={'end'} />
         ) : (

@@ -8,6 +8,7 @@ import adminRouter from "../src/routers/admin"
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import localforage from 'localforage';
 import siteConfig from './config/siteConfig';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 const isPublicBuild = typeof process.env.REACT_APP_PUBLIC_BUILD === "string";
 
@@ -34,6 +35,7 @@ const App = () => {
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
+        <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
     </React.StrictMode>
   );

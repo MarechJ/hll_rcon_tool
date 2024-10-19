@@ -4,7 +4,7 @@ import { useTemplates } from "@/hooks/useTemplates";
 import { useState } from "react";
 
 export const ReasonField = ({ control, errors, setValue, ...props }) => {
-  const { value: templates } = useTemplates("reason");
+  const templates = useTemplates("reason");
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const error = errors["reason"];
   const hasError = !!error;
