@@ -18,7 +18,7 @@ export const playerToRow = (player) => ({
 });
 
 const PlayersTable = ({ data: teamData, rows, columns, ...props }) => {
-  const { setOpen: setSidebarOpen, setPlayer } = usePlayerSidebar();
+  const { setPlayer } = usePlayerSidebar();
 
   const apiRef = useGridApiRef();
 
@@ -42,7 +42,6 @@ const PlayersTable = ({ data: teamData, rows, columns, ...props }) => {
       sx: { '--DataGrid-overlayHeight': '300px', maxWidth: 'calc(var(--DataGrid-columnsTotalWidth) + 50px)' },
       onRowDoubleClick: (params) => {
         setPlayer(params.row);
-        setSidebarOpen((prev) => !prev);
       },
       onRowClick: (params) => {
         setPlayer(params.row);

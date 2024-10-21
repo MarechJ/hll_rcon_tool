@@ -213,7 +213,6 @@ const ReceivedActions = ({ actions }) => {
           </AccordionSummary>
           <AccordionDetails>
             <Typography>{action.reason}</Typography>
-            {action.comment && <Typography>{action.comment}</Typography>}
           </AccordionDetails>
         </Accordion>
       ))}
@@ -263,62 +262,63 @@ const Messages = ({ messages }) => {
   );
 };
 
-export const PlayerDetailDrawer = () => {
+const LoadingSkeleton = () => (
+  <ProfileWrapper>
+    <ProfileHeader>
+      <IconButton
+        sx={{
+          position: "absolute",
+          top: (theme) => theme.spacing(0.5),
+          right: (theme) => theme.spacing(0.5),
+        }}
+        size="small"
+        onClick={() => setOpen(false)}
+      >
+        <Close />
+      </IconButton>
+    </ProfileHeader>
+    <Stack gap={2} justifyContent={"center"} alignItems={"center"}>
+      <Skeleton variant="circular" width={40} height={40} />
+      <Divider orientation="horizontal" flexItem />
+      <Skeleton variant="rectangular" width={210} height={60} />
+      <Skeleton variant="rounded" width={210} height={60} />
+    </Stack>
+  </ProfileWrapper>
+);
+
+const ProfileNotFound = () => (
+  <ProfileWrapper>
+    <ProfileHeader>
+      <IconButton
+        sx={{
+          position: "absolute",
+          top: (theme) => theme.spacing(0.5),
+          right: (theme) => theme.spacing(0.5),
+        }}
+        size="small"
+        onClick={() => setOpen(false)}
+      >
+        <Close />
+      </IconButton>
+    </ProfileHeader>
+    <Box
+      sx={{
+        display: "grid",
+        alignContent: "center",
+        height: "100%",
+        width: "100%",
+      }}
+    >
+      <Typography variant="h6" sx={{ textAlign: "center" }}>
+        Profile not found
+      </Typography>
+    </Box>
+  </ProfileWrapper>
+);
+
+const PlayerDetails = ({ player, onClose }) => {
   const [openedTab, setOpenedTab] = React.useState("1");
-
   const { openDialog } = useActionDialog();
-
-  const { open, setOpen, player: playerObj, isFetching } = usePlayerSidebar();
-
-  const [comments, setComments] = React.useState([]);
-  const [bans, setBans] = React.useState([]);
-
-  const player = playerObj && "profile" in playerObj ? playerObj.profile : playerObj;
-
-  // TODO
-  // Move up to the sidebar provider
-  useEffect(() => {
-    const fetchComments = async () => {
-      const response = await get(
-        "get_player_comments?player_id=" + player.player_id
-      );
-      const json = await response.json();
-      const comments = json.result;
-      if (comments && typeof comments === "object" && comments.length > 0) {
-        setComments(comments);
-      }
-    };
-
-    open && player && fetchComments();
-  }, [player, open]);
-
-  useEffect(() => {
-    const fetchBans = async () => {
-      const response = await get("get_ban?player_id=" + player.player_id);
-      const json = await response.json();
-      const bans = json.result;
-      if (bans && typeof bans === "object" && bans.length > 0) {
-        setBans(bans);
-      }
-    };
-
-    open && player && fetchBans();
-  }, [player, open]);
-
-  let receivedActions = player?.received_actions;
-
-  if (receivedActions && comments.length > 0) {
-    const ACTION_COMMENT_CREATION_GAP = 200;
-    receivedActions = receivedActions.map((action) => {
-      const commentMatch = comments.find((comment) => {
-        const commentCreated = new Date(comment.creation_time);
-        const actionCreated = new Date(action.time);
-        const createdDifference = Math.abs(commentCreated - actionCreated);
-        return createdDifference < ACTION_COMMENT_CREATION_GAP;
-      });
-      return { ...action, comment: commentMatch };
-    });
-  }
 
   const handleActionClick = (recipients) => (action) => {
     openDialog(action, recipients);
@@ -327,17 +327,151 @@ export const PlayerDetailDrawer = () => {
   const handleTabChange = (event, newValue) => {
     setOpenedTab(newValue);
   };
-  // TODO
-  // Move this also to the sidebar provider?
-  const isOnline = playerObj?.is_online;
-  const playerVip = playerObj?.is_vip;
-  const isWatched =
-    player?.watchlist && player?.watchlist?.is_watched;
-  const isBlacklisted =
-    player?.blacklist && player?.blacklist?.is_blacklisted;
-  const isBanned = bans.length > 0;
 
+  const profile = player.profile;
+  const isOnline = player?.is_online;
+  const playerVip = player?.is_vip;
+  const isWatched = profile?.watchlist && profile?.watchlist?.is_watched;
+  const isBlacklisted = profile?.blacklist && profile?.blacklist?.is_blacklisted;
+  const isBanned = profile?.is_blacklisted || false;
   const actionList = isOnline ? playerGameActions : playerProfileActions;
+  const avatar = profile?.steaminfo?.profile?.avatar;
+  const name = player?.name ?? profile.names[0]?.name ?? "?"
+
+
+  return (
+    <ProfileWrapper component={"article"}>
+      <ProfileHeader rowGap={1}>
+        <OnlineStatusBadge
+          overlap="circular"
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+          variant="dot"
+          isOnline={isOnline}
+        >
+          <Avatar
+            src={avatar}
+          >
+            {name}
+          </Avatar>
+        </OnlineStatusBadge>
+        <Box sx={{ flexGrow: 1 }}>
+          <Typography
+            component={"h1"}
+            variant="h6"
+            sx={{ textOverflow: "ellipsis" }}
+          >
+            {name}
+          </Typography>
+          <Typography variant="subtitle2">ID: {player?.player_id ?? profile.player_id}</Typography>
+        </Box>
+        <IconButton
+          sx={{
+            position: "absolute",
+            top: (theme) => theme.spacing(0.5),
+            right: (theme) => theme.spacing(0.5),
+          }}
+          size="small"
+          onClick={onClose}
+        >
+          <Close />
+        </IconButton>
+        <ActionMenu
+          handleActionClick={handleActionClick([player])}
+          actionList={actionList}
+          sx={{
+            position: "absolute",
+            top: (theme) => theme.spacing(0.5),
+            left: (theme) => theme.spacing(0.5),
+          }}
+        />
+      </ProfileHeader>
+      <Divider />
+      <Stack
+        direction="row"
+        alignItems={"center"}
+        justifyContent={"center"}
+        divider={<Divider orientation="vertical" flexItem />}
+        spacing={2}
+        sx={{ p: 1 }}
+      >
+        {playerVip && <StarIcon />}
+        {isWatched && <VisibilityIcon />}
+        {isBlacklisted && <NoAccountsIcon />}
+        {isBanned && <GavelIcon />}
+      </Stack>
+      <Divider />
+      <TabContext value={openedTab}>
+        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+          <Tabs
+            value={openedTab}
+            onChange={handleTabChange}
+            variant="scrollable"
+            scrollButtons="auto"
+            aria-label="Player details"
+          >
+            <Tab label="Profile" value="1" />
+            <Tab label="Admin" value="2" />
+            <Tab label="Messages" value="3" />
+          </Tabs>
+        </Box>
+        <TabPanel value="1">
+          <BasicProfileDetails
+            country={player.country}
+            firstSeen={profile.created ?? player.created}
+            lastSeen={
+              profile?.names[0]?.last_seen
+            }
+            sessionCount={profile.sessions_count ?? profile.sessions_count}
+            flags={profile.flags ?? profile.flags}
+            totalPlaytime={
+              profile.total_playtime_seconds ?? profile.total_playtime_seconds
+            }
+            vip={playerVip}
+          />
+        </TabPanel>
+        <TabPanel value="2">
+          <Box component={"section"}>
+            <Typography variant="h6" component={"h2"}>
+              Penalties
+            </Typography>
+            <Penalties
+              punish={profile.penalty_count["PUNISH"]}
+              kick={profile.penalty_count["KICK"]}
+              tempBan={profile.penalty_count["TEMPBAN"]}
+              parmaBan={profile.penalty_count["PERMABAN"]}
+            />
+          </Box>
+          <Box component={"section"}>
+            <Typography variant="h6" component={"h2"}>
+              Received actions
+            </Typography>
+            <ReceivedActions actions={profile.received_actions} />
+          </Box>
+        </TabPanel>
+        <TabPanel value="3">
+          <Box component={"section"}>
+            <Typography variant="h6" component={"h2"}>
+              Messages
+            </Typography>
+            <Messages
+              messages={profile.received_actions.filter(
+                (action) => action.action_type === "MESSAGE"
+              )}
+            />
+          </Box>
+        </TabPanel>
+      </TabContext>
+    </ProfileWrapper>
+  );
+};
+
+export const PlayerDetailDrawer = () => {
+  const {
+    open,
+    setOpen,
+    player,
+    isFetching,
+  } = usePlayerSidebar();
 
   return (
     <ResponsiveDrawer
@@ -348,174 +482,11 @@ export const PlayerDetailDrawer = () => {
     >
       <Toolbar />
       {isFetching ? (
-        <ProfileWrapper>
-          <ProfileHeader>
-            <IconButton
-              sx={{
-                position: "absolute",
-                top: (theme) => theme.spacing(0.5),
-                right: (theme) => theme.spacing(0.5),
-              }}
-              size="small"
-              onClick={() => setOpen(false)}
-            >
-              <Close />
-            </IconButton>
-          </ProfileHeader>
-          <Stack gap={2} justifyContent={"center"} alignItems={"center"}>
-            <Skeleton variant="circular" width={40} height={40} />
-            <Divider orientation="horizontal" flexItem />
-            <Skeleton variant="rectangular" width={210} height={60} />
-            <Skeleton variant="rounded" width={210} height={60} />
-          </Stack>
-        </ProfileWrapper>
+        <LoadingSkeleton />
       ) : !!player ? (
-        <ProfileWrapper component={"article"}>
-          <ProfileHeader rowGap={1}>
-            <OnlineStatusBadge
-              overlap="circular"
-              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-              variant="dot"
-              isOnline={isOnline}
-            >
-              <Avatar src={player?.steaminfo?.profile?.avatar ?? player?.steaminfo?.profile?.avatar}>
-                {player?.names[0]?.name[0] ?? player?.names[0]?.name[0] ?? "?"}
-              </Avatar>
-            </OnlineStatusBadge>
-            <Box sx={{ flexGrow: 1 }}>
-              <Typography
-                component={"h1"}
-                variant="h6"
-                sx={{ textOverflow: "ellipsis" }}
-              >
-                {player?.names[0]?.name ?? player?.names[0]?.name ?? "Unknown"}
-              </Typography>
-              <Typography variant="subtitle2">
-                ID: {player.player_id}
-              </Typography>
-            </Box>
-            <IconButton
-              sx={{
-                position: "absolute",
-                top: (theme) => theme.spacing(0.5),
-                right: (theme) => theme.spacing(0.5),
-              }}
-              size="small"
-              onClick={() => setOpen(false)}
-            >
-              <Close />
-            </IconButton>
-            <ActionMenu
-              handleActionClick={handleActionClick([player])}
-              actionList={actionList}
-              sx={{
-                position: "absolute",
-                top: (theme) => theme.spacing(0.5),
-                left: (theme) => theme.spacing(0.5),
-              }}
-            />
-          </ProfileHeader>
-          <Divider />
-          <Stack
-            direction="row"
-            alignItems={"center"}
-            justifyContent={"center"}
-            divider={<Divider orientation="vertical" flexItem />}
-            spacing={2}
-            sx={{ p: 1 }}
-          >
-            {playerVip && <StarIcon />}
-            {isWatched && <VisibilityIcon />}
-            {isBlacklisted && <NoAccountsIcon />}
-            {isBanned && <GavelIcon />}
-          </Stack>
-          <Divider />
-          <TabContext value={openedTab}>
-            <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-              <Tabs
-                value={openedTab}
-                onChange={handleTabChange}
-                variant="scrollable"
-                scrollButtons="auto"
-                aria-label="Player details"
-              >
-                <Tab label="Profile" value="1" />
-                <Tab label="Admin" value="2" />
-                <Tab label="Messages" value="3" />
-              </Tabs>
-            </Box>
-            <TabPanel value="1">
-              <BasicProfileDetails
-                country={player.country}
-                firstSeen={player?.created ?? player.created}
-                lastSeen={player?.names[0]?.last_seen ?? player?.names[0]?.last_seen}
-                sessionCount={player?.sessions_count ?? player?.sessions_count}
-                flags={player?.flags ?? player?.flags}
-                totalPlaytime={player?.total_playtime_seconds ?? player?.total_playtime_seconds}
-                vip={playerVip}
-              />
-            </TabPanel>
-            <TabPanel value="2">
-              <Box component={"section"}>
-                <Typography variant="h6" component={"h2"}>
-                  Penalties
-                </Typography>
-                <Penalties
-                  punish={player?.penalty_count["PUNISH"]}
-                  kick={player?.penalty_count["KICK"]}
-                  tempBan={player?.penalty_count["TEMPBAN"]}
-                  parmaBan={player?.penalty_count["PERMABAN"]}
-                />
-              </Box>
-              <Box component={"section"}>
-                <Typography variant="h6" component={"h2"}>
-                  Received actions
-                </Typography>
-                <ReceivedActions actions={receivedActions} />
-              </Box>
-            </TabPanel>
-            <TabPanel value="3">
-              <Box component={"section"}>
-                <Typography variant="h6" component={"h2"}>
-                  Messages
-                </Typography>
-                <Messages
-                  messages={player?.received_actions.filter(
-                    (action) => action.action_type === "MESSAGE"
-                  )}
-                />
-              </Box>
-            </TabPanel>
-          </TabContext>
-        </ProfileWrapper>
+        <PlayerDetails player={player} onClose={() => setOpen(false)} />
       ) : open && !player ? (
-        <ProfileWrapper>
-          <ProfileHeader>
-            <IconButton
-              sx={{
-                position: "absolute",
-                top: (theme) => theme.spacing(0.5),
-                right: (theme) => theme.spacing(0.5),
-              }}
-              size="small"
-              onClick={() => setOpen(false)}
-            >
-              <Close />
-            </IconButton>
-          </ProfileHeader>
-          <Box
-            sx={{
-              display: "grid",
-              alignContent: "center",
-              height: "100%",
-              width: "100%",
-            }}
-          >
-            <Typography variant="h6" sx={{ textAlign: "center" }}>
-              Player not found
-            </Typography>
-          </Box>
-        </ProfileWrapper>
+        <ProfileNotFound />
       ) : null}
     </ResponsiveDrawer>
   );

@@ -134,27 +134,24 @@ export const loader = async () => {
     },
   });
 
-  const teams = await cmd.GET_LIVE_TEAMS();
-
-  return { initialLogsView: logs, initialTeamView: teams };
+  return { initialLogsView: logs };
 };
 
 const Live = () => {
-  const { initialLogsView, initialTeamView } = useLoaderData();
+  const { initialLogsView } = useLoaderData();
 
   const { data: teamData } = useQuery({
-    queryKey: ["live-teams"],
+    queryKey: ["teams", "live"],
     queryFn: cmd.GET_LIVE_TEAMS,
     staleTime: 5 * 1000,
-    refetchInterval: 15 * 1000,
-    initialData: initialTeamView,
+    refetchInterval: 10 * 1000,
   });
 
   const { data: gameState } = useQuery({
-    queryKey: ["game-state"],
+    queryKey: ["game", "state"],
     queryFn: cmd.GET_GAME_STATE,
     staleTime: 5 * 1000,
-    refetchInterval: 15 * 1000,
+    refetchInterval: 10 * 1000,
   });
 
   const rows = React.useMemo(() => {
