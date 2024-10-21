@@ -1,25 +1,18 @@
 import * as React from "react";
 
-import makeStyles from "@material-ui/core/styles/makeStyles";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemAvatar from "@material-ui/core/ListItemAvatar";
-import ListItemText from "@material-ui/core/ListItemText";
-import { ListItemSecondaryAction, createStyles } from "@material-ui/core";
+import ListItem from "@mui/material/ListItem";
+import ListItemAvatar from "@mui/material/ListItemAvatar";
+import ListItemText from "@mui/material/ListItemText";
+import { ListItemButton, ListItemSecondaryAction } from "@mui/material";
 import { MapAvatar, MapDescription } from "./map-details";
 
-const useStyles = makeStyles((theme) =>
-  createStyles({
-    root: {
-      borderBottom: `1px solid ${theme.palette.divider}`,
-    },
-  })
-);
 
 export function MapListItem({ mapLayer, primary, secondary, renderAction, ...props }) {
-  const classes = useStyles();
+
+  const ListItemComponent = props.button ? ListItemButton : ListItem;
 
   return (
-    <ListItem className={classes.root} {...props}>
+    <ListItemComponent sx={{ borderBottom: `1px solid gray` }} {...props}>
       <ListItemAvatar>
         <MapAvatar mapLayer={mapLayer} />
       </ListItemAvatar>
@@ -32,6 +25,6 @@ export function MapListItem({ mapLayer, primary, secondary, renderAction, ...pro
           {renderAction(mapLayer)}
         </ListItemSecondaryAction>
       )}
-    </ListItem>
+    </ListItemComponent>
   );
 }

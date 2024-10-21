@@ -1,3 +1,3 @@
-import PlayerView from "./playerView";
+import PlayerView from "./PlayerView";
 
 export default PlayerView;

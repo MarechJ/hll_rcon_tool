@@ -1,4 +1,4 @@
-import { Grid } from "@material-ui/core";
+import Grid from "@mui/material/Grid2";
 import React from "react";
 import { WithPopver } from "../../commonComponent";
 import moment from "moment";
@@ -27,11 +27,10 @@ export const Penalites = ({ player }) => (
   </div>
 );
 
-export const PlayerPenalties = ({ classes, player }) => (
+export const PlayerPenalties = ({ player }) => (
   <Grid container>
-    <Grid item xs={12} className={classes.paddingBottom}>
+    <Grid size={12}>
       <WithPopver
-        classes={classes}
         popoverContent={<Penalites player={player} />}
       >
         <small>

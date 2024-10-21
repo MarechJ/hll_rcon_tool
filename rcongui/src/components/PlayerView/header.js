@@ -1,16 +1,15 @@
 import React from "react";
-import Grid from "@material-ui/core/Grid";
-import ListItemText from "@material-ui/core/ListItemText";
-import LinearProgress from "@material-ui/core/LinearProgress";
+import Grid from "@mui/material/Grid2";
+import ListItemText from "@mui/material/ListItemText";
+import LinearProgress from "@mui/material/LinearProgress";
 import "react-toastify/dist/ReactToastify.css";
-import useStyles from "../useStyles";
-import Button from "@material-ui/core/Button";
-import Link from "@material-ui/core/Link";
+import Button from "@mui/material/Button";
+import Link from "@mui/material/Link";
 import { toast } from "react-toastify";
-import ButtonGroup from "@material-ui/core/ButtonGroup";
-import FullscreenIcon from "@material-ui/icons/Fullscreen";
-import FullscreenExitIcon from "@material-ui/icons/FullscreenExit";
-import { IconButton } from "@material-ui/core";
+import ButtonGroup from "@mui/material/ButtonGroup";
+import FullscreenIcon from "@mui/icons-material/Fullscreen";
+import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
+import { IconButton } from "@mui/material";
 
 const AutoRefreshBar = ({
   intervalFunction,
@@ -21,7 +20,6 @@ const AutoRefreshBar = ({
   onFullScreenClick,
   isFullScreen,
 }) => {
-  const classes = useStyles();
   const [completed, setCompleted] = React.useState(0);
 
   React.useEffect(() => {
@@ -43,21 +41,21 @@ const AutoRefreshBar = ({
   }, [everyMs, intervalFunction, refreshIntevalMs]);
 
   return (
-    <React.Fragment>
-      <Grid className={classes.textLeft} container justify="flex-start">
-        <Grid item xs={12}>
-          <Grid container justify="space-between">
-            <Grid style={{ textAlign: "left" }} item xs={6}>
+    (<React.Fragment>
+      <Grid  container justifyContent="flex-start">
+        <Grid size={12}>
+          <Grid container justifyContent="space-between">
+            <Grid style={{ textAlign: "left" }}  size={6}>
               <h1>
                 Players view{" "}
-                <IconButton onClick={onFullScreenClick}>
+                <IconButton onClick={onFullScreenClick} size="large">
                   {isFullScreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
                 </IconButton>
               </h1>
             </Grid>
-            <Grid item xs={6} style={{ textAlign: "right" }}>
+            <Grid style={{ textAlign: "right" }} size={6}>
               <ButtonGroup
-                className={classes.margin}
+                
                 orientation="vertical"
                 color="primary"
                 variant="contained"
@@ -69,7 +67,7 @@ const AutoRefreshBar = ({
             </Grid>
           </Grid>
         </Grid>
-        <Grid item xs={12}>
+        <Grid size={12}>
           <Link
             style={{ cursor: "pointer" }}
             onClick={() =>
@@ -83,9 +81,9 @@ const AutoRefreshBar = ({
       <LinearProgress
         variant="determinate"
         value={completed}
-        className={classes.marginBottom}
+        
       />
-    </React.Fragment>
+    </React.Fragment>)
   );
 };
 
