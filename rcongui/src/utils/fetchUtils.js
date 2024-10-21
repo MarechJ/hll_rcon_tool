@@ -126,6 +126,8 @@ export const cmd = {
   GET_ONLINE_PLAYERS: (params) => requestFactory({ method: "GET", cmd: "get_players", ...params }),
   GET_LIVE_TEAMS: (params) => requestFactory({ method: "GET", cmd: "get_team_view", ...params }),
   GET_LIVE_LOGS: (params) => requestFactory({ method: "GET", cmd: "get_recent_logs", ...params }),
+  GET_PLAYER_COMMENTS: (params) => requestFactory({ method: "GET", cmd: "get_player_comments", ...params }),
+  GET_PLAYER_BANS: (params) => requestFactory({ method: "GET", cmd: "get_ban", ...params }),
 };
 
 export function execute(command, data) {

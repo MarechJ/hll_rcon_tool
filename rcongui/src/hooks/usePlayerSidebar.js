@@ -3,6 +3,7 @@ import { cmd } from "@/utils/fetchUtils";
 import React, { useEffect, useMemo } from "react";
 import { useGlobalStore } from "./useGlobalState";
 import dayjs from "dayjs";
+import { useQuery } from "@tanstack/react-query";
 
 export const SidebarContext = React.createContext();
 
@@ -10,82 +11,100 @@ export const PlayerSidebarProvider = ({ children }) => {
   const [open, setOpen] = React.useState(false);
   const [player, setPlayer] = React.useState(null);
   const [playerId, setPlayerId] = React.useState("");
-  const [isFetching, setIsFetching] = React.useState(false);
   const serverStatus = useGlobalStore((state) => state.status);
   const onlinePlayers = useGlobalStore((state) => state.onlinePlayers);
 
-  useEffect(() => {
-    const getPlayer = async () => {
-      if (!playerId) return;
-      setOpen(true);
-      setIsFetching(true);
-      const player = await cmd.GET_PLAYER({ params: { player_id: playerId } });
-      if (player) {
-        setPlayer({
-          ...player,
-          isOnline: onlinePlayers.some(
-            (aPlayer) => aPlayer.player_id === player.player_id
-          ),
-        });
-        setIsFetching(false);
-      } else {
-        setTimeout(() => {
-          setPlayer(null);
-          setIsFetching(false);
-        }, 2000);
-      }
-    };
-    getPlayer();
-  }, [playerId]);
-/*
-[
-    {
-        "server_number": 2,
-        "expiration": "2024-10-19T13:47:06+00:00"
-    },
-    {
-        "server_number": 1,
-        "expiration": "3000-01-01T00:00:00+00:00"
-    }
-]
-*/
+  const { data: comments } = useQuery({
+    queryKey: ["player", "comments", player?.player_id ?? playerId],
+    queryFn: () =>
+      cmd.GET_PLAYER_COMMENTS({
+        params: { player_id: player?.player_id ?? playerId },
+      }),
+    enabled: open && (!!playerId || !!player?.player_id),
+    refetchInterval: 15 * 1000,
+    initialData: [],
+  });
+
+  console.log({ enabled: open && (!!playerId || !!player?.player_id) });
+
+  const { data: profile, isFetching } = useQuery({
+    queryKey: ["player", "profile", playerId],
+    queryFn: () => cmd.GET_PLAYER({ params: { player_id: playerId } }),
+    enabled: open && !!playerId,
+    refetchOnWindowFocus: false,
+  });
+
+  const handleSetId = (id) => {
+    if (!id) return;
+    setOpen(true);
+    setPlayerId(id);
+  };
+
+  const handleSetPlayer = (player) => {
+    if (!player) return;
+    setOpen(true);
+    setPlayer(player);
+  };
+
   const extendedPlayer = useMemo(() => {
-    let is_online = false;
-    let is_vip = false;
-    if (player && onlinePlayers.length) {
-      // check online status
-      if (
-        onlinePlayers.some((aPlayer) => aPlayer.player_id === player.player_id)
-      ) {
-        is_online = true;
+    if (!open) return null;
+
+    let finalPlayer;
+
+    // if player object set
+    if (player) {
+      // find it in online players
+      finalPlayer = onlinePlayers.find(
+        (aPlayer) => aPlayer.player_id === player.player_id
+      );
+      if (finalPlayer) {
+        finalPlayer.in_online = true;
+      } else {
+        // or set to the player if not online
+        finalPlayer = { ...player };
+        finalPlayer.is_online = false;
       }
-      // check vip status
-      if (player?.profile?.vips?.length) {
-        const vip = player.profile.vips.find(vip => vip.server_number === serverStatus?.server_number);
+    }
+
+    if (!finalPlayer && profile) {
+      finalPlayer = onlinePlayers.find(
+        (aPlayer) => aPlayer.player_id === profile.player_id
+      );
+      if (finalPlayer) {
+        finalPlayer.in_online = true;
+      } else {
+        // or set to the player if not online
+        finalPlayer = {
+          profile,
+          is_online: false,
+          is_vip: false,
+        };
+        const vip = profile.vips.find(
+          (vip) => vip.server_number === serverStatus?.server_number
+        );
         if (vip && dayjs().isBefore(vip.expiration)) {
           is_vip = true;
         }
       }
-
-      return {
-        ...player,
-        is_online,
-        is_vip,
-      };
     }
-    return player;
-  }, [player, onlinePlayers, serverStatus]);
+
+    if (finalPlayer) {
+      finalPlayer.comments = comments;
+      return finalPlayer;
+    }
+
+    return null;
+  }, [player, onlinePlayers, serverStatus, comments, profile, playerId]);
 
   const contextValue = React.useMemo(
     () => ({
       open,
       setOpen,
       player: extendedPlayer,
-      setPlayer,
+      setPlayer: handleSetPlayer,
       playerId,
-      setPlayerId,
+      setPlayerId: handleSetId,
       isFetching,
-      setIsFetching,
     }),
     [open, player, playerId, isFetching]
   );
@@ -93,7 +112,7 @@ export const PlayerSidebarProvider = ({ children }) => {
   return (
     <SidebarContext.Provider value={contextValue}>
       {children}
-      <PlayerDetailDrawer />
+      {open && <PlayerDetailDrawer />}
     </SidebarContext.Provider>
   );
 };
@@ -114,7 +133,6 @@ export const usePlayerSidebar = () => {
       playerId: null,
       setPlayerId: () => {},
       isFetching: false,
-      setIsFetching: () => {},
     };
   }
 

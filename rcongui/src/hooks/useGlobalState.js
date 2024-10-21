@@ -1,3 +1,4 @@
+import { extractPlayers } from "@/utils/extractPlayers";
 import { cmd } from "@/utils/fetchUtils";
 import { useQueries } from "@tanstack/react-query";
 import { create } from "zustand";
@@ -76,10 +77,10 @@ const globalQueries = [
     },
   },
   {
-    queryKey: ["players", "live"],
-    queryFn: cmd.GET_ONLINE_PLAYERS,
+    queryKey: ["teams", "live"],
+    queryFn: cmd.GET_LIVE_TEAMS,
     select: (data) => {
-      useGlobalStore.setState((state) => ({ onlinePlayers: data }));
+      useGlobalStore.setState((state) => ({ onlinePlayers: extractPlayers(data) }));
       return data;
     },
   },
