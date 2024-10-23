@@ -34,7 +34,6 @@ export const MessageField = ({ control, errors, setValue, ...props }) => {
         multiline
         minRows={5}
         fullWidth
-        {...props}
       />
       <Select
         id="saved-messages-select"

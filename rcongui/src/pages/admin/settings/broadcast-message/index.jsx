@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Await, defer, Link, useLoaderData, useSubmit } from "react-router-dom";
 import { cmd } from "@/utils/fetchUtils";
-import { ErrorSection } from "@/components/shared/ErrorSection";
+import { AsyncClientError } from "@/components/shared/AsyncClientError";
 import {
   Autocomplete,
   Box,
@@ -144,7 +144,7 @@ const BroadcastMessagePage = () => {
       <React.Suspense fallback={<TemplateSkeleton />}>
         <Await
           resolve={data.templates}
-          errorElement={<ErrorSection title={"Welcome Templates"} />}
+          errorElement={<AsyncClientError title={"Welcome Templates"} />}
         >
           {(templates) => {
             return (

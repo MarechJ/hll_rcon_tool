@@ -77,7 +77,7 @@ const ConsoleAdminsPage = () => {
   const [checked, setChecked] = useState(new Set());
   const [searched, setSearched] = useState("");
   const [newAdmin, setNewAdmin] = useState(initialAdmin);
-  const { setPlayerId } = usePlayerSidebar();
+  const { openWithId } = usePlayerSidebar();
   const submit = useSubmit();
 
   const filteredAdmins = useMemo(
@@ -89,7 +89,7 @@ const ConsoleAdminsPage = () => {
   );
 
   const handleOpenProfile = (playerId) => {
-    setPlayerId(playerId);
+    openWithId(playerId);
   };
 
   const handleToggle = (id) => () => {

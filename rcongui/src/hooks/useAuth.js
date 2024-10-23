@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }) => {
   const {
     data: permissions,
     isLoading: isPermissionsLoading,
-    error: permissionsError,
+    isError: isPermissionsError,
   } = useQuery({
     queryKey: ["user", "permissions"],
     queryFn: cmd.GET_PERMISSIONS,
@@ -41,15 +41,16 @@ export const AuthProvider = ({ children }) => {
     refetchOnWindowFocus: false,
   });
 
+  useEffect(() => {
+    if (isAuthError || isPermissionsError) {
+      navigate("/login"); // Redirect if authentication fails
+    }
+  }, [isAuthError, isPermissionsError, navigate]);
+
   // Handle loading state
   const isLoading = isAuthLoading || isPermissionsLoading;
 
-  // Handle error state
-  if (isAuthError) {
-    navigate("/login"); // Redirect if authentication fails
-  }
-
-  if (isLoading) {
+  if (isLoading || isAuthError || isPermissionsError) {
     return (
       <Box
         sx={{

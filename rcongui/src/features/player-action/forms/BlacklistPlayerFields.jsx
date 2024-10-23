@@ -4,6 +4,7 @@ import { ReasonField } from "../fields/ReasonField";
 import { Box, Stack } from "@mui/material";
 import dayjs from "dayjs";
 import { ControlledSelect } from "@/components/form/core/ControlledSelect";
+import { useEffect } from "react";
 
 const presetTimes = [
   [2, "hours"],
@@ -12,7 +13,13 @@ const presetTimes = [
   [1, "month"],
 ];
 
-export const BlacklistPlayerFormFields = ({ control, errors, setValue, getValues, contextData }) => {
+export const BlacklistPlayerFormFields = ({ control, errors, setValue, getValues, contextData, setError, contextError }) => {
+
+  useEffect(() => {
+    if (contextError) {
+      setError("blacklist_id", { message: contextError.message });
+    }
+  }, [contextError]);
 
   return (
     <Stack gap={3}>
@@ -22,8 +29,8 @@ export const BlacklistPlayerFormFields = ({ control, errors, setValue, getValues
         name={"blacklist_id"}
         label={"Blacklist"}
         required={true}
-        defaultValue={"0"} // there is always the Default blacklist with id 0
-        options={contextData?.get_blacklists?.map(blacklist => ({
+        defaultValue={contextData?.blacklists?.length ? "0" : ""} // there is always the Default blacklist with id 0
+        options={contextData?.blacklists?.map(blacklist => ({
             label: `${blacklist.name} - ${blacklist.sync}`,
             value: String(blacklist.id),
         })) ?? []}

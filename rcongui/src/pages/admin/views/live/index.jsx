@@ -28,7 +28,7 @@ import { Header } from "@/components/game/Header";
 import { extractPlayers, extractTeamState } from "@/utils/extractPlayers";
 import { useLoaderData } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-// import teamData from "./data.json"
+// import teamViewResponse from "./data.json"
 
 export const StyledToggleButtonGroup = styled(ToggleButtonGroup)(
   ({ theme }) => ({
@@ -147,6 +147,8 @@ const Live = () => {
     refetchInterval: 10 * 1000,
   });
 
+  // const teamData = teamViewResponse.result;
+
   const { data: gameState } = useQuery({
     queryKey: ["game", "state"],
     queryFn: cmd.GET_GAME_STATE,
@@ -179,7 +181,7 @@ const Live = () => {
       <Grid
         size={{
           sm: 12,
-          md: "auto",
+          lg: "auto",
         }}
       >
         <PlayersTable columns={columns} rows={rows} data={teamData ?? {}} />
@@ -187,7 +189,7 @@ const Live = () => {
       <Grid
         size={{
           sm: 12,
-          md: "grow",
+          lg: "grow",
         }}
       >
         <GameLogs initialLogsView={initialLogsView} />

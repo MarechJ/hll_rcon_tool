@@ -34,7 +34,6 @@ export const ReasonField = ({ control, errors, setValue, ...props }) => {
         multiline
         minRows={5}
         fullWidth
-        {...props}
       />
       <Select
         id="saved-reasons-select"

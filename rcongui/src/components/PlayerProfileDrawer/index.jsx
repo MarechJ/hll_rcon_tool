@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import {
   Box,
   IconButton,
@@ -17,30 +17,34 @@ import {
   AccordionActions,
   Button,
   Skeleton,
+  Paper,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
 import { TabContext, TabPanel } from "@mui/lab";
-import { styled } from "@mui/system";
-import ActionMenu from "@/features/player-action/ActionMenu";
+import { styled, useMediaQuery } from "@mui/system";
+import { ActionMenu } from "@/features/player-action/ActionMenu";
 import dayjs from "dayjs";
-import CheckIcon from "@mui/icons-material/Check";
-import CloseIcon from "@mui/icons-material/Close";
 import StarIcon from "@mui/icons-material/Star";
-import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import NoAccountsIcon from "@mui/icons-material/NoAccounts";
 import GavelIcon from "@mui/icons-material/Gavel";
-import { green, red } from "@mui/material/colors";
+import { green, red, yellow } from "@mui/material/colors";
 import { useActionDialog } from "@/hooks/useActionDialog";
 import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
 import { CountryFlag } from "../CountryFlag";
-import { get } from "@/utils/fetchUtils";
 import {
   playerGameActions,
   playerProfileActions,
 } from "@/features/player-action/actions";
+import { ClientError } from "../shared/ClientError";
+import { useTheme } from "@mui/material/styles";
 
 const OnlineStatusBadge = styled(Badge, {
   shouldForwardProp: (props) => props !== "isOnline",
@@ -74,9 +78,11 @@ const OnlineStatusBadge = styled(Badge, {
 }));
 
 const ResponsiveDrawer = styled(Drawer)(({ theme }) => ({
-  width: "100%",
-  [theme.breakpoints.up("md")]: {
-    width: "30rem",
+  "& .MuiDrawer-paper": {
+    width: "100%",
+    [theme.breakpoints.up("sm")]: {
+      width: "30rem",
+    },
   },
 }));
 
@@ -262,31 +268,18 @@ const Messages = ({ messages }) => {
   );
 };
 
-const LoadingSkeleton = () => (
-  <ProfileWrapper>
-    <ProfileHeader>
-      <IconButton
-        sx={{
-          position: "absolute",
-          top: (theme) => theme.spacing(0.5),
-          right: (theme) => theme.spacing(0.5),
-        }}
-        size="small"
-        onClick={() => setOpen(false)}
-      >
-        <Close />
-      </IconButton>
-    </ProfileHeader>
+const LoadingSkeleton = ({ onClose }) => (
+  <DrawerBase onClose={onClose}>
     <Stack gap={2} justifyContent={"center"} alignItems={"center"}>
       <Skeleton variant="circular" width={40} height={40} />
       <Divider orientation="horizontal" flexItem />
       <Skeleton variant="rectangular" width={210} height={60} />
       <Skeleton variant="rounded" width={210} height={60} />
     </Stack>
-  </ProfileWrapper>
+  </DrawerBase>
 );
 
-const ProfileNotFound = () => (
+const DrawerBase = ({ children, onClose }) => (
   <ProfileWrapper>
     <ProfileHeader>
       <IconButton
@@ -296,11 +289,17 @@ const ProfileNotFound = () => (
           right: (theme) => theme.spacing(0.5),
         }}
         size="small"
-        onClick={() => setOpen(false)}
+        onClick={onClose}
       >
         <Close />
       </IconButton>
     </ProfileHeader>
+    <Box component={"section"} sx={{ p: 2 }}>{children}</Box>
+  </ProfileWrapper>
+);
+
+const ProfileNotFound = ({ onClose }) => (
+  <DrawerBase onClose={onClose}>
     <Box
       sx={{
         display: "grid",
@@ -313,11 +312,17 @@ const ProfileNotFound = () => (
         Profile not found
       </Typography>
     </Box>
-  </ProfileWrapper>
+  </DrawerBase>
+);
+
+const ProfileError = ({ error, onClose }) => (
+  <DrawerBase onClose={onClose}>
+    <ClientError error={error} />
+  </DrawerBase>
 );
 
 const PlayerDetails = ({ player, onClose }) => {
-  const [openedTab, setOpenedTab] = React.useState("1");
+  const [openedTab, setOpenedTab] = React.useState("profile");
   const { openDialog } = useActionDialog();
 
   const handleActionClick = (recipients) => (action) => {
@@ -330,14 +335,14 @@ const PlayerDetails = ({ player, onClose }) => {
 
   const profile = player.profile;
   const isOnline = player?.is_online;
-  const playerVip = player?.is_vip;
+  const isVip = player?.is_vip;
+  const playerVip = player?.vip;
   const isWatched = profile?.watchlist && profile?.watchlist?.is_watched;
-  const isBlacklisted = profile?.blacklist && profile?.blacklist?.is_blacklisted;
-  const isBanned = profile?.is_blacklisted || false;
+  const isBlacklisted = profile?.is_blacklisted;
+  const isBanned = profile?.is_banned;
   const actionList = isOnline ? playerGameActions : playerProfileActions;
+  const name = player?.name ?? profile.names[0]?.name ?? "?";
   const avatar = profile?.steaminfo?.profile?.avatar;
-  const name = player?.name ?? profile.names[0]?.name ?? "?"
-
 
   return (
     <ProfileWrapper component={"article"}>
@@ -348,11 +353,7 @@ const PlayerDetails = ({ player, onClose }) => {
           variant="dot"
           isOnline={isOnline}
         >
-          <Avatar
-            src={avatar}
-          >
-            {name}
-          </Avatar>
+          <Avatar src={avatar}>{name[0]}</Avatar>
         </OnlineStatusBadge>
         <Box sx={{ flexGrow: 1 }}>
           <Typography
@@ -362,7 +363,9 @@ const PlayerDetails = ({ player, onClose }) => {
           >
             {name}
           </Typography>
-          <Typography variant="subtitle2">ID: {player?.player_id ?? profile.player_id}</Typography>
+          <Typography variant="subtitle2">
+            ID: {player?.player_id ?? profile.player_id}
+          </Typography>
         </Box>
         <IconButton
           sx={{
@@ -394,10 +397,10 @@ const PlayerDetails = ({ player, onClose }) => {
         spacing={2}
         sx={{ p: 1 }}
       >
-        {playerVip && <StarIcon />}
+        {isVip && <StarIcon sx={{ color: yellow["500"] }} />}
         {isWatched && <VisibilityIcon />}
-        {isBlacklisted && <NoAccountsIcon />}
-        {isBanned && <GavelIcon />}
+        {isBlacklisted && <NoAccountsIcon sx={{ color: red["500"] }} />}
+        {isBanned && <GavelIcon sx={{ color: red["500"] }} />}
       </Stack>
       <Divider />
       <TabContext value={openedTab}>
@@ -409,18 +412,35 @@ const PlayerDetails = ({ player, onClose }) => {
             scrollButtons="auto"
             aria-label="Player details"
           >
-            <Tab label="Profile" value="1" />
-            <Tab label="Admin" value="2" />
-            <Tab label="Messages" value="3" />
+            <Tab label="Profile" value="profile" />
+            {isOnline && <Tab label="Game" value="game" />}
+            <Tab label="Admin" value="admin" />
+            <Tab
+              label="Messages"
+              value="messages"
+              disabled={
+                profile.received_actions.filter(
+                  (action) => action.action_type === "MESSAGE"
+                ).length === 0
+              }
+            />
+            <Tab
+              label="Comments"
+              value="comments"
+              disabled={player.comments.length === 0}
+            />
+            <Tab
+              label="Bans"
+              value="bans"
+              disabled={player.bans.length === 0}
+            />
           </Tabs>
         </Box>
-        <TabPanel value="1">
+        <TabPanel value="profile">
           <BasicProfileDetails
             country={player.country}
             firstSeen={profile.created ?? player.created}
-            lastSeen={
-              profile?.names[0]?.last_seen
-            }
+            lastSeen={profile?.names[0]?.last_seen}
             sessionCount={profile.sessions_count ?? profile.sessions_count}
             flags={profile.flags ?? profile.flags}
             totalPlaytime={
@@ -429,7 +449,12 @@ const PlayerDetails = ({ player, onClose }) => {
             vip={playerVip}
           />
         </TabPanel>
-        <TabPanel value="2">
+        {isOnline && (
+          <TabPanel value="game">
+            <PlayerGameDetails player={player} />
+          </TabPanel>
+        )}
+        <TabPanel value="admin">
           <Box component={"section"}>
             <Typography variant="h6" component={"h2"}>
               Penalties
@@ -448,7 +473,7 @@ const PlayerDetails = ({ player, onClose }) => {
             <ReceivedActions actions={profile.received_actions} />
           </Box>
         </TabPanel>
-        <TabPanel value="3">
+        <TabPanel value="messages">
           <Box component={"section"}>
             <Typography variant="h6" component={"h2"}>
               Messages
@@ -460,33 +485,139 @@ const PlayerDetails = ({ player, onClose }) => {
             />
           </Box>
         </TabPanel>
+        <TabPanel value="comments">
+          <Comments comments={player.comments} />
+        </TabPanel>
+        <TabPanel value="bans">
+          <Bans bans={player.bans} />
+        </TabPanel>
       </TabContext>
     </ProfileWrapper>
+  );
+};
+
+const Comments = ({ comments }) => {
+  return (
+    <Box component={"section"}>
+      <Typography variant="h6" component={"h2"}>
+        Comments
+      </Typography>
+      <Stack sx={{ gap: 1 }}>
+        {comments.map((comment) => (
+          <Comment key={comment.id} comment={comment} />
+        ))}
+      </Stack>
+    </Box>
+  );
+};
+
+const Comment = ({ comment }) => {
+  return (
+    <Box component={Paper} sx={{ p: 1 }}>
+      <Typography>{comment.content}</Typography>
+      <Divider sx={{ my: 1 }} />
+      <Typography sx={{ fontSize: "0.7rem" }} variant="subtitle2">
+        {comment.by} | {dayjs(comment.creation_time).format("HH:MM DD.MM.YY")}
+      </Typography>
+    </Box>
+  );
+};
+
+const Bans = ({ bans }) => {
+  return (
+    <Box component={"section"}>
+      <Typography variant="h6" component={"h2"}>
+        Bans
+      </Typography>
+      <Stack sx={{ gap: 1 }}>
+        {bans.map((ban) => (
+          <Ban key={ban.id} ban={ban} />
+        ))}
+      </Stack>
+    </Box>
+  );
+};
+
+const Ban = ({ ban }) => {
+  return (
+    <Box component={Paper} sx={{ p: 1 }}>
+      <Typography variant="subtitle">{ban.type}</Typography>
+      <Typography>{ban.reason}</Typography>
+      <Divider sx={{ my: 1 }} />
+      <Typography sx={{ fontSize: "0.7rem" }} variant="subtitle2">
+        {ban.by} | {dayjs(ban.ban_time).format("HH:MM DD.MM.YY")}
+      </Typography>
+    </Box>
+  );
+};
+
+const PlayerGameDetails = ({ player }) => {
+  return (
+    <Box component={"section"}>
+      <Typography variant="h6" component={"h2"}>
+        Current Game Stats
+      </Typography>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell>Stat</TableCell>
+            <TableCell>Value</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {[
+            "level",
+            "unit",
+            "loadout",
+            "team",
+            "role",
+            "kills",
+            "deaths",
+            "combat",
+            "offense",
+            "defense",
+            "support",
+          ].map((stat) => (
+            <TableRow key={stat}>
+              <TableCell>{stat}</TableCell>
+              <TableCell>{player[stat] ?? "-"}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Box>
   );
 };
 
 export const PlayerDetailDrawer = () => {
   const {
     open,
-    setOpen,
+    close,
     player,
-    isFetching,
+    isLoading,
+    commentsError,
+    bansError,
+    profileError,
   } = usePlayerSidebar();
+  const theme = useTheme();
+  const fullScreen = useMediaQuery(theme.breakpoints.down("md"));
 
   return (
     <ResponsiveDrawer
       variant="persistent"
       open={open}
       anchor="right"
-      onClose={() => setOpen(false)}
+      onClose={close}      
     >
       <Toolbar />
-      {isFetching ? (
-        <LoadingSkeleton />
+      {isLoading && !player ? (
+        <LoadingSkeleton onClose={close} />
+      ) : profileError ? (
+        <ProfileError error={profileError} onClose={close} />
       ) : !!player ? (
-        <PlayerDetails player={player} onClose={() => setOpen(false)} />
+        <PlayerDetails player={player} onClose={close} />
       ) : open && !player ? (
-        <ProfileNotFound />
+        <ProfileNotFound onClose={close} />
       ) : null}
     </ResponsiveDrawer>
   );

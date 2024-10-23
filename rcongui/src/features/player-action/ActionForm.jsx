@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import { BadgeList } from './BadgeList';
+import { useQueryClient } from '@tanstack/react-query';
 
 const ACTION_STATUS = {
   default: 'default',
@@ -12,7 +13,7 @@ const ACTION_STATUS = {
 
 const initRecipients = (recipients) =>
   recipients.map((recipient) => {
-    recipient.name = recipient?.name ?? recipient?.names[0]?.name;
+    recipient.name = recipient?.name ?? recipient?.profile.names[0]?.name;
     let removedClanName = recipient.name.replace(/^\[([^\]]*)\]/, '').trim(); // remove `[clantags]`
     let shortedName = removedClanName.substring(0, 8);
     let label = removedClanName.length > 6 ? shortedName + '...' : shortedName;
@@ -31,7 +32,7 @@ export const ActionForm = ({
   const {
     handleSubmit,
     formState: { errors },
-    ...restForm
+    ...formProps
   } = useForm({
     // to make the text inputs detect any change when calling
     // setValue from the react-hook-form
@@ -44,6 +45,7 @@ export const ActionForm = ({
   const { submitRef, closeDialog, setLoading, setError } = actionHandlers;
   const [recipientStates, setRecipientStates] = React.useState(initRecipients(recipients));
   const closeDialogTimeoutRef = React.useRef(null);
+  const queryClient = useQueryClient();
 
   React.useEffect(() => {
     setRecipientStates(initRecipients(recipients));
@@ -54,11 +56,13 @@ export const ActionForm = ({
   }, [])
 
   const onSubmit = React.useCallback(async (data) => {
+    const getPlayerId = (recipient) => recipient.player_id ?? recipient?.profile?.player_id;
+
     let allSuccess = true;
     setLoading(true)
     // get list of all selected players and ids
     const steamIds = recipientStates.map(
-      ({ recipient }) => recipient.player_id
+      ({ recipient }) => getPlayerId(recipient)
     );
     const players = recipientStates.map(({ recipient }) => recipient.name);
     // map each to a request payload
@@ -79,7 +83,7 @@ export const ActionForm = ({
     const responses = await Promise.allSettled(requests);
     // create a map of players' ids and their statuses
     const idsToStatus = recipientStates.reduce((obj, { recipient, status }) => {
-      obj[recipient.player_id] = status;
+      obj[getPlayerId(recipient)] = status;
       return obj;
     }, {});
     // determine statuses based on the response's return value
@@ -91,6 +95,8 @@ export const ActionForm = ({
         player_id = result.arguments.player_id
         if (!result.failed) {
           idsToStatus[player_id] = ACTION_STATUS.success;
+          // invalidate the player profile query
+          queryClient.invalidateQueries({ queryKey: ['player', 'profile', player_id] });
         } else {
           allSuccess = false;
           idsToStatus[player_id] = ACTION_STATUS.error;
@@ -108,9 +114,9 @@ export const ActionForm = ({
       return prevStatePlayers.map((state) => {
         const { recipient } = state;
         let nextStatus =
-          idsToStatus[recipient.player_id] !== ACTION_STATUS.success
+          idsToStatus[getPlayerId(recipient)] !== ACTION_STATUS.success
             ? ACTION_STATUS.error
-            : idsToStatus[recipient.player_id];
+            : idsToStatus[getPlayerId(recipient)];
 
         return {
           ...state,
@@ -132,7 +138,7 @@ export const ActionForm = ({
     <React.Fragment>
       <BadgeList recipients={recipientStates} />
       <form onSubmit={handleSubmit(onSubmit)}>
-        <ActionFields errors={errors} {...restForm} {...actionState} />
+        <ActionFields errors={errors} {...formProps} {...actionState} />
         <Button
           ref={submitRef}
           type="submit"
