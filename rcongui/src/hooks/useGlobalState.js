@@ -92,7 +92,8 @@ export const GlobalState = () => {
     queries: globalQueries.map((query) => ({
       ...query,
       staleTime,
-      refetchInterval,
+      // only refetch if the query is stale and does not have an error
+      refetchInterval: (query) => query.state.error ? false : refetchInterval,
     })),
   });
 

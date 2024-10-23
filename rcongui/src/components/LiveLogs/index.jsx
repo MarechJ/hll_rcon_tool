@@ -1,7 +1,7 @@
 import React, { Suspense } from "react";
 import { useStorageState } from "@/hooks/useStorageState";
 import { useAsyncInterval } from "@/hooks/useInterval"; // Updated hook with AbortController
-import { execute } from "@/utils/fetchUtils";
+import { cmd, execute } from "@/utils/fetchUtils";
 import TableChartIcon from "@mui/icons-material/TableChart";
 import TableRowsIcon from "@mui/icons-material/TableRows";
 import Grid from "@mui/material/Grid2";
@@ -34,7 +34,6 @@ import PlaylistAddCircleIcon from '@mui/icons-material/PlaylistAddCircle';
 import { useLoaderData } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { height } from "@mui/system";
 import { GridToolbar } from "@mui/x-data-grid";
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
@@ -79,7 +78,7 @@ const limitOptions = [
   100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000,
 ];
 
-const interval = 5 * 1000; // 30 seconds
+const interval = 15 * 1000; // 15 seconds
 
 const LiveLogs = ({ initialLogsView }) => {
   // Using custom hook that synchronizes the components state
@@ -100,16 +99,12 @@ const LiveLogs = ({ initialLogsView }) => {
     isLoading,
   } = useQuery({
     queryKey: ["logs", "live"],
-    queryFn: async () => {
-      const response = await execute("get_recent_logs", {
-        end: logsConfig.limit,
-        filter_action: logsConfig.actions,
-        filter_player: logsConfig.players,
-        inclusive_filter: logsConfig.inclusive,
-      });
-      const data = await response.json();
-      return data.result;
-    },
+    queryFn: cmd.GET_RECENT_LOGS({ params: {
+      end: logsConfig.limit,
+      filter_action: logsConfig.actions,
+      filter_player: logsConfig.players,
+      inclusive_filter: logsConfig.inclusive,
+    }}),
     initialData: initialLogsView,
     refetchInterval: interval, // Polling interval for updates
   });

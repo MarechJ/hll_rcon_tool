@@ -9,7 +9,7 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import CloseIcon from "@mui/icons-material/Close";
 import { useState } from "react";
 
-export function ErrorSection({ title }) {
+export function AsyncClientError({ title }) {
   const error = useAsyncError();
   const [open, setOpen] = useState(true);
 

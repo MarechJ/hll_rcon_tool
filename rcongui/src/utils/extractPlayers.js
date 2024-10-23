@@ -60,14 +60,13 @@ export const extractPlayers = (game) => {
     }
   
     if (team.count) {
+      // get team average level   
       out['avg_level'] = Math.round(levels.reduce((sum, level) => sum + level, 0) / team.count);
       
-      let mid = Math.floor(levels.length / 2);
-      if (levels.length % 2 === 0) {
-        out['med_level'] = Math.round((levels[mid] + levels[mid + 1]) / 2)
-      } else {
-        out['med_level'] = levels[mid];
-      }
+      // get team median level
+      levels.sort((a, b) => a - b);
+      const mid = Math.floor(levels.length / 2);
+      out['med_level'] = levels[mid];
     }
   
     return out;

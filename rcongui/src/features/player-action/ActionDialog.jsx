@@ -17,6 +17,7 @@ import { useActionDialog } from "@/hooks/useActionDialog";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTheme } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
+import { ClientError } from "@/components/shared/ClientError";
 
 export const ActionDialog = () => {
   const { state, closeDialog } = useActionDialog();
@@ -89,13 +90,7 @@ export const ActionDialog = () => {
         </Toolbar>
       </AppBar>
       <DialogContent dividers>
-        {error && (
-          <Alert severity="error" sx={{ mb: 1 }}>
-            <AlertTitle>{error?.name ?? "Error"}</AlertTitle>
-            {error?.message ??
-              "An error occured with your request. Open up your browser's console to investigate."}
-          </Alert>
-        )}
+        {error && <ClientError error={error} />}
         {action.deprecated && (
           <Alert severity="info" sx={{ mb: 1 }}>
             <AlertTitle>Action deprecated</AlertTitle>

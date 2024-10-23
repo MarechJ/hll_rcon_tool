@@ -1,4 +1,4 @@
-import { Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { Select, MenuItem, FormControl, InputLabel, FormHelperText } from '@mui/material';
 import { Controller } from 'react-hook-form';
 
 export function ControlledSelect({
@@ -19,15 +19,17 @@ export function ControlledSelect({
         control={control}
         defaultValue={defaultValue}
         rules={rules}
-        render={({ field }) => (
-          <Select
-            label={label}
-            value={field.value || ''} // use empty string as fallback for value
-            onChange={field.onChange}
-            onBlur={field.onBlur}
-            inputRef={field.ref}
-            disabled={disabled}
-            {...props}
+        render={({ field, fieldState: { error } }) => (
+          <>
+            <Select
+              label={label}
+              value={field.value || ''} // use empty string as fallback for value
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              inputRef={field.ref}
+              disabled={disabled}
+              error={!!error}
+              {...props}
           >
             {options.map((option) => (
               <MenuItem key={option.value} value={option.value}>
@@ -35,6 +37,8 @@ export function ControlledSelect({
               </MenuItem>
             ))}
           </Select>
+            {error && <FormHelperText>{error?.message ?? error?.text ?? "Error"}</FormHelperText>}
+          </>
         )}
       />
     </FormControl>

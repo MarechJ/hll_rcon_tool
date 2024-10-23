@@ -92,7 +92,7 @@ const VipPage = () => {
   const [checked, setChecked] = useState(new Set());
   const [searched, setSearched] = useState("");
   const [addFormData, setAddFormData] = useState(initialAddFormData);
-  const { setPlayerId } = usePlayerSidebar();
+  const { openWithId } = usePlayerSidebar();
   const submit = useSubmit();
 
   const filteredItems = useMemo(
@@ -104,7 +104,7 @@ const VipPage = () => {
   );
 
   const handleOpenProfile = (playerId) => {
-    setPlayerId(playerId);
+    openWithId(playerId);
   };
 
   const handleToggle = (id) => () => {

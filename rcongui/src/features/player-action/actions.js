@@ -11,7 +11,7 @@ import FlagIcon from '@mui/icons-material/Flag';
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import AddCommentIcon from '@mui/icons-material/AddComment';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import { execute } from '@/utils/fetchUtils';
+import { cmd, execute } from '@/utils/fetchUtils';
 import { MessageFormFields } from '@/features/player-action/forms/MessageFormFields';
 import { PunishFormFields } from '@/features/player-action/forms/PunishFormFields';
 import { WatchFormFields } from '@/features/player-action/forms/WatchFormFields';
@@ -47,6 +47,7 @@ export const messageAction = {
     component: MessageFormFields,
     icon: <MessageIcon />,
     execute: executeAction('message_player'),
+    permission: ["can_message_players"],
 };
 
 export const watchAction = {
@@ -55,6 +56,7 @@ export const watchAction = {
     component: WatchFormFields,
     icon: <RemoveRedEyeIcon />,
     execute: executeAction('watch_player'),
+    permission: ["can_add_player_watch"],
 };
 
 export const vipAction = {
@@ -63,6 +65,7 @@ export const vipAction = {
     component: AddVipFormFields,
     icon: <StarIcon />,
     execute: executeAction('add_vip'),
+    permission: ["can_add_vip"],
 };
 
 export const switchAction = {
@@ -71,6 +74,7 @@ export const switchAction = {
     component: ConfirmationOnly,
     icon: <SyncIcon />,
     execute: executeAction('switch_player_now'),
+    permission: ["can_switch_players_immediately"],
 };
 
 export const switchOnDeathAction = {
@@ -79,6 +83,7 @@ export const switchOnDeathAction = {
     component: ConfirmationOnly,
     icon: <SyncLockIcon />,
     execute: executeAction('switch_player_on_death'),
+    permission: ["can_switch_players_on_death"],
 };
 
 export const punishAction = {
@@ -87,6 +92,7 @@ export const punishAction = {
     component: PunishFormFields,
     icon: <WarningIcon />,
     execute: executeAction('punish'),
+    permission: ["can_punish_players"],
 };
 
 export const kickAction = {
@@ -95,6 +101,7 @@ export const kickAction = {
     component: PunishFormFields,
     icon: <SportsMartialArtsIcon />,
     execute: executeAction('kick'),
+    permission: ["can_kick_players"],
 };
 
 export const tempBanAction = {
@@ -103,6 +110,7 @@ export const tempBanAction = {
     component: TempBanFormFields,
     icon: <GavelIcon />,
     execute: executeAction('temp_ban'),
+    permission: ["can_temp_ban_players"],
     deprecated: true,
     deprecationNote: "We suggest utilizing blacklists for more effective ban management.",
 };
@@ -113,6 +121,7 @@ export const permaBanAction = {
     component: PermaBanFormFields,
     icon: <BlockIcon />,
     execute: executeAction('perma_ban'),
+    permission: ["can_perma_ban_players"],
     deprecated: true,
     deprecationNote: "We suggest utilizing blacklists for more effective ban management.",
 };
@@ -123,7 +132,12 @@ export const blacklistAction = {
     component: BlacklistPlayerFormFields,
     icon: <AccountBalanceIcon />,
     execute: executeAction('add_blacklist_record'),
-    context: ["get_blacklists"],
+    permission: ["can_add_blacklist_record"],
+    context: [{
+        type: "blacklists",
+        queryKey: ["get_blacklists"],
+        queryFn: () => cmd.GET_BLACKLISTS({ throwRouteError: false })
+    }],
 }
 
 export const flagAction = {
@@ -132,6 +146,7 @@ export const flagAction = {
     component: AddFlagFormFields,
     icon: <FlagIcon />,
     execute: executeAction('flag_player'),
+    permission: ["can_flag_player"],
 };
 
 export const commentAction = {
@@ -140,6 +155,7 @@ export const commentAction = {
     component: AddCommentFormFields,
     icon: <AddCommentIcon />,
     execute: executeAction('post_player_comment'),
+    permission: ["can_add_player_comments"],
 };
 
 export const clearAccountAction = {
@@ -148,6 +164,7 @@ export const clearAccountAction = {
     component: ConfirmationOnly,
     icon: <HowToRegIcon />,
     execute: executeAction('unban'),
+    permission: ["can_remove_perma_bans"],
 };
 
 
@@ -157,7 +174,7 @@ export const clearAccountAction = {
 // That will be used for a single recepient actions
 // Or make it so that it makes sure all recepients are eligible for 
 // that action
-export const generatePlayerActions = (mode, player) => {
+export const generatePlayerActions = (mode, user) => {
     // perhaps get whether is online or not based on the player
     switch (mode) {
         case 'profile':

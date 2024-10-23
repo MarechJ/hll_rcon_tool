@@ -9,29 +9,72 @@ export const SidebarContext = React.createContext();
 
 export const PlayerSidebarProvider = ({ children }) => {
   const [open, setOpen] = React.useState(false);
-  const [player, setPlayer] = React.useState(null);
   const [playerId, setPlayerId] = React.useState("");
   const serverStatus = useGlobalStore((state) => state.status);
   const onlinePlayers = useGlobalStore((state) => state.onlinePlayers);
+  const enabled = open && !!playerId;
+  const staleTime = 60 * 1000; // 60 seconds
 
-  const { data: comments } = useQuery({
-    queryKey: ["player", "comments", player?.player_id ?? playerId],
+  const {
+    data: comments,
+    isLoading: isLoadingComments,
+    error: commentsError,
+  } = useQuery({
+    queryKey: ["player", "comments", playerId],
     queryFn: () =>
       cmd.GET_PLAYER_COMMENTS({
-        params: { player_id: player?.player_id ?? playerId },
+        params: { player_id: playerId },
+        throwRouteError: false,
       }),
-    enabled: open && (!!playerId || !!player?.player_id),
-    refetchInterval: 15 * 1000,
+    enabled,
+    staleTime,
     initialData: [],
+    refetchOnWindowFocus: false,
+    refetchInterval: (query) => {
+      // Only refetch if the data is stale and there's no error
+      return query.state.isStale && !query.state.error ? staleTime : false;
+    },
   });
 
-  console.log({ enabled: open && (!!playerId || !!player?.player_id) });
-
-  const { data: profile, isFetching } = useQuery({
-    queryKey: ["player", "profile", playerId],
-    queryFn: () => cmd.GET_PLAYER({ params: { player_id: playerId } }),
-    enabled: open && !!playerId,
+  const {
+    data: bans,
+    isLoading: isLoadingBans,
+    error: bansError,
+  } = useQuery({
+    queryKey: ["player", "bans", playerId],
+    queryFn: () =>
+      cmd.GET_PLAYER_BANS({
+        params: { player_id: playerId },
+        throwRouteError: false,
+      }),
+    enabled,
+    staleTime,
+    initialData: [],
     refetchOnWindowFocus: false,
+    refetchInterval: (query) => {
+      // Only refetch if the data is stale and there's no error
+      return query.state.isStale && !query.state.error ? staleTime : false;
+    },
+  });
+
+  const {
+    data: profile,
+    isLoading: isLoadingProfile,
+    error: profileError,
+  } = useQuery({
+    queryKey: ["player", "profile", playerId],
+    queryFn: () =>
+      cmd.GET_PLAYER({
+        params: { player_id: playerId },
+        throwRouteError: false,
+      }),
+    enabled,
+    staleTime,
+    refetchOnWindowFocus: false,
+    refetchInterval: (query) => {
+      // Only refetch if the data is stale and there's no error
+      return query.state.isStale && !query.state.error ? staleTime : false;
+    },
   });
 
   const handleSetId = (id) => {
@@ -40,73 +83,71 @@ export const PlayerSidebarProvider = ({ children }) => {
     setPlayerId(id);
   };
 
-  const handleSetPlayer = (player) => {
-    if (!player) return;
-    setOpen(true);
-    setPlayer(player);
+  const handleClose = () => {
+    setOpen(false);
+    setPlayerId("");
   };
 
-  const extendedPlayer = useMemo(() => {
-    if (!open) return null;
+  const handleSwitchPlayer = (id) => {
+    setPlayerId(id);
+  };
 
-    let finalPlayer;
+  const player = useMemo(() => {
+    if (!open || !playerId) return null;
 
-    // if player object set
-    if (player) {
-      // find it in online players
-      finalPlayer = onlinePlayers.find(
-        (aPlayer) => aPlayer.player_id === player.player_id
-      );
-      if (finalPlayer) {
-        finalPlayer.in_online = true;
-      } else {
-        // or set to the player if not online
-        finalPlayer = { ...player };
-        finalPlayer.is_online = false;
-      }
+    const getOnlinePlayer = (id) =>
+      onlinePlayers.find((p) => p.player_id === id);
+
+    const getPlayerWithOnlineStatus = (player, isOnline) => ({
+      ...player,
+      is_online: isOnline,
+    });
+
+    let aPlayer = getOnlinePlayer(playerId);
+
+    if (aPlayer) {
+      aPlayer = getPlayerWithOnlineStatus(aPlayer, true);
+    } else if (profile) {
+      aPlayer = getPlayerWithOnlineStatus({ profile }, false);
+    } else {
+      return null;
     }
 
-    if (!finalPlayer && profile) {
-      finalPlayer = onlinePlayers.find(
-        (aPlayer) => aPlayer.player_id === profile.player_id
-      );
-      if (finalPlayer) {
-        finalPlayer.in_online = true;
-      } else {
-        // or set to the player if not online
-        finalPlayer = {
-          profile,
-          is_online: false,
-          is_vip: false,
-        };
-        const vip = profile.vips.find(
-          (vip) => vip.server_number === serverStatus?.server_number
-        );
-        if (vip && dayjs().isBefore(vip.expiration)) {
-          is_vip = true;
-        }
-      }
+    aPlayer.comments = comments;
+    aPlayer.bans = bans;
+    if (bans.length > 0) {
+      aPlayer.is_banned = true;
     }
 
-    if (finalPlayer) {
-      finalPlayer.comments = comments;
-      return finalPlayer;
+    const vip = aPlayer.profile.vips.find(
+      (v) => v.server_number === serverStatus?.server_number
+    );
+    if (vip && dayjs().isBefore(vip.expiration)) {
+      aPlayer.is_vip = true;
+      aPlayer.vip = vip;
     }
 
-    return null;
-  }, [player, onlinePlayers, serverStatus, comments, profile, playerId]);
+    aPlayer.player_id = aPlayer.player_id ?? aPlayer.profile.player_id;
+    aPlayer.name = aPlayer.name ?? aPlayer.profile.names[0]?.name;
+
+    return aPlayer;
+  }, [open, playerId, onlinePlayers, serverStatus, comments, bans, profile]);
+
+  const isLoading = isLoadingComments || isLoadingBans || isLoadingProfile;
 
   const contextValue = React.useMemo(
     () => ({
       open,
-      setOpen,
-      player: extendedPlayer,
-      setPlayer: handleSetPlayer,
-      playerId,
-      setPlayerId: handleSetId,
-      isFetching,
+      close: handleClose,
+      player,
+      openWithId: handleSetId,
+      switchPlayer: handleSwitchPlayer,
+      isLoading,
+      commentsError,
+      bansError,
+      profileError,
     }),
-    [open, player, playerId, isFetching]
+    [open, player, playerId, isLoading, commentsError, bansError, profileError]
   );
 
   return (
@@ -127,12 +168,14 @@ export const usePlayerSidebar = () => {
     );
     return {
       open: false,
-      setOpen: () => {},
+      close: () => {},
       player: null,
-      setPlayer: () => {},
-      playerId: null,
-      setPlayerId: () => {},
-      isFetching: false,
+      openWithId: () => {},
+      switchPlayer: () => {},
+      isLoading: false,
+      commentsError: null,
+      bansError: null,
+      profileError: null,
     };
   }
 

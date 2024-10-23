@@ -128,6 +128,8 @@ export const cmd = {
   GET_LIVE_LOGS: (params) => requestFactory({ method: "GET", cmd: "get_recent_logs", ...params }),
   GET_PLAYER_COMMENTS: (params) => requestFactory({ method: "GET", cmd: "get_player_comments", ...params }),
   GET_PLAYER_BANS: (params) => requestFactory({ method: "GET", cmd: "get_ban", ...params }),
+  GET_BLACKLISTS: (params) => requestFactory({ method: "GET", cmd: "get_blacklists", ...params }),
+  GET_RECENT_LOGS: (params) => requestFactory({ method: "GET", cmd: "get_recent_logs", ...params }),
 };
 
 export function execute(command, data) {
