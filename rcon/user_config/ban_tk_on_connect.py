@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import Optional, TypedDict
 
 from pydantic import BaseModel, Field, HttpUrl, field_serializer
@@ -6,6 +7,14 @@ from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
 DISCORD_WEBHOOK_MESSAGE = "{player} banned for TK right after connecting"
 MESSAGE = "Your first action on the server was a TEAM KILL you were banned as a result"
+
+
+class TimeFrameType(TypedDict):
+    minutes: int
+    hours: int
+    days: int
+    weeks: int
+    years: int
 
 
 class BanTeamKillOnConnectWhitelistType(TypedDict):
@@ -19,6 +28,7 @@ class BanTeamKillOnConnectType(TypedDict):
     message: str
     author_name: str
     blacklist_id: int | None
+    ban_duration: TimeFrameType
     excluded_weapons: list[str]
     max_time_after_connect_minutes: int
     ignore_tk_after_n_kills: int
@@ -35,11 +45,30 @@ class BanTeamKillOnConnectWhiteList(BaseModel):
     has_at_least_n_sessions: int = Field(ge=0, default=10)
 
 
+class TimeFrame(BaseModel):
+    minutes: int = Field(default=0, ge=0)
+    hours: int = Field(default=0, ge=0)
+    days: int = Field(default=0, ge=0)
+    weeks: int = Field(default=0, ge=0)
+    years: int = Field(default=0, ge=0)
+
+    @property
+    def as_timedelta(self):
+        return timedelta(
+            minutes=self.minutes, hours=self.hours, days=self.days, weeks=self.weeks
+        )
+
+    @property
+    def total_seconds(self):
+        return int(self.as_timedelta.total_seconds())
+
+
 class BanTeamKillOnConnectUserConfig(BaseUserConfig):
     enabled: bool = Field(default=False)
     message: str = Field(default=MESSAGE)
     author_name: str = Field(default="HATERS GONNA HATE")
     blacklist_id: int | None = None
+    ban_duration: TimeFrame = Field(default_factory=TimeFrame)
     excluded_weapons: list[str] = Field(default_factory=list)
     max_time_after_connect_minutes: int = Field(ge=1, default=5)
     ignore_tk_after_n_kills: int = Field(ge=1, default=1)
@@ -74,10 +103,20 @@ class BanTeamKillOnConnectUserConfig(BaseUserConfig):
             ),
         )
 
+        raw_duration = values.get("ban_duration")
+        ban_duration = TimeFrame(
+            minutes=raw_duration["minutes"],
+            hours=raw_duration["hours"],
+            days=raw_duration["days"],
+            weeks=raw_duration["weeks"],
+            years=raw_duration["years"],
+        )
+
         validated_conf = BanTeamKillOnConnectUserConfig(
             enabled=values.get("enabled"),
             message=values.get("message"),
             blacklist_id=values.get("blacklist_id"),
+            ban_duration=ban_duration,
             author_name=values.get("author_name"),
             excluded_weapons=values.get("excluded_weapons"),
             max_time_after_connect_minutes=values.get("max_time_after_connect_minutes"),

@@ -7,11 +7,11 @@ from typing import Any, Set, Type
 
 import click
 import pydantic
-import yaml
 from sqlalchemy import func as pg_func
 from sqlalchemy import select, text, update
 
 import rcon.expiring_vips.service
+import rcon.seed_vip.service
 import rcon.user_config
 import rcon.user_config.utils
 from rcon import auto_settings, broadcast, game_logs, routines
@@ -23,14 +23,10 @@ from rcon.game_logs import LogLoop, LogStream, load_generic_hooks
 from rcon.models import PlayerID, enter_session, install_unaccent
 from rcon.rcon import get_rcon
 from rcon.scoreboard import live_stats_loop
-from rcon.server_stats import (
-    save_server_stats_for_last_hours,
-    save_server_stats_since_inception,
-)
-from rcon.settings import SERVER_INFO
 from rcon.steam_utils import enrich_db_users
 from rcon.user_config.auto_settings import AutoSettingsConfig
 from rcon.user_config.log_stream import LogStreamUserConfig
+from rcon.user_config.seed_vip import SeedVIPUserConfig
 from rcon.user_config.webhooks import (
     BaseMentionWebhookUserConfig,
     BaseUserConfig,
@@ -55,17 +51,6 @@ def run_stats_loop():
     except:
         logger.exception("Stats loop stopped")
         sys.exit(1)
-
-
-@cli.command(name="record_server_stats_inception")
-def save_stats():
-    save_server_stats_since_inception()
-
-
-@cli.command(name="record_server_stats")
-def save_recent_stats():
-    save_server_stats_for_last_hours()
-
 
 @cli.command(name="enrich_db_users")
 def run_enrich_db_users():
@@ -124,6 +109,15 @@ def run_routines():
 @cli.command(name="expiring_vips")
 def run_expiring_vips():
     rcon.expiring_vips.service.run()
+
+
+@cli.command(name="seed_vip")
+def run_seed_vip():
+    try:
+        rcon.seed_vip.service.run()
+    except:
+        logger.exception("seed VIP stopped")
+        sys.exit(1)
 
 
 @cli.command(name="automod")

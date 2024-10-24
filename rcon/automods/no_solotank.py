@@ -22,7 +22,7 @@ from rcon.automods.models import (
     WatchStatus,
 )
 from rcon.automods.num_or_inf import num_or_inf
-from rcon.types import GameState
+from rcon.types import GameStateType
 from rcon.user_config.auto_mod_solo_tank import AutoModNoSoloTankUserConfig
 
 SOLO_TANK_RESET_SECS = 120
@@ -133,7 +133,7 @@ class NoSoloTankAutomod:
         squad_name: str,
         team: Literal["axis", "allies"],
         squad: dict,
-        game_state: GameState,
+        game_state: GameStateType,
     ) -> PunitionsToApply:
         """
         Observe all squads/players

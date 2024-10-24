@@ -755,6 +755,12 @@ class ServerCtl:
             can_fail=False,
         )
         return list(objectives)
+    
+    def get_game_mode(self):
+        """
+        Any of "IntenseWarfare", "OffensiveWarfare", or ???
+        """
+        return self._str_request("get gamemode", can_fail=False)
 
 
 if __name__ == "__main__":

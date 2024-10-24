@@ -1,4 +1,4 @@
-black==24.8.0
+black==24.10.0
 isort==5.13.2
 pytest==8.3.3
-cachetools==5.3.3
+cachetools==5.5.0

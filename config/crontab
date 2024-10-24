@@ -7,7 +7,6 @@ LOGGING_FILENAME=cron.log
 5 * * * * /bin/bash /config/do_logrotate.sh
 # This routine updates your database every day at 10:00, pull steam profiles older than 30 days
 0 10 * * * /code/manage.py enrich_db_users
-# 0 * * * * /code/manage.py record_server_stats
 # Below is an example show how to set your map to hill 400 at 9 am every day, remove the # to enable
 # 0 9 * * * /code/manage.py set_map hill400_warfare >> /config/cronout 2>&1
 # Below is an example show how to set your welcome message to Hello (line break) toto... at 23h15 every day, you can use the same variables as in the UI

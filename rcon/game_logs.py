@@ -26,6 +26,7 @@ from rcon.player_history import get_player_profile, player_has_flag
 from rcon.rcon import LOG_ACTIONS, Rcon, get_rcon
 from rcon.types import (
     AllLogTypes,
+    BlacklistRecordWithBlacklistType,
     GetDetailedPlayer,
     ParsedLogsType,
     PlayerStat,
@@ -752,11 +753,13 @@ def auto_ban_if_tks_right_after_connection(
     rcon: Rcon,
     log: StructuredLogLineWithMetaData,
     config: BanTeamKillOnConnectUserConfig | None = None,
-):
+) -> None | BlacklistRecordWithBlacklistType:
     if config is None:
         config = BanTeamKillOnConnectUserConfig.load_from_db()
     if not config or not config.enabled:
         return
+
+    result: None | BlacklistRecordWithBlacklistType = None
 
     player_name = log["player_name_1"]
     player_id = log["player_id_1"]
@@ -842,12 +845,20 @@ def auto_ban_if_tks_right_after_connection(
                 logger.info(
                     "Banning player %s for TEAMKILL after connect %s", player_name, log
                 )
-                blacklist_or_ban(
+                if config.ban_duration.total_seconds > 0:
+                    expires_at = (
+                        datetime.datetime.now() + config.ban_duration.as_timedelta
+                    )
+                else:
+                    expires_at = None
+
+                result = blacklist_or_ban(
                     rcon=rcon,
                     blacklist_id=config.blacklist_id,
                     player_id=player_id,
                     reason=reason,
                     admin_name=author,
+                    expires_at=expires_at,
                 )
                 logger.info(
                     "Banned player %s for TEAMKILL after connect %s", player_name, log
@@ -872,6 +883,8 @@ def auto_ban_if_tks_right_after_connection(
             kill_counter += 1
             if kill_counter >= ignore_after_kill:
                 last_action_is_connect = False
+
+    return result
 
 
 def get_historical_logs_records(

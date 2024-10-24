@@ -81,7 +81,7 @@ class PunishPlayer:
     name: str
     squad: str
     team: str
-    flags: List[Flag]
+    flags: List[Flag] = field(default_factory=list)
     role: str = None
     lvl: int = None
     details: PunishDetails = None

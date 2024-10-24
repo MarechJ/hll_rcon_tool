@@ -17,13 +17,13 @@ from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import SUCCESS, CommandFailedError, ServerCtl, VipId
 from rcon.maps import UNKNOWN_MAP_NAME, Layer, is_server_loading_map, parse_layer
 from rcon.models import PlayerID, PlayerVIP, enter_session
-from rcon.player_history import get_profiles, safe_save_player_action, save_player
+from rcon.player_history import get_profiles, safe_save_player_action, save_player, get_player_profile
 from rcon.settings import SERVER_INFO
 from rcon.types import (
     AdminType,
     GameLayoutRandomConstraints,
     GameServerBanType,
-    GameState,
+    GameStateType,
     GetDetailedPlayer,
     GetDetailedPlayers,
     GetPlayersType,
@@ -292,24 +292,8 @@ class Rcon(ServerCtl):
         players_by_id = detailed_players["players"]
         fail_count = detailed_players["fail_count"]
 
-        logger.debug("Getting DB profiles")
-        steam_profiles = {
-            profile[PLAYER_ID]: profile
-            for profile in get_profiles(list(players_by_id.keys()))
-        }
-
-        logger.debug("Getting VIP list")
-        try:
-            vips = set(v[PLAYER_ID] for v in super().get_vip_ids())
-        except Exception:
-            logger.exception("Failed to get VIPs")
-            vips = set()
-
         for player in players_by_id.values():
             player_id = player[PLAYER_ID]
-            profile = steam_profiles.get(player.get(PLAYER_ID), {}) or {}
-            player["profile"] = profile
-            player["is_vip"] = player_id in vips
 
             teams.setdefault(player.get("team"), {}).setdefault(
                 player.get("unit_name"), {}
@@ -505,8 +489,15 @@ class Rcon(ServerCtl):
         Level: 34
 
         """
+        # Add VIP Status
+        player_data = parse_raw_player_info(raw, player_name)
+        vip_player_ids = set(v[PLAYER_ID] for v in super().get_vip_ids())
+        player_data["is_vip"] = player_data["player_id"] in vip_player_ids
 
-        return parse_raw_player_info(raw, player_name)
+        # Add Profile
+        profile = get_player_profile(player_data["player_id"], 1)
+        player_data["profile"] = profile
+        return player_data
 
     @ttl_cache(ttl=60 * 10)
     def get_admin_ids(self) -> list[AdminType]:
@@ -795,7 +786,7 @@ class Rcon(ServerCtl):
             )
         return res
 
-    def get_gamestate(self) -> GameState:
+    def get_gamestate(self) -> GameStateType:
         """
         Returns player counts, team scores, remaining match time and current/next map
 

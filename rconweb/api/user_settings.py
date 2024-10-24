@@ -22,6 +22,7 @@ from rcon.user_config.rcon_connection_settings import RconConnectionSettingsUser
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.user_config.scorebot import ScorebotUserConfig
+from rcon.user_config.seed_vip import SeedVIPUserConfig
 from rcon.user_config.standard_messages import (
     StandardBroadcastMessagesUserConfig,
     StandardPunishmentMessagesUserConfig,
@@ -502,6 +503,19 @@ def describe_real_vip_config(request):
 
     return api_response(
         result=RealVipUserConfig.model_json_schema(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@require_http_methods(["GET"])
+def describe_seed_vip_config(request):
+    command_name = "describe_seed_vip_config"
+
+    return api_response(
+        result=SeedVIPUserConfig.model_json_schema(),
         command=command_name,
         failed=False,
     )

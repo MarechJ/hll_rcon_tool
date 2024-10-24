@@ -12,31 +12,33 @@ import { navMenus } from "./nav-data";
 import { LoginBox } from "./login";
 import { Box, createStyles, makeStyles } from "@material-ui/core";
 
-const useStyles = makeStyles((theme) => createStyles({
-  root: {
-    display: "flex",
-    flexGrow: 1,
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "start",
-    padding: theme.spacing(0.25),
-    minHeight: 0,
-    gap: theme.spacing(0.25),
-    [theme.breakpoints.up("md")]: {
+const useStyles = makeStyles((theme) =>
+  createStyles({
+    root: {
+      display: "flex",
+      flexGrow: 1,
+      flexDirection: "column",
+      justifyContent: "center",
+      alignItems: "start",
+      padding: theme.spacing(0.25),
+      minHeight: 0,
+      gap: theme.spacing(0.25),
+      [theme.breakpoints.up("md")]: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: theme.spacing(2),
+        padding: theme.spacing(0.5),
+      },
+    },
+    nav: {
+      display: "flex",
       flexDirection: "row",
+      flexGrow: 1,
       justifyContent: "space-between",
-      alignItems: "center",
-      gap: theme.spacing(2),
-      padding: theme.spacing(0.5),
-    }
-  },
-  nav: {
-    display: "flex",
-    flexDirection: "row",
-    flexGrow: 1,
-    justifyContent: "space-between",
-  },
-}))
+    },
+  })
+);
 
 const initialMenuState = navMenus.reduce((state, menu) => {
   state[menu.name] = false;
@@ -47,7 +49,7 @@ const initialMenuState = navMenus.reduce((state, menu) => {
 const Header = ({ classes }) => {
   const [openedMenu, setOpenedMenu] = React.useState(initialMenuState);
   const [anchorEl, setAnchorEl] = React.useState(null);
-  const localClasses = useStyles()
+  const localClasses = useStyles();
 
   const handleOpenMenu = (name) => (event) => {
     setOpenedMenu({
@@ -85,12 +87,18 @@ const Header = ({ classes }) => {
                     onClose={handleCloseMenu(menu.name)}
                     PaperProps={{
                       style: {
-                        minWidth: '20ch',
+                        minWidth: "20ch",
                       },
                     }}
                   >
                     {menu.links.map((link) => (
-                      <MenuItem component={RouterLink} to={link.to} key={link.to} color="inherit" onClick={handleCloseMenu(menu.name)}>
+                      <MenuItem
+                        component={RouterLink}
+                        to={link.to}
+                        key={link.to}
+                        color="inherit"
+                        onClick={handleCloseMenu(menu.name)}
+                      >
                         {link.name}
                       </MenuItem>
                     ))}

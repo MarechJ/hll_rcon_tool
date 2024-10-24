@@ -46,7 +46,7 @@ export const navMenus = [
       },
       {
         name: "Map Manager",
-        to: "/settings/maps/change"
+        to: "/settings/maps/change",
       },
       {
         name: "Audit Webhooks",
@@ -139,6 +139,10 @@ export const navMenus = [
       {
         name: "Log Stream",
         to: "/settings/log-stream",
+      },
+      {
+        name: "Seed VIP",
+        to: "/settings/seed-vip",
       },
     ],
   },
