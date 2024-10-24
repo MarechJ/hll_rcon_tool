@@ -1,76 +1,72 @@
-import React from 'react';
-import { DataGrid, useGridApiRef } from '@mui/x-data-grid';
-import { TableToolbar } from './TableToolbar';
-import { usePlayerSidebar } from '@/hooks/usePlayerSidebar';
-import { NoRowsOverlay } from '@/components/NoRowsOverlay';
+import React, { useState } from "react";
+import {
+  flexRender,
+  getCoreRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
+import { NoRowsOverlay } from "@/components/NoRowsOverlay";
+import { StyledTable, StyledTd, StyledTh, StyledTr } from "./styled-table";
 
-
-export const playerToRow = (player) => ({
-  ...player,
-  sessions_count: player?.profile?.sessions_count,
-  current_playtime_seconds: player?.profile?.current_playtime_seconds,
-  kicked_times: player?.profile?.penalty_count?.KICK,
-  punish_times: player?.profile?.penalty_count?.PUNISH,
-  tempban_times: player?.profile?.penalty_count?.TEMPBAN,
-  permaban_times: player?.profile?.penalty_count?.PERMABAN,
-  flags: player?.profile?.flags,
-  is_watched: player?.profile?.watchlist?.is_watched,
-});
-
-const PlayersTable = ({ data: teamData, rows, columns, ...props }) => {
+const PlayersTable = ({ data, columns, size }) => {
   const { openWithId, switchPlayer } = usePlayerSidebar();
 
-  const apiRef = useGridApiRef();
+  const [sorting, setSorting] = useState([]);
 
-  const tableProps = React.useMemo(
-    () => ({
-      getRowId: (row) => row.player_id,
-      checkboxSelection: true,
-      autoHeight: true,
-      initialState: {
-        sorting: {
-          sortModel: [{ field: 'current_playtime_seconds', sort: 'desc' }],
-        },
-        density: 'compact',
-      },
-      disableRowSelectionOnClick: true,
-      disableColumnMenu: true,
-      slots: {
-        toolbar: TableToolbar,
-        noRowsOverlay: NoRowsOverlay,
-      },
-      sx: { '--DataGrid-overlayHeight': '300px', maxWidth: 'calc(var(--DataGrid-columnsTotalWidth) + 50px)' },
-      onRowDoubleClick: (params) => {
-        openWithId(params.row.player_id);
-      },
-      onRowClick: (params) => {
-        switchPlayer(params.row.player_id);
-      },
-      onCellClick: (params) => {
-        if (params.field !== 'assignment' && params.field !== 'unit_name')
-          return;
-        const squadPlayers =
-          teamData.result?.[params.row.team]?.squads[params.row.unit_name]
-            ?.players;
-        const selectOrUnselect = !apiRef.current.isRowSelected(params.id);
-        squadPlayers?.forEach((player) =>
-          apiRef.current.selectRow(player.player_id, selectOrUnselect)
-        );
-      },
-    }),
-    [teamData]
-  );
+  const table = useReactTable({
+    data,
+    columns,
+    onSortingChange: setSorting,
+    getSortedRowModel: getSortedRowModel(),
+    getCoreRowModel: getCoreRowModel(),
+    state: {
+      sorting,
+    },
+  });
 
   return (
-    <DataGrid
-      columns={columns}
-      rows={rows}
-      apiRef={apiRef}
-      columnBufferPx={350}
-      disableVirtualization={false}
-      {...tableProps}
-      {...props}
-    />
+    <div>
+      <StyledTable size={size}>
+        <thead>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <StyledTr key={headerGroup.id}>
+              {headerGroup.headers.map((header) => (
+                <StyledTh
+                  key={header.id}
+                  onClick={header.column.getToggleSortingHandler()}
+                >
+                  {header.isPlaceholder ? null : (
+                    <div>
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                    </div>
+                  )}
+                </StyledTh>
+              ))}
+            </StyledTr>
+          ))}
+        </thead>
+        <tbody>
+          {table.getRowModel().rows.map((row) => (
+            <StyledTr
+              key={row.id}
+              onDoubleClick={() => openWithId(row.original.player_id)}
+              onClick={() => switchPlayer(row.original.player_id)}
+            >
+              {row.getVisibleCells().map((cell) => (
+                <StyledTd key={cell.id}>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </StyledTd>
+              ))}
+            </StyledTr>
+          ))}
+        </tbody>
+      </StyledTable>
+      {table.getRowModel().rows.length === 0 && <NoRowsOverlay />}
+    </div>
   );
 };
 

@@ -59,21 +59,34 @@ export const ActionDialogProvider = ({ children }) => {
   const queryClient = useQueryClient(); // Access react-query's client for manual queries
 
   // The openDialog function now handles fetching and dispatching
-  const openDialog = async (actionValue, recipientsValue) => {
+  /**
+   * Accepts an action and an array of recipient IDs or a single recipient ID
+   * @param {Object} action
+   * @param {Object[]|Object} recipients
+   */
+  const openDialog = async (action, aRecipients) => {
+    let recipients;
+
+    if (Array.isArray(aRecipients)) {
+      recipients = aRecipients;
+    } else {
+      recipients = [aRecipients];
+    }
+
     // Step 1: Set the initial state with the action and recipients
     dispatch({
       type: SET_STATE,
       payload: {
-        recipients: recipientsValue,
-        action: actionValue,
+        recipients,
+        action,
       },
     });
 
-    if (!actionValue?.context?.length) return;
+    if (!action?.context?.length) return;
 
     try {
       // Step 2: Fetch all the context-based data using Promise.all and queryClient
-      const promises = actionValue.context.map(({ type, ...query }) =>
+      const promises = action.context.map(({ type, ...query }) =>
         queryClient.fetchQuery({ ...query })
       );
 
@@ -81,7 +94,7 @@ export const ActionDialogProvider = ({ children }) => {
       const results = await Promise.all(promises);
 
       // Step 3: Construct the contextData object with the fetched results
-      const contextData = actionValue.context.reduce((acc, { type }, index) => {
+      const contextData = action.context.reduce((acc, { type }, index) => {
         acc[type] = results[index];
         return acc;
       }, {});
