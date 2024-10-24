@@ -261,7 +261,7 @@ def reward_players(
             if player
             else format_vip_reward_name(
                 players_lookup.get(player_id, "No player name found"),
-                format_str=config.player_messages.reward_player_message_no_vip,
+                format_str=config.reward.player_name_format_not_current_vip,
             )
         )
 
