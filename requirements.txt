@@ -22,8 +22,6 @@ ftpretty==0.4.0
 pytz>=2023.3
 pydantic==2.9.2
 discord.py==2.4.0
-# django-directory
-# django-dirctory is currently incompatible with Django 4.0+, PR is pending to fix django-directory upstream
-git+https://github.com/cemathey/django-directory@f51ee1e8dc50edf453fee4a0d9631c0e46fe9433
+django-directory>=0.0.5
 pre-commit
 humanize==4.11.0
