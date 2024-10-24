@@ -3,6 +3,7 @@ import IconButton from "@mui/material/IconButton";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import { Box, Divider, ListItemIcon, Paper, Stack, styled, Tooltip, Typography } from "@mui/material";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -17,6 +18,7 @@ const HorizontalActionMenu = styled(Stack)(({ theme }) => ({
 export function ActionMenu({
   handleActionClick,
   actionList,
+  orientation = "vertical",
   ...props
 }) {
   const { permissions: user } = useAuth();
@@ -35,7 +37,7 @@ export function ActionMenu({
   );
 
   return (
-    <Box {...props}>
+    <Box>
       <IconButton
         aria-label="more"
         id="long-button"
@@ -43,8 +45,9 @@ export function ActionMenu({
         aria-expanded={open ? "true" : undefined}
         aria-haspopup="true"
         onClick={handleClick}
+        {...props}
       >
-        <MoreVertIcon />
+        {orientation === "vertical" ? <MoreVertIcon /> : <MoreHorizIcon />}
       </IconButton>
       <Menu
         id="long-menu"
@@ -59,6 +62,7 @@ export function ActionMenu({
               handleClose();
               handleActionClick(action);
             }}
+            dense
           >
             <ListItemIcon>{action.icon}</ListItemIcon>
             <Typography
