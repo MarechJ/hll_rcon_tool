@@ -1,7 +1,6 @@
 from typing import Optional, TypedDict
 
 from pydantic import Field, HttpUrl, field_serializer, field_validator
-from steam.protobufs.steammessages_unified_base_pb2 import description
 
 from rcon.types import Roles
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
