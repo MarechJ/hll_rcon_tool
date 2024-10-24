@@ -1,78 +1,51 @@
 import React, { useEffect, useRef, useState } from "react";
-import Badge from "@material-ui/core/Badge";
-import { Comment, Send } from "@material-ui/icons";
-import {
-  Box,
-  Button,
-  Chip,
-  Drawer,
-  Grid,
-  makeStyles,
-  TextField,
-} from "@material-ui/core";
-import IconButton from "@material-ui/core/IconButton";
-import Typography from "@material-ui/core/Typography";
+import Badge from "@mui/material/Badge";
+import { Comment, Send } from "@mui/icons-material";
+import { Box, Button, Chip, Drawer, TextField } from "@mui/material";
+import IconButton from "@mui/material/IconButton";
+import Typography from "@mui/material/Typography";
 import moment from "moment";
-
-const useStyles = makeStyles((theme) => ({
-  message: {
-    whiteSpace: "pre-wrap",
-    marginTop: "5px",
-    marginBottom: "5px",
-  },
-  date: {
-    color: theme.palette.disabledColor,
-  },
-  padding: {
-    padding: theme.spacing(1),
-    overflow: "auto",
-    maxHeight: "68vh",
-  },
-}));
+import Grid from "@mui/material/Grid2";
 
 const MessageHistory = ({ data }) => {
-  const classes = useStyles();
   const [comment, setComment] = React.useState("");
 
   return (
-    <React.Fragment>
+    (<React.Fragment>
       <Box paddingLeft={2}>
         <Grid
           container
-          justify="flex-start"
+          justifyContent="flex-start"
           alignContent="flex-start"
           alignItems="flex-end"
           direction="column"
-          className={classes.padding}
           wrap="nowrap"
         >
           {data?.map((message, index) => {
             return (
-              <Grid item key={index}>
+              (<Grid key={index}>
                 <Grid
                   container
-                  justify="flex-start"
+                  justifyContent="flex-start"
                   alignContent="flex-start"
                   alignItems="flex-end"
                   direction="column"
                 >
-                  <Grid item>
+                  <Grid>
                     <Chip
                       style={{ height: "auto", paddingTop: "-10px" }}
                       color="primary"
-                      variant="default"
                       label={
-                        <Typography align="left" className={classes.message}>
+                        <Typography align="left" >
                           {message.reason}
                         </Typography>
-                      }
-                    />
+                      } />
                   </Grid>
-                  <Grid item>
+                  <Grid>
                     <Typography
                       variant="caption"
                       display="block"
-                      className={classes.date}
+                      
                       color="textSecondary"
                     >
                       {moment
@@ -83,12 +56,12 @@ const MessageHistory = ({ data }) => {
                     </Typography>
                   </Grid>
                 </Grid>
-              </Grid>
+              </Grid>)
             );
           })}
         </Grid>
       </Box>
-    </React.Fragment>
+    </React.Fragment>)
   );
 };
 

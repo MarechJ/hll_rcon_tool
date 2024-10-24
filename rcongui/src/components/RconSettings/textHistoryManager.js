@@ -1,17 +1,17 @@
 import React from "react";
 import {
-  Grid,
   IconButton,
   List,
   ListItem,
   ListItemSecondaryAction,
   ListItemText,
-} from "@material-ui/core";
-import DeleteIcon from "@material-ui/icons/Delete";
+} from "@mui/material";
+import Grid from "@mui/material/Grid2";
+import DeleteIcon from "@mui/icons-material/Delete";
 import TextHistory, { getAllNamespaces } from "../textHistory";
-import InputLabel from "@material-ui/core/InputLabel";
-import FormControl from "@material-ui/core/FormControl";
-import Select from "@material-ui/core/Select";
+import InputLabel from "@mui/material/InputLabel";
+import FormControl from "@mui/material/FormControl";
+import Select from "@mui/material/Select";
 
 const SelectNameSpace = ({ value, values, handleChange }) => (
   <FormControl>
@@ -27,7 +27,7 @@ const SelectNameSpace = ({ value, values, handleChange }) => (
     >
       <option value="" />
       {values.map((v) => (
-        <option value={v}>{v}</option>
+        <option key={'history-option'+ v} value={v}>{v}</option>
       ))}
     </Select>
   </FormControl>
@@ -40,7 +40,7 @@ class TextHistoryList extends React.Component {
     const texts = textHistory.getTexts();
 
     return (
-      <List dense>
+      (<List dense>
         {texts.map((text, idx) => (
           <ListItem key={idx}>
             <ListItemText primary={text} />
@@ -52,42 +52,44 @@ class TextHistoryList extends React.Component {
                   textHistory.deleteTextByIdx(idx);
                   this.forceUpdate();
                 }}
-              >
+                size="large">
                 <DeleteIcon />
               </IconButton>
             </ListItemSecondaryAction>
           </ListItem>
         ))}
-      </List>
+      </List>)
     );
   }
 }
 
-const TextHistoryManager = ({ classes }) => {
+const TextHistoryManager = () => {
   const [namespace, setNamespace] = React.useState("");
   const nameSpaces = getAllNamespaces();
 
   return (
-    <Grid container>
+    (<Grid container>
       {nameSpaces.length > 0 ? (
         <React.Fragment>
-          <Grid lg={12}>
+          <Grid size={{
+            lg: 12
+          }}>
             <SelectNameSpace
               value={namespace}
               handleChange={setNamespace}
               values={nameSpaces}
             />
           </Grid>
-          <Grid xs={12} className={classes.padding}>
+          <Grid size={12}>
             <TextHistoryList namespace={namespace} />
           </Grid>
         </React.Fragment>
       ) : (
-        <Grid xs={12} className={classes.padding}>
+        <Grid size={12}>
           No text recorded yet
         </Grid>
       )}
-    </Grid>
+    </Grid>)
   );
 };
 

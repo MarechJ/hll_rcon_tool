@@ -1,12 +1,11 @@
 import React from "react";
-import Autocomplete from "@material-ui/lab/Autocomplete";
-import TextField from "@material-ui/core/TextField";
-import Button from "@material-ui/core/Button";
-import Dialog from "@material-ui/core/Dialog";
+import Autocomplete from '@mui/material/Autocomplete';
+import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
 import { Duration, PlayerActions } from "./playerActions";
-import withWidth from "@material-ui/core/withWidth";
 import { Reason } from "./textInputBar";
-import Grid from "@material-ui/core/Grid";
+import Grid from "@mui/material/Grid2";
 import { DialogActions, DialogContent, DialogTitle } from "../dialog";
 import { join } from "lodash/array";
 import TextHistory from "../textHistory";
@@ -32,8 +31,6 @@ const compactProfile = (player) => {
 
 const GroupActions = ({
   players,
-  classes,
-  width,
   handleAction,
   onClose,
   open,
@@ -45,7 +42,7 @@ const GroupActions = ({
   const [saveMessage, setSaveMessage] = React.useState(true);
   const [comment, setComment] = React.useState("");
   const textHistory = new TextHistory("punishments");
-  const nbButton = ["xs"].indexOf(width) !== -1 ? 3 : 6;
+  const nbButton = 3;
   const [sharedMessages, setSharedMessages] = React.useState([]);
   React.useEffect(() => {
     getSharedMessages("punishments").then((data) => setSharedMessages(data));
@@ -55,20 +52,18 @@ const GroupActions = ({
   myPlayers = myPlayers.toJS();
 
   return (
-    <Dialog
-      onClose={onClose}
-      aria-labelledby="customized-dialog-title"
-      open={open}
-      fullWidth={width}
-      maxWidth={width}
-    >
+    (<Dialog
+        onClose={onClose}
+        aria-labelledby="customized-dialog-title"
+        open={open}
+      >
       <DialogTitle id="customized-dialog-title" onClose={onClose}>
         Apply same action on all selected players
       </DialogTitle>
       <DialogContent dividers>
         <Autocomplete
           autoFocus
-          className={classes.marginBottom}
+          
           multiple
           clearOnEscape
           id="tags-outlined"
@@ -87,7 +82,11 @@ const GroupActions = ({
         />
 
         <Grid container>
-          <Grid item xs={12} xl={12} className={classes.marginBottom}>
+          <Grid
+            size={{
+              xs: 12,
+              xl: 12
+            }}>
             <Reason
               message={message}
               handleMessageChange={setMessage}
@@ -97,11 +96,15 @@ const GroupActions = ({
               textHistory={textHistory}
             />
           </Grid>
-          <Grid item xs={12} xl={12} className={classes.marginBottom}>
+          <Grid
+            size={{
+              xs: 12,
+              xl: 12
+            }}>
             <TextField
               multiline
-              rows={1}
-              rowsMax={10}
+              minRows={1}
+              maxRows={10}
               fullWidth
               value={comment}
               onChange={(e) => setComment(e.target.value)}
@@ -110,7 +113,11 @@ const GroupActions = ({
               helperText="A comment that will NOT be displayed to the player"
             />
           </Grid>
-          <Grid item xs={12} xl={12} className={classes.marginTop}>
+          <Grid
+            size={{
+              xs: 12,
+              xl: 12
+            }}>
             <PlayerActions
               handleAction={(actionType) =>
                 selectedPlayers.forEach((p) => {
@@ -132,7 +139,11 @@ const GroupActions = ({
               displayCount={nbButton}
             />
           </Grid>
-          <Grid item xs={12} xl={12} className={classes.marginTop}>
+          <Grid
+            size={{
+              xs: 12,
+              xl: 12
+            }}>
             <Duration
               durationNumber={durationNumber}
               onNumberChange={(number) => setDurationNumber(number)}
@@ -149,8 +160,8 @@ const GroupActions = ({
           Close
         </Button>
       </DialogActions>
-    </Dialog>
+    </Dialog>)
   );
 };
 
-export default withWidth()(GroupActions);
+export default GroupActions;

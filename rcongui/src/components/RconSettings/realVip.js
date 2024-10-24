@@ -1,24 +1,19 @@
 import React from "react";
 import {
-  Button,
-  Grid,
-  IconButton,
-  Link,
   TextField,
-  Typography,
   Switch,
-  Tooltip,
   FormControlLabel,
-} from "@material-ui/core";
+} from "@mui/material";
 import {
   get,
   handle_http_errors,
   postData,
   showResponse,
 } from "../../utils/fetchUtils";
+import Grid from "@mui/material/Grid2";
 
-const RealVip = ({ classes }) => {
-  const [enabled, setEnabled] = React.useState(null);
+const RealVip = () => {
+  const [enabled, setEnabled] = React.useState(false);
   const [maxVipSlot, setMaxVipSlot] = React.useState(-1);
   const [minVipSlot, setMinVipSlot] = React.useState(-1);
   const isFirstRender = React.useRef(true);
@@ -50,8 +45,8 @@ const RealVip = ({ classes }) => {
   }, [enabled, maxVipSlot, minVipSlot]);
 
   return (
-    <Grid container>
-      <Grid item xs={12}>
+    (<Grid container>
+      <Grid size={12}>
         <FormControlLabel
           control={
             <Switch
@@ -62,25 +57,29 @@ const RealVip = ({ classes }) => {
           label="Real VIP enabled"
         />
       </Grid>
-      <Grid item xs={6}>
+      <Grid size={6}>
         <TextField
           type="number"
-          InputProps={{ inputProps: { min: 0, max: 100 } }}
+          slotProps={{
+            input: { min: 0, max: 100 }
+          }}
           label="Max num of VIP slot"
           value={maxVipSlot}
           onChange={(e) => setMaxVipSlot(e.target.value)}
         />
       </Grid>
-      <Grid item xs={6}>
+      <Grid size={6}>
         <TextField
           type="number"
-          InputProps={{ inputProps: { min: 0, max: 100 } }}
+          slotProps={{
+            input: { min: 0, max: 100 }
+          }}
           label="Min num of VIP slot"
           value={minVipSlot}
           onChange={(e) => setMinVipSlot(e.target.value)}
         />
       </Grid>
-    </Grid>
+    </Grid>)
   );
 };
 
