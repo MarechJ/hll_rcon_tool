@@ -15,7 +15,14 @@ def require_http_methods(request_method_list: list[str]):
         func,
     ):  # -> _Wrapped[Callable[..., Any], Any, Callable[..., Any], Any]:  # -> _Wrapped[Callable[..., Any], Any, Callable[..., Any], Any]:  # -> _Wrapped[Callable[..., Any], Any, Callable[..., Any], Any]:
         if func.__name__ in ENDPOINT_HTTP_METHODS:
-            raise ValueError(f"{func.__name__} already added to ENDPOINT_HTTP_METHODS")
+            # TODO: I have only seen this error when launching 4+ game servers within the same install
+            # I haven't done any looking to figure out why it happens, it should be unique to each Python
+            # interpreter instance, maybe some sort of weird race condition and I think there is likely
+            # a better underlying fix we can make, but this will resolve issues immediately for users
+            # and I don't think it will hurt anything, worst case there's some extraneous log statements
+            logger.error(f"{func.__name__} already added to ENDPOINT_HTTP_METHODS")
+            return
+            # raise ValueError(f"{func.__name__} already added to ENDPOINT_HTTP_METHODS")
 
         ENDPOINT_HTTP_METHODS[func.__name__] = request_method_list
 
