@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, Outlet } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import {
   Avatar,
   Box,
@@ -10,41 +10,43 @@ import {
   Select,
   selectClasses,
 } from "@mui/material";
-import DevicesRoundedIcon from "@mui/icons-material/DevicesRounded";
+import ChatIcon from '@mui/icons-material/Chat';
+import WavingHandIcon from '@mui/icons-material/WavingHand';
+import AnnouncementIcon from '@mui/icons-material/Announcement';
+import PodcastsIcon from '@mui/icons-material/Podcasts';
 
-const messageTypes = [
+const categories = [
   {
-    name: "Standard",
-    href: "/settings/messages/standard",
+    name: "Message",
+    href: "/settings/templates/message",
+    icon: <ChatIcon />,
   },
   {
-    name: "Punishments",
-    href: "/settings/messages/punishments",
+    name: "Reason",
+    href: "/settings/templates/reason",
+    icon: <AnnouncementIcon />,
   },
   {
     name: "Welcome",
-    href: "/settings/messages/welcome",
+    href: "/settings/templates/welcome",
+    icon: <WavingHandIcon />,
   },
   {
     name: "Broadcast",
-    href: "/settings/messages/broadcast",
+    href: "/settings/templates/broadcast",
+    icon: <PodcastsIcon />,
   },
 ];
 
 const MessagesRoot = () => {
-  const [value, setValue] = React.useState("Standard");
-
-  const handleChange = (event) => {
-    setValue(event.target.value);
-  };
+  const location = useLocation()
 
   return (
     <Box>
       <Select
         labelId="messages-select"
         id="messages-simple-select"
-        value={value}
-        onChange={handleChange}
+        value={location.pathname}
         displayEmpty
         inputProps={{ "aria-label": "Select messages" }}
         fullWidth
@@ -72,18 +74,18 @@ const MessagesRoot = () => {
           },
         }}
       >
-        <ListSubheader sx={{ pt: 0 }}>Messages</ListSubheader>
-        {messageTypes?.map((type) => (
+        <ListSubheader sx={{ pt: 0 }}>Categories</ListSubheader>
+        {categories?.map((type) => (
           <MenuItem
             key={type.name}
-            value={type.name}
+            value={type.href}
             component={Link}
             href={type.href}
             to={type.href}
           >
             <ListItemAvatar>
               <Avatar alt={type.name}>
-                <DevicesRoundedIcon sx={{ fontSize: "1rem" }} />
+                {type.icon}
               </Avatar>
             </ListItemAvatar>
             <ListItemText

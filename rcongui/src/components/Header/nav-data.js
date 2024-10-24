@@ -43,6 +43,10 @@ import ElectricalServicesIcon from '@mui/icons-material/ElectricalServices';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import GradeIcon from '@mui/icons-material/Grade';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import DraftsIcon from '@mui/icons-material/Drafts';
+import SpellcheckIcon from '@mui/icons-material/Spellcheck';
+import DvrIcon from '@mui/icons-material/Dvr';
+import OndemandVideoIcon from '@mui/icons-material/OndemandVideo';
 
 export const navMenus = [
   {
@@ -60,12 +64,12 @@ export const navMenus = [
     links: [
       {
         name: "Live",
-        to: "views/live",
+        to: "/views/live",
         icon: <BoltIcon />,
       },
       {
         name: "Team",
-        to: "views/team",
+        to: "/views/team",
         icon: <GroupsIcon />,
       },
     ],
@@ -102,33 +106,23 @@ export const navMenus = [
     links: [
       {
         name: "Players",
-        to: "records/players",
+        to: "/records/players",
         icon: <PeopleIcon />,
       },
       {
         name: "Blacklist",
-        to: "records/blacklists",
+        to: "/records/blacklists",
         icon: <AccountBalanceIcon />,
       },
       {
         name: "Game Logs",
-        to: "records/game-logs",
+        to: "/records/game-logs",
         icon: <TextSnippetIcon />,
       },
       {
         name: "Audit Logs",
-        to: "records/audit-logs",
+        to: "/records/audit-logs",
         icon: <TextSnippetIcon />,
-      },
-      {
-        name: "Admins",
-        to: "records/admin",
-        icon: <AdminPanelSettingsIcon />,
-      },
-      {
-        name: "Vips",
-        to: "records/vip",
-        icon: <GradeIcon />,
       },
     ],
   },
@@ -147,9 +141,34 @@ export const navMenus = [
         icon: <ElectricalServicesIcon />,
       },
       {
-        name: "Messages",
-        to: "/settings/messages/standard",
-        icon: <LibraryBooksIcon />,
+        name: "Welcome message",
+        to: "/settings/welcome-message",
+        icon: <DvrIcon />,
+      },
+      {
+        name: "Broadcast message",
+        to: "/settings/broadcast-message",
+        icon: <OndemandVideoIcon />,
+      },
+      {
+        name: "Console Admins",
+        to: "/settings/console-admins",
+        icon: <AdminPanelSettingsIcon />,
+      },
+      {
+        name: "Vips",
+        to: "/settings/vip",
+        icon: <GradeIcon />,
+      },
+      {
+        name: "Templates",
+        to: "/settings/templates/message",
+        icon: <DraftsIcon />,
+      },
+      {
+        name: "Profanity filter",
+        to: "/settings/profanity-filter",
+        icon: <SpellcheckIcon />,
       },
       {
         name: "Autosettings",

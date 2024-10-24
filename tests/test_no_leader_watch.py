@@ -17,7 +17,7 @@ from rcon.automods.models import (
     WatchStatus,
 )
 from rcon.automods.no_leader import NoLeaderAutomod
-from rcon.types import GameState, Roles
+from rcon.types import GameStateType, Roles
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 
 
@@ -557,7 +557,7 @@ def team_view():
     }
 
 
-game_state: GameState = {
+game_state: GameStateType = {
     "allied_score": 3,
     "axis_score": 2,
     "current_map": "",

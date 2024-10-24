@@ -1,7 +1,5 @@
-import path from 'path';
 import {
   Faceoff,
-  MatchStats,
   Player,
   ServerFinalStats,
   Weapon,
@@ -506,99 +504,6 @@ export const getLiveStats = (data: ServerFinalStats) => {
   players.sort((a, b) => b.kills - a.kills);
   return players;
 }
-
-export const getDetailedStats = (data: ServerFinalStats): MatchStats => {
-  const matchStats: MatchStats = {
-    allies: {
-      kills: 0,
-      deaths: 0,
-      weaponCategories: {},
-      killsCategory: {
-        infantry: 0,
-        armor: 0,
-        artillery: 0,
-        other: 0,
-      },
-      points: {
-        combat: 0,
-        support: 0,
-        offensive: 0,
-        defensive: 0,
-      },
-      players: [], // Initialize with an empty array or add actual player data
-    },
-    axis: {
-      kills: 0,
-      deaths: 0,
-      weaponCategories: {},
-      killsCategory: {
-        infantry: 0,
-        armor: 0,
-        artillery: 0,
-        other: 0,
-      },
-      points: {
-        combat: 0,
-        support: 0,
-        offensive: 0,
-        defensive: 0,
-      },
-      players: [], // Initialize with an empty array or add actual player data
-    },
-    weapons: {},
-  };
-
-  // Sort players by kill count
-  const players = data.result.player_stats as Player[];
-  players.sort((a, b) => b.kills - a.kills);
-
-  // Start modifying player details
-  players.forEach((player) => {
-    // Decide player's faction by a weapon used to kill
-    const isAxis = Object.keys(player.weapons).find((weapon) => {
-      const weaponKey = weapon as Weapon;
-      return axisWeapons.has(weaponKey);
-    });
-
-    player.side = isAxis ? 'axis' : 'allies';
-
-    // Update player's team statistics
-    const teamStats = matchStats[player.side];
-
-    teamStats.kills += player.kills;
-    teamStats.deaths += player.deaths;
-    teamStats.points.combat += player.combat;
-    teamStats.points.support += player.support;
-    teamStats.points.offensive += player.offense;
-    teamStats.points.defensive += player.defense;
-
-    // Categorize each weapon used to kill
-    // and update team and overall match stats
-    for (const weapon in player.weapons) {
-      const weaponKey: Weapon = weapon as Weapon; // Asserting the type of `weapon` to be `Weapon`
-      const killCount = player.weapons[weaponKey];
-      const killCategory = getKillCategory(weaponKey);
-      matchStats.weapons[weaponKey] =
-        (matchStats.weapons[weaponKey] ?? 0) + killCount;
-      if (weaponCategoryMap[weaponKey]) {
-        teamStats.weaponCategories[weaponCategoryMap[weaponKey]] =
-          (teamStats.weaponCategories[weaponCategoryMap[weaponKey]] ?? 0) +
-          killCount;
-        teamStats.killsCategory[killCategory] += killCount;
-      } else {
-        console.error(
-          `${weaponKey} is not registered. Assigned to UNKNOWN category.`
-        );
-        teamStats.weaponCategories.UNKNOWN =
-          teamStats.weaponCategories.UNKNOWN ?? 0 + killCount;
-      }
-    }
-
-    teamStats.players.push(player);
-  });
-
-  return matchStats;
-};
 
 export function mergeKillsDeaths(player: Player) {
   const { most_killed: killsByPlayer, death_by: deathsByPlayer } = player;

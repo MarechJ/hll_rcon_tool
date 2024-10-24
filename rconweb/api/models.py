@@ -32,7 +32,9 @@ class SteamPlayer(models.Model):
     """Associate a players in game ID (steam or windows) with their Django user"""
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    steam_id_64 = models.CharField(max_length=100, verbose_name="Player ID")
+    steam_id_64 = models.CharField(
+        max_length=100, verbose_name="Player ID", blank=True, default=""
+    )
     default_permissions = ()
 
 
@@ -438,4 +440,8 @@ class RconUser(User):
             ("can_change_blacklists", "Can change blacklists"),
             ("can_delete_blacklists", "Can delete blacklists"),
             ("can_change_game_layout", "Can change game layout"),
+            ("can_view_message_templates", "Can view shared message templates"),
+            ("can_add_message_templates", "Can add new shared message templates"),
+            ("can_delete_message_templates", "Can delete shared message templates"),
+            ("can_edit_message_templates", "Can edit shared message templates"),
         )

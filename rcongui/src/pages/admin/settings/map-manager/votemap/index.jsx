@@ -409,8 +409,8 @@ const VoteMapConfig = () => {
       <Accordion>
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
-          aria-controls="panel2a-content"
-          id="panel2a-header"
+          aria-controls="panel3a-content"
+          id="panel3a-header"
         >
           <Typography className={classes.heading}>
             {"Allowed maps (Whitelist)"}

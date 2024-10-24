@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from "react";
 import {
   Box,
   IconButton,
@@ -16,74 +16,84 @@ import {
   AccordionDetails,
   AccordionActions,
   Button,
-} from '@mui/material';
-import { Close } from '@mui/icons-material';
-import { TabContext, TabPanel } from '@mui/lab';
-import { styled } from '@mui/system';
-import ActionMenu from '@/features/player-action/ActionMenu';
-import dayjs from 'dayjs';
-import CheckIcon from '@mui/icons-material/Check';
-import CloseIcon from '@mui/icons-material/Close';
-import StarIcon from '@mui/icons-material/Star';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import NoAccountsIcon from '@mui/icons-material/NoAccounts';
-import GavelIcon from '@mui/icons-material/Gavel';
-import { green, red } from '@mui/material/colors';
-import { useActionDialog } from '@/hooks/useActionDialog';
-import { usePlayerSidebar } from '@/hooks/usePlayerSidebar';
-import { CountryFlag } from '../CountryFlag';
-import { get } from '@/utils/fetchUtils';
-import { playerGameActions, playerProfileActions } from '@/features/player-action/actions';
+  Skeleton,
+  Paper,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+} from "@mui/material";
+import { Close } from "@mui/icons-material";
+import { TabContext, TabPanel } from "@mui/lab";
+import { styled, useMediaQuery } from "@mui/system";
+import { ActionMenu } from "@/features/player-action/ActionMenu";
+import dayjs from "dayjs";
+import StarIcon from "@mui/icons-material/Star";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import NoAccountsIcon from "@mui/icons-material/NoAccounts";
+import GavelIcon from "@mui/icons-material/Gavel";
+import { green, red, yellow } from "@mui/material/colors";
+import { useActionDialog } from "@/hooks/useActionDialog";
+import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
+import { CountryFlag } from "../CountryFlag";
+import {
+  playerGameActions,
+  playerProfileActions,
+} from "@/features/player-action/actions";
+import { ClientError } from "../shared/ClientError";
+import { useTheme } from "@mui/material/styles";
 
 const OnlineStatusBadge = styled(Badge, {
-  shouldForwardProp: (props) => props !== 'isOnline',
+  shouldForwardProp: (props) => props !== "isOnline",
 })(({ theme, isOnline }) => ({
-  '& .MuiBadge-badge': {
-    backgroundColor: isOnline ? green['500'] : red['500'],
-    color: isOnline ? green['500'] : red['500'],
+  "& .MuiBadge-badge": {
+    backgroundColor: isOnline ? green["500"] : red["500"],
+    color: isOnline ? green["500"] : red["500"],
     boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
-    '&::after': {
-      position: 'absolute',
+    "&::after": {
+      position: "absolute",
       top: 0,
       left: 0,
-      width: '100%',
-      height: '100%',
-      borderRadius: '50%',
-      animation: isOnline ? 'ripple 1.2s infinite ease-in-out' : 'none',
-      border: '1px solid currentColor',
+      width: "100%",
+      height: "100%",
+      borderRadius: "50%",
+      animation: isOnline ? "ripple 1.2s infinite ease-in-out" : "none",
+      border: "1px solid currentColor",
       content: '""',
     },
   },
-  '@keyframes ripple': {
-    '0%': {
-      transform: 'scale(.8)',
+  "@keyframes ripple": {
+    "0%": {
+      transform: "scale(.8)",
       opacity: 1,
     },
-    '100%': {
-      transform: 'scale(2.4)',
+    "100%": {
+      transform: "scale(2.4)",
       opacity: 0,
     },
   },
 }));
 
 const ResponsiveDrawer = styled(Drawer)(({ theme }) => ({
-  width: '100%',
-  [theme.breakpoints.up('md')]: {
-    width: '30rem',
+  "& .MuiDrawer-paper": {
+    width: "100%",
+    [theme.breakpoints.up("sm")]: {
+      width: "30rem",
+    },
   },
 }));
 
 const ProfileWrapper = styled(Box)(({ theme }) => ({
-  width: '100%',
-  height: '100%',
-  overflowX: 'hidden',
+  width: "100%",
+  height: "100%",
+  overflowX: "hidden",
   paddingTop: theme.spacing(1),
   paddingBottom: theme.spacing(2),
-  [theme.breakpoints.up('sm')]: {
-    width: '30rem',
+  [theme.breakpoints.up("sm")]: {
+    width: "30rem",
   },
 }));
 
@@ -92,14 +102,14 @@ const ProfileHeader = styled(Stack)(({ theme }) => ({
   paddingLeft: theme.spacing(2),
   paddingTop: theme.spacing(2),
   marginBottom: theme.spacing(1),
-  alignItems: 'center',
-  textAlign: 'center',
-  position: 'relative',
+  alignItems: "center",
+  textAlign: "center",
+  position: "relative",
 }));
 
 const Message = styled(Box)(({ theme }) => ({
   background:
-    theme.palette.mode === 'dark'
+    theme.palette.mode === "dark"
       ? theme.palette.primary.dark
       : theme.palette.primary.light,
   color: theme.palette.primary.contrastText,
@@ -124,26 +134,26 @@ const BasicProfileDetails = ({
     <dl>
       <dt>Country</dt>
       <dd>
-        {country && country !== 'private' ? (
+        {country && country !== "private" ? (
           <>
             <CountryFlag country={country} />
             <span style={{ marginLeft: 4 }}>{country}</span>
           </>
         ) : (
-          'Unknown'
+          "Unknown"
         )}
       </dd>
       <dt>First Seen</dt>
-      <dd>{firstSeen ? dayjs(firstSeen).format('MMM DD, YYYY') : 'N/A'}</dd>
+      <dd>{firstSeen ? dayjs(firstSeen).format("MMM DD, YYYY") : "N/A"}</dd>
       <dt>Last Seen</dt>
-      <dd>{lastSeen ? dayjs(lastSeen).format('MMM DD, YYYY') : 'N/A'}</dd>
+      <dd>{lastSeen ? dayjs(lastSeen).format("MMM DD, YYYY") : "N/A"}</dd>
       <dt>VIP</dt>
-      <dd>{vip ? 'Yes' : 'No'}</dd>
+      <dd>{vip ? "Yes" : "No"}</dd>
       {vip && (
         <>
           <dt>VIP Expires</dt>
           <dd>{dayjs(vip.expiration).fromNow()}</dd>
-          <dd>{dayjs(vip.expiration).format('mm:HH MM DD, YYYY')}</dd>
+          <dd>{dayjs(vip.expiration).format("mm:HH MM DD, YYYY")}</dd>
         </>
       )}
       <dt>Visits</dt>
@@ -155,14 +165,17 @@ const BasicProfileDetails = ({
           <dt>Flags</dt>
           <dd>
             <dl>
-            {flags.map(({ flag, comment: note, modified }, index) => (
-              <React.Fragment key={flag + index}>
-                {index ? <Divider /> : null}
-                <dt>{flag}</dt>
-                <dd>Created: {modified ? dayjs(modified).format('HH:MM DD.MM.YY') : ''}</dd>
-                {note ? <dd>Note: {note}</dd> : null}
-              </React.Fragment>
-            ))}
+              {flags.map(({ flag, comment: note, modified }, index) => (
+                <React.Fragment key={flag + index}>
+                  {index ? <Divider /> : null}
+                  <dt>{flag}</dt>
+                  <dd>
+                    Created:{" "}
+                    {modified ? dayjs(modified).format("HH:MM DD.MM.YY") : ""}
+                  </dd>
+                  {note ? <dd>Note: {note}</dd> : null}
+                </React.Fragment>
+              ))}
             </dl>
           </dd>
         </>
@@ -197,16 +210,15 @@ const ReceivedActions = ({ actions }) => {
             aria-controls={`panel${i}-content`}
             id={`panel${i}-header`}
           >
-            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+            <Box sx={{ display: "flex", flexDirection: "column" }}>
               <Typography variant="subtitle2">{action.action_type}</Typography>
-              <Typography component={'span'} sx={{ fontSize: '0.7rem' }}>
-                {action.by} | {dayjs(action.time).format('HH:MM DD.MM.YY')}
+              <Typography component={"span"} sx={{ fontSize: "0.7rem" }}>
+                {action.by} | {dayjs(action.time).format("HH:MM DD.MM.YY")}
               </Typography>
             </Box>
           </AccordionSummary>
           <AccordionDetails>
             <Typography>{action.reason}</Typography>
-            {action.comment && <Typography>{action.comment}</Typography>}
           </AccordionDetails>
         </Accordion>
       ))}
@@ -223,7 +235,7 @@ const ReceivedActions = ({ actions }) => {
         </AccordionDetails>
         <AccordionActions>
           <Button onClick={() => setExpanded((prevState) => !prevState)}>
-            {expanded ? 'Hide' : 'Show'}
+            {expanded ? "Hide" : "Show"}
           </Button>
         </AccordionActions>
       </Accordion>
@@ -238,8 +250,8 @@ const Messages = ({ messages }) => {
         <Stack spacing={1.5}>
           {messages.map((message, index) => (
             <Message key={message.time}>
-              <Typography component={'span'} sx={{ fontSize: '0.7rem' }}>
-                {message.by} | {dayjs(message.time).format('HH:MM DD.MM.YY')}
+              <Typography component={"span"} sx={{ fontSize: "0.7rem" }}>
+                {message.by} | {dayjs(message.time).format("HH:MM DD.MM.YY")}
               </Typography>
               <Typography>{message.reason}</Typography>
             </Message>
@@ -247,7 +259,7 @@ const Messages = ({ messages }) => {
         </Stack>
       ) : (
         <Box>
-          <Typography variant="subtitle" component={'span'}>
+          <Typography variant="subtitle" component={"span"}>
             No messages
           </Typography>
         </Box>
@@ -256,208 +268,357 @@ const Messages = ({ messages }) => {
   );
 };
 
-export const PlayerDetailDrawer = () => {
-  const [openedTab, setOpenedTab] = React.useState('1');
+const LoadingSkeleton = ({ onClose }) => (
+  <DrawerBase onClose={onClose}>
+    <Stack gap={2} justifyContent={"center"} alignItems={"center"}>
+      <Skeleton variant="circular" width={40} height={40} />
+      <Divider orientation="horizontal" flexItem />
+      <Skeleton variant="rectangular" width={210} height={60} />
+      <Skeleton variant="rounded" width={210} height={60} />
+    </Stack>
+  </DrawerBase>
+);
 
+const DrawerBase = ({ children, onClose }) => (
+  <ProfileWrapper>
+    <ProfileHeader>
+      <IconButton
+        sx={{
+          position: "absolute",
+          top: (theme) => theme.spacing(0.5),
+          right: (theme) => theme.spacing(0.5),
+        }}
+        size="small"
+        onClick={onClose}
+      >
+        <Close />
+      </IconButton>
+    </ProfileHeader>
+    <Box component={"section"} sx={{ p: 2 }}>{children}</Box>
+  </ProfileWrapper>
+);
+
+const ProfileNotFound = ({ onClose }) => (
+  <DrawerBase onClose={onClose}>
+    <Box
+      sx={{
+        display: "grid",
+        alignContent: "center",
+        height: "100%",
+        width: "100%",
+      }}
+    >
+      <Typography variant="h6" sx={{ textAlign: "center" }}>
+        Profile not found
+      </Typography>
+    </Box>
+  </DrawerBase>
+);
+
+const ProfileError = ({ error, onClose }) => (
+  <DrawerBase onClose={onClose}>
+    <ClientError error={error} />
+  </DrawerBase>
+);
+
+const PlayerDetails = ({ player, onClose }) => {
+  const [openedTab, setOpenedTab] = React.useState("profile");
   const { openDialog } = useActionDialog();
 
-  const { open, setOpen, player } = usePlayerSidebar();
-
-  const [comments, setComments] = React.useState([]);
-  const [bans, setBans] = React.useState([]);
-
-  // TODO
-  // Move up to the sidebar provider
-  useEffect(() => {
-    const fetchComments = async () => {
-      const response = await get(
-        'get_player_comment?player_id=' + player.player_id
-      );
-      const json = await response.json();
-      const comments = json.result;
-      if (comments && typeof comments === 'object' && comments.length > 0) {
-        setComments(comments);
-      }
-    };
-
-    open && player && fetchComments();
-  }, [player, open]);
-
-  useEffect(() => {
-    const fetchBans = async () => {
-      const response = await get(
-        'get_ban?player_id=' + player.player_id
-      );
-      const json = await response.json();
-      const bans = json.result;
-      if (bans && typeof bans === 'object' && bans.length > 0) {
-        setBans(bans);
-      }
-    };
-
-    open && player && fetchBans();
-  }, [player, open]);
-
-  let receivedActions = player?.profile?.received_actions;
-
-  if (receivedActions && comments.length > 0) {
-    const ACTION_COMMENT_CREATION_GAP = 200;
-    receivedActions = receivedActions.map((action) => {
-      const commentMatch = comments.find((comment) => {
-        const commentCreated = new Date(comment.creation_time);
-        const actionCreated = new Date(action.time);
-        const createdDifference = Math.abs(commentCreated - actionCreated);
-        return createdDifference < ACTION_COMMENT_CREATION_GAP;
-      });
-      return { ...action, comment: commentMatch };
-    });
-  }
-
   const handleActionClick = (recipients) => (action) => {
-    openDialog(action, recipients)
+    openDialog(action, recipients);
   };
 
   const handleTabChange = (event, newValue) => {
     setOpenedTab(newValue);
   };
-  // TODO
-  // Move this also to the sidebar provider?
-  const isOnline = player?.profile?.sessions?.[0]?.end ?? false;
-  const isWatched = player?.profile?.watchlist && player?.profile?.watchlist?.is_watched;
-  const isBlacklisted = player?.profile?.blacklist && player?.profile?.blacklist?.is_blacklisted;
-  const isBanned = bans.length > 0;
+
+  const profile = player.profile;
+  const isOnline = player?.is_online;
+  const isVip = player?.is_vip;
+  const playerVip = player?.vip;
+  const isWatched = profile?.watchlist && profile?.watchlist?.is_watched;
+  const isBlacklisted = profile?.is_blacklisted;
+  const isBanned = profile?.is_banned;
   const actionList = isOnline ? playerGameActions : playerProfileActions;
-  // TODO
-  const playerVip = false
+  const name = player?.name ?? profile.names[0]?.name ?? "?";
+  const avatar = profile?.steaminfo?.profile?.avatar;
+
+  return (
+    <ProfileWrapper component={"article"}>
+      <ProfileHeader rowGap={1}>
+        <OnlineStatusBadge
+          overlap="circular"
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+          variant="dot"
+          isOnline={isOnline}
+        >
+          <Avatar src={avatar}>{name[0]}</Avatar>
+        </OnlineStatusBadge>
+        <Box sx={{ flexGrow: 1 }}>
+          <Typography
+            component={"h1"}
+            variant="h6"
+            sx={{ textOverflow: "ellipsis" }}
+          >
+            {name}
+          </Typography>
+          <Typography variant="subtitle2">
+            ID: {player?.player_id ?? profile.player_id}
+          </Typography>
+        </Box>
+        <IconButton
+          sx={{
+            position: "absolute",
+            top: (theme) => theme.spacing(0.5),
+            right: (theme) => theme.spacing(0.5),
+          }}
+          size="small"
+          onClick={onClose}
+        >
+          <Close />
+        </IconButton>
+        <ActionMenu
+          handleActionClick={handleActionClick([player])}
+          actionList={actionList}
+          sx={{
+            position: "absolute",
+            top: (theme) => theme.spacing(0.5),
+            left: (theme) => theme.spacing(0.5),
+          }}
+        />
+      </ProfileHeader>
+      <Divider />
+      <Stack
+        direction="row"
+        alignItems={"center"}
+        justifyContent={"center"}
+        divider={<Divider orientation="vertical" flexItem />}
+        spacing={2}
+        sx={{ p: 1 }}
+      >
+        {isVip && <StarIcon sx={{ color: yellow["500"] }} />}
+        {isWatched && <VisibilityIcon />}
+        {isBlacklisted && <NoAccountsIcon sx={{ color: red["500"] }} />}
+        {isBanned && <GavelIcon sx={{ color: red["500"] }} />}
+      </Stack>
+      <Divider />
+      <TabContext value={openedTab}>
+        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+          <Tabs
+            value={openedTab}
+            onChange={handleTabChange}
+            variant="scrollable"
+            scrollButtons="auto"
+            aria-label="Player details"
+          >
+            <Tab label="Profile" value="profile" />
+            {isOnline && <Tab label="Game" value="game" />}
+            <Tab label="Admin" value="admin" />
+            <Tab
+              label="Messages"
+              value="messages"
+              disabled={
+                profile.received_actions.filter(
+                  (action) => action.action_type === "MESSAGE"
+                ).length === 0
+              }
+            />
+            <Tab
+              label="Comments"
+              value="comments"
+              disabled={player.comments.length === 0}
+            />
+            <Tab
+              label="Bans"
+              value="bans"
+              disabled={player.bans.length === 0}
+            />
+          </Tabs>
+        </Box>
+        <TabPanel value="profile">
+          <BasicProfileDetails
+            country={player.country}
+            firstSeen={profile.created ?? player.created}
+            lastSeen={profile?.names[0]?.last_seen}
+            sessionCount={profile.sessions_count ?? profile.sessions_count}
+            flags={profile.flags ?? profile.flags}
+            totalPlaytime={
+              profile.total_playtime_seconds ?? profile.total_playtime_seconds
+            }
+            vip={playerVip}
+          />
+        </TabPanel>
+        {isOnline && (
+          <TabPanel value="game">
+            <PlayerGameDetails player={player} />
+          </TabPanel>
+        )}
+        <TabPanel value="admin">
+          <Box component={"section"}>
+            <Typography variant="h6" component={"h2"}>
+              Penalties
+            </Typography>
+            <Penalties
+              punish={profile.penalty_count["PUNISH"]}
+              kick={profile.penalty_count["KICK"]}
+              tempBan={profile.penalty_count["TEMPBAN"]}
+              parmaBan={profile.penalty_count["PERMABAN"]}
+            />
+          </Box>
+          <Box component={"section"}>
+            <Typography variant="h6" component={"h2"}>
+              Received actions
+            </Typography>
+            <ReceivedActions actions={profile.received_actions} />
+          </Box>
+        </TabPanel>
+        <TabPanel value="messages">
+          <Box component={"section"}>
+            <Typography variant="h6" component={"h2"}>
+              Messages
+            </Typography>
+            <Messages
+              messages={profile.received_actions.filter(
+                (action) => action.action_type === "MESSAGE"
+              )}
+            />
+          </Box>
+        </TabPanel>
+        <TabPanel value="comments">
+          <Comments comments={player.comments} />
+        </TabPanel>
+        <TabPanel value="bans">
+          <Bans bans={player.bans} />
+        </TabPanel>
+      </TabContext>
+    </ProfileWrapper>
+  );
+};
+
+const Comments = ({ comments }) => {
+  return (
+    <Box component={"section"}>
+      <Typography variant="h6" component={"h2"}>
+        Comments
+      </Typography>
+      <Stack sx={{ gap: 1 }}>
+        {comments.map((comment) => (
+          <Comment key={comment.id} comment={comment} />
+        ))}
+      </Stack>
+    </Box>
+  );
+};
+
+const Comment = ({ comment }) => {
+  return (
+    <Box component={Paper} sx={{ p: 1 }}>
+      <Typography>{comment.content}</Typography>
+      <Divider sx={{ my: 1 }} />
+      <Typography sx={{ fontSize: "0.7rem" }} variant="subtitle2">
+        {comment.by} | {dayjs(comment.creation_time).format("HH:MM DD.MM.YY")}
+      </Typography>
+    </Box>
+  );
+};
+
+const Bans = ({ bans }) => {
+  return (
+    <Box component={"section"}>
+      <Typography variant="h6" component={"h2"}>
+        Bans
+      </Typography>
+      <Stack sx={{ gap: 1 }}>
+        {bans.map((ban) => (
+          <Ban key={ban.id} ban={ban} />
+        ))}
+      </Stack>
+    </Box>
+  );
+};
+
+const Ban = ({ ban }) => {
+  return (
+    <Box component={Paper} sx={{ p: 1 }}>
+      <Typography variant="subtitle">{ban.type}</Typography>
+      <Typography>{ban.reason}</Typography>
+      <Divider sx={{ my: 1 }} />
+      <Typography sx={{ fontSize: "0.7rem" }} variant="subtitle2">
+        {ban.by} | {dayjs(ban.ban_time).format("HH:MM DD.MM.YY")}
+      </Typography>
+    </Box>
+  );
+};
+
+const PlayerGameDetails = ({ player }) => {
+  return (
+    <Box component={"section"}>
+      <Typography variant="h6" component={"h2"}>
+        Current Game Stats
+      </Typography>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell>Stat</TableCell>
+            <TableCell>Value</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {[
+            "level",
+            "unit",
+            "loadout",
+            "team",
+            "role",
+            "kills",
+            "deaths",
+            "combat",
+            "offense",
+            "defense",
+            "support",
+          ].map((stat) => (
+            <TableRow key={stat}>
+              <TableCell>{stat}</TableCell>
+              <TableCell>{player[stat] ?? "-"}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Box>
+  );
+};
+
+export const PlayerDetailDrawer = () => {
+  const {
+    open,
+    close,
+    player,
+    isLoading,
+    commentsError,
+    bansError,
+    profileError,
+  } = usePlayerSidebar();
+  const theme = useTheme();
+  const fullScreen = useMediaQuery(theme.breakpoints.down("md"));
 
   return (
     <ResponsiveDrawer
       variant="persistent"
       open={open}
       anchor="right"
-      onClose={() => setOpen(false)}
+      onClose={close}      
     >
       <Toolbar />
-      {player && (
-        <ProfileWrapper component={'article'}>
-          <ProfileHeader rowGap={1}>
-            <OnlineStatusBadge
-              overlap="circular"
-              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-              variant="dot"
-              isOnline={isOnline}
-            >
-              <Avatar src={player.profile?.steaminfo?.profile?.avatar}>
-                {player.name[0]}
-              </Avatar>
-            </OnlineStatusBadge>
-            <Box sx={{ flexGrow: 1 }}>
-              <Typography
-                component={'h1'}
-                variant="h6"
-                sx={{ textOverflow: 'ellipsis' }}
-              >
-                {player.name}
-              </Typography>
-              <Typography variant="subtitle2">
-                ID: {player.player_id}
-              </Typography>
-            </Box>
-            <IconButton
-              sx={{
-                position: 'absolute',
-                top: (theme) => theme.spacing(0.5),
-                right: (theme) => theme.spacing(0.5),
-              }}
-              size="small"
-              onClick={() => setOpen(false)}
-            >
-              <Close />
-            </IconButton>
-            <ActionMenu
-              handleActionClick={handleActionClick([player])}
-              actionList={actionList}
-              sx={{
-                position: 'absolute',
-                top: (theme) => theme.spacing(0.5),
-                left: (theme) => theme.spacing(0.5),
-              }}
-            />
-          </ProfileHeader>
-          <Divider />
-          <Stack
-            direction="row"
-            alignItems={'center'}
-            justifyContent={'center'}
-            divider={<Divider orientation="vertical" flexItem />}
-            spacing={2}
-            sx={{ p: 1 }}
-          >
-            {playerVip && <StarIcon />}
-            {isWatched && <VisibilityIcon />}
-            {isBlacklisted && <NoAccountsIcon />}
-            {isBanned && <GavelIcon />}
-          </Stack>
-          <Divider />
-          <TabContext value={openedTab}>
-            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-              <Tabs
-                value={openedTab}
-                onChange={handleTabChange}
-                variant="scrollable"
-                scrollButtons="auto"
-                aria-label="Player details"
-              >
-                <Tab label="Profile" value="1" />
-                <Tab label="Admin" value="2" />
-                <Tab label="Messages" value="3" />
-              </Tabs>
-            </Box>
-            <TabPanel value="1">
-              <BasicProfileDetails
-                country={player.country}
-                firstSeen={player?.profile.created}
-                lastSeen={player?.profile.names?.[0]?.last_seen}
-                sessionCount={player?.profile.sessions_count}
-                flags={player?.profile.flags}
-                totalPlaytime={player?.profile.total_playtime_seconds}
-                vip={playerVip}
-              />
-            </TabPanel>
-            <TabPanel value="2">
-              <Box component={'section'}>
-                <Typography variant="h6" component={'h2'}>
-                  Penalties
-                </Typography>
-                <Penalties
-                  punish={player?.profile?.penalty_count['PUNISH']}
-                  kick={player?.profile?.penalty_count['KICK']}
-                  tempBan={player?.profile?.penalty_count['TEMPBAN']}
-                  parmaBan={player?.profile?.penalty_count['PERMABAN']}
-                />
-              </Box>
-              <Box component={'section'}>
-                <Typography variant="h6" component={'h2'}>
-                  Received actions
-                </Typography>
-                <ReceivedActions actions={receivedActions} />
-              </Box>
-            </TabPanel>
-            <TabPanel value="3">
-              <Box component={'section'}>
-                <Typography variant="h6" component={'h2'}>
-                  Messages
-                </Typography>
-                <Messages
-                  messages={player?.profile?.received_actions.filter(
-                    (action) => action.action_type === 'MESSAGE'
-                  )}
-                />
-              </Box>
-            </TabPanel>
-          </TabContext>
-        </ProfileWrapper>
-      )}
+      {isLoading && !player ? (
+        <LoadingSkeleton onClose={close} />
+      ) : profileError ? (
+        <ProfileError error={profileError} onClose={close} />
+      ) : !!player ? (
+        <PlayerDetails player={player} onClose={close} />
+      ) : open && !player ? (
+        <ProfileNotFound onClose={close} />
+      ) : null}
     </ResponsiveDrawer>
   );
 };

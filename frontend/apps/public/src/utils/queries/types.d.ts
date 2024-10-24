@@ -24,7 +24,6 @@ type MatchMap = {
   environment: MapEnvironment;
   pretty_name: string;
   image_name: string;
-  orientation: "horizontal" | "vertical";
 }
 
 type Map = {
@@ -35,6 +34,7 @@ type Map = {
   shortname: string;
   allies: MapTeam;
   axis: MapTeam;
+  orientation: "horizontal" | "vertical";
 }
 
 type ScoreboardMap = {
@@ -42,7 +42,7 @@ type ScoreboardMap = {
   creation_time: string;
   start: ISO_8601_Timestamp;
   end: ISO_8601_Timestamp;
-  map_name: MatchMap;
+  map: MatchMap;
   result: {
     allied: number;
     axis: number;

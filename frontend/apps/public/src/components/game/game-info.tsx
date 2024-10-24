@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import { PublicInfo } from '../../utils/queries/types';
 import MapFigure from './map-figure';
 import GameOverview from './game-overview';
@@ -20,6 +19,7 @@ export default function LiveGameInfo({ game }: { game: PublicInfo }) {
       <h2 className="sr-only">Game Info</h2>
       <div className="flex flex-col-reverse xl:flex-row divide-y xl:divide-y-0">
         <GameOverview
+          map={game.current_map.map}
           allies={allies}
           axis={axis}
           alliesCount={game.player_count_by_team.allied}
@@ -34,11 +34,13 @@ export default function LiveGameInfo({ game }: { game: PublicInfo }) {
             text={'Now'}
             src={`/maps/${game.current_map.map.image_name}`}
             name={game.current_map.map.pretty_name}
+            className='w-1/2 h-10 xl:h-full'
           />
           <MapFigure
             text={'Up next'}
             src={`/maps/${game.next_map.map.image_name}`}
             name={game.next_map.map.pretty_name}
+            className='w-1/2 h-10 xl:h-full'
             muted
           />
         </aside>

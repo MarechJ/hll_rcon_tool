@@ -1,91 +1,35 @@
-import * as React from 'react';
-import { createTheme, ThemeProvider, alpha } from '@mui/material/styles';
-import { Container, Box, Stack, CssBaseline } from '@mui/material';
-import getDashboardTheme from '@/themes/getDashboardTheme';
-import AppNavbar from '@/components/layout/AppNavbar';
-import Header from '@/components/layout/Header';
-import SideMenu from '@/components/layout/SideMenu';
-import TemplateFrame from '@/pages/TemplateFrame';
+import * as React from "react";
+import { createTheme, ThemeProvider, alpha } from "@mui/material/styles";
+import { Container, Box, Stack, CssBaseline } from "@mui/material";
+import getDashboardTheme from "@/themes/getDashboardTheme";
+import AppNavbar from "@/components/layout/AppNavbar";
+import Header from "@/components/layout/Header";
+import SideMenu from "@/components/layout/SideMenu";
+import TemplateFrame from "@/pages/TemplateFrame";
 import { ToastContainer } from "react-toastify";
 import { defer, Outlet, redirect } from "react-router-dom";
-import { useStorageState } from "@/hooks/useStorageState"
-import { get } from '@/utils/fetchUtils';
+import { useStorageState } from "@/hooks/useStorageState";
+import { cmd, get } from "@/utils/fetchUtils";
 import "react-toastify/dist/ReactToastify.css";
-import { ActionDialogProvider } from '@/hooks/useActionDialog';
-import { PlayerSidebarProvider } from '@/hooks/usePlayerSidebar';
+import { ActionDialogProvider } from "@/hooks/useActionDialog";
+import { PlayerSidebarProvider } from "@/hooks/usePlayerSidebar";
 
-const fetchResource = async (url, errorMessage) => {
-  try {
-    const response = await get(url);
-    if (!response.ok) throw new Response(errorMessage, { status: 404 });
-    const data = await response.json();
-    if (!data.result) throw new Response(errorMessage, { status: 404 });
-    return data.result;
-  } catch (error) {
-    console.warn(`Failed to fetch ${url}:`, error);
-    return null; // Return null if any request fails
-  }
+export const loader = async () => {
+  return null;
 };
 
 export const action = async ({ request }) => {
-  const { intent }  = Object.fromEntries(await request.formData());
+  const { intent } = Object.fromEntries(await request.formData());
 
-  if (intent === 'logout') {
-      const response = await get('logout');
-      const data = await response.json();
-      const success = data.result;
+  if (intent === "logout") {
+    const success = await cmd.LOGOUT();
 
-      if (!success) {
-        throw data;
-      }
-
-      return redirect('/login')
-  }
-}
-
-export const loader = async () => {
-    try {
-        const response = await get('is_logged_in');
-        const data = await response.json();
-
-        const authenticated = data.result.authenticated;
-
-        if (!authenticated) {
-            throw new Error('Not authenticated.')
-        }
-
-        const fetchUserPermissions = fetchResource(
-          'get_own_user_permissions',
-          'Failed to load own permissions.'
-        )
-
-        const fetchConnectionInfo = fetchResource(
-          'get_connection_info',
-          'Failed to load crcon connection info.'
-        )
-
-        const fetchOtherServers = fetchResource(
-          'get_server_list',
-          'Failed to load crcon server list.'
-        )
-
-          // Run all promises concurrently
-        const [permissions, thisServer, otherServers] = await Promise.all([
-          fetchUserPermissions,
-          fetchConnectionInfo,
-          fetchOtherServers,
-        ]);
-
-        return defer({ 
-          permissions,
-          thisServer,
-          otherServers
-        });
-
-    } catch (error) {
-        return redirect('/login')
+    if (success) {
+      return redirect("/login");
     }
-}
+
+  }
+};
 
 export default function Root() {
   const [mode, setMode] = useStorageState("mode", "dark");
@@ -94,18 +38,18 @@ export default function Root() {
   const [openDrawer, setOpenDrawer] = React.useState(true);
 
   const toggleDrawer = () => {
-    setOpenDrawer(prev => !prev);
+    setOpenDrawer((prev) => !prev);
   };
 
   const toggleColorMode = () => {
-    const newMode = mode === 'dark' ? 'light' : 'dark';
+    const newMode = mode === "dark" ? "light" : "dark";
     setMode(newMode);
   };
 
   const toggleWidthMode = () => {
-    const newMode = widthMode === "xl" ? "false" : "xl"
-    setWidthMode(newMode)
-  }
+    const newMode = widthMode === "xl" ? "false" : "xl";
+    setWidthMode(newMode);
+  };
 
   return (
     <TemplateFrame
@@ -118,7 +62,7 @@ export default function Root() {
     >
       <ThemeProvider theme={dashboardTheme}>
         <CssBaseline enableColorScheme />
-        <Box sx={{ display: 'flex' }}>
+        <Box sx={{ display: "flex" }}>
           <SideMenu open={openDrawer} />
           <AppNavbar />
           {/* Main content */}
@@ -127,13 +71,13 @@ export default function Root() {
             sx={(theme) => ({
               flexGrow: 1,
               backgroundColor: alpha(theme.palette.background.default, 1),
-              overflow: 'auto',
+              overflow: "auto",
             })}
           >
             <Stack
               spacing={2}
               sx={{
-                alignItems: 'center',
+                alignItems: "center",
                 mx: 3,
                 pb: 10,
                 mt: { xs: 8, lg: 0 },
@@ -144,7 +88,7 @@ export default function Root() {
                 <ActionDialogProvider>
                   <PlayerSidebarProvider>
                     <Outlet />
-                  </PlayerSidebarProvider>                  
+                  </PlayerSidebarProvider>
                 </ActionDialogProvider>
               </Container>
             </Stack>
