@@ -20,7 +20,6 @@ rq-scheduler==0.13.1
 paramiko==3.5.0
 ftpretty==0.4.0
 pytz>=2023.3
-pandas>=1.4.1,<2.0.0
 numpy>=1.26.0,<2.0.0
 pydantic==2.9.2
 discord.py==2.4.0
