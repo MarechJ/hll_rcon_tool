@@ -101,6 +101,10 @@ export const navMenus = [
         to: "/settings/chat-commands",
       },
       {
+        name: "RCon Chat Commands",
+        to: "/settings/rcon-chat-commands",
+      },
+      {
         name: "Scorebot",
         to: "/settings/scorebot",
       },

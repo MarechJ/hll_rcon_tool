@@ -89,7 +89,11 @@ class BanTeamKillOnConnectUserConfig(BaseUserConfig):
 
     @staticmethod
     def save_to_db(values: BanTeamKillOnConnectType, dry_run=False):
-        key_check(BanTeamKillOnConnectType.__required_keys__, values.keys())
+        key_check(
+            BanTeamKillOnConnectType.__required_keys__,
+            BanTeamKillOnConnectType.__optional_keys__,
+            values.keys(),
+        )
 
         whitelist_players = BanTeamKillOnConnectWhiteList(
             has_flag=values.get("whitelist_players", {}).get("has_flag"),
