@@ -130,6 +130,16 @@ export const cmd = {
   GET_PLAYER_BANS: (params) => requestFactory({ method: "GET", cmd: "get_ban", ...params }),
   GET_BLACKLISTS: (params) => requestFactory({ method: "GET", cmd: "get_blacklists", ...params }),
   GET_RECENT_LOGS: (params) => requestFactory({ method: "GET", cmd: "get_recent_logs", ...params }),
+  GET_SERVER_SETTINGS: (params) => requestFactory({ method: "GET", cmd: "get_server_settings", ...params }),
+  SET_SERVER_SETTINGS: (params) => requestFactory({ method: "POST", cmd: "set_server_settings", ...params }),
+  GET_CAMERA_NOTIFICATION_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_camera_notification_config", ...params }),
+  SET_CAMERA_NOTIFICATION_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_camera_notification_config", ...params }),
+  GET_AUTOVOTEKICK_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_auto_votekick_config", ...params }),
+  SET_AUTOVOTEKICK_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_auto_votekick_config", ...params }),
+  GET_VOTEKICK_AUTOTOGGLER_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_votekick_autotoggle_config", ...params }),
+  SET_VOTEKICK_AUTOTOGGLER_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_votekick_autotoggle_config", ...params }),
+  GET_SERVER_NAME: (params) => requestFactory({ method: "GET", cmd: "get_name", ...params }),
+  SET_SERVER_NAME: (params) => requestFactory({ method: "POST", cmd: "set_server_name", ...params }),
 };
 
 export function execute(command, data) {

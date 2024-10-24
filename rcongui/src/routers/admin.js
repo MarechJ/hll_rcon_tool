@@ -24,7 +24,10 @@ import Login from "../pages/admin/login"
 import { loader as loginLoader } from "../pages/admin/login"
 import { action as loginAction } from "../pages/admin/login"
 
-import Settings from "../pages/admin/settings"
+import SettingsPage from "../pages/admin/settings"
+import { loader as settingsLoader } from "../pages/admin/settings"
+import { action as settingsAction } from "../pages/admin/settings"
+
 import MapManager from "../pages/admin/settings/map-manager"
 import MapChange from "../pages/admin/settings/map-manager/map-change"
 import MapRotation from "../pages/admin/settings/map-manager/map-rotation"
@@ -160,7 +163,9 @@ const router = createBrowserRouter([
                     {
                         path: '',
                         handle: { crumb: () => <span>General</span> },
-                        element: <Settings />,
+                        element: <SettingsPage />,
+                        loader: settingsLoader,
+                        action: settingsAction,
                     },
                     {
                         path: 'services',
