@@ -14,7 +14,7 @@ import CompactList from "./playerList";
 import Chip from "@mui/material/Chip";
 import { ReasonDialog } from "./playerActions";
 import { fromJS, List } from "immutable";
-import { FlagDialog } from "@/pages/admin/records/players";
+import { FlagDialog } from "@/pages/records/players";
 import { getEmojiFlag } from "@/utils/emoji";
 import BlacklistRecordCreateDialog from "../Blacklist/BlacklistRecordCreateDialog";
 import { VipExpirationDialog } from "../VipDialog";

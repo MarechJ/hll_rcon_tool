@@ -6,7 +6,7 @@ import { get } from '@/utils/fetchUtils';
 import { useInterval } from '@/hooks/useInterval';
 import { Box } from '@mui/material';
 import { extractPlayers, extractTeamState } from '@/utils/extractPlayers';
-import { columns, playerToRow } from '@/pages/admin/views/live/columns';
+import { columns, playerToRow } from '@/pages/views/live/columns';
 import { styled } from '@mui/styles';
 import { Header } from '@/components/game/Header';
 
