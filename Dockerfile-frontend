@@ -4,28 +4,29 @@ RUN apt update && apt install -y git
 
 WORKDIR /code
 
-RUN mkdir /pw
+# Copy package files for both old and new apps
+COPY rcongui/package.json rcongui/package-lock.json ./rcongui/
+COPY frontend/package.json frontend/package-lock.json ./frontend/
 
-COPY rcongui/package.json package.json
-COPY rcongui/package-lock.json package-lock.json
+# Install dependencies for both apps
+RUN cd rcongui && npm ci
+RUN cd frontend && npm ci
 
-RUN npm ci
-
-ENV REACT_APP_API_URL /api/
-
-COPY rcongui/ .
+# Copy source code for both apps
+COPY rcongui/ ./rcongui/
+COPY frontend/ ./frontend/
 
 COPY .git/ .git/
 RUN git describe --tags > /code/tag_version
-RUN npx browserslist@latest --update-db
-# Normal build
-RUN npm run build
 
-RUN mv /code/dist /www
-# Public build
-ENV REACT_APP_PUBLIC_BUILD true
-RUN npm run build
-RUN mv /code/dist /www_public
+# Build the old private app
+ENV REACT_APP_API_URL /api/
+RUN cd rcongui && npm run build
+RUN mv /code/rcongui/dist /www
+
+# Build the new public Next.js app
+RUN cd frontend && npx nx build public
+RUN mkdir -p /www_public && mv /code/frontend/apps/public/dist/* /www_public/
 
 FROM nginx:mainline-alpine
 
@@ -33,9 +34,8 @@ RUN apk add openssl
 COPY rcongui/nginx.conf /etc/nginx/conf.d/default.conf
 WORKDIR /var/www
 
-RUN mkdir /var/www_public/
-COPY --from=build /www_public /var/www_public/
 COPY --from=build /www /var/www/
+COPY --from=build /www_public /var/www_public/
 COPY --from=build /code/tag_version /code/tag_version
 
 VOLUME /certs

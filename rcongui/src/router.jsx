@@ -1,80 +1,80 @@
 import { createBrowserRouter, Link } from "react-router-dom";
 
-import Root from "../pages/admin/root"
-import { loader as rootLoader } from "../pages/admin/root"
-import { action as rootAction } from "../pages/admin/root"
+import Root from "./pages/root"
+import { loader as rootLoader } from "./pages/root"
+import { action as rootAction } from "./pages/root"
 
-import ErrorPage from "../pages/admin/error";
-import Dashboard from "../pages/admin/dashboard";
+import ErrorPage from "./pages/error";
+import Dashboard from "./pages/dashboard";
 
-import LiveView from "../pages/admin/views/live";
-import { loader as liveViewLoader } from "../pages/admin/views/live"
+import LiveView from "./pages/views/live";
+import { loader as liveViewLoader } from "./pages/views/live"
 
-import TeamView from "../pages/admin/views/team";
-import PlayerRecords from "../pages/admin/records/players"
-import Blacklists from "../pages/admin/records/blacklists/manage"
-import BlacklistRecords from "../pages/admin/records/blacklists"
-import GameLogsRecords from "../pages/admin/records/game-logs"
-import AuditLogsRecords from "../pages/admin/records/audit-logs"
-import LiveGameStats from "../pages/admin/stats/live-game";
-import LiveSessionStats from "../pages/admin/stats/live-sessions";
-import GamesStats from "../pages/admin/stats/games";
+import TeamView from "./pages/views/team";
+import PlayerRecords from "./pages/records/players"
+import Blacklists from "./pages/records/blacklists/manage"
+import BlacklistRecords from "./pages/records/blacklists"
+import GameLogsRecords from "./pages/records/game-logs"
+import AuditLogsRecords from "./pages/records/audit-logs"
+import LiveGameStats from "./pages/stats/live-game";
+import LiveSessionStats from "./pages/stats/live-sessions";
+import GamesStats from "./pages/stats/games";
 
-import Login from "../pages/admin/login"
-import { loader as loginLoader } from "../pages/admin/login"
-import { action as loginAction } from "../pages/admin/login"
+import Login from "./pages/login"
+import { loader as loginLoader } from "./pages/login"
+import { action as loginAction } from "./pages/login"
 
-import SettingsPage from "../pages/admin/settings"
-import { loader as settingsLoader } from "../pages/admin/settings"
-import { action as settingsAction } from "../pages/admin/settings"
+import SettingsPage from "./pages/settings"
+import { loader as settingsLoader } from "./pages/settings"
+import { action as settingsAction } from "./pages/settings"
 
-import MapManager from "../pages/admin/settings/map-manager"
-import MapChange from "../pages/admin/settings/map-manager/map-change"
-import MapRotation from "../pages/admin/settings/map-manager/map-rotation"
-import MapObjectives from "../pages/admin/settings/map-manager/objectives"
-import MapVotemap from "../pages/admin/settings/map-manager/votemap"
+import MapManager from "./pages/settings/map-manager"
+import MapChange from "./pages/settings/map-manager/map-change"
+import MapRotation from "./pages/settings/map-manager/map-rotation"
+import MapObjectives from "./pages/settings/map-manager/objectives"
+import MapVotemap from "./pages/settings/map-manager/votemap"
 
-import ConfigDetail from "../pages/admin/settings/[configs]/detail"
-import { loader as configLoader } from "../pages/admin/settings/[configs]/detail"
-import { action as configAction } from "../pages/admin/settings/[configs]/detail"
-import { ErrorElement as SharedErrorElement } from "../pages/admin/settings/[configs]/detail"
+import ConfigDetail from "./pages/settings/[configs]/detail"
+import { loader as configLoader } from "./pages/settings/[configs]/detail"
+import { action as configAction } from "./pages/settings/[configs]/detail"
+import { ErrorElement as SharedErrorElement } from "./pages/settings/[configs]/detail"
 
-import PlayerProfile from "../pages/admin/records/players/[playerId]"
-import { loader as playerProfileLoader } from "../pages/admin/records/players/[playerId]"
-import { action as playerProfileAction } from "../pages/admin/records/players/[playerId]"
+import PlayerProfile from "./pages/records/players/[playerId]"
+import { loader as playerProfileLoader } from "./pages/records/players/[playerId]"
+import { action as playerProfileAction } from "./pages/records/players/[playerId]"
 
-import ServicesSettings from "../pages/admin/settings/services"
-import { loader as servicesLoader } from "../pages/admin/settings/services"
-import { action as servicesAction } from "../pages/admin/settings/services"
+import ServicesSettings from "./pages/settings/services"
+import { loader as servicesLoader } from "./pages/settings/services"
+import { action as servicesAction } from "./pages/settings/services"
 
-import TemplatesSettings from "../pages/admin/settings/templates"
-import { loader as templatesLoader } from "../pages/admin/settings/templates/detail"
-import { action as templatesAction } from "../pages/admin/settings/templates/detail"
-import TemplatesDetail from "../pages/admin/settings/templates/detail"
+import TemplatesSettings from "./pages/settings/templates"
+import { loader as templatesLoader } from "./pages/settings/templates/detail"
+import { action as templatesAction } from "./pages/settings/templates/detail"
+import TemplatesDetail from "./pages/settings/templates/detail"
 
-import AutoSettings from "../pages/admin/settings/autosettings"
-import { loader as autosettingsLoader } from "../pages/admin/settings/autosettings"
-import { action as autosettingsAction } from "../pages/admin/settings/autosettings"
+import AutoSettings from "./pages/settings/autosettings"
+import { loader as autosettingsLoader } from "./pages/settings/autosettings"
+import { action as autosettingsAction } from "./pages/settings/autosettings"
 
-import WelcomeMessageSettings from "../pages/admin/settings/welcome-message"
-import { loader as welcomeMessageLoader } from "../pages/admin/settings/welcome-message"
-import { action as welcomeMessageAction } from "../pages/admin/settings/welcome-message"
+import WelcomeMessageSettings from "./pages/settings/welcome-message"
+import { loader as welcomeMessageLoader } from "./pages/settings/welcome-message"
+import { action as welcomeMessageAction } from "./pages/settings/welcome-message"
 
-import BroadcastMessageSettings from "../pages/admin/settings/broadcast-message"
-import { loader as broadcastMessageLoader } from "../pages/admin/settings/broadcast-message"
-import { action as broadcastMessageAction } from "../pages/admin/settings/broadcast-message"
+import BroadcastMessageSettings from "./pages/settings/broadcast-message"
+import { loader as broadcastMessageLoader } from "./pages/settings/broadcast-message"
+import { action as broadcastMessageAction } from "./pages/settings/broadcast-message"
 
-import ProfanityFilterSettings from "../pages/admin/settings/profanity-filter"
-import { loader as profanityFilterLoader } from "../pages/admin/settings/profanity-filter"
-import { action as profanityFilterAction } from "../pages/admin/settings/profanity-filter"
+import ProfanityFilterSettings from "./pages/settings/profanity-filter"
+import { loader as profanityFilterLoader } from "./pages/settings/profanity-filter"
+import { action as profanityFilterAction } from "./pages/settings/profanity-filter"
 
-import ConsoleAdminSettings from "../pages/admin/settings/console-admins"
-import { loader as consoleAdminSettingsLoader } from "../pages/admin/settings/console-admins"
-import { action as consoleaAdminSettingsAction } from "../pages/admin/settings/console-admins"
+import ConsoleAdminSettings from "./pages/settings/console-admins"
+import { loader as consoleAdminSettingsLoader } from "./pages/settings/console-admins"
+import { action as consoleaAdminSettingsAction } from "./pages/settings/console-admins"
 
-import VipSettings from "../pages/admin/settings/vip"
-import { loader as vipSettingsLoader } from "../pages/admin/settings/vip"
-import { action as vipSettingsAction } from "../pages/admin/settings/vip"
+import VipSettings from "./pages/settings/vip"
+import { loader as vipSettingsLoader } from "./pages/settings/vip"
+import { action as vipSettingsAction } from "./pages/settings/vip"
 
 import { AuthProvider } from "@/hooks/useAuth";
 import { GlobalState } from "@/hooks/useGlobalState";
