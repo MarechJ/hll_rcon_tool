@@ -112,12 +112,18 @@ const Live = () => {
     }));
   };
 
-  const gameStateProp = React.useMemo(() => {
+  const gameData = React.useMemo(() => {
     if (gameState && teamData) {
       return {
         ...gameState,
-        allies: extractTeamState(teamData?.allies ?? {}),
-        axis: extractTeamState(teamData?.axis ?? {}),
+        allies: {
+          ...extractTeamState(teamData?.allies ?? {}),
+          ...teamData?.allies ?? {},  
+        },
+        axis: {
+          ...extractTeamState(teamData?.axis ?? {}),
+          ...teamData?.axis ?? {},
+        },
       };
     }
     return null;
@@ -126,9 +132,9 @@ const Live = () => {
   return (
     <Grid container spacing={1}>
       <Grid size={12}>
-        <Header teamData={teamData} gameState={gameStateProp} />
+        <Header data={gameData} />
       </Grid>
-      <Grid size={12}>
+      {/* <Grid size={12}>
         <Button onClick={() => setTableSize("small")}>Small</Button>
         <Button onClick={() => setTableSize("medium")}>Medium</Button>
         <Button onClick={() => setTableSize("large")}>Large</Button>
@@ -138,11 +144,11 @@ const Live = () => {
         <Button startIcon={logsVisible ? <VisibilityIcon /> : <VisibilityOffIcon />} onClick={() => setLogsVisible(!logsVisible)}>
           {logsVisible ? "Hide Logs" : "Show Logs"}
         </Button>
-      </Grid>
+      </Grid> */}
       {playersVisible && (
         <Grid
           size={{
-          sm: 12,
+          xs: 12,
           lg: "auto",
         }}
       >
@@ -152,7 +158,7 @@ const Live = () => {
       {logsVisible && (
         <Grid
           size={{
-            sm: 12,
+            xs: 12,
           lg: "grow",
         }}
       >

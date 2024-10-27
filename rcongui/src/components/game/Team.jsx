@@ -1,12 +1,12 @@
 import Grid from "@mui/material/Grid2";
 import Man4Icon from "@mui/icons-material/Man4";
-import Points, { NumberText } from "./Points";
+import Points, { NumberText, SquareIcon } from "./Points";
 import { Avatar, Box, Divider, Stack } from "@mui/material";
 import { extractTeamState } from "@/utils/extractPlayers";
 
 const teamMetrics = ["combat", "offense", "defense", "support"];
 
-const teamStats = ["kills", "deaths"];
+const teamStats = ["kills", "deaths", "avg_level", "med_level"];
 
 const teamRoles = ["armycommander", "armor", "infantry", "recon"];
 
@@ -29,11 +29,11 @@ export const TeamMobile = ({ data, align }) => {
   const team = data ?? {};
   return (
     <Stack orientation={"vertical"} sx={{ height: "100%" }}>
-      <Grid container size={12} sx={{ textAlign: "center" }}>
+      <Grid container size={6} sx={{ textAlign: "center", width: "100%" }}>
         {teamMetrics.map((metric) => (
           <Grid
             key={metric}
-            size={12}
+            size={6}
             sx={{
               display: "flex",
               alignItems: "center",
@@ -49,11 +49,11 @@ export const TeamMobile = ({ data, align }) => {
           </Grid>
         ))}
       </Grid>
-      <Grid container size={12} sx={{ textAlign: "center" }}>
+      <Grid container size={6} sx={{ textAlign: "center", width: "100%" }}>
         {teamStats.map((stat) => (
           <Grid
             key={stat}
-            size={12}
+            size={6}
             sx={{
               display: "flex",
               alignItems: "center",
@@ -85,59 +85,43 @@ export const TeamDesktop = ({ data }) => {
 
   return (
     <Stack orientation={"vertical"} sx={{ height: "100%" }}>
-      <Grid container size={12} sx={{ height: "1.5rem", textAlign: "center" }}>
+      <Stack direction={"row"} spacing={1}>
         {teamMetrics.map((metric) => (
-          <Grid
-            key={metric}
-            size={3}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "start",
-              gap: 1,
-            }}
-          >
+          <Stack key={metric} direction={"row"} flexBasis={1} flexGrow={1} spacing={1}>
             <Points value={team[metric]} type={metric} />
-          </Grid>
+          </Stack>
         ))}
-      </Grid>
-      <Grid container size={12} sx={{ height: "1.5rem", textAlign: "center" }}>
+      </Stack>
+      <Divider variant="middle" />
+      <Stack direction={"row"} spacing={1}>
         {teamStats.map((stat) => (
-          <Grid
-            key={stat}
-            size={6}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "start",
-              gap: 1,
-            }}
-          >
+          <Stack key={stat} direction={"row"} flexBasis={1} flexGrow={1} spacing={1}>
             <Points value={team[stat]} type={stat} />
-          </Grid>
+          </Stack>
         ))}
-      </Grid>
-      <Divider sx={{ my: 0.5 }} />
-      <Grid container size={12} sx={{ flexGrow: 1 }}>
+      </Stack>
+      <Divider variant="middle" />
+      <Stack direction={"row"} spacing={1}>
         {counts.map(({ role, count }) => (
-          <Grid key={role} container size={12}>
-            <Grid size={1}>
-              <Avatar alt={role} sx={{ width: 20, height: 20 }}>
-                <Box
-                  component={"img"}
-                  src={roleSrc(role)}
-                  width={16}
-                  height={16}
-                />
-              </Avatar>
-            </Grid>
-            <Grid size={10}>{makeTeam(count)}</Grid>
-            <Grid size={1}>
-              <NumberText>{count}</NumberText>
-            </Grid>
-          </Grid>
+          <Stack
+            key={role}
+            direction={"row"}
+            flexBasis={1}
+            flexGrow={1}
+            spacing={1}
+          >
+            <SquareIcon>
+              <Box
+                component={"img"}
+                src={roleSrc(role)}
+                width={16}
+                height={16}
+              />
+            </SquareIcon>
+            <NumberText>{count}</NumberText>
+          </Stack>
         ))}
-      </Grid>
+      </Stack>
     </Stack>
   );
 };

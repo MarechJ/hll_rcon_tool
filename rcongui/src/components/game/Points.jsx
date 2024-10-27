@@ -1,34 +1,55 @@
-import { Avatar, Typography } from '@mui/material';
-import { styled } from '@mui/material';
+import { Avatar, Typography, Box } from "@mui/material";
+import { styled } from "@mui/material";
 
 export const NumberText = styled(Typography)(() => ({
-  fontSize: '0.8rem',
-  fontWeight: '600',
+  fontSize: "0.8rem",
+  fontWeight: "600",
 }));
 
-const Points = ({ value, type, direction = 'left' }) => {
-  if (direction === 'left') {
+export const SquareIcon = styled((props) => <Avatar variant="square" {...props} />)(({ theme }) => {
+  const styles = {
+    width: 20,
+    height: 20,
+  }
+
+  if (theme.palette.mode === "dark") {
+    styles.backgroundColor = theme.palette.background.default;
+  }
+  
+  return styles 
+});
+
+const Points = ({ value, type, direction = "left" }) => {
+  if (direction === "left") {
     return (
       <>
-        <Avatar
-          src={`/icons/metrics/${type}.png`}
-          alt={type}
-          sx={{ width: '1rem', height: '1rem' }}
-        />
+        <SquareIcon variant="square">
+          <Box
+            component={"img"}
+            src={`/icons/metrics/${type}.png`}
+            width={16}
+            height={16}
+            alt={type}
+          />
+        </SquareIcon>
         <NumberText>{value ?? 0}</NumberText>
       </>
     );
   }
 
-  if (direction === 'right') {
+  if (direction === "right") {
     return (
       <>
         <NumberText>{value ?? 0}</NumberText>
-        <Avatar
-          src={`/icons/metrics/${type}.png`}
-          alt={type}
-          sx={{ width: '1rem', height: '1rem' }}
-        />
+        <SquareIcon variant="square">
+          <Box
+            component={"img"}
+            src={`/icons/metrics/${type}.png`}
+            width={16}
+            height={16}
+            alt={type}
+          />
+        </SquareIcon>
       </>
     );
   }

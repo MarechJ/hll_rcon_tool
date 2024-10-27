@@ -294,7 +294,9 @@ const DrawerBase = ({ children, onClose }) => (
         <Close />
       </IconButton>
     </ProfileHeader>
-    <Box component={"section"} sx={{ p: 2 }}>{children}</Box>
+    <Box component={"section"} sx={{ p: 2 }}>
+      {children}
+    </Box>
   </ProfileWrapper>
 );
 
@@ -434,6 +436,7 @@ const PlayerDetails = ({ player, onClose }) => {
               value="bans"
               disabled={player.bans.length === 0}
             />
+            <Tab label="Logs" value="logs" disabled={true} />
           </Tabs>
         </Box>
         <TabPanel value="profile">
@@ -607,7 +610,7 @@ export const PlayerDetailDrawer = () => {
       variant="persistent"
       open={open}
       anchor="right"
-      onClose={close}      
+      onClose={close}
     >
       <Toolbar />
       {isLoading && !player ? (
