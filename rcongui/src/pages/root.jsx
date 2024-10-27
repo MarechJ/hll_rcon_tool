@@ -78,13 +78,13 @@ export default function Root() {
               spacing={2}
               sx={{
                 alignItems: "center",
-                mx: 3,
+                px: 0,
                 pb: 10,
                 mt: { xs: 8, lg: 0 },
               }}
             >
               <Header />
-              <Container maxWidth={widthMode}>
+              <Container maxWidth={widthMode} sx={{ overflowY: "auto", overflowX: "hidden" }}>
                 <ActionDialogProvider>
                   <PlayerSidebarProvider>
                     <Outlet />

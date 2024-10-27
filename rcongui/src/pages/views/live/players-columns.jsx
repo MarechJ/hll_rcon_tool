@@ -42,7 +42,7 @@ const tierColors = {
   Legend: purple[500],
 };
 
-const Center = styled(Box)(({ theme }) => ({
+export const Square = styled(Box)(({ theme }) => ({
   display: "flex",
   alignItems: "start",
   justifyContent: "center",
@@ -72,7 +72,7 @@ export const columns = [
     accessorKey: "team",
     cell: ({ row }) => {
       return (
-        <Center>
+        <Square>
           <img
             src={`/icons/teams/${
               row.original.team === "axis" ? "ger" : "us"
@@ -80,7 +80,7 @@ export const columns = [
             width={16}
             height={16}
           />
-        </Center>
+        </Square>
       );
     },
   },
@@ -89,9 +89,9 @@ export const columns = [
     accessorKey: "unit_name",
     cell: ({ row }) => {
       return (
-        <Center>
+        <Square>
           {row.original.unit_name?.charAt(0)?.toUpperCase() ?? "-"}
-        </Center>
+        </Square>
       );
     },
   },
@@ -100,7 +100,7 @@ export const columns = [
     accessorKey: "role",
     cell: ({ row }) => {
       return (
-        <Center
+        <Square
           sx={{
             bgcolor: (theme) =>
               theme.palette.mode === "dark" ? "background.paper" : "#121212",
@@ -111,7 +111,7 @@ export const columns = [
             width={16}
             height={16}
           />
-        </Center>
+        </Square>
       );
     },
   },

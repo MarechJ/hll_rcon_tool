@@ -13,6 +13,7 @@ export const StyledTable = styled("table", {
     borderCollapse: "collapse",
     borderSpacing: 0,
     border: `1px solid ${theme.palette.divider}`,
+    width: "100%",
   };
 });
 

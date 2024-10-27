@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-table";
 import { useState } from "react";
 import { StyledTable, StyledTd, StyledTh, StyledTr } from "./styled-table";
+import { Box } from "@mui/material";
 
 // Implementation of Tanstack React Table v8 using basic HTML table elements
 export default function LogsTable({ data, columns, size }) {
@@ -36,7 +37,7 @@ export default function LogsTable({ data, columns, size }) {
 
   return (
     <div>
-      <div>
+      <Box sx={{ width: "100%", overflowX: "auto", overflowY: "hidden", scrollbarWidth: "none" }}>
         <StyledTable size={size}>
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -73,7 +74,7 @@ export default function LogsTable({ data, columns, size }) {
           </tbody>
         </StyledTable>
         {table.getRowModel().rows.length === 0 && <NoRowsOverlay />}
-      </div>
+      </Box>
       {/* TODO: Replace tailwind className with MUI sx prop */}
       <div sx={{ height: "8px" }} />
       <div sx={{ display: "flex", justifyContent: "center", flexGap: 2 }}>
