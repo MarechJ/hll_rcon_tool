@@ -805,6 +805,7 @@ class MessageTemplateCategory(enum.StrEnum):
     BROADCAST = "BROADCAST"
     WELCOME = "WELCOME"
     REASON = "REASON"
+    AUTO_SETTINGS = "AUTO_SETTINGS"
 
 
 class MessageTemplateType(TypedDict):
