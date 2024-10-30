@@ -13,9 +13,10 @@ from channels.security.websocket import WebsocketDenier
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import Group, Permission, User
+from django.contrib.sessions.backends.db import SessionStore
 from django.core.exceptions import PermissionDenied
 from django.db.models.signals import post_delete, post_save
-from django.http import HttpResponse, QueryDict
+from django.http import HttpResponse, QueryDict, parse_cookie
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon.audit import heartbeat, ingame_mods, online_mods, set_registered_mods
@@ -66,33 +67,59 @@ class APITokenAuthMiddleware:
     async def __call__(self, scope, receive, send):
         ENDPOINT = scope["path"]
         logger.info("Incoming websocket connection on %s", ENDPOINT)
+
         headers = dict(scope["headers"])
         headers = {k.decode(): v.decode() for k, v in headers.items()}
-        try:
-            header_name, raw_api_key = headers.get("authorization", "").split(
-                maxsplit=1
-            )
-            if not header_name.upper().strip() in BEARER:
+
+        # Extract any cookies
+        raw_cookies = headers.get("cookies")
+        if raw_cookies:
+            cookies = parse_cookie(raw_cookies)
+        else:
+            cookies = {}
+
+        # Try to authenticate the user if they include a sessionid cookie
+        session_id = cookies.get("sessionid")
+        if session_id:
+            session = SessionStore(session_id)
+            await database_sync_to_async(session.load)()
+            user_id = await database_sync_to_async(session.get)("_auth_user_id")
+            try:
+                user = await database_sync_to_async(User.objects.get)(pk=user_id)
+            except User.DoesNotExist:
+                logger.error(
+                    "Could not find a Django User account with user_id=%s", user_id
+                )
+                user = None
+            scope["user"] = user
+        # Otherwise try to use their API key
+        else:
+            try:
+                header_name, raw_api_key = headers.get("authorization", "").split(
+                    maxsplit=1
+                )
+                if not header_name.upper().strip() in BEARER:
+                    raw_api_key = None
+            except (KeyError, ValueError):
                 raw_api_key = None
-        except (KeyError, ValueError):
-            raw_api_key = None
-            logger.info(f"Couldn't parse API key {raw_api_key=}")
+                logger.info(f"Couldn't parse API key {raw_api_key=}")
 
-        try:
-            # If we don't include the salt, the hasher generates its own
-            # and it will generate different hashed values every time
-            hashed_api_key = make_password(raw_api_key, salt=SECRET_KEY)
+            try:
+                # If we don't include the salt, the hasher generates its own
+                # and it will generate different hashed values every time
+                hashed_api_key = make_password(raw_api_key, salt=SECRET_KEY)
 
-            # Retrieve the user to use the normal authentication system
-            # to include their permissions
-            scope["user"] = await get_user(hashed_api_key)
-        except DjangoAPIKey.DoesNotExist:
-            scope["user"] = None
-            logger.info(
-                "API key not associated with a user, denying connection to %s", ENDPOINT
-            )
-            denier = WebsocketDenier()
-            return await denier(scope, receive, send)
+                # Retrieve the user to use the normal authentication system
+                # to include their permissions
+                scope["user"] = await get_user(hashed_api_key)
+            except DjangoAPIKey.DoesNotExist:
+                scope["user"] = None
+                logger.info(
+                    "API key not associated with a user, denying connection to %s",
+                    ENDPOINT,
+                )
+                denier = WebsocketDenier()
+                return await denier(scope, receive, send)
 
         if not await has_perms(scope, self.perms):
             logger.warning(
