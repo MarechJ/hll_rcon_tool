@@ -1,7 +1,7 @@
-import {and, createCombinatorRenderInfos, rankWith, schemaMatches, schemaTypeIs, uiTypeIs} from "@jsonforms/core";
-import {JsonFormsDispatch, withJsonFormsAnyOfProps, withJsonFormsControlProps} from "@jsonforms/react";
-import React, {useCallback} from "react";
 import {Unwrapped} from "@jsonforms/material-renderers";
+import React, {useCallback} from "react";
+import {JsonFormsDispatch, withJsonFormsAnyOfProps, withJsonFormsControlProps} from "@jsonforms/react";
+import {and, createCombinatorRenderInfos, rankWith, schemaMatches, schemaTypeIs, uiTypeIs} from "@jsonforms/core";
 
 const {MaterialTextControl} = Unwrapped;
 
@@ -98,11 +98,9 @@ const isAnyOfNullControl = and(
   )
 );
 
-const anyOfNullTester = rankWith(
+export const anyOfNullTester = rankWith(
   3,
   isAnyOfNullControl
 );
 
-export const customRenderers = [
-  {tester: anyOfNullTester, renderer: withJsonFormsAnyOfProps(anyOfNullRenderer)},
-]
+export const renderer = withJsonFormsAnyOfProps(anyOfNullRenderer);

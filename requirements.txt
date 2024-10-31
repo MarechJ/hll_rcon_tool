@@ -22,7 +22,8 @@ ftpretty==0.4.0
 pytz>=2023.3
 pandas>=1.4.1,<2.0.0
 numpy>=1.26.0,<2.0.0
-pydantic==2.9.2
+# pydantic==2.9.2
+pydantic @ git+https://github.com/pydantic/pydantic@eda3eb472ce07e314858a7469e663f2e3c883578
 discord.py==2.4.0
 # django-directory
 # django-dirctory is currently incompatible with Django 4.0+, PR is pending to fix django-directory upstream

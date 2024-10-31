@@ -1,6 +1,5 @@
 from typing import Optional, TypedDict
 
-from numpy.core.defchararray import title
 from pydantic import BaseModel, Field, HttpUrl, field_serializer, field_validator
 
 from rcon.types import Roles
