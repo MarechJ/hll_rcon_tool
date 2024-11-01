@@ -41,6 +41,7 @@ import { MapAutocomplete } from "@/components/MapManager/map-autocomplete";
 import { MapListItem } from "@/components/MapManager/map-list-item";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useOutletContext } from "react-router-dom";
+import { mapIdsToLayers } from "@/utils/lib";
 
 const useStyles = makeStyles((theme) =>
   ({
@@ -160,26 +161,9 @@ const VoteMapConfig = () => {
 
   async function getWhitelist() {
     if (!maps.length) return;
-    const whitelistRaw = await getVotemapWhitelist();
-    if (whitelistRaw) {
-      const mapLayers = [];
-      const invalidMapIds = [];
-      whitelistRaw.forEach((mapId) => {
-        const mapLayer = maps.find((mapLayer) => mapLayer.id === mapId);
-        if (mapLayer) {
-          mapLayers.push(mapLayer);
-        } else {
-          invalidMapIds.push(mapId);
-        }
-      });
-      setWhitelist(mapLayers);
-      if (invalidMapIds.length) {
-        toast.error(
-          `Some maps in your whitelist have been deleted or renamed: ${invalidMapIds.join(
-            ", "
-          )}. Reset the whitelist or changed your auto settings.`
-        );
-      }
+    const whitelistMapIds = await getVotemapWhitelist();
+    if (whitelistMapIds) {
+      setWhitelist(mapIdsToLayers(maps, whitelistMapIds));
     }
   }
 
@@ -192,13 +176,9 @@ const VoteMapConfig = () => {
   }
 
   async function resetWhitelist() {
-    const whitelistRaw = await resetVotemapWhitelist();
-    if (whitelistRaw) {
-      setWhitelist(
-        whitelistRaw.map((mapId) =>
-          maps.find((mapLayer) => mapLayer.id === mapId)
-        )
-      );
+    const whitelistMapIds = await resetVotemapWhitelist();
+    if (whitelistMapIds) {
+      setWhitelist(mapIdsToLayers(maps, whitelistMapIds));
     }
   }
 

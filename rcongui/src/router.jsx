@@ -166,6 +166,7 @@ const router = createBrowserRouter([
                         element: <SettingsPage />,
                         loader: settingsLoader,
                         action: settingsAction,
+                        index: true,
                     },
                     {
                         path: 'services',

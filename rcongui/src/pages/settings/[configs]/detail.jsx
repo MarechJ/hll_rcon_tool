@@ -318,8 +318,8 @@ export function ErrorElement() {
     return (
       <Stack spacing={2} alignItems={"center"} justifyContent={"center"}>
         <Typography variant="h3">{error.status}</Typography>
-        <Typography variant="h4">{error.data.text ?? error.data.message}</Typography>
-        <Typography>{error.data.command}</Typography>
+        <Typography variant="h4">{error.data.text ?? error.data.message ?? error.statusText}</Typography>
+        <Typography>{error.data.command ?? error.data}</Typography>
         <Typography>{error.data.name ?? error.data.error}</Typography>
         <Button variant="contained" LinkComponent={Link} to={location.pathname}>
           Try again!

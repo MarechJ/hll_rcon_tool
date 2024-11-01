@@ -28,12 +28,12 @@ import SplitButton from "@/components/shared/SplitButton";
 import dayjs from "dayjs";
 import relativeTimePlugin from "dayjs/plugin/relativeTime";
 import localizedFormatPlugin from "dayjs/plugin/localizedFormat";
-import { purple, red } from "@mui/material/colors";
 import {
   DesktopDateTimePicker,
   LocalizationProvider,
 } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { getVipExpirationStatus, getVipExpirationStatusColor } from "@/utils/lib";
 
 dayjs.extend(relativeTimePlugin);
 dayjs.extend(localizedFormatPlugin);
@@ -44,8 +44,6 @@ const INTENT = {
   APPLY_SINGLE: 2,
   APPLY_ALL: 3,
 };
-
-const NEVER_EXPIRES_DATE = "3000-01-01T00:00:00+00:00";
 
 export const loader = async () => {
   const vips = await cmd.GET_VIPS();
@@ -278,6 +276,7 @@ const VipPage = () => {
         </Button>
         <Box>
           <SplitButton
+            disabled={!hasChanges}
             options={[
               {
                 name: "Apply",
@@ -395,15 +394,8 @@ const VipPage = () => {
         >
           {filteredItems.map((vip, index) => {
             const labelId = `checkbox-list-label-${index}`;
-            const expirationDate = dayjs(vip.vip_expiration ?? "1970-01-01");
-            const expired = expirationDate.isBefore(dayjs());
-            const neverExpires =
-              dayjs(NEVER_EXPIRES_DATE).isSame(expirationDate);
-            const color = neverExpires
-              ? purple[500]
-              : expired
-              ? red[500]
-              : null;
+            const status = getVipExpirationStatus(vip);
+            const color = getVipExpirationStatusColor(status);
             return (
               <ListItem
                 key={vip.player_id + index}
@@ -440,13 +432,7 @@ const VipPage = () => {
                   <ListItemText
                     id={labelId}
                     primary={vip.name}
-                    secondary={
-                      expired
-                        ? "Expired"
-                        : neverExpires
-                        ? "Never"
-                        : expirationDate.fromNow()
-                    }
+                    secondary={status[0].toUpperCase() + status.slice(1)}
                     secondaryTypographyProps={{
                       sx: { color },
                     }}
