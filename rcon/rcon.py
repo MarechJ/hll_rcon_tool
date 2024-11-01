@@ -19,6 +19,7 @@ from rcon.models import PlayerID, PlayerVIP, enter_session
 from rcon.player_history import get_profiles, safe_save_player_action, save_player, get_player_profile
 from rcon.settings import SERVER_INFO
 from rcon.types import (
+    PlayerProfileType,
     AdminType,
     GameLayoutRandomConstraints,
     GameServerBanType,
@@ -226,10 +227,15 @@ class Rcon(ServerCtl):
         fail_count = 0
         players_by_id: dict[str, GetDetailedPlayer] = {}
 
-        futures: dict[Future[Any], GetDetailedPlayer] = {
-            self.run_in_pool("get_detailed_player_info", player[NAME]): player
-            for _, player in enumerate(players)
-        }  # type: ignore
+        player_ids = [p["player_id"] for p in players]
+        profiles = get_profiles(player_ids=player_ids)
+        indexed_profiles = {profile["player_id"]: profile for profile in profiles}
+
+        futures: dict[Future[Any], GetDetailedPlayer] = {}
+        for player in players:
+            profile = indexed_profiles.get(player['player_id'])
+            res =  self.run_in_pool("get_detailed_player_info", player[NAME], profile)
+            futures[res] = player
 
         for future in as_completed(futures):
             try:
@@ -434,7 +440,7 @@ class Rcon(ServerCtl):
         }
 
     @ttl_cache(ttl=2, cache_falsy=False)
-    def get_detailed_player_info(self, player_name: str) -> GetDetailedPlayer:
+    def get_detailed_player_info(self, player_name: str, profile: PlayerProfileType | None) -> GetDetailedPlayer:
         raw = super().get_player_info(player_name)
         if not raw:
             raise CommandFailedError("Got bad data")
@@ -457,7 +463,9 @@ class Rcon(ServerCtl):
         player_data["is_vip"] = player_data["player_id"] in vip_player_ids
 
         # Add Profile
-        profile = get_player_profile(player_data["player_id"], 1)
+        if profile is None:
+            profile = get_player_profile(player_data["player_id"], 1)
+
         player_data["profile"] = profile
         return player_data
 
