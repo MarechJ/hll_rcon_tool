@@ -601,6 +601,7 @@ export const PlayerDetailDrawer = () => {
     commentsError,
     bansError,
     profileError,
+    messagesError,
   } = usePlayerSidebar();
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("md"));

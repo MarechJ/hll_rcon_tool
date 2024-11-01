@@ -41,6 +41,7 @@ import { MapAutocomplete } from "@/components/MapManager/map-autocomplete";
 import { MapListItem } from "@/components/MapManager/map-list-item";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useOutletContext } from "react-router-dom";
+import { mapIdsToLayers } from "@/utils/lib";
 
 const useStyles = makeStyles((theme) =>
   ({
@@ -162,13 +163,9 @@ const VoteMapConfig = () => {
 
   async function getWhitelist() {
     if (!maps.length) return;
-    const whitelistRaw = await getVotemapWhitelist();
-    if (whitelistRaw) {
-      setWhitelist(
-        whitelistRaw.map((mapId) =>
-          maps.find((mapLayer) => mapLayer.id === mapId)
-        )
-      );
+    const whitelistMapIds = await getVotemapWhitelist();
+    if (whitelistMapIds) {
+      setWhitelist(mapIdsToLayers(maps, whitelistMapIds));
     }
   }
 
@@ -181,13 +178,9 @@ const VoteMapConfig = () => {
   }
 
   async function resetWhitelist() {
-    const whitelistRaw = await resetVotemapWhitelist();
-    if (whitelistRaw) {
-      setWhitelist(
-        whitelistRaw.map((mapId) =>
-          maps.find((mapLayer) => mapLayer.id === mapId)
-        )
-      );
+    const whitelistMapIds = await resetVotemapWhitelist();
+    if (whitelistMapIds) {
+      setWhitelist(mapIdsToLayers(maps, whitelistMapIds));
     }
   }
 

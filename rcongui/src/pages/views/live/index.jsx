@@ -15,6 +15,7 @@ import { Button } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import teamViewResponse from "./data.json"
+import { teamsLiveQueryOptions } from "@/queries/teams-live-query";
 
 const limitOptions = [
   100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000,
@@ -42,8 +43,7 @@ const Live = () => {
   const [logsVisible, setLogsVisible] = useState(true);
 
   const { data: teamData } = useQuery({
-    queryKey: ["teams", "live"],
-    queryFn: cmd.GET_LIVE_TEAMS,
+    ...teamsLiveQueryOptions,
     staleTime: 5 * 1000,
     refetchInterval: 10 * 1000,
   });
