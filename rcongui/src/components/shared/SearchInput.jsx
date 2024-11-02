@@ -9,8 +9,9 @@ const SearchWrapper = styled(Box)({
 });
 
 export function SearchInput({ ...props }) {
+  const { sx, ...rest } = props;
   return (
-    <SearchWrapper>
+    <SearchWrapper sx={sx}>
       <Box sx={{ p: "10px", display: "grid", alignItems: "center" }}>
         <SearchIcon />
       </Box>
@@ -20,7 +21,7 @@ export function SearchInput({ ...props }) {
         inputProps={{
           "aria-label": props.placeholder?.toLowerCase() ?? "search",
         }}
-        {...props}
+        {...rest}
       />
     </SearchWrapper>
   );
