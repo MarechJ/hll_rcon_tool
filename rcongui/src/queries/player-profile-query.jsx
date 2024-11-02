@@ -10,7 +10,9 @@ export const playerProfileQueryOptions = (playerId, options) => {
         params: { player_id: playerId },
         throwRouteError,
       }),
-    select: (data) => normalizePlayerProfile(data),
+    select: (data) => {
+      return data ? normalizePlayerProfile(data) : data;
+    },
   };
 };
 

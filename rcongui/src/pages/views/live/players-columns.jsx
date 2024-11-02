@@ -1,6 +1,14 @@
 import React from "react";
 import { CountryFlag } from "@/components/CountryFlag";
-import { Box, Stack, styled, Tooltip, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Checkbox,
+  Stack,
+  styled,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import { Star, Warning } from "@mui/icons-material";
 import { blue, green, purple, red, yellow } from "@mui/material/colors";
 import dayjs from "dayjs";
@@ -10,7 +18,7 @@ import {
 } from "@/features/player-action/ActionMenu";
 import { playerGameActions } from "@/features/player-action/actions";
 import { useActionDialog } from "@/hooks/useActionDialog";
-import { TextButton } from "./styled-table";
+import { HeaderButton, TextButton } from "./styled-table";
 
 function getPlayerTier(level) {
   if (level < 20) {
@@ -65,12 +73,54 @@ const LevelColored = styled(Box, {
   };
 });
 
+const SortableHeader =
+  (text) =>
+  ({ column }) => {
+    return (
+      <HeaderButton onClick={column.getToggleSortingHandler()}>
+        {text}
+      </HeaderButton>
+    );
+  };
+
 // ... keep playerToRow function as is ...
 export const columns = [
   {
-    header: "T",
+    id: "select",
+    // TODO: Add a toggle for selecting all rows
+    // The table is enabled for column grouping
+    // So we need to make sure the select all toggle is working correctly with the grouping
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllRowsSelected()}
+        indeterminate={table.getIsSomePageRowsSelected()}
+        onChange={table.getToggleAllRowsSelectedHandler()}
+        size="small"
+        sx={{
+          p: 0,
+        }}
+      />
+    ),
+    cell: ({ row }) => (
+      <div>
+        <Checkbox
+          checked={row.getIsSelected()}
+          disabled={!row.getCanSelect()}
+          indeterminate={row.getIsSomeSelected()}
+          onChange={row.getToggleSelectedHandler()}
+          size="small"
+          sx={{
+            p: 0,
+          }}
+        />
+      </div>
+    ),
+  },
+  {
     accessorKey: "team",
-    cell: ({ row }) => {
+    id: "team",
+    header: SortableHeader("T"),
+    cell: ({ row, table }) => {
       return (
         <Square>
           <img
@@ -85,8 +135,11 @@ export const columns = [
     },
   },
   {
-    header: "U",
+    id: "unit",
+    header: SortableHeader("U"),
     accessorKey: "unit_name",
+    // Group by unit name and team
+    // getGroupingValue: (row) => `${row.original.unit_name ?? "-"}-${row.original.team}`,
     cell: ({ row }) => {
       return (
         <Square>
@@ -96,7 +149,8 @@ export const columns = [
     },
   },
   {
-    header: "R",
+    id: "role",
+    header: SortableHeader("R"),
     accessorKey: "role",
     cell: ({ row }) => {
       return (
@@ -116,8 +170,10 @@ export const columns = [
     },
   },
   {
-    header: "Level",
+    id: "level",
+    header: SortableHeader("LVL"),
     accessorKey: "level",
+    aggregationFn: "mean",
     cell: ({ row }) => {
       return (
         <LevelColored level={row.original.level}>
@@ -127,25 +183,27 @@ export const columns = [
     },
   },
   {
-    header: "Name",
+    id: "name",
+    header: SortableHeader("Name"),
     accessorKey: "name",
     cell: ({ row }) => {
       return (
-        <TextButton
+        <Box
           sx={{
             textOverflow: "ellipsis",
             overflow: "hidden",
             textWrap: "nowrap",
-            maxWidth: "20ch",
+            width: "20ch",
           }}
         >
-          {row.original.name}
-        </TextButton>
+          <span>{row.original.name}</span>
+        </Box>
       );
     },
   },
   {
-    header: "Country",
+    id: "country",
+    header: SortableHeader("Country"),
     accessorKey: "country",
     cell: ({ row }) => {
       return row.original.country && row.original.country !== "private" ? (
@@ -154,7 +212,8 @@ export const columns = [
     },
   },
   {
-    header: "VIP",
+    id: "vip",
+    header: SortableHeader("VIP"),
     accessorKey: "is_vip",
     cell: ({ row }) => {
       return row.original.is_vip ? (
@@ -163,6 +222,7 @@ export const columns = [
     },
   },
   {
+    id: "flags",
     header: "Flags",
     accessorKey: "profile.flags",
     cell: ({ row }) => {
@@ -184,8 +244,10 @@ export const columns = [
     },
   },
   {
-    header: "Time",
+    id: "time",
+    header: SortableHeader("Time"),
     accessorKey: "profile.current_playtime_seconds",
+    aggregationFn: "mean",
     cell: ({ row }) => {
       return (
         <>
@@ -197,7 +259,8 @@ export const columns = [
     },
   },
   {
-    header: "⚠️",
+    id: "warnings",
+    header: SortableHeader("⚠️"),
     accessorKey: "profile.received_actions",
     cell: ({ row }) => {
       return hasRecentWarnings(row.original.profile.received_actions) ? (
@@ -206,6 +269,7 @@ export const columns = [
     },
   },
   {
+    id: "actions",
     header: "🛠️",
     accessorKey: "actions",
     cell: ({ row }) => {
@@ -214,6 +278,7 @@ export const columns = [
           actions={playerGameActions}
           recipients={row.original}
           orientation="horizontal"
+          disableRipple={true}
           sx={{
             width: 12,
             height: 12,

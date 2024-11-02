@@ -68,25 +68,25 @@ export const mapIdsToLayers = (layers, ids) => {
     .filter((layer) => layer !== undefined);
 };
 
-export const normalizePlayerProfile = (profile = {}) => {
+export const normalizePlayerProfile = (profile) => {
   return {
     ...profile,
-    received_actions: profile.received_actions || [],
-    vips: profile.vips || [],
-    blacklist: profile.blacklist || null,
-    watchlist: profile.watchlist || null,
-    flags: profile.flags || [],
-    penalty_count: profile.penalty_count || {
+    received_actions: profile.received_actions ?? [],
+    vips: profile.vips ?? [],
+    blacklists: profile.blacklists ?? [],
+    watchlist: profile.watchlist ?? [],
+    flags: profile.flags ?? [],
+    penalty_count: profile.penalty_count ?? {
       KICK: 0,
       PUNISH: 0,
       TEMPBAN: 0,
       PERMABAN: 0,
     },
-    sessions: profile.sessions || [],
-    sessions_count: profile.sessions_count || 0,
-    total_playtime_seconds: profile.total_playtime_seconds || 0,
-    current_playtime_seconds: profile.current_playtime_seconds || 0,
-    names: profile.names || [],
-    bans: profile.bans || [],
+    sessions: profile.sessions ?? [],
+    sessions_count: profile.sessions_count ?? 0,
+    total_playtime_seconds: profile.total_playtime_seconds ?? 0,
+    current_playtime_seconds: profile.current_playtime_seconds ?? 0,
+    names: profile.names ?? [],
+    bans: profile.bans ?? [],
   };
 };

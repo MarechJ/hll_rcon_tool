@@ -36,8 +36,6 @@ export const PlayerSidebarProvider = ({ children }) => {
     },
   });
 
-  console.log(isLoadingComments, comments);
-
   const {
     data: bans,
     isLoading: isLoadingBans,
@@ -128,10 +126,11 @@ export const PlayerSidebarProvider = ({ children }) => {
     } else {
       return null;
     }
-
-    aPlayer.comments = comments;
-    aPlayer.bans = bans;
-    if (bans.length > 0) {
+    
+    aPlayer.messages = messages ?? [];
+    aPlayer.comments = comments ?? [];
+    aPlayer.bans = bans ?? [];
+    if (aPlayer.bans.length > 0) {
       aPlayer.is_banned = true;
     }
 
@@ -143,7 +142,6 @@ export const PlayerSidebarProvider = ({ children }) => {
       aPlayer.vip = vip;
     }
 
-    aPlayer.messages = messages;
     aPlayer.player_id = aPlayer.player_id ?? aPlayer.profile.player_id;
     aPlayer.name = aPlayer.name ?? aPlayer.profile.names[0]?.name;
 

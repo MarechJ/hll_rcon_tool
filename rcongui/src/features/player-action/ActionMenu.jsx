@@ -207,7 +207,7 @@ export function ActionMenuButton({
         open={open}
         onClose={handleClose}
       >
-        {withProfile && (
+        {!Array.isArray(recipients) && (
           <MenuItem onClick={handleProfileClick} dense>
             <ListItemIcon>
               <PersonIcon />

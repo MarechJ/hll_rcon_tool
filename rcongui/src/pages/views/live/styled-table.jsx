@@ -1,4 +1,4 @@
-import { styled } from "@mui/material";
+import { Button, styled } from "@mui/material";
 
 // The table will have a prop size ["small", "default", "large"]
 // Styles will be different based on the size property
@@ -99,4 +99,19 @@ export const TextButton = styled((props) => (
   "&:hover": {
     textDecoration: "underline",
   },
+}));
+
+export const HeaderButton = styled((props) => (
+  <Button size="small" {...props} />
+))(({ theme }) => ({
+  width: "100%",
+  minWidth: 16,
+  minHeight: 16,
+  py: 0,
+  borderRadius: 0,
+  textAlign: "left",
+  color: theme.palette.text.primary,
+  fontSize: "inherit",
+  textDecoration: "none",
+  textTransform: "none",
 }));
