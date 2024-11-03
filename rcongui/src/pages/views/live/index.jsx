@@ -13,7 +13,7 @@ import { useStorageState } from "@/hooks/useStorageState";
 import { Button, Stack } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import teamViewResponse from "./data.json";
+// import teamViewResponse from "./data.json";
 import { teamsLiveQueryOptions } from "@/queries/teams-live-query";
 import { normalizePlayerProfile } from "@/utils/lib";
 import { useReactTable } from "@tanstack/react-table";
@@ -60,13 +60,13 @@ const Live = () => {
   const [rowSelection, setRowSelection] = useState({});
   const [columnFilters, setColumnFilters] = useState([]);
 
-  // const { data: teamData } = useQuery({
-  //   ...teamsLiveQueryOptions,
-  //   staleTime: 5 * 1000,
-  //   refetchInterval: 10 * 1000,
-  // });
+  const { data: teamData } = useQuery({
+    ...teamsLiveQueryOptions,
+    staleTime: 5 * 1000,
+    refetchInterval: 10 * 1000,
+  });
 
-  const teamData = teamViewResponse.result;
+  // const teamData = teamViewResponse.result;
 
   const { data: gameState } = useQuery({
     queryKey: ["game", "state"],
