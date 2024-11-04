@@ -13,7 +13,7 @@ import { useStorageState } from "@/hooks/useStorageState";
 import { Button, Stack } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-// import teamViewResponse from "./data.json";
+import teamViewResponse from "./data.json";
 import { teamsLiveQueryOptions } from "@/queries/teams-live-query";
 import { normalizePlayerProfile } from "@/utils/lib";
 import { useReactTable } from "@tanstack/react-table";
@@ -26,10 +26,12 @@ import {
   getSortedRowModel,
 } from "@tanstack/react-table";
 import { Box, IconButton } from "@mui/material";
-import { DebouncedSearchInput, TeamSelectionToolbar } from "./players-filters";
+import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
+import { TeamSelectionToolbar } from "./TeamSelectionToolbar";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { ActionMenuButton } from "@/features/player-action/ActionMenu";
 import { playerGameActions } from "@/features/player-action/actions";
+import PlayersTableConfigModal from "./PlayersTableConfigModal";
 
 const limitOptions = [
   100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000,
@@ -52,7 +54,10 @@ export const loader = async () => {
 
 const Live = () => {
   const { initialLogsView } = useLoaderData();
-  const [tableSize, setTableSize] = useState("small");
+  const [playersTableConfig, setPlayersTableConfig] = useStorageState("live-players-table-config", {
+    density: "normal",
+    fontSize: "normal",
+  });
   const [playersVisible, setPlayersVisible] = useState(true);
   const [logsVisible, setLogsVisible] = useState(true);
 
@@ -60,13 +65,17 @@ const Live = () => {
   const [rowSelection, setRowSelection] = useState({});
   const [columnFilters, setColumnFilters] = useState([]);
 
-  const { data: teamData } = useQuery({
-    ...teamsLiveQueryOptions,
-    staleTime: 5 * 1000,
-    refetchInterval: 10 * 1000,
-  });
+  const [playersTableConfigDrawerOpen, setPlayersTableConfigDrawerOpen] =
+    useState(false);
 
-  // const teamData = teamViewResponse.result;
+
+  // const { data: teamData } = useQuery({
+  //   ...teamsLiveQueryOptions,
+  //   staleTime: 5 * 1000,
+  //   refetchInterval: 10 * 1000,
+  // });
+
+  const teamData = teamViewResponse.result;
 
   const { data: gameState } = useQuery({
     queryKey: ["game", "state"],
@@ -155,6 +164,11 @@ const Live = () => {
     }));
   };
 
+  const handlePlayersTableConfigClick = () => {
+    // toggle config drawer
+    setPlayersTableConfigDrawerOpen((prev) => !prev);
+  };
+
   const gameData = React.useMemo(() => {
     if (gameState && teamData) {
       return {
@@ -184,93 +198,107 @@ const Live = () => {
   }, [rowSelection, playersTable.getSelectedRowModel().rows]);
 
   return (
-    <Grid container spacing={1}>
-      <Grid size={12}>
-        <Header data={gameData} />
-      </Grid>
-      {/* <Grid size={12}>
-        <Button onClick={() => setTableSize("small")}>Small</Button>
-        <Button onClick={() => setTableSize("medium")}>Medium</Button>
-        <Button onClick={() => setTableSize("large")}>Large</Button>
-        <Button startIcon={playersVisible ? <VisibilityIcon /> : <VisibilityOffIcon />} onClick={() => setPlayersVisible(!playersVisible)}>
-          {playersVisible ? "Hide Players" : "Show Players"}
-        </Button>
-        <Button startIcon={logsVisible ? <VisibilityIcon /> : <VisibilityOffIcon />} onClick={() => setLogsVisible(!logsVisible)}>
-          {logsVisible ? "Hide Logs" : "Show Logs"}
-        </Button>
-      </Grid> */}
-      {playersVisible && (
-        <Grid
-          size={{
-            xs: 12,
-            lg: "auto",
-          }}
-        >
-          <TeamSelectionToolbar table={playersTable} teamData={teamData} />
-          <Stack direction="column" spacing={0}>
-            <Stack
-              direction="row"
-              spacing={1}
-              sx={{
-                borderRadius: 0,
-                border: (theme) => `1px solid ${theme.palette.divider}`,
-                borderBottom: "none",
-              }}
-            >
-              <ActionMenuButton
-                actions={playerGameActions}
-                disabled={
-                  !playersTable.getIsSomePageRowsSelected() &&
-                  !playersTable.getIsAllRowsSelected()
-                }
-                recipients={selectedPlayers}
-                orientation="horizontal"
-                disableRipple={true}
+    <>
+      <Grid container spacing={1}>
+        <Grid size={12}>
+          <Header data={gameData} />
+        </Grid>
+        {/* <Grid size={12}>
+          <Button onClick={() => setTableSize("small")}>Small</Button>
+          <Button onClick={() => setTableSize("medium")}>Medium</Button>
+          <Button onClick={() => setTableSize("large")}>Large</Button>
+          <Button startIcon={playersVisible ? <VisibilityIcon /> : <VisibilityOffIcon />} onClick={() => setPlayersVisible(!playersVisible)}>
+            {playersVisible ? "Hide Players" : "Show Players"}
+          </Button>
+          <Button startIcon={logsVisible ? <VisibilityIcon /> : <VisibilityOffIcon />} onClick={() => setLogsVisible(!logsVisible)}>
+            {logsVisible ? "Hide Logs" : "Show Logs"}
+          </Button>
+        </Grid> */}
+        {playersVisible && (
+          <Grid
+            size={{
+              xs: 12,
+              lg: "auto",
+            }}
+          >
+            <TeamSelectionToolbar table={playersTable} teamData={teamData} />
+            <Stack direction="column" spacing={0}>
+              <Stack
+                direction="row"
+                spacing={1}
                 sx={{
-                  p: "1px 4px",
-                  height: "100%",
+                  borderRadius: 0,
+                  border: (theme) => `1px solid ${theme.palette.divider}`,
+                  borderBottom: "none",
                 }}
-              />
-              <DebouncedSearchInput
-                initialValue={
-                  playersTable.getColumn("name")?.getFilterValue() ?? ""
-                }
-                onChange={(value) => {
-                  playersTable.getColumn("name")?.setFilterValue(value);
+              >
+                <ActionMenuButton
+                  actions={playerGameActions}
+                  disabled={
+                    !playersTable.getIsSomePageRowsSelected() &&
+                    !playersTable.getIsAllRowsSelected()
+                  }
+                  recipients={selectedPlayers}
+                  orientation="horizontal"
+                  disableRipple={true}
+                  sx={{
+                    p: "1px 4px",
+                    height: "100%",
+                  }}
+                />
+                <DebouncedSearchInput
+                  initialValue={
+                    playersTable.getColumn("name")?.getFilterValue() ?? ""
+                  }
+                  onChange={(value) => {
+                    playersTable.getColumn("name")?.setFilterValue(value);
+                  }}
+                />
+                <IconButton
+                  size="small"
+                  sx={{ p: 0.5, borderRadius: 0 }}
+                  onClick={handlePlayersTableConfigClick}
+                >
+                  <SettingsIcon sx={{ fontSize: 16 }} />
+                </IconButton>
+              </Stack>
+              <Box
+                sx={{
+                  overflowX: "auto",
+                  overflowY: "hidden",
+                  width: "100%",
+                  scrollbarWidth: "none",
                 }}
-              />
-              <IconButton size="small" sx={{ p: 0.5, borderRadius: 0 }}>
-                <SettingsIcon sx={{ fontSize: 16 }} />
-              </IconButton>
+              >
+                <PlayersTable table={playersTable} config={playersTableConfig} />
+              </Box>
             </Stack>
-            <Box
-              sx={{
-                overflowX: "auto",
-                overflowY: "hidden",
-                width: "100%",
-                scrollbarWidth: "none",
-              }}
-            >
-              <PlayersTable table={playersTable} size={tableSize} />
-            </Box>
-          </Stack>
-        </Grid>
-      )}
-      {logsVisible && (
-        <Grid
-          size={{
-            xs: 12,
-            lg: "grow",
-          }}
-        >
-          <LogsTable
-            data={logsView.logs}
-            columns={logsColumns}
-            size={tableSize}
-          />
-        </Grid>
-      )}
-    </Grid>
+          </Grid>
+        )}
+        {logsVisible && (
+          <Grid
+            size={{
+              xs: 12,
+              lg: "grow",
+            }}
+          >
+            <LogsTable
+              data={logsView.logs}
+              columns={logsColumns}
+              size={playersTableConfig.size}
+            />
+          </Grid>
+        )}
+      </Grid>
+      <PlayersTableConfigModal
+        open={playersTableConfigDrawerOpen}
+        onClose={(config) => {
+          setPlayersTableConfigDrawerOpen(false)
+          setPlayersTableConfig(config)
+        }}
+        config={playersTableConfig}
+      />
+    </>
   );
 };
 

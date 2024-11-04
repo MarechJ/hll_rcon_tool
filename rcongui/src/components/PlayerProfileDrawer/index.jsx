@@ -38,7 +38,7 @@ import GavelIcon from "@mui/icons-material/Gavel";
 import { green, red, yellow } from "@mui/material/colors";
 import { useActionDialog } from "@/hooks/useActionDialog";
 import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
-import { CountryFlag } from "../CountryFlag";
+import { CountryFlag } from "@/components/shared/CountryFlag";
 import {
   playerGameActions,
   playerProfileActions,
