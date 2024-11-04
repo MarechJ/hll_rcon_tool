@@ -20,6 +20,7 @@ from rcon.models import PlayerID, PlayerVIP, enter_session
 from rcon.player_history import get_profiles, safe_save_player_action, save_player, get_player_profile
 from rcon.settings import SERVER_INFO
 from rcon.types import (
+    PlayerProfileType,
     AdminType,
     GameLayoutRandomConstraints,
     GameServerBanType,
@@ -264,10 +265,10 @@ class Rcon(ServerCtl):
         fail_count = 0
         players_by_id: dict[str, GetDetailedPlayer] = {}
 
-        futures: dict[Future[Any], GetDetailedPlayer] = {
-            self.run_in_pool("get_detailed_player_info", player[NAME]): player
-            for _, player in enumerate(players)
-        }  # type: ignore
+        futures: dict[Future[Any], GetDetailedPlayer] = {}
+        for player in players:
+            res =  self.run_in_pool("get_detailed_player_info", player[NAME], player)
+            futures[res] = player
 
         for future in as_completed(futures):
             try:
@@ -472,7 +473,7 @@ class Rcon(ServerCtl):
         }
 
     @ttl_cache(ttl=2, cache_falsy=False)
-    def get_detailed_player_info(self, player_name: str) -> GetDetailedPlayer:
+    def get_detailed_player_info(self, player_name: str, player: GetPlayersType | None = None) -> GetDetailedPlayer:
         raw = super().get_player_info(player_name)
         if not raw:
             raise CommandFailedError("Got bad data")
@@ -487,16 +488,21 @@ class Rcon(ServerCtl):
         Kills: 0 - Deaths: 0
         Score: C 50, O 0, D 40, S 10
         Level: 34
-
         """
-        # Add VIP Status
-        player_data = parse_raw_player_info(raw, player_name)
-        vip_player_ids = set(v[PLAYER_ID] for v in super().get_vip_ids())
-        player_data["is_vip"] = player_data["player_id"] in vip_player_ids
 
-        # Add Profile
-        profile = get_player_profile(player_data["player_id"], 1)
-        player_data["profile"] = profile
+        player_data = parse_raw_player_info(raw, player_name)
+        if player is not None and 'is_vip' in player:
+            player_data["is_vip"] = player.get('is_vip')
+        else:
+            vip_player_ids = set(v[PLAYER_ID] for v in super().get_vip_ids())
+            player_data["is_vip"] = player_data["player_id"] in vip_player_ids
+
+        if player is not None and 'profile' in player:
+            player_data["profile"] = player.get('profile')
+        else:
+            profile = get_player_profile(player_data["player_id"], 1)
+            player_data["profile"] = profile
+
         return player_data
 
     @ttl_cache(ttl=60 * 10)
