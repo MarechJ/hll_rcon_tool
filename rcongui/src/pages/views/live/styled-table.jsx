@@ -1,45 +1,72 @@
 import { Button, styled } from "@mui/material";
 
-// The table will have a prop size ["small", "default", "large"]
+// The table will have a prop size ["small", "normal", "large"]
 // Styles will be different based on the size property
 // The property size won't be passed to the component, but rather it will be used in the styled component
 export const StyledTable = styled("table", {
-  shouldForwardProp: (prop) => prop !== "size",
+  shouldForwardProp: (prop) => prop !== "fontSize" || prop !== "density",
 })((styledProps) => {
   const theme = styledProps.theme;
-  const size = styledProps.size ?? "medium";
+  const fontSize = styledProps.fontSize;
+  const density = styledProps.density;
+
   return {
-    fontSize: size === "small" ? 12 : size === "large" ? 18 : 14,
+    // TABLE
+    fontSize:
+      fontSize === "small"
+        ? theme.typography.pxToRem(12)
+        : fontSize === "large"
+        ? theme.typography.pxToRem(20)
+        : theme.typography.pxToRem(16),
     borderCollapse: "collapse",
     borderSpacing: 0,
     border: `1px solid ${theme.palette.divider}`,
     width: "100%",
+    "& td": {
+      paddingRight: density === "small" ? 2 : density === "large" ? 6 : 4,
+      paddingLeft: density === "small" ? 2 : density === "large" ? 6 : 4,
+      paddingTop:
+        density === "small"
+          ? theme.spacing(0.25)
+          : density === "large"
+          ? theme.spacing(1.25)
+          : theme.spacing(0.75),
+      paddingBottom:
+        density === "small"
+          ? theme.spacing(0.25)
+          : density === "large"
+          ? theme.spacing(1.25)
+          : theme.spacing(0.75),
+    },
+    "& th": {
+      paddingRight: density === "small" ? 2 : density === "large" ? 6 : 4,
+      paddingLeft: density === "small" ? 2 : density === "large" ? 6 : 4,
+    },
   };
 });
 
 export const StyledTh = styled("th", {
-  shouldForwardProp: (prop) => prop !== "size",
+  shouldForwardProp: (prop) => prop !== "variant",
 })((styledProps) => {
-  const size = styledProps.size;
+  const variant = styledProps.variant;
   return {
-    padding: "1px 4px",
-    textAlign: "left",
-    minWidth:
-      size === "icon"
-        ? 30
-        : size === "medium"
-        ? 100
-        : size === "large"
-        ? 200
-        : size === "full"
-        ? "100%"
-        : "auto",
+    padding: variant === "short" ? "4px" : "1px 4px",
+    width: variant === "icon" ? "1.5rem" : variant === "short" ? "4rem" : "auto",
+    textAlign: variant === "icon" ? "center" : "left",
   };
 });
 
-export const StyledTd = styled("td")(({ theme }) => ({
-  padding: "1px 4px",
-}));
+export const StyledTd = styled("td", {
+  shouldForwardProp: (prop) => prop !== "variant",
+})((styledProps) => {
+  const theme = styledProps.theme;
+  const variant = styledProps.variant;
+
+  return {
+    width: variant === "icon" ? "1.5rem" : variant === "short" ? "4rem" : "auto",
+    textAlign: variant === "icon" ? "center" : "left",
+  };
+});
 
 export const StyledTr = styled("tr")(({ theme }) => ({
   borderBottom: `1px solid ${theme.palette.divider}`,
@@ -107,7 +134,7 @@ export const HeaderButton = styled((props) => (
   width: "100%",
   minWidth: 16,
   minHeight: 16,
-  py: 0,
+  p: 0,
   borderRadius: 0,
   textAlign: "left",
   color: theme.palette.text.primary,

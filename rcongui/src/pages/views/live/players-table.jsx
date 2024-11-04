@@ -4,27 +4,29 @@ import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
 import { NoRowsOverlay } from "@/components/NoRowsOverlay";
 import { StyledTable, StyledTd, StyledTh, StyledTr } from "./styled-table";
 
-const PlayersTable = ({ table, size }) => {
+const PlayersTable = ({ table, config }) => {
   const { switchPlayer } = usePlayerSidebar();
 
   return (
     <>
-      <StyledTable size={size}>
+      <StyledTable {...config}>
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
             <StyledTr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <StyledTh key={header.id}>
-                  {header.isPlaceholder ? null : (
-                    <div>
-                      {flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                    </div>
-                  )}
-                </StyledTh>
-              ))}
+              {headerGroup.headers.map((header) => {
+                return (
+                  <StyledTh key={header.id} variant={header.column.columnDef?.meta?.variant}>
+                    {header.isPlaceholder ? null : (
+                      <div>
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                      </div>
+                    )}
+                  </StyledTh>
+                )
+              })}
             </StyledTr>
           ))}
         </thead>
@@ -35,7 +37,7 @@ const PlayersTable = ({ table, size }) => {
               onClick={() => switchPlayer(row.original.player_id)}
             >
               {row.getVisibleCells().map((cell) => (
-                <StyledTd key={cell.id}>
+                <StyledTd key={cell.id} variant={cell.column.columnDef?.meta?.variant}>
                   {cell.getIsGrouped() ? (
                     // If it's a grouped cell, add an expander and row count
                     <>
