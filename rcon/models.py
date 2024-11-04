@@ -514,13 +514,19 @@ class Maps(Base):
             "end": self.end,
             "server_number": self.server_number,
             "map_name": self.map_name,
-            "result": {
-                "axis": self.result.get("Axis"),
-                "allied": self.result.get("Allied"),
-            } if self.result is not None and self.result.get('Allied') is not None else None,
-            "player_stats": []
-            if not with_stats or not self.player_stats
-            else [s.to_dict() for s in self.player_stats],
+            "result": (
+                {
+                    "axis": self.result.get("Axis"),
+                    "allied": self.result.get("Allied"),
+                }
+                if self.result is not None and self.result.get("Allied") is not None
+                else None
+            ),
+            "player_stats": (
+                []
+                if not with_stats or not self.player_stats
+                else [s.to_dict() for s in self.player_stats]
+            ),
         }
 
 

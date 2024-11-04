@@ -12,15 +12,15 @@ from channels.db import database_sync_to_async
 from channels.security.websocket import WebsocketDenier
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth.models import Permission, User, Group
+from django.contrib.auth.models import Group, Permission, User
 from django.core.exceptions import PermissionDenied
 from django.db.models.signals import post_delete, post_save
 from django.http import HttpResponse, QueryDict
 from django.views.decorators.csrf import csrf_exempt
 
-from rcon.types import DjangoGroup, DjangoPermission, DjangoUserPermissions
 from rcon.audit import heartbeat, ingame_mods, online_mods, set_registered_mods
 from rcon.cache_utils import ttl_cache
+from rcon.types import DjangoGroup, DjangoPermission, DjangoUserPermissions
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rconweb.settings import SECRET_KEY, TAG_VERSION
 

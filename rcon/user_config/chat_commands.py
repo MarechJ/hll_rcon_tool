@@ -1,3 +1,4 @@
+import logging
 import re
 from functools import cached_property
 from typing import Iterable, TypedDict
@@ -10,6 +11,8 @@ from rcon.user_config.utils import BaseUserConfig, _listType, key_check, set_use
 MESSAGE_VAR_RE = re.compile(r"\{(.*?)}")
 VALID_COMMAND_PREFIXES = ("!", "@")
 HELP_PREFIX = "?"
+
+logger = logging.getLogger(__name__)
 
 
 def chat_contains_command_word(
@@ -37,10 +40,13 @@ def is_description_word(words: Iterable[str], description_words: Iterable[str]):
     return any(word in description_words for word in words)
 
 
-class ChatCommandType(TypedDict):
+class BaseChatCommandType(TypedDict):
     words: list[str]
-    message: str
     description: str
+
+
+class ChatCommandType(BaseChatCommandType):
+    message: str
 
 
 class ChatCommandsType(TypedDict):
@@ -49,29 +55,13 @@ class ChatCommandsType(TypedDict):
     describe_words: list[str]
 
 
-class ChatCommand(BaseModel):
+class BaseChatCommand(BaseModel):
     words: list[str] = Field(default_factory=list)
-    message: str = Field(default="")
     description: str | None = Field(default=None)
 
     @cached_property
     def help_words(self) -> set[str]:
         return set(f"?{word[1:]}" for word in self.words)
-
-    @field_validator("message")
-    @classmethod
-    def only_valid_variables(cls, v: str) -> str:
-        for match in re.findall(MESSAGE_VAR_RE, v):
-            # Has to either be a valid MessageVariable or MessageVariableContext
-            try:
-                MessageVariable[match]
-            except KeyError:
-                try:
-                    MessageVariableContext[match]
-                except KeyError:
-                    raise ValueError(f"{match} is not a valid message variable")
-
-        return v
 
     @field_validator("words")
     @classmethod
@@ -85,11 +75,32 @@ class ChatCommand(BaseModel):
         return vs
 
 
-class ChatCommandsUserConfig(BaseUserConfig):
-    enabled: bool = Field(default=False)
-    command_words: list[ChatCommand] = Field(default_factory=list)
+class ChatCommand(BaseChatCommand):
+    message: str | None = Field(default=None)
 
-    # Thes will trigger an automatic help command if `description`s are set on
+    @field_validator("message")
+    @classmethod
+    def only_valid_variables(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        for match in re.findall(MESSAGE_VAR_RE, v):
+            # Has to either be a valid MessageVariable or MessageVariableContext
+            try:
+                MessageVariable[match]
+            except KeyError:
+                try:
+                    MessageVariableContext[match]
+                except KeyError:
+                    raise ValueError(f"{match} is not a valid message variable")
+
+        return v
+
+
+class BaseChatCommandUserConfig(BaseUserConfig):
+    command_words: list[BaseChatCommand] = []
+    enabled: bool = Field(default=False)
+
+    # These will trigger an automatic help command if `description`s are set on
     # `command_words`
     describe_words: list[str] = Field(default_factory=list)
 
@@ -111,15 +122,27 @@ class ChatCommandsUserConfig(BaseUserConfig):
             if word.description
         ]
 
+
+class ChatCommandsUserConfig(BaseChatCommandUserConfig):
+    command_words: list[ChatCommand] = Field(default_factory=list)
+
     @staticmethod
     def save_to_db(values: ChatCommandsType, dry_run=False) -> None:
-        key_check(ChatCommandsType.__required_keys__, values.keys())
+        key_check(
+            ChatCommandsType.__required_keys__,
+            ChatCommandsType.__optional_keys__,
+            values.keys(),
+        )
 
         raw_command_words = values.get("command_words")
         _listType(values=raw_command_words)
 
         for obj in raw_command_words:
-            key_check(ChatCommandType.__required_keys__, obj.keys())
+            key_check(
+                ChatCommandType.__required_keys__,
+                ChatCommandType.__optional_keys__,
+                obj.keys(),
+            )
 
         validated_words = []
         for raw_word in raw_command_words:

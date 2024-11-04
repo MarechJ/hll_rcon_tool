@@ -76,7 +76,7 @@ def get_scoreboard_maps(request):
                     end=r["end"],
                     server_number=r["server_number"],
                     player_stats=r["player_stats"],
-                    result=r['result']
+                    result=r["result"],
                 )
             )
 

@@ -53,7 +53,7 @@ def set_registered_mods(moderators_name_steamids: List[tuple]):
         red.hset("moderators", k, v)
 
 
-def online_mods(rcon=None) -> list[AdminUserType]:
+def online_mods() -> list[AdminUserType]:
     red = _red()
     return [
         json.loads(red.get(u)) for u in red.scan_iter(f"{HEARTBEAT_KEY_PREFIX}*", 1)

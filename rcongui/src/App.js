@@ -53,6 +53,7 @@ import {
   ExpiredVIP,
   GTXNameChange,
   ChatCommands,
+  RConChatCommands,
   LogStream,
   SeedVIP,
 } from "./components/UserSettings/miscellaneous";
@@ -632,6 +633,17 @@ function App() {
                           setEndpoint="set_chat_commands_config"
                           validateEndpoint="validate_chat_commands_config"
                           describeEndpoint="describe_chat_commands_config"
+                        />
+                      </Grid>
+                    </Route>
+                    <Route path="/settings/rcon-chat-commands">
+                      <Grid container spacing={2}>
+                        <RConChatCommands
+                          description="RCon Chat Commands Settings"
+                          getEndpoint="get_rcon_chat_commands_config"
+                          setEndpoint="set_rcon_chat_commands_config"
+                          validateEndpoint="validate_rcon_chat_commands_config"
+                          describeEndpoint="describe_rcon_chat_commands_config"
                         />
                       </Grid>
                     </Route>

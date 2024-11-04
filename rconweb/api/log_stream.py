@@ -1,14 +1,14 @@
-from django.urls import path
-from rcon.game_logs import LogStream, is_action
-from rcon.utils import StreamInvalidID, StreamID
-from typing import TypedDict, Generator
 import asyncio
-
+from logging import getLogger
+from typing import Generator, TypedDict
 
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
-from logging import getLogger
-from rcon.types import StructuredLogLineWithMetaData, AllLogTypes
+from django.urls import path
+
+from rcon.game_logs import LogStream, is_action
+from rcon.types import AllLogTypes, StructuredLogLineWithMetaData
 from rcon.user_config.log_stream import LogStreamUserConfig
+from rcon.utils import StreamID, StreamInvalidID
 
 logger = getLogger(__name__)
 
