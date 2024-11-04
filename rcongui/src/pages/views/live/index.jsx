@@ -69,13 +69,13 @@ const Live = () => {
     useState(false);
 
 
-  // const { data: teamData } = useQuery({
-  //   ...teamsLiveQueryOptions,
-  //   staleTime: 5 * 1000,
-  //   refetchInterval: 10 * 1000,
-  // });
+  const { data: teamData } = useQuery({
+    ...teamsLiveQueryOptions,
+    staleTime: 5 * 1000,
+    refetchInterval: 10 * 1000,
+  });
 
-  const teamData = teamViewResponse.result;
+  // const teamData = teamViewResponse.result;
 
   const { data: gameState } = useQuery({
     queryKey: ["game", "state"],
