@@ -739,19 +739,20 @@ class ServerCtl:
 
     def get_objective_row(self, row: int):
         if not (0 <= row <= 4):
-            raise ValueError('Row must be between 0 and 4')
-        
+            raise ValueError("Row must be between 0 and 4")
+
         return self._get_list(
-            f'get objectiverow_{row}',
-            fail_msgs="Cannot execute command for this gamemode."
+            f"get objectiverow_{row}",
+            fail_msgs="Cannot execute command for this gamemode.",
         )
 
     def set_game_layout(self, objectives: Sequence[str]):
         if len(objectives) != 5:
             raise ValueError("5 objectives must be provided")
         self._str_request(
-            f'gamelayout "{objectives[0]}" "{objectives[1]}" "{objectives[2]}" "{objectives[3]}" "{objectives[4]}"', log_info=True,
-            can_fail=False
+            f'gamelayout "{objectives[0]}" "{objectives[1]}" "{objectives[2]}" "{objectives[3]}" "{objectives[4]}"',
+            log_info=True,
+            can_fail=False,
         )
         return list(objectives)
     
@@ -760,6 +761,7 @@ class ServerCtl:
         Any of "IntenseWarfare", "OffensiveWarfare", or ???
         """
         return self._str_request("get gamemode", can_fail=False)
+
 
 if __name__ == "__main__":
     from rcon.settings import SERVER_INFO

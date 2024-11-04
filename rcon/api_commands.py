@@ -61,6 +61,7 @@ from rcon.user_config.gtx_server_name import GtxServerNameChangeUserConfig
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
 from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.user_config.name_kicks import NameKickUserConfig
+from rcon.user_config.rcon_chat_commands import RConChatCommandsUserConfig
 from rcon.user_config.rcon_connection_settings import RconConnectionSettingsUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
@@ -1763,6 +1764,41 @@ class RconAPI(Rcon):
             command_name=inspect.currentframe().f_code.co_name,  # type: ignore
             by=by,
             model=ChatCommandsUserConfig,
+            data=config or kwargs,
+            dry_run=True,
+            reset_to_default=reset_to_default,
+        )
+
+    def get_rcon_chat_commands_config(self):
+        return RConChatCommandsUserConfig.load_from_db()
+
+    def set_rcon_chat_commands_config(
+        self,
+        by: str,
+        config: dict[str, Any] | BaseUserConfig | None = None,
+        reset_to_default: bool = False,
+        **kwargs,
+    ) -> bool:
+        return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
+            model=RConChatCommandsUserConfig,
+            data=config or kwargs,
+            dry_run=False,
+            reset_to_default=reset_to_default,
+        )
+
+    def validate_rcon_chat_commands_config(
+        self,
+        by: str,
+        config: dict[str, Any] | BaseUserConfig | None = None,
+        reset_to_default: bool = False,
+        **kwargs,
+    ) -> bool:
+        return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
+            model=RConChatCommandsUserConfig,
             data=config or kwargs,
             dry_run=True,
             reset_to_default=reset_to_default,

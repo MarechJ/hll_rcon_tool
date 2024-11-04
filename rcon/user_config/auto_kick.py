@@ -35,7 +35,11 @@ class AutoVoteKickUserConfig(BaseUserConfig):
 
     @staticmethod
     def save_to_db(values: AutoVoteKickType, dry_run=False):
-        key_check(AutoVoteKickType.__required_keys__, values.keys())
+        key_check(
+            AutoVoteKickType.__required_keys__,
+            AutoVoteKickType.__optional_keys__,
+            values.keys(),
+        )
 
         validated_conf = AutoVoteKickUserConfig(
             enabled=values.get("enabled"),
