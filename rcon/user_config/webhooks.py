@@ -106,7 +106,11 @@ class BaseWebhookUserConfig(BaseUserConfig):
 
     @classmethod
     def save_to_db(cls, values: RawWebhookType, dry_run=False) -> None:
-        key_check(RawWebhookType.__required_keys__, values.keys())
+        key_check(
+            RawWebhookType.__required_keys__,
+            RawWebhookType.__optional_keys__,
+            values.keys(),
+        )
         raw_hooks: list[WebhookType] = values.get("hooks")
         _listType(values=raw_hooks)
 
