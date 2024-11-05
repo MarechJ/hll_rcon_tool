@@ -18,7 +18,11 @@ class RealVipUserConfig(BaseUserConfig):
 
     @staticmethod
     def save_to_db(values: RealVipConfigType, dry_run=False):
-        key_check(RealVipConfigType.__required_keys__, values.keys())
+        key_check(
+            RealVipConfigType.__required_keys__,
+            RealVipConfigType.__optional_keys__,
+            values.keys(),
+        )
         validated_conf = RealVipUserConfig(
             enabled=values.get("enabled"),
             desired_total_number_vips=values.get("desired_total_number_vips"),
