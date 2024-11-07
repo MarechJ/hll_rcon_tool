@@ -154,7 +154,7 @@ export const sortByRank = (rankA, rankB) => {
  */
 export const toSnakeCase = (str) => str.replace(/\s+/g, "_");
 
-export const teamToNation = (team) => team === "axis" ? "ger" : "us";
+export const teamToNation = (team) => (team === "axis" ? "ger" : "us");
 
 export function getPlayerTier(level) {
   if (level < 20) {
@@ -184,4 +184,39 @@ export const tierColors = {
   Expert: green[500],
   Master: blue[500],
   Legend: purple[500],
+};
+
+export const logActions = {
+  ADMIN: "🚨",
+  "ADMIN MISC": "🚨",
+  "ADMIN IDLE": "💤",
+  "ADMIN ANTI-CHEAT": "🚷",
+  "ADMIN BANNED": "⌛",
+  "ADMIN PERMA BANNED": "⛔",
+  "ADMIN KICKED": "🚷",
+  CHAT: "💬",
+  CAMERA: "👀",
+  "CHAT[Allies]": "🟦",
+  "CHAT[Allies][Team]": "🟦",
+  "CHAT[Allies][Unit]": "🟦",
+  "CHAT[Axis]": "🟥",
+  "CHAT[Axis][Team]": "🟥",
+  "CHAT[Axis][Unit]": "🟥",
+  CONNECTED: "🛬",
+  DISCONNECTED: "🛫",
+  KILL: "💀",
+  MATCH: "🏁",
+  "MATCH ENDED": "🏁",
+  "MATCH START": "🏁",
+  MESSAGE: "📢",
+  "TEAM KILL": "⚠️",
+  TEAMSWITCH: "♻️",
+  "TK AUTO": "🚷",
+  "TK AUTO BANNED": "⌛",
+  "TK AUTO KICKED": "🚷",
+  VOTE: "🙋",
+  "VOTE COMPLETED": "🙋",
+  "VOTE EXPIRED": "🙋",
+  "VOTE PASSED": "🙋",
+  "VOTE STARTED": "🙋",
 };

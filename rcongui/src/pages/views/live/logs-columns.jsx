@@ -3,7 +3,7 @@ import { playerGameActions } from "@/features/player-action/actions";
 import { Button } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import dayjs from "dayjs";
-import { Action, TextButton } from "./styled-table";
+import { Action, SortableHeader, TextButton } from "@/components/table/styles";
 
 const TIME_FORMAT = "HH:mm:ss, MMM DD";
 
@@ -112,14 +112,13 @@ const removePlayerIds = (message) => {
 // Column definitions for the log table
 export const logsColumns = [
   {
-    header: "Time",
+    header: SortableHeader("Time"),
     accessorKey: "timestamp_ms",
     cell: ({ row }) => {
       return dayjs(row.original.timestamp_ms).format(TIME_FORMAT);
     },
-    minSize: 100,
     meta: {
-      size: "medium",
+      variant: "time"
     },
   },
   {
@@ -137,18 +136,21 @@ export const logsColumns = [
         />
       ) : null;
     },
+    filterFn: "arrIncludesSome",
     meta: {
-      size: "medium",
+      variant: "name"
     },
   },
   {
     header: "Action",
     accessorKey: "action",
+    id: "action",
     cell: ({ row }) => {
       return <Action type={row.original.action}>{row.original.action}</Action>;
     },
+    filterFn: "arrIncludesSome",
     meta: {
-      size: "large",
+      variant: "action"
     },
   },
   {
@@ -167,7 +169,7 @@ export const logsColumns = [
       ) : null;
     },
     meta: {
-      size: "medium",
+      variant: "name"
     },
   },
   {

@@ -1,5 +1,48 @@
 import { Button, styled } from "@mui/material";
 
+function getVariantWidth(variant) {
+  switch (variant) {
+    case "icon":
+      return "1.5rem";
+    case "short":
+      return "4rem";
+    case "time":
+      return "16ch";
+    case "name":
+      return "20ch";
+    case "action":
+      return "24ch";
+    default:
+      return "auto";
+  }
+}
+
+function getDensityPadding(density, theme) {
+  switch (density) {
+    case "dense":
+      return {
+        paddingRight: theme.spacing(0.25),
+        paddingLeft: theme.spacing(0.25),
+        paddingTop: theme.spacing(0.25),
+        paddingBottom: theme.spacing(0.25),
+      };
+    case "comfortable":
+      return {
+        paddingRight: theme.spacing(1.25),
+        paddingLeft: theme.spacing(1.25),
+        paddingTop: theme.spacing(1.25),
+        paddingBottom: theme.spacing(1.25),
+      };
+    default:
+      return {
+        paddingRight: theme.spacing(1),
+        paddingLeft: theme.spacing(1),
+        paddingTop: theme.spacing(1),
+        paddingBottom: theme.spacing(1),
+      };
+  }
+}
+
 // The table will have a prop size ["small", "normal", "large"]
 // Styles will be different based on the size property
 // The property size won't be passed to the component, but rather it will be used in the styled component
@@ -23,47 +66,35 @@ export const StyledTable = styled("table", {
     border: `1px solid ${theme.palette.divider}`,
     width: "100%",
     "& td": {
-      paddingRight: density === "small" ? 2 : density === "large" ? 6 : 4,
-      paddingLeft: density === "small" ? 2 : density === "large" ? 6 : 4,
-      paddingTop:
-        density === "small"
-          ? theme.spacing(0.25)
-          : density === "large"
-          ? theme.spacing(1.25)
-          : theme.spacing(0.75),
-      paddingBottom:
-        density === "small"
-          ? theme.spacing(0.25)
-          : density === "large"
-          ? theme.spacing(1.25)
-          : theme.spacing(0.75),
+      ...getDensityPadding(density, theme),
     },
     "& th": {
-      paddingRight: density === "small" ? 2 : density === "large" ? 6 : 4,
-      paddingLeft: density === "small" ? 2 : density === "large" ? 6 : 4,
+      ...getDensityPadding(density, theme),
+      paddingTop: "auto",
+      paddingBottom: "auto",
     },
   };
 });
 
 export const StyledTh = styled("th", {
-  shouldForwardProp: (prop) => prop !== "variant",
+  shouldForwardProp: (prop) => prop !== "variant" || prop !== "minWidth",
 })((styledProps) => {
   const variant = styledProps.variant;
   return {
-    padding: variant === "short" ? "4px" : "1px 4px",
-    width: variant === "icon" ? "1.5rem" : variant === "short" ? "4rem" : "auto",
+    width: getVariantWidth(variant),
+    minWidth: getVariantWidth(variant),
     textAlign: variant === "icon" ? "center" : "left",
   };
 });
 
 export const StyledTd = styled("td", {
-  shouldForwardProp: (prop) => prop !== "variant",
+  shouldForwardProp: (prop) => prop !== "variant" || prop !== "minWidth",
 })((styledProps) => {
-  const theme = styledProps.theme;
   const variant = styledProps.variant;
 
   return {
-    width: variant === "icon" ? "1.5rem" : variant === "short" ? "4rem" : "auto",
+    width: getVariantWidth(variant),
+    minWidth: getVariantWidth(variant),
     textAlign: variant === "icon" ? "center" : "left",
   };
 });
@@ -142,3 +173,13 @@ export const HeaderButton = styled((props) => (
   textDecoration: "none",
   textTransform: "none",
 }));
+
+export const SortableHeader =
+  (text) =>
+  ({ column }) => {
+    return (
+      <HeaderButton onClick={column.getToggleSortingHandler()}>
+        {text}
+      </HeaderButton>
+    );
+  };
