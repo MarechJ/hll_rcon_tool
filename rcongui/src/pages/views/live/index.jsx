@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from "react";
-import Grid from "@mui/material/Grid2";
 import { cmd } from "@/utils/fetchUtils";
-import { columns } from "./players-columns";
+import { columns as playersColumns } from "./players-columns";
 import { Header } from "@/components/game/Header";
 import { extractPlayers, extractTeamState } from "@/utils/extractPlayers";
 import { useLoaderData } from "react-router-dom";
@@ -10,65 +9,42 @@ import PlayersTable from "./players-table";
 import LogsTable from "./logs-table";
 import { logsColumns } from "./logs-columns";
 import { useStorageState } from "@/hooks/useStorageState";
-import { Button, Stack } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import teamViewResponse from "./data.json";
 import { teamsLiveQueryOptions } from "@/queries/teams-live-query";
 import { normalizePlayerProfile } from "@/utils/lib";
-import { useReactTable } from "@tanstack/react-table";
+import { getPaginationRowModel, useReactTable } from "@tanstack/react-table";
 import {
   getCoreRowModel,
-  getExpandedRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
   getFilteredRowModel,
   getSortedRowModel,
 } from "@tanstack/react-table";
-import { Box, IconButton } from "@mui/material";
-import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
-import { TeamSelectionToolbar } from "./TeamSelectionToolbar";
-import SettingsIcon from "@mui/icons-material/Settings";
-import { ActionMenuButton } from "@/features/player-action/ActionMenu";
-import { playerGameActions } from "@/features/player-action/actions";
-import PlayersTableConfigModal from "./PlayersTableConfigModal";
-
-const limitOptions = [
-  100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000,
-];
+import Grid from "@mui/material/Grid2";
+import storageKeys from "@/config/storageKeys";
 
 const interval = 15 * 1000; // 15 seconds
 
 export const loader = async () => {
-  const logs = await cmd.GET_LIVE_LOGS({
-    params: {
-      end: 100,
+  const response = await cmd.GET_LIVE_LOGS({
+    payload: {
+      end: 250,
       filter_action: [],
       filter_player: [],
       inclusive_filter: true,
     },
   });
 
-  return { initialLogsView: logs };
+  return { initialLogsView: response };
 };
 
 const Live = () => {
+  // ---------------- VIEW STATE -----------------
   const { initialLogsView } = useLoaderData();
-  const [playersTableConfig, setPlayersTableConfig] = useStorageState("live-players-table-config", {
-    density: "normal",
-    fontSize: "normal",
-  });
   const [playersVisible, setPlayersVisible] = useState(true);
   const [logsVisible, setLogsVisible] = useState(true);
 
-  const [sorting, setSorting] = useState([]);
-  const [rowSelection, setRowSelection] = useState({});
-  const [columnFilters, setColumnFilters] = useState([]);
-
-  const [playersTableConfigDrawerOpen, setPlayersTableConfigDrawerOpen] =
-    useState(false);
-
-
+  // ---------------- PLAYERS DATA -----------------
   const { data: teamData } = useQuery({
     ...teamsLiveQueryOptions,
     staleTime: 5 * 1000,
@@ -77,97 +53,60 @@ const Live = () => {
 
   // const teamData = teamViewResponse.result;
 
+  const playersData = React.useMemo(() => {
+    if (!teamData) return [];
+    const o = extractPlayers(teamData).map((player) => ({
+      ...player,
+      profile: normalizePlayerProfile(player?.profile),
+    }));
+    return o;
+  }, [teamData]);
+
+  // ---------------- LOGS DATA -----------------
+  // Using custom hook that synchronizes the components state
+  // and the browser's local storage
+  const [logsSearchParams, setLogsSearchParams] = useStorageState(
+    storageKeys.LIVE_LOGS_SEARCH_PARAMS,
+    {
+      players: [],
+      actions: [],
+      inclusive: true,
+      limit: 500,
+    }
+  );
+
+  const { data: logsView } = useQuery({
+    queryKey: [
+      "logs",
+      "live",
+      {
+        end: logsSearchParams.limit,
+        filter_action: logsSearchParams.actions,
+        filter_player: logsSearchParams.players,
+        inclusive_filter: logsSearchParams.inclusive,
+      },
+    ],
+    queryFn: () =>
+      cmd.GET_LIVE_LOGS({
+        payload: {
+          end: logsSearchParams.limit,
+          filter_action: logsSearchParams.actions,
+          filter_player: logsSearchParams.players,
+          inclusive_filter: logsSearchParams.inclusive,
+        },
+      }),
+    select: (response) => response.result,
+    initialData: initialLogsView,
+    refetchInterval: interval, // Polling interval for updates
+  });
+
+  // ---------------- GAME HEADER DATA -----------------
   const { data: gameState } = useQuery({
     queryKey: ["game", "state"],
     queryFn: cmd.GET_GAME_STATE,
     staleTime: 5 * 1000,
     refetchInterval: 10 * 1000,
   });
-
-  const playersData = React.useMemo(() => {
-    if (!teamData) return [];
-    return extractPlayers(teamData).map((player) => ({
-      ...player,
-      profile: normalizePlayerProfile(player?.profile),
-    }));
-  }, [teamData]);
-
-  // Using custom hook that synchronizes the components state
-  // and the browser's local storage
-  const [logsConfig, setLogsConfig] = useStorageState("logs-config", {
-    players: [],
-    actions: [],
-    inclusive: true,
-    limit: 500,
-    highlighted: false,
-    tableMode: "table",
-  });
-
-  // Use React Query to manage background refetching
-  const {
-    data: logsView,
-    error,
-    isLoading,
-  } = useQuery({
-    queryKey: ["logs", "live"],
-    queryFn: () =>
-      cmd.GET_RECENT_LOGS({
-        params: {
-          end: logsConfig.limit,
-          filter_action: logsConfig.actions,
-          filter_player: logsConfig.players,
-          inclusive_filter: logsConfig.inclusive,
-        },
-      }),
-    initialData: initialLogsView,
-    refetchInterval: interval, // Polling interval for updates
-  });
-
-  const playersTable = useReactTable({
-    data: playersData,
-    columns,
-    onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getCoreRowModel: getCoreRowModel(),
-    onRowSelectionChange: setRowSelection,
-    onColumnFiltersChange: setColumnFilters,
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
-    getExpandedRowModel: getExpandedRowModel(),
-    getRowId: (row) => row.player_id,
-    state: {
-      sorting,
-      rowSelection,
-      columnFilters,
-    },
-  });
-
-  // const logsData = React.useMemo(() => {
-  //   if (!logsView || !logsView.logs) {
-  //     return [];
-  //   }
-
-  //   return logsView.logs.map((log, index) => ({
-  //     id: index,
-  //     time: log.event_time ?? "N/A", // Handle missing fields gracefully
-  //     action: log.action ?? "N/A",
-  //     player: log.player_name_1 ?? "N/A",
-  //     content: log.sub_content ?? "",
-  //   }));
-  // }, [logsView]);
-
-  const handleFiltersChange = (newParams) => {
-    setLogsConfig((prevConfig) => ({
-      ...prevConfig,
-      ...newParams,
-    }));
-  };
-
-  const handlePlayersTableConfigClick = () => {
-    // toggle config drawer
-    setPlayersTableConfigDrawerOpen((prev) => !prev);
-  };
 
   const gameData = React.useMemo(() => {
     if (gameState && teamData) {
@@ -186,8 +125,59 @@ const Live = () => {
     return null;
   }, [gameState, teamData]);
 
+  // ---------------- PLAYERS TABLE STATE -----------------
+  const [playersSorting, setPlayersSorting] = useState([]);
+  const [playersRowSelection, setPlayersRowSelection] = useState({});
+  const [playersColumnFilters, setPlayersColumnFilters] = useState([]);
+
+  const playersTable = useReactTable({
+    data: playersData,
+    columns: playersColumns,
+    onSortingChange: setPlayersSorting,
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getCoreRowModel: getCoreRowModel(),
+    onRowSelectionChange: setPlayersRowSelection,
+    onColumnFiltersChange: setPlayersColumnFilters,
+    getRowId: (row) => row.player_id,
+    state: {
+      sorting: playersSorting,
+      rowSelection: playersRowSelection,
+      columnFilters: playersColumnFilters,
+    },
+  });
+
+  // ---------------- LOGS TABLE STATE -----------------
+  const [logsFiltering, setLogsFiltering] = useState([]);
+
+  const logsTable = useReactTable({
+    data: logsView.logs,
+    columns: logsColumns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    onColumnFiltersChange: setLogsFiltering,
+    initialState: {
+      pagination: {
+        pageIndex: 0,
+        pageSize: 100,
+      },
+    },
+    state: {
+      columnFilters: logsFiltering,
+    },
+  });
+
+  const handleFiltersChange = (newParams) => {
+    setLogsSearchParams((prevConfig) => ({
+      ...prevConfig,
+      ...newParams,
+    }));
+  };
+
   const selectedPlayers = useMemo(() => {
-    return Object.keys(rowSelection)
+    return Object.keys(playersRowSelection)
       .map((key) => {
         return (
           playersTable.getSelectedRowModel().rows.find((row) => row.id === key)
@@ -195,110 +185,43 @@ const Live = () => {
         );
       })
       .filter(Boolean);
-  }, [rowSelection, playersTable.getSelectedRowModel().rows]);
+  }, [playersRowSelection, playersTable.getSelectedRowModel().rows]);
 
   return (
-    <>
-      <Grid container spacing={1}>
-        <Grid size={12}>
-          <Header data={gameData} />
-        </Grid>
-        {/* <Grid size={12}>
-          <Button onClick={() => setTableSize("small")}>Small</Button>
-          <Button onClick={() => setTableSize("medium")}>Medium</Button>
-          <Button onClick={() => setTableSize("large")}>Large</Button>
-          <Button startIcon={playersVisible ? <VisibilityIcon /> : <VisibilityOffIcon />} onClick={() => setPlayersVisible(!playersVisible)}>
-            {playersVisible ? "Hide Players" : "Show Players"}
-          </Button>
-          <Button startIcon={logsVisible ? <VisibilityIcon /> : <VisibilityOffIcon />} onClick={() => setLogsVisible(!logsVisible)}>
-            {logsVisible ? "Hide Logs" : "Show Logs"}
-          </Button>
-        </Grid> */}
-        {playersVisible && (
-          <Grid
-            size={{
-              xs: 12,
-              lg: "auto",
-            }}
-          >
-            <TeamSelectionToolbar table={playersTable} teamData={teamData} />
-            <Stack direction="column" spacing={0}>
-              <Stack
-                direction="row"
-                spacing={1}
-                sx={{
-                  borderRadius: 0,
-                  border: (theme) => `1px solid ${theme.palette.divider}`,
-                  borderBottom: "none",
-                }}
-              >
-                <ActionMenuButton
-                  actions={playerGameActions}
-                  disabled={
-                    !playersTable.getIsSomePageRowsSelected() &&
-                    !playersTable.getIsAllRowsSelected()
-                  }
-                  recipients={selectedPlayers}
-                  orientation="horizontal"
-                  disableRipple={true}
-                  sx={{
-                    p: "1px 4px",
-                    height: "100%",
-                  }}
-                />
-                <DebouncedSearchInput
-                  initialValue={
-                    playersTable.getColumn("name")?.getFilterValue() ?? ""
-                  }
-                  onChange={(value) => {
-                    playersTable.getColumn("name")?.setFilterValue(value);
-                  }}
-                />
-                <IconButton
-                  size="small"
-                  sx={{ p: 0.5, borderRadius: 0 }}
-                  onClick={handlePlayersTableConfigClick}
-                >
-                  <SettingsIcon sx={{ fontSize: 16 }} />
-                </IconButton>
-              </Stack>
-              <Box
-                sx={{
-                  overflowX: "auto",
-                  overflowY: "hidden",
-                  width: "100%",
-                  scrollbarWidth: "none",
-                }}
-              >
-                <PlayersTable table={playersTable} config={playersTableConfig} />
-              </Box>
-            </Stack>
-          </Grid>
-        )}
-        {logsVisible && (
-          <Grid
-            size={{
-              xs: 12,
-              lg: "grow",
-            }}
-          >
-            <LogsTable
-              data={logsView.logs}
-              columns={logsColumns}
-              size={playersTableConfig.size}
-            />
-          </Grid>
-        )}
+    <Grid container spacing={1}>
+      <Grid size={12}>
+        <Header data={gameData} />
       </Grid>
-      <PlayersTableConfigModal
-        open={playersTableConfigDrawerOpen}
-        onClose={(config) => {
-          setPlayersTableConfigDrawerOpen(false)
-          setPlayersTableConfig(config)
-        }}
-        config={playersTableConfig}
-      />
-    </>
+      {playersVisible && (
+        <Grid
+          size={{
+            xs: 12,
+            lg: "auto",
+          }}
+        >
+          <PlayersTable
+            table={playersTable}
+            teamData={teamData}
+            selectedPlayers={selectedPlayers}
+          />
+        </Grid>
+      )}
+      {logsVisible && (
+        <Grid
+          size={{
+            xs: 12,
+            lg: "grow",
+          }}
+        >
+          <LogsTable
+            table={logsTable}
+            logsViewData={logsView}
+            searchParams={logsSearchParams}
+            setSearchParams={setLogsSearchParams}
+          />
+        </Grid>
+      )}
+    </Grid>
   );
 };
 

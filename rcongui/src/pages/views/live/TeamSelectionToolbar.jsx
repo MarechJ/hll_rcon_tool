@@ -1,11 +1,12 @@
 import { useMemo } from "react";
 import { Button, ButtonGroup, ToggleButtonGroup, Tooltip } from "@mui/material";
 import { Box, Stack } from "@mui/material";
-import { CountrySelectionMenu } from "@/components/selection/CountrySelectionMenu";
-import { UnitSelectionMenu } from "@/components/selection/UnitSelectionMenu";
-import { RoleSelectionMenu } from "@/components/selection/RoleSelectionMenu";
-import { RankSelectionMenu } from "@/components/selection/RankSelectionMenu";
+import { CountrySelectionMenu } from "@/components/table/selection/CountrySelectionMenu";
+import { UnitSelectionMenu } from "@/components/table/selection/UnitSelectionMenu";
+import { RoleSelectionMenu } from "@/components/table/selection/RoleSelectionMenu";
+import { RankSelectionMenu } from "@/components/table/selection/RankSelectionMenu";
 import { levelToRank } from "@/utils/lib";
+import TableToolbar from "@/components/table/TableToolbar";
 
 export const TeamSelectionToolbar = ({ table, teamData }) => {
   const handleTeamSelect = (selectedTeam) => {
@@ -152,56 +153,40 @@ export const TeamSelectionToolbar = ({ table, teamData }) => {
   }, [table.getRowModel().rows]);
 
   return (
-    <Box>
-      <Stack direction="row" spacing={1} alignItems="center">
-        <ButtonGroup
-          style={{ marginLeft: 0 }}
-          sx={{
-            "& .MuiButtonGroup-firstButton, .MuiButtonGroup-lastButton": {
-              borderRadius: 0,
-            },
-          }}
-          variant="outlined"
-          size="small"
-        >
-          <Tooltip title="Select Axis">
-            <Button onClick={() => handleTeamSelect("axis")}>
-              <img
-                src="/icons/teams/ger.webp"
-                width={16}
-                height={16}
-                style={{ marginRight: 1 }}
-              />
-            </Button>
-          </Tooltip>
-          <Tooltip title="Select Allies">
-            <Button onClick={() => handleTeamSelect("allies")}>
-              <img
-                src="/icons/teams/us.webp"
-                width={16}
-                height={16}
-                style={{ marginRight: 1 }}
-              />
-            </Button>
-          </Tooltip>
-          <UnitSelectionMenu
-            unitOptions={unitOptions}
-            onUnitSelect={handleUnitSelect}
+    <TableToolbar>
+      <Tooltip title="Select Axis">
+        <Button onClick={() => handleTeamSelect("axis")}>
+          <img
+            src="/icons/teams/ger.webp"
+            width={16}
+            height={16}
+            style={{ marginRight: 1 }}
           />
-          <CountrySelectionMenu
-            countryOptions={countryOptions}
-            onCountrySelect={handleCountrySelect}
+        </Button>
+      </Tooltip>
+      <Tooltip title="Select Allies">
+        <Button onClick={() => handleTeamSelect("allies")}>
+          <img
+            src="/icons/teams/us.webp"
+            width={16}
+            height={16}
+            style={{ marginRight: 1 }}
           />
-          <RoleSelectionMenu
-            roleOptions={roleOptions}
-            onRoleSelect={handleRoleSelect}
-          />
-          <RankSelectionMenu
-            rankOptions={rankOptions}
-            onRankSelect={() => {}}
-          />
-        </ButtonGroup>
-      </Stack>
-    </Box>
+        </Button>
+      </Tooltip>
+      <UnitSelectionMenu
+        unitOptions={unitOptions}
+        onUnitSelect={handleUnitSelect}
+      />
+      <CountrySelectionMenu
+        countryOptions={countryOptions}
+        onCountrySelect={handleCountrySelect}
+      />
+      <RoleSelectionMenu
+        roleOptions={roleOptions}
+        onRoleSelect={handleRoleSelect}
+      />
+      <RankSelectionMenu rankOptions={rankOptions} onRankSelect={() => {}} />
+    </TableToolbar>
   );
 };

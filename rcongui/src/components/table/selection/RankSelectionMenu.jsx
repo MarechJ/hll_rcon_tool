@@ -1,29 +1,30 @@
 import { List, ListItem, ListItemButton, Box } from "@mui/material";
-import { CountryFlag } from "@/components/shared/CountryFlag";
 import { PopoverMenu } from "@/components/shared/PopoverMenu";
-import FlagIcon from "@mui/icons-material/Flag";
 import { Tooltip, Button } from "@mui/material";
+import MilitaryTechIcon from '@mui/icons-material/MilitaryTech';
+import { sortByRank } from "@/utils/lib";
+import { RankIcon } from "../../shared/RankIcon";
 
 /**
- * @typedef {Object} CountryOption
- * @property {string} country
+ * @typedef {Object} RankOption
+ * @property {string} rank
  * @property {number} [count]
  */
 
 /**
  * @param {Object} props
- * @param {Array<CountryOption>} props.countryOptions
- * @param {Function} props.onCountrySelect
+ * @param {Array<RankOption>} props.rankOptions
+ * @param {Function} props.onRankSelect
  * @returns {JSX.Element}
  */
-export const CountrySelectionMenu = ({ countryOptions, onCountrySelect }) => (
+export const RankSelectionMenu = ({ rankOptions, onRankSelect }) => (
   <PopoverMenu
-    id="country-picker"
-    description="Pick a country to select all players from it"
+    id="rank-picker"
+    description="Pick a rank to select all players with it"
     renderButton={(props) => (
       <Button {...props}>
-        <Tooltip title="Select by country">
-          <FlagIcon />
+        <Tooltip title="Select by rank">
+          <MilitaryTechIcon />
         </Tooltip>
       </Button>
     )}
@@ -39,19 +40,19 @@ export const CountrySelectionMenu = ({ countryOptions, onCountrySelect }) => (
         "& ul": { padding: 0 },
       }}
     >
-      {countryOptions.map((option) => (
+      {[...rankOptions].sort((a, b) => sortByRank(a.rank, b.rank)).map((option, ) => (
         <ListItem
-          key={option.country}
+          key={option.rank}
           dense
           disableGutters
           sx={{ "& .MuiButtonBase-root": { opacity: 1 } }}
         >
-          <ListItemButton onClick={() => onCountrySelect(option)}>
+          <ListItemButton onClick={() => onRankSelect(option)}>
             <Box sx={{ display: "flex", alignItems: "center", overflow: "hidden", px: 0, py: 0.25, gap: 1 }}>
-              <CountryFlag country={option.country} />
+              <RankIcon rank={option.rank} />
               <Box sx={{ overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
                 <Box component="span" fontWeight="bold" textTransform="uppercase">
-                  {option.country}{option.count ? ` (${option.count})` : ""}
+                  {option.rank}{option.count ? ` (${option.count})` : ""}
                 </Box>
               </Box>
             </Box>

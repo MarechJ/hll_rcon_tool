@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { SearchInput } from "@/components/shared/SearchInput";
 
 export const DebouncedSearchInput = ({
-  initialValue,
+  initialValue = "",
   onChange,
   debounce = 500,
   ...props

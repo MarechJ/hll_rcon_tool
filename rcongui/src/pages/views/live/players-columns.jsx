@@ -14,9 +14,9 @@ import {
   ActionMenuButton,
 } from "@/features/player-action/ActionMenu";
 import { playerGameActions } from "@/features/player-action/actions";
-import { HeaderButton } from "./styled-table";
 import { CountryFlag } from "@/components/shared/CountryFlag";
 import { getPlayerTier, hasRecentWarnings, teamToNation, tierColors } from "@/utils/lib";
+import { SortableHeader } from "@/components/table/styles";
 
 export const Square = styled(Box)(({ theme }) => ({
   display: "flex",
@@ -46,16 +46,6 @@ const Center = styled(Box)(() => ({
   justifyItems: "center",
   alignContent: "center",
 }))
-
-const SortableHeader =
-  (text) =>
-  ({ column }) => {
-    return (
-      <HeaderButton onClick={column.getToggleSortingHandler()}>
-        {text}
-      </HeaderButton>
-    );
-  };
 
 export const columns = [
   {

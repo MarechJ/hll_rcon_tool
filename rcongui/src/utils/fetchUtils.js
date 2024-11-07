@@ -125,12 +125,14 @@ export const cmd = {
   GET_CRCON_MODS: (params) => requestFactory({ method: "GET", cmd: "get_online_mods", ...params }),
   GET_ONLINE_PLAYERS: (params) => requestFactory({ method: "GET", cmd: "get_players", ...params }),
   GET_LIVE_TEAMS: (params) => requestFactory({ method: "GET", cmd: "get_team_view", ...params }),
-  GET_LIVE_LOGS: (params) => requestFactory({ method: "GET", cmd: "get_recent_logs", ...params }),
+  // TODO
+  // FIX
+  // THIS SHOULD NOT BE A GET REQUEST?!
+  GET_LIVE_LOGS: (params) => requestFactory({ method: "POST", cmd: "get_recent_logs", ...params }),
   GET_PLAYER_COMMENTS: (params) => requestFactory({ method: "GET", cmd: "get_player_comments", ...params }),
   GET_PLAYER_BANS: (params) => requestFactory({ method: "GET", cmd: "get_ban", ...params }),
   GET_PLAYER_MESSAGES: (params) => requestFactory({ method: "GET", cmd: "get_player_messages", ...params }),
   GET_BLACKLISTS: (params) => requestFactory({ method: "GET", cmd: "get_blacklists", ...params }),
-  GET_RECENT_LOGS: (params) => requestFactory({ method: "GET", cmd: "get_recent_logs", ...params }),
   GET_SERVER_SETTINGS: (params) => requestFactory({ method: "GET", cmd: "get_server_settings", ...params }),
   GET_CAMERA_NOTIFICATION_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_camera_notification_config", ...params }),
   SET_CAMERA_NOTIFICATION_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_camera_notification_config", ...params }),

@@ -68,7 +68,7 @@ export function NoRowsOverlay() {
           </g>
         </g>
       </svg>
-      <Box sx={{ mt: 1 }}>No players</Box>
+      <Box sx={{ mt: 1 }}>No data</Box>
     </StyledGridOverlay>
   );
 }
