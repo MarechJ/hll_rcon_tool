@@ -66,8 +66,6 @@ const TableConfigDrawer = ({
     setPendingConfig({ ...config });
   }, [open]);
 
-  console.log(table?.getState()?.pagination);
-
   return (
     <ResponsiveDrawer open={open} onClose={handleClose}>
       <Toolbar
