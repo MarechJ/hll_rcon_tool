@@ -1,41 +1,46 @@
 import {
   Divider,
-  FormControl,
   IconButton,
-  Input,
-  InputLabel,
   List,
   ListItem,
   ListItemText,
-  Select,
-  Stack,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
 } from "@mui/material";
-import Table from "@/components/table/Table";
 import storageKeys from "@/config/storageKeys";
 import TableConfigDrawer from "@/components/table/TableConfigDrawer";
 import React, { useEffect, useState } from "react";
 import { useStorageState } from "@/hooks/useStorageState";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import SettingsIcon from "@mui/icons-material/Settings";
-import TableToolbar from "@/components/table/TableToolbar";
 import { logActions as _logActions } from "@/utils/lib";
 import { LogActionSelectionMenu } from "@/components/table/selection/LogActionSelectionMenu";
 import { LogPlayerSelectionMenu } from "@/components/table/selection/LogPlayerSelectionMenu";
 import { LogActionQuerySelectionMenu } from "@/components/table/selection/LogActionQuerySelectionMenu";
 import DeleteIcon from "@mui/icons-material/Delete";
-import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
-import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
-import KeyboardDoubleArrowLeftIcon from "@mui/icons-material/KeyboardDoubleArrowLeft";
-import KeyboardDoubleArrowRightIcon from "@mui/icons-material/KeyboardDoubleArrowRight";
+import { TablePagination } from "./TablePagination";
+import { TableToolbar } from "@/components/table/TableToolbar";
+import TableAddons from "@/components/table/TableAddons";
+import { LogActionHighlightMenu } from "@/components/table/selection/LogActionHighlightMenu";
+import LiveLogsTable from "@/components/live-logs/LiveLogsTable";
 
 const logActions = Object.entries(_logActions).reduce((acc, [name]) => {
   acc[name] = false;
   return acc;
 }, {});
+
+const updateActionSelection = (action) => (prev) => {
+  const isToggled = prev.actions.includes(action);
+  const actions = isToggled
+    ? prev.actions.filter((aAction) => aAction !== action)
+    : prev.actions.concat(action);
+  return {
+    ...prev,
+    actions,
+  };
+}
 
 export default function LogsTable({
   table,
@@ -50,6 +55,9 @@ export default function LogsTable({
     {
       density: "normal",
       fontSize: "normal",
+      rowsPerPage: "100",
+      highlighted: false,
+      actions: [],
     }
   );
 
@@ -76,16 +84,11 @@ export default function LogsTable({
   };
 
   const handleQueryActionParamSelect = (action) => {
-    setSearchParams((prev) => {
-      const isToggled = prev.actions.includes(action);
-      const actions = isToggled
-        ? prev.actions.filter((aAction) => aAction !== action)
-        : prev.actions.concat(action);
-      return {
-        ...prev,
-        actions,
-      };
-    });
+    setSearchParams(updateActionSelection(action));
+  };
+
+  const handleHighlightActionSelect = (action) => {
+    setTableConfig(updateActionSelection(action));
   };
 
   const handleQueryLimitInputBlur = (event) => {
@@ -130,15 +133,20 @@ export default function LogsTable({
   }, [logActionOptions]);
 
   useEffect(() => {
-    const selectedActions = Object.entries(playerOptions)
+    const selectedPlayers = Object.entries(playerOptions)
       .filter(([_, selected]) => selected)
       .map(([name]) => name);
-    table.getColumn("player_name_1")?.setFilterValue(selectedActions);
+    table.getColumn("player_name_1")?.setFilterValue(selectedPlayers);
   }, [playerOptions]);
+
+  const highlightedActionOptions = Object.entries(logActions).reduce((acc, [name]) => {
+    acc[name] = tableConfig.actions.includes(name);
+    return acc;
+  }, {})
 
   return (
     <>
-      <TableToolbar>
+      <TableAddons>
         <LogActionSelectionMenu
           actionOptions={logActionOptions}
           onActionSelect={handleClientActionFilterChange}
@@ -147,17 +155,19 @@ export default function LogsTable({
           actionOptions={playerOptions}
           onActionSelect={handleClientPlayerFilterChange}
         />
-      </TableToolbar>
-      <Stack
-        direction="row"
-        spacing={1}
-        flexWrap={"wrap"}
-        sx={{
-          borderRadius: 0,
-          border: (theme) => `1px solid ${theme.palette.divider}`,
-          borderBottom: "none",
-        }}
-      >
+        <LogActionHighlightMenu
+          actionOptions={highlightedActionOptions}
+          onActionSelect={handleHighlightActionSelect}
+          toggleValue={tableConfig.highlighted}
+          onToggle={(value) => {
+            setTableConfig(prev => ({
+              ...prev,
+              highlighted: value === "on",
+            }))
+          }}
+        />
+      </TableAddons>
+      <TableToolbar>
         <DebouncedSearchInput
           placeholder={"Search logs"}
           onChange={(value) => {
@@ -165,62 +175,20 @@ export default function LogsTable({
           }}
           sx={{ maxWidth: 230 }}
         />
-        <Stack
-          direction={"row"}
-          justifyContent={"end"}
-          alignItems={"center"}
-          gap={0.25}
-          flexGrow={1}
+        <TablePagination table={table} />
+        <Divider flexItem orientation="vertical" />
+        <IconButton
+          size="small"
+          sx={{ width: 20, height: 20, borderRadius: 0, p: 2 }}
+          onClick={handleTableConfigClick}
         >
-          <IconButton
-            onClick={() => table.firstPage()}
-            disabled={!table.getCanPreviousPage()}
-            size="small"
-            sx={{ width: 20, height: 20, borderRadius: 0, p: 2 }}
-          >
-            <KeyboardDoubleArrowLeftIcon />
-          </IconButton>
-          <IconButton
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-            size="small"
-            sx={{ width: 20, height: 20, borderRadius: 0, p: 2 }}
-          >
-            <KeyboardArrowLeftIcon />
-          </IconButton>
-          <span>
-            <strong>
-              {table.getState().pagination.pageIndex + 1} of{" "}
-              {table.getPageCount().toLocaleString()}
-            </strong>
-          </span>
-          <IconButton
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-            size="small"
-            sx={{ width: 20, height: 20, borderRadius: 0, p: 2 }}
-          >
-            <KeyboardArrowRightIcon />
-          </IconButton>
-          <IconButton
-            onClick={() => table.lastPage()}
-            disabled={!table.getCanNextPage()}
-            size="small"
-            sx={{ width: 20, height: 20, borderRadius: 0, p: 2 }}
-          >
-            <KeyboardDoubleArrowRightIcon />
-          </IconButton>
-          <Divider flexItem orientation="vertical" />
-          <IconButton
-            size="small"
-            sx={{ width: 20, height: 20, borderRadius: 0, p: 2 }}
-            onClick={handleTableConfigClick}
-          >
-            <SettingsIcon sx={{ fontSize: 16 }} />
-          </IconButton>
-        </Stack>
-      </Stack>
-      <Table table={table} config={tableConfig} />
+          <SettingsIcon sx={{ fontSize: 16 }} />
+        </IconButton>
+      </TableToolbar>
+      <LiveLogsTable table={table} config={tableConfig} />
+      <TableToolbar sx={{ borderBottomWidth: "1px", borderBottomStyle: "solid", borderTop: "none" }}>
+        <TablePagination table={table} />
+      </TableToolbar>
       <TableConfigDrawer
         table={table}
         name={"Logs"}

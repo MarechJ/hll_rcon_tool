@@ -11,10 +11,10 @@ const Table = ({ table, config = {} }) => {
         overflowX: "auto",
         overflowY: "hidden",
         width: "100%",
-        scrollbarWidth: "none",
+        scrollbarWidth: "thin",
       }}
     >
-      <StyledTable {...config}>
+      <StyledTable density={config.density} fontSize={config.fontSize}>
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
             <StyledTr key={headerGroup.id}>

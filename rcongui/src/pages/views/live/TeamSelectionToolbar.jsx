@@ -1,12 +1,11 @@
 import { useMemo } from "react";
-import { Button, ButtonGroup, ToggleButtonGroup, Tooltip } from "@mui/material";
-import { Box, Stack } from "@mui/material";
+import { Button, Tooltip } from "@mui/material";
 import { CountrySelectionMenu } from "@/components/table/selection/CountrySelectionMenu";
 import { UnitSelectionMenu } from "@/components/table/selection/UnitSelectionMenu";
 import { RoleSelectionMenu } from "@/components/table/selection/RoleSelectionMenu";
 import { RankSelectionMenu } from "@/components/table/selection/RankSelectionMenu";
 import { levelToRank } from "@/utils/lib";
-import TableToolbar from "@/components/table/TableToolbar";
+import TableAddons from "@/components/table/TableAddons";
 
 export const TeamSelectionToolbar = ({ table, teamData }) => {
   const handleTeamSelect = (selectedTeam) => {
@@ -153,7 +152,7 @@ export const TeamSelectionToolbar = ({ table, teamData }) => {
   }, [table.getRowModel().rows]);
 
   return (
-    <TableToolbar>
+    <TableAddons>
       <Tooltip title="Select Axis">
         <Button onClick={() => handleTeamSelect("axis")}>
           <img
@@ -187,6 +186,6 @@ export const TeamSelectionToolbar = ({ table, teamData }) => {
         onRoleSelect={handleRoleSelect}
       />
       <RankSelectionMenu rankOptions={rankOptions} onRankSelect={() => {}} />
-    </TableToolbar>
+    </TableAddons>
   );
 };

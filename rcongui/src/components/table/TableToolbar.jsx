@@ -1,24 +1,19 @@
-import { Box, ButtonGroup, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 
-const TableToolbar = ({ children }) => {
-  return (
-    <Box>
-      <Stack direction="row" spacing={1} alignItems="center">
-        <ButtonGroup
-          style={{ marginLeft: 0 }}
-          sx={{
-            "& .MuiButton-root": {
-              borderRadius: 0,
-            },
-          }}
-          variant="outlined"
-          size="small"
-        >
-            {children}
-        </ButtonGroup>
-      </Stack>
-    </Box>
-  );
-};
-
-export default TableToolbar;
+export const TableToolbar = ({ children, ...props }) => (
+  <Stack
+    direction="row"
+    flexWrap={"wrap"}
+    alignItems={"center"}
+    sx={{
+    borderBottom: "none",
+      borderRadius: 0,
+      borderWidth: "1px",
+      borderStyle: "solid",
+      borderColor: (theme) => theme.palette.divider,
+      ...(props?.sx ?? {}),
+    }}
+  >
+    {children}
+  </Stack>
+);

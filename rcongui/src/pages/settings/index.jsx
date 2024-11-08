@@ -454,6 +454,7 @@ const getMaxValue = (key) => {
     case "vip_slots_num":
       return 100;
     case "players":
+    case "autobalance_threshold":
       return 50;
     default:
       return 100; // Default max value

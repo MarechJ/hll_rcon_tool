@@ -1,6 +1,6 @@
 import { Button, styled } from "@mui/material";
 
-function getVariantWidth(variant) {
+export function getVariantWidth(variant) {
   switch (variant) {
     case "icon":
       return "1.5rem";
@@ -12,12 +12,33 @@ function getVariantWidth(variant) {
       return "20ch";
     case "action":
       return "24ch";
+    case "content":
+      return "auto"
     default:
       return "auto";
   }
 }
 
-function getDensityPadding(density, theme) {
+export function getVariantMinWidth(variant) {
+  switch (variant) {
+    case "icon":
+      return "1.5rem";
+    case "short":
+      return "4rem";
+    case "time":
+      return "16ch";
+    case "name":
+      return "20ch";
+    case "action":
+      return "24ch";
+    case "content":
+      return "50ch"
+    default:
+      return "auto";
+  }
+}
+
+export function getDensityPadding(density, theme) {
   switch (density) {
     case "dense":
       return {
@@ -70,9 +91,12 @@ export const StyledTable = styled("table", {
     },
     "& th": {
       ...getDensityPadding(density, theme),
-      paddingTop: "auto",
-      paddingBottom: "auto",
+      paddingTop: "unset",
+      paddingBottom: "unset",
     },
+    "& tbody tr": {
+      verticalAlign: "top",
+    }
   };
 });
 
@@ -82,7 +106,7 @@ export const StyledTh = styled("th", {
   const variant = styledProps.variant;
   return {
     width: getVariantWidth(variant),
-    minWidth: getVariantWidth(variant),
+    minWidth: getVariantMinWidth(variant),
     textAlign: variant === "icon" ? "center" : "left",
   };
 });
@@ -94,7 +118,7 @@ export const StyledTd = styled("td", {
 
   return {
     width: getVariantWidth(variant),
-    minWidth: getVariantWidth(variant),
+    minWidth: getVariantMinWidth(variant),
     textAlign: variant === "icon" ? "center" : "left",
   };
 });
