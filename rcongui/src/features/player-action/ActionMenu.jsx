@@ -206,6 +206,7 @@ export function ActionMenuButton({
         anchorEl={anchorEl}
         open={open}
         onClose={handleClose}
+        sx={{ maxHeight: (theme) => theme.typography.pxToRem(500) }}
       >
         {!Array.isArray(recipients) && (
           <MenuItem onClick={handleProfileClick} dense>
@@ -215,7 +216,7 @@ export function ActionMenuButton({
             View Profile
           </MenuItem>
         )}
-        <Divider />
+        {!Array.isArray(recipients) && <Divider />}
         {filteredActionList.map((action) => (
           <MenuItem
             key={action.name}

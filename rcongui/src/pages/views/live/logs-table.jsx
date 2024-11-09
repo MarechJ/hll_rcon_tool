@@ -20,7 +20,7 @@ import { LogActionSelectionMenu } from "@/components/table/selection/LogActionSe
 import { LogPlayerSelectionMenu } from "@/components/table/selection/LogPlayerSelectionMenu";
 import { LogActionQuerySelectionMenu } from "@/components/table/selection/LogActionQuerySelectionMenu";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { TablePagination } from "./TablePagination";
+import { TablePagination } from "../../../components/table/TablePagination";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import TableAddons from "@/components/table/TableAddons";
 import { LogActionHighlightMenu } from "@/components/table/selection/LogActionHighlightMenu";

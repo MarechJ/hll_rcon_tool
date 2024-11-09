@@ -57,7 +57,7 @@ export const ActionForm = ({
 
   const onSubmit = React.useCallback(async (data) => {
     const getPlayerId = (recipient) => recipient.player_id ?? recipient?.profile?.player_id;
-
+    console.log(recipientStates)
     let allSuccess = true;
     setLoading(true)
     // get list of all selected players and ids
@@ -68,6 +68,7 @@ export const ActionForm = ({
     // map each to a request payload
     const payloads = [];
     for (let i = 0; i < players.length; i++) {
+      console.log(steamIds[i])
       payloads.push({ player_name: players[i], player_id: steamIds[i], ...data });
     }
     // now map payloads to requests

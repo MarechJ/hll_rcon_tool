@@ -10,13 +10,18 @@ import {
 import { Star, Warning } from "@mui/icons-material";
 import { yellow } from "@mui/material/colors";
 import dayjs from "dayjs";
-import {
-  ActionMenuButton,
-} from "@/features/player-action/ActionMenu";
+import { ActionMenuButton } from "@/features/player-action/ActionMenu";
 import { playerGameActions } from "@/features/player-action/actions";
 import { CountryFlag } from "@/components/shared/CountryFlag";
-import { getPlayerTier, hasRecentWarnings, teamToNation, tierColors } from "@/utils/lib";
+import {
+  getPlayerTier,
+  hasRecentWarnings,
+  teamToNation,
+  tierColors,
+} from "@/utils/lib";
 import { SortableHeader } from "@/components/table/styles";
+import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";
+
 
 export const Square = styled(Box)(({ theme }) => ({
   display: "flex",
@@ -45,7 +50,7 @@ const Center = styled(Box)(() => ({
   display: "grid",
   justifyItems: "center",
   alignContent: "center",
-}))
+}));
 
 export const columns = [
   {
@@ -76,7 +81,7 @@ export const columns = [
       </div>
     ),
     meta: {
-      variant: "icon"
+      variant: "icon",
     },
   },
   {
@@ -97,7 +102,7 @@ export const columns = [
       );
     },
     meta: {
-      variant: "icon"
+      variant: "icon",
     },
   },
   {
@@ -116,7 +121,7 @@ export const columns = [
       );
     },
     meta: {
-      variant: "icon"
+      variant: "icon",
     },
   },
   {
@@ -142,7 +147,7 @@ export const columns = [
       );
     },
     meta: {
-      variant: "icon"
+      variant: "icon",
     },
   },
   {
@@ -158,7 +163,7 @@ export const columns = [
       );
     },
     meta: {
-      variant: "short"
+      variant: "short",
     },
   },
   {
@@ -180,7 +185,7 @@ export const columns = [
       );
     },
     meta: {
-      variant: "icon"
+      variant: "icon",
     },
   },
   {
@@ -212,7 +217,20 @@ export const columns = [
       ) : null;
     },
     meta: {
-      variant: "icon"
+      variant: "icon",
+    },
+  },
+  {
+    id: "watchlist",
+    header: SortableHeader("👁️"),
+    accessorKey: "profile.watchlist",
+    cell: ({ row }) => {
+      return row.original.profile?.watchlist && row.original.profile?.watchlist?.is_watched ? (
+        <RemoveRedEyeIcon sx={{ fontSize: 12 }} />
+      ) : null;
+    },
+    meta: {
+      variant: "icon",
     },
   },
   {
@@ -225,7 +243,7 @@ export const columns = [
       ) : null;
     },
     meta: {
-      variant: "icon"
+      variant: "icon",
     },
   },
   {
@@ -238,7 +256,7 @@ export const columns = [
       ) : null;
     },
     meta: {
-      variant: "icon"
+      variant: "icon",
     },
   },
   {
@@ -278,7 +296,7 @@ export const columns = [
       );
     },
     meta: {
-      variant: "short"
+      variant: "short",
     },
   },
 ];
