@@ -4,6 +4,7 @@ import React, { useEffect, useMemo } from "react";
 import { useGlobalStore } from "./useGlobalState";
 import dayjs from "dayjs";
 import { useQuery } from "@tanstack/react-query";
+import { playerProfileQueryOptions } from "@/queries/player-profile-query";
 
 export const SidebarContext = React.createContext();
 
@@ -28,7 +29,6 @@ export const PlayerSidebarProvider = ({ children }) => {
       }),
     enabled,
     staleTime,
-    initialData: [],
     refetchOnWindowFocus: false,
     refetchInterval: (query) => {
       // Only refetch if the data is stale and there's no error
@@ -49,7 +49,26 @@ export const PlayerSidebarProvider = ({ children }) => {
       }),
     enabled,
     staleTime,
-    initialData: [],
+    refetchOnWindowFocus: false,
+    refetchInterval: (query) => {
+      // Only refetch if the data is stale and there's no error
+      return query.state.isStale && !query.state.error ? staleTime : false;
+    },
+  });
+
+  const {
+    data: messages,
+    isLoading: isLoadingMessages,
+    error: messagesError,
+  } = useQuery({
+    queryKey: ["player", "messages", playerId],
+    queryFn: () =>
+      cmd.GET_PLAYER_MESSAGES({
+        params: { player_id: playerId },
+        throwRouteError: false,
+      }),
+    enabled,
+    staleTime,
     refetchOnWindowFocus: false,
     refetchInterval: (query) => {
       // Only refetch if the data is stale and there's no error
@@ -62,12 +81,7 @@ export const PlayerSidebarProvider = ({ children }) => {
     isLoading: isLoadingProfile,
     error: profileError,
   } = useQuery({
-    queryKey: ["player", "profile", playerId],
-    queryFn: () =>
-      cmd.GET_PLAYER({
-        params: { player_id: playerId },
-        throwRouteError: false,
-      }),
+    ...playerProfileQueryOptions(playerId, { throwRouteError: false }),
     enabled,
     staleTime,
     refetchOnWindowFocus: false,
@@ -112,10 +126,11 @@ export const PlayerSidebarProvider = ({ children }) => {
     } else {
       return null;
     }
-
-    aPlayer.comments = comments;
-    aPlayer.bans = bans;
-    if (bans.length > 0) {
+    
+    aPlayer.messages = messages ?? [];
+    aPlayer.comments = comments ?? [];
+    aPlayer.bans = bans ?? [];
+    if (aPlayer.bans.length > 0) {
       aPlayer.is_banned = true;
     }
 
@@ -131,9 +146,9 @@ export const PlayerSidebarProvider = ({ children }) => {
     aPlayer.name = aPlayer.name ?? aPlayer.profile.names[0]?.name;
 
     return aPlayer;
-  }, [open, playerId, onlinePlayers, serverStatus, comments, bans, profile]);
+  }, [open, playerId, onlinePlayers, serverStatus, comments, bans, profile, messages]);
 
-  const isLoading = isLoadingComments || isLoadingBans || isLoadingProfile;
+  const isLoading = isLoadingComments || isLoadingBans || isLoadingProfile || isLoadingMessages;
 
   const contextValue = React.useMemo(
     () => ({
@@ -146,8 +161,9 @@ export const PlayerSidebarProvider = ({ children }) => {
       commentsError,
       bansError,
       profileError,
+      messagesError,
     }),
-    [open, player, playerId, isLoading, commentsError, bansError, profileError]
+    [open, player, playerId, isLoading, commentsError, bansError, profileError, messagesError]
   );
 
   return (
@@ -176,6 +192,7 @@ export const usePlayerSidebar = () => {
       commentsError: null,
       bansError: null,
       profileError: null,
+      messagesError: null,
     };
   }
 

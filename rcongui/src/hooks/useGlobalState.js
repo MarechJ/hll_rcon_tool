@@ -1,3 +1,4 @@
+import { teamsLiveQueryOptions } from "@/queries/teams-live-query";
 import { extractPlayers } from "@/utils/extractPlayers";
 import { cmd } from "@/utils/fetchUtils";
 import { useQueries } from "@tanstack/react-query";
@@ -76,14 +77,7 @@ const globalQueries = [
       return data;
     },
   },
-  {
-    queryKey: ["teams", "live"],
-    queryFn: cmd.GET_LIVE_TEAMS,
-    select: (data) => {
-      useGlobalStore.setState((state) => ({ onlinePlayers: extractPlayers(data) }));
-      return data;
-    },
-  },
+  teamsLiveQueryOptions,
 ];
 
 export const GlobalState = () => {

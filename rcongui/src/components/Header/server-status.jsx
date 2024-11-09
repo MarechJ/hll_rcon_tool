@@ -6,6 +6,9 @@ import { useGlobalStore } from "@/hooks/useGlobalState";
 const Wrapper = styled("div")(({ theme }) => ({
   paddingLeft: theme.spacing(1),
   color: theme.palette.text.primary,
+  overflowX: "hidden",
+  textOverflow: "ellipsis",
+  textWrap: "nowrap",
 }));
 
 const MenuBox = styled("div")(({ theme }) => ({
@@ -34,7 +37,7 @@ const ServerStatus = () => {
   return (
     <Wrapper>
       <MenuBox>
-        <Typography variant="subtitle2" component={"span"}>
+        <Typography variant="subtitle2">
           {name}
         </Typography>
       </MenuBox>

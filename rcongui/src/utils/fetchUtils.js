@@ -47,7 +47,7 @@ async function handleFetchResponse(response, method) {
   if (method === "GET") {
     return data.result
   } else if (method === "POST") {
-    return { result: data.result, arguments: data.arguments };
+    return data;
   }
   return data;
 }
@@ -125,11 +125,37 @@ export const cmd = {
   GET_CRCON_MODS: (params) => requestFactory({ method: "GET", cmd: "get_online_mods", ...params }),
   GET_ONLINE_PLAYERS: (params) => requestFactory({ method: "GET", cmd: "get_players", ...params }),
   GET_LIVE_TEAMS: (params) => requestFactory({ method: "GET", cmd: "get_team_view", ...params }),
-  GET_LIVE_LOGS: (params) => requestFactory({ method: "GET", cmd: "get_recent_logs", ...params }),
+  // TODO
+  // FIX
+  // THIS SHOULD NOT BE A GET REQUEST?!
+  GET_LIVE_LOGS: (params) => requestFactory({ method: "POST", cmd: "get_recent_logs", ...params }),
   GET_PLAYER_COMMENTS: (params) => requestFactory({ method: "GET", cmd: "get_player_comments", ...params }),
   GET_PLAYER_BANS: (params) => requestFactory({ method: "GET", cmd: "get_ban", ...params }),
+  GET_PLAYER_MESSAGES: (params) => requestFactory({ method: "GET", cmd: "get_player_messages", ...params }),
   GET_BLACKLISTS: (params) => requestFactory({ method: "GET", cmd: "get_blacklists", ...params }),
-  GET_RECENT_LOGS: (params) => requestFactory({ method: "GET", cmd: "get_recent_logs", ...params }),
+  GET_SERVER_SETTINGS: (params) => requestFactory({ method: "GET", cmd: "get_server_settings", ...params }),
+  GET_CAMERA_NOTIFICATION_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_camera_notification_config", ...params }),
+  SET_CAMERA_NOTIFICATION_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_camera_notification_config", ...params }),
+  GET_AUTOVOTEKICK_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_auto_votekick_config", ...params }),
+  SET_AUTOVOTEKICK_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_auto_votekick_config", ...params }),
+  GET_VOTEKICK_AUTOTOGGLER_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_votekick_autotoggle_config", ...params }),
+  SET_VOTEKICK_AUTOTOGGLER_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_votekick_autotoggle_config", ...params }),
+  GET_SERVER_NAME: (params) => requestFactory({ method: "GET", cmd: "get_name", ...params }),
+  SET_SERVER_NAME: (params) => requestFactory({ method: "POST", cmd: "set_server_name", ...params }),
+  SET_TEAM_SWITCH_COOLDOWN: (params) => requestFactory({ method: "POST", cmd: "set_team_switch_cooldown", ...params }),
+  SET_AUTOBALANCE_THRESHOLD: (params) => requestFactory({ method: "POST", cmd: "set_autobalance_threshold", ...params }),
+  SET_IDLE_AUTOKICK_TIME: (params) => requestFactory({ method: "POST", cmd: "set_idle_autokick_time", ...params }),
+  SET_MAX_PING_AUTOKICK: (params) => requestFactory({ method: "POST", cmd: "set_max_ping_autokick", ...params }),
+  SET_QUEUE_LENGTH: (params) => requestFactory({ method: "POST", cmd: "set_queue_length", ...params }),
+  SET_VIP_SLOTS_NUM: (params) => requestFactory({ method: "POST", cmd: "set_vip_slots_num", ...params }),
+  SET_VOTEKICK_THRESHOLDS: (params) => requestFactory({ method: "POST", cmd: "set_votekick_thresholds", ...params }),
+  RESET_VOTEKICK_THRESHOLDS: (params) => requestFactory({ method: "POST", cmd: "reset_votekick_thresholds", ...params }),
+  SET_VOTEKICK_ENABLED: (params) => requestFactory({ method: "POST", cmd: "set_votekick_enabled", ...params }),
+  SET_AUTOBALANCE_ENABLED: (params) => requestFactory({ method: "POST", cmd: "set_autobalance_enabled", ...params }),
+  GET_VOTEKICK_AUTOTOGGLE_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_votekick_autotoggle_config", ...params }),
+  SET_VOTEKICK_AUTOTOGGLE_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_votekick_autotoggle_config", ...params }),
+  GET_REAL_VIP_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_real_vip_config", ...params }),
+  SET_REAL_VIP_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_real_vip_config", ...params }),
 };
 
 export function execute(command, data) {

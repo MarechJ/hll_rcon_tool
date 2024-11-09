@@ -6,7 +6,7 @@ import { styled } from '@mui/material';
 import { Skeleton } from '@mui/material';
 
 const MobileHeaderWrapper = styled(Grid)(({ theme }) => ({
-  minHeight: '10rem',
+  minHeight: '4rem',
   marginBottom: theme.spacing(1),
   [theme.breakpoints.up('md')]: {
     display: 'none',
@@ -14,7 +14,7 @@ const MobileHeaderWrapper = styled(Grid)(({ theme }) => ({
 }));
 
 const DesktopHeaderWrapper = styled(Grid)(({ theme }) => ({
-  minHeight: '10rem',
+  minHeight: '4rem',
   marginBottom: theme.spacing(1),
   [theme.breakpoints.down("md")]: {
     display: 'none',
@@ -22,11 +22,11 @@ const DesktopHeaderWrapper = styled(Grid)(({ theme }) => ({
 }));
 
 const StyledSkeleton = styled(Skeleton)(() => ({
-  minHeight: '10rem',
+  minHeight: '4',
   margin: '0 1rem',
 }));
-
-const DesktopHeader = ({ teamData, boardData }) => {
+  
+const DesktopHeader = ({ data }) => {
   return (
     <DesktopHeaderWrapper container component={'header'}>
       <Grid
@@ -37,10 +37,10 @@ const DesktopHeader = ({ teamData, boardData }) => {
           borderRightColor: (theme) => theme.palette.divider,
         }}
       >
-        {teamData ? <TeamDesktop data={teamData.allies} /> : <StyledSkeleton />}
+        {data ? <TeamDesktop data={data.allies} /> : <StyledSkeleton />}
       </Grid>
       <Grid size={4}>
-        {boardData ? <Board data={boardData} /> : <StyledSkeleton />}
+        {data ? <Board data={data} /> : <StyledSkeleton />}
       </Grid>
       <Grid
         size={4}
@@ -50,28 +50,28 @@ const DesktopHeader = ({ teamData, boardData }) => {
           borderLeftColor: (theme) => theme.palette.divider,
         }}
       >
-        {teamData ? <TeamDesktop data={teamData.axis} /> : <StyledSkeleton />}
+        {data ? <TeamDesktop data={data.axis} /> : <StyledSkeleton />}
       </Grid>
     </DesktopHeaderWrapper>
   );
 };
 
-const MobileHeader = ({ teamData, boardData }) => {
+const MobileHeader = ({ data }) => {
   return (
     <MobileHeaderWrapper container component={'header'}>
       <Grid size={12}>
-        {boardData ? <Board data={boardData} /> : <StyledSkeleton />}
+        {data ? <Board data={data} /> : <StyledSkeleton />}
       </Grid>
-      <Grid size={6}>
-        {teamData ? (
-          <TeamMobile data={teamData.allies} align={'start'} />
+      <Grid size={6} sx={{ borderRight: '1px solid', borderRightColor: (theme) => theme.palette.divider }}>
+        {data ? (
+          <TeamMobile data={data.allies} align={'start'} />
         ) : (
           <StyledSkeleton />
         )}
       </Grid>
       <Grid size={6}>
-        {teamData ? (
-          <TeamMobile data={teamData.axis} align={'end'} />
+        {data ? (
+          <TeamMobile data={data.axis} align={'end'} />
         ) : (
           <StyledSkeleton />
         )}
@@ -80,11 +80,11 @@ const MobileHeader = ({ teamData, boardData }) => {
   );
 };
 
-export const Header = ({ teamData, gameState }) => {
+export const Header = ({ data }) => {
   return (
     <React.Fragment>
-      <MobileHeader teamData={teamData} boardData={gameState} />
-      <DesktopHeader teamData={teamData} boardData={gameState} />
+      <MobileHeader data={data} />
+      <DesktopHeader data={data} />
     </React.Fragment>
   );
 };

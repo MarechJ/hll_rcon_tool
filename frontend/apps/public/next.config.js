@@ -13,6 +13,9 @@ const nextConfig = {
     svgr: false,
   },
   distDir: 'dist',
+  env: {
+    CRCON_URL: process.env.CRCON_URL ?? process.env.REACT_APP_API_URL,
+  },
   async rewrites() {
     return [
       {

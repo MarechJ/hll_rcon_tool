@@ -444,4 +444,6 @@ class RconUser(User):
             ("can_add_message_templates", "Can add new shared message templates"),
             ("can_delete_message_templates", "Can delete shared message templates"),
             ("can_edit_message_templates", "Can edit shared message templates"),
+            ("can_view_seed_vip_config", "Can view the Seed VIP config"),
+            ("can_change_seed_vip_config", "Can change the Seed VIP config"),
         )

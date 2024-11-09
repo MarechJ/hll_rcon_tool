@@ -37,11 +37,11 @@ import dayjs from "dayjs";
 import { GridToolbar } from "@mui/x-data-grid";
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
-const DataGrid = React.lazy(() =>
-  import("@mui/x-data-grid").then((module) => ({ default: module.DataGrid }))
-);
+import { logColumns } from "./logs-columns";
+
 const LogLine = React.lazy(() => import("./LogLine"));
 const Log = React.lazy(() => import("./Log"));
+const LogTable = React.lazy(() => import("./LogTable"));
 
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;
@@ -257,19 +257,7 @@ const LiveLogs = ({ initialLogsView }) => {
         fallback={<Skeleton variant="rectangular" sx={{ height: "100vh" }} />}
       >
         {logsConfig.logsMode === "table" ? (
-          <DataGrid
-            density="compact"
-            rows={rows}
-            columns={columns}
-            loading={isLoading}
-            pageSize={100}
-            pagination
-            slots={{
-              toolbar: GridToolbar,
-              // Use custom FilterPanel only for deep modification
-              // FilterPanel: MyCustomFilterPanel,
-            }}
-          />
+          <LogTable data={logsView.logs} columns={logColumns} />
         ) : (
           <Paper
             sx={{ p: 1, my: 1, overflow: "auto" }}

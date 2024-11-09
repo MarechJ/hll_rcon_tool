@@ -43,7 +43,6 @@ function TemplateFrame({
       <Box sx={{ height: "100dvh", display: "flex", flexDirection: "column" }}>
         <StyledAppBar>
           <Toolbar
-            variant="dense"
             disableGutters
             sx={{
               display: "flex",
@@ -52,13 +51,13 @@ function TemplateFrame({
               p: "8px 12px",
             }}
           >
-            <Box sx={{ display: "flex", gap: 1 }}>
+            <Box sx={{ display: "flex", gap: 1, overflowX: "hidden", textOverflow: "ellipsis", textWrap: "nowrap" }}>
               <MenuButton aria-label="menu" onClick={toggleDrawer} sx={{ display: { xs: 'none', lg: 'block' } }}>
                 {!openDrawer ? <MenuRoundedIcon /> : <MenuOpenIcon /> }
               </MenuButton>
               <ServerStatus />
             </Box>
-            <Box sx={{ display: "flex", gap: 1 }}>
+            <Box sx={{ display: "flex", gap: 2, width: "fit-content" }}>
               <ToggleWidthMode
                 mode={widthMode}
                 toggleWidthMode={toggleWidthMode}
