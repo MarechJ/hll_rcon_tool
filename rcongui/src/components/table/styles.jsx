@@ -10,6 +10,8 @@ export function getVariantWidth(variant) {
       return "16ch";
     case "name":
       return "20ch";
+    case "fullname":
+      return "30ch";
     case "action":
       return "24ch";
     case "content":
@@ -29,6 +31,8 @@ export function getVariantMinWidth(variant) {
       return "16ch";
     case "name":
       return "20ch";
+    case "fullname":
+      return "30ch";
     case "action":
       return "24ch";
     case "content":
