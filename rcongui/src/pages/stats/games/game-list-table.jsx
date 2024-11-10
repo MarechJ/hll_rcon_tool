@@ -8,8 +8,9 @@ import { useState } from "react";
 import SettingsIcon from "@mui/icons-material/Settings";
 import TableConfigDrawer from "@/components/table/TableConfigDrawer";
 import { TablePagination } from "@/components/table/TablePagination";
+import NavPagination from "./nav-pagination";
 
-export function GameListTable({ table }) {
+export function GameListTable({ table, maxPages, page }) {
   const [tableConfigDrawerOpen, setTableConfigDrawerOpen] = useState(false);
 
   const [tableConfig, setTableConfig] = useStorageState(
@@ -37,7 +38,7 @@ export function GameListTable({ table }) {
           }}
           sx={{ maxWidth: 230 }}
         />
-        <TablePagination table={table} />
+        <NavPagination page={page} maxPages={maxPages} />
         <Divider flexItem orientation="vertical" />
         <IconButton
           size="small"

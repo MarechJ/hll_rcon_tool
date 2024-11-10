@@ -88,9 +88,11 @@ const GameDetailsPage = () => {
             <Typography variant="h4" sx={{ mb: 2 }}>
               {data.map.pretty_name}
             </Typography>
-            <Typography variant="h5" sx={{ color: 'text.secondary' }}>
-              Score: <Box component="span" sx={{ color: 'primary.main' }}>Allies {data.result.allied}</Box> : <Box component="span" sx={{ color: 'error.main' }}>{data.result.axis} Axis</Box>
-            </Typography>
+            {data.result && (
+              <Typography variant="h5" sx={{ color: 'text.secondary' }}>
+                Score: <Box component="span" sx={{ color: 'primary.main' }}>Allies {data.result.allied}</Box> : <Box component="span" sx={{ color: 'error.main' }}>{data.result.axis} Axis</Box>
+              </Typography>
+            )}
           </Box>
           <Box sx={{ textAlign: 'right' }}>
             <Typography variant="subtitle1" sx={{ mb: 1 }}>
