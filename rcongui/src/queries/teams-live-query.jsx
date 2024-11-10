@@ -2,6 +2,7 @@ import { useGlobalStore } from "@/hooks/useGlobalState";
 import { extractPlayers } from "@/utils/extractPlayers";
 import { cmd } from "@/utils/fetchUtils";
 import { normalizePlayerProfile } from "@/utils/lib";
+import { useQuery } from "@tanstack/react-query";
 
 export const teamsLiveQueryOptions = {
   queryKey: ["teams", "live"],

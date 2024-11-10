@@ -7,7 +7,7 @@ export const gameQueryOptions = {
       queryKey: [{ queryIdentifier: "scoreboard-maps", page, pageSize }],
       queryFn: () =>
         cmd.GET_COMPLETED_GAMES({
-          params: { page: page ?? 1, pageSize: pageSize ?? 50 },
+          params: { page: page ?? 1, limit: pageSize ?? 50 },
         }),
     }),
   detail: (gameId) =>
@@ -29,25 +29,25 @@ export const gameQueryOptions = {
     }),
 };
 
-export const gameDetailQuery = (gameId) => {
+export const useGameDetailQuery = (gameId) => {
   return useQuery({
     ...gameQueryOptions.detail(gameId),
   });
 };
 
-export const liveGameQuery = () => {
+export const useLiveGameQuery = () => {
   return useQuery({
     ...gameQueryOptions.live(),
   });
 };
 
-export const liveSessionsQuery = () => {
+export const useLiveSessionsQuery = () => {
   return useQuery({
     ...gameQueryOptions.sessions(),
   });
 };
 
-export const gameListQuery = (page, pageSize) => {
+export const useGameListQuery = (page, pageSize) => {
   return useQuery({
     ...gameQueryOptions.list(page, pageSize),
   });

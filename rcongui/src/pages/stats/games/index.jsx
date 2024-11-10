@@ -2,13 +2,14 @@ import { useReactTable } from "@tanstack/react-table";
 import { GameListTable } from "./game-list-table";
 import { columns } from "./game-list-columns";
 import { cmd } from "@/utils/fetchUtils";
-import { useLoaderData } from "react-router-dom";
+import { useLoaderData, useSearchParams } from "react-router-dom";
 import {
   getCoreRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   getFilteredRowModel,
 } from "@tanstack/react-table";
+import { gameQueryOptions } from "@/queries/game-query";
+import { useQuery } from "@tanstack/react-query";
 
 export const loader = async () => {
   return await cmd.GET_COMPLETED_GAMES();
@@ -16,11 +17,21 @@ export const loader = async () => {
 
 const GamesPage = () => {
   const data = useLoaderData();
+
+  const [searchParams] = useSearchParams();
+  const page = Number(searchParams.get("page") ?? 1);
+  const pageSize = Number(searchParams.get("page_size") ?? 50);
+  const maxPages = Math.ceil(data.total / pageSize);
+
+  const { data: games, isLoading } = useQuery({
+    ...gameQueryOptions.list(page, pageSize),
+    initialData: data,
+  });
+
   const table = useReactTable({
     columns: columns,
-    data: data.maps,
+    data: games?.maps ?? [],
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     filterFns: {
@@ -30,18 +41,12 @@ const GamesPage = () => {
           .includes(filterValue.toLowerCase());
       },
     },
-    initialState: {
-      pagination: {
-        pageIndex: 0,
-        pageSize: 50,
-      },
-    },
   });
 
   return (
     <div>
       <h1>Games</h1>
-      <GameListTable table={table} />
+      <GameListTable table={table} page={page} maxPages={maxPages} />
     </div>
   );
 };

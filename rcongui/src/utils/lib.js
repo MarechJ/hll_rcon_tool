@@ -234,3 +234,7 @@ export function getGameDuration(start, end) {
 
   return formattedTime;
 }
+
+export function isLeader(role) {
+  return ["officer", "tankcommander", "spotter", "armycommander"].includes(role);
+}
