@@ -15,7 +15,7 @@ export const loader = async () => {
   return await cmd.GET_COMPLETED_GAMES();
 };
 
-const GamesPage = () => {
+export const GamesList = ({ columns }) => {
   const data = useLoaderData();
 
   const [searchParams] = useSearchParams();
@@ -49,6 +49,10 @@ const GamesPage = () => {
       <GameListTable table={table} page={page} maxPages={maxPages} />
     </div>
   );
+};
+
+const GamesPage = () => {
+  return <GamesList columns={columns} />;
 };
 
 export default GamesPage;

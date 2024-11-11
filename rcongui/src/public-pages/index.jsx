@@ -1,5 +1,4 @@
 import { cmd } from "@/utils/fetchUtils";
-import { columns } from "../games/[gameId]/game-columns";
 import { useLoaderData } from "react-router-dom";
 import {
   Stack,
@@ -8,8 +7,6 @@ import {
   AccordionSummary,
   AccordionDetails,
 } from "@mui/material";
-import { GameTable } from "../games/[gameId]";
-import { StatCard } from "../games/[gameId]";
 import Grid from "@mui/material/Grid2";
 import { gameQueryOptions } from "@/queries/game-query";
 import { useQuery } from "@tanstack/react-query";
@@ -17,11 +14,23 @@ import { Board } from "@/components/game/Board";
 import dayjs from "dayjs";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { VoteStatus } from "@/pages/settings/map-manager/votemap/vote-status";
+import { columns } from "./public-game-columns";
+import { StatCard } from "@/pages/stats/games/[gameId]";
+import PlayersTable from "./public-game-table";
+import { useReactTable } from "@tanstack/react-table";
+import {
+  getCoreRowModel,
+  getFilteredRowModel,
+  getSortedRowModel,
+  getExpandedRowModel,
+} from "@tanstack/react-table";
+import { useMemo } from "react";
 
 export const loader = async () => {
   const stats = await cmd.GET_LIVE_GAME();
   const game = await cmd.GET_PUBLIC_GAME_STATE();
-  return { stats, game };
+  const session = await cmd.GET_LIVE_SESSIONS();
+  return { stats, game, session };
 };
 
 const LiveGamePage = () => {
@@ -38,6 +47,44 @@ const LiveGamePage = () => {
   const { data: game, isLoading: gameIsLoading } = useQuery({
     ...gameQueryOptions.publicState(),
     initialData: initialData.game,
+  });
+
+  const {
+    data: { stats: sessions },
+    isLoading: sessionIsLoading,
+  } = useQuery({
+    ...gameQueryOptions.sessions(),
+    initialData: initialData.session,
+  });
+
+  const tableData = useMemo(() => stats.map((stat) => {
+    if (!sessions || !stats) return [];
+    if (!sessions) return stats;
+
+    return ({
+        ...stat,
+        is_online: !!sessions.find((s) => s.player_id === stat.player_id),
+      })
+    }),
+    [stats, sessions],
+  );
+
+  const table = useReactTable({
+    data: tableData,
+    columns: columns,
+    getRowCanExpand: () => true,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
+    getRowId: (row) => row.player_id,
+    initialState: {
+      pagination: {
+        pageIndex: 0,
+        pageSize: 100,
+      },
+      sorting: [{ id: "time", desc: true }],
+    },
   });
 
   if (statsIsLoading || gameIsLoading) {
@@ -88,7 +135,7 @@ const LiveGamePage = () => {
       </Accordion>
 
       <section id="players-table">
-        <GameTable playerStats={stats} columns={columns} />
+        <PlayersTable table={table} />
       </section>
     </Stack>
   );

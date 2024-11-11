@@ -7,23 +7,20 @@ export const NumberText = styled(Typography)(() => ({
 }));
 
 export const SquareIcon = styled((props) => <Avatar variant="square" {...props} />)(({ theme }) => {
-  const styles = {
+  return {
     width: 20,
     height: 20,
-  }
-
-  if (theme.palette.mode === "dark") {
-    styles.backgroundColor = theme.palette.background.default;
-  }
-  
-  return styles 
+    ...theme.applyStyles("dark", {
+      backgroundColor: theme.palette.background.default,
+    }),
+  };
 });
 
 const Points = ({ value, type, direction = "left" }) => {
   if (direction === "left") {
     return (
       <>
-        <SquareIcon variant="square">
+        <SquareIcon>
           <Box
             component={"img"}
             src={`/icons/metrics/${type}.png`}

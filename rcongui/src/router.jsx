@@ -17,9 +17,11 @@ import BlacklistRecords from "./pages/records/blacklists"
 import GameLogsRecords from "./pages/records/game-logs"
 import AuditLogsRecords from "./pages/records/audit-logs"
 
-import LiveGamePage from "./pages/stats/live-game";
 import LiveSessionStats from "./pages/stats/live-sessions";
 import GamesLayout from "./pages/stats/games/layout";
+
+import LiveGamePage from "./pages/stats/live-game";
+import { loader as liveGameLoader } from "./pages/stats/live-game";
 
 import GamesPage from "./pages/stats/games";
 import { loader as gamesLoader } from "./pages/stats/games";
@@ -284,11 +286,12 @@ const router = createBrowserRouter([
                         path: 'live-game',
                         handle: { crumb: () => <Link to={'/stats/live-game'}>Live Game</Link> },
                         element: <LiveGamePage />,
+                        loader: liveGameLoader,
                     },
                     {
                         path: 'live-sessions',
                         handle: { crumb: () => <Link to={'/stats/live-sessions'}>Live Sessions</Link> },
-                        element: <LiveSessionStats />
+                        element: <LiveSessionStats />,
                     },
                     {
                         path: 'games',

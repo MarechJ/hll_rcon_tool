@@ -19,12 +19,28 @@ export const gameQueryOptions = {
     queryOptions({
       queryKey: [{ queryIdentifier: "get_live_game_stats" }],
       queryFn: () => cmd.GET_LIVE_GAME(),
+      staleTime: 5 * 1000,
       refetchInterval: 15 * 1000,
     }),
   sessions: () =>
     queryOptions({
       queryKey: [{ queryIdentifier: "get_live_scoreboard" }],
       queryFn: () => cmd.GET_LIVE_SESSIONS(),
+      staleTime: 5 * 1000,
+      refetchInterval: 15 * 1000,
+    }),
+  state: () =>
+    queryOptions({
+      queryKey: [{ queryIdentifier: "get_gamestate" }],
+      queryFn: () => cmd.GET_GAME_STATE(),
+      staleTime: 5 * 1000,
+      refetchInterval: 15 * 1000,
+    }),
+  publicState: () =>
+    queryOptions({
+      queryKey: [{ queryIdentifier: "get_public_info" }],
+      queryFn: () => cmd.GET_PUBLIC_GAME_STATE(),
+      staleTime: 5 * 1000,
       refetchInterval: 15 * 1000,
     }),
 };

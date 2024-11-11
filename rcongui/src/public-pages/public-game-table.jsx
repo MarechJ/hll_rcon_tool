@@ -1,13 +1,11 @@
 import Table from "@/components/table/Table";
 import TableConfigDrawer from "@/components/table/TableConfigDrawer";
 import storageKeys from "@/config/storageKeys";
-import { Divider, IconButton, Stack } from "@mui/material";
+import { Divider, IconButton } from "@mui/material";
 import { useState } from "react";
 import { useStorageState } from "@/hooks/useStorageState";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import SettingsIcon from "@mui/icons-material/Settings";
-import { ActionMenuButton } from "@/features/player-action/ActionMenu";
-import { playerProfileActions } from "@/features/player-action/actions";
 import { TablePagination } from "@/components/table/TablePagination";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import { Box, Typography } from "@mui/material";
@@ -140,7 +138,7 @@ const renderSubComponent = ({ row }) => {
   );
 };
 
-const PlayersTable = ({ table, selectedPlayers }) => {
+const PlayersTable = ({ table }) => {
   const [tableConfigDrawerOpen, setTableConfigDrawerOpen] = useState(false);
 
   const [tableConfig, setTableConfig] = useStorageState(
@@ -159,19 +157,6 @@ const PlayersTable = ({ table, selectedPlayers }) => {
   return (
     <div>
       <TableToolbar>
-        <ActionMenuButton
-          actions={playerProfileActions}
-          disabled={
-            !table.getIsSomePageRowsSelected() && !table.getIsAllRowsSelected()
-          }
-          recipients={selectedPlayers}
-          orientation="horizontal"
-          disableRipple={true}
-          sx={{
-            p: "1px 4px",
-            height: "100%",
-          }}
-        />
         <DebouncedSearchInput
           placeholder={"Search player"}
           initialValue={table.getColumn("name")?.getFilterValue() ?? ""}

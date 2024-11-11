@@ -37,7 +37,7 @@ function TemplateFrame({
   children,
 }) {
   const dashboardTheme = createTheme(getDashboardTheme(mode));
-
+  
   return (
     <ThemeProvider theme={dashboardTheme}>
       <Box sx={{ height: "100dvh", display: "flex", flexDirection: "column" }}>
