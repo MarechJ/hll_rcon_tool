@@ -4,6 +4,8 @@ import Grid from "@mui/material/Grid2";
 
 const StyledStack = styled(Stack)(({ theme }) => ({
   padding: 0,
+  maxWidth: theme.breakpoints.values.md,
+  margin: "0 auto",
   [theme.breakpoints.up("md")]: {
     paddingRight: theme.spacing(1),
     paddingLeft: theme.spacing(1),
@@ -14,6 +16,22 @@ const SmallText = styled(Typography)(({ theme }) => ({
   fontSize: theme.typography.pxToRem(12),
 }));
 
+/**
+ * @typedef {Object} BoardData
+ * @property {string} raw_time_remaining - The raw time remaining.
+ * @property {number} allied_score - The allied score.
+ * @property {number} axis_score - The axis score.
+ * @property {Object} current_map - The current map.
+ * @property {number} num_allied_players - The number of allied players.
+ * @property {number} num_axis_players - The number of axis players.
+ */
+
+/**
+ * 
+ * @param {BoardData} data - The data object containing the game information.
+ * @param {Object} props - Additional props.
+ * @returns {JSX.Element} The rendered Board component.
+ */
 export const Board = ({ data, ...props }) => {
   return (
     <StyledStack>

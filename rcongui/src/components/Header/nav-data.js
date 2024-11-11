@@ -335,3 +335,20 @@ export const navMenus = [
     ],
   },
 ];
+
+export const publicNavMenus = [
+  {
+    links: [
+      {
+        name: "Live",
+        to: "/",
+        icon: <BoltIcon />,
+      },
+      {
+        name: "Games",
+        to: "/games",
+        icon: <HourglassBottomIcon />,
+      },
+    ]
+  }
+]

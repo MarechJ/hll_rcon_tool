@@ -156,11 +156,12 @@ export const cmd = {
   SET_VOTEKICK_AUTOTOGGLE_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_votekick_autotoggle_config", ...params }),
   GET_REAL_VIP_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_real_vip_config", ...params }),
   SET_REAL_VIP_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_real_vip_config", ...params }),
-  // STATS
+  // PUBLIC ROUTES
   GET_LIVE_GAME: (params) => requestFactory({ method: "GET", cmd: "get_live_game_stats", ...params }),
   GET_LIVE_SESSIONS: (params) => requestFactory({ method: "GET", cmd: "get_live_scoreboard", ...params }),
   GET_COMPLETED_GAMES: (params) => requestFactory({ method: "GET", cmd: "get_scoreboard_maps", ...params }),
   GET_COMPLETED_GAME_DETAIL: (params) => requestFactory({ method: "GET", cmd: "get_map_scoreboard", ...params }),
+  GET_PUBLIC_GAME_STATE: (params) => requestFactory({ method: "GET", cmd: "get_public_info", ...params }),
 };
 
 export function execute(command, data) {

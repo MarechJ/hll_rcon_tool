@@ -7,85 +7,100 @@ import { SortableHeader } from "@/components/table/styles";
 
 dayjs.extend(LocalizedFormat);
 
-export const columns = [
-  {
-    accessorKey: "id",
-    header: "ID",
-    cell: ({ cell }) => {
-      const matchId = cell.getValue();
-      return (
-        <Button variant="text">
-          <Link to={`/stats/games/${matchId}`}>
-            {matchId}
-          </Link>
-        </Button>
-      );
-    },
-    meta: {
-      variant: "short"
-    },
+export const gameIdColumn = {
+  accessorKey: "id",
+  header: "ID",
+  cell: ({ cell }) => {
+    const matchId = cell.getValue();
+    return (
+      <Button component={Link} to={`/stats/games/${matchId}`} variant="text">
+        {matchId}
+      </Button>
+    );
   },
-  {
-    header: SortableHeader("Map"),
-    id: "map",
-    accessorKey: "map",
-    minSize: 200,
-    size: 200,
-    filterFn: 'mapFilter',
-    cell: ({ cell }) => {
-      const matchMap = cell.getValue();
-      const size = 60;
-      const ratio = 9 / 16;
-      return (
-        <Box sx={{ display: "flex", flexDirection: "row", gap: 0.5, width: "max-content" }}>
-          <img
-            src={"/maps/" + matchMap.image_name}
-            width={size}
-            height={size * ratio}
-            alt=""
-          />
-          <Box sx={{ display: "flex", flexDirection: "column"}}>
-            <Typography variant="body1" sx={{ fontWeight: 600, lineHeight: 1 }}>{matchMap.map.pretty_name}</Typography>
-            <Typography variant="subtitle2" sx={{ display: "flex", flexDirection: "row", fontWeight: 400 }}>
-              <Box component="span" sx={{ paddingRight: 0.5 }}>
-                {matchMap.game_mode[0].toUpperCase() +
-                  matchMap.game_mode.slice(1)}
-              </Box>
-              <Box component="span">
-                {matchMap.environment}
-              </Box>
-            </Typography>
-          </Box>
+  meta: {
+    variant: "short",
+  },
+};
+
+export const mapColumn = {
+  header: SortableHeader("Map"),
+  id: "map",
+  accessorKey: "map",
+  minSize: 200,
+  size: 200,
+  filterFn: "mapFilter",
+  cell: ({ cell }) => {
+    const matchMap = cell.getValue();
+    const size = 60;
+    const ratio = 9 / 16;
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "row",
+          gap: 0.5,
+          width: "max-content",
+        }}
+      >
+        <img
+          src={"/maps/" + matchMap.image_name}
+          width={size}
+          height={size * ratio}
+          alt=""
+        />
+        <Box sx={{ display: "flex", flexDirection: "column" }}>
+          <Typography variant="body1" sx={{ fontWeight: 600, lineHeight: 1 }}>
+            {matchMap.map.pretty_name}
+          </Typography>
+          <Typography
+            variant="subtitle2"
+            sx={{ display: "flex", flexDirection: "row", fontWeight: 400 }}
+          >
+            <Box component="span" sx={{ paddingRight: 0.5 }}>
+              {matchMap.game_mode[0].toUpperCase() +
+                matchMap.game_mode.slice(1)}
+            </Box>
+            <Box component="span">{matchMap.environment}</Box>
+          </Typography>
         </Box>
-      );
-    },
-    meta: {
-      variant: "content"
-    },
+      </Box>
+    );
   },
-  {
-    header: "Result",
-    id: "result",
-    accessorFn: (row) =>
-      `${row.result?.allied ?? "?"} - ${row.result?.axis ?? "?"}`,
-    meta: {
-      variant: "short"
-    },
+  meta: {
+    variant: "content",
   },
-  {
-    header: SortableHeader("Start"),
-    accessorKey: "start",
-    cell: ({ cell }) => dayjs(cell.getValue()).format("L LT"),
-    meta: {
-      variant: "name"
-    },
+};
+
+export const resultColumn = {
+  header: "Result",
+  id: "result",
+  accessorFn: (row) =>
+    `${row.result?.allied ?? "?"} - ${row.result?.axis ?? "?"}`,
+  meta: {
+    variant: "short",
   },
-  {
-    header: SortableHeader("Duration"),
-    accessorKey: "duration",
-    cell: ({ row }) => getGameDuration(row.original.start, row.original.end),
-    meta: {
-      variant: "time"
-    },
+};
+
+export const startColumn = {
+  header: SortableHeader("Start"),
+  accessorKey: "start",
+  cell: ({ cell }) => dayjs(cell.getValue()).format("L LT"),
+  meta: {
+    variant: "name",
   },
+};
+
+export const durationColumn = {
+  header: SortableHeader("Duration"),
+  accessorKey: "duration",
+  cell: ({ row }) => getGameDuration(row.original.start, row.original.end),
+};
+
+export const columns = [
+  gameIdColumn,
+  mapColumn,
+  resultColumn,
+  startColumn,
+  durationColumn,
 ];

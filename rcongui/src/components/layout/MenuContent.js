@@ -63,7 +63,7 @@ const Group = ({ groupName, icon, level = 1, children }) => {
   );
 };
 
-export default function MenuContent() {
+export default function MenuContent({ navigationTree }) {
   return (
     <Stack
       sx={{
@@ -74,7 +74,7 @@ export default function MenuContent() {
       }}
     >
       <List dense sx={{ overflowY: "auto" }}>
-        {navMenus
+        {navigationTree
           .filter((group) => !("name" in group))
           .map((group) =>
             group.links.map((link) => (
@@ -87,7 +87,7 @@ export default function MenuContent() {
             ))
           )}
 
-        {navMenus
+        {navigationTree
           .filter((group) => "name" in group)
           .map((group) => (
             <Group key={group.name} groupName={group.name} icon={group.icon}>
@@ -101,10 +101,6 @@ export default function MenuContent() {
               ))}
             </Group>
           ))}
-      </List>
-
-      <List dense>
-        <NewReleases />
       </List>
     </Stack>
   );
