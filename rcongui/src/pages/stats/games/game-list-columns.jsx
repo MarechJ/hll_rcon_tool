@@ -44,7 +44,7 @@ export const mapColumn = {
         }}
       >
         <img
-          src={"/maps/" + matchMap.image_name}
+          src={"/maps/icons/" + matchMap.image_name}
           width={size}
           height={size * ratio}
           alt=""
