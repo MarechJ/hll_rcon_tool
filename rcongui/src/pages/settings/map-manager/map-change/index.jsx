@@ -1,16 +1,14 @@
 import { Button, List } from "@mui/material";
 import React from "react";
-import {
-  changeMap,
-} from "@/utils/fetchUtils";
+import { changeMap } from "@/utils/fetchUtils";
 import MapSearch from "./map-search";
 import { MapListItem } from "@/components/MapManager/map-list-item";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { unifiedGamemodeName } from "@/components/MapManager/helpers";
-import { styled } from '@mui/styles';
+import { styled } from "@mui/styles";
 import { useOutletContext } from "react-router-dom";
 
-const Main = styled('div')(({ theme }) => ({
+const Main = styled("div")(({ theme }) => ({
   display: "flex",
   flexDirection: "column",
   gap: theme.spacing(1),
@@ -23,8 +21,6 @@ const Maps = styled(List)(({ theme }) => ({
   minHeight: 500,
   maxHeight: "70vh",
 }));
-
-
 
 function MapChange() {
   const { maps } = useOutletContext();
@@ -56,6 +52,10 @@ function MapChange() {
       ...prevFilters,
       [filter]: !prevFilters[filter],
     }));
+  };
+
+  const handleListItemClick = (mapLayer) => {
+    setSelected(mapLayer.id);
   };
 
   return (
@@ -105,13 +105,11 @@ function MapChange() {
       <Maps dense={true}>
         {filteredMaps.map((mapLayer, index) => (
           <MapListItem
-            button
-            onClick={() => {
-              setSelected(mapLayer.id);
-            }}
             key={`${index}#${mapLayer.id}`}
+            asButton={true}
+            onClick={() => handleListItemClick(mapLayer)}
             mapLayer={mapLayer}
-            renderAction={(mapLayer) =>
+            secondaryAction={
               selected === mapLayer.id && (
                 <Button
                   endIcon={<CheckCircleOutlineIcon />}
@@ -119,9 +117,10 @@ function MapChange() {
                   color="secondary"
                   aria-label="confirm"
                   onClick={() => handleConfirmMap(mapLayer)}
-                  size="large">
-                  <CheckCircleOutlineIcon />
-                </IconButton>
+                  size="large"
+                >
+                  Confirm
+                </Button>
               )
             }
           />

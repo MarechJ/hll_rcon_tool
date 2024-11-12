@@ -51,10 +51,10 @@ function TemplateFrame({
               p: "8px 12px",
             }}
           >
-            <Box sx={{ display: "flex", gap: 1, overflowX: "hidden", textOverflow: "ellipsis", textWrap: "nowrap" }}>
-              <MenuButton aria-label="menu" onClick={toggleDrawer} sx={{ display: { xs: 'none', lg: 'block' } }}>
-                {!openDrawer ? <MenuRoundedIcon /> : <MenuOpenIcon /> }
-              </MenuButton>
+            <MenuButton aria-label="toggle-menu" onClick={toggleDrawer} sx={{ display: { xs: 'none', lg: 'inline-flex' } }}>
+              {!openDrawer ? <MenuRoundedIcon /> : <MenuOpenIcon /> }
+            </MenuButton>
+            <Box sx={{ display: "flex", flexGrow: 1, gap: 1, overflowX: "hidden", textOverflow: "ellipsis", textWrap: "nowrap" }}>
               <ServerStatus />
             </Box>
             <Box sx={{ display: "flex", gap: 2, width: "fit-content" }}>

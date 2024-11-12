@@ -6,17 +6,21 @@ import ListItemText from "@mui/material/ListItemText";
 import { ListItemButton } from "@mui/material";
 import { MapAvatar, MapDescription } from "./map-details";
 
+const ListItemComponent = ({ children, secondaryAction, asButton, ...props }) => asButton ? (
+  <ListItem secondaryAction={secondaryAction} disablePadding>
+    <ListItemButton role={undefined} disableRipple dense {...props}>
+      {children}
+    </ListItemButton>
+  </ListItem>
+) : (
+  <ListItem secondaryAction={secondaryAction} {...props}>
+    {children}
+  </ListItem>
+);
 
-export function MapListItem({ mapLayer, primary, secondary, renderAction, ...props }) {
-
-  const ListItemComponent = props.button ? ListItemButton : ListItem;
-
+export function MapListItem({ mapLayer, primary, secondary, secondaryAction, asButton, ...props }) {
   return (
-    <ListItemComponent 
-      sx={{ borderBottom: `1px solid gray` }} 
-      {...props}
-      secondaryAction={renderAction && renderAction(mapLayer)}
-    >
+    <ListItemComponent secondaryAction={secondaryAction} asButton={asButton} {...props}>
       <ListItemAvatar>
         <MapAvatar mapLayer={mapLayer} />
       </ListItemAvatar>
