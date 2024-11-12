@@ -47,6 +47,7 @@ import DraftsIcon from '@mui/icons-material/Drafts';
 import SpellcheckIcon from '@mui/icons-material/Spellcheck';
 import DvrIcon from '@mui/icons-material/Dvr';
 import OndemandVideoIcon from '@mui/icons-material/OndemandVideo';
+import MilitaryTechIcon from '@mui/icons-material/MilitaryTech';
 
 export const navMenus = [
   {
@@ -263,6 +264,11 @@ export const navMenus = [
     name: 'Others',
     icon: <MiscellaneousServicesIcon />,
     links: [
+      {
+        name: "Seeder VIP Reward",
+        to: "/settings/others/seed-vip",
+        icon: <MilitaryTechIcon />,
+      },
       {
         name: "RCON Game Server Connection",
         to: "/settings/others/game-server",
