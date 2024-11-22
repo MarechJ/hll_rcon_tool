@@ -10,8 +10,11 @@ from typing_extensions import Literal
 
 logger = getLogger(__name__)
 
-RE_LAYER_NAME = re.compile(
-    r"^(?P<tag>[A-Z]{3,5})_(?P<size>S|L)_(?P<year>\d{4})_(?:(?P<environment>\w+)_)?P_(?P<game_mode>\w+)$"
+RE_LAYER_NAME_SMALL = re.compile(
+    r"^(?P<tag>[A-Z]{3,5})_S_(?P<year>\d{4})_(?:(?P<environment>\w+)_)?P_(?P<game_mode>\w+)$"
+)
+RE_LAYER_NAME_LARGE = re.compile(
+    r"^(?P<tag>[A-Z]{3,5})_L_(?P<year>\d{4})_(?P<game_mode>\w+?)(?P<attackers>US|GER|Ger|COM|USSR|RUS|GB|CW|Brit|British)?(?:_(?P<environment>\w+))?$"
 )
 RE_LEGACY_LAYER_NAME = re.compile(
     r"^(?P<name>[a-z0-9]+)_(?:(?P<offensive>off(?:ensive)?)_?(?P<attackers>[a-zA-Z]+)|(?P<game_mode>[a-z]+)(?:_V2)?)(?:_(?P<environment>[a-z]+))?$"
@@ -390,10 +393,20 @@ MAPS = {
             name="MORTAIN",
             tag="MOR",
             pretty_name="Mortain",
-            shortname="MOR",
+            shortname="Mortain",
             allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
             axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
             orientation=Orientation.HORIZONTAL,
+        ),
+        Map(
+            id="elsenbornridge",
+            name="ELSENBORN RIDGE",
+            tag="EBR",
+            pretty_name="Elsenborn Ridge",
+            shortname="Elsenborn",
+            allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
+            axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
+            orientation=Orientation.VERTICAL,
         ),
     )
 }
@@ -503,7 +516,7 @@ LAYERS = {
             id="omahabeach_warfare_night",
             map=MAPS["omahabeach"],
             game_mode=GameMode.WARFARE,
-            environment=Environment.NIGHT,
+            environment=Environment.DUSK,
         ),
         Layer(
             id="omahabeach_offensive_us",
@@ -546,6 +559,7 @@ LAYERS = {
             id="PHL_L_1944_Warfare",
             map=MAPS["purpleheartlane"],
             game_mode=GameMode.WARFARE,
+            environment=Environment.RAIN,
         ),
         Layer(
             id="PHL_L_1944_Warfare_Night",
@@ -683,6 +697,12 @@ LAYERS = {
             environment=Environment.DUSK,
         ),
         Layer(
+            id="HIL_S_1944_Night_P_Skirmish",
+            map=MAPS["hill400"],
+            game_mode=GameMode.CONTROL,
+            environment=Environment.NIGHT,
+        ),
+        Layer(
             id="foy_warfare",
             map=MAPS["foy"],
             game_mode=GameMode.WARFARE,
@@ -704,6 +724,17 @@ LAYERS = {
             map=MAPS["foy"],
             game_mode=GameMode.OFFENSIVE,
             attackers=Team.AXIS,
+        ),
+        Layer(
+            id="FOY_S_1944_P_Skirmish",
+            map=MAPS["foy"],
+            game_mode=GameMode.CONTROL,
+        ),
+        Layer(
+            id="FOY_S_1944_Night_P_Skirmish",
+            map=MAPS["foy"],
+            game_mode=GameMode.CONTROL,
+            environment=Environment.NIGHT,
         ),
         Layer(
             id="kursk_warfare",
@@ -796,6 +827,17 @@ LAYERS = {
             map=MAPS["kharkov"],
             game_mode=GameMode.OFFENSIVE,
             attackers=Team.AXIS,
+        ),
+        Layer(
+            id="KHA_S_1944_P_Skirmish",
+            map=MAPS["kharkov"],
+            game_mode=GameMode.CONTROL,
+        ),
+        Layer(
+            id="KHA_S_1944_Night_P_Skirmish",
+            map=MAPS["kharkov"],
+            game_mode=GameMode.CONTROL,
+            environment=Environment.NIGHT,
         ),
         Layer(
             id="driel_warfare",
@@ -891,7 +933,9 @@ LAYERS = {
             environment=Environment.RAIN,
         ),
         Layer(
-            id="mortain_warfare_day", map=MAPS["mortain"], game_mode=GameMode.WARFARE
+            id="mortain_warfare_day",
+            map=MAPS["mortain"],
+            game_mode=GameMode.WARFARE,
         ),
         Layer(
             id="mortain_warfare_evening",
@@ -904,6 +948,12 @@ LAYERS = {
             map=MAPS["mortain"],
             game_mode=GameMode.WARFARE,
             environment=Environment.OVERCAST,
+        ),
+        Layer(
+            id="mortain_warfare_night",
+            map=MAPS["mortain"],
+            game_mode=GameMode.WARFARE,
+            environment=Environment.NIGHT,
         ),
         Layer(
             id="mortain_offensiveUS_day",
@@ -926,6 +976,13 @@ LAYERS = {
             environment=Environment.DUSK,
         ),
         Layer(
+            id="mortain_offensiveUS_night",
+            map=MAPS["mortain"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.ALLIES,
+            environment=Environment.NIGHT,
+        ),
+        Layer(
             id="mortain_offensiveger_day",
             map=MAPS["mortain"],
             game_mode=GameMode.OFFENSIVE,
@@ -946,6 +1003,13 @@ LAYERS = {
             environment=Environment.DUSK,
         ),
         Layer(
+            id="mortain_offensiveger_night",
+            map=MAPS["mortain"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.AXIS,
+            environment=Environment.NIGHT,
+        ),
+        Layer(
             id="mortain_skirmish_day",
             map=MAPS["mortain"],
             game_mode=GameMode.CONTROL,
@@ -961,6 +1025,112 @@ LAYERS = {
             map=MAPS["mortain"],
             game_mode=GameMode.CONTROL,
             environment=Environment.DUSK,
+        ),
+        Layer(
+            id="mortain_skirmish_night",
+            map=MAPS["mortain"],
+            game_mode=GameMode.CONTROL,
+            environment=Environment.NIGHT,
+        ),
+        Layer(
+            id="elsenbornridge_warfare_day",
+            map=MAPS["elsenbornridge"],
+            game_mode=GameMode.WARFARE,
+        ),
+        Layer(
+            id="elsenbornridge_warfare_morning",
+            map=MAPS["elsenbornridge"],
+            game_mode=GameMode.WARFARE,
+            environment=Environment.DAWN,
+        ),
+        Layer(
+            id="elsenbornridge_warfare_evening",
+            map=MAPS["elsenbornridge"],
+            game_mode=GameMode.WARFARE,
+            environment=Environment.DUSK,
+        ),
+        Layer(
+            id="elsenbornridge_warfare_night",
+            map=MAPS["elsenbornridge"],
+            game_mode=GameMode.WARFARE,
+            environment=Environment.NIGHT,
+        ),
+        Layer(
+            id="elsenbornridge_offensiveUS_day",
+            map=MAPS["elsenbornridge"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.ALLIES,
+        ),
+        Layer(
+            id="elsenbornridge_offensiveUS_morning",
+            map=MAPS["elsenbornridge"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.ALLIES,
+            environment=Environment.DAWN,
+        ),
+        Layer(
+            id="elsenbornridge_offensiveUS_evening",
+            map=MAPS["elsenbornridge"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.ALLIES,
+            environment=Environment.DUSK,
+        ),
+        Layer(
+            id="elsenbornridge_offensiveUS_night",
+            map=MAPS["elsenbornridge"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.ALLIES,
+            environment=Environment.NIGHT,
+        ),
+        Layer(
+            id="elsenbornridge_offensiveger_day",
+            map=MAPS["elsenbornridge"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.AXIS,
+        ),
+        Layer(
+            id="elsenbornridge_offensiveger_morning",
+            map=MAPS["elsenbornridge"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.AXIS,
+            environment=Environment.DAWN,
+        ),
+        Layer(
+            id="elsenbornridge_offensiveger_evening",
+            map=MAPS["elsenbornridge"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.AXIS,
+            environment=Environment.DUSK,
+        ),
+        Layer(
+            id="elsenbornridge_offensiveger_night",
+            map=MAPS["elsenbornridge"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.AXIS,
+            environment=Environment.NIGHT,
+        ),
+        Layer(
+            id="elsenbornridge_skirmish_day",
+            map=MAPS["elsenbornridge"],
+            game_mode=GameMode.CONTROL,
+        ),
+        Layer(
+            id="elsenbornridge_skirmish_morning",
+            map=MAPS["elsenbornridge"],
+            game_mode=GameMode.CONTROL,
+            environment=Environment.DAWN,
+        ),
+        Layer(
+            id="elsenbornridge_skirmish_evening",
+            map=MAPS["elsenbornridge"],
+            game_mode=GameMode.CONTROL,
+            environment=Environment.DUSK,
+        ),
+        Layer(
+            id="elsenbornridge_skirmish_night",
+            map=MAPS["elsenbornridge"],
+            game_mode=GameMode.CONTROL,
+            environment=Environment.NIGHT,
         ),
     )
 }
@@ -978,7 +1148,7 @@ def parse_layer(layer_name: str | Layer) -> Layer:
 
     getLogger().warning("Unknown layer %s", layer_name)
 
-    layer_match = RE_LAYER_NAME.match(layer_name)
+    layer_match = RE_LAYER_NAME_LARGE.match(layer_name) or RE_LAYER_NAME_SMALL.match(layer_name)
     if not layer_match:
         return _parse_legacy_layer(layer_name)
 
@@ -1002,6 +1172,7 @@ def parse_layer(layer_name: str | Layer) -> Layer:
             orientation=Orientation.VERTICAL,
         )
 
+    attackers = None
     try:
         game_mode = GameMode[layer_data["game_mode"].upper()]
     except KeyError:
@@ -1009,8 +1180,6 @@ def parse_layer(layer_name: str | Layer) -> Layer:
     else:
         if game_mode == GameMode.OFFENSIVE:
             attackers = Team.ALLIES
-        else:
-            attackers = None
 
     if layer_data["environment"]:
         try:
