@@ -18,7 +18,7 @@ import storageKeys from "@/config/storageKeys";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import { ActionMenuButton } from "@/features/player-action/ActionMenu";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
-import { playerGameActions } from "@/features/player-action/actions";
+import { generatePlayerActions } from "@/features/player-action/actions";
 
 const LiveSessionsPage = () => {
   const { data, isLoading } = teamsLiveQuery({ refetchInterval: 15 * 1000 });
@@ -108,7 +108,10 @@ const LiveSessionsPage = () => {
     <Box>
       <TableToolbar table={table}>
         <ActionMenuButton
-          actions={playerGameActions}
+          actions={generatePlayerActions({
+            multiAction: true,
+            onlineAction: true,
+          })}
           disabled={
             !table.getIsSomePageRowsSelected() && !table.getIsAllRowsSelected()
           }
