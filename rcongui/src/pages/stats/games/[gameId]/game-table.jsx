@@ -7,7 +7,7 @@ import { useStorageState } from "@/hooks/useStorageState";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { ActionMenuButton } from "@/features/player-action/ActionMenu";
-import { playerProfileActions } from "@/features/player-action/actions";
+import { generatePlayerActions } from "@/features/player-action/actions";
 import { TablePagination } from "@/components/table/TablePagination";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import { Box, Typography } from "@mui/material";
@@ -160,7 +160,10 @@ const PlayersTable = ({ table, selectedPlayers }) => {
     <div>
       <TableToolbar>
         <ActionMenuButton
-          actions={playerProfileActions}
+          actions={generatePlayerActions({
+            multiAction: true,
+            onlineAction: false,
+          })}
           disabled={
             !table.getIsSomePageRowsSelected() && !table.getIsAllRowsSelected()
           }

@@ -24,6 +24,8 @@ import { PermaBanFormFields } from "@/features/player-action/forms/PermaBanFormF
 import { AddFlagFormFields } from "@/features/player-action/forms/AddFlagFormFields";
 import { AddCommentFormFields } from "@/features/player-action/forms/AddCommentFormFields";
 import { BlacklistPlayerFormFields } from "@/features/player-action/forms/BlacklistPlayerFields";
+import { playerProfileQueryOptions } from "@/queries/player-profile-query";
+import { RemoveFlagFormFields } from "./forms/RemoveFlagFormFields";
 
 const executeAction = (command) => async (payload) => {
   // In the UI, it does not make sense to ask for a reason and message
@@ -64,8 +66,7 @@ export const watchAction = {
 
 export const removeWatchAction = {
   name: "remove Watch",
-  description:
-    "Remove from Watchlist.",
+  description: "Remove from Watchlist.",
   component: ConfirmationOnly,
   icon: <VisibilityOffIcon color="warning" />,
   execute: executeAction("unwatch_player"),
@@ -160,8 +161,10 @@ export const blacklistAction = {
   context: [
     {
       type: "blacklists",
-      queryKey: ["get_blacklists"],
-      queryFn: () => cmd.GET_BLACKLISTS({ throwRouteError: false }),
+      getQuery: () => ({
+        queryKey: ["get_blacklists"],
+        queryFn: () => cmd.GET_BLACKLISTS({ throwRouteError: false }),
+      }),
     },
   ],
 };
@@ -173,6 +176,25 @@ export const flagAction = {
   icon: <FlagIcon />,
   execute: executeAction("flag_player"),
   permission: ["can_flag_player"],
+};
+
+export const unflagAction = {
+  name: "Remove Flag",
+  description: "Remove a flag from the player.",
+  component: RemoveFlagFormFields,
+  icon: <FlagIcon color="warning" />,
+  execute: executeAction("unflag_player"),
+  permission: ["can_unflag_player"],
+  context: [
+    {
+      type: "profile",
+      // This action is only available for a single recipient
+      getQuery: (recipients) =>
+        playerProfileQueryOptions(recipients[0].player_id, {
+          throwRouteError: false,
+        }),
+    },
+  ],
 };
 
 export const commentAction = {
@@ -193,53 +215,50 @@ export const clearAccountAction = {
   permission: ["can_remove_perma_bans"],
 };
 
-// TODO
-// A function that takes in either Player object or params as `hasVIP`
-// and returns a list of relevant actions
-// That will be used for a single recepient actions
-// Or make it so that it makes sure all recepients are eligible for
-// that action
-export const generatePlayerActions = (mode, user) => {
-  // perhaps get whether is online or not based on the player
-  switch (mode) {
-    case "profile":
-      return playerProfileActions;
-    case "game":
-      return playerGameActions;
-    default:
-      throw new Error("Must provide either profile or game mode");
+export const generatePlayerActions = (
+  { multiAction = false, onlineAction = false } = {
+    multiAction: false,
+    onlineAction: false,
   }
+) => {
+  const profileActions = multiAction
+    ? [
+        watchAction,
+        removeWatchAction,
+        vipAction,
+        removeVipAction,
+        blacklistAction,
+        tempBanAction,
+        permaBanAction,
+        clearAccountAction,
+        flagAction,
+        commentAction,
+      ]
+    : [
+        watchAction,
+        removeWatchAction,
+        vipAction,
+        removeVipAction,
+        blacklistAction,
+        tempBanAction,
+        permaBanAction,
+        clearAccountAction,
+        flagAction,
+        unflagAction,
+        commentAction,
+      ];
+
+  const gameActions = [
+    messageAction,
+    switchAction,
+    switchOnDeathAction,
+    punishAction,
+    kickAction,
+  ];
+
+  const actions = onlineAction
+    ? [...gameActions, ...profileActions]
+    : profileActions;
+
+  return actions;
 };
-
-export const playerProfileActions = [
-  watchAction,
-  removeWatchAction,
-  vipAction,
-  removeVipAction,
-  clearAccountAction,
-  blacklistAction,
-  tempBanAction,
-  permaBanAction,
-  clearAccountAction,
-  flagAction,
-  commentAction,
-];
-
-// The order of action objects here determins the order in the UI
-export const playerGameActions = [
-  messageAction,
-  watchAction,
-  removeWatchAction,
-  vipAction,
-  removeVipAction,
-  switchAction,
-  switchOnDeathAction,
-  punishAction,
-  kickAction,
-  blacklistAction,
-  tempBanAction,
-  permaBanAction,
-  clearAccountAction,
-  flagAction,
-  commentAction,
-];

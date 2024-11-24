@@ -1,9 +1,7 @@
 import { ActionMenuButton } from "@/features/player-action/ActionMenu";
-import { playerGameActions } from "@/features/player-action/actions";
-import { Button } from "@mui/material";
-import { styled } from "@mui/material/styles";
 import dayjs from "dayjs";
 import { Action, SortableHeader, TextButton } from "@/components/table/styles";
+import { generatePlayerActions } from "@/features/player-action/actions";
 
 const TIME_FORMAT = "HH:mm:ss, MMM DD";
 
@@ -61,7 +59,10 @@ export const logsColumns = [
     cell: ({ row }) => {
       return row.original.player_name_1 && row.original.player_id_1 ? (
         <ActionMenuButton
-          actions={playerGameActions}
+          actions={generatePlayerActions({
+            multiAction: false,
+            onlineAction: true,
+          })}
           withProfile
           recipients={{ player_id: row.original.player_id_1, name: row.original.player_name_1 }}
           renderButton={(props) => (
@@ -93,7 +94,10 @@ export const logsColumns = [
     cell: ({ row }) => {
       return row.original.player_name_2 && row.original.player_id_2 ? (
         <ActionMenuButton
-          actions={playerGameActions}
+          actions={generatePlayerActions({
+            multiAction: false,
+            onlineAction: true,
+          })}
           withProfile
           recipients={{ player_id: row.original.player_id_2, name: row.original.player_name_2 }}
           renderButton={(props) => (

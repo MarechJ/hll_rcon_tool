@@ -1,0 +1,1 @@
+- [ ] When selecting multiple players from live sessions table, it only selects the main row player, not the players in the sub rows

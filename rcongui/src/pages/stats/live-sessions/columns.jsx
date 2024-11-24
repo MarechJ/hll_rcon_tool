@@ -12,7 +12,7 @@ import { Star, Warning } from "@mui/icons-material";
 import { yellow } from "@mui/material/colors";
 import dayjs from "dayjs";
 import { ActionMenuButton } from "@/features/player-action/ActionMenu";
-import { playerGameActions } from "@/features/player-action/actions";
+import { generatePlayerActions } from "@/features/player-action/actions";
 import { CountryFlag } from "@/components/shared/CountryFlag";
 import {
   getPlayerTier,
@@ -189,7 +189,10 @@ export const columns = [
 
       return (
         <ActionMenuButton
-          actions={playerGameActions}
+          actions={generatePlayerActions({
+            multiAction: false,
+            onlineAction: true,
+          })}
           recipients={row.original}
           orientation="horizontal"
           disableRipple={true}

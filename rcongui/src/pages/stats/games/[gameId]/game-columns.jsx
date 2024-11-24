@@ -7,7 +7,7 @@ import {
 } from "@mui/material";
 import dayjs from "dayjs";
 import { ActionMenuButton } from "@/features/player-action/ActionMenu";
-import { playerProfileActions } from "@/features/player-action/actions";
+import { generatePlayerActions } from "@/features/player-action/actions";
 import { CountryFlag } from "@/components/shared/CountryFlag";
 import { SortableHeader } from "@/components/table/styles";
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
@@ -82,7 +82,7 @@ export const columns = [
     cell: ({ row }) => {
       return (
         <ActionMenuButton
-          actions={playerProfileActions}
+          actions={generatePlayerActions()}
           recipients={{ name: row.original.player, player_id: row.original.player_id }}
           orientation="horizontal"
           disableRipple={true}

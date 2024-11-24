@@ -86,8 +86,8 @@ export const ActionDialogProvider = ({ children }) => {
 
     try {
       // Step 2: Fetch all the context-based data using Promise.all and queryClient
-      const promises = action.context.map(({ type, ...query }) =>
-        queryClient.fetchQuery({ ...query })
+      const promises = action.context.map(({ getQuery }) =>
+        queryClient.fetchQuery(getQuery(recipients))
       );
 
       // Wait for all queries to complete
