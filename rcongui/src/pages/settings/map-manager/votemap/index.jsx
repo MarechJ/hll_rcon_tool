@@ -162,17 +162,20 @@ const VoteMapConfig = () => {
 
   async function getWhitelist() {
     if (!maps.length) return;
-    const whitelistMapIds = await getVotemapWhitelist();
-    if (whitelistMapIds) {
-      const mapLayers = mapIdsToLayers(maps, whitelistMapIds);
+    const whitelistRaw = await getVotemapWhitelist();
+    if (whitelistRaw) {
+      const mapLayers = [];
+      const invalidMapIds = [];
+      whitelistRaw.forEach((mapId) => {
+        const mapLayer = maps.find((mapLayer) => mapLayer.id === mapId);
+        if (mapLayer) {
+          mapLayers.push(mapLayer);
+        } else {
+          invalidMapIds.push(mapId);
+        }
+      });
       setWhitelist(mapLayers);
-      // check if there is as many map layers as there are whitelist map ids
-      // if not, reset the whitelist
-      // that means some maps have been deleted or renamed
-      if (mapLayers.length !== whitelistMapIds.length) {
-        const invalidMapIds = whitelistMapIds.filter( 
-          (id) => !mapLayers.find((map) => map.id === id)
-        );
+      if (invalidMapIds.length) {
         toast.error(
           `Some maps in your whitelist have been deleted or renamed: ${invalidMapIds.join(
             ", "
