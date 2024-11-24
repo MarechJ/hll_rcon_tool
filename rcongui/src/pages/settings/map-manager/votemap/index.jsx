@@ -42,6 +42,7 @@ import { MapListItem } from "@/components/MapManager/map-list-item";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useOutletContext } from "react-router-dom";
 import { mapIdsToLayers } from "@/utils/lib";
+import { toast } from "react-toastify";
 
 const useStyles = makeStyles((theme) => ({
   spacing: {
@@ -163,7 +164,21 @@ const VoteMapConfig = () => {
     if (!maps.length) return;
     const whitelistMapIds = await getVotemapWhitelist();
     if (whitelistMapIds) {
-      setWhitelist(mapIdsToLayers(maps, whitelistMapIds));
+      const mapLayers = mapIdsToLayers(maps, whitelistMapIds);
+      setWhitelist(mapLayers);
+      // check if there is as many map layers as there are whitelist map ids
+      // if not, reset the whitelist
+      // that means some maps have been deleted or renamed
+      if (mapLayers.length !== whitelistMapIds.length) {
+        const invalidMapIds = whitelistMapIds.filter( 
+          (id) => !mapLayers.find((map) => map.id === id)
+        );
+        toast.error(
+          `Some maps in your whitelist have been deleted or renamed: ${invalidMapIds.join(
+            ", "
+          )}. Reset the whitelist or changed your auto settings.`
+        );
+      }
     }
   }
 
@@ -412,6 +427,14 @@ const VoteMapConfig = () => {
           <AccordionActions>
             <Button size="small" variant="outlined" onClick={getWhitelist}>
               Refresh
+            </Button>
+            <Button
+              color={"secondary"}
+              size="small"
+              variant="outlined"
+              onClick={resetWhitelist}
+            >
+              Reset whitelist
             </Button>
             <Button
               color={"secondary"}

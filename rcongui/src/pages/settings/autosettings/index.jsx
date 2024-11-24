@@ -1,16 +1,21 @@
+import React from "react";
 import Padlock from "@/components/shared/Padlock";
 import SplitButton from "@/components/shared/SplitButton";
 import { cmd } from "@/utils/fetchUtils";
+import { TEMPLATE_CATEGORY } from "@/utils/lib";
 import { Editor } from "@monaco-editor/react";
-import { Alert, Button, Paper, useTheme } from "@mui/material";
+import { Alert, Autocomplete, Box, Button, Paper, Skeleton, TextField, useTheme } from "@mui/material";
 import { Stack } from "@mui/system";
 import { useEffect, useState } from "react";
 import {
+  Await,
+  defer,
   json,
   useActionData,
   useLoaderData,
   useSubmit,
 } from "react-router-dom";
+import { AsyncClientError } from "@/components/shared/AsyncClientError";
 
 const INTENT = {
   APPLY_SINGLE: "0",
@@ -21,10 +26,14 @@ const INTENT = {
 export const loader = async () => {
   const autosettings = await cmd.GET_AUTOSETTINGS();
   const services = await cmd.GET_SERVICES();
-  return {
+  const templates = cmd.GET_MESSAGE_TEMPLATES({
+    params: { category: TEMPLATE_CATEGORY.AUTO_SETTINGS },
+  });
+  return defer({
     service: services.find((service) => service.name === "auto_settings"),
     autosettings,
-  };
+    templates,
+  });
 };
 
 export const action = async ({ request }) => {
@@ -63,15 +72,19 @@ export const action = async ({ request }) => {
 
 const isRunning = (service) => service.statename === "RUNNING";
 
+const TemplateSkeleton = () => <Skeleton height={80} />;
+
 const Autosettings = () => {
-  const { service, autosettings } = useLoaderData();
+  const data = useLoaderData();
   const [editorContent, setEditorContent] = useState("");
   const [error, setError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
   const actionData = useActionData();
   const submit = useSubmit();
   const theme = useTheme();
 
   const handleApplyClick = (intent) => (e) => {
+    setSubmitting(true);
     const formData = new FormData();
     formData.append("intent", intent);
     formData.append("forward", intent === INTENT.APPLY_ALL);
@@ -87,13 +100,18 @@ const Autosettings = () => {
     submit(formData, { method: "post" });
   };
 
-  useEffect(() => {
-    if (!actionData?.error) {
-      setEditorContent(JSON.stringify(autosettings, null, 2));
-    }
-  }, [autosettings, actionData]);
+  const handleTemplateChange = (e, message) => {
+    setEditorContent(message ? message.content : JSON.stringify(data.autosettings, null, 2));
+  };
 
   useEffect(() => {
+    if (!actionData?.error) {
+      setEditorContent(JSON.stringify(data.autosettings, null, 2));
+    }
+  }, [data.autosettings, actionData]);
+
+  useEffect(() => {
+    setSubmitting(false);
     if (actionData) {
       if (actionData.error) {
         setError(actionData.error.text);
@@ -113,8 +131,8 @@ const Autosettings = () => {
         gap={1}
       >
         <Padlock
-          label={isRunning(service) ? "ON" : "OFF"}
-          checked={isRunning(service)}
+          label={isRunning(data.service) ? "ON" : "OFF"}
+          checked={isRunning(data.service)}
           handleChange={handleToggleService}
         />
         <Stack direction={"row"} gap={1}>
@@ -127,17 +145,20 @@ const Autosettings = () => {
             Read docs
           </Button>
           <SplitButton
+            disabled={submitting}
             options={[
               {
-                name: "Apply",
+                name: submitting ? "Submitting..." : "Apply",
                 buttonProps: {
                   onClick: handleApplyClick(INTENT.APPLY_SINGLE),
+                  disabled: submitting,
                 },
               },
               {
-                name: "Apply all servers",
+                name: submitting ? "Submitting..." : "Apply all servers",
                 buttonProps: {
                   onClick: handleApplyClick(INTENT.APPLY_ALL),
+                  disabled: submitting,
                 },
               },
             ]}
@@ -153,6 +174,44 @@ const Autosettings = () => {
         theme={theme.palette.mode === "dark" ? "vs-dark" : "vs-light"}
         onChange={(value) => setEditorContent(value)}
       />
+      <React.Suspense fallback={<TemplateSkeleton />}>
+        <Await
+          resolve={data.templates}
+          errorElement={<AsyncClientError title={"Autosettings Templates"} />}
+        >
+          {(templates) => {
+            return (
+              <Autocomplete
+                id="template-select"
+                fullWidth
+                options={templates}
+                onChange={handleTemplateChange}
+                autoHighlight
+                getOptionLabel={(option) => option.title}
+                renderOption={(props, option) => {
+                  const { key, ...optionProps } = props;
+                  return (
+                    <Box key={key} component="li" {...optionProps}>
+                      #{option.id} {option.title}
+                    </Box>
+                  );
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Choose a template"
+                    slotProps={{
+                      htmlInput: {
+                        ...params.inputProps,
+                      },
+                    }}
+                  />
+                )}
+              />
+            );
+          }}
+        </Await>
+      </React.Suspense>
     </Stack>
   );
 };
