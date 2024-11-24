@@ -41,6 +41,7 @@ import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import { MapAutocomplete } from "../map-autocomplete";
 import { MapListItem } from "../map-list-item";
 import DeleteIcon from "@material-ui/icons/Delete";
+import { toast } from "react-toastify";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -163,11 +164,24 @@ const VoteMapConfig = ({ maps }) => {
     if (!maps.length) return;
     const whitelistRaw = await getVotemapWhitelist();
     if (whitelistRaw) {
-      setWhitelist(
-        whitelistRaw.map((mapId) =>
-          maps.find((mapLayer) => mapLayer.id === mapId)
-        )
-      );
+      const mapLayers = [];
+      const invalidMapIds = [];
+      whitelistRaw.forEach((mapId) => {
+        const mapLayer = maps.find((mapLayer) => mapLayer.id === mapId);
+        if (mapLayer) {
+          mapLayers.push(mapLayer);
+        } else {
+          invalidMapIds.push(mapId);
+        }
+      });
+      setWhitelist(mapLayers);
+      if (invalidMapIds.length) {
+        toast.error(
+          `Some maps in your whitelist have been deleted or renamed: ${invalidMapIds.join(
+            ", "
+          )}. Reset the whitelist or changed your auto settings.`
+        );
+      }
     }
   }
 
@@ -420,6 +434,13 @@ const VoteMapConfig = ({ maps }) => {
           <AccordionActions>
             <Button size="small" variant="outlined" onClick={getWhitelist}>
               Refresh
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={resetWhitelist}
+            >
+              Reset whitelist
             </Button>
             <Button
               color={"secondary"}

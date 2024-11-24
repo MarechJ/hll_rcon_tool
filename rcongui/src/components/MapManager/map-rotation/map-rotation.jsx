@@ -11,6 +11,8 @@ import {
 import { Box, Button, CircularProgress, Grid } from "@material-ui/core";
 import { Alert } from "@material-ui/lab";
 import { MapAutocomplete } from "../map-autocomplete";
+import MapRotationConfig from "./map-rotation-config";
+import Typography from "material-ui/styles/typography";
 
 const MapRotation = ({ maps }) => {
   const [currentRotation, setCurrentRotation] = React.useState([]);
@@ -158,6 +160,10 @@ const MapRotation = ({ maps }) => {
           onChange={onMapChange}
           isSaved={hasChanged}
         />
+      </Grid>
+      <Grid item xs={12}>
+        <Typography variant="h6">Map rotation settings</Typography>
+        <MapRotationConfig />
       </Grid>
     </Grid>
   );
