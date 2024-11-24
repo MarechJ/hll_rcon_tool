@@ -14,6 +14,7 @@ import ChatIcon from '@mui/icons-material/Chat';
 import WavingHandIcon from '@mui/icons-material/WavingHand';
 import AnnouncementIcon from '@mui/icons-material/Announcement';
 import PodcastsIcon from '@mui/icons-material/Podcasts';
+import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 
 const categories = [
   {
@@ -35,6 +36,11 @@ const categories = [
     name: "Broadcast",
     href: "/settings/templates/broadcast",
     icon: <PodcastsIcon />,
+  },
+  {
+    name: "Auto-Settings",
+    href: "/settings/templates/auto_settings",
+    icon: <SettingsSuggestIcon />,
   },
 ];
 
