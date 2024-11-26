@@ -1,7 +1,6 @@
 import { Avatar, Box, Divider, Typography } from "@mui/material";
 import { styled } from '@mui/material/styles';
 import { getMapLayerImageSrc, unifiedGamemodeName } from "./helpers";
-import { styled } from "@mui/material/styles"
 
 const DescriptionRoot = styled("span")(({ theme }) => ({
   display: "flex",

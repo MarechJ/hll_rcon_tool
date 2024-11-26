@@ -285,10 +285,6 @@ export const navMenus = [
         icon: <RateReviewIcon />,
       },
       {
-        name: "RCon Chat Commands",
-        to: "/settings/rcon-chat-commands",
-      },
-      {
         name: "Scorebot",
         to: "/settings/others/scorebot",
         icon: <ScoreboardIcon />,
@@ -312,10 +308,6 @@ export const navMenus = [
         name: "Log Stream",
         to: "/settings/others/log-stream",
         icon: <StreamIcon />,
-      },
-      {
-        name: "Seed VIP",
-        to: "/settings/seed-vip",
       },
     ],
   },

@@ -599,6 +599,9 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.get_objective_row: "api.can_view_current_map",
     rcon_api.get_objective_rows: "api.can_view_current_map",
     rcon_api.set_game_layout: "api.can_change_game_layout",
+    rcon_api.get_seed_vip_config: "api.can_view_seed_vip_config",
+    rcon_api.set_seed_vip_config: "api.can_change_seed_vip_config",
+    rcon_api.validate_seed_vip_config: "api.can_change_seed_vip_config",
 }
 
 PREFIXES_TO_EXPOSE = [

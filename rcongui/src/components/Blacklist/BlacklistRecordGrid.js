@@ -34,11 +34,6 @@ const BlacklistRecordTile = ({
   onDelete,
 }) => {
   const [showAll, setShowAll] = React.useState(false);
-  const [isExpired, setIsExpired] = React.useState(!record.get("is_active"));
-  const [expiresAt, setExpiresAt] = React.useState(
-    record.get("expires_at") ? moment(record.get("expires_at")) : null
-  );
-
   const expiresAt = record.get("expires_at") ? moment(record.get("expires_at")) : null
   const isExpired = !record.get("is_active")
   const player = record.get("player");

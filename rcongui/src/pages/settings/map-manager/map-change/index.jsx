@@ -60,43 +60,6 @@ function MapChange() {
 
   return (
     (<Main>
-      <Panel>
-        <Button
-          startIcon={<ReplayIcon />}
-          color="secondary"
-          onClick={handleResetMap}
-          variant="outlined"
-          size="small"
-        >
-          Map Reset
-        </Button>
-        <Button
-          startIcon={<LockIcon />}
-          disabled
-          variant="outlined"
-          size="small"
-        >
-          Switch Allies
-        </Button>
-        <Button
-          startIcon={<LockIcon />}
-          disabled
-          variant="outlined"
-          size="small"
-        >
-          Switch Axis
-        </Button>
-      </Panel>
-      {currentMap ? (
-        <MapListItem
-          style={{ borderBottom: "none" }}
-          mapLayer={currentMap}
-          primary={`>>> ${currentMap.pretty_name} <<<`}
-          component={Box}
-        />
-      ) : (
-        <Skeleton variant="rectangular" height={60} />
-      )}
       <MapSearch
         onChange={handleOnInputChange}
         filters={modeFilters}

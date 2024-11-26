@@ -92,6 +92,8 @@ const VoteMapConfig = () => {
   const statusIntervalRef = React.useRef(null);
   const configIntervalRef = React.useRef(null);
 
+  const classes = useStyles();
+
   const config = {
     ..._config,
     ...configChanges,
