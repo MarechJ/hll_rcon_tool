@@ -8,11 +8,10 @@ import {
   postData,
   showResponse,
 } from "../../../utils/fetchUtils";
-import { Box, Button, CircularProgress, Grid } from "@material-ui/core";
+import { Box, Button, CircularProgress, Grid, Typography } from "@material-ui/core";
 import { Alert } from "@material-ui/lab";
 import { MapAutocomplete } from "../map-autocomplete";
 import MapRotationConfig from "./map-rotation-config";
-import Typography from "material-ui/styles/typography";
 
 const MapRotation = ({ maps }) => {
   const [currentRotation, setCurrentRotation] = React.useState([]);
