@@ -6,6 +6,7 @@ export const TEMPLATE_CATEGORY = {
   BROADCAST: "BROADCAST",
   MESSAGE: "MESSAGE",
   REASON: "REASON",
+  AUTO_SETTINGS: "AUTO_SETTINGS",
 };
 
 export const NEVER_EXPIRES_VIP_DATE = "3000-01-01T00:00:00+00:00";
@@ -220,3 +221,21 @@ export const logActions = {
   "VOTE PASSED": "🙋",
   "VOTE STARTED": "🙋",
 };
+
+export function getGameDuration(start, end) {
+  const totalSeconds = dayjs(end).diff(dayjs(start), 'seconds');
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  // Format the result as hh:mm:ss
+  const formattedTime = `${String(hours).padStart(2, '0')}:${String(
+    minutes
+  ).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+  return formattedTime;
+}
+
+export function isLeader(role) {
+  return ["officer", "tankcommander", "spotter", "armycommander"].includes(role);
+}

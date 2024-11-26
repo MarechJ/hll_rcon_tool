@@ -1,9 +1,7 @@
 import { ActionMenuButton } from "@/features/player-action/ActionMenu";
-import { playerGameActions } from "@/features/player-action/actions";
-import { Button } from "@mui/material";
-import { styled } from "@mui/material/styles";
 import dayjs from "dayjs";
 import { Action, SortableHeader, TextButton } from "@/components/table/styles";
+import { generatePlayerActions } from "@/features/player-action/actions";
 
 const TIME_FORMAT = "HH:mm:ss, MMM DD";
 
@@ -59,16 +57,19 @@ export const logsColumns = [
     header: "This Player",
     accessorKey: "player_name_1",
     cell: ({ row }) => {
-      return row.original.player_name_1 ? (
+      return row.original.player_name_1 && row.original.player_id_1 ? (
         <ActionMenuButton
-          actions={playerGameActions}
+          actions={generatePlayerActions({
+            multiAction: false,
+            onlineAction: true,
+          })}
           withProfile
           recipients={{ player_id: row.original.player_id_1, name: row.original.player_name_1 }}
           renderButton={(props) => (
             <TextButton {...props}>{row.original.player_name_1}</TextButton>
           )}
         />
-      ) : null;
+      ) : row.original.player_name_1 ? <span>{row.original.player_name_1}</span> : null;
     },
     filterFn: "arrIncludesSome",
     meta: {
@@ -91,16 +92,19 @@ export const logsColumns = [
     header: "That Player",
     accessorKey: "player_name_2",
     cell: ({ row }) => {
-      return row.original.player_name_2 ? (
+      return row.original.player_name_2 && row.original.player_id_2 ? (
         <ActionMenuButton
-          actions={playerGameActions}
+          actions={generatePlayerActions({
+            multiAction: false,
+            onlineAction: true,
+          })}
           withProfile
           recipients={{ player_id: row.original.player_id_2, name: row.original.player_name_2 }}
           renderButton={(props) => (
             <TextButton {...props}>{row.original.player_name_2}</TextButton>
           )}
         />
-      ) : null;
+      ) : row.original.player_name_2 ? <span>{row.original.player_name_2}</span> : null;
     },
     meta: {
       variant: "name"

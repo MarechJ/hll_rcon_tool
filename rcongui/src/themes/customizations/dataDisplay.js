@@ -49,7 +49,7 @@ export const dataDisplayCustomizations = {
             },
           },
           '&:focus-visible': {
-            backgroundColor: 'transparent',
+            backgroundColor: alpha(theme.palette.action.selected, 0.3),
           },
         },
       }),

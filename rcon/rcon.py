@@ -2,6 +2,7 @@ import logging
 import os
 import random
 import re
+import time
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from functools import cached_property
@@ -19,6 +20,7 @@ from rcon.models import PlayerID, PlayerVIP, enter_session
 from rcon.player_history import get_profiles, safe_save_player_action, save_player, get_player_profile
 from rcon.settings import SERVER_INFO
 from rcon.types import (
+    PlayerProfileType,
     AdminType,
     GameLayoutRandomConstraints,
     GameServerBanType,
@@ -37,6 +39,7 @@ from rcon.types import (
 )
 from rcon.user_config.rcon_connection_settings import RconConnectionSettingsUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
+from rcon.user_config.utils import BaseUserConfig
 from rcon.utils import (
     ALL_ROLES,
     ALL_ROLES_KEY_INDEX_MAP,
@@ -44,7 +47,6 @@ from rcon.utils import (
     default_player_info_dict,
     get_server_number,
     parse_raw_player_info,
-    strtobool,
 )
 
 PLAYER_ID = "player_id"
@@ -53,6 +55,8 @@ ROLE = "role"
 
 TEMP_BAN = "temp"
 PERMA_BAN = "perma"
+
+USER_CONFIG_NAME_PATTERN = re.compile(r"set_.*_config")
 
 # The base level of actions that will always show up in the Live view
 # actions filter from the call to `get_recent_logs`
@@ -107,6 +111,41 @@ def get_rcon(credentials: ServerInfoType | None = None):
     if CTL is None:
         CTL = Rcon(credentials)
     return CTL
+
+
+def do_run_commands(rcon, commands):
+    for command, params in commands.items():
+        try:
+            logger.info("Applying %s %s", command, params)
+
+            # Allow people to apply partial changes to a user config to make
+            # auto settings less gigantic
+            if is_user_config_func(command):
+                # super dirty we should probably make an actual look up table
+                # but all the names are consistent
+                get_config_command = f"g{command[1:]}"
+                config: BaseUserConfig = rcon.__getattribute__(get_config_command)()
+                # get the existing config, override anything set in params
+                merged_params = config.model_dump() | params
+
+                if "by" not in merged_params:
+                    merged_params["by"] = "AutoSettings"
+
+                rcon.__getattribute__(command)(**merged_params)
+            else:
+                # Non user config settings
+                rcon.__getattribute__(command)(**params)
+        except AttributeError as e:
+            logger.exception(
+                "%s is not a valid command, double check the name!", command
+            )
+        except Exception as e:
+            logger.exception("Unable to apply %s %s: %s", command, params, e)
+        time.sleep(5)  # go easy on the server
+
+
+def is_user_config_func(name: str) -> bool:
+    return re.match(USER_CONFIG_NAME_PATTERN, name) is not None
 
 
 class Rcon(ServerCtl):
@@ -226,10 +265,10 @@ class Rcon(ServerCtl):
         fail_count = 0
         players_by_id: dict[str, GetDetailedPlayer] = {}
 
-        futures: dict[Future[Any], GetDetailedPlayer] = {
-            self.run_in_pool("get_detailed_player_info", player[NAME]): player
-            for _, player in enumerate(players)
-        }  # type: ignore
+        futures: dict[Future[Any], GetDetailedPlayer] = {}
+        for player in players:
+            res =  self.run_in_pool("get_detailed_player_info", player[NAME], player)
+            futures[res] = player
 
         for future in as_completed(futures):
             try:
@@ -434,7 +473,7 @@ class Rcon(ServerCtl):
         }
 
     @ttl_cache(ttl=2, cache_falsy=False)
-    def get_detailed_player_info(self, player_name: str) -> GetDetailedPlayer:
+    def get_detailed_player_info(self, player_name: str, player: GetPlayersType | None = None) -> GetDetailedPlayer:
         raw = super().get_player_info(player_name)
         if not raw:
             raise CommandFailedError("Got bad data")
@@ -449,16 +488,21 @@ class Rcon(ServerCtl):
         Kills: 0 - Deaths: 0
         Score: C 50, O 0, D 40, S 10
         Level: 34
-
         """
-        # Add VIP Status
-        player_data = parse_raw_player_info(raw, player_name)
-        vip_player_ids = set(v[PLAYER_ID] for v in super().get_vip_ids())
-        player_data["is_vip"] = player_data["player_id"] in vip_player_ids
 
-        # Add Profile
-        profile = get_player_profile(player_data["player_id"], 1)
-        player_data["profile"] = profile
+        player_data = parse_raw_player_info(raw, player_name)
+        if player is not None and 'is_vip' in player:
+            player_data["is_vip"] = player.get('is_vip')
+        else:
+            vip_player_ids = set(v[PLAYER_ID] for v in super().get_vip_ids())
+            player_data["is_vip"] = player_data["player_id"] in vip_player_ids
+
+        if player is not None and 'profile' in player:
+            player_data["profile"] = player.get('profile')
+        else:
+            profile = get_player_profile(player_data["player_id"], 1)
+            player_data["profile"] = profile
+
         return player_data
 
     @ttl_cache(ttl=60 * 10)

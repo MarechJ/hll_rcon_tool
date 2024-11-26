@@ -8,7 +8,7 @@ import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import SettingsIcon from "@mui/icons-material/Settings"
 import { TeamSelectionToolbar } from "./TeamSelectionToolbar";
 import { ActionMenuButton } from "@/features/player-action/ActionMenu";
-import { playerGameActions } from "@/features/player-action/actions";
+import { generatePlayerActions } from "@/features/player-action/actions";
 
 const PlayersTable = ({ table, teamData, selectedPlayers }) => {
 
@@ -42,7 +42,10 @@ const PlayersTable = ({ table, teamData, selectedPlayers }) => {
           }}
         >
           <ActionMenuButton
-            actions={playerGameActions}
+            actions={generatePlayerActions({
+              multiAction: true,
+              onlineAction: true,
+            })}
             disabled={
               !table.getIsSomePageRowsSelected() &&
               !table.getIsAllRowsSelected()

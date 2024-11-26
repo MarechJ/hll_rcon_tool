@@ -364,7 +364,9 @@ class LiveStats(BaseStats):
 class TimeWindowStats(BaseStats):
     def __init__(self):
         super().__init__()
-        self.match_end_result_regex = re.compile("MATCH ENDED `.+` ALLIED \((\d) - (\d)\) AXIS")
+        self.match_end_result_regex = re.compile(
+            "MATCH ENDED `.+` ALLIED \((\d) - (\d)\) AXIS"
+        )
 
     def _set_start_end_times(
         self, player, players_times, log, from_, offset_warmup_time_seconds=180
@@ -536,9 +538,11 @@ class TimeWindowStats(BaseStats):
                 limit=1,
             )
             if len(rows) == 0:
-                return {'Allied': 2, 'Axis': 2}
-            (allied, axis) = self.match_end_result_regex.match(rows[0].compatible_dict().get('message')).groups()
-            return {'Allied': int(allied), 'Axis': int(axis)}
+                return {"Allied": 2, "Axis": 2}
+            (allied, axis) = self.match_end_result_regex.match(
+                rows[0].compatible_dict().get("message")
+            ).groups()
+            return {"Allied": int(allied), "Axis": int(axis)}
 
     def get_players_stats_from_time(self, from_timestamp):
         logs = get_recent_logs(min_timestamp=from_timestamp)

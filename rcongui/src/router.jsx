@@ -16,9 +16,18 @@ import Blacklists from "./pages/records/blacklists/manage"
 import BlacklistRecords from "./pages/records/blacklists"
 import GameLogsRecords from "./pages/records/game-logs"
 import AuditLogsRecords from "./pages/records/audit-logs"
-import LiveGameStats from "./pages/stats/live-game";
+
 import LiveSessionStats from "./pages/stats/live-sessions";
-import GamesStats from "./pages/stats/games";
+import GamesLayout from "./pages/stats/games/layout";
+
+import LiveGamePage from "./pages/stats/live-game";
+import { loader as liveGameLoader } from "./pages/stats/live-game";
+
+import GamesPage from "./pages/stats/games";
+import { loader as gamesLoader } from "./pages/stats/games";
+
+import GameDetailsPage from "./pages/stats/games/[gameId]";
+import { loader as gameDetailsLoader } from "./pages/stats/games/[gameId]";
 
 import Login from "./pages/login"
 import { loader as loginLoader } from "./pages/login"
@@ -271,19 +280,38 @@ const router = createBrowserRouter([
             {
                 path: 'stats',
                 errorElement: <SharedErrorElement />,
+                handle: { crumb: () => <span>Stats</span> },
                 children: [
                     {
-                        path: 'games',
-                        element: <GamesStats />
-                    },
-                    {
                         path: 'live-game',
-                        element: <LiveGameStats />
+                        handle: { crumb: () => <Link to={'/stats/live-game'}>Live Game</Link> },
+                        element: <LiveGamePage />,
+                        loader: liveGameLoader,
                     },
                     {
                         path: 'live-sessions',
-                        element: <LiveSessionStats />
+                        handle: { crumb: () => <Link to={'/stats/live-sessions'}>Live Sessions</Link> },
+                        element: <LiveSessionStats />,
                     },
+                    {
+                        path: 'games',
+                        handle: { crumb: () => <Link to={'/stats/games'}>Games</Link> },
+                        element: <GamesLayout />,
+                        children: [
+                            {
+                                path: '',
+                                index: true,
+                                loader: gamesLoader,
+                                element: <GamesPage />,
+                            },
+                            {
+                                path: ':gameId',
+                                handle: { crumb: (data) => <span>{data?.gameId}</span> },
+                                element: <GameDetailsPage />,
+                                loader: gameDetailsLoader,
+                            }
+                        ]
+                    }
                 ]
             }
         ]

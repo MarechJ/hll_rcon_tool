@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { lazy, Suspense, useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import { Form, json, useActionData, useLoaderData } from "react-router-dom";
 import {
@@ -9,6 +9,7 @@ import {
   ListItemButton,
   ListItemText,
   Paper,
+  Skeleton,
   Stack,
   styled,
   TextField,
@@ -25,6 +26,9 @@ import dayjs from "dayjs";
 import debounce from "lodash/debounce";
 import { BroadcastFields } from "@/components/shared/BroadcastFields";
 import { parseBroadcastMessages, unpackBroadcastMessage } from "@/utils/lib";
+import { useTheme } from "@mui/material/styles";
+
+const Editor = lazy(() => import("@monaco-editor/react"));
 
 const MODE = {
   READ: 0,
@@ -62,6 +66,8 @@ export const action = async ({ request }) => {
   const title = message.title;
   const content = message.content;
   const id = message.id;
+
+  console.log(intent, category, message);
 
   const hasTitle = !!title?.trim()?.length;
   const hasContent = !!content?.trim()?.length;
@@ -226,7 +232,31 @@ function EditorActions({ editor, actions }) {
   );
 }
 
-function EditorFields({ editor, category, onBroadcastChange, onInputChange }) {
+function EditorFields({ editor, category, setEditor }) {
+  const theme = useTheme();
+
+  const handleOnInputChange = (event) => {
+    const key = event.target.name;
+    setEditor((prev) => ({
+      ...prev,
+      [key]: event.target.value,
+    }));
+  };
+
+  const handleOnBroadcastChange = (value) => {
+    setEditor((prev) => ({
+      ...prev,
+      content: parseBroadcastMessages(value),
+    }));
+  };
+
+  const handleAutosettingsChange = (value) => {
+    setEditor((prev) => ({
+      ...prev,
+      content: value,
+    }));
+  };
+
   return (
     <>
       <input name="id" value={editor.id} hidden readOnly />
@@ -234,19 +264,46 @@ function EditorFields({ editor, category, onBroadcastChange, onInputChange }) {
       <StyledTextField
         name="title"
         value={editor.title}
-        onChange={onInputChange}
+        onChange={handleOnInputChange}
         placeholder="Message title"
         fullWidth
         required
         disabled={editor.mode === MODE.READ}
       />
       {category === "broadcast" ? (
-        <BroadcastFields messages={unpackBroadcastMessage(editor.content ?? "")} disabled={editor.mode === MODE.READ} onChange={onBroadcastChange} />
+        <BroadcastFields
+          messages={unpackBroadcastMessage(editor.content ?? "")}
+          disabled={editor.mode === MODE.READ}
+          onChange={handleOnBroadcastChange}
+        />
+      ) : category === "auto_settings" ? (
+        <Suspense fallback={<Skeleton variant="rectangular" height="70vh" />}>
+          <StyledTextField
+            multiline
+            minRows={16}
+            fullWidth
+            name="content"
+            value={editor.content}
+            required
+            readOnly={editor.mode === MODE.READ}
+            sx={{ display: editor.mode === MODE.READ ? "block" : "none" }}
+          />
+          <Box sx={{ display: editor.mode === MODE.READ ? "none" : "block" }}>
+            <Editor
+              height="70vh"
+              defaultLanguage="json"
+              value={editor.content}
+              defaultValue=""
+              theme={theme.palette.mode === "dark" ? "vs-dark" : "vs-light"}
+              onChange={handleAutosettingsChange}
+            />
+          </Box>
+        </Suspense>
       ) : (
         <StyledTextField
           name="content"
           value={editor.content}
-          onChange={onInputChange}
+          onChange={handleOnInputChange}
           placeholder="Message content"
           multiline
           minRows={16}
@@ -346,21 +403,6 @@ const MessagesDetailPage = () => {
     setEditor(initialState);
   }, [category]);
 
-  const handleOnInputChange = (event) => {
-    const key = event.target.name;
-    setEditor((prev) => ({
-      ...prev,
-      [key]: event.target.value,
-    }));
-  };
-
-  const handleOnBroadcastChange = (value) => {
-    setEditor((prev) => ({
-      ...prev,
-      content: parseBroadcastMessages(value),
-    }));
-  };
-
   const handleMessageClick = (index) => {
     const message = messages[index];
     if (!message) return;
@@ -446,9 +488,8 @@ const MessagesDetailPage = () => {
         />
         <EditorFields
           editor={editor}
+          setEditor={setEditor}
           category={category}
-          onInputChange={handleOnInputChange}
-          onBroadcastChange={handleOnBroadcastChange}
         />
       </Box>
     </Stack>

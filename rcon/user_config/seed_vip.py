@@ -168,21 +168,19 @@ class SeedVIPUserConfig(BaseUserConfig):
 
     @staticmethod
     def save_to_db(values: SeedVIPType, dry_run=False):
-        # logger.info(f"{values=}")
-        key_check(SeedVIPType.__required_keys__, values.keys())
-        logger.info(f"after key_check")
-
+        key_check(
+            SeedVIPType.__required_keys__, SeedVIPType.__optional_keys__, values.keys()
+        )
         raw_hooks: list[WebhookType] = values.get("hooks")
         _listType(values=raw_hooks)
 
-        logger.info(f"after listType check")
         for obj in raw_hooks:
-            key_check(WebhookType.__required_keys__, obj.keys())
+            key_check(
+                WebhookType.__required_keys__, WebhookType.__optional_keys__, obj.keys()
+            )
 
-        logger.info(f"after key_check for webhooks")
         validated_hooks = [DiscordWebhook(url=obj.get("url")) for obj in raw_hooks]
 
-        logger.info(f"after hooks validated")
         raw_player_messages = values.get("player_messages")
         raw_requirements = values.get("requirements")
         raw_buffer = raw_requirements.get("buffer")

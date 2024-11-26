@@ -133,6 +133,8 @@ export const cmd = {
   GET_PLAYER_BANS: (params) => requestFactory({ method: "GET", cmd: "get_ban", ...params }),
   GET_PLAYER_MESSAGES: (params) => requestFactory({ method: "GET", cmd: "get_player_messages", ...params }),
   GET_BLACKLISTS: (params) => requestFactory({ method: "GET", cmd: "get_blacklists", ...params }),
+  UNFLAG_PLAYER: (params) => requestFactory({ method: "POST", cmd: "unflag_player", ...params }),
+  FLAG_PLAYER: (params) => requestFactory({ method: "POST", cmd: "flag_player", ...params }),
   GET_SERVER_SETTINGS: (params) => requestFactory({ method: "GET", cmd: "get_server_settings", ...params }),
   GET_CAMERA_NOTIFICATION_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_camera_notification_config", ...params }),
   SET_CAMERA_NOTIFICATION_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_camera_notification_config", ...params }),
@@ -156,6 +158,12 @@ export const cmd = {
   SET_VOTEKICK_AUTOTOGGLE_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_votekick_autotoggle_config", ...params }),
   GET_REAL_VIP_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_real_vip_config", ...params }),
   SET_REAL_VIP_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_real_vip_config", ...params }),
+  // PUBLIC ROUTES
+  GET_LIVE_GAME: (params) => requestFactory({ method: "GET", cmd: "get_live_game_stats", ...params }),
+  GET_LIVE_SESSIONS: (params) => requestFactory({ method: "GET", cmd: "get_live_scoreboard", ...params }),
+  GET_COMPLETED_GAMES: (params) => requestFactory({ method: "GET", cmd: "get_scoreboard_maps", ...params }),
+  GET_COMPLETED_GAME_DETAIL: (params) => requestFactory({ method: "GET", cmd: "get_map_scoreboard", ...params }),
+  GET_PUBLIC_GAME_STATE: (params) => requestFactory({ method: "GET", cmd: "get_public_info", ...params }),
 };
 
 export function execute(command, data) {

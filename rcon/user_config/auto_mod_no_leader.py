@@ -5,7 +5,6 @@ from pydantic import Field, HttpUrl, field_serializer, field_validator
 from rcon.types import Roles
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
-
 WARNING_MESSAGE = "Warning, {player_name}! Your squad ({squad_name}) does not have an officer. Players of squads without an officer will be punished after {max_warnings} warnings (you already received {received_warnings}), then kicked.\nNext check will happen automatically in {next_check_seconds}s."
 PUNISH_MESSAGE = "Your squad ({squad_name}) must have an officer.\nYou're being punished by a bot ({received_punishes}/{max_punishes}).\nNext check in {next_check_seconds} seconds"
 KICK_MESSAGE = "Your Squad ({squad_name}) must have an officer.\nYour grace period of {kick_grace_period}s has passed.\nYou failed to comply with the previous warnings."
@@ -88,7 +87,11 @@ class AutoModNoLeaderUserConfig(BaseUserConfig):
 
     @staticmethod
     def save_to_db(values: AutoModNoLeaderType, dry_run=False):
-        key_check(AutoModNoLeaderType.__required_keys__, values.keys())
+        key_check(
+            AutoModNoLeaderType.__required_keys__,
+            AutoModNoLeaderType.__optional_keys__,
+            values.keys(),
+        )
 
         validated_conf = AutoModNoLeaderUserConfig(
             enabled=values.get("enabled"),

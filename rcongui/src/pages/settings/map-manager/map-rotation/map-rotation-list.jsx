@@ -6,9 +6,9 @@ import {
   ListItem,
   ListItemAvatar,
   ListItemText,
-  ListItemSecondaryAction,
   IconButton,
   Tooltip,
+  Stack,
 } from "@mui/material";
 import Avatar from "@mui/material/Avatar";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -37,7 +37,7 @@ const DraggableList = React.memo(
 
     return (
       <DragDropContext onDragEnd={onDragEnd}>
-        <Droppable droppableId="droppable-list">
+        <Droppable droppableId="droppable-rotation-list">
           {(provided) => (
             <List
               dense={true}
@@ -45,7 +45,10 @@ const DraggableList = React.memo(
               {...provided.droppableProps}
             >
               {maps.map((mapLayer, index, thisList) => (
-                <Draggable draggableId={mapLayer.id + index} index={index}>
+                <Draggable
+                  draggableId={`${mapLayer.id}-${index}`}
+                  index={index}
+                >
                   {(provided, snapshot) => (
                     <ListItem
                       ref={provided.innerRef}
@@ -56,6 +59,35 @@ const DraggableList = React.memo(
                           ? classes.draggingListItem
                           : classes.base
                       }
+                      secondaryAction={
+                        <Stack direction="row" gap={2}>
+                          {thisList.findIndex(
+                            (aMapLayer) => aMapLayer.id === mapLayer.id
+                          ) === index && (
+                            <Tooltip title={"Change map"}>
+                              <span>
+                                <IconButton
+                                  edge="end"
+                                  aria-label="set map"
+                                  disabled={!isSaved}
+                                  onClick={() => onChange(mapLayer)}
+                                  size="large"
+                                >
+                                  <InputIcon />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+                          )}
+                          <IconButton
+                            edge="end"
+                            aria-label="delete"
+                            onClick={() => onRemove(index)}
+                            size="large"
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Stack>
+                      }
                     >
                       <ListItemAvatar>
                         <Avatar src={getMapLayerImageSrc(mapLayer)} />
@@ -64,35 +96,6 @@ const DraggableList = React.memo(
                         primary={mapLayer.map.pretty_name}
                         secondary={<MapDescription mapLayer={mapLayer} />}
                       />
-                      <ListItemSecondaryAction
-                        className={classes.secondaryAction}
-                      >
-                        {thisList.findIndex(
-                          (aMapLayer) => aMapLayer.id === mapLayer.id
-                        ) === index && (
-                          <Tooltip title={"Change map"}>
-                            <span>
-                              <IconButton
-                                edge="end"
-                                aria-label="set map"
-                                disabled={!isSaved}
-                                onClick={() => onChange(mapLayer)}
-                                size="large"
-                              >
-                                <InputIcon />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
-                        )}
-                        <IconButton
-                          edge="end"
-                          aria-label="delete"
-                          onClick={() => onRemove(index)}
-                          size="large"
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </ListItemSecondaryAction>
                     </ListItem>
                   )}
                 </Draggable>

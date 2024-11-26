@@ -39,10 +39,7 @@ import { green, red, yellow } from "@mui/material/colors";
 import { useActionDialog } from "@/hooks/useActionDialog";
 import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
 import { CountryFlag } from "@/components/shared/CountryFlag";
-import {
-  playerGameActions,
-  playerProfileActions,
-} from "@/features/player-action/actions";
+import { generatePlayerActions } from "@/features/player-action/actions";
 import { ClientError } from "../shared/ClientError";
 import { useTheme } from "@mui/material/styles";
 
@@ -342,7 +339,10 @@ const PlayerDetails = ({ player, onClose }) => {
   const isWatched = profile?.watchlist && profile?.watchlist?.is_watched;
   const isBlacklisted = profile?.is_blacklisted;
   const isBanned = profile?.is_banned;
-  const actionList = isOnline ? playerGameActions : playerProfileActions;
+  const actionList = generatePlayerActions({
+    multiAction: false,
+    onlineAction: isOnline,
+  });
   const name = player?.name ?? profile.names[0]?.name ?? "?";
   const avatar = profile?.steaminfo?.profile?.avatar;
 

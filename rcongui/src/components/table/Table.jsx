@@ -1,10 +1,10 @@
-import React from "react";
+import React, { Fragment } from "react";
 import { flexRender } from "@tanstack/react-table";
 import { NoRowsOverlay } from "@/components/NoRowsOverlay";
 import { StyledTable, StyledTd, StyledTh, StyledTr } from "./styles";
 import { Box } from "@mui/material";
 
-const Table = ({ table, config = {} }) => {
+const Table = ({ table, config = {}, renderSubComponent }) => {
   return (
     <Box
       sx={{
@@ -40,43 +40,26 @@ const Table = ({ table, config = {} }) => {
         </thead>
         <tbody>
           {table.getRowModel().rows.map((row) => (
-            <StyledTr key={row.id}>
-              {row.getVisibleCells().map((cell) => (
-                <StyledTd
-                  key={cell.id}
-                  variant={cell.column.columnDef?.meta?.variant}
-                >
-                  {cell.getIsGrouped() ? (
-                    // If it's a grouped cell, add an expander and row count
-                    <>
-                      <button
-                        {...{
-                          onClick: row.getToggleExpandedHandler(),
-                          style: {
-                            cursor: row.getCanExpand() ? "pointer" : "normal",
-                          },
-                        }}
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </button>
-                    </>
-                  ) : cell.getIsAggregated() ? (
-                    // If the cell is aggregated, use the Aggregated
-                    // renderer for cell
-                    flexRender(
-                      cell.column.columnDef.aggregatedCell ??
-                        cell.column.columnDef.cell,
-                      cell.getContext()
-                    )
-                  ) : (
-                    flexRender(cell.column.columnDef.cell, cell.getContext())
-                  )}
-                </StyledTd>
-              ))}
-            </StyledTr>
+            <Fragment key={row.id}>
+              <StyledTr>
+                {row.getVisibleCells().map((cell) => (
+                  <StyledTd
+                    key={cell.id}
+                    variant={cell.column.columnDef?.meta?.variant}
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </StyledTd>
+                ))}
+              </StyledTr>
+              {row.getIsExpanded() && renderSubComponent && (
+                <StyledTr>
+                  {/* 2nd row is a custom 1 cell row */}
+                  <StyledTd colSpan={row.getVisibleCells().length}>
+                    {renderSubComponent({ row })}
+                  </StyledTd>
+                </StyledTr>
+              )}
+            </Fragment>
           ))}
         </tbody>
       </StyledTable>

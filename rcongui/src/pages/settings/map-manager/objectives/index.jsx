@@ -139,7 +139,7 @@ const ControlButton = styled("button")(({ theme, state }) =>
 function MapObjectives() {
   const [currentMap, setCurrentMap] = React.useState(null);
   const [randomConstraint, setRandomConstraint] = React.useState({
-    1: false,
+    1: true,
     2: false,
   });
   const [objectives, setObjectives] = React.useState(null);

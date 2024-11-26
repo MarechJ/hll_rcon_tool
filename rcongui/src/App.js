@@ -3,7 +3,8 @@ import { RouterProvider } from 'react-router-dom';
 import dayjs from 'dayjs';
 import relativeTimePlugin from 'dayjs/plugin/relativeTime';
 import durationPlugin from 'dayjs/plugin/duration';
-import router from "./router"
+import adminRouter from "./router"
+import publicRouter from "./public-router"
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import localforage from 'localforage';
 import siteConfig from './config/siteConfig';
@@ -11,6 +12,8 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 // Create a query client for React Query
 const queryClient = new QueryClient();
+
+const router = process.env.REACT_APP_PUBLIC_BUILD ? publicRouter : adminRouter;
 
 const App = () => {
   // Dayjs plugins

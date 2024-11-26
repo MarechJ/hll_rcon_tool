@@ -61,6 +61,11 @@ export const automods = [
 
 export const others = [
     {
+        path: '/settings/others/seed-vip',
+        command: 'seed_vip_config',
+        name: 'Seeder VIP Reward',
+    },
+    {
         path: '/settings/others/game-server',
         command: 'rcon_connection_settings_config',
         name: 'Game Server Connection Settings',

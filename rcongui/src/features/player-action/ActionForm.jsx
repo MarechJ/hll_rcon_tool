@@ -57,7 +57,6 @@ export const ActionForm = ({
 
   const onSubmit = React.useCallback(async (data) => {
     const getPlayerId = (recipient) => recipient.player_id ?? recipient?.profile?.player_id;
-
     let allSuccess = true;
     setLoading(true)
     // get list of all selected players and ids

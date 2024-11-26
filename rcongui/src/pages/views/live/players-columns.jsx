@@ -10,13 +10,18 @@ import {
 import { Star, Warning } from "@mui/icons-material";
 import { yellow } from "@mui/material/colors";
 import dayjs from "dayjs";
-import {
-  ActionMenuButton,
-} from "@/features/player-action/ActionMenu";
-import { playerGameActions } from "@/features/player-action/actions";
+import { ActionMenuButton } from "@/features/player-action/ActionMenu";
+import { generatePlayerActions } from "@/features/player-action/actions";
 import { CountryFlag } from "@/components/shared/CountryFlag";
-import { getPlayerTier, hasRecentWarnings, teamToNation, tierColors } from "@/utils/lib";
+import {
+  getPlayerTier,
+  hasRecentWarnings,
+  teamToNation,
+  tierColors,
+} from "@/utils/lib";
 import { SortableHeader } from "@/components/table/styles";
+import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";
+
 
 export const Square = styled(Box)(({ theme }) => ({
   display: "flex",
@@ -45,7 +50,7 @@ const Center = styled(Box)(() => ({
   display: "grid",
   justifyItems: "center",
   alignContent: "center",
-}))
+}));
 
 export const columns = [
   {
@@ -76,7 +81,7 @@ export const columns = [
       </div>
     ),
     meta: {
-      variant: "icon"
+      variant: "icon",
     },
   },
   {
@@ -97,7 +102,7 @@ export const columns = [
       );
     },
     meta: {
-      variant: "icon"
+      variant: "icon",
     },
   },
   {
@@ -116,7 +121,7 @@ export const columns = [
       );
     },
     meta: {
-      variant: "icon"
+      variant: "icon",
     },
   },
   {
@@ -142,7 +147,7 @@ export const columns = [
       );
     },
     meta: {
-      variant: "icon"
+      variant: "icon",
     },
   },
   {
@@ -158,7 +163,7 @@ export const columns = [
       );
     },
     meta: {
-      variant: "short"
+      variant: "short",
     },
   },
   {
@@ -168,7 +173,10 @@ export const columns = [
     cell: ({ row }) => {
       return (
         <ActionMenuButton
-          actions={playerGameActions}
+          actions={generatePlayerActions({
+            multiAction: false,
+            onlineAction: true,
+          })}
           recipients={row.original}
           orientation="horizontal"
           disableRipple={true}
@@ -180,7 +188,7 @@ export const columns = [
       );
     },
     meta: {
-      variant: "icon"
+      variant: "icon",
     },
   },
   {
@@ -212,7 +220,20 @@ export const columns = [
       ) : null;
     },
     meta: {
-      variant: "icon"
+      variant: "icon",
+    },
+  },
+  {
+    id: "watchlist",
+    header: SortableHeader("👁️"),
+    accessorKey: "profile.watchlist",
+    cell: ({ row }) => {
+      return row.original.profile?.watchlist && row.original.profile?.watchlist?.is_watched ? (
+        <RemoveRedEyeIcon sx={{ fontSize: 12 }} />
+      ) : null;
+    },
+    meta: {
+      variant: "icon",
     },
   },
   {
@@ -225,7 +246,7 @@ export const columns = [
       ) : null;
     },
     meta: {
-      variant: "icon"
+      variant: "icon",
     },
   },
   {
@@ -238,7 +259,7 @@ export const columns = [
       ) : null;
     },
     meta: {
-      variant: "icon"
+      variant: "icon",
     },
   },
   {
@@ -251,13 +272,13 @@ export const columns = [
       const flagsCount = 2;
       return (
         <Stack spacing={0.25} direction={"row"} alignItems={"center"}>
-          {flags.map(({ flag, comment: note, modified }) => (
+          {flags.slice(0, flagsCount).map(({ flag, comment: note, modified }) => (
             <Tooltip title={note} key={modified}>
               <Box>{flag}</Box>
             </Tooltip>
           ))}
           {flags.length - flagsCount > 0 ? (
-            <Typography>{`+${flags.length - flagsCount}`}</Typography>
+            <Typography variant="caption" sx={{ fontSize: 12, pr: 0.5 }}>{`+${flags.length - flagsCount}`}</Typography>
           ) : null}
         </Stack>
       );
@@ -278,7 +299,7 @@ export const columns = [
       );
     },
     meta: {
-      variant: "short"
+      variant: "short",
     },
   },
 ];

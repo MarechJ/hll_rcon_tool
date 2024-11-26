@@ -15,7 +15,7 @@ import {
   List,
   IconButton,
 } from "@mui/material";
-import { makeStyles } from '@mui/styles';
+import { makeStyles } from "@mui/styles";
 import React from "react";
 import {
   getVotemapConfig,
@@ -35,50 +35,49 @@ import {
   textFieldConfigs,
 } from "./configs-data";
 import { isEmpty, isEqual } from "lodash";
-import { Alert } from '@mui/material';
+import { Alert } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { MapAutocomplete } from "@/components/MapManager/map-autocomplete";
 import { MapListItem } from "@/components/MapManager/map-list-item";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useOutletContext } from "react-router-dom";
 import { mapIdsToLayers } from "@/utils/lib";
+import { toast } from "react-toastify";
 
-const useStyles = makeStyles((theme) =>
-  ({
-    spacing: {
-      marginTop: theme.spacing(1),
-      marginBottom: theme.spacing(1),
-    },
-    messages: {
-      maxWidth: theme.breakpoints.values.md,
-    },
-    container: {
-      display: "flex",
-      flexDirection: "column",
-      gap: theme.spacing(2),
-    },
-    numberFields: {
-      display: "flex",
-      flexDirection: "column",
-      gap: theme.spacing(1),
-      maxWidth: theme.breakpoints.values.sm,
-    },
-    sticky: {
-      position: "sticky",
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      padding: theme.spacing(1),
-      background: theme.palette.background.default,
-      zIndex: theme.zIndex.appBar,
-      top: 0,
-    },
-    section: {
-      position: "relative",
-      width: "100%",
-    },
-  })
-);
+const useStyles = makeStyles((theme) => ({
+  spacing: {
+    marginTop: theme.spacing(1),
+    marginBottom: theme.spacing(1),
+  },
+  messages: {
+    maxWidth: theme.breakpoints.values.md,
+  },
+  container: {
+    display: "flex",
+    flexDirection: "column",
+    gap: theme.spacing(2),
+  },
+  numberFields: {
+    display: "flex",
+    flexDirection: "column",
+    gap: theme.spacing(1),
+    maxWidth: theme.breakpoints.values.sm,
+  },
+  sticky: {
+    position: "sticky",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: theme.spacing(1),
+    background: theme.palette.background.default,
+    zIndex: theme.zIndex.appBar,
+    top: 0,
+  },
+  section: {
+    position: "relative",
+    width: "100%",
+  },
+}));
 
 const UPDATE_INTERVAL = 15 * 1000;
 
@@ -163,9 +162,26 @@ const VoteMapConfig = () => {
 
   async function getWhitelist() {
     if (!maps.length) return;
-    const whitelistMapIds = await getVotemapWhitelist();
-    if (whitelistMapIds) {
-      setWhitelist(mapIdsToLayers(maps, whitelistMapIds));
+    const whitelistRaw = await getVotemapWhitelist();
+    if (whitelistRaw) {
+      const mapLayers = [];
+      const invalidMapIds = [];
+      whitelistRaw.forEach((mapId) => {
+        const mapLayer = maps.find((mapLayer) => mapLayer.id === mapId);
+        if (mapLayer) {
+          mapLayers.push(mapLayer);
+        } else {
+          invalidMapIds.push(mapId);
+        }
+      });
+      setWhitelist(mapLayers);
+      if (invalidMapIds.length) {
+        toast.error(
+          `Some maps in your whitelist have been deleted or renamed: ${invalidMapIds.join(
+            ", "
+          )}. Reset the whitelist or changed your auto settings.`
+        );
+      }
     }
   }
 
@@ -239,240 +255,251 @@ const VoteMapConfig = () => {
     getWhitelist();
   }, [maps]);
 
-  return (<>
-    <Snackbar
-      open={incomingChanges !== null}
-      anchorOrigin={{ vertical: "top", horizontal: "center" }}
-    >
-      <Alert
-        severity="warning"
-        action={
-          <Button
-            color="inherit"
-            size="small"
-            onClick={acceptIncomingConfigChanges}
-          >
-            Accept changes
-          </Button>
-        }
+  return (
+    <>
+      <Snackbar
+        open={incomingChanges !== null}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        The config has changed!
-      </Alert>
-    </Snackbar>
-    <Box className={classes.container}>
-      <Box component={"section"} className={classes.section}>
-        <Box
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            paddingBottom: 4,
-          }}
+        <Alert
+          severity="warning"
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              onClick={acceptIncomingConfigChanges}
+            >
+              Accept changes
+            </Button>
+          }
         >
-          <Padlock
-            label="Enabled"
-            checked={config.enabled ?? false}
-            handleChange={handleEnableToggle}
-          />
-
-          <Button
-            size="small"
-            variant="outlined"
-            color="secondary"
-            onClick={() => {
-              if (window.confirm("Are you sure?") === true) {
-                resetState();
-              }
+          The config has changed!
+        </Alert>
+      </Snackbar>
+      <Box className={classes.container}>
+        <Box component={"section"} className={classes.section}>
+          <Box
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              paddingBottom: 4,
             }}
           >
-            Reset selection & votes
-          </Button>
-        </Box>
+            <Padlock
+              label="Enabled"
+              checked={config.enabled ?? false}
+              handleChange={handleEnableToggle}
+            />
 
-        <Box component={Paper}>
-          <VoteStatus voteStatus={status} />
-        </Box>
-      </Box>
-
-      <Accordion>
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon />}
-          aria-controls="panel1a-content"
-          id="panel1a-header"
-        >
-          <Typography className={classes.heading}>In-Game Texts</Typography>
-        </AccordionSummary>
-
-        <AccordionDetails>
-          <Box component={"section"} className={classes.section}>
-            <Box className={classes.messages}>
-              {messageFieldConfigs.map((configItem) => (
-                <TextField
-                  key={configItem.name}
-                  className={classes.spacing}
-                  fullWidth
-                  variant="filled"
-                  multiline
-                  rows={configItem.rows}
-                  label={configItem.label}
-                  helperText={configItem.helperText}
-                  value={config[configItem.name] ?? ""}
-                  onChange={handleConfigChange(configItem.name)}
-                />
-              ))}
-            </Box>
+            <Button
+              size="small"
+              variant="outlined"
+              color="secondary"
+              onClick={() => {
+                if (window.confirm("Are you sure?") === true) {
+                  resetState();
+                }
+              }}
+            >
+              Reset selection & votes
+            </Button>
           </Box>
-        </AccordionDetails>
 
-        <AccordionActions>
-          <Button
-            color={hasChanges ? "secondary" : "inherit"}
-            size="small"
-            variant="outlined"
-            onClick={updateConfig}
+          <Box component={Paper}>
+            <VoteStatus voteStatus={status} />
+          </Box>
+        </Box>
+
+        <Accordion>
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon />}
+            aria-controls="panel1a-content"
+            id="panel1a-header"
           >
-            Save changes
-          </Button>
-        </AccordionActions>
-      </Accordion>
-      <Accordion>
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon />}
-          aria-controls="panel2a-content"
-          id="panel2a-header"
-        >
-          <Typography className={classes.heading}>Other settings</Typography>
-        </AccordionSummary>
+            <Typography className={classes.heading}>In-Game Texts</Typography>
+          </AccordionSummary>
 
-        <AccordionDetails>
-          <Box component={"section"} className={classes.section}>
-            <FormControl className={classes.spacing}>
-              <InputLabel>Default map method (when no votes)</InputLabel>
-              <NativeSelect
-                value={config.default_method ?? ""}
-                onChange={handleConfigChange("default_method")}
-              >
-                {defaultMapOptions.map((option) => (
-                  <option key={option.name} value={option.name}>
-                    {option.label}
-                  </option>
+          <AccordionDetails>
+            <Box component={"section"} className={classes.section}>
+              <Box className={classes.messages}>
+                {messageFieldConfigs.map((configItem) => (
+                  <TextField
+                    key={configItem.name}
+                    className={classes.spacing}
+                    fullWidth
+                    variant="filled"
+                    multiline
+                    rows={configItem.rows}
+                    label={configItem.label}
+                    helperText={configItem.helperText}
+                    value={config[configItem.name] ?? ""}
+                    onChange={handleConfigChange(configItem.name)}
+                  />
                 ))}
-              </NativeSelect>
-            </FormControl>
+              </Box>
+            </Box>
+          </AccordionDetails>
 
-            {padlockConfigs.map(({ name, label }) => (
-              <Padlock
-                key={name}
-                label={label}
-                checked={config[name] ?? false}
-                handleChange={handleConfigChange(name)}
-              />
-            ))}
+          <AccordionActions>
+            <Button
+              color={hasChanges ? "secondary" : "inherit"}
+              size="small"
+              variant="outlined"
+              onClick={updateConfig}
+            >
+              Save changes
+            </Button>
+          </AccordionActions>
+        </Accordion>
+        <Accordion>
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon />}
+            aria-controls="panel2a-content"
+            id="panel2a-header"
+          >
+            <Typography className={classes.heading}>Other settings</Typography>
+          </AccordionSummary>
 
-            <Box className={classes.numberFields}>
-              {textFieldConfigs.map((configItem) => (
-                <TextField
-                  key={configItem.name}
-                  variant="filled"
-                  fullWidth
-                  type="number"
-                  inputProps={configItem.inputProps}
-                  label={configItem.label}
-                  helperText={configItem.helperText}
-                  value={config[configItem.name] ?? false}
-                  onChange={handleConfigChange(configItem.name)}
+          <AccordionDetails>
+            <Box component={"section"} className={classes.section}>
+              <FormControl className={classes.spacing}>
+                <InputLabel>Default map method (when no votes)</InputLabel>
+                <NativeSelect
+                  value={config.default_method ?? ""}
+                  onChange={handleConfigChange("default_method")}
+                >
+                  {defaultMapOptions.map((option) => (
+                    <option key={option.name} value={option.name}>
+                      {option.label}
+                    </option>
+                  ))}
+                </NativeSelect>
+              </FormControl>
+
+              {padlockConfigs.map(({ name, label }) => (
+                <Padlock
+                  key={name}
+                  label={label}
+                  checked={config[name] ?? false}
+                  handleChange={handleConfigChange(name)}
                 />
               ))}
+
+              <Box className={classes.numberFields}>
+                {textFieldConfigs.map((configItem) => (
+                  <TextField
+                    key={configItem.name}
+                    variant="filled"
+                    fullWidth
+                    type="number"
+                    inputProps={configItem.inputProps}
+                    label={configItem.label}
+                    helperText={configItem.helperText}
+                    value={config[configItem.name] ?? false}
+                    onChange={handleConfigChange(configItem.name)}
+                  />
+                ))}
+              </Box>
             </Box>
-          </Box>
-        </AccordionDetails>
+          </AccordionDetails>
 
-        <AccordionActions>
-          <Button
-            color={hasChanges ? "secondary" : "inherit"}
-            size="small"
-            variant="outlined"
-            onClick={updateConfig}
+          <AccordionActions>
+            <Button
+              color={hasChanges ? "secondary" : "inherit"}
+              size="small"
+              variant="outlined"
+              onClick={updateConfig}
+            >
+              Save changes
+            </Button>
+          </AccordionActions>
+        </Accordion>
+
+        <Accordion>
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon />}
+            aria-controls="panel3a-content"
+            id="panel3a-header"
           >
-            Save changes
-          </Button>
-        </AccordionActions>
-      </Accordion>
+            <Typography className={classes.heading}>
+              {"Allowed maps (Whitelist)"}
+            </Typography>
+          </AccordionSummary>
 
-      <Accordion>
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon />}
-          aria-controls="panel3a-content"
-          id="panel3a-header"
-        >
-          <Typography className={classes.heading}>
-            {"Allowed maps (Whitelist)"}
-          </Typography>
-        </AccordionSummary>
+          <AccordionActions>
+            <Button size="small" variant="outlined" onClick={getWhitelist}>
+              Refresh
+            </Button>
+            <Button
+              color={"secondary"}
+              size="small"
+              variant="outlined"
+              onClick={resetWhitelist}
+            >
+              Reset whitelist
+            </Button>
+            <Button
+              color={"secondary"}
+              size="small"
+              variant="outlined"
+              onClick={submitWhitelist}
+            >
+              Save whitelist
+            </Button>
+          </AccordionActions>
 
-        <AccordionActions>
-          <Button size="small" variant="outlined" onClick={getWhitelist}>
-            Refresh
-          </Button>
-          <Button
-            color={"secondary"}
-            size="small"
-            variant="outlined"
-            onClick={submitWhitelist}
-          >
-            Save whitelist
-          </Button>
-        </AccordionActions>
-
-        <AccordionDetails>
-          <Box component={"section"} className={classes.section}>
-            <Box style={{ display: "flex", gap: "0.5rem" }}>
-              <MapAutocomplete
-                options={autocompleteSelection}
-                style={{ flexGrow: 1 }}
-                onChange={(e, v) => setMapsToAdd(v)}
-                value={mapsToAdd}
-              />
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={() => {
-                  setWhitelist(whitelist.concat(mapsToAdd));
-                  setMapsToAdd([]);
-                }}
-                style={{ width: 60 }}
-              >
-                Add
-              </Button>
-            </Box>
-            <List dense={true}>
-              {whitelistSorted.map((thisMapLayer, index) => (
-                <MapListItem
-                  key={`${index}#${thisMapLayer.id}`}
-                  mapLayer={thisMapLayer}
-                  renderAction={(thisMapLayer) => (
-                    <IconButton
-                      edge="end"
-                      aria-label="delete"
-                      onClick={() =>
-                        setWhitelist((prevWhitelist) =>
-                          prevWhitelist.filter(
-                            (mapLayer) => mapLayer.id !== thisMapLayer.id
+          <AccordionDetails>
+            <Box component={"section"} className={classes.section}>
+              <Box style={{ display: "flex", gap: "0.5rem" }}>
+                <MapAutocomplete
+                  options={autocompleteSelection}
+                  style={{ flexGrow: 1 }}
+                  onChange={(e, v) => setMapsToAdd(v)}
+                  value={mapsToAdd}
+                />
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => {
+                    setWhitelist(whitelist.concat(mapsToAdd));
+                    setMapsToAdd([]);
+                  }}
+                  style={{ width: 60 }}
+                >
+                  Add
+                </Button>
+              </Box>
+              <List dense={true}>
+                {whitelistSorted.map((thisMapLayer, index) => (
+                  <MapListItem
+                    key={`${index}#${thisMapLayer.id}`}
+                    mapLayer={thisMapLayer}
+                    secondaryAction={
+                      <IconButton
+                        edge="end"
+                        aria-label="delete"
+                        onClick={() =>
+                          setWhitelist((prevWhitelist) =>
+                            prevWhitelist.filter(
+                              (mapLayer) => mapLayer.id !== thisMapLayer.id
+                            )
                           )
-                        )
-                      }
-                      size="large">
-                      <DeleteIcon />
-                    </IconButton>
-                  )}
-                />
-              ))}
-            </List>
-          </Box>
-        </AccordionDetails>
-      </Accordion>
-    </Box>
-  </>);
+                        }
+                        size="large"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    }
+                  />
+                ))}
+              </List>
+            </Box>
+          </AccordionDetails>
+        </Accordion>
+      </Box>
+    </>
+  );
 };
 
 export default VoteMapConfig;
