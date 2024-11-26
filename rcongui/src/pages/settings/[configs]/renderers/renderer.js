@@ -1,11 +1,11 @@
-import {materialObjectControlTester} from "@jsonforms/material-renderers";
 import {anyOfNullTester, renderer as anyOfNullRenderer} from "./anyOfNull";
-import {renderer as additionalPropertiesRenderer} from "./additionalProperties";
+import {renderer as objectRenderer} from "./object";
+import {materialObjectControlTester} from "@jsonforms/material-renderers";
 
 export const customRenderers = [
   {
     tester: materialObjectControlTester,
-    renderer: additionalPropertiesRenderer,
+    renderer: objectRenderer,
   },
   {tester: anyOfNullTester, renderer: anyOfNullRenderer},
 ]
