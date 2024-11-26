@@ -1,7 +1,7 @@
-import {and, createCombinatorRenderInfos, rankWith, schemaMatches, schemaTypeIs, uiTypeIs} from "@jsonforms/core";
-import {JsonFormsDispatch, withJsonFormsAnyOfProps, withJsonFormsControlProps} from "@jsonforms/react";
-import React, {useCallback} from "react";
 import {Unwrapped} from "@jsonforms/material-renderers";
+import React, {useCallback} from "react";
+import {JsonFormsDispatch, withJsonFormsAnyOfProps, withJsonFormsControlProps} from "@jsonforms/react";
+import {and, createCombinatorRenderInfos, rankWith, schemaMatches, schemaTypeIs, uiTypeIs} from "@jsonforms/core";
 
 const {MaterialTextControl} = Unwrapped;
 
@@ -21,19 +21,15 @@ const nullableTextControl = (props) => {
       props.handleChange(path, newValue);
     }
   }, [props.handleChange]);
-
   return <MaterialTextControl {...props} handleChange={nullableChange}/>;
 }
-
 const NullableTextControl = withJsonFormsControlProps(nullableTextControl);
-
 /**
  * Custom tester for a nullable text input, for use in anyOfNullRenderer.
  *
  * @type {Tester}
  */
 const nullableTextTester = and(uiTypeIs('Control'), schemaTypeIs('string'));
-
 /**
  * Dispatches rendering of a JSON Form element based on the schema type of one of the anyOf elements.
  * Expects a schema with anyOf with exactly two elements, one of them having the type "null", making the other fields
@@ -70,7 +66,6 @@ const anyOfNullRenderer = ({
     uischemas
   );
   const anyOfRenderInfo = anyOfRenderInfos.find((e) => e.schema.type !== 'null');
-
   return <JsonFormsDispatch
     schema={{
       description: schema.description,
@@ -84,7 +79,6 @@ const anyOfNullRenderer = ({
     cells={cells}
   />
 }
-
 /**
  * Explicitly tests for an optional field (in pydantic `Any | None` or Optional[Any]) and renders the underlying field.
  */
@@ -98,11 +92,9 @@ const isAnyOfNullControl = and(
   )
 );
 
-const anyOfNullTester = rankWith(
+export const anyOfNullTester = rankWith(
   3,
   isAnyOfNullControl
 );
 
-export const customRenderers = [
-  {tester: anyOfNullTester, renderer: withJsonFormsAnyOfProps(anyOfNullRenderer)},
-]
+export const renderer = withJsonFormsAnyOfProps(anyOfNullRenderer);
