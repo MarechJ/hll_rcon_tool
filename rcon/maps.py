@@ -938,7 +938,7 @@ LAYERS = {
             game_mode=GameMode.WARFARE,
         ),
         Layer(
-            id="mortain_warfare_evening",
+            id="mortain_warfare_dusk",
             map=MAPS["mortain"],
             game_mode=GameMode.WARFARE,
             environment=Environment.DUSK,
