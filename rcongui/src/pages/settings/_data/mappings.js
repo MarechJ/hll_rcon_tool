@@ -81,6 +81,11 @@ export const others = [
         name: 'Chat Commands Settings',
     },
     {
+        path: '/settings/others/rcon-chat-commands',
+        command: 'rcon_chat_commands_config',
+        name: 'RCON Chat Commands Settings',
+    },
+    {
         path: '/settings/others/scorebot',
         command: 'scorebot_config',
         name: 'Scorebot',

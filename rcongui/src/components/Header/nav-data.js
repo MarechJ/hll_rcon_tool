@@ -285,6 +285,11 @@ export const navMenus = [
         icon: <RateReviewIcon />,
       },
       {
+        name: "RCON Chat Commands",
+        to: "/settings/others/rcon-chat-commands",
+        icon: <RateReviewIcon />,
+      },
+      {
         name: "Scorebot",
         to: "/settings/others/scorebot",
         icon: <ScoreboardIcon />,

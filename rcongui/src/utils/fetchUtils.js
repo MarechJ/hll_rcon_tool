@@ -41,9 +41,16 @@ async function requestFactory({
 }
 
 async function handleFetchResponse(response, method) {
-  handleServerErrors(response);
-  const data = await parseJsonResponse(response);
+  let data;
+
+  const contentType = response.headers.get("content-type");
+  if (contentType && contentType.includes("application/json")) {
+    data = await parseJsonResponse(response);
+  }
+
+  handleServerErrors(response, data);
   handleClientErrors(response, data);
+
   if (method === "GET") {
     return data.result
   } else if (method === "POST") {
@@ -52,12 +59,13 @@ async function handleFetchResponse(response, method) {
   return data;
 }
 
-function handleServerErrors(response) {
+function handleServerErrors(response, data) {
   if (!response.ok && response.status >= 500) {
     switch (response.status) {
       case 504:
         throw new CRCONServerDownError("There was a problem connecting to your CRCON server.");
       default:
+        if (data) throw new UnknownError(data.error, data.command);
         throw new UnknownError(response.statusText, response.status);
     }
   }
@@ -138,10 +146,6 @@ export const cmd = {
   GET_SERVER_SETTINGS: (params) => requestFactory({ method: "GET", cmd: "get_server_settings", ...params }),
   GET_CAMERA_NOTIFICATION_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_camera_notification_config", ...params }),
   SET_CAMERA_NOTIFICATION_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_camera_notification_config", ...params }),
-  GET_AUTOVOTEKICK_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_auto_votekick_config", ...params }),
-  SET_AUTOVOTEKICK_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_auto_votekick_config", ...params }),
-  GET_VOTEKICK_AUTOTOGGLER_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_votekick_autotoggle_config", ...params }),
-  SET_VOTEKICK_AUTOTOGGLER_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_votekick_autotoggle_config", ...params }),
   GET_SERVER_NAME: (params) => requestFactory({ method: "GET", cmd: "get_name", ...params }),
   SET_SERVER_NAME: (params) => requestFactory({ method: "POST", cmd: "set_server_name", ...params }),
   SET_TEAM_SWITCH_COOLDOWN: (params) => requestFactory({ method: "POST", cmd: "set_team_switch_cooldown", ...params }),
@@ -158,6 +162,8 @@ export const cmd = {
   SET_VOTEKICK_AUTOTOGGLE_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_votekick_autotoggle_config", ...params }),
   GET_REAL_VIP_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_real_vip_config", ...params }),
   SET_REAL_VIP_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_real_vip_config", ...params }),
+  CLEAR_APPLICATION_CACHE: (params) => requestFactory({ method: "POST", cmd: "clear_cache", ...params }),
+  RECONNECT_GAME_SERVER: (params) => requestFactory({ method: "POST", cmd: "reconnect_gameserver", ...params }),
   // PUBLIC ROUTES
   GET_LIVE_GAME: (params) => requestFactory({ method: "GET", cmd: "get_live_game_stats", ...params }),
   GET_LIVE_SESSIONS: (params) => requestFactory({ method: "GET", cmd: "get_live_scoreboard", ...params }),
