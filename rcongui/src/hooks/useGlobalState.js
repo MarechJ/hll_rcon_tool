@@ -1,7 +1,7 @@
 import { teamsLiveQueryOptions } from "@/queries/teams-live-query";
-import { extractPlayers } from "@/utils/extractPlayers";
 import { cmd } from "@/utils/fetchUtils";
-import { useQueries } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { create } from "zustand";
 
 // Create the Zustand store
@@ -30,18 +30,10 @@ const refetchInterval = 30 * 1000;
 // Define your global queries with onSuccess callbacks
 const globalQueries = [
   {
-    queryKey: ["crcon", "state"],
-    queryFn: cmd.GET_STATUS,
+    queryKey: ["server", "state"],
+    queryFn: cmd.GET_GAME_SERVER_STATUS,
     select: (data) => {
       useGlobalStore.setState((state) => ({ status: data }));
-      return data;
-    },
-  },
-  {
-    queryKey: ["server", "state"],
-    queryFn: cmd.GET_GAME_SERVER_CONNECTION,
-    select: (data) => {
-      useGlobalStore.setState((state) => ({ serverState: data }));
       return data;
     },
   },
@@ -81,15 +73,29 @@ const globalQueries = [
 ];
 
 export const GlobalState = () => {
-  // Use React Query's `useQueries` to fetch multiple pieces of data
-  const results = useQueries({
+  const { data, isSuccess: isCrconConnected } = useQuery({
+    queryKey: ["crcon", "state"],
+    queryFn: cmd.GET_CRCON_SERVER_CONNECTION,
+    refetchInterval,
+    retry: 1,
+  });
+
+  useEffect(() => {
+    if (isCrconConnected) {
+      useGlobalStore.setState({ serverState: data });
+    } else {
+      useGlobalStore.setState({ serverState: null });
+    }
+  }, [isCrconConnected]);
+
+  useQueries({
     queries: globalQueries.map((query) => ({
-      ...query,
       staleTime,
-      // only refetch if the query is stale and does not have an error
-      refetchInterval: (query) => query.state.error ? false : refetchInterval,
+      refetchInterval,
+      enabled: isCrconConnected,
+      ...query,
     })),
   });
 
-  return null; // This component only updates the Zustand store, no UI rendering needed
+  return null;
 };

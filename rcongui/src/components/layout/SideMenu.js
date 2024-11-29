@@ -11,8 +11,9 @@ import MenuContent from "./MenuContent";
 import OptionsMenu from "./OptionsMenu";
 import { useAuth } from "@/hooks/useAuth";
 import { navMenus } from "../Header/nav-data";
-import { List } from "@mui/material";
+import { List, ListItem, ListItemText } from "@mui/material";
 import NewReleases from "./NewReleases";
+import ConnectionStatus from "./ConnectionStatus";
 
 const drawerWidth = 240;
 
@@ -58,6 +59,9 @@ export default function SideMenu({ open }) {
     <MenuDrawer open={open}>
       <MenuContent navigationTree={navMenus} />
       <List dense>
+        <ListItem>
+          <ListItemText sx={{ marginLeft: -0.5 }} primary={<ConnectionStatus />} />
+        </ListItem>
         <NewReleases />
       </List>
       <Divider />

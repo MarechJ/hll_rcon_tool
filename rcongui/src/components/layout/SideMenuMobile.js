@@ -6,10 +6,11 @@ import Stack from "@mui/material/Stack";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import MenuContent from "./MenuContent";
 import SelectContent from "./SelectContent";
-import { Box, List } from "@mui/material";
+import { Box, List, ListItem, ListItemText } from "@mui/material";
 import { Form } from "react-router-dom";
 import { navMenus, publicNavMenus } from "../Header/nav-data";
 import NewReleases from "./NewReleases";
+import ConnectionStatus from "./ConnectionStatus";
 
 const MobileDrawer = ({ open, toggleDrawer, children }) => {
   return (
@@ -43,7 +44,7 @@ export const PublicSideMenuMobile = ({ open, toggleDrawer }) => {
     <MobileDrawer open={open} toggleDrawer={toggleDrawer}>
       <MenuContent navigationTree={publicNavMenus} />
     </MobileDrawer>
-  )
+  );
 };
 
 function AdminSideMenuMobile({ open, toggleDrawer }) {
@@ -52,6 +53,12 @@ function AdminSideMenuMobile({ open, toggleDrawer }) {
       <Stack sx={{ flexGrow: 1 }}>
         <MenuContent navigationTree={navMenus} />
         <List dense>
+          <ListItem>
+            <ListItemText
+              sx={{ marginLeft: -0.5 }}
+              primary={<ConnectionStatus />}
+            />
+          </ListItem>
           <NewReleases />
         </List>
         <Divider />
