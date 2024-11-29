@@ -22,8 +22,10 @@ import { cmd } from "@/utils/fetchUtils";
 import getDashboardTheme from "@/themes/getDashboardTheme";
 import { useStorageState } from "@/hooks/useStorageState";
 
-export const loader = async () => {
+export const loader = async ({ request }) => {
   let user;
+  const url = new URL(request.url);
+  const from = url.searchParams.get("from") || "/";
 
   try {
     user = await cmd.IS_AUTHENTICATED({ throwRouteError: false });
@@ -35,14 +37,16 @@ export const loader = async () => {
   }
 
   if (user.authenticated) {
-    return redirect("/");
+    return redirect(from);
   }
 
-  return { authenticated: user.authenticated };
+  return { authenticated: user.authenticated, from };
 };
 
 export const action = async ({ request }) => {
-  const { username, password } = Object.fromEntries(await request.formData());
+  const formData = await request.formData();
+  const { username, password } = Object.fromEntries(formData);
+  const from = formData.get("from") || "/";
   let isAuth = false;
 
   try {
@@ -70,7 +74,7 @@ export const action = async ({ request }) => {
   }
 
   if (isAuth) {
-    return redirect("/");
+    return redirect(from);
   }
 };
 
@@ -130,6 +134,7 @@ export default function Login() {
 
   const authError = useActionData();
   const data = useLoaderData();
+  const { from } = useLoaderData();
 
   const submit = useSubmit();
 
@@ -176,6 +181,7 @@ export default function Login() {
                 </Box>
               ) : null}
               <Form method="POST" onSubmit={handleSubmit(onSubmit)}>
+                <input type="hidden" name="from" value={from} />
                 <Controller
                   control={control}
                   name={"username"}

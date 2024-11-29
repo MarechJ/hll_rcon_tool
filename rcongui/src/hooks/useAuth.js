@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { AuthError, cmd } from "@/utils/fetchUtils";
@@ -9,6 +9,7 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Step 1: First, fetch the authentication status
   const {
@@ -43,9 +44,10 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (isAuthError || isPermissionsError) {
-      navigate("/login"); // Redirect if authentication fails
+      const from = encodeURIComponent(location.pathname + location.search);
+      navigate(`/login?from=${from}`);
     }
-  }, [isAuthError, isPermissionsError, navigate]);
+  }, [isAuthError, isPermissionsError, navigate, location]);
 
   // Handle loading state
   const isLoading = isAuthLoading || isPermissionsLoading;

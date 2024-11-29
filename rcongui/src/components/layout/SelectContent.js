@@ -7,6 +7,7 @@ import Select, { selectClasses } from "@mui/material/Select";
 import { styled } from "@mui/material/styles";
 import DevicesRoundedIcon from "@mui/icons-material/DevicesRounded";
 import { useGlobalStore } from "@/hooks/useGlobalState";
+import { useNavigate } from 'react-router-dom';
 
 const Avatar = styled(MuiAvatar)(({ theme }) => ({
   width: 28,
@@ -24,6 +25,7 @@ const ListItemAvatar = styled(MuiListItemAvatar)({
 export default function SelectContent() {
   const thisServer = useGlobalStore((state) => state.serverState);
   const otherServers = useGlobalStore((state) => state.servers);
+  const navigate = useNavigate();
 
   const handleChange = (servers) => (event) => {
     const serverNumber = Number(event.target.value);
@@ -33,16 +35,23 @@ export default function SelectContent() {
     if (!selectedServer) {
       return;
     }
-    let link = "";
+
+    let newUrl;
     if (selectedServer.link) {
-      link = new URL(`${selectedServer.link}${window.location.hash}`);
+      newUrl = new URL(selectedServer.link);
+      newUrl.pathname = window.location.pathname;
+      newUrl.search = window.location.search;
+      newUrl.hash = window.location.hash;
     } else {
       const regex = /:(\d+)/gm;
-      link = new URL(
-        window.location.href.replace(regex, `:${selectedServer.port}`)
-      );
+      newUrl = new URL(window.location.href.replace(regex, `:${selectedServer.port}`));
     }
-    window.location.replace(link);
+
+    if (newUrl.origin === window.location.origin) {
+      navigate(newUrl.pathname + newUrl.search + newUrl.hash, { replace: true });
+    } else {
+      window.location.replace(newUrl.href);
+    }
   };
 
   const servers = thisServer ? [thisServer, ...otherServers] : null;
