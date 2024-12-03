@@ -5,7 +5,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 from threading import Timer
-from typing import Final
+from typing import Any, Final
 
 from discord_webhook import DiscordEmbed
 
@@ -76,7 +76,7 @@ from rcon.vote_map import VoteMap
 from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
 
 logger = logging.getLogger(__name__)
-arg_re = re.compile("\$(\d+)")
+ARG_RE = re.compile(r"\$(\d+)")
 
 
 @on_chat
@@ -181,7 +181,7 @@ def chat_commands(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
 
 def chat_message_command(rcon: Rcon, command: ChatCommand, ctx: dict[str, str]):
     player_id = ctx[MessageVariableContext.player_id.value]
-    message_vars: list[str] = re.findall(MESSAGE_VAR_RE, command.message)
+    message_vars: list[str] = MESSAGE_VAR_RE.findall(command.message)
     populated_variables = populate_message_variables(
         vars=message_vars, player_id=player_id
     )
@@ -248,7 +248,7 @@ def chat_rcon_command(
         do_run_commands(rcon, commands)
 
 
-def replace_params(ctx: dict[str, str], args: list[str], v: str or list or dict) -> str or list or dict:
+def replace_params(ctx: dict[str, str], args: list[str], v: Any) -> Any:
     """
     Replaces arguments (from args) and message parameters (from ctx) into the provided parameter value (v).
     The parameter value can be a str, list or dict, the arguments and message parameters are going to be replaced at
@@ -265,17 +265,17 @@ def replace_params(ctx: dict[str, str], args: list[str], v: str or list or dict)
     :return:
     """
     for i, a in enumerate(args):
-        if isinstance(v, list):
-            for li, lv in enumerate(v):
-                v[li] = replace_params(ctx, args, lv)
         if isinstance(v, str):
             v = format_message_string(v.replace(f"${i + 1}", a), context=ctx)
-        if isinstance(v, dict):
+        elif isinstance(v, list):
+            for li, lv in enumerate(v):
+                v[li] = replace_params(ctx, args, lv)
+        elif isinstance(v, dict):
             for k, kv in v:
                 v[k] = replace_params(ctx, args, kv)
     return v
 
-def max_arg_index(p: str or list or dict) -> int:
+def max_arg_index(p: Any) -> int:
     """
     Counts the highest argument index that occurs in any value. If $2 and $5 is used in any of the values, the return
     value of this function will be 5.
@@ -290,11 +290,11 @@ def max_arg_index(p: str or list or dict) -> int:
             a = max_arg_index(v)
             if a > max_count:
                 max_count = a
-    if isinstance(p, str):
-        for a in arg_re.findall(p):
+    elif isinstance(p, str):
+        for a in ARG_RE.findall(p):
             if int(a) > max_count:
                 max_count = int(a)
-    if isinstance(p, dict):
+    elif isinstance(p, dict):
         for _, v in p:
             a = max_arg_index(v)
             if a > max_count:
