@@ -5,7 +5,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 from threading import Timer
-from typing import Final
+from typing import Any, Final
 
 from discord_webhook import DiscordEmbed
 
@@ -76,7 +76,7 @@ from rcon.vote_map import VoteMap
 from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
 
 logger = logging.getLogger(__name__)
-arg_re = re.compile("\$(\d+)")
+ARG_RE = re.compile(r"\$(\d+)")
 
 
 @on_chat
@@ -181,7 +181,7 @@ def chat_commands(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
 
 def chat_message_command(rcon: Rcon, command: ChatCommand, ctx: dict[str, str]):
     player_id = ctx[MessageVariableContext.player_id.value]
-    message_vars: list[str] = re.findall(MESSAGE_VAR_RE, command.message)
+    message_vars: list[str] = MESSAGE_VAR_RE.findall(command.message)
     populated_variables = populate_message_variables(
         vars=message_vars, player_id=player_id
     )
@@ -225,9 +225,9 @@ def chat_rcon_command(
         expected_argument_count = 0
         for _, params in command.commands.items():
             for _, v in params.items():
-                for a in arg_re.findall(v):
-                    if int(a) > expected_argument_count:
-                        expected_argument_count = int(a)
+                a = max_arg_index(v)
+                if a > expected_argument_count:
+                    expected_argument_count = a
         if len(args) != expected_argument_count:
             logger.info(
                 "provided message does not have expected number of arguments. Expected %d, got %d. Message: %s, Command: %s",
@@ -238,15 +238,69 @@ def chat_rcon_command(
             )
             return
 
-        commands: dict[str, dict[str, str]] = {}
+        commands: dict[str, dict[str, str | list[str]]] = {}
         for name, params in command.commands.items():
+            logger.info("Original: %s -> %s, args: %s", name, params, args)
             commands[name] = {}
             for k, v in params.items():
-                for i, a in enumerate(args):
-                    v = v.replace(f"${i + 1}", a)
-                commands[name][k] = format_message_string(v, context=ctx)
+                commands[name][k] = replace_params(ctx, args, v)
 
         do_run_commands(rcon, commands)
+
+
+def replace_params(ctx: dict[str, str], args: list[str], v: Any) -> Any:
+    """
+    Replaces arguments (from args) and message parameters (from ctx) into the provided parameter value (v).
+    The parameter value can be a str, list or dict, the arguments and message parameters are going to be replaced at
+    any appropriate value:
+    * in lists: for each element of the list; if a list item is a list or dict, each item is processed independently to
+      ensure nested values are covered as well
+    * in dicts: for each value, but not for keys. If a value is a list or dict, it is going to be processed independently
+      just like list items are as well.
+    The return value has the same type as the passed in value, just with all arguments in values being replaced with their
+    expected context or parameters.
+    :param ctx:
+    :param args:
+    :param v:
+    :return:
+    """
+    for i, a in enumerate(args):
+        if isinstance(v, str):
+            v = format_message_string(v.replace(f"${i + 1}", a), context=ctx)
+        elif isinstance(v, list):
+            for li, lv in enumerate(v):
+                v[li] = replace_params(ctx, args, lv)
+        elif isinstance(v, dict):
+            for k, kv in v:
+                v[k] = replace_params(ctx, args, kv)
+    return v
+
+def max_arg_index(p: Any) -> int:
+    """
+    Counts the highest argument index that occurs in any value. If $2 and $5 is used in any of the values, the return
+    value of this function will be 5.
+    Each item of a list, as well as each value of a dict key-value pair, is evaluated independently and the highest
+    argument index is returned from any nested value.
+    :param p:
+    :return:
+    """
+    max_count = 0
+    if isinstance(p, list):
+        for v in p:
+            a = max_arg_index(v)
+            if a > max_count:
+                max_count = a
+    elif isinstance(p, str):
+        for a in ARG_RE.findall(p):
+            if int(a) > max_count:
+                max_count = int(a)
+    elif isinstance(p, dict):
+        for _, v in p:
+            a = max_arg_index(v)
+            if a > max_count:
+                max_count = a
+
+    return max_count
 
 
 def chat_help_command(rcon: Rcon, command: BaseChatCommand, ctx: dict[str, str]):
