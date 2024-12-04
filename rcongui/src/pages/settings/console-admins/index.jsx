@@ -28,6 +28,7 @@ import debounce from "lodash/debounce";
 import { InputFileUpload } from "@/components/shared/InputFileUpload";
 import exportFile from "@/utils/exportFile";
 import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
+import PlayerAutocompletion from "@/components/form/custom/PlayerAutocompletion";
 
 const INTENT = {
   ADD_ADMIN: "add_admin",
@@ -274,14 +275,7 @@ const ConsoleAdminsPage = () => {
         }}
       >
         <Stack direction={"row"} gap={1} sx={{ mb: 1, p: 0.5 }}>
-          <TextField
-            autoComplete={"off"}
-            value={newAdmin.name}
-            onChange={handleInputChange}
-            name={"name"}
-            fullWidth
-            label={"Name"}
-          />
+          <PlayerAutocompletion state={newAdmin} setState={setNewAdmin}/>
           <TextField
             autoComplete={"off"}
             value={newAdmin.player_id}
