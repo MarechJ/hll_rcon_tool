@@ -18,7 +18,7 @@ import {
 import Grid from "@mui/material/Grid2";
 import { Link } from "react-router-dom";
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueries } from "@tanstack/react-query";
 import { LineChart } from "@mui/x-charts";
 import dayjs from "dayjs";
 import OnlineUsersCard from "@/components/shared/card/UsersCard";
@@ -265,32 +265,40 @@ const Dashboard = () => {
     }));
   }, [onlinePlayers]);
 
-  const {
-    data: games = [],
-    isLoading,
-    error,
-  } = useQuery({
+  const { data: gamesList = [], isLoading: isLoadingGames } = useQuery({
     queryKey: ["games", "dashboard"],
+    enabled: status !== null,
     queryFn: async () => {
       const result = await cmd.GET_COMPLETED_GAMES({
         params: { page: 1, limit: 100 },
       });
       if (!result?.maps) return [];
 
-      const detailedGames = await Promise.all(
-        result.maps.map(async (game) => {
-          try {
-            return await cmd.GET_COMPLETED_GAME_DETAIL({
-              params: { map_id: game.id },
-            });
-          } catch (error) {
-            return null;
-          }
-        })
-      );
-      return detailedGames.filter(Boolean);
+      return result.maps
+        .filter((game) => game.server_number === status.server_number)
+        .slice(0, 15);
     },
   });
+
+  const gameQueries = useQueries({
+    queries: gamesList.map((game) => ({
+      queryKey: ["game", "details", game.id],
+      staleTime: Infinity,
+      queryFn: async () => {
+        const details = await cmd.GET_COMPLETED_GAME_DETAIL({
+          params: { map_id: game.id },
+        });
+        return details;
+      },
+      enabled: status !== null,
+    })),
+  });
+
+  const detailedGames = useMemo(() => {
+    return gameQueries
+      .filter((query) => query.isSuccess)
+      .map((query) => query.data);
+  }, [gameQueries]);
 
   const { data: logs = [] } = useQuery({
     queryKey: ["logs", "dashboard"],
@@ -359,14 +367,6 @@ const Dashboard = () => {
     queryFn: async () => await cmd.GET_MAP_ROTATION(),
   });
 
-  const thisServerGames = useMemo(() => {
-    return status !== null
-      ? games
-          .filter((game) => game.server_number === status.server_number)
-          .slice(0, 15)
-      : [];
-  }, [status, games]);
-
   return (
     <Grid container sx={{ overflow: "hidden" }} spacing={2}>
       <Grid size={SMALL_CARD_SIZE}>
@@ -418,15 +418,15 @@ const Dashboard = () => {
       </Grid>
 
       <Grid size={MEDIUM_CARD_SIZE}>
-        <GamesCard games={thisServerGames} />
+        <GamesCard games={detailedGames} />
       </Grid>
 
       <Grid container size={MEDIUM_CARD_SIZE} spacing={2}>
         <Grid size={LARGE_CARD_SIZE}>
-          <TotalPlayersCard games={thisServerGames} />
+          <TotalPlayersCard games={detailedGames} />
         </Grid>
         <Grid size={LARGE_CARD_SIZE}>
-          <GameBalanceCard games={thisServerGames} />
+          <GameBalanceCard games={detailedGames} />
         </Grid>
       </Grid>
     </Grid>
