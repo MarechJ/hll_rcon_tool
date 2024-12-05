@@ -24,7 +24,7 @@ export default defineConfig(({ command, mode }) => {
       port: 3000,
       proxy: {
         '/api': {
-          target: 'http://localhost:8010',
+          target: 'http://192.168.4.30:8010',
           changeOrigin: true,
         },
       },
@@ -33,7 +33,7 @@ export default defineConfig(({ command, mode }) => {
       port: 3000,
       proxy: {
         '/api': {
-          target: 'http://localhost:8010',
+          target: 'http://192.168.4.30:8010',
           changeOrigin: true,
         },
       },

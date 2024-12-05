@@ -1,5 +1,5 @@
 import { cmd } from "@/utils/fetchUtils";
-import { queryOptions } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 
 export const gameQueryOptions = {
   list: (page, pageSize) =>
@@ -13,7 +13,7 @@ export const gameQueryOptions = {
   detail: (gameId) =>
     queryOptions({
       queryKey: [{ queryIdentifier: "map-scoreboard", gameId }],
-      queryFn: () => cmd.GET_COMPLETED_GAME_DETAIL({ params: { gameId } }),
+      queryFn: () => cmd.GET_COMPLETED_GAME_DETAIL({ params: { map_id: gameId } }),
     }),
   live: () =>
     queryOptions({
