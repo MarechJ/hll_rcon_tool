@@ -70,7 +70,7 @@ const AddAdminItem = ({
           onAdd(name, playerId, role).then(() => {
             setName("");
             setPlayerId("");
-            setRole("spectator");
+            setRole(roles.includes("spectator") ? "spectator" : "");
           })
         }
       >
@@ -89,7 +89,7 @@ const AdminsEditableList = ({
 }) => {
   const [name, setName] = React.useState("");
   const [playerId, setPlayerId] = React.useState("");
-  const [role, setRole] = React.useState("spectator");
+  const [role, setRole] = React.useState(roles.includes("spectator") ? "spectator" : "");
 
   return (
     <React.Fragment>
