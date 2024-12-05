@@ -6,6 +6,33 @@ import dayjs from "dayjs";
 import { useQuery } from "@tanstack/react-query";
 import { playerProfileQueryOptions } from "@/queries/player-profile-query";
 
+/**
+ * @typedef {Object} PlayerVIP
+ * @property {number} server_number - The server number where the VIP status applies
+ * @property {string} expiration - The expiration date of the VIP status
+ */
+
+/**
+ * @typedef {Object} PlayerProfile
+ * @property {string} player_id - Unique identifier for the player
+ * @property {Array<{name: string}>} names - Array of player names
+ * @property {PlayerVIP[]} vips - Array of VIP statuses across different servers
+ */
+
+/**
+ * @typedef {Object} Player
+ * @property {string} player_id - Unique identifier for the player
+ * @property {string} name - Current display name of the player
+ * @property {boolean} is_online - Whether the player is currently online
+ * @property {boolean} [is_banned] - Whether the player is currently banned
+ * @property {boolean} [is_vip] - Whether the player has VIP status
+ * @property {PlayerVIP} [vip] - VIP details if the player is a VIP
+ * @property {PlayerProfile} profile - Player's profile information
+ * @property {Array<Object>} messages - Player's message history
+ * @property {Array<Object>} comments - Comments about the player
+ * @property {Array<Object>} bans - Player's ban history
+ */
+
 export const SidebarContext = React.createContext();
 
 export const PlayerSidebarProvider = ({ children }) => {
