@@ -111,23 +111,23 @@ class PunitionsToApply:
         try:
             if any(s.team == team and s.name == squad_name for s in self.squads_state):
                 return
-            self.squads_state.append(
-                ASquad(
-                    team=team,
-                    name=squad_name,
-                    players=[
-                        PunishPlayer(
-                            player_id=p.get("player_id"),
-                            name=p.get("name"),
-                            squad=p.get("unit_name"),
-                            team=p.get("team"),
-                            flags=p.get("profile", {}).get("flags", []),
-                            role=p.get("role"),
-                            lvl=p.get("level"),
-                        )
-                        for p in squad.get("players", []) if p
-                    ],
+
+            players = []
+            for player in squad.get("players", []):
+                profile = player.get("profile", {})
+                punish_player = PunishPlayer(
+                    player_id=player.get("player_id"),
+                    name=player.get("name"),
+                    squad=player.get("unit_name"),
+                    team=player.get("team"),
+                    flags=profile.get("flags", []) if profile else [],
+                    role=player.get("role"),
+                    lvl=player.get("level"),
                 )
+                players.append(punish_player)
+
+            self.squads_state.append(
+                ASquad(team=team, name=squad_name, players=players)
             )
         except:
             logger.exception("Unable to add squad info")
