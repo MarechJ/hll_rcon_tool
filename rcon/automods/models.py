@@ -120,7 +120,7 @@ class PunitionsToApply:
                     name=player.get("name"),
                     squad=player.get("unit_name"),
                     team=player.get("team"),
-                    flags=profile.get("flags", []) if profile else [],
+                    flags=profile.get("flags") if profile else [],
                     role=player.get("role"),
                     lvl=player.get("level"),
                 )
