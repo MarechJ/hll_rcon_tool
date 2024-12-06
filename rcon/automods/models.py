@@ -125,7 +125,7 @@ class PunitionsToApply:
                             role=p.get("role"),
                             lvl=p.get("level"),
                         )
-                        for p in squad.get("players", [])
+                        for p in squad.get("players", []) if p
                     ],
                 )
             )
