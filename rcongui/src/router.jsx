@@ -27,7 +27,6 @@ import GamesPage from "./pages/stats/games";
 import { loader as gamesLoader } from "./pages/stats/games";
 
 import GameDetailsPage from "./pages/stats/games/[gameId]";
-import { loader as gameDetailsLoader } from "./pages/stats/games/[gameId]";
 
 import Login from "./pages/login"
 import { loader as loginLoader } from "./pages/login"
@@ -87,6 +86,7 @@ import { action as vipSettingsAction } from "./pages/settings/vip"
 
 import { AuthProvider } from "@/hooks/useAuth";
 import { GlobalState } from "@/hooks/useGlobalState";
+import { queryClient } from './queryClient';
 
 const router = createBrowserRouter([
     {
@@ -308,7 +308,6 @@ const router = createBrowserRouter([
                                 path: ':gameId',
                                 handle: { crumb: (data) => <span>{data?.gameId}</span> },
                                 element: <GameDetailsPage />,
-                                loader: gameDetailsLoader,
                             }
                         ]
                     }

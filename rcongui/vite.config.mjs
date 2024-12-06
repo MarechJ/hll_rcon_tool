@@ -6,6 +6,8 @@ import path from 'path';
 export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
+  console.log(JSON.stringify(env.REACT_APP_API_URL))
+
   return {
     define: {
       'process.env.REACT_APP_PUBLIC_BUILD': JSON.stringify(env.REACT_APP_PUBLIC_BUILD),
@@ -24,7 +26,7 @@ export default defineConfig(({ command, mode }) => {
       port: 3000,
       proxy: {
         '/api': {
-          target: 'http://192.168.4.30:8010',
+          target: 'http://localhost:8010',
           changeOrigin: true,
         },
       },
@@ -33,7 +35,7 @@ export default defineConfig(({ command, mode }) => {
       port: 3000,
       proxy: {
         '/api': {
-          target: 'http://192.168.4.30:8010',
+          target: 'http://localhost:8010',
           changeOrigin: true,
         },
       },

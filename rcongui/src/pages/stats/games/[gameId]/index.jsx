@@ -1,5 +1,6 @@
-import { cmd } from "@/utils/fetchUtils";
-import { useLoaderData } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { gameQueryOptions } from "@/queries/game-query";
 import PlayersTable from "./game-table";
 import {
   useReactTable,
@@ -13,12 +14,6 @@ import { useMemo, useState } from "react";
 import dayjs from "dayjs";
 import { Typography, Box, Paper } from "@mui/material";
 import Grid from "@mui/material/Grid2";
-
-export const loader = async ({ params }) => {
-  return await cmd.GET_COMPLETED_GAME_DETAIL({
-    params: { map_id: params.gameId },
-  });
-};
 
 export const StatCard = ({ playerStats, statsKey, limit = 10 }) => {
   const title = statsKey.replace("_", " ").toUpperCase();
@@ -142,12 +137,30 @@ export const GameTable = ({ playerStats, columns }) => {
 };
 
 const CompletedGamePage = () => {
-  const data = useLoaderData();
+  const { gameId } = useParams();
+  
+  const { data, isLoading, error } = useQuery({
+    ...gameQueryOptions.detail(gameId),
+  });
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
 
   return (
     <div>
       <Box sx={{ p: 4 }}>
-        <CompletedGameDetails mapLayer={data.map} result={data.result} start={data.start} end={data.end} id={data.id} />
+        <CompletedGameDetails 
+          mapLayer={data.map} 
+          result={data.result} 
+          start={data.start} 
+          end={data.end} 
+          id={data.id} 
+        />
         <Grid container spacing={3} sx={{ mb: 4 }}>
           <StatCard playerStats={data.player_stats} statsKey="kills" />
           <StatCard playerStats={data.player_stats} statsKey="combat" />

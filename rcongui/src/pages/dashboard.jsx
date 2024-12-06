@@ -25,6 +25,7 @@ import OnlineUsersCard from "@/components/shared/card/UsersCard";
 import LogsCard from "@/components/shared/card/LogsCard";
 import ScrollableCard from "@/components/shared/card/ScrollableCard";
 import { MapAvatar } from "@/components/MapManager/map-details";
+import { gameQueryOptions } from "@/queries/game-query";
 
 const CHART_HEIGHT = 275;
 
@@ -146,6 +147,8 @@ const GamesCard = ({ games }) => {
                   sx={{
                     display: "flex",
                     flexDirection: "row",
+                    flexGrow: 1,
+                    maxWidth: "50%",
                     gap: 0.5,
                     width: "max-content",
                   }}
@@ -180,7 +183,7 @@ const GamesCard = ({ games }) => {
                   </Box>
                 </Box>
                 <Divider orientation="vertical" flexItem sx={{ mx: 2 }} />
-                <Typography variant="subtitle2" sx={{ fontSize: 20 }}>
+                <Typography variant="subtitle2" sx={{ fontSize: 20, whiteSpace: "nowrap" }}>
                   {game.result.allied} - {game.result.axis}
                 </Typography>
                 <Divider orientation="vertical" flexItem sx={{ mx: 2 }} />
@@ -201,8 +204,6 @@ const Dashboard = () => {
   const onlineCrconMods = useGlobalStore((state) => state.onlineCrconMods);
   const onlineIngameMods = useGlobalStore((state) => state.onlineIngameMods);
   const onlinePlayers = useGlobalStore((state) => state.onlinePlayers);
-
-  console.log(status);
 
   const vips = useMemo(
     () =>
@@ -282,14 +283,7 @@ const Dashboard = () => {
 
   const gameQueries = useQueries({
     queries: gamesList.map((game) => ({
-      queryKey: ["game", "details", game.id],
-      staleTime: Infinity,
-      queryFn: async () => {
-        const details = await cmd.GET_COMPLETED_GAME_DETAIL({
-          params: { map_id: game.id },
-        });
-        return details;
-      },
+      ...gameQueryOptions.detail(game.id),
       enabled: status !== null,
     })),
   });
