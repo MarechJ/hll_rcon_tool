@@ -129,7 +129,7 @@ const renderSubComponent = ({ row }) => {
       </Box>
 
       <Box
-        sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" }, gap: { xs: 2, md: 4 } }}
+        sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" }, gap: { xs: 2, md: 4 } }}
       >
         <Box>
             <Typography variant="subtitle2" sx={{ mb: 1 }}>
