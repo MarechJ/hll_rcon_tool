@@ -43,7 +43,7 @@ export const StatCard = ({ playerStats, statsKey, limit = 10 }) => {
                   ? `🥈 ${player.player}`
                   : i === 2
                   ? `🥉 ${player.player}`
-                  : player.player}
+                  : (i + 1).toString() + '. ' + player.player}
               </Typography>
               <Box sx={{ flexGrow: 1, minWidth: 10 }} />
               <Typography variant="body2" color="primary">
