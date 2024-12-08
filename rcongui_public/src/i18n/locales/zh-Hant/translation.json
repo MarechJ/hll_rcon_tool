@@ -1,0 +1,12 @@
+{
+  "title": "Vite React Tailwind Starter",
+  "features": "功能",
+  "modernstack": "現代且高效的堆疊",
+  "modernstack-desc": "使用 vite、react、tailwindcss、shadcnui 等建構",
+  "i18nsupport": "內建 i18n 支援",
+  "i18nsupport-desc": "原生支援多種語言的產品",
+  "linters": "保存時檢查所有程式碼",
+  "linters-desc": "使用 eslint、prettier、stylelint、commitlint 建構",
+  "hero-title": "使用我們喜愛的最佳 DX 建構應用程式",
+  "get-started": "開始使用"
+}

@@ -1,0 +1,13 @@
+{
+  "title": "Hell Let Loose Stats",
+  "features": "Funkce",
+  "modernstack": "Modern a efektivní stack",
+  "modernstack-desc": "Vytvořeno s Vite, React, Tailwind CSS, Shadcnui a dalšími",
+  "i18nsupport": "Podpora i18n",
+  "i18nsupport-desc": "Vytvořte svůj produkt s různými jazyky nativními",
+  "linters": "Lintování všeho při ukládání",
+  "linters-desc": "Vytvořeno s ESLint, Prettier, Stylelint a Commitlint",
+  "hero-title": "Vytvořte aplikace s nejlepší DX, kterou milujeme",
+  "get-started": "Začít",
+  "made-by": "Vytvořil"
+}

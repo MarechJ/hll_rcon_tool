@@ -1,0 +1,12 @@
+{
+  "title": "Vite React Tailwind Starter",
+  "features": "Fonctionnalités",
+  "modernstack": "Stack moderne et efficace",
+  "modernstack-desc": "Construit avec vite, react, tailwindcss, shadcnui et plus encore",
+  "i18nsupport": "Support i18n intégré",
+  "i18nsupport-desc": "Expédiez votre produit avec différentes langues nativement",
+  "linters": "Vérifier tous les codes à la sauvegarde",
+  "linters-desc": "Construit avec eslint, prettier, stylelint, commitlint",
+  "hero-title": "Créez des applications avec la meilleure expérience de développement que nous aimons",
+  "get-started": "Commencer"
+}

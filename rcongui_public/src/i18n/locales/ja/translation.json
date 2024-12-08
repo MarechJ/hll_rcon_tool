@@ -1,0 +1,12 @@
+{
+  "title": "Vite React Tailwind スターター",
+  "features": "特徴",
+  "modernstack": "モダンで効率的なスタック",
+  "modernstack-desc": "vite、react、tailwindcss、shadcnuiなどで構築されています",
+  "i18nsupport": "ボックス内のi18nサポート",
+  "i18nsupport-desc": "さまざまな言語で製品をネイティブに提供します",
+  "linters": "保存時にすべてのコードをリント",
+  "linters-desc": "eslint、prettier、stylelint、commitlintで構築されています",
+  "hero-title": "最高のDXでアプリを構築する",
+  "get-started": "はじめる"
+}
