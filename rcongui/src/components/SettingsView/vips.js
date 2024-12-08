@@ -20,6 +20,7 @@ import moment from "moment";
 import { VipExpirationDialog } from "../VipDialog";
 import { fromJS } from "immutable";
 import { vipListFromServer } from "../VipDialog/vipFromServer";
+import PlayerAutocomplete from "./playerAutocomplete";
 
 const AddVipItem = ({
   classes,
@@ -32,14 +33,7 @@ const AddVipItem = ({
   <ListItem>
     <Grid container>
       <Grid item xs={6} className={classes.paddingRight}>
-        <TextField
-          InputLabelProps={{
-            shrink: true,
-          }}
-          label="Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+        <PlayerAutocomplete classes={classes} name={name} setName={setName} setPlayerId={setPlayerId}/>
       </Grid>
       <Grid item xs={6} className={classes.paddingLeft}>
         <TextField

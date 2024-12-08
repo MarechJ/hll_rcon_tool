@@ -14,6 +14,7 @@ import {
 } from "@material-ui/core";
 import DeleteIcon from "@material-ui/icons/Delete";
 import AddIcon from "@material-ui/icons/Add";
+import PlayerAutocomplete from "./playerAutocomplete";
 
 const AdminRole = ({ classes, role, setRole, roles }) => (
   <FormControl className={classes.formControl}>
@@ -40,14 +41,7 @@ const AddAdminItem = ({
   <ListItem>
     <Grid container>
       <Grid item xs={4} className={classes.paddingRight}>
-        <TextField
-          InputLabelProps={{
-            shrink: true,
-          }}
-          label="Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+        <PlayerAutocomplete classes={classes} name={name} setName={setName} playerId={playerId} setPlayerId={setPlayerId}/>
       </Grid>
       <Grid item xs={4} className={classes.paddingLeft}>
         <TextField
@@ -76,7 +70,7 @@ const AddAdminItem = ({
           onAdd(name, playerId, role).then(() => {
             setName("");
             setPlayerId("");
-            setRole("");
+            setRole(roles.includes("spectator") ? "spectator" : "");
           })
         }
       >
@@ -95,7 +89,7 @@ const AdminsEditableList = ({
 }) => {
   const [name, setName] = React.useState("");
   const [playerId, setPlayerId] = React.useState("");
-  const [role, setRole] = React.useState("");
+  const [role, setRole] = React.useState(roles.includes("spectator") ? "spectator" : "");
 
   return (
     <React.Fragment>
