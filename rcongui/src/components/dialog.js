@@ -1,57 +1,27 @@
 import React from "react";
-import { withStyles } from "@material-ui/core/styles";
-import MuiDialogTitle from "@material-ui/core/DialogTitle";
-import MuiDialogContent from "@material-ui/core/DialogContent";
-import MuiDialogActions from "@material-ui/core/DialogActions";
-import IconButton from "@material-ui/core/IconButton";
-import CloseIcon from "@material-ui/icons/Close";
-import Typography from "@material-ui/core/Typography";
+import MuiDialogTitle from "@mui/material/DialogTitle";
+import MuiDialogContent from "@mui/material/DialogContent";
+import MuiDialogActions from "@mui/material/DialogActions";
+import IconButton from "@mui/material/IconButton";
+import CloseIcon from "@mui/icons-material/Close";
+import Typography from "@mui/material/Typography";
 
-const styles = (theme) => ({
-  root: {
-    margin: 0,
-    padding: theme.spacing(2),
-  },
-  closeButton: {
-    position: "absolute",
-    right: theme.spacing(1),
-    top: theme.spacing(1),
-    color: theme.palette.grey[500],
-  },
-  marginBottom: {
-    marginBottom: theme.spacing(1),
-  },
-});
-
-const DialogTitle = withStyles(styles)((props) => {
-  const { children, classes, onClose, ...other } = props;
+const DialogTitle = (props) => {
+  const { children, onClose, ...other } = props;
   return (
-    <MuiDialogTitle disableTypography className={classes.root} {...other}>
+    (<MuiDialogTitle disableTypography {...other}>
       <Typography variant="h6">{children}</Typography>
       {onClose ? (
-        <IconButton
-          aria-label="close"
-          className={classes.closeButton}
-          onClick={onClose}
-        >
+        <IconButton aria-label="close" onClick={onClose} size="large">
           <CloseIcon />
         </IconButton>
       ) : null}
-    </MuiDialogTitle>
+    </MuiDialogTitle>)
   );
-});
+};
 
-const DialogContent = withStyles((theme) => ({
-  root: {
-    padding: theme.spacing(2),
-  },
-}))(MuiDialogContent);
+const DialogContent = MuiDialogContent
 
-const DialogActions = withStyles((theme) => ({
-  root: {
-    margin: 0,
-    padding: theme.spacing(1),
-  },
-}))(MuiDialogActions);
+const DialogActions = MuiDialogActions
 
 export { DialogContent, DialogActions, DialogTitle };

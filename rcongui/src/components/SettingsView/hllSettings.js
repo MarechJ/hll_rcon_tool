@@ -1,9 +1,11 @@
 import React from "react";
 import {
   Button,
-  Grid,
   TextField,
-} from "@material-ui/core";
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import { range } from "lodash/util";
 import {
   get,
@@ -17,10 +19,10 @@ import AdminsEditableList from "./admins";
 import CollapseCard from "../collapseCard";
 import ServerMessage from "./serverMessage";
 import NumSlider from "./numSlider";
-import Padlock from "../shared/padlock";
+import Padlock from "@/components/shared/Padlock";
 import AutoRefreshLine from "../autoRefreshLine";
 import { ForwardCheckBox, WordList } from "../commonComponent";
-import { chunk } from "lodash";
+import { Help as HelpIcon } from "@mui/icons-material"
 
 const ProfanityFiler = ({
   words,
@@ -30,7 +32,7 @@ const ProfanityFiler = ({
   onFowardChange,
 }) => (
   <Grid container>
-    <Grid xs={12}>
+    <Grid size={12}>
       <WordList
         words={words}
         onWordsChange={onWordsChange}
@@ -106,7 +108,6 @@ class HLLSettings extends React.Component {
     this.saveSetting = this.saveSetting.bind(this);
     this.addMapsToRotation = this.addMapsToRotation.bind(this);
     this.removeMapsFromRotation = this.removeMapsFromRotation.bind(this);
-    this.changeMap = this.changeMap.bind(this);
     this.toggleLockSliders = this.toggleLockSliders.bind(this);
     this.loadProfanities = this.loadProfanities.bind(this);
     this.setProfanities = this.setProfanities.bind(this);
@@ -326,25 +327,28 @@ class HLLSettings extends React.Component {
       votekickThreshold,
       autobalanceEnabled,
     } = this.state;
-    const { classes } = this.props;
 
     return (
-      <Grid container spacing={3} className={classes.paper}>
-        <Grid item xs={12}>
+      (<Grid container spacing={3} >
+        <Grid size={12}>
           <h2>HLL Game Server settings </h2>
           <small>(1min autorefresh)</small>
           <AutoRefreshLine
             intervalFunction={() => this.loadAll()}
             execEveryMs={60000}
             statusRefreshIntervalMs={500}
-            classes={classes}
+            
           />
         </Grid>
-        <Grid item className={classes.paper} sm={6} xs={12}>
+        <Grid
+          size={{
+            sm: 6,
+            xs: 12
+          }}>
           <ServerMessage
             autocompleteKey="welcome"
             type="Welcome message"
-            classes={classes}
+            
             forward={forwardWelcome}
             onForwardChange={() => this.toggle("forwardWelcome")}
             value={welcomeMessage}
@@ -359,11 +363,15 @@ class HLLSettings extends React.Component {
             }
           />
         </Grid>
-        <Grid item className={classes.paper} sm={6} xs={12}>
+        <Grid
+          size={{
+            sm: 6,
+            xs: 12
+          }}>
           <ServerMessage
             autocompleteKey="broadcast"
             type="Broadcast message"
-            classes={classes}
+            
             value={broadcastMessage}
             forward={forwardBroadcast}
             onForwardChange={() => this.toggle("forwardBroadcast")}
@@ -383,17 +391,21 @@ class HLLSettings extends React.Component {
             }
           />
         </Grid>
-        <Grid item className={classes.paper} xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <CollapseCard
             title="Manage VIPs"
-            classes={classes}
+            
             onExpand={this.loadVips}
           >
-            <VipUpload classes={classes} />
+            <VipUpload  />
             <p>Changes are applied immediately</p>
             <VipEditableList
               peopleList={vips}
-              classes={classes}
+              
               forward={forwardVIP}
               onFowardChange={() => this.toggle("forwardVIP")}
               onAdd={(name, player_id, expirationTimestamp) =>
@@ -413,17 +425,21 @@ class HLLSettings extends React.Component {
             />
           </CollapseCard>
         </Grid>
-        <Grid item className={classes.paper} xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <CollapseCard
             title="Manage Console admins"
-            classes={classes}
+            
             onExpand={this.loadAdmins}
           >
             <p>Changes are applied immediately</p>
             <AdminsEditableList
               peopleList={admins}
               roles={adminRoles}
-              classes={classes}
+              
               onAdd={(name, playerId, role) =>
                 sendAction("add_admin", {
                   player_id: playerId,
@@ -441,39 +457,43 @@ class HLLSettings extends React.Component {
         </Grid>
         <Grid
           container
-          className={classes.paper}
-          xs={12}
+          
           alignContent="center"
-          justify="center"
+          justifyContent="center"
+          size={12}
         >
-          <Grid item>
+          <Grid>
             <Padlock
               checked={lockedSliders}
               handleChange={() => this.toggle("lockedSliders")}
-              classes={classes}
+              
               label="Locked sliders"
             />
           </Grid>
-          <Grid item>
+          <Grid>
             <Padlock
               checked={sildersShowValues}
               handleChange={() => this.toggle("sildersShowValues")}
-              classes={classes}
+              
               label="Show all values"
             />
           </Grid>
-          <Grid item>
+          <Grid>
             <Padlock
               checked={forwardSettings}
               handleChange={() => this.toggle("forwardSettings")}
-              classes={classes}
+              
               label="Forward settings changes to all servers"
             />
           </Grid>
         </Grid>
-        <Grid item className={classes.paper} xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <NumSlider
-            classes={classes}
+            
             disabled={lockedSliders}
             showValue={sildersShowValues}
             text="Teamswitch cooldown (minutes)"
@@ -493,9 +513,13 @@ class HLLSettings extends React.Component {
             }
           />
         </Grid>
-        <Grid item className={classes.paper} xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <NumSlider
-            classes={classes}
+            
             disabled={lockedSliders}
             showValue={sildersShowValues}
             text="Autobalance threshold"
@@ -514,9 +538,13 @@ class HLLSettings extends React.Component {
             }
           />
         </Grid>
-        <Grid item className={classes.paper} xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <NumSlider
-            classes={classes}
+            
             disabled={lockedSliders}
             showValue={sildersShowValues}
             text="Idle autokick (minutes)"
@@ -539,9 +567,13 @@ class HLLSettings extends React.Component {
             }
           />
         </Grid>
-        <Grid item className={classes.paper} xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <NumSlider
-            classes={classes}
+            
             disabled={lockedSliders}
             showValue={sildersShowValues}
             text="Maximum ping (ms)"
@@ -562,9 +594,13 @@ class HLLSettings extends React.Component {
             }
           />
         </Grid>
-        <Grid item className={classes.paper} xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <NumSlider
-            classes={classes}
+            
             disabled={lockedSliders}
             showValue={sildersShowValues}
             text="Max queue length"
@@ -584,9 +620,13 @@ class HLLSettings extends React.Component {
             }
           />
         </Grid>
-        <Grid item className={classes.paper} xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <NumSlider
-            classes={classes}
+            
             disabled={lockedSliders}
             showValue={sildersShowValues}
             text="Vip slots"
@@ -605,8 +645,11 @@ class HLLSettings extends React.Component {
             }
           />
         </Grid>
-
-        <Grid item className={classes.paper} xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <Padlock
             label="Auto balance enabled"
             checked={autobalanceEnabled}
@@ -618,7 +661,11 @@ class HLLSettings extends React.Component {
             }
           />
         </Grid>
-        <Grid item className={classes.paper} xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <Padlock
             label="Vote kicks allowed"
             checked={votekickEnabled}
@@ -630,9 +677,9 @@ class HLLSettings extends React.Component {
             }
           />
         </Grid>
-        <Grid item xs={12}>
+        <Grid size={12}>
           <Grid container spacing={1}>
-            <Grid item xs={12}>
+            <Grid size={12}>
               <TextField
                 fullWidth
                 label="Vote kick threshold"
@@ -643,7 +690,7 @@ class HLLSettings extends React.Component {
                 helperText="Use the following format, Error: First entry must be for 0 Players (you can add as many pairs as you want): player count,votekick threshold... example: 0,1,10,5,25,12,50,20"
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid size={6}>
               <Button
                 fullWidth
                 variant="outlined"
@@ -654,7 +701,7 @@ class HLLSettings extends React.Component {
                 SAVE
               </Button>
             </Grid>
-            <Grid item xs={6}>
+            <Grid size={6}>
               <Button
                 fullWidth
                 variant="outlined"
@@ -667,8 +714,7 @@ class HLLSettings extends React.Component {
             </Grid>
           </Grid>
         </Grid>
-
-        <Grid item xs={12}>
+        <Grid size={12}>
           <ProfanityFiler
             words={profanities}
             onWordsChange={(words) => this.setState({ profanities: words })}
@@ -677,7 +723,7 @@ class HLLSettings extends React.Component {
             onFowardChange={() => this.toggle("forwardProfanities")}
           />
         </Grid>
-      </Grid>
+      </Grid>)
     );
   }
 }

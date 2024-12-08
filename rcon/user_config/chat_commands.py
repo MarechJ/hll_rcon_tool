@@ -1,8 +1,9 @@
 import logging
 import re
 from functools import cached_property
-from typing import Iterable, TypedDict
+from typing import Iterable, TypedDict, NotRequired, Optional
 
+from django.template.defaultfilters import title
 from pydantic import BaseModel, Field, field_validator
 
 from rcon.types import MessageVariable, MessageVariableContext
@@ -56,8 +57,8 @@ class ChatCommandsType(TypedDict):
 
 
 class BaseChatCommand(BaseModel):
-    words: list[str] = Field(default_factory=list)
-    description: str | None = Field(default=None)
+    words: list[str] = Field(default_factory=list, title="Words", description="A lit of words that trigger this command. Needs to be prefixed with either one of " + ", ".join(VALID_COMMAND_PREFIXES))
+    description: str = Field(default="", title="Description", description="An optional description that is shown to the player when one of the describe words is used.")
 
     @cached_property
     def help_words(self) -> set[str]:
@@ -76,7 +77,7 @@ class BaseChatCommand(BaseModel):
 
 
 class ChatCommand(BaseChatCommand):
-    message: str | None = Field(default=None)
+    message: str = Field(default="", title="Message", description="The message send to the player in-game when the command is triggered. Allows the use of message placeholders.")
 
     @field_validator("message")
     @classmethod
@@ -97,8 +98,8 @@ class ChatCommand(BaseChatCommand):
 
 
 class BaseChatCommandUserConfig(BaseUserConfig):
-    command_words: list[BaseChatCommand] = []
-    enabled: bool = Field(default=False)
+    command_words: list[BaseChatCommand] = Field(default_factory=list, title="Command Words", description="Commands that are available to player on the server.")
+    enabled: bool = Field(default=False, title="Enabled", description="Whether chat commands is enabled on the server or not.")
 
     # These will trigger an automatic help command if `description`s are set on
     # `command_words`
@@ -119,12 +120,12 @@ class BaseChatCommandUserConfig(BaseUserConfig):
         return [
             f"{', '.join(word.words)} | {word.description}"
             for word in self.command_words
-            if word.description
+            if word.description and word.description != ""
         ]
 
 
 class ChatCommandsUserConfig(BaseChatCommandUserConfig):
-    command_words: list[ChatCommand] = Field(default_factory=list)
+    command_words: list[ChatCommand] = Field(default_factory=list, title="Command Words", description="Commands that are available to player on the server.")
 
     @staticmethod
     def save_to_db(values: ChatCommandsType, dry_run=False) -> None:

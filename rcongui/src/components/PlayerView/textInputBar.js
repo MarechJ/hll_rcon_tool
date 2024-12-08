@@ -1,22 +1,21 @@
 import React from "react";
-import Grid from "@material-ui/core/Grid";
-import TextField from "@material-ui/core/TextField";
+import Grid from "@mui/material/Grid2";
+import TextField from "@mui/material/TextField";
 import "react-toastify/dist/ReactToastify.css";
 import TextHistory from "../textHistory";
-import Autocomplete from "@material-ui/lab/Autocomplete";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import Checkbox from "@material-ui/core/Checkbox";
+import Autocomplete from '@mui/material/Autocomplete';
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Checkbox from "@mui/material/Checkbox";
 
-import InputLabel from "@material-ui/core/InputLabel";
-import MenuItem from "@material-ui/core/MenuItem";
-import FormHelperText from "@material-ui/core/FormHelperText";
-import FormControl from "@material-ui/core/FormControl";
-import Select from "@material-ui/core/Select";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import FormHelperText from "@mui/material/FormHelperText";
+import FormControl from "@mui/material/FormControl";
+import Select from "@mui/material/Select";
 import { getSharedMessages } from "../../utils/fetchUtils";
 
 const Reason = ({
   handleMessageChange,
-  extraClasses,
   helperText = "Leave blank if you want a confirmation popup",
   message,
   label = "In Game Message/Punish/Kick/Ban message",
@@ -34,11 +33,10 @@ const Reason = ({
   }, []);
 
   return (
-    <React.Fragment>
+    (<React.Fragment>
       <Autocomplete
         freeSolo
         fullWidth
-        className={extraClasses}
         options={sharedMessages.concat(autoCompletehistory)}
         inputValue={message}
         onInputChange={(e, value) => {
@@ -52,8 +50,8 @@ const Reason = ({
             {...params}
             label={label}
             multiline
-            rows={1}
-            rowsMax={10}
+            minRows={1}
+            maxRows={10}
             margin="dense"
             helperText={helperText}
           />
@@ -73,12 +71,11 @@ const Reason = ({
       ) : (
         ""
       )}
-    </React.Fragment>
+    </React.Fragment>)
   );
 };
 
 const TextInputBar = ({
-  classes,
   handleChange,
   total,
   showCount,
@@ -88,10 +85,14 @@ const TextInputBar = ({
 }) => {
   /* todo refactor */
   return (
-    <Grid item xs={12} spacing={2}>
-      <Grid container justify="flex-start" direction="row" alignItems="center">
-        <Grid item xs={12} lg={3}>
-          <FormControl className={classes.formControl}>
+    (<Grid spacing={2} size={12}>
+      <Grid container justifyContent="flex-start" direction="row" alignItems="center">
+        <Grid
+          size={{
+            xs: 12,
+            lg: 3
+          }}>
+          <FormControl >
             <InputLabel>Sort</InputLabel>
             <Select
               value={sortType}
@@ -116,7 +117,11 @@ const TextInputBar = ({
             <FormHelperText>Sort the player list</FormHelperText>
           </FormControl>
         </Grid>
-        <Grid item xs={12} md={3} className={classes.textLeft}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 3
+          }}>
           <TextField
             label="Filter"
             helperText={`Showing: ${showCount} / ${total}`}
@@ -126,11 +131,15 @@ const TextInputBar = ({
             }}
           />
         </Grid>
-        <Grid item xs={12} lg={6} className={classes.textLeft}>
+        <Grid
+          size={{
+            xs: 12,
+            lg: 6
+          }}>
           <Reason handleMessageChange={handleMessageChange} />
         </Grid>
       </Grid>
-    </Grid>
+    </Grid>)
   );
 };
 

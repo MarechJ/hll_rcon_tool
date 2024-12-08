@@ -1,16 +1,13 @@
 import React from "react";
-import Autocomplete from "@material-ui/lab/Autocomplete";
-import TextField from "@material-ui/core/TextField";
-import Button from "@material-ui/core/Button";
-import Dialog from "@material-ui/core/Dialog";
+import Autocomplete from '@mui/material/Autocomplete';
+import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
 import { DialogActions, DialogContent, DialogTitle } from "../dialog";
-import withWidth from "@material-ui/core/withWidth";
-import FormHelperText from "@material-ui/core/FormHelperText";
+import FormHelperText from "@mui/material/FormHelperText";
 
 const Unban = ({
   bannedPlayers,
-  classes,
-  width,
   handleUnban,
   onReload,
   onClose,
@@ -23,8 +20,6 @@ const Unban = ({
       onClose={onClose}
       aria-labelledby="customized-dialog-title"
       open={open}
-      fullWidth={width}
-      maxWidth={width}
     >
       <DialogTitle id="customized-dialog-title" onClose={onClose}>
         Unban players
@@ -32,7 +27,6 @@ const Unban = ({
       <DialogContent dividers>
         {bannedPlayers !== null ? (
           <Autocomplete
-            className={classes.marginBottom}
             multiple
             clearOnEscape
             id="tags-outlined"
@@ -53,11 +47,11 @@ const Unban = ({
         ) : (
           "Unable to show bans. Please retry"
         )}
-        <FormHelperText className={classes.paddingBottom}>
+        <FormHelperText >
           Don't forget to remove the Blacklisting as well for permabans
         </FormHelperText>
         <Button
-          className={classes.margin}
+          
           autoFocus
           onClick={onReload}
           variant="outlined"
@@ -84,4 +78,4 @@ const Unban = ({
   );
 };
 
-export default withWidth()(Unban);
+export default Unban;

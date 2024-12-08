@@ -1,5 +1,6 @@
 import React from "react";
-import { Grid, Button, Menu, MenuItem } from "@material-ui/core";
+import { Button, Menu, MenuItem } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 
 const ChangeMap = ({ availableMaps, changeMap }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -13,8 +14,8 @@ const ChangeMap = ({ availableMaps, changeMap }) => {
   };
 
   return (
-    <Grid container xs={12}>
-      <Grid item xs={12}>
+    (<Grid container size={12}>
+      <Grid size={12}>
         <Button
           variant="outlined"
           color="primary"
@@ -43,7 +44,7 @@ const ChangeMap = ({ availableMaps, changeMap }) => {
           ))}
         </Menu>
       </Grid>
-    </Grid>
+    </Grid>)
   );
 };
 

@@ -3,15 +3,15 @@ import {
   Button,
   Checkbox,
   FormControlLabel,
-  Grid,
   Popover,
   Tooltip,
-} from "@material-ui/core";
-import Chip from "@material-ui/core/Chip";
-import Autocomplete from "@material-ui/lab/Autocomplete";
-import TextField from "@material-ui/core/TextField";
+} from "@mui/material";
+import Chip from "@mui/material/Chip";
+import Autocomplete from '@mui/material/Autocomplete';
+import TextField from "@mui/material/TextField";
+import Grid from "@mui/material/Grid2";
 
-export const WithPopver = ({ classes, popoverContent, children }) => {
+export const WithPopver = ({ popoverContent, children }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
 
   const handlePopoverOpen = (event) => {
@@ -31,10 +31,6 @@ export const WithPopver = ({ classes, popoverContent, children }) => {
       </div>
       <Popover
         id="mouse-over-popover"
-        className={classes.popover}
-        classes={{
-          paper: classes.paper,
-        }}
         open={open}
         anchorEl={anchorEl}
         anchorOrigin={{
@@ -66,10 +62,13 @@ export const ManualPlayerInput = ({
   onSubmit,
   actionName,
   tooltipText,
-  classes,
 }) => (
-  <Grid container spacing={1} justify="space-between">
-    <Grid item xs={6} md={3}>
+  <Grid container spacing={1} justifyContent="space-between">
+    <Grid
+      size={{
+        xs: 6,
+        md: 3
+      }}>
       <TextField
         id="playerId"
         label="Player ID"
@@ -80,7 +79,11 @@ export const ManualPlayerInput = ({
         onChange={(e) => setPlayerId(e.target.value)}
       />
     </Grid>
-    <Grid item xs={6} md={3}>
+    <Grid
+      size={{
+        xs: 6,
+        md: 3
+      }}>
       <TextField
         id="name"
         label="Player name"
@@ -90,7 +93,11 @@ export const ManualPlayerInput = ({
         onChange={(e) => setName(e.target.value)}
       />
     </Grid>
-    <Grid item xs={12} md={4}>
+    <Grid
+      size={{
+        xs: 12,
+        md: 4
+      }}>
       <Autocomplete
         freeSolo
         fullWidth
@@ -104,23 +111,24 @@ export const ManualPlayerInput = ({
       />
     </Grid>
     <Grid
-      item
-      xs={12}
-      md={2}
-      className={`${classes.padding} ${classes.margin}`}
-    >
-      <Tooltip fullWidth title={tooltipText} arrow>
-        <Button
-          color="secondary"
-          variant="outlined"
-          disabled={playerId === "" || reason === ""}
-          onClick={() => {
-            onSubmit();
-            textHistory.saveText(reason);
-          }}
-        >
-          {actionName}
-        </Button>
+      size={{
+        xs: 12,
+        md: 2
+      }}>
+      <Tooltip title={tooltipText} arrow>
+        <span>
+          <Button
+            color="secondary"
+            variant="outlined"
+            disabled={playerId === "" || reason === ""}
+            onClick={() => {
+              onSubmit();
+              textHistory.saveText(reason);
+            }}
+          >
+            {actionName}
+          </Button>
+        </span>
       </Tooltip>
     </Grid>
   </Grid>
@@ -158,11 +166,12 @@ export const WordList = ({
       renderTags={(value, getTagProps) =>
         value.map((option, index) => (
           <Chip
-            color="primary"
-            size="small"
-            variant="outlined"
-            label={option}
-            {...getTagProps({ index })}
+          color="primary"
+          size="small"
+          variant="outlined"
+          label={option}
+          {...getTagProps({ index })}
+          key={'chip' + option + index}
           />
         ))
       }
