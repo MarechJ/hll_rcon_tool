@@ -72,6 +72,19 @@ export const columns = [
     },
   },
   {
+    id: "rank",
+    header: SortableHeader("🥇"),
+    accessorKey: "index",
+    cell: (row) => {
+      const index = row.table.getSortedRowModel()
+        .rows.findIndex((r) => r.id === row.row.id);
+      return index + 1;
+    },
+    meta: {
+      variant: "icon",
+    },
+  },
+  {
     id: "online-status",
     header: SortableHeader("Status"),
     accessorKey: "is_online",
