@@ -1,9 +1,10 @@
 import { Stack, TextField, useTheme } from "@mui/material";
 import { ControlledTextInput } from "@/components/form/core/ControlledTextInput";
-import EmojiPicker from "@emoji-mart/react";
-import emojis from "@emoji-mart/data";
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { Controller } from "react-hook-form";
+import emojiData from "@emoji-mart/data/sets/15/twitter.json";
+const EmojiPicker = lazy(() => import("@emoji-mart/react"));
+import LushEmojiPicker, { EmojiStyle } from 'emoji-picker-react';
 
 export const AddFlagFormFields = ({ control, errors, setValue, ...props }) => {
   const theme = useTheme();
@@ -17,11 +18,6 @@ export const AddFlagFormFields = ({ control, errors, setValue, ...props }) => {
 
   return (
     <Stack alignContent={"center"} spacing={2}>
-      <style>
-        {`em-emoji-picker {
-        width: 100%
-      }`}
-      </style>
       <Stack direction={"row"} spacing={1}>
         <Controller
           defaultValue={""}
@@ -57,19 +53,21 @@ export const AddFlagFormFields = ({ control, errors, setValue, ...props }) => {
           defaultValue={""}
         />
       </Stack>
-      <EmojiPicker
-        style={{ border: "1px solid red" }}
-        dynamicWidth={true}
-        perLine={8}
-        theme={theme.palette.mode}
-        data={emojis}
-        onEmojiSelect={(emoji) =>
-          setValue("flag", emoji.native, {
-            shouldTouch: true,
-            shouldValidate: true,
-          })
-        }
-      />
+      <Suspense fallback={<div>Loading emoji picker...</div>}>
+        <LushEmojiPicker
+          width={"100%"}
+          emojiStyle={EmojiStyle.TWITTER}
+          emojiVersion="15"
+          skinTonesDisabled={true}
+          theme={theme.palette.mode}
+          onEmojiClick={({emoji}) =>
+            setValue("flag", emoji, {
+              shouldTouch: true,
+              shouldValidate: true,
+            })
+          }
+        />
+      </Suspense>
     </Stack>
   );
 };

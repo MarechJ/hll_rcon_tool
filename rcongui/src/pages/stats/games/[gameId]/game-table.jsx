@@ -57,6 +57,20 @@ const renderSubComponent = ({ row }) => {
     </Box>
   );
 
+  const players = Object.entries(row.original.most_killed || {}).map(
+      ([player, kills]) => (
+          <Box
+              key={player}
+              sx={{ display: "flex", justifyContent: "space-between", py: 0.5 }}
+          >
+              <Typography variant="body2">{player}:</Typography>
+              <Typography variant="body2" sx={{ ml: 2 }}>
+                  {kills}
+              </Typography>
+          </Box>
+      )
+  );
+
   const weapons = Object.entries(row.original.weapons || {}).map(
     ([weapon, kills]) => (
       <Box
@@ -115,8 +129,14 @@ const renderSubComponent = ({ row }) => {
       </Box>
 
       <Box
-        sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" }, gap: { xs: 2, md: 4 } }}
+        sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" }, gap: { xs: 2, md: 4 } }}
       >
+        <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                Kills by Player
+            </Typography>
+            {players}
+        </Box>
         <Box>
           <Typography variant="subtitle2" sx={{ mb: 1 }}>
             Kills by Weapon
