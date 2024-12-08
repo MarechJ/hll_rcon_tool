@@ -9,6 +9,8 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import { TablePagination } from "@/components/table/TablePagination";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import { Box, Typography } from "@mui/material";
+import DownloadIcon from "@mui/icons-material/Download";
+import {downloadGame} from "@/features/download-game";
 
 const renderSubComponent = ({ row }) => {
   // Create a custom component that renders the player's stats
@@ -187,6 +189,13 @@ const PlayersTable = ({ table }) => {
         />
         <TablePagination table={table} />
         <Divider flexItem orientation="vertical" />
+        <IconButton
+          size="small"
+          sx={{ p: 0.5, borderRadius: 0 }}
+          onClick={() => downloadGame(table.options.data)}
+        >
+          <DownloadIcon sx={{ fontSize: 16 }} />
+        </IconButton>
         <IconButton
           size="small"
           sx={{ p: 0.5, borderRadius: 0 }}
