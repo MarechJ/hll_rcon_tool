@@ -4,7 +4,7 @@ django-cors-headers==4.6.0
 redis==5.2.0
 sqlalchemy==2.0.36
 channels==4.2.0
-channels-redis==4.2.0
+channels-redis==4.2.1
 orjson==3.10.12
 simplejson==3.19.3
 psycopg2-binary
