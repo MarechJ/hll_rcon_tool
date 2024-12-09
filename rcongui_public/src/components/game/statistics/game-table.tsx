@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 import { Player } from '@/types/player'
 import DebouncedInput from '@/components/debounced-input'
+import { useTranslation } from 'react-i18next'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -49,6 +50,8 @@ export function DataTable<TData extends Player, TValue>({ columns, data }: DataT
     },
   })
 
+  const { t } = useTranslation('game')
+
   return (
     <div className="border w-full divide-y">
       <div className="flex flex-row justify-between items-center p-2">
@@ -56,12 +59,12 @@ export function DataTable<TData extends Player, TValue>({ columns, data }: DataT
           {table.getColumn('is_online') && (
             <Select onValueChange={(value) => table.getColumn('is_online')?.setFilterValue(value)}>
               <SelectTrigger className="w-24">
-                <SelectValue placeholder="Status" />
+                <SelectValue placeholder={t('playersTable.status')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="online">Online</SelectItem>
-                <SelectItem value="offline">Offline</SelectItem>
+                <SelectItem value="all">{t('onlineStatusFilter.all')}</SelectItem>
+                <SelectItem value="online">{t('onlineStatusFilter.online')}</SelectItem>
+                <SelectItem value="offline">{t('onlineStatusFilter.offline')}</SelectItem>
               </SelectContent>
             </Select>
           )}
@@ -71,7 +74,7 @@ export function DataTable<TData extends Player, TValue>({ columns, data }: DataT
               onChange={(value) => {
                 table.getColumn('player')?.setFilterValue(value)
               }}
-              placeholder={`Search player...`}
+              placeholder={`${t('searchPlayer')}...`}
               type="text"
               value={(table.getColumn('player')?.getFilterValue() ?? '') as string}
             />

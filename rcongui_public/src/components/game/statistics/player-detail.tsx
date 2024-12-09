@@ -15,11 +15,13 @@ import { Status } from '@/components/game/statistics/player-status'
 import { getSteamProfileUrl, getXboxProfileUrl, isPlayerWithStatus, isSteamPlayer } from './player/utils'
 import { Gamepad2Icon } from 'lucide-react'
 import PlayerGameDetail from './player'
+import { useTranslation } from 'react-i18next'
 
 export function NoPlayerGameDetail() {
+  const { t } = useTranslation('game')
   return (
     <div className="w-full px-10 py-5 text-center border lg:border-l-0 lg:sticky lg:top-14">
-      <div className="grid items-center border border-dashed w-full h-40 text-2xl">SELECT A PLAYER</div>
+      <div className="grid items-center border border-dashed w-full h-40 text-2xl">{t('selectPlayer')}</div>
     </div>
   )
 }
@@ -33,6 +35,7 @@ export function MobilePlayerGameDetail({
   setOpen: (open: boolean) => void
   player: Player | PlayerWithStatus
 }) {
+  const { t } = useTranslation('translation')
   return (
     <Drawer open={open} onOpenChange={(open) => setOpen(open)}>
       <DrawerContent className="max-h-[75vh]">
@@ -69,7 +72,7 @@ export function MobilePlayerGameDetail({
           <DrawerFooter>
             <DrawerClose asChild>
               <Button variant="outline" onClick={() => setOpen(false)}>
-                Close
+                {t('close')}
               </Button>
             </DrawerClose>
           </DrawerFooter>

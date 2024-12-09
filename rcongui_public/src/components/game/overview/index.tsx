@@ -28,7 +28,7 @@ export default function GameOverview({
   alliesCount,
   score,
 }: GameOverviewProps) {
-  const { t } = useTranslation('translation')
+  const { t } = useTranslation('game')
 
   return (
     <div className="flex flex-col w-full pt-1">

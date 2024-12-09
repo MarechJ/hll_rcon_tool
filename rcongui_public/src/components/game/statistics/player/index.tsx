@@ -13,6 +13,7 @@ import { IconStatistic } from '../icon'
 import { columns as faceoffColumns } from '../faceoff-columns'
 import { deathByColumns, killByColumns } from '../weapons-columns'
 import { mergeKillsDeaths } from '../utils'
+import { useTranslation } from 'react-i18next'
 
 export default function PlayerGameDetail({
   player,
@@ -21,6 +22,7 @@ export default function PlayerGameDetail({
   player: Player | PlayerWithStatus
   isMobile?: boolean
 }) {
+  const { t } = useTranslation('game')
   const killsBy = player
     ? Object.entries(player.weapons).map((entry) => ({
         name: entry[0],
@@ -73,7 +75,7 @@ export default function PlayerGameDetail({
                   src={point.icon}
                   width={12}
                   height={12}
-                  alt={point.label}
+                  alt={t(point.transKey)}
                   className="mb-[2px] bg-primary dark:bg-transparent"
                 />
                 <div className="text-sm">{player[point.key]}</div>
@@ -84,19 +86,19 @@ export default function PlayerGameDetail({
             {scores.map((score) => {
               const Icon = score.icon
               return (
-                <IconStatistic key={score.key} stat={player[score.key]} text={score.label}>
+                <IconStatistic key={score.key} stat={player[score.key]} text={t(score.transKey)}>
                   <Icon size={16} />
                 </IconStatistic>
               )
             })}
           </section>
-          <CollapsibleSection name="Encounters" defaultOpen={true}>
+          <CollapsibleSection name={t('playerStats.encounters')} defaultOpen={true}>
             <SimpleTable columns={faceoffColumns} data={mergeKillsDeaths(player)} />
           </CollapsibleSection>
-          <CollapsibleSection name="Kills by">
+          <CollapsibleSection name={t('playerStats.killsByWeapon')}>
             <SimpleTable columns={killByColumns} data={killsBy} />
           </CollapsibleSection>
-          <CollapsibleSection name="Deaths by">
+          <CollapsibleSection name={t('playerStats.deathsByWeapon')}>
             <SimpleTable columns={deathByColumns} data={deathsBy} />
           </CollapsibleSection>
         </div>

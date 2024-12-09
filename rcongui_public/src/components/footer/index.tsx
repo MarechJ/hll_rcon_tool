@@ -1,3 +1,4 @@
+import siteConfig from '@/lib/siteConfig'
 import { useTranslation } from 'react-i18next'
 
 export default function Footer() {
@@ -15,7 +16,7 @@ export default function Footer() {
               target="_blank"
               rel="noreferrer"
             >
-              CRCON Team
+              {siteConfig.teamName}
             </a>
           </div>
         </div>

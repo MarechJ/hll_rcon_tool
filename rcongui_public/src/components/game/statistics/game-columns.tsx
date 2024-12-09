@@ -6,6 +6,7 @@ import { IconHeader as Header } from './column-header'
 import { Status } from './player-status'
 import { isPlayerWithStatus } from './player/utils'
 import { Button } from '@/components/ui/button'
+import { useTranslation } from 'react-i18next'
 
 const threeDigitsWidth = 40
 const fourDigitsWidth = 50
@@ -14,86 +15,107 @@ const pointColumns: ColumnDef<Player | PlayerWithStatus>[] = [
   {
     accessorKey: 'kills',
     size: threeDigitsWidth,
-    header: ({ column }) => (
-      <Header
-        src={'/roles/infantry.png'}
-        desc={'Kills'}
-        onClick={() => {
-          column.toggleSorting(column.getIsSorted() === 'asc')
+    header: ({ column }) => {
+      const { t } = useTranslation('game')
+      return (
+        <Header
+          src={'/roles/infantry.png'}
+          desc={t('playersTable.kills')}
+          onClick={() => {
+            column.toggleSorting(column.getIsSorted() === 'asc')
         }}
-      />
-    ),
+        />
+      )
+    },
   },
   {
     accessorKey: 'deaths',
     size: fourDigitsWidth,
-    header: ({ column }) => (
-      <Header
-        src={'/roles/medic.png'}
-        desc={'Deaths'}
-        onClick={() => {
-          column.toggleSorting(column.getIsSorted() === 'asc')
-        }}
-      />
-    ),
+    header: ({ column }) => {
+      const { t } = useTranslation('game')
+      return (
+        <Header
+          src={'/roles/medic.png'}
+          desc={t('playersTable.deaths')}
+          onClick={() => {
+            column.toggleSorting(column.getIsSorted() === 'asc')
+          }}
+        />
+      )
+    },
   },
   {
     accessorKey: 'combat',
     size: fourDigitsWidth,
-    header: ({ column }) => (
-      <Header
-        src={'/roles/score_combat.png'}
-        desc={'Combat'}
+    header: ({ column }) => {
+      const { t } = useTranslation('game')
+      return (
+        <Header
+          src={'/roles/score_combat.png'}
+          desc={t('playersTable.combat')}
         onClick={() => {
-          column.toggleSorting(column.getIsSorted() === 'asc')
-        }}
-      />
-    ),
+            column.toggleSorting(column.getIsSorted() === 'asc')
+          }}
+        />
+      )
+    },
   },
   {
     accessorKey: 'offense',
     size: fourDigitsWidth,
-    header: ({ column }) => (
-      <Header
-        src={'/roles/score_offensive.png'}
-        desc={'Offensive'}
-        onClick={() => {
+    header: ({ column }) => {
+      const { t } = useTranslation('game')
+      return (
+        <Header
+          src={'/roles/score_offensive.png'}
+          desc={t('playersTable.offense')}
+          onClick={() => {
           column.toggleSorting(column.getIsSorted() === 'asc')
         }}
-      />
-    ),
+        />
+      )
+    },
   },
   {
     accessorKey: 'defense',
     size: fourDigitsWidth,
-    header: ({ column }) => (
-      <Header
-        src={'/roles/score_defensive.png'}
-        desc={'Defensive'}
-        onClick={() => {
-          column.toggleSorting(column.getIsSorted() === 'asc')
-        }}
-      />
-    ),
+    header: ({ column }) => {
+      const { t } = useTranslation('game')
+      return (
+        <Header
+          src={'/roles/score_defensive.png'}
+          desc={t('playersTable.defense')}
+          onClick={() => {
+            column.toggleSorting(column.getIsSorted() === 'asc')
+          }}
+        />
+      )
+    },
   },
   {
     accessorKey: 'support',
     size: fourDigitsWidth,
-    header: ({ column }) => (
-      <Header
-        src={'/roles/score_support.png'}
-        desc={'Support'}
-        onClick={() => {
-          column.toggleSorting(column.getIsSorted() === 'asc')
-        }}
-      />
-    ),
+    header: ({ column }) => {
+      const { t } = useTranslation('game')
+      return (
+        <Header
+          src={'/roles/score_support.png'}
+          desc={t('playersTable.support')}
+          onClick={() => {
+            column.toggleSorting(column.getIsSorted() === 'asc')
+          }}
+        />
+      )
+    },
   },
 ]
 
 const playerColumn = (handlePlayerClick: (id: string) => void): ColumnDef<Player | PlayerWithStatus> => ({
   accessorKey: 'player',
-  header: () => <div>Player</div>,
+  header: () => {
+    const { t } = useTranslation('game')
+    return <div>{t('playersTable.player')}</div>
+  },
   cell: ({ row }) => {
     const name = String(row.getValue('player'))
     const id = String(row.original.player_id)
@@ -119,7 +141,10 @@ const statusColumn: ColumnDef<Player | PlayerWithStatus> = {
   meta: {
     filterVariant: 'select',
   },
-  header: () => <div className="sr-only w-4">Status</div>,
+  header: () => {
+    const { t } = useTranslation('game')
+    return <div className="sr-only w-4">{t('playersTable.status')}</div>
+  },
   size: 20,
   filterFn: (row, columnId, filterValue) => {
     if (!filterValue || filterValue === 'all') {

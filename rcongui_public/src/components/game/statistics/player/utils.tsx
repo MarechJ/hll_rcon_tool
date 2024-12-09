@@ -2,19 +2,19 @@ import { Player, PlayerWithStatus } from '@/types/player'
 import { ScaleIcon, ZapIcon, SkullIcon, HeartCrackIcon } from 'lucide-react'
 
 export const points = [
-  { key: 'kills', label: 'K', icon: '/roles/infantry.png' },
-  { key: 'deaths', label: 'D', icon: '/roles/medic.png' },
-  { key: 'combat', label: 'C', icon: '/roles/score_combat.png' },
-  { key: 'offense', label: 'O', icon: '/roles/score_offensive.png' },
-  { key: 'defense', label: 'D', icon: '/roles/score_defensive.png' },
-  { key: 'support', label: 'S', icon: '/roles/score_support.png' },
+  { key: 'kills', label: 'K', icon: '/roles/infantry.png', transKey: 'playersTable.kills' },
+  { key: 'deaths', label: 'D', icon: '/roles/medic.png', transKey: 'playersTable.deaths' },
+  { key: 'combat', label: 'C', icon: '/roles/score_combat.png', transKey: 'playersTable.combat' },
+  { key: 'offense', label: 'O', icon: '/roles/score_offensive.png', transKey: 'playersTable.offense' },
+  { key: 'defense', label: 'D', icon: '/roles/score_defensive.png', transKey: 'playersTable.defense' },
+  { key: 'support', label: 'S', icon: '/roles/score_support.png', transKey: 'playersTable.support' },
 ] as const
 
 export const scores = [
-  { key: 'kill_death_ratio', label: 'K/D', icon: ScaleIcon },
-  { key: 'kills_streak', label: 'Killstreak', icon: ZapIcon },
-  { key: 'deaths_without_kill_streak', label: 'Deathstreak', icon: SkullIcon },
-  { key: 'teamkills', label: 'Teamkills', icon: HeartCrackIcon },
+  { key: 'kill_death_ratio', label: 'K/D', icon: ScaleIcon, transKey: 'score.k/d' },
+  { key: 'kills_streak', label: 'Killstreak', icon: ZapIcon, transKey: 'score.killstreak' },
+  { key: 'deaths_without_kill_streak', label: 'Deathstreak', icon: SkullIcon, transKey: 'score.deathstreak' },
+  { key: 'teamkills', label: 'Teamkills', icon: HeartCrackIcon, transKey: 'score.teamkills' },
 ] as const
 
 export function isSteamPlayer(player: Player) {

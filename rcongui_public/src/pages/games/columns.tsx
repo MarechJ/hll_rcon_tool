@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom'
 import { getGameDuration } from './utils'
 import { ScoreboardMap } from '@/types/api'
 import { MapLayer } from '@/types/mapLayer'
+import { useTranslation } from 'react-i18next'
 
 dayjs.extend(LocalizedFormat)
 
@@ -27,7 +28,10 @@ export const columns: ColumnDef<ScoreboardMap>[] = [
     },
   },
   {
-    header: 'Map',
+    header: () => {
+      const { t } = useTranslation('game')
+      return t('matchTable.map')
+    },
     id: 'map',
     accessorKey: 'map',
     minSize: 200,
@@ -36,6 +40,9 @@ export const columns: ColumnDef<ScoreboardMap>[] = [
       const gameMap = cell.getValue() as MapLayer
       const size = 60
       const ratio = 9 / 16
+
+      const { t } = useTranslation('game')
+
       return (
         <div className="flex flex-row items-center gap-2 w-max">
           <img src={'/maps/icons/' + gameMap.image_name} width={size} height={size * ratio} alt="" />
@@ -43,7 +50,7 @@ export const columns: ColumnDef<ScoreboardMap>[] = [
             <div className="pl-1">{gameMap.map.pretty_name}</div>
             <div className="divide-x-2 text-sm text-muted-foreground">
               <span className="px-1">{gameMap.game_mode[0].toUpperCase() + gameMap.game_mode.slice(1)}</span>
-              <span className="pl-1">{gameMap.environment}</span>
+              <span className="pl-1">{t(`weather.${gameMap.environment}`)}</span>
             </div>
           </div>
         </div>
@@ -51,17 +58,26 @@ export const columns: ColumnDef<ScoreboardMap>[] = [
     },
   },
   {
-    header: 'Result',
+    header: () => {
+      const { t } = useTranslation('game')
+      return t('matchTable.result')
+    },
     id: 'result',
     accessorFn: (row) => `${row.result?.allied ?? '?'} - ${row.result?.axis ?? '?'}`,
   },
   {
-    header: 'Start',
+    header: () => {
+      const { t } = useTranslation('game')
+      return t('matchTable.start')
+    },
     accessorKey: 'start',
     cell: ({ cell }) => dayjs(cell.getValue() as string).format('L LT'),
   },
   {
-    header: 'Duration',
+    header: () => {
+      const { t } = useTranslation('game')
+      return t('matchTable.duration')
+    },
     accessorKey: 'duration',
     cell: ({ row }) => getGameDuration(row.original.start, row.original.end),
   },

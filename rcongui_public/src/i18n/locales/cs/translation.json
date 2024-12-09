@@ -2,10 +2,25 @@
   "title": "Hell Let Loose Stats",
   "now": "Nyní",
   "up-next": "Další",
-  "player": "Hráč",
-  "players": "Hráči",
-  "allies": "Spojenci",
-  "axis": "Osy",
+  "open": "Otevřít",
+  "close": "Zavřít",
+  "toggle": "Přepnout",
+  "toggleTheme": "Přepnout téma",
   "get-started": "Začít",
-  "made-by": "Vytvořil"
+  "made-by": "Vytvořil",
+  "themeMode": {
+    "light": "Světlý",
+    "dark": "Tmavý",
+    "system": "Systém"
+  },
+  "pagination": {
+    "previous": {
+      "text": "Předchozí",
+      "label": "Přejít na předchozí stranu"
+    },
+    "next": {
+      "text": "Následující",
+      "label": "Přejít na následující stranu"
+    }
+  }
 }

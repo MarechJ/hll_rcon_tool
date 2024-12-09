@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input'
 import { CheckIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
+import { useTranslation } from 'react-i18next'
 
 type MatchPaginationProps = {
   page: number
@@ -24,7 +25,7 @@ type MatchPaginationProps = {
 export default function MatchPagination({ page, maxPages, ...props }: MatchPaginationProps) {
   const [insertCustom, setInsertCustom] = useState(false)
   const [customPageValue, setCustomPageValue] = useState(page)
-
+  const { t } = useTranslation('translation')
   const { className, ...rest } = props
 
   const handleConfirmCustomClick = () => {
@@ -46,7 +47,11 @@ export default function MatchPagination({ page, maxPages, ...props }: MatchPagin
       <PaginationContent>
         {page > 1 && (
           <PaginationItem>
-            <PaginationPrevious to={`?page=${page - 1}`} />
+            <PaginationPrevious
+              to={`?page=${page - 1}`}
+              text={t('pagination.previous.text')}
+              label={t('pagination.previous.label')}
+            />
           </PaginationItem>
         )}
         <PaginationItem>
@@ -99,7 +104,11 @@ export default function MatchPagination({ page, maxPages, ...props }: MatchPagin
         </PaginationItem>
         {page < maxPages && (
           <PaginationItem>
-            <PaginationNext to={`?page=${page + 1}`} />
+            <PaginationNext
+              to={`?page=${page + 1}`}
+              text={t('pagination.next.text')}
+              label={t('pagination.next.label')}
+            />
           </PaginationItem>
         )}
       </PaginationContent>

@@ -2,6 +2,7 @@
 
 import { ColumnDef } from '@tanstack/react-table'
 import { Header } from './column-header'
+import { useTranslation } from 'react-i18next'
 
 const nColSize = 40
 
@@ -13,19 +14,25 @@ type WeaponKillCount = {
 export const killByColumns: ColumnDef<WeaponKillCount>[] = [
   {
     accessorKey: 'name',
-    header: 'Weapon',
+    header: () => {
+      const { t } = useTranslation('game')
+      return t('playerStats.weapon')
+    },
   },
   {
     accessorKey: 'count',
-    header: ({ column }) => (
-      <Header
-        header={'K'}
-        desc={'Kills'}
-        onClick={() => {
-          column.toggleSorting(column.getIsSorted() === 'asc')
-        }}
-      />
-    ),
+    header: ({ column }) => {
+      const { t } = useTranslation('game')
+      return (
+        <Header
+          header={'K'}
+          desc={t('playersTable.kills')}
+          onClick={() => {
+            column.toggleSorting(column.getIsSorted() === 'asc')
+          }}
+        />
+      )
+    },
     cell: ({ cell }) => <div className="text-center px-1">{String(cell.getValue())}</div>,
     size: nColSize,
   },
@@ -34,19 +41,25 @@ export const killByColumns: ColumnDef<WeaponKillCount>[] = [
 export const deathByColumns: ColumnDef<WeaponKillCount>[] = [
   {
     accessorKey: 'name',
-    header: 'Weapon',
+    header: () => {
+      const { t } = useTranslation('game')
+      return t('playerStats.weapon')
+    },
   },
   {
     accessorKey: 'count',
-    header: ({ column }) => (
-      <Header
-        header={'D'}
-        desc={'Deaths'}
-        onClick={() => {
-          column.toggleSorting(column.getIsSorted() === 'asc')
-        }}
-      />
-    ),
+    header: ({ column }) => {
+      const { t } = useTranslation('game')
+      return (
+        <Header
+          header={'D'}
+          desc={t('playersTable.deaths')}
+          onClick={() => {
+            column.toggleSorting(column.getIsSorted() === 'asc')
+          }}
+        />
+      )
+    },
     cell: ({ cell }) => <div className="text-center px-1">{String(cell.getValue())}</div>,
     size: nColSize,
   },

@@ -2,13 +2,9 @@ import type resources from '../types/resources'
 
 type NavigationKeys = keyof (typeof resources)['navigation']
 
-type SiteConfig = {
-  crconGitUrl: string
-  navLinks: { href: string; labelKey: NavigationKeys; disabled?: boolean }[]
-}
-
-const siteConfig: SiteConfig = {
+const siteConfig = {
   crconGitUrl: 'https://github.com/MarechJ/hll_rcon_tool',
+  teamName: 'CRCON Team',
   navLinks: [
     {
       href: '/',
@@ -18,7 +14,7 @@ const siteConfig: SiteConfig = {
       href: '/games',
       labelKey: 'gameHistory',
     },
-  ],
+  ] as { href: string; labelKey: NavigationKeys; disabled?: boolean }[],
 }
 
 export default siteConfig
