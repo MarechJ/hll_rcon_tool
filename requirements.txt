@@ -8,7 +8,7 @@ channels-redis==4.2.1
 orjson==3.10.12
 simplejson==3.19.3
 psycopg2-binary
-sentry-sdk[django]==2.19.0
+sentry-sdk[django]==2.19.2
 python-dateutil==2.9.0.post0
 discord-webhook[async]
 requests==2.32.3
