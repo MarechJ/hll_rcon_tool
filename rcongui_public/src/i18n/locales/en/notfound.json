@@ -1,5 +1,6 @@
 {
   "oops": "Oops!",
   "title": "Sorry, an unexpected error has occurred.",
-  "backtohomepage": "Back to home page"
+  "backtohomepage": "Back to home page",
+  "connectionError": "Could not connect to the server. Please try again later."
 }

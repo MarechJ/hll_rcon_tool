@@ -3,6 +3,9 @@ import { createBrowserRouter, RouteObject } from 'react-router-dom'
 import ErrorPage from './components/error-page'
 import HomePage from './pages/home'
 import Layout from './components/layout'
+import GamesLayout from './pages/games/layout'
+import GamesList from './pages/games'
+import GameDetail from './pages/games/[id]'
 
 export const routerObjects: RouteObject[] = [
   {
@@ -12,7 +15,23 @@ export const routerObjects: RouteObject[] = [
     children: [
       {
         index: true,
+        errorElement: <ErrorPage />,
         element: <HomePage />,
+      },
+      {
+        path: '/games',
+        element: <GamesLayout />,
+        errorElement: <ErrorPage />,
+        children: [
+          {
+            index: true,
+            element: <GamesList />,
+          },
+          {
+            path: ':id',
+            element: <GameDetail />,
+          },
+        ],
       },
     ],
   },

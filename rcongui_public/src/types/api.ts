@@ -1,48 +1,16 @@
+import { MapLayer } from './mapLayer'
 import { Player } from './player'
 
 type UNIX_Timestamp = number
 type ISO_8601_Timestamp = string
 type TIME_SECONDS = number
-type Team = 'allies' | 'axis'
-type Nation = 'us' | 'gb' | 'ger' | 'rus'
-type MatchMode = 'warfare' | 'offensive' | 'skirmish' | 'control'
-type MapEnvironment = 'day' | 'night' | 'dusk' | 'rain'
-type MapTeam = {
-  name: Nation
-  team: Team
-}
-export type MatchScore = {
-  allies: number
-  axis: number
-}
 
-type MatchMap = {
-  id: string
-  map: Map
-  game_mode: MatchMode
-  attackers: Team | null
-  environment: MapEnvironment
-  pretty_name: string
-  image_name: string
-}
-
-type Map = {
-  id: string
-  name: string
-  tag: string
-  pretty_name: string
-  shortname: string
-  allies: MapTeam
-  axis: MapTeam
-  orientation: 'horizontal' | 'vertical'
-}
-
-type ScoreboardMap = {
+export type ScoreboardMap = {
   id: number
   creation_time: string
   start: ISO_8601_Timestamp
   end: ISO_8601_Timestamp
-  map: MatchMap
+  map: MapLayer
   result: {
     allied: number
     axis: number
@@ -53,7 +21,7 @@ type ScoreboardMap = {
 
 // TODO
 // Fix after https://github.com/MarechJ/hll_rcon_tool/issues/657 issue has been resolved
-type ScoreboardMapStats = Omit<ScoreboardMap, 'player_stats'> & {
+export type ScoreboardMapStats = Omit<ScoreboardMap, 'player_stats'> & {
   player_stats: Player[]
   // map_name: string;
 }
@@ -92,16 +60,16 @@ export type PublicInfo = {
   }
   current_map: {
     id: string
-    map: MatchMap
+    map: MapLayer
     start: UNIX_Timestamp
   }
   next_map: {
     id: string
-    map: MatchMap
+    map: MapLayer
     start: UNIX_Timestamp
   }
   vote_status: {
-    map: MatchMap
+    map: MapLayer
     // TODO fix voters type
     voters: string[]
   }[]

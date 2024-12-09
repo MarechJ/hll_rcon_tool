@@ -15,7 +15,7 @@ const siteConfig: SiteConfig = {
       labelKey: 'currentGame',
     },
     {
-      href: '/history',
+      href: '/games',
       labelKey: 'gameHistory',
     },
   ],

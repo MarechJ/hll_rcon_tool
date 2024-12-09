@@ -1,5 +1,7 @@
 {
   "oops": "Ups!",
   "title": "Je nám líto, ale nastala neočekávaná chyba.",
-  "backtohomepage": "Zpět na hlavní stránku"
+  "backtohomepage": "Zpět na hlavní stránku",
+  "connectionError": "Nepodařilo se nám se připojit k serveru. Zkuste to znovu později."
 }
+

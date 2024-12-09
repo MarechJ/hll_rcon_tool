@@ -1,0 +1,4 @@
+{
+    "gameNotFound": "Game {{ id }} not found",
+    "loading": "Loading..."
+}

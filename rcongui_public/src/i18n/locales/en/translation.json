@@ -1,13 +1,11 @@
 {
   "title": "Hell Let Loose Stats",
-  "features": "Features",
-  "modernstack": "Modern and efficient stack",
-  "modernstack-desc": "Built with Vite, React, Tailwind CSS, Shadcnui, and more",
-  "i18nsupport": "i18n support out of the box",
-  "i18nsupport-desc": "Ship your product with different languages natively",
-  "linters": "Lint all code at save",
-  "linters-desc": "Built with ESLint, Prettier, Stylelint, and Commitlint",
-  "hero-title": "Building Apps with the best DX we love",
+  "now": "Now",
+  "up-next": "Up Next",
+  "player": "Player",
+  "players": "Players",
+  "allies": "Allies",
+  "axis": "Axis",
   "get-started": "Get Started",
   "made-by": "Made by"
 }

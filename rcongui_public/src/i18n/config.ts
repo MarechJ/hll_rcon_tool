@@ -16,7 +16,7 @@ i18next
     }),
   )
   .init({
-    debug: true,
+    debug: import.meta.env.DEV,
     fallbackLng: {
       'de-CH': ['fr', 'it'],
       default: ['en'],
