@@ -290,16 +290,16 @@ class LevelThresholdsAutomod:
 
         with self.watch_state(team, squad_name) as watch_status:
 
-
             author = AUTOMOD_USERNAME + ("-DryRun" if self.config.dry_run else "")
 
             for player in squad["players"]:
+                profile = player.get("profile", {})
                 aplayer = PunishPlayer(
                     player_id=player["player_id"],
                     name=player["name"],
                     squad=squad_name,
                     team=team,
-                    flags=player.get("profile", {}).get("flags", []),
+                    flags=profile.get("flags") if profile else [],
                     role=player.get("role"),
                     lvl=int(player.get("level")),
                     details=PunishDetails(
@@ -340,12 +340,9 @@ class LevelThresholdsAutomod:
 
                 # Server max level threshold check
                 max_level = self.config.max_level
-                if (
-                    aplayer.lvl > max_level > 0
-                    and not any(
-                        flag_entry.flag in self.config.whitelist_flags
-                        for flag_entry in aplayer.flags
-                    )
+                if aplayer.lvl > max_level > 0 and not any(
+                    flag_entry.flag in self.config.whitelist_flags
+                    for flag_entry in aplayer.flags
                 ):
                     message = self.config.max_level_message
                     try:
