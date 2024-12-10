@@ -1,45 +1,23 @@
 import dayjs from 'dayjs'
 import localizedFormat from 'dayjs/plugin/localizedFormat'
 import MapFigure from '@/components/game/map-figure'
-import { useGameDetail } from '@/lib/queries/scoreboard-maps'
+import { gameQueries } from '@/lib/queries/scoreboard-maps'
 import { getGameDuration } from '../utils'
 import GameOverview from '@/components/game/overview'
 import GameStats from '@/components/game/statistics/game-stats'
 import { getCompletedGameColumns } from '@/components/game/statistics/game-columns'
-import { useParams } from 'react-router-dom'
+import { useLoaderData } from 'react-router-dom'
 import { Helmet } from 'react-helmet'
 import { useTranslation } from 'react-i18next'
+import { clientLoader } from './clientLoader'
+import { QueryErrorResetBoundary, useSuspenseQuery } from '@tanstack/react-query'
+import { ErrorBoundary } from 'react-error-boundary'
+import { ScoreboardMapStats } from '@/types/api'
 
 dayjs.extend(localizedFormat)
 
-export default function GameDetail() {
-  const { id: gameId } = useParams()
+const GameDetail = ({ game }: { game: ScoreboardMapStats }) => {
   const { t: tNavigation } = useTranslation('navigation')
-  const { t: tGame } = useTranslation('game')
-
-  const [game, { isLoading, isError }] = useGameDetail(Number(gameId), !!gameId && !Number.isNaN(Number(gameId)))
-
-  if (isLoading) {
-    return (
-      <>
-        <Helmet>
-          <title>{`${tNavigation('gameDetail')} - ${gameId} - ${tGame('loading')}`}</title>
-        </Helmet>
-        <div>{tGame('loading')}</div>
-      </>
-    )
-  }
-
-  if (!game || isError) {
-    return (
-      <>
-        <Helmet>
-          <title>{`${tNavigation('gameDetail')} - ${gameId} - ${tGame('gameNotFound', { id: gameId })}`}</title>
-        </Helmet>
-        <h1>{tGame('gameNotFound', { id: gameId })}</h1>
-      </>
-    )
-  }
 
   const gameOverviewProps = {
     map: game.map,
@@ -72,5 +50,32 @@ export default function GameDetail() {
       </div>
       <GameStats stats={game.player_stats} getColumns={getCompletedGameColumns} />
     </>
+  )
+
+}
+
+
+
+export default function Page() {
+  const { gameId } = useLoaderData() as Awaited<ReturnType<ReturnType<typeof clientLoader>>>
+  const { data: game } = useSuspenseQuery(gameQueries.detail(gameId))
+
+  return (
+    <QueryErrorResetBoundary>
+      {({ reset }) => (
+        <ErrorBoundary
+          fallbackRender={({ error, resetErrorBoundary }) => (
+            <div>
+              <p>An error occurred:</p>
+              <pre>{error.message}</pre>
+              <button onClick={resetErrorBoundary}>Try again</button>
+            </div>
+          )}
+          onReset={reset}
+        >
+          <GameDetail game={game} />
+        </ErrorBoundary>
+      )}
+    </QueryErrorResetBoundary>
   )
 }

@@ -1,20 +1,39 @@
-import MatchesList from './list'
-import { useSearchParams } from 'react-router-dom'
+import GamesList from './list'
+import { useLoaderData } from 'react-router-dom'
 import { Helmet } from 'react-helmet'
 import { useTranslation } from 'react-i18next'
+import { QueryErrorResetBoundary, useSuspenseQuery } from '@tanstack/react-query'
+import { clientLoader } from './clientLoader'
+import { gameQueries } from '@/lib/queries/scoreboard-maps'
+import { ErrorBoundary } from 'react-error-boundary'
 
-export default function MatchesPage() {
+export default function GamesPage() {
+  const { page, pageSize } = useLoaderData() as Awaited<ReturnType<ReturnType<typeof clientLoader>>>
+  const { data: games } = useSuspenseQuery(gameQueries.list(page, pageSize))
   const { t } = useTranslation('navigation')
-  const [searchParams] = useSearchParams()
-  const page = Number(searchParams.get('page') ?? 1)
-  const pageSize = Number(searchParams.get('page_size') ?? 50)
+
+  console.log(page, pageSize)
 
   return (
     <>
       <Helmet>
         <title>{t('gameHistory')}</title>
       </Helmet>
-      <MatchesList page={page} pageSize={pageSize} />
+      <QueryErrorResetBoundary>
+        {({ reset }) => (
+          <ErrorBoundary
+            fallbackRender={({ error, resetErrorBoundary }) => (
+              <div>
+                <p>An error occurred:</p>
+                <pre>{error.message}</pre>
+                <button onClick={resetErrorBoundary}>Try again</button>
+              </div>
+            )}
+          >
+            <GamesList games={games} page={page} pageSize={pageSize} />
+          </ErrorBoundary>
+        )}
+      </QueryErrorResetBoundary>
     </>
   )
 }

@@ -2,11 +2,12 @@ import { Outlet } from 'react-router-dom'
 import Footer from '../footer'
 import { Header } from '../header'
 import { Helmet } from 'react-helmet'
-import { usePublicInfo } from '@/lib/queries/public-info'
+import { publicInfoQueryOptions } from '@/lib/queries/public-info'
 import { useTranslation } from 'react-i18next'
+import { useSuspenseQuery } from '@tanstack/react-query'
 
 export default function Layout() {
-  const [publicInfo] = usePublicInfo()
+  const { data: publicInfo } = useSuspenseQuery(publicInfoQueryOptions)
   const { t } = useTranslation('translation')
 
   return (

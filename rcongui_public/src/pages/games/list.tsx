@@ -4,36 +4,36 @@ import dayjs from 'dayjs'
 import { columns } from './columns'
 import { DataTable as MatchTable } from './table'
 import MatchPagination from './pagination'
-import { ScoreboardMap } from '@/types/api'
-import { useGames } from '@/lib/queries/scoreboard-maps'
-import { Suspense } from 'react'
+import { ScoreboardMap, ScoreboardMaps } from '@/types/api'
 
-export function validMatch(match: ScoreboardMap) {
-  const start = dayjs(match.start)
-  const end = dayjs(match.end)
+export function validGame(game: ScoreboardMap) {
+  const start = dayjs(game.start)
+  const end = dayjs(game.end)
   const diffMinutes = end.diff(start, 'minutes')
-  const isDraw = (match.result?.allied ?? 0) + (match.result?.axis ?? 0) === 4
+  const isDraw = (game.result?.allied ?? 0) + (game.result?.axis ?? 0) === 4
 
   return diffMinutes < 100 && diffMinutes > 9 && !isDraw
 }
 
-export default function MatchesList({ page, pageSize }: { page: number; pageSize: number }) {
-  const [games, { isLoading }] = useGames(page, pageSize)
-
-  if (isLoading || !games) return <div>Loading...</div>
-
+export default function GamesList({
+  games,
+  page,
+  pageSize,
+}: {
+  games: ScoreboardMaps
+  page: number
+  pageSize: number
+}) {
   const totalGames = games.total
   const maxPages = Math.ceil(totalGames / pageSize)
 
-  const filteredGames = games.maps.filter(validMatch)
+  const filteredGames = games.maps.filter(validGame)
 
   return (
     <>
-      <Suspense fallback={<div>Loading...</div>}>
-        <MatchPagination page={page} maxPages={maxPages} className="justify-end" />
-        <MatchTable data={filteredGames} columns={columns} />
-        <MatchPagination page={page} maxPages={maxPages} />
-      </Suspense>
+      <MatchPagination page={page} maxPages={maxPages} className="justify-end" />
+      <MatchTable data={filteredGames} columns={columns} />
+      <MatchPagination page={page} maxPages={maxPages} />
     </>
   )
 }
