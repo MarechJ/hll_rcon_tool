@@ -3,7 +3,7 @@
     "loading": "Načítání...",
     "selectPlayer": "Vyberte hráče",
     "searchPlayer": "Hledejte hráče",
-    "noPlayersFound": "Žádné hráče nebyly nalezeny",
+    "noPlayersFound": "Žádný hráč nebyl nalezen",
     "onlineStatusFilter": {
         "online": "Online",
         "offline": "Offline",
@@ -24,7 +24,7 @@
     "playersTable": {
         "player": "Hráč",
         "team": "Tým",
-        "kills": "Zabíjení",
+        "kills": "Zabítí",
         "deaths": "Umrtí",
         "combat": "Boj",
         "score": "Skóre",
@@ -48,7 +48,7 @@
         "start": "Začátek"
     },
     "playerStats": {
-        "killsByWeapon": "Zabíjení zbraní",
+        "killsByWeapon": "Zabítí zbraní",
         "deathsByWeapon": "Umrtí zbraní",
         "encounters": "Střety",
         "weapon": "Zbraň",
@@ -57,7 +57,7 @@
     "score": {
         "killstreak": "Killstreak",
         "deathstreak": "Deathstreak",
-        "teamkills": "Týmové zabíjení",
+        "teamkills": "Týmové zabítí",
         "k/d": "K/D"
     }
 }

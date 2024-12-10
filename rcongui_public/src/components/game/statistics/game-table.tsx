@@ -110,8 +110,9 @@ export function DataTable<TData extends Player, TValue>({ columns, data }: DataT
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
+              {/* +1 for the index column */}
+              <TableCell colSpan={columns.length + 1} className="h-24 text-center">
+                {t('noPlayersFound')}
               </TableCell>
             </TableRow>
           )}

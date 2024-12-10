@@ -32,7 +32,7 @@ export default function PlayerGameDetail({
   killsBy.sort((a, b) => b.count - a.count)
 
   const deathsBy = player
-    ? Object.entries(player.death_by_weapons).map((entry) => ({
+    ? Object.entries(player.death_by_weapons || {}).map((entry) => ({
         name: entry[0],
         count: entry[1],
       }))

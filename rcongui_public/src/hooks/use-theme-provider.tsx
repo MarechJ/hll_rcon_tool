@@ -1,4 +1,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
+import { Helmet } from 'react-helmet'
+
+enum ThemeColor {
+  LIGHT = '#ffffff',
+  DARK = '#292524',
+}
 
 type Theme = 'light' | 'dark' | 'system'
 
@@ -44,7 +50,14 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     setThemeState(newTheme)
   }
 
-  return <ThemeContext.Provider value={{ theme, setTheme }}>{children}</ThemeContext.Provider>
+  return (
+    <ThemeContext.Provider value={{ theme, setTheme }}>
+      <Helmet>
+        <meta name="theme-color" content={theme === 'dark' ? ThemeColor.DARK : ThemeColor.LIGHT} />
+      </Helmet>
+      {children}
+    </ThemeContext.Provider>
+  )
 }
 
 // Custom hook to access the theme context

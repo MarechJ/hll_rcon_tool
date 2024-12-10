@@ -111,7 +111,7 @@ export interface PlayerBase {
   most_killed: Record<string, number>
   death_by: Record<string, number>
   weapons: Record<Weapon, number>
-  death_by_weapons: Record<Weapon, number>
+  death_by_weapons: Record<Weapon, number> | null
 }
 
 // Live player interface with online status
