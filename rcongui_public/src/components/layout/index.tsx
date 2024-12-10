@@ -12,9 +12,9 @@ export default function Layout() {
   return (
     <>
       <Helmet defaultTitle={t('title')} titleTemplate={`%s | ${publicInfo?.name?.name ?? t('title')}`} />
-      <div className="relative flex min-h-screen flex-col">
+      <div className="relative flex flex-col min-h-screen">
         <Header />
-        <main className="container px-1 mb-10 sm:px-4 relative flex min-h-screen flex-col bg-background gap-1">
+        <main className="container px-1 pb-10 sm:px-4 relative flex flex-col grow bg-background gap-1">
           <Outlet />
         </main>
         <Footer />

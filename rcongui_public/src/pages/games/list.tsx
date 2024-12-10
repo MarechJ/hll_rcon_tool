@@ -6,6 +6,7 @@ import { DataTable as MatchTable } from './table'
 import MatchPagination from './pagination'
 import { ScoreboardMap } from '@/types/api'
 import { useGames } from '@/lib/queries/scoreboard-maps'
+import { Suspense } from 'react'
 
 export function validMatch(match: ScoreboardMap) {
   const start = dayjs(match.start)
@@ -28,9 +29,11 @@ export default function MatchesList({ page, pageSize }: { page: number; pageSize
 
   return (
     <>
-      <MatchPagination page={page} maxPages={maxPages} className="justify-end" />
-      <MatchTable data={filteredGames} columns={columns} />
-      <MatchPagination page={page} maxPages={maxPages} />
+      <Suspense fallback={<div>Loading...</div>}>
+        <MatchPagination page={page} maxPages={maxPages} className="justify-end" />
+        <MatchTable data={filteredGames} columns={columns} />
+        <MatchPagination page={page} maxPages={maxPages} />
+      </Suspense>
     </>
   )
 }

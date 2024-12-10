@@ -42,7 +42,7 @@ export const gameQueries = {
     }),
 }
 
-export function useGames(page: number, pageSize: number) {
+export function useGames(page = DEFAULT_PAGE, pageSize = DEFAULT_PAGE_SIZE) {
   const { data, ...rest } = useQuery(gameQueries.list(page, pageSize))
 
   return [data, rest] as const

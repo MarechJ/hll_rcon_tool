@@ -17,6 +17,72 @@ type GameOverviewProps = {
   }
 }
 
+type Score = {
+  allies: number | undefined
+  axis: number | undefined
+}
+
+const ArrowsContainer = ({ children }: { children: React.ReactNode }) => {
+  return <div className="w-full h-4 md:h-6 lg:h-8 flex flex-row px-2 mb-1">{children}</div>
+}
+
+const MAX_SCORE = 5
+
+const OffensiveArrows = ({ score, map }: { score: Score; map: MapLayer }) => (
+  <>
+    {Array(score.allies).fill(null).map((_, index) => (
+      <Arrow
+        key={`score-${index}`}
+        direction={map.attackers === 'allies' ? 'right' : 'left'}
+        team="allies"
+        mode="offensive"
+        order={index}
+        highlighted={index === 4}
+      />
+    ))}
+    {Array(score.axis).fill(null).map((_, index) => (
+      <Arrow
+        key={`score-${index}`}
+        direction={map.attackers === 'allies' ? 'right' : 'left'}
+        team="axis"
+        mode="offensive"
+        highlighted={index === 0}
+        order={(score.allies ?? 0) + index}
+      />
+    ))}
+  </>
+)
+
+const WarfareArrows = ({ score }: { score: Score }) => {
+  const isGameFinished = score.allies === MAX_SCORE || score.axis === MAX_SCORE
+  const isTied = score.allies === score.axis
+  const shouldHighlight = !isTied && !isGameFinished
+
+  return (
+    <>
+      {Array(score.allies).fill(null).map((_, index, arr) => (
+        <Arrow
+          key={`score-${index}`}
+          direction="right"
+          team="allies"
+          mode="warfare"
+          highlighted={index === arr.length - 1 && shouldHighlight}
+        />
+      ))}
+      {isTied && <RectangleNeutral />}
+      {Array(score.axis).fill(null).map((_, index) => (
+        <Arrow
+          key={`score-${index}`}
+          direction="left"
+          team="axis"
+          mode="warfare"
+          highlighted={index === 0 && shouldHighlight}
+        />
+      ))}
+    </>
+  )
+}
+
 export default function GameOverview({
   map,
   time,
@@ -30,70 +96,20 @@ export default function GameOverview({
 }: GameOverviewProps) {
   const { t } = useTranslation('game')
 
+  const displayArrows = () => {
+    if (!score.allies || !score.axis) return null
+  
+    return (
+      <ArrowsContainer>
+        {mode === 'offensive' && <OffensiveArrows score={score} map={map} />}
+        {mode === 'warfare' && <WarfareArrows score={score} />}
+      </ArrowsContainer>
+    )
+  }
+
   return (
     <div className="flex flex-col w-full pt-1">
-      <div className="w-full h-4 md:h-6 lg:h-8 flex flex-row px-2 mb-1">
-        {map.game_mode === 'warfare' ? (
-          <>
-            {Array(score.allies)
-              .fill(null)
-              .map((_, index, arr) => (
-                <Arrow
-                  key={`score-${index}`}
-                  direction="right"
-                  team="allies"
-                  mode="warfare"
-                  highlighted={
-                    index === arr.length - 1 && score.allies !== score.axis && score.allies !== 5 && score.axis !== 5
-                  }
-                />
-              ))}
-            {score.allies === score.axis && <RectangleNeutral />}
-            {Array(score.axis)
-              .fill(null)
-              .map((_, index) => (
-                <Arrow
-                  key={`score-${index}`}
-                  direction="left"
-                  team="axis"
-                  mode="warfare"
-                  highlighted={index === 0 && score.allies !== score.axis && score.allies !== 5 && score.axis !== 5}
-                />
-              ))}
-          </>
-        ) : map.game_mode === 'offensive' ? (
-          <>
-            {Array(score.allies)
-              .fill(null)
-              .map((_, index) => {
-                return (
-                  <Arrow
-                    key={`score-${index}`}
-                    direction={map.attackers === 'allies' ? 'right' : 'left'}
-                    team="allies"
-                    mode={'offensive'}
-                    order={index}
-                    highlighted={index === 4}
-                  />
-                )
-              })}
-            {Array(score.axis)
-              .fill(null)
-              .map((_, index) => {
-                return (
-                  <Arrow
-                    key={`score-${index}`}
-                    direction={map.attackers === 'allies' ? 'right' : 'left'}
-                    team="axis"
-                    mode={'offensive'}
-                    highlighted={index === 0}
-                    order={(score.allies ?? 0) + index}
-                  />
-                )
-              })}
-          </>
-        ) : null}
-      </div>
+      {displayArrows()}
       <div className="text-sm text-center">{time}</div>
       <div className="flex flex-row justify-center items-center lg:px-2">
         <div className="flex flex-row justify-between basis-full">

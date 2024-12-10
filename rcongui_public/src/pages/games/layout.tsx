@@ -1,7 +1,6 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
-import React, { useEffect, useRef } from 'react'
+import { Suspense, useEffect, useRef } from 'react'
 import { validMatch } from './list'
 import MapFigure from '@/components/game/map-figure'
 import dayjs from 'dayjs'
@@ -9,18 +8,18 @@ import localizedFormat from 'dayjs/plugin/localizedFormat'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { cn } from '@/lib/utils'
-import { gameQueries } from '@/lib/queries/scoreboard-maps'
+import { useGames } from '@/lib/queries/scoreboard-maps'
 
 dayjs.extend(localizedFormat)
 
 export default function GamesLayout() {
-  const { data, isLoading } = useQuery(gameQueries.list())
+  const [games, { isLoading }] = useGames()
   const { pathname } = useLocation()
   const gamesContainerRef = useRef<HTMLDivElement>(null)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (isLoading || !gamesContainerRef.current || !scrollAreaRef.current || !pathname) return
+    if (!games ||isLoading || !gamesContainerRef.current || !scrollAreaRef.current || !pathname) return
     const childElements = Array.from(gamesContainerRef.current?.children)
     const activeGameIndex = childElements.findIndex((el) => el.getAttribute('href') === pathname)
     const activeGameEl = childElements[activeGameIndex]
@@ -41,28 +40,30 @@ export default function GamesLayout() {
         viewport.scrollTo({ behavior: 'smooth', left: scrollBy })
       }
     }
-  }, [isLoading, gamesContainerRef, pathname, scrollAreaRef])
+  }, [games,isLoading, gamesContainerRef, pathname, scrollAreaRef])
 
   return (
     <>
       {isLoading ? (
         <div>Loading...</div>
       ) : (
-        <ScrollArea ref={scrollAreaRef} className="w-full whitespace-nowrap -mx-4 xl:mx-0 pb-2">
-          <div ref={gamesContainerRef} className="flex flex-row w-max space-x-2">
-            {data?.maps.filter(validMatch).map((game) => (
-              <Link key={game.id} to={`/games/${game.id}`}>
-                <MapFigure
-                  text={dayjs(game.start).format('LLL')}
-                  src={`/maps/${game.map.image_name}`}
-                  name={`${game.map.map.pretty_name} (${game.result?.allied ?? '?'}:${game.result?.axis ?? '?'})`}
-                  className={cn('group h-12 w-64', pathname === `/games/${game.id}` && 'border-2 border-primary')}
-                />
-              </Link>
-            ))}
-          </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+        <Suspense fallback={<div>SUSPENDED...</div>}>
+          <ScrollArea ref={scrollAreaRef} className="w-full whitespace-nowrap -mx-4 xl:mx-0 pb-2">
+            <div ref={gamesContainerRef} className="flex flex-row w-max space-x-2">
+              {games?.maps.filter(validMatch).map((game) => (
+                <Link key={game.id} to={`/games/${game.id}`}>
+                  <MapFigure
+                    text={dayjs(game.start).format('LLL')}
+                    src={`/maps/${game.map.image_name}`}
+                    name={`${game.map.map.pretty_name} (${game.result?.allied ?? '?'}:${game.result?.axis ?? '?'})`}
+                    className={cn('group h-12 w-64', pathname === `/games/${game.id}` && 'border-2 border-primary')}
+                  />
+                </Link>
+              ))}
+            </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+        </Suspense>
       )}
       <Outlet />
     </>
