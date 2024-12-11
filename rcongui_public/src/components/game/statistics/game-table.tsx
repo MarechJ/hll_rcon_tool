@@ -19,6 +19,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Player } from '@/types/player'
 import DebouncedInput from '@/components/debounced-input'
 import { useTranslation } from 'react-i18next'
+import {Button} from "@/components/ui/button";
+import {downloadGame} from "@/download-game";
+import {Download} from "lucide-react";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -80,6 +83,11 @@ export function DataTable<TData extends Player, TValue>({ columns, data }: DataT
               value={(table.getColumn('player')?.getFilterValue() ?? '') as string}
             />
           )}
+        </div>
+        <div>
+          <Button variant="outline" size={'icon'} onClick={() => downloadGame(data)}>
+            <Download size={20}/>
+          </Button>
         </div>
       </div>
       <Table>
