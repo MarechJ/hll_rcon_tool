@@ -52,11 +52,12 @@ export function DataTable<TData extends Player, TValue>({ columns, data }: DataT
 
   const { t } = useTranslation('game')
 
+  const hasIsOnline = table.getAllColumns().find((c) => c.id === 'is_online')
   return (
     <div className="border w-full divide-y">
       <div className="flex flex-row justify-between items-center p-2">
         <div className="flex flex-row items-center gap-1">
-          {table.getColumn('is_online') && (
+          {hasIsOnline && (
             <Select onValueChange={(value) => table.getColumn('is_online')?.setFilterValue(value)}>
               <SelectTrigger className="w-24">
                 <SelectValue placeholder={t('playersTable.status')} />
