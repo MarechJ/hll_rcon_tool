@@ -1,0 +1,26 @@
+{
+  "title": "Hell Let Loose Stats",
+  "now": "Now",
+  "up-next": "Up Next",
+  "open": "Open",
+  "close": "Close",
+  "toggle": "Toggle",
+  "toggleTheme": "Toggle Theme",
+  "get-started": "Get Started",
+  "made-by": "Made by",
+  "themeMode": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "pagination": {
+    "previous": {
+      "text": "Previous",
+      "label": "Go to previous page"
+    },
+    "next": {
+      "text": "Next",
+      "label": "Go to next page"
+    }
+  }
+}

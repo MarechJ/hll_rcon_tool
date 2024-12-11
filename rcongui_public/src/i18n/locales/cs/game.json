@@ -1,0 +1,63 @@
+{
+    "gameNotFound": "Hra {{ id }} nebyla nalezena",
+    "loading": "Načítání...",
+    "selectPlayer": "Vyberte hráče",
+    "searchPlayer": "Hledejte hráče",
+    "noPlayersFound": "Žádný hráč nebyl nalezen",
+    "onlineStatusFilter": {
+        "online": "Online",
+        "offline": "Offline",
+        "all": "Vše"
+    },
+    "player": "Hráč",
+    "players": "Hráči",
+    "allies": "Spojenci",
+    "axis": "Osa",
+    "weather": {
+        "day": "Den",
+        "night": "Noc",
+        "dusk": "Západ",
+        "dawn": "Východ",
+        "rain": "Déšť",
+        "overcast": "Zatažené"
+    },
+    "playersTable": {
+        "player": "Hráč",
+        "team": "Tým",
+        "kills": "Zabítí",
+        "deaths": "Umrtí",
+        "combat": "Boj",
+        "score": "Skóre",
+        "weapon": "Zbraň",
+        "vehicle": "Vozidlo",
+        "armor": "Armor",
+        "commander": "Velitel",
+        "offense": "Ofenzivní",
+        "defense": "Defenzivní",
+        "support": "Podpora",
+        "utility": "Užitečnost",
+        "diff": "Rozdíl",
+        "status": "Stav"
+    },
+    "matchTable": {
+        "match": "Zápas",
+        "map": "Mapa",
+        "mode": "Režim",
+        "duration": "Doba trvání",
+        "result": "Výsledek",
+        "start": "Začátek"
+    },
+    "playerStats": {
+        "killsByWeapon": "Zabítí zbraní",
+        "deathsByWeapon": "Umrtí zbraní",
+        "encounters": "Střety",
+        "weapon": "Zbraň",
+        "count": "Počet"
+    },
+    "score": {
+        "killstreak": "Killstreak",
+        "deathstreak": "Deathstreak",
+        "teamkills": "Týmové zabítí",
+        "k/d": "K/D"
+    }
+}

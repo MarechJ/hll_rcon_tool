@@ -14,6 +14,7 @@ export const gameQueryOptions = {
     queryOptions({
       queryKey: [{ queryIdentifier: "map-scoreboard", gameId }],
       queryFn: () => cmd.GET_COMPLETED_GAME_DETAIL({ params: { map_id: gameId } }),
+      staleTime: Infinity,
     }),
   live: () =>
     queryOptions({

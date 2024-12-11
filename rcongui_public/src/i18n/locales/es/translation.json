@@ -1,0 +1,12 @@
+{
+  "title": "Vite React Tailwind Starter",
+  "features": "Características",
+  "modernstack": "Pila moderna y eficiente",
+  "modernstack-desc": "Construido con vite, react, tailwindcss, shadcnui y más",
+  "i18nsupport": "Soporte i18n de serie",
+  "i18nsupport-desc": "Envía tu producto con diferentes idiomas de forma nativa",
+  "linters": "Linters para todo el código al guardar",
+  "linters-desc": "Construido con eslint, prettier, stylelint, commitlint",
+  "hero-title": "Construye aplicaciones con la mejor experiencia de desarrollo que amamos",
+  "get-started": "Empezar"
+}

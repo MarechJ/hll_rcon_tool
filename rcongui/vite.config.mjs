@@ -6,6 +6,8 @@ import path from 'path';
 export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
+  console.log(JSON.stringify(env.REACT_APP_API_URL))
+
   return {
     define: {
       'process.env.REACT_APP_PUBLIC_BUILD': JSON.stringify(env.REACT_APP_PUBLIC_BUILD),

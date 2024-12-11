@@ -1,0 +1,12 @@
+{
+  "title": "Vite React Tailwind Starter",
+  "features": "기능",
+  "modernstack": "현대적이고 효율적인 스택",
+  "modernstack-desc": "vite, react, tailwindcss, shadcnui 등으로 구축되었습니다",
+  "i18nsupport": "i18n 지원 기능",
+  "i18nsupport-desc": "다국어로 제품을 네이티브로 제공하세요",
+  "linters": "저장 시 모든 코드를 린트합니다",
+  "linters-desc": "eslint, prettier, stylelint, commitlint로 구축되었습니다",
+  "hero-title": "우리가 사랑하는 최고의 DX로 앱을 개발하세요",
+  "get-started": "시작하기"
+}

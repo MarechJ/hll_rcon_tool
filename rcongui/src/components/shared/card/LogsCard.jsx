@@ -133,7 +133,11 @@ const LogsCard = ({ logs }) => {
                 if (index % 2 === 0) {
                   output.push(<React.Fragment key={index + "a" + "user_1"}>{part}</React.Fragment>);
                 } else {
-                  output.push(<PlayerLink playerId={log.user_1?.id} key={index + "b" + "user_1"}>{log.user_1?.name}</PlayerLink>);
+                  if (log.user_1?.id) {
+                    output.push(<PlayerLink playerId={log.user_1?.id} key={index + "b" + "user_1"}>{log.user_1?.name}</PlayerLink>);
+                  } else {
+                    output.push(<React.Fragment key={index + "b" + "user_1"}>{log.user_1?.name}</React.Fragment>);
+                  }
                   output.push(<React.Fragment key={index + "c" + "user_1"}>{part}</React.Fragment>);
                 }
               });
@@ -145,14 +149,18 @@ const LogsCard = ({ logs }) => {
                   if (index % 2 === 0) {
                     output.push(<React.Fragment key={index + "a" + "user_2"}>{part}</React.Fragment>);
                   } else {
-                    output.push(<PlayerLink playerId={log.user_2?.id} key={index + "b" + log.user_2?.id}>{log.user_2?.name}</PlayerLink>);
+                    if (log.user_2?.id) {
+                      output.push(<PlayerLink playerId={log.user_2?.id} key={index + "b" + log.user_2?.id}>{log.user_2?.name}</PlayerLink>);
+                    } else {
+                      output.push(<React.Fragment key={index + "b" + log.user_2?.id}>{log.user_2?.name}</React.Fragment>);
+                    }
                     output.push(<React.Fragment key={index + "c" + log.user_2?.id}>{part}</React.Fragment>);
                   }
                 });
 
               }
 
-              return <span>{output}</span>
+              return <Box sx={{ whiteSpace: "nowrap" }}>{output}</Box>
             }
 
             return (
@@ -160,7 +168,7 @@ const LogsCard = ({ logs }) => {
                 <StyledListItem
                   key={index}
                 >
-                  <Box component="span" sx={{ width: 125 }}>{dayjs(log.timestamp).format(TIME_FORMAT)}</Box>
+                  <Box component="span" sx={{ width: 125, minWidth: 125 }}>{dayjs(log.timestamp).format(TIME_FORMAT)}</Box>
                   <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
                   <Message />
                 </StyledListItem>
