@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { isRouteErrorResponse, Link, useRouteError } from 'react-router-dom'
+import { isRouteErrorResponse, Link, useRouteError } from 'react-router'
 import { Button } from '../ui/button'
 
 export default function ErrorPage() {

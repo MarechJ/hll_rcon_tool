@@ -1,5 +1,5 @@
 import { siGithub } from 'simple-icons'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import ThemeToggle from '../theme-toggle'
 import { SimpleIcon } from './simple-icon'
 import siteConfig from '@/lib/siteConfig'

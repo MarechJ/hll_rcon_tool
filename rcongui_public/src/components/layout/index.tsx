@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom'
+import { Outlet } from 'react-router'
 import Footer from '../footer'
 import { Header } from '../header'
 import { Helmet } from 'react-helmet'

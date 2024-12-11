@@ -1,6 +1,6 @@
 import { gameQueries } from '@/lib/queries/scoreboard-maps'
 import { QueryClient } from '@tanstack/react-query'
-import { LoaderFunctionArgs } from 'react-router-dom'
+import { LoaderFunctionArgs } from 'react-router'
 
 export const clientLoader =
   (queryClient: QueryClient) =>

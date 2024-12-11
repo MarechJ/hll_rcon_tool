@@ -1,5 +1,5 @@
 import GamesList from './list'
-import { useLoaderData } from 'react-router-dom'
+import { useLoaderData } from 'react-router'
 import { Helmet } from 'react-helmet'
 import { useTranslation } from 'react-i18next'
 import { QueryErrorResetBoundary, useSuspenseQuery } from '@tanstack/react-query'
@@ -11,8 +11,6 @@ export default function GamesPage() {
   const { page, pageSize } = useLoaderData() as Awaited<ReturnType<ReturnType<typeof clientLoader>>>
   const { data: games } = useSuspenseQuery(gameQueries.list(page, pageSize))
   const { t } = useTranslation('navigation')
-
-  console.log(page, pageSize)
 
   return (
     <>

@@ -2,7 +2,7 @@
 import siteConfig from '@/lib/siteConfig'
 import { cn } from '@/lib/utils'
 import { useTranslation } from 'react-i18next'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router'
 
 export function NavLinks() {
   const pathname = useLocation()
