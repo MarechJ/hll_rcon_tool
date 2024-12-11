@@ -1,6 +1,4 @@
 export function downloadGame(player_stats) {
-  console.log(player_stats[0].most_killed);
-
   const data = [
     [
       "Player ID",
