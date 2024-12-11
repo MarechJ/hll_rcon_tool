@@ -155,7 +155,7 @@ const CompletedGamePage = () => {
     <div>
       <Box sx={{ p: 4 }}>
         <CompletedGameDetails 
-          mapLayer={data.map} 
+          mapLayer={data.map}
           result={data.result} 
           start={data.start} 
           end={data.end} 
