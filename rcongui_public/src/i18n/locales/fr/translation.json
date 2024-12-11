@@ -1,10 +1,26 @@
 {
+  "title": "Hell Let Loose Stats",
   "now": "Maintenant",
-  "up-next": "Prochain",
-  "player": "Joueur",
-  "players": "Joueurs",
-  "allies": "alliés",
-  "axis": "l'axe",
+  "up-next": "Prochaine partie",
+  "open": "Ouvrir",
+  "close": "Fermer",
+  "toggle": "Basculer",
+  "toggleTheme": "Changer de thème",
+  "get-started": "Commencer",
   "made-by": "Fait par",
-  "get-started": "Commencer"
+  "themeMode": {
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Système"
+  },
+  "pagination": {
+    "previous": {
+      "text": "Précédent",
+      "label": "Aller à la page précédente"
+    },
+    "next": {
+      "text": "Suivant",
+      "label": "Aller à la page suivante"
+    }
+  }
 }

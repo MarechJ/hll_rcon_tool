@@ -1,12 +1,26 @@
 {
-  "title": "Vite React Tailwind Starter",
-  "features": "Caratteristiche",
-  "modernstack": "Stack moderno ed efficiente",
-  "modernstack-desc": "Realizzato con vite, react, tailwindcss, shadcnui e altro",
-  "i18nsupport": "Supporto i18n integrato",
-  "i18nsupport-desc": "Distribuisci il tuo prodotto con diverse lingue in modo nativo",
-  "linters": "Verifica tutti i codici al salvataggio",
-  "linters-desc": "Realizzato con eslint, prettier, stylelint, commitlint",
-  "hero-title": "Costruisci app con la migliore DX che amiamo",
-  "get-started": "Inizia"
+  "title": "Hell Let Loose Stats",
+  "now": "Ora",
+  "up-next": "Prossimo",
+  "open": "Apri",
+  "close": "Chiudi",
+  "toggle": "Attiva/Disattiva",
+  "toggleTheme": "Attiva/Disattiva tema",
+  "get-started": "Inizia",
+  "made-by": "Fattorizzato da",
+  "themeMode": {
+    "light": "Chiaro",
+    "dark": "Scuro",
+    "system": "Sistema"
+  },
+  "pagination": {
+    "previous": {
+      "text": "Precedente",
+      "label": "Vai alla pagina precedente"
+    },
+    "next": {
+      "text": "Successivo",
+      "label": "Vai alla pagina successiva"
+    }
+  }
 }

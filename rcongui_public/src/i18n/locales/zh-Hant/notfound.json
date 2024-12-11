@@ -1,5 +1,6 @@
 {
   "oops": "哎呀！",
-  "title": "抱歉，發生了意外錯誤。",
-  "backtohomepage": "返回首頁"
+  "title": "抱歉，發生了一個意外的錯誤。",
+  "backtohomepage": "返回首頁",
+  "connectionError": "無法連接到伺服器。請稍後再試。"
 }

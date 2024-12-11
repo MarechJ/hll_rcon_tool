@@ -1,12 +1,26 @@
 {
-  "title": "Vite React Tailwind Starter",
-  "features": "기능",
-  "modernstack": "현대적이고 효율적인 스택",
-  "modernstack-desc": "vite, react, tailwindcss, shadcnui 등으로 구축되었습니다",
-  "i18nsupport": "i18n 지원 기능",
-  "i18nsupport-desc": "다국어로 제품을 네이티브로 제공하세요",
-  "linters": "저장 시 모든 코드를 린트합니다",
-  "linters-desc": "eslint, prettier, stylelint, commitlint로 구축되었습니다",
-  "hero-title": "우리가 사랑하는 최고의 DX로 앱을 개발하세요",
-  "get-started": "시작하기"
+  "title": "Hell Let Loose Stats",
+  "now": "현재",
+  "up-next": "다음",
+  "open": "열기",
+  "close": "닫기",
+  "toggle": "토글",
+  "toggleTheme": "테마 토글",
+  "get-started": "시작하기",
+  "made-by": "만든 사람",
+  "themeMode": {
+    "light": "밝은",
+    "dark": "어두운",
+    "system": "시스템"
+  },
+  "pagination": {
+    "previous": {
+      "text": "이전",
+      "label": "이전 페이지로 이동"
+    },
+    "next": {
+      "text": "다음",
+      "label": "다음 페이지로 이동"
+    }
+  }
 }

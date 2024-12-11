@@ -1,5 +1,6 @@
 {
   "oops": "¡Ups!",
-  "title": "Lo sentimos, ha ocurrido un error inesperado.",
-  "backtohomepage": "Volver a la página de inicio"
+  "title": "Lo siento, ha ocurrido un error inesperado.",
+  "backtohomepage": "Volver a la página de inicio",
+  "connectionError": "No se pudo conectar al servidor. Por favor, inténtelo de nuevo más tarde."
 }

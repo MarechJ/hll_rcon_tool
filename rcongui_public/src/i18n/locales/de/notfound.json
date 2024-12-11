@@ -1,5 +1,6 @@
 {
   "oops": "Hoppla!",
   "title": "Entschuldigung, es ist ein unerwarteter Fehler aufgetreten.",
-  "backtohomepage": "Zurück zur Startseite"
+  "backtohomepage": "Zurück zur Startseite",
+  "connectionError": "Konnte nicht mit dem Server verbinden. Bitte versuchen Sie es später erneut."
 }

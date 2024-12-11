@@ -1,0 +1,63 @@
+{
+    "gameNotFound": "Jogo {{ id }} não encontrado",
+    "loading": "Carregando...",
+    "selectPlayer": "Selecionar jogador",
+    "searchPlayer": "Procurar jogador",
+    "noPlayersFound": "Nenhum jogador encontrado",
+    "onlineStatusFilter": {
+        "online": "Online",
+        "offline": "Offline",
+        "all": "Todos"
+    },
+    "player": "Jogador",
+    "players": "Jogadores",
+    "allies": "Aliados",
+    "axis": "Eixo",
+    "weather": {
+        "day": "Dia",
+        "night": "Noite",
+        "dusk": "Crepúsculo",
+        "dawn": "Amanhecer",
+        "rain": "Chuva",
+        "overcast": "Nublado"
+    },
+    "playersTable": {
+        "player": "Jogador",
+        "team": "Equipe",
+        "kills": "Abates",
+        "deaths": "Mortes",
+        "combat": "Combate",
+        "score": "Pontuação",
+        "weapon": "Arma",
+        "vehicle": "Veículo",
+        "armor": "Blindagem",
+        "commander": "Comandante",
+        "offense": "Ataque",
+        "defense": "Defesa",
+        "support": "Suporte",
+        "utility": "Utilidade",
+        "diff": "Diferença",
+        "status": "Status"
+    },
+    "matchTable": {
+        "match": "Partida",
+        "map": "Mapa",
+        "mode": "Modo",
+        "duration": "Duração",
+        "result": "Resultado",
+        "start": "Início"
+    },
+    "playerStats": {
+        "killsByWeapon": "Abates por arma",
+        "deathsByWeapon": "Mortes por arma",
+        "encounters": "Encontros",
+        "weapon": "Arma",
+        "count": "Quantidade"
+    },
+    "score": {
+        "killstreak": "Sequência de abates",
+        "deathstreak": "Sequência de mortes",
+        "teamkills": "Fogo amigo",
+        "k/d": "A/M"
+    }
+}

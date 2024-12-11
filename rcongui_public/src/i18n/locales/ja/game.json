@@ -1,0 +1,63 @@
+{
+    "gameNotFound": "ゲーム {{ id }} が見つかりません",
+    "loading": "読み込み中...",
+    "selectPlayer": "プレイヤーを選択",
+    "searchPlayer": "プレイヤーを検索",
+    "noPlayersFound": "プレイヤーが見つかりません",
+    "onlineStatusFilter": {
+        "online": "オンライン",
+        "offline": "オフライン",
+        "all": "すべて"
+    },
+    "player": "プレイヤー",
+    "players": "プレイヤー",
+    "allies": "連合軍",
+    "axis": "枢軸軍",
+    "weather": {
+        "day": "昼",
+        "night": "夜",
+        "dusk": "夕暮れ",
+        "dawn": "夜明け",
+        "rain": "雨",
+        "overcast": "曇り"
+    },
+    "playersTable": {
+        "player": "プレイヤー",
+        "team": "チーム",
+        "kills": "キル数",
+        "deaths": "デス数",
+        "combat": "戦闘",
+        "score": "スコア",
+        "weapon": "武器",
+        "vehicle": "車両",
+        "armor": "装甲",
+        "commander": "指揮官",
+        "offense": "攻撃",
+        "defense": "防衛",
+        "support": "支援",
+        "utility": "ユーティリティ",
+        "diff": "差分",
+        "status": "状態"
+    },
+    "matchTable": {
+        "match": "マッチ",
+        "map": "マップ",
+        "mode": "モード",
+        "duration": "時間",
+        "result": "結果",
+        "start": "開始"
+    },
+    "playerStats": {
+        "killsByWeapon": "武器別キル数",
+        "deathsByWeapon": "武器別デス数",
+        "encounters": "遭遇数",
+        "weapon": "武器",
+        "count": "回数"
+    },
+    "score": {
+        "killstreak": "キルストリーク",
+        "deathstreak": "デスストリーク",
+        "teamkills": "チームキル",
+        "k/d": "K/D"
+    }
+}
