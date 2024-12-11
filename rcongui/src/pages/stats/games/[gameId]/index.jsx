@@ -63,7 +63,7 @@ export const CompletedGameDetails = ({ mapLayer, result, start, end, id }) => {
     >
       <Box>
         <Typography variant="h4" sx={{ mb: 2 }}>
-          {mapLayer}
+          {mapLayer.map.pretty_name}
         </Typography>
         {result && (
           <Typography variant="h5" sx={{ color: "text.secondary" }}>
