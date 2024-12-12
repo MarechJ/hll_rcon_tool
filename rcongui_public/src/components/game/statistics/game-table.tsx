@@ -78,7 +78,7 @@ export function DataTable<TData extends Player, TValue>({ columns, data, tableId
           )}
           {table.getColumn('player') && (
             <DebouncedInput
-              className="w-60 border shadow rounded"
+              className="grow max-w-60 border shadow rounded"
               onChange={(value) => {
                 table.getColumn('player')?.setFilterValue(value)
               }}

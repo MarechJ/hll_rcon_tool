@@ -6,6 +6,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { cn } from '@/lib/utils'
 import { LANGUAGES } from '@/i18n/config'
 import i18next from 'i18next'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
+import { Label } from '../ui/label'
 
 const getLocaleDisplayName = (locale: string, displayLocale?: string) => {
   const displayName = new Intl.DisplayNames([displayLocale || locale], {
@@ -14,8 +16,9 @@ const getLocaleDisplayName = (locale: string, displayLocale?: string) => {
   return displayName.charAt(0).toLocaleUpperCase() + displayName.slice(1)
 }
 
-const LanguageSelector = () => {
+const DropdownLanguageSelector = () => {
   const { i18n } = useTranslation()
+  const { t } = useTranslation('translation')
 
   const localesAndNames = useMemo(() => {
     return LANGUAGES.map((locale) => ({
@@ -35,7 +38,7 @@ const LanguageSelector = () => {
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="icon">
           <Languages className="h-[1.2rem] w-[1.2rem]" />
-          <span className="sr-only">Select language</span>
+          <span className="sr-only">{t('selectLanguage')}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -56,4 +59,29 @@ const LanguageSelector = () => {
   )
 }
 
-export { LanguageSelector }
+const SelectLanguageSelector = () => {
+  const { i18n } = useTranslation()
+  const { t } = useTranslation('translation')
+  return (
+    <div>
+      <Label className="flex flex-row gap-2 py-1" htmlFor="language-selector">
+        <Languages className="size-4" />
+        {t('selectLanguage')}
+      </Label>
+      <Select value={i18n.language} onValueChange={i18n.changeLanguage}>
+        <SelectTrigger id="language-selector" className="w-full">
+          <SelectValue placeholder={t('selectLanguage')} />
+        </SelectTrigger>
+        <SelectContent className="max-h-[200px]">
+          {LANGUAGES.map((locale) => (
+            <SelectItem key={locale} value={locale}>
+              {getLocaleDisplayName(locale)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  )
+}
+
+export { DropdownLanguageSelector, SelectLanguageSelector }
