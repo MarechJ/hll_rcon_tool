@@ -1,5 +1,6 @@
 import os
 from xmlrpc.client import Fault, ServerProxy
+from http.client import CannotSendRequest
 
 from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
@@ -10,6 +11,9 @@ from .audit_log import record_audit
 from .auth import api_response, login_required
 from .decorators import require_content_type, require_http_methods
 from .utils import _get_data
+from logging import getLogger
+
+logger = getLogger(__name__)
 
 supervisor_client = None
 
@@ -66,6 +70,8 @@ def do_service(request):
     client = get_supervisor_client()
     error = None
     res = None
+    command_name = "do_service"
+    failed = False
 
     actions = {
         "START": client.supervisor.startProcess,
@@ -75,9 +81,23 @@ def do_service(request):
     service_name = data.get("service_name")
 
     if not action or action.upper() not in actions:
-        return api_response(error="action must be START or STOP", status_code=400)
+        failed = True
+        return api_response(
+            command=command_name,
+            arguments=data,
+            failed=failed,
+            error="action must be START or STOP",
+            status_code=400,
+        )
     if not service_name:
-        return api_response(error="process_name must be set", status_code=400)
+        failed = True
+        return api_response(
+            command=command_name,
+            arguments=data,
+            failed=failed,
+            error="service_name must be set",
+            status_code=400,
+        )
 
     try:
         res = actions[action.upper()](service_name)
@@ -86,7 +106,16 @@ def do_service(request):
             command_name=f"service {action}",
             by=request.user.username,
         )
+    except CannotSendRequest as e:
+        error = "Service request already sent"
+        logger.info(f"{error=}")
     except Fault as e:
         error = repr(e)
 
-    return api_response(result=res, failed=bool(error), error=error)
+    return api_response(
+        command=command_name,
+        arguments=data,
+        failed=failed,
+        result=res,
+        error=error,
+    )

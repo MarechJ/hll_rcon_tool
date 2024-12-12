@@ -1,0 +1,64 @@
+{
+    "gameNotFound": "Partie {{ id }} non trouvée",
+    "loading": "Chargement...",
+    "selectPlayer": "Sélectionner un joueur",
+    "searchPlayer": "Rechercher un joueur",
+    "noPlayersFound": "Aucun joueur trouvé",
+    "onlineStatusFilter": {
+        "online": "En ligne",
+        "offline": "Hors ligne",
+        "all": "Tous"
+    },
+    "player": "Joueur",
+    "players": "Joueurs",
+    "allies": "Alliés",
+    "axis": "Axe",
+    "weather": {
+        "day": "Jour",
+        "night": "Nuit",
+        "dusk": "Crépuscule",
+        "dawn": "Aube",
+        "rain": "Pluie",
+        "overcast": "Couvert"
+    },
+    "playersTable": {
+        "player": "Joueur",
+        "team": "Équipe",
+        "kills": "Éliminations",
+        "deaths": "Morts",
+        "combat": "Combat",
+        "score": "Score",
+        "weapon": "Arme",
+        "vehicle": "Véhicule",
+        "armor": "Blindage",
+        "commander": "Commandant",
+        "offense": "Attaque",
+        "defense": "Défense",
+        "support": "Soutien",
+        "utility": "Utilitaire",
+        "diff": "Différence",
+        "status": "Statut"
+    },
+    "matchTable": {
+        "match": "Partie",
+        "map": "Carte",
+        "mode": "Mode",
+        "duration": "Durée",
+        "result": "Résultat",
+        "start": "Début"
+    },
+    "playerStats": {
+        "killsByWeapon": "Éliminations par arme",
+        "deathsByWeapon": "Morts par arme",
+        "encounters": "Rencontres",
+        "weapon": "Arme",
+        "count": "Nombre"
+    },
+    "score": {
+        "killstreak": "Série d'éliminations",
+        "deathstreak": "Série de morts",
+        "teamkills": "Tirs alliés",
+        "k/d": "R/M"
+    },
+    "downloadTable": "Télécharger le tableau"
+}

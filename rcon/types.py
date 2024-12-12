@@ -791,8 +791,35 @@ class DjangoUserPermissions(TypedDict):
     permissions: list[DjangoPermission]
     groups: list[DjangoGroup]
     is_superuser: bool
+    username: str
+    player_id: str
 
 
 class GameLayoutRandomConstraints(enum.IntFlag):
     ALWAYS_ADJACENT = enum.auto()
     ALWAYS_DIAGONAL = enum.auto()
+
+
+class MessageTemplateCategory(enum.StrEnum):
+    MESSAGE = "MESSAGE"
+    BROADCAST = "BROADCAST"
+    WELCOME = "WELCOME"
+    REASON = "REASON"
+    AUTO_SETTINGS = "AUTO_SETTINGS"
+
+
+class MessageTemplateType(TypedDict):
+    id: int
+    title: str
+    content: str
+    category: MessageTemplateCategory
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+    updated_by: str
+
+
+class AllMessageTemplateTypes(TypedDict):
+    MESSAGE: list[MessageTemplateType]
+    BROADCAST: list[MessageTemplateType]
+    WELCOME: list[MessageTemplateType]
+    REASON: list[MessageTemplateType]

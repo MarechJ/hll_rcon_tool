@@ -1,0 +1,15 @@
+{
+  "extends": ["stylelint-config-standard", "stylelint-prettier/recommended"],
+  "plugins": ["stylelint-less","stylelint-prettier"],
+  "customSyntax": "postcss-less",
+  "rules": {
+    "prettier/prettier": true,
+    "at-rule-no-unknown": null,
+    "selector-class-pattern": [
+      "^([a-z]+)(-[a-z0-9]+)*$",
+      {
+        "message": "use lowercase latter and '-' for class name \n e.g \"form-item\""
+      }
+    ]
+  }
+}

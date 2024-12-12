@@ -1,9 +1,9 @@
-import { Button, FormControl, FormControlLabel, Grid, InputLabel, MenuItem, Select, Switch, TextField } from "@material-ui/core";
+import { Button, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Switch, TextField } from "@mui/material";
 import React from "react";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
+import Grid from "@mui/material/Grid2";
 
 const BlacklistRecordsSearch = ({
-  classes,
   blacklists,
   onSearch,
   disabled,
@@ -15,15 +15,15 @@ const BlacklistRecordsSearch = ({
   const [pageSize, setPageSize] = React.useState(50);
 
   return (
-    <form className={classes.flexContainer}>
+    (<form>
       <Grid
         container
         spacing={2}
         alignContent="center"
         alignItems="center"
-        justify="space-evenly"
+        justifyContent="space-evenly"
       >
-        <Grid item xs={4}>
+        <Grid size={4}>
           <TextField
             fullWidth
             label="Search by player ID"
@@ -31,7 +31,7 @@ const BlacklistRecordsSearch = ({
             onChange={(e) => setPlayerIdQuery(e.target.value)}
           />
         </Grid>
-        <Grid item xs={8}>
+        <Grid size={8}>
           <TextField
             fullWidth
             label="Search by name or reason"
@@ -39,7 +39,7 @@ const BlacklistRecordsSearch = ({
             onChange={(e) => setReasonQuery(e.target.value)}
           />
         </Grid>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <FormControl fullWidth>
             <InputLabel>Blacklist</InputLabel>
             <Select
@@ -53,7 +53,7 @@ const BlacklistRecordsSearch = ({
             </Select>
           </FormControl>
         </Grid>
-        <Grid item xs={3}>
+        <Grid size={3}>
           <FormControlLabel
             control={
               <Switch
@@ -66,7 +66,7 @@ const BlacklistRecordsSearch = ({
             labelPlacement="top"
           />
         </Grid>
-        <Grid item xs={2}>
+        <Grid size={2}>
           <FormControl fullWidth>
             <InputLabel>Page size</InputLabel>
             <Select
@@ -85,7 +85,7 @@ const BlacklistRecordsSearch = ({
             </Select>
           </FormControl>
         </Grid>
-        <Grid item xs={3}>
+        <Grid size={3}>
           <Button
             type="submit"
             disabled={disabled}
@@ -107,7 +107,7 @@ const BlacklistRecordsSearch = ({
           </Button>
         </Grid>
       </Grid>
-    </form>
+    </form>)
   );
 }
 

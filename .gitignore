@@ -1,6 +1,5 @@
 # Compose files are templated now
 compose.yaml
-frontend/
 db_data/
 .env
 broadcasts.txt
