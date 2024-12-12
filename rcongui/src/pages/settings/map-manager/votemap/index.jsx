@@ -33,7 +33,8 @@ import {
   padlockConfigs,
   textFieldConfigs,
 } from "./configs-data";
-import { isEmpty, isEqual } from "lodash";
+import isEqual from "lodash/isEqual";
+import isEmpty from "lodash/isEmpty";
 import { Alert } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { MapAutocomplete } from "@/components/MapManager/map-autocomplete";

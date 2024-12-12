@@ -16,10 +16,10 @@ import CloseIcon from "@mui/icons-material/Close";
 import {DesktopDateTimePicker} from '@mui/x-date-pickers/DesktopDateTimePicker';
 import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
 import {LocalizationProvider} from '@mui/x-date-pickers/LocalizationProvider';
-import data from '@emoji-mart/data'
-import EmojiPicker from "@emoji-mart/react";
 import Grid from "@mui/material/Grid2";
-import {useState} from "react";
+import {lazy, Suspense, useEffect, useState} from "react";
+
+const EmojiPicker = lazy(() => import("@emoji-mart/react"));
 
 const SearchBar = ({
   name,
@@ -43,6 +43,11 @@ const SearchBar = ({
   setCountry,
 }) => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [data, setData] = useState({});
+
+  useEffect(() => {
+    import('@emoji-mart/data').then((d) => setData(d.default));
+  }, []);
 
   return (
     (<form>
@@ -111,15 +116,17 @@ const SearchBar = ({
                 }
               />
               <CardContent>
-                <EmojiPicker
-                  style={{border: '1px solid red'}}
-                  dynamicWidth={true}
-                  perLine={8}
-                  data={data}
-                  onEmojiSelect={(emoji) =>
-                    setFlags(flags + emoji.native + ",")
-                  }
-                />
+                <Suspense>
+                  <EmojiPicker
+                    style={{border: '1px solid red'}}
+                    dynamicWidth={true}
+                    perLine={8}
+                    data={data}
+                    onEmojiSelect={(emoji) =>
+                      setFlags(flags + emoji.native + ",")
+                    }
+                  />
+                </Suspense>
               </CardContent>
             </Card>
           ) : (

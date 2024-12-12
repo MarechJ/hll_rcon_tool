@@ -12,7 +12,7 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
-import { throttle } from "lodash/function";
+import throttle from "lodash/throttle";
 import {Component, Fragment} from "react";
 
 export class LoginBox extends Component {

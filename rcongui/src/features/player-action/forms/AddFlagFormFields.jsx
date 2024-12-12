@@ -1,11 +1,13 @@
 import {Stack, TextField, useTheme} from "@mui/material";
 import {ControlledTextInput} from "@/components/form/core/ControlledTextInput";
-import {Suspense} from "react";
+import {lazy, Suspense, useEffect} from "react";
 import {Controller} from "react-hook-form";
-import LushEmojiPicker, {EmojiStyle} from 'emoji-picker-react';
 
-export const AddFlagFormFields = ({control, errors, setValue, ...props}) => {
+const LushEmojiPicker = lazy(() => import('emoji-picker-react'));
+
+export const AddFlagFormFields = ({control, errors, setValue}) => {
   const theme = useTheme();
+  let EmojiStyle = {};
 
   // It is called 'comment' at the backend but it is really a 'note' for the flag
   const noteError = errors["comment"];
@@ -13,6 +15,10 @@ export const AddFlagFormFields = ({control, errors, setValue, ...props}) => {
 
   const flagError = errors["flag"];
   const hasFlagError = !!flagError;
+
+  useEffect(() => {
+    import('emoji-picker-react').then((epr) => EmojiStyle = epr.EmojiStyle);
+  }, []);
 
   return (
     <Stack alignContent={"center"} spacing={2}>

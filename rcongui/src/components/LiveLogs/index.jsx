@@ -24,7 +24,6 @@ import ToggleButtonGroup, {
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import PlaylistAddCircleIcon from '@mui/icons-material/PlaylistAddCircle';
 import { useQuery } from "@tanstack/react-query";
-import dayjs from "dayjs";
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import { logColumns } from "./logs-columns";

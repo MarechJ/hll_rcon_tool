@@ -1,5 +1,3 @@
-import _ from "lodash";
-
 const PREFIX = "autocomplete_";
 
 class TextHistory {
@@ -20,12 +18,6 @@ class TextHistory {
     texts.sort((a, b) => a.toLowerCase() > b.toLowerCase());
 
     return texts;
-  }
-
-  deleteTextByIdx(index) {
-    const texts = this.getTexts();
-    texts.splice(index, 1);
-    localStorage.setItem(this.namespace, JSON.stringify(texts));
   }
 
   saveText(text, sharedMessages = []) {

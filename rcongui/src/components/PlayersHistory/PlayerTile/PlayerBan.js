@@ -1,6 +1,6 @@
 import { Typography } from "@mui/material";
 import { fromJS } from "immutable";
-import { reduce } from "lodash";
+import reduce from "lodash/reduce";
 import Grid from "@mui/material/Grid2";
 
 export function banListFromServer(data) {

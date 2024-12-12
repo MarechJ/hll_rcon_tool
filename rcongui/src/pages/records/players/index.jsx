@@ -1,40 +1,27 @@
-import {
-  addPlayerToWatchList,
-  get,
-  handle_http_errors,
-  postData,
-  sendAction,
-  showResponse,
-} from "@/utils/fetchUtils";
-import { toast } from "react-toastify";
+import {addPlayerToWatchList, get, handle_http_errors, postData, sendAction, showResponse,} from "@/utils/fetchUtils";
+import {toast} from "react-toastify";
 import Pagination from '@mui/material/Pagination';
-import {
-  Button,
-  Chip,
-  LinearProgress,
-  TextField,
-  Typography,
-} from "@mui/material";
+import {Button, Chip, LinearProgress, TextField, Typography,} from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import { ReasonDialog } from "@/components/PlayerView/playerActions";
-import { omitBy } from "lodash/object";
+import {ReasonDialog} from "@/components/PlayerView/playerActions";
+import {omitBy} from "lodash/object";
 import SearchBar from "@/components/PlayersHistory/searchBar";
-import { fromJS, List, Map } from "immutable";
-import data from '@emoji-mart/data'
+import {fromJS, List, Map} from "immutable";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
-import { getEmojiFlag } from "@/utils/emoji";
+import {getEmojiFlag} from "@/utils/emoji";
 import PlayerGrid from "@/components/PlayersHistory/playerGrid";
-import { VipExpirationDialog } from "@/components/VipDialog";
-import { vipListFromServer } from "@/components/VipDialog/vipFromServer";
-import { banListFromServer } from "@/components/PlayersHistory/PlayerTile/PlayerBan";
+import {VipExpirationDialog} from "@/components/VipDialog";
+import {vipListFromServer} from "@/components/VipDialog/vipFromServer";
+import {banListFromServer} from "@/components/PlayersHistory/PlayerTile/PlayerBan";
 import BlacklistRecordCreateDialog from "@/components/Blacklist/BlacklistRecordCreateDialog";
-import EmojiPicker from "@emoji-mart/react";
-import {Component, Fragment} from "react";
+import {Component, Fragment, lazy, Suspense} from "react";
 
-const PlayerSummary = ({ player, flag }) => (
+const EmojiPicker = lazy(() => import("@emoji-mart/react"));
+
+const PlayerSummary = ({player, flag}) => (
   <Fragment>
     <Typography variant="body2">
       Add flag: {flag ? getEmojiFlag(flag) : <small>Please choose</small>}
@@ -42,7 +29,7 @@ const PlayerSummary = ({ player, flag }) => (
     <Typography variant="body2">
       To:{" "}
       {player && player.get("names")
-        ? player.get("names").map((n) => <Chip label={n.get("name")} />)
+        ? player.get("names").map((n) => <Chip label={n.get("name")}/>)
         : "No name recorded"}
     </Typography>
     <Typography variant="body2">
@@ -57,17 +44,24 @@ class FlagDialog extends Component {
     this.state = {
       flag: null,
       comment: "",
+      data: {},
     };
   }
 
+  componentDidMount() {
+    import('@emoji-mart/data').then((d) => this.setState((s) => {
+      return {...s, data: d.default};
+    }));
+  }
+
   render() {
-    const { open, handleClose, handleConfirm, SummaryRenderer } = this.props;
-    const { flag, comment } = this.state;
+    const {open, handleClose, handleConfirm, SummaryRenderer} = this.props;
+    const {flag, comment, data} = this.state;
 
     return (
       (<Dialog open={open} aria-labelledby="form-dialog-title">
         <DialogTitle id="form-dialog-title">
-          <SummaryRenderer player={open} flag={flag} />
+          <SummaryRenderer player={open} flag={flag}/>
         </DialogTitle>
         <DialogContent>
           <Grid
@@ -81,7 +75,7 @@ class FlagDialog extends Component {
               <TextField
                 label="Comment"
                 value={comment}
-                onChange={(e) => this.setState({ comment: e.target.value })}
+                onChange={(e) => this.setState({comment: e.target.value})}
               />
             </Grid>
           </Grid>
@@ -93,19 +87,21 @@ class FlagDialog extends Component {
             spacing={2}
           >
             <Grid size={12}>
-            <EmojiPicker
-                style={{ border: '1px solid red' }}
-                perLine={8}
-                data={data}
-                onEmojiSelect={(emoji) => this.setState({ flag: emoji.native })}
-              />
+              <Suspense>
+                <EmojiPicker
+                  style={{border: '1px solid red'}}
+                  perLine={8}
+                  data={data}
+                  onEmojiSelect={(emoji) => this.setState({flag: emoji.native})}
+                />
+              </Suspense>
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
           <Button
             onClick={() => {
-              this.setState({ flag: "" });
+              this.setState({flag: ""});
               handleClose();
             }}
             color="primary"
@@ -115,7 +111,7 @@ class FlagDialog extends Component {
           <Button
             onClick={() => {
               handleConfirm(open, flag, comment);
-              this.setState({ flag: "", comment: "" });
+              this.setState({flag: "", comment: ""});
             }}
             color="primary"
           >
@@ -127,7 +123,7 @@ class FlagDialog extends Component {
   }
 }
 
-const MyPagination = ({ pageSize, total, page, setPage }) => (
+const MyPagination = ({pageSize, total, page, setPage}) => (
   <Pagination
     count={Math.ceil(total / pageSize)}
     page={page}
@@ -321,14 +317,14 @@ class PlayersHistory extends Component {
       (v) => v === null || v === "" || v === undefined
     );
 
-    this.setState({ isLoading: true });
+    this.setState({isLoading: true});
     return postData(
       `${process.env.REACT_APP_API_URL}get_players_history`,
       params
     )
       .then((response) => showResponse(response, "get_players_history"))
       .then((data) => {
-        this.setState({ isLoading: false });
+        this.setState({isLoading: false});
         if (data.failed) {
           return;
         }
@@ -478,11 +474,11 @@ class PlayersHistory extends Component {
   }
 
   setDoFlag(playerToFlag) {
-    return this.setState({ doFlag: playerToFlag });
+    return this.setState({doFlag: playerToFlag});
   }
 
   setDoConfirmPlayer(confirmPlayer) {
-    return this.setState({ doConfirmPlayer: confirmPlayer });
+    return this.setState({doConfirmPlayer: confirmPlayer});
   }
 
   setDoVIPPlayer(doVIPPlayer) {
@@ -492,19 +488,19 @@ class PlayersHistory extends Component {
   }
 
   setIgnoreAccent(ignoreAccent) {
-    return this.setState({ ignoreAccent });
+    return this.setState({ignoreAccent});
   }
 
   setExactMatch(exactMatch) {
-    return this.setState({ exactMatch });
+    return this.setState({exactMatch});
   }
 
   setFlags(flags) {
-    return this.setState({ flags });
+    return this.setState({flags});
   }
 
   setCountry(country) {
-    return this.setState({ country });
+    return this.setState({country});
   }
 
   /* Shortcut function for the grid list */
@@ -553,6 +549,7 @@ class PlayersHistory extends Component {
   onDeleteVip(player, forwardVIP) {
     return this.deleteVip(player.get("player_id"), forwardVIP);
   }
+
   onAddToWatchList(player) {
     const playerName = player.get("names")?.get(0)?.get("name");
     return this.setDoConfirmPlayer({
@@ -601,19 +598,19 @@ class PlayersHistory extends Component {
         <Grid size={12}>
           <SearchBar
             pageSize={pageSize}
-            setPageSize={(v) => this.setState({ pageSize: v })}
+            setPageSize={(v) => this.setState({pageSize: v})}
             lastSeenFrom={lastSeenFrom}
-            setLastSeenFrom={(v) => this.setState({ lastSeenFrom: v })}
+            setLastSeenFrom={(v) => this.setState({lastSeenFrom: v})}
             lastSeenUntil={lastSeenUntil}
-            setLastSeenUntil={(v) => this.setState({ lastSeenUntil: v })}
+            setLastSeenUntil={(v) => this.setState({lastSeenUntil: v})}
             name={byName}
-            setName={(v) => this.setState({ byName: v })}
+            setName={(v) => this.setState({byName: v})}
             playerId={byPlayerId}
-            setPlayerId={(v) => this.setState({ byPlayerId: v })}
+            setPlayerId={(v) => this.setState({byPlayerId: v})}
             blacklistedOnly={blacklistedOnly}
-            setBlacklistedOnly={(v) => this.setState({ blacklistedOnly: v })}
+            setBlacklistedOnly={(v) => this.setState({blacklistedOnly: v})}
             isWatchedOnly={isWatchedOnly}
-            setIsWatchedOnly={(v) => this.setState({ isWatchedOnly: v })}
+            setIsWatchedOnly={(v) => this.setState({isWatchedOnly: v})}
             onSearch={this.getPlayerHistory}
             exactMatch={exactMatch}
             setExactMatch={this.setExactMatch}
@@ -630,13 +627,13 @@ class PlayersHistory extends Component {
             pageSize={pageSize}
             page={page}
             setPage={(page) =>
-              this.setState({ page: page }, this.getPlayerHistory)
+              this.setState({page: page}, this.getPlayerHistory)
             }
             total={total}
           />
         </Grid>
         <Grid size={12}>
-          {isLoading ? <LinearProgress color="secondary" /> : ""}
+          {isLoading ? <LinearProgress color="secondary"/> : ""}
           <PlayerGrid
             players={playersHistory}
             onBlacklist={this.onBlacklist}
@@ -659,7 +656,7 @@ class PlayersHistory extends Component {
             pageSize={pageSize}
             page={page}
             setPage={(page) =>
-              this.setState({ page: page }, this.getPlayerHistory)
+              this.setState({page: page}, this.getPlayerHistory)
             }
             total={total}
           />
@@ -709,7 +706,7 @@ class PlayersHistory extends Component {
         />
         <BlacklistRecordCreateDialog
           open={blacklistDialogOpen}
-          setOpen={(value) => this.setState({ blacklistDialogOpen: value })}
+          setOpen={(value) => this.setState({blacklistDialogOpen: value})}
           blacklists={blacklists}
           initialValues={blacklistDialogInitialValues}
           onSubmit={this.blacklistPlayer}
@@ -721,4 +718,4 @@ class PlayersHistory extends Component {
 }
 
 export default PlayersHistory;
-export { FlagDialog, PlayersHistory };
+export {FlagDialog, PlayersHistory};

@@ -10,7 +10,7 @@ import {
   useRouteError,
   useSubmit,
 } from "react-router-dom";
-import {lazy, useEffect, useState} from "react";
+import {lazy, Suspense, useEffect, useState} from "react";
 import { execute, get, handleHttpError } from "@/utils/fetchUtils";
 import { Box, Button, Stack, Typography, useTheme } from "@mui/material";
 import { a11yDark, a11yLight, CopyBlock } from "react-code-blocks";
@@ -260,14 +260,16 @@ const ConfigPage = () => {
               />
             </ThemeProvider>
           ) : (
-            <Editor
-              height="70vh"
-              defaultLanguage="json"
-              value={editorContent}
-              defaultValue=""
-              theme={theme.palette.mode === "dark" ? "vs-dark" : "vs-light"}
-              onChange={(value) => setEditorContent(value)}
-            />
+            <Suspense>
+              <Editor
+                height="70vh"
+                defaultLanguage="json"
+                value={editorContent}
+                defaultValue=""
+                theme={theme.palette.mode === "dark" ? "vs-dark" : "vs-light"}
+                onChange={(value) => setEditorContent(value)}
+              />
+            </Suspense>
           )}
           <Stack direction={"row"} spacing={1}>
             <Button variant={"outlined"} onClick={handleRefresh}>

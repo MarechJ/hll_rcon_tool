@@ -1,19 +1,12 @@
 import Padlock from "@/components/shared/Padlock";
 import SplitButton from "@/components/shared/SplitButton";
-import { cmd } from "@/utils/fetchUtils";
-import { TEMPLATE_CATEGORY } from "@/utils/lib";
-import { Alert, Autocomplete, Box, Button, Paper, Skeleton, TextField, useTheme } from "@mui/material";
-import { Stack } from "@mui/system";
+import {cmd} from "@/utils/fetchUtils";
+import {TEMPLATE_CATEGORY} from "@/utils/lib";
+import {Alert, Autocomplete, Box, Button, Paper, Skeleton, TextField, useTheme} from "@mui/material";
+import {Stack} from "@mui/system";
 import {lazy, Suspense, useEffect, useState} from "react";
-import {
-  Await,
-  defer,
-  json,
-  useActionData,
-  useLoaderData,
-  useSubmit,
-} from "react-router-dom";
-import { AsyncClientError } from "@/components/shared/AsyncClientError";
+import {Await, defer, json, useActionData, useLoaderData, useSubmit,} from "react-router-dom";
+import {AsyncClientError} from "@/components/shared/AsyncClientError";
 
 const Editor = lazy(() => import("@monaco-editor/react"));
 
@@ -27,7 +20,7 @@ export const loader = async () => {
   const autosettings = await cmd.GET_AUTOSETTINGS();
   const services = await cmd.GET_SERVICES();
   const templates = cmd.GET_MESSAGE_TEMPLATES({
-    params: { category: TEMPLATE_CATEGORY.AUTO_SETTINGS },
+    params: {category: TEMPLATE_CATEGORY.AUTO_SETTINGS},
   });
   return defer({
     service: services.find((service) => service.name === "auto_settings"),
@@ -36,26 +29,26 @@ export const loader = async () => {
   });
 };
 
-export const action = async ({ request }) => {
+export const action = async ({request}) => {
   const formData = Object.fromEntries(await request.formData());
-  const { intent, ...data } = formData;
+  const {intent, ...data} = formData;
   let result;
 
   try {
     switch (intent) {
       case INTENT.APPLY_ALL:
       case INTENT.APPLY_SINGLE:
-        result = await cmd.SET_AUTOSETTINGS({ payload: data });
+        result = await cmd.SET_AUTOSETTINGS({payload: data});
         break;
       case INTENT.TOGGLE_SERVICE:
-        result = await cmd.TOGGLE_SERVICE({ payload: data });
+        result = await cmd.TOGGLE_SERVICE({payload: data});
         break;
       default:
         return json(
           {
             error: "InvalidIntent",
           },
-          { status: 400 }
+          {status: 400}
         );
     }
   } catch (error) {
@@ -63,7 +56,7 @@ export const action = async ({ request }) => {
       {
         error: error,
       },
-      { status: 400 }
+      {status: 400}
     );
   }
 
@@ -72,7 +65,7 @@ export const action = async ({ request }) => {
 
 const isRunning = (service) => service.statename === "RUNNING";
 
-const TemplateSkeleton = () => <Skeleton height={80} />;
+const TemplateSkeleton = () => <Skeleton height={80}/>;
 
 const Autosettings = () => {
   const data = useLoaderData();
@@ -89,7 +82,7 @@ const Autosettings = () => {
     formData.append("intent", intent);
     formData.append("forward", intent === INTENT.APPLY_ALL);
     formData.append("settings", editorContent);
-    submit(formData, { method: "post" });
+    submit(formData, {method: "post"});
   };
 
   const handleToggleService = (checked) => {
@@ -97,7 +90,7 @@ const Autosettings = () => {
     formData.append("intent", INTENT.TOGGLE_SERVICE);
     formData.append("action", checked ? "start" : "stop");
     formData.append("service_name", "auto_settings");
-    submit(formData, { method: "post" });
+    submit(formData, {method: "post"});
   };
 
   const handleTemplateChange = (e, message) => {
@@ -125,7 +118,7 @@ const Autosettings = () => {
     <Stack gap={2}>
       <Stack
         component={Paper}
-        sx={{ p: 1, mb: 1 }}
+        sx={{p: 1, mb: 1}}
         direction={"row"}
         justifyContent={"space-between"}
         gap={1}
@@ -166,18 +159,20 @@ const Autosettings = () => {
         </Stack>
       </Stack>
       {error && <Alert severity="error">{error}</Alert>}
-      <Editor
-        height="70vh"
-        defaultLanguage="json"
-        value={editorContent}
-        defaultValue=""
-        theme={theme.palette.mode === "dark" ? "vs-dark" : "vs-light"}
-        onChange={(value) => setEditorContent(value)}
-      />
-      <Suspense fallback={<TemplateSkeleton />}>
+      <Suspense>
+        <Editor
+          height="70vh"
+          defaultLanguage="json"
+          value={editorContent}
+          defaultValue=""
+          theme={theme.palette.mode === "dark" ? "vs-dark" : "vs-light"}
+          onChange={(value) => setEditorContent(value)}
+        />
+      </Suspense>
+      <Suspense fallback={<TemplateSkeleton/>}>
         <Await
           resolve={data.templates}
-          errorElement={<AsyncClientError title={"Autosettings Templates"} />}
+          errorElement={<AsyncClientError title={"Autosettings Templates"}/>}
         >
           {(templates) => {
             return (
@@ -189,7 +184,7 @@ const Autosettings = () => {
                 autoHighlight
                 getOptionLabel={(option) => option.title}
                 renderOption={(props, option) => {
-                  const { key, ...optionProps } = props;
+                  const {key, ...optionProps} = props;
                   return (
                     <Box key={key} component="li" {...optionProps}>
                       #{option.id} {option.title}
