@@ -7,7 +7,6 @@ import { Box, Divider, IconButton } from "@mui/material";
 import { useState } from "react";
 import SettingsIcon from "@mui/icons-material/Settings";
 import TableConfigDrawer from "@/components/table/TableConfigDrawer";
-import { TablePagination } from "@/components/table/TablePagination";
 import NavPagination from "./nav-pagination";
 
 export function GameListTable({ table, maxPages, page }) {

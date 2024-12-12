@@ -1,13 +1,9 @@
-import { useAuth } from "@/hooks/useAuth";
 import { useGlobalStore } from "@/hooks/useGlobalState";
 import { cmd } from "@/utils/fetchUtils";
 import {
   List,
-  ListItemAvatar,
   Card,
-  Avatar,
   ListItem,
-  ListItemText,
   CardHeader,
   CardContent,
   styled,

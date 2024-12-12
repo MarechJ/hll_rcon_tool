@@ -1,9 +1,7 @@
 import { ButtonGroup, Button } from "@mui/material";
-import React from "react";
 import FlagIcon from "@mui/icons-material/Flag";
 import Tooltip from "@mui/material/Tooltip";
 import StarIcon from "@mui/icons-material/Star";
-import StarBorder from "@mui/icons-material/StarBorder";
 import HowToRegIcon from "@mui/icons-material/HowToReg";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import BlockIcon from "@mui/icons-material/Block";
@@ -21,7 +19,6 @@ export const ActionButton = ({
   onflag,
   isVip,
   onAddVip,
-  onDeleteVip,
   isWatched,
   onAddToWatchList,
   onRemoveFromWatchList,

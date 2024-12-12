@@ -1,7 +1,6 @@
-import React, { Fragment } from "react";
+import {Fragment, useEffect, useMemo, useState} from "react";
 import {
   Link,
-  Modal,
   Typography,
   TextField,
   Avatar,
@@ -33,7 +32,6 @@ import {
   showResponse,
 } from "@/utils/fetchUtils";
 import {
-  Duration,
   PlayerActions,
   ReasonDialog,
 } from "@/components/PlayerView/playerActions";
@@ -46,13 +44,12 @@ const Squad = ({
   squadName,
   squadData,
   doOpen,
-  onSelectSquad,
   onSelectPlayer,
   selectedPlayers,
   selectMultiplePlayers,
   showOnlySelected,
 }) => {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
   const handleClick = () => {
     setOpen(!open);
   };
@@ -62,20 +59,20 @@ const Squad = ({
     recon: 2,
   };
 
-  const squadPlayerNames = React.useMemo(
+  const squadPlayerNames = useMemo(
     () =>
       squadData.get("players", new IList()).map((player) => player.get("name")),
     [squadData]
   );
 
-  const hasSelectedPlayers = React.useMemo(() => {
+  const hasSelectedPlayers = useMemo(() => {
     const intersection = new OrderedSet(squadPlayerNames).intersect(
       selectedPlayers
     );
     return intersection.size !== 0;
   }, [selectedPlayers, squadPlayerNames]);
 
-  const shouldHide = React.useMemo(
+  const shouldHide = useMemo(
     () => showOnlySelected && !hasSelectedPlayers,
     [showOnlySelected, hasSelectedPlayers]
   );
@@ -193,7 +190,7 @@ const Team = ({
   sortFunc,
   showOnlySelected,
 }) => {
-  const [openAll, setOpenAll] = React.useState(false);
+  const [openAll, setOpenAll] = useState(false);
 
   const onOpenAll = () => (openAll ? setOpenAll(false) : setOpenAll(true));
 
@@ -275,17 +272,17 @@ const SimplePlayerRenderer = ({ player, flag }) => (
 );
 
 const GameView = () => {
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [teamView, setTeamView] = React.useState(null);
-  const [selectedPlayers, setSelectedPlayers] = React.useState(
+  const [isLoading, setIsLoading] = useState(false);
+  const [teamView, setTeamView] = useState(null);
+  const [selectedPlayers, setSelectedPlayers] = useState(
     new OrderedSet()
   );
-  const [refreshFreqSecs, setResfreshFreqSecs] = React.useState(5);
-  const intervalHandleRef = React.useRef(null);
-  const [flag, setFlag] = React.useState(false);
-  const [blacklistDialogOpen, setBlacklistDialogOpen] = React.useState(false);
-  const [blacklists, setBlacklists] = React.useState([]);
-  const [sortType, setSortType] = React.useState(
+  const [refreshFreqSecs, setResfreshFreqSecs] = useState(5);
+  const intervalHandleRef = useRef(null);
+  const [flag, setFlag] = useState(false);
+  const [blacklistDialogOpen, setBlacklistDialogOpen] = useState(false);
+  const [blacklists, setBlacklists] = useState([]);
+  const [sortType, setSortType] = useState(
     localStorage.getItem("game_view_sorting")
       ? localStorage.getItem("game_view_sorting")
       : "name_asc"
@@ -297,10 +294,10 @@ const GameView = () => {
           player_id: null,
         }
   */
-  const [confirmAction, setConfirmAction] = React.useState(false);
-  const [showOnlySelected, setShowOnlySelected] = React.useState(false);
+  const [confirmAction, setConfirmAction] = useState(false);
+  const [showOnlySelected, setShowOnlySelected] = useState(false);
 
-  const sortTypeToFunc = React.useMemo(
+  const sortTypeToFunc = useMemo(
     () => ({
       combat_desc: (squadData, squadName) => -squadData.get("combat", 0),
       offense_desc: (squadData, squadName) => -squadData.get("offense", 0),
@@ -319,7 +316,7 @@ const GameView = () => {
     []
   );
 
-  const playerNamesToPlayerId = React.useMemo(() => {
+  const playerNamesToPlayerId = useMemo(() => {
     if (!teamView) {
       return new Map();
     }
@@ -367,12 +364,12 @@ const GameView = () => {
     return names;
   };
 
-  const autoCompleteSelectedPlayers = React.useMemo(
+  const autoCompleteSelectedPlayers = useMemo(
     () => selectedPlayers.toJS(),
     [selectedPlayers]
   );
 
-  const allPlayerNames = React.useMemo(() => {
+  const allPlayerNames = useMemo(() => {
     if (!teamView) {
       return [];
     }
@@ -442,11 +439,11 @@ const GameView = () => {
       .catch(handle_http_errors);
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     loadData();
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Set up the interval
     intervalHandleRef.current = setInterval(() => {
       loadData().catch(e => console.warn("Error in periodic refresh", e));

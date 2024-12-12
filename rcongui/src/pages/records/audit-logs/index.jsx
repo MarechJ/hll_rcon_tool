@@ -1,8 +1,6 @@
-import React from "react";
 import {
   get,
   handle_http_errors,
-  postData,
   showResponse,
 } from "@/utils/fetchUtils";
 import InputLabel from "@mui/material/InputLabel";
@@ -15,6 +13,7 @@ import { List as IList, fromJS } from "immutable";
 import Grid from "@mui/material/Grid2";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import dayjs from "dayjs";
+import {useEffect, useState} from "react";
 
 const columns = [
   { field: "id", headerName: "ID", width: 70, sortable: false },
@@ -62,13 +61,13 @@ const AuditLogsTable = ({ auditLogs }) => {
 };
 
 const AuditLog = () => {
-  const [auditLogs, setAuditLogs] = React.useState(new IList());
-  const [usernames, setUsernames] = React.useState(new IList());
-  const [commands, setCommands] = React.useState(new IList());
-  const [usernameSearch, setUsernameSearch] = React.useState([]);
-  const [commandSearch, setCommandSearch] = React.useState([]);
-  const [paramSearch, setParamSearch] = React.useState("");
-  const [timeSort, setTimeSort] = React.useState("desc");
+  const [auditLogs, setAuditLogs] = useState(new IList());
+  const [usernames, setUsernames] = useState(new IList());
+  const [commands, setCommands] = useState(new IList());
+  const [usernameSearch, setUsernameSearch] = useState([]);
+  const [commandSearch, setCommandSearch] = useState([]);
+  const [paramSearch, setParamSearch] = useState("");
+  const [timeSort, setTimeSort] = useState("desc");
 
   const getAuditLogs = () => {
     get(
@@ -102,7 +101,7 @@ const AuditLog = () => {
       .catch(handle_http_errors);
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     getMetdata();
     getAuditLogs();
   }, []);

@@ -38,7 +38,6 @@ import ThreeSixtyIcon from '@mui/icons-material/ThreeSixty';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import HowToVoteIcon from '@mui/icons-material/HowToVote';
 import AdsClickIcon from '@mui/icons-material/AdsClick';
-import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import ElectricalServicesIcon from '@mui/icons-material/ElectricalServices';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import GradeIcon from '@mui/icons-material/Grade';
@@ -338,20 +337,3 @@ export const navMenus = [
     ],
   },
 ];
-
-export const publicNavMenus = [
-  {
-    links: [
-      {
-        name: "Live",
-        to: "/",
-        icon: <BoltIcon />,
-      },
-      {
-        name: "Games",
-        to: "/games",
-        icon: <HourglassBottomIcon />,
-      },
-    ]
-  }
-]

@@ -78,7 +78,7 @@ import { action as profanityFilterAction } from "./pages/settings/profanity-filt
 
 import ConsoleAdminSettings from "./pages/settings/console-admins"
 import { loader as consoleAdminSettingsLoader } from "./pages/settings/console-admins"
-import { action as consoleaAdminSettingsAction } from "./pages/settings/console-admins"
+import { action as consoleAdminSettingsAction } from "./pages/settings/console-admins"
 
 import VipSettings from "./pages/settings/vip"
 import { loader as vipSettingsLoader } from "./pages/settings/vip"
@@ -86,7 +86,6 @@ import { action as vipSettingsAction } from "./pages/settings/vip"
 
 import { AuthProvider } from "@/hooks/useAuth";
 import { GlobalState } from "@/hooks/useGlobalState";
-import { queryClient } from './queryClient';
 
 const router = createBrowserRouter([
     {
@@ -196,7 +195,7 @@ const router = createBrowserRouter([
                         handle: { crumb: () => <Link to={'/settings/console-admins'}>Console Admins</Link> },
                         element: <ConsoleAdminSettings />,
                         loader: consoleAdminSettingsLoader,
-                        action: consoleaAdminSettingsAction,
+                        action: consoleAdminSettingsAction,
                     },
                     {
                         path: 'profanity-filter',

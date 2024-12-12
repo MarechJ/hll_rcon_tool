@@ -1,4 +1,3 @@
-import * as React from "react";
 import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -21,6 +20,7 @@ import { redirect } from "react-router-dom";
 import { cmd } from "@/utils/fetchUtils";
 import getDashboardTheme from "@/themes/getDashboardTheme";
 import { useStorageState } from "@/hooks/useStorageState";
+import {useEffect, useState} from "react";
 
 export const loader = async ({ request }) => {
   let user;
@@ -118,7 +118,7 @@ const MainWrapper = styled(Stack)(({ theme }) => ({
 }));
 
 export default function Login() {
-  const [loading, setLoading] = React.useState(false);
+  const [loading, setLoading] = useState(false);
   const [mode] = useStorageState("mode", "dark");
 
   const {
@@ -138,7 +138,7 @@ export default function Login() {
 
   const submit = useSubmit();
 
-  React.useEffect(() => setLoading(false), [authError]);
+  useEffect(() => setLoading(false), [authError]);
 
   const onSubmit = (values, e) => {
     setLoading(true);

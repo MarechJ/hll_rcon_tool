@@ -1,8 +1,8 @@
-import React from 'react';
 import { Button } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import { BadgeList } from './BadgeList';
 import { useQueryClient } from '@tanstack/react-query';
+import {Fragment, useCallback, useEffect, useRef, useState} from "react";
 
 const ACTION_STATUS = {
   default: 'default',
@@ -43,19 +43,19 @@ export const ActionForm = ({
   });
   const { recipients, action } = actionState;
   const { submitRef, closeDialog, setLoading, setError } = actionHandlers;
-  const [recipientStates, setRecipientStates] = React.useState(initRecipients(recipients));
-  const closeDialogTimeoutRef = React.useRef(null);
+  const [recipientStates, setRecipientStates] = useState(initRecipients(recipients));
+  const closeDialogTimeoutRef = useRef(null);
   const queryClient = useQueryClient();
 
-  React.useEffect(() => {
+  useEffect(() => {
     setRecipientStates(initRecipients(recipients));
   }, [recipients]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     return () => clearTimeout(closeDialogTimeoutRef.current);
   }, [])
 
-  const onSubmit = React.useCallback(async (data) => {
+  const onSubmit = useCallback(async (data) => {
     const getPlayerId = (recipient) => recipient.player_id ?? recipient?.profile?.player_id;
     let allSuccess = true;
     setLoading(true)
@@ -134,7 +134,7 @@ export const ActionForm = ({
   const ActionFields = action.component;
 
   return (
-    <React.Fragment>
+    <Fragment>
       <BadgeList recipients={recipientStates} />
       <form onSubmit={handleSubmit(onSubmit)}>
         <ActionFields errors={errors} {...formProps} {...actionState} />
@@ -146,6 +146,6 @@ export const ActionForm = ({
           Submit
         </Button>
       </form>
-    </React.Fragment>
+    </Fragment>
   ); 
 };

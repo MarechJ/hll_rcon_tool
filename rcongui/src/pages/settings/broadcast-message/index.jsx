@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import {Suspense, useEffect, useMemo, useState} from "react";
 import { Await, defer, Link, useLoaderData, useSubmit } from "react-router-dom";
 import { cmd } from "@/utils/fetchUtils";
 import { AsyncClientError } from "@/components/shared/AsyncClientError";
@@ -141,7 +141,7 @@ const BroadcastMessagePage = () => {
         onChange={handleMessagesChange}
         sx={{ mb: 2 }}
       />
-      <React.Suspense fallback={<TemplateSkeleton />}>
+      <Suspense fallback={<TemplateSkeleton />}>
         <Await
           resolve={data.templates}
           errorElement={<AsyncClientError title={"Welcome Templates"} />}
@@ -178,7 +178,7 @@ const BroadcastMessagePage = () => {
             );
           }}
         </Await>
-      </React.Suspense>
+      </Suspense>
     </Box>
   );
 };

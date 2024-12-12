@@ -1,4 +1,3 @@
-import React from "react";
 import Padlock from "@/components/shared/Padlock";
 import SplitButton from "@/components/shared/SplitButton";
 import { cmd } from "@/utils/fetchUtils";
@@ -22,7 +21,7 @@ import {
   TextField,
   Alert,
 } from "@mui/material";
-import { Suspense } from "react";
+import {Suspense, useState} from "react";
 import { useLoaderData, defer, Await } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -898,10 +897,9 @@ const PANEL_COMPONENTS = {
 
 const SettingsPage = () => {
   const data = useLoaderData();
-  const [expanded, setExpanded] = React.useState(false);
-  const [isFlushingCache, setIsFlushingCache] = React.useState(false);
-  const [isReconnectingToGameserver, setIsReconnectingToGameserver] =
-    React.useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [isFlushingCache, setIsFlushingCache] = useState(false);
+  const [isReconnectingToGameserver, setIsReconnectingToGameserver] = useState(false);
 
   const handleChange = (panel) => (event, isExpanded) => {
     setExpanded(isExpanded ? panel : false);

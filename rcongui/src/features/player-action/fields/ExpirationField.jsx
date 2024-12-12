@@ -1,4 +1,3 @@
-import React from 'react';
 import dayjs from 'dayjs';
 import { ControlledDesktopDateTimePicker } from '@/components/form/core/ControlledDesktopDateTimePicker';
 

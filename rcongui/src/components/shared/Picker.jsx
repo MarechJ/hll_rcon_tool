@@ -1,15 +1,11 @@
-import * as React from "react";
-import { useTheme, styled } from "@mui/material/styles";
+import { styled } from "@mui/material/styles";
 import Popper from "@mui/material/Popper";
 import ClickAwayListener from "@mui/material/ClickAwayListener";
-import SettingsIcon from "@mui/icons-material/Settings";
-import CloseIcon from "@mui/icons-material/Close";
-import DoneIcon from "@mui/icons-material/Done";
 import Autocomplete, { autocompleteClasses } from "@mui/material/Autocomplete";
 import ButtonBase from "@mui/material/ButtonBase";
 import InputBase from "@mui/material/InputBase";
 import Box from "@mui/material/Box";
-import FlagIcon from "@mui/icons-material/Flag";
+import {Fragment, useState} from "react";
 
 const StyledAutocompletePopper = styled("div")(({ theme }) => ({
   [`& .${autocompleteClasses.paper}`]: {
@@ -125,9 +121,9 @@ export function Picker({
   onClose,
   ...props
 }) {
-  const [anchorEl, setAnchorEl] = React.useState(null);
-  const [value, setValue] = React.useState([]);
-  const [pendingValue, setPendingValue] = React.useState([]);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [value, setValue] = useState([]);
+  const [pendingValue, setPendingValue] = useState([]);
 
   const handleClick = (event) => {
     setPendingValue(value);
@@ -147,7 +143,7 @@ export function Picker({
   id = open ? id : undefined;
 
   return (
-    <React.Fragment>
+    <Fragment>
       <Box sx={{ fontSize: 12 }}>{renderButton({ onClick: handleClick })}</Box>
       <StyledPopper
         id={id}
@@ -209,6 +205,6 @@ export function Picker({
           </div>
         </ClickAwayListener>
       </StyledPopper>
-    </React.Fragment>
+    </Fragment>
   );
 }

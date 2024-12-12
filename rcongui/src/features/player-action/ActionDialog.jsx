@@ -6,24 +6,23 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  DialogTitle,
   IconButton,
   Toolbar,
   Typography,
 } from "@mui/material";
-import React from "react";
 import { ActionForm } from "./ActionForm";
 import { useActionDialog } from "@/hooks/useActionDialog";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTheme } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import { ClientError } from "@/components/shared/ClientError";
+import {useEffect, useRef, useState} from "react";
 
 export const ActionDialog = () => {
   const { state, closeDialog } = useActionDialog();
-  const submitRef = React.useRef();
-  const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState(null);
+  const submitRef = useRef();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("md"));
   const { open, action, recipients } = state;
@@ -42,7 +41,7 @@ export const ActionDialog = () => {
     submitRef.current.click();
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     return () => {
       setLoading(false);
     };

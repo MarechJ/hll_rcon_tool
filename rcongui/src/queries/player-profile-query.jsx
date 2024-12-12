@@ -15,9 +15,3 @@ export const playerProfileQueryOptions = (playerId, options) => {
     },
   };
 };
-
-export const playerProfileQuery = (playerId, options) => {
-  return useQuery({
-    ...playerProfileQueryOptions(playerId, options),
-  });
-};

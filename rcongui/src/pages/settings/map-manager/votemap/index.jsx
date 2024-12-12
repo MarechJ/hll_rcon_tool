@@ -16,7 +16,6 @@ import {
   IconButton,
 } from "@mui/material";
 import { makeStyles } from "@mui/styles";
-import React from "react";
 import {
   getVotemapConfig,
   getVotemapStatus,
@@ -43,6 +42,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { useOutletContext } from "react-router-dom";
 import { mapIdsToLayers } from "@/utils/lib";
 import { toast } from "react-toastify";
+import {useEffect, useMemo, useRef, useState} from "react";
 
 const useStyles = makeStyles((theme) => ({
   spacing: {
@@ -83,14 +83,14 @@ const UPDATE_INTERVAL = 15 * 1000;
 
 const VoteMapConfig = () => {
   const { maps } = useOutletContext();
-  const [_config, setConfig] = React.useState({});
-  const [configChanges, setConfigChanges] = React.useState({});
-  const [whitelist, setWhitelist] = React.useState([]);
-  const [mapsToAdd, setMapsToAdd] = React.useState([]);
-  const [incomingChanges, setIncomingChanges] = React.useState(null);
-  const [status, setStatus] = React.useState([]);
-  const statusIntervalRef = React.useRef(null);
-  const configIntervalRef = React.useRef(null);
+  const [_config, setConfig] = useState({});
+  const [configChanges, setConfigChanges] = useState({});
+  const [whitelist, setWhitelist] = useState([]);
+  const [mapsToAdd, setMapsToAdd] = useState([]);
+  const [incomingChanges, setIncomingChanges] = useState(null);
+  const [status, setStatus] = useState([]);
+  const statusIntervalRef = useRef(null);
+  const configIntervalRef = useRef(null);
 
   const classes = useStyles();
 
@@ -101,7 +101,7 @@ const VoteMapConfig = () => {
 
   const hasChanges = Object.keys(configChanges).length > 0;
 
-  const autocompleteSelection = React.useMemo(() => {
+  const autocompleteSelection = useMemo(() => {
     if (!maps.length) return [];
 
     const mapSelection = maps.reduce((acc, map) => {
@@ -118,7 +118,7 @@ const VoteMapConfig = () => {
     return Object.values(mapSelection);
   }, [maps, whitelist]);
 
-  const whitelistSorted = React.useMemo(() => {
+  const whitelistSorted = useMemo(() => {
     const sorted = [...whitelist];
     sorted.sort((mapA, mapB) => {
       if (mapA.pretty_name < mapB.pretty_name) {
@@ -225,17 +225,17 @@ const VoteMapConfig = () => {
     setIncomingChanges(null);
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     getConfig();
     getStatus();
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     statusIntervalRef.current = setInterval(getStatus, UPDATE_INTERVAL);
     return () => clearInterval(statusIntervalRef.current);
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     configIntervalRef.current = setInterval(async () => {
       const freshConfig = await getVotemapConfig();
       if (!isEqual(_config, freshConfig)) {
@@ -245,13 +245,13 @@ const VoteMapConfig = () => {
     return () => clearInterval(configIntervalRef.current);
   }, [_config]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (incomingChanges !== null && isEmpty(configChanges)) {
       acceptIncomingConfigChanges();
     }
   }, [incomingChanges, configChanges]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     getWhitelist();
   }, [maps]);
 

@@ -1,4 +1,4 @@
-import { Avatar, Box, Divider, Typography } from "@mui/material";
+import { Avatar, Box, Typography } from "@mui/material";
 import { styled } from '@mui/material/styles';
 import { getMapLayerImageSrc, unifiedGamemodeName } from "./helpers";
 

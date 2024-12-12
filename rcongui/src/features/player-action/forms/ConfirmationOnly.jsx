@@ -1,3 +1,3 @@
-import React from 'react';
+import {Fragment} from "react";
 
-export const ConfirmationOnly = () => <React.Fragment />;
+export const ConfirmationOnly = () => <Fragment />;

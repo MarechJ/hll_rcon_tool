@@ -10,9 +10,8 @@ import {
   useRouteError,
   useSubmit,
 } from "react-router-dom";
-import { useEffect, useState } from "react";
+import {lazy, useEffect, useState} from "react";
 import { execute, get, handleHttpError } from "@/utils/fetchUtils";
-import Editor from "@monaco-editor/react";
 import { Box, Button, Stack, Typography, useTheme } from "@mui/material";
 import { a11yDark, a11yLight, CopyBlock } from "react-code-blocks";
 import { toast } from "react-toastify";
@@ -26,6 +25,8 @@ import { Generate } from "@jsonforms/core";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { customRenderers } from "@/pages/settings/[configs]/renderer/renderer";
+
+const Editor = lazy(() => import("@monaco-editor/react"));
 
 export const loader = async ({ params }) => {
   const { category, type } = params;

@@ -1,15 +1,10 @@
-import React, { Suspense } from "react";
 import { useStorageState } from "@/hooks/useStorageState";
-import { useAsyncInterval } from "@/hooks/useInterval"; // Updated hook with AbortController
-import { cmd, execute } from "@/utils/fetchUtils";
+import { cmd } from "@/utils/fetchUtils";
 import TableChartIcon from "@mui/icons-material/TableChart";
 import TableRowsIcon from "@mui/icons-material/TableRows";
-import Grid from "@mui/material/Grid2";
 import {
   Box,
-  FormControlLabel,
   Stack,
-  Switch,
   Autocomplete,
   TextField,
   Paper,
@@ -19,8 +14,6 @@ import {
   MenuItem,
   Skeleton,
   ToggleButton,
-  lighten,
-  darken,
   styled,
   Divider,
   Checkbox,
@@ -28,20 +21,18 @@ import {
 import ToggleButtonGroup, {
   toggleButtonGroupClasses,
 } from "@mui/material/ToggleButtonGroup";
-import { debounce } from "lodash";
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import PlaylistAddCircleIcon from '@mui/icons-material/PlaylistAddCircle';
-import { useLoaderData } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { GridToolbar } from "@mui/x-data-grid";
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import { logColumns } from "./logs-columns";
+import {lazy, Suspense, useMemo} from "react";
 
-const LogLine = React.lazy(() => import("./LogLine"));
-const Log = React.lazy(() => import("./Log"));
-const LogTable = React.lazy(() => import("./LogTable"));
+const LogLine = lazy(() => import("./LogLine"));
+const Log = lazy(() => import("./Log"));
+const LogTable = lazy(() => import("./LogTable"));
 
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;
@@ -61,18 +52,6 @@ const StyledToggleButtonGroup = styled(ToggleButtonGroup)(({ theme }) => ({
       borderLeft: "1px solid transparent",
     },
 }));
-
-const columns = [
-  { field: "action", headerName: "Action", width: 150 },
-  { field: "player", headerName: "Player", width: 150 },
-  {
-    field: "time",
-    headerName: "Time",
-    width: 150,
-    valueFormatter: (value) => dayjs(value).format("h:mm:ss"),
-  },
-  { field: "content", headerName: "Content", flex: 1 },
-];
 
 const limitOptions = [
   100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000,
@@ -96,7 +75,6 @@ const LiveLogs = ({ initialLogsView }) => {
   const {
     data: logsView,
     error,
-    isLoading,
   } = useQuery({
     queryKey: ["logs", "live"],
     queryFn: cmd.GET_RECENT_LOGS({ params: {
@@ -109,7 +87,7 @@ const LiveLogs = ({ initialLogsView }) => {
     refetchInterval: interval, // Polling interval for updates
   });
 
-  const rows = React.useMemo(() => {
+  useMemo(() => {
     if (!logsView || !logsView.logs) {
       return [];
     }

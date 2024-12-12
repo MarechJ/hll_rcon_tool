@@ -1,4 +1,3 @@
-import React from "react";
 import {
   addPlayerToWatchList,
   get,
@@ -21,7 +20,6 @@ import { ReasonDialog } from "@/components/PlayerView/playerActions";
 import { omitBy } from "lodash/object";
 import SearchBar from "@/components/PlayersHistory/searchBar";
 import { fromJS, List, Map } from "immutable";
-import FlagIcon from "@mui/icons-material/Flag";
 import data from '@emoji-mart/data'
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -34,9 +32,10 @@ import { vipListFromServer } from "@/components/VipDialog/vipFromServer";
 import { banListFromServer } from "@/components/PlayersHistory/PlayerTile/PlayerBan";
 import BlacklistRecordCreateDialog from "@/components/Blacklist/BlacklistRecordCreateDialog";
 import EmojiPicker from "@emoji-mart/react";
+import {Component, Fragment} from "react";
 
 const PlayerSummary = ({ player, flag }) => (
-  <React.Fragment>
+  <Fragment>
     <Typography variant="body2">
       Add flag: {flag ? getEmojiFlag(flag) : <small>Please choose</small>}
     </Typography>
@@ -49,10 +48,10 @@ const PlayerSummary = ({ player, flag }) => (
     <Typography variant="body2">
       Player ID: {player ? player.get("player_id") : ""}
     </Typography>
-  </React.Fragment>
+  </Fragment>
 );
 
-class FlagDialog extends React.Component {
+class FlagDialog extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -128,12 +127,6 @@ class FlagDialog extends React.Component {
   }
 }
 
-const FlagButton = ({ onflag }) => (
-  <Button variant="outlined" onClick={onflag}>
-    <FlagIcon />
-  </Button>
-);
-
 const MyPagination = ({ pageSize, total, page, setPage }) => (
   <Pagination
     count={Math.ceil(total / pageSize)}
@@ -144,7 +137,7 @@ const MyPagination = ({ pageSize, total, page, setPage }) => (
   />
 );
 
-class PlayersHistory extends React.Component {
+class PlayersHistory extends Component {
   constructor(props) {
     super(props);
 
@@ -728,4 +721,4 @@ class PlayersHistory extends React.Component {
 }
 
 export default PlayersHistory;
-export { FlagDialog, FlagButton, PlayersHistory };
+export { FlagDialog, PlayersHistory };

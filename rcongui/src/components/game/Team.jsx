@@ -1,7 +1,6 @@
 import Grid from "@mui/material/Grid2";
-import Man4Icon from "@mui/icons-material/Man4";
 import Points, { NumberText, SquareIcon } from "./Points";
-import { Avatar, Box, Divider, Stack } from "@mui/material";
+import { Box, Divider, Stack } from "@mui/material";
 import { extractTeamState } from "@/utils/extractPlayers";
 
 const teamMetrics = ["combat", "offense", "defense", "support"];
@@ -9,19 +8,6 @@ const teamMetrics = ["combat", "offense", "defense", "support"];
 const teamStats = ["kills", "deaths", "avg_level", "med_level"];
 
 const teamRoles = ["armycommander", "armor", "infantry", "recon"];
-
-const makeTeam = (n) =>
-  Array.from({ length: n })
-    .fill(null)
-    .map(() => (
-      <Man4Icon
-        sx={{
-          margin: "0 -0.45rem",
-          fontSize: "1.25rem",
-          color: (theme) => theme.palette.primary.main,
-        }}
-      />
-    ));
 
 const roleSrc = (role) => `/icons/roles/${role}.png`;
 

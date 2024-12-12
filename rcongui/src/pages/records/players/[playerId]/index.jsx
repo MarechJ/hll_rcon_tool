@@ -2,7 +2,6 @@ import {
   get,
   execute,
 } from "@/utils/fetchUtils";
-import React from "react";
 import { Avatar, Box, Button, Link, Popover, Stack } from "@mui/material";
 import Typography from "@mui/material/Typography";
 import { ExpandMore } from "@mui/icons-material";
@@ -15,6 +14,7 @@ import makePlayerProfileUrl from "@/utils/makePlayerProfileUrl";
 import Grid from "@mui/material/Grid2";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import dayjs from "dayjs";
+import {useState} from "react";
 
 const fetchResource = async (url, errorMessage) => {
   try {
@@ -117,7 +117,7 @@ const getLinkLabel = (id) => {
 };
 
 const NamePopOver = ({ names }) => {
-  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -202,20 +202,13 @@ const PlayerInfo = () => {
   const submit = useSubmit()
 
   const {
-    id,
     player_id,
-    created,
     names,
     sessions,
-    sessions_count,
     total_playtime_seconds,
-    current_playtime_seconds,
     received_actions,
     penalty_count,
-    blacklists,
     is_blacklisted,
-    flags,
-    watchlist,
     steaminfo,
     vips,
     bans,

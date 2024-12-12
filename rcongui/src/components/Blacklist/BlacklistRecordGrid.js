@@ -1,4 +1,3 @@
-import React from "react";
 import { Link as RouterLink } from "react-router-dom";
 import {
   Avatar,
@@ -25,7 +24,8 @@ import { List } from "immutable";
 import moment from "moment";
 import BlacklistRecordActionRow from "./BlacklistRecordActionRow";
 import BlacklistRecordCreateDialog from "./BlacklistRecordCreateDialog";
-import { handle_http_errors, postData, showResponse } from "../../utils/fetchUtils";
+import { handle_http_errors, postData, showResponse } from "@/utils/fetchUtils";
+import {Fragment, useState} from "react";
 
 const BlacklistRecordTile = ({
   record,
@@ -33,7 +33,7 @@ const BlacklistRecordTile = ({
   onExpire,
   onDelete,
 }) => {
-  const [showAll, setShowAll] = React.useState(false);
+  const [showAll, setShowAll] = useState(false);
   const expiresAt = record.get("expires_at") ? moment(record.get("expires_at")) : null
   const isExpired = !record.get("is_active")
   const player = record.get("player");
@@ -86,7 +86,7 @@ const BlacklistRecordTile = ({
           </ListItemAvatar>
           <ListItemText
             primary={
-              <React.Fragment>
+              <Fragment>
                 {showAll ? (
                   <Typography variant="body1">
                     {hasMultipleNames ? (
@@ -118,7 +118,7 @@ const BlacklistRecordTile = ({
                     {firstName} {getCountry(country)}
                   </Typography>
                 )}
-              </React.Fragment>
+              </Fragment>
             }
             secondary={
               <Link
@@ -248,8 +248,8 @@ const BlacklistRecordGrid = ({
     records,
     onRefresh,
   }) => {
-    const [editDialogOpen, setEditDialogOpen] = React.useState(false);
-    const [editDialogInitialValues, setEditDialogInitialValues] = React.useState();
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [editDialogInitialValues, setEditDialogInitialValues] = useState();
 
     function onEditRecord(record) {
       setEditDialogInitialValues({
@@ -310,7 +310,7 @@ const BlacklistRecordGrid = ({
     }[2];
 
     return (
-      (<React.Fragment>
+      (<Fragment>
         <Grid container>
           <Grid size={12}>
             <ImageList cols={size} cellHeight={210} spacing={12}>
@@ -342,7 +342,7 @@ const BlacklistRecordGrid = ({
           submitText="Save"
           disablePlayerId
         />
-      </React.Fragment>)
+      </Fragment>)
     );
   }
 

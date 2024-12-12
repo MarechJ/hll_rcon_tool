@@ -1,19 +1,15 @@
-import React from "react";
 import { Outlet } from "react-router-dom";
 import { get, getGameState } from "@/utils/fetchUtils.js";
+import {useEffect, useRef, useState} from "react";
 
 const UPDATE_INTERVAL = 60 * 1000;
 
 function MapManager() {
-  const [gameState, setGameState] = React.useState(null);
-  const [maps, setMaps] = React.useState([]);
-  const statusIntervalRef = React.useRef(null);
+  const [maps, setMaps] = useState([]);
+  const statusIntervalRef = useRef(null);
 
   const updateGameState = async () => {
-    const state = await getGameState();
-    if (state) {
-      setGameState(state);
-    }
+    await getGameState();
   };
 
   const getMaps = async () => {
@@ -25,7 +21,7 @@ function MapManager() {
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     updateGameState();
     getMaps();
     statusIntervalRef.current = setInterval(updateGameState, UPDATE_INTERVAL);

@@ -45,27 +45,3 @@ export const gameQueryOptions = {
       refetchInterval: 15 * 1000,
     }),
 };
-
-export const useGameDetailQuery = (gameId) => {
-  return useQuery({
-    ...gameQueryOptions.detail(gameId),
-  });
-};
-
-export const useLiveGameQuery = () => {
-  return useQuery({
-    ...gameQueryOptions.live(),
-  });
-};
-
-export const useLiveSessionsQuery = () => {
-  return useQuery({
-    ...gameQueryOptions.sessions(),
-  });
-};
-
-export const useGameListQuery = (page, pageSize) => {
-  return useQuery({
-    ...gameQueryOptions.list(page, pageSize),
-  });
-};

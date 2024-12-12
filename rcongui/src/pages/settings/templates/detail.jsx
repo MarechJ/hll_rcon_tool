@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import { Form, json, useActionData, useLoaderData } from "react-router-dom";
 import {
@@ -66,8 +66,6 @@ export const action = async ({ request }) => {
   const title = message.title;
   const content = message.content;
   const id = message.id;
-
-  console.log(intent, category, message);
 
   const hasTitle = !!title?.trim()?.length;
   const hasContent = !!content?.trim()?.length;

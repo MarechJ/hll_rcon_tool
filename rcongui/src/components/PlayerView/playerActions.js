@@ -1,4 +1,3 @@
-import React from "react";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import ButtonGroup from "@mui/material/ButtonGroup";
@@ -19,13 +18,14 @@ import TextHistory from "../textHistory";
 import Autocomplete from '@mui/material/Autocomplete';
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
-import { getSharedMessages } from "../../utils/fetchUtils";
+import { getSharedMessages } from "@/utils/fetchUtils";
 import Grid from "@mui/material/Grid2";
 import Tooltip from "@mui/material/Tooltip";
 import MessageIcon from "@mui/icons-material/Message";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import BlockIcon from "@mui/icons-material/Block";
 import StarIcon from "@mui/icons-material/Star";
+import {Component, Fragment, useState} from "react";
 
 const Duration = ({
   durationNumber,
@@ -71,7 +71,7 @@ const Duration = ({
   </Grid>
 );
 
-class ReasonDialog extends React.Component {
+class ReasonDialog extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -246,8 +246,8 @@ const PlayerActions = ({
   onBlacklist,
   onVipDialogOpen,
 }) => {
-  const [anchorEl, setAnchorEl] = React.useState(null);
-  const [isOpen, setOpen] = React.useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [isOpen, setOpen] = useState(false);
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
     setOpen(true);
@@ -273,7 +273,7 @@ const PlayerActions = ({
   const show = Math.min(displayCount, actions.length);
 
   return (
-    <React.Fragment>
+    <Fragment>
       <ButtonGroup
         size={size}
         disabled={disableAll}
@@ -394,7 +394,7 @@ const PlayerActions = ({
       ) : (
         ""
       )}
-    </React.Fragment>
+    </Fragment>
   );
 };
 

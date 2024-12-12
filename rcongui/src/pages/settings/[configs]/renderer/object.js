@@ -1,8 +1,7 @@
-import React from "react";
 import {InputLabel} from "@mui/material";
 
 const objectRenderer = (props) => {
-  name = props.uischema.scope.replace('#/properties/', '');
+  const name = props.uischema.scope.replace('#/properties/', '');
 
   return (
     <>

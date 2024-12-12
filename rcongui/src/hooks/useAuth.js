@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect } from "react";
+import { createContext, useContext, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings";

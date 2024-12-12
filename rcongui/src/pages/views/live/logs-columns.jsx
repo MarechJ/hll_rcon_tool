@@ -5,34 +5,6 @@ import { generatePlayerActions } from "@/features/player-action/actions";
 
 const TIME_FORMAT = "HH:mm:ss, MMM DD";
 
-const getTeamForLog = (log) => {
-  let team;
-
-  switch (log.action) {
-    case "KILL":
-    case "TEAM KILL":
-      team = log.message.match(/\((?<team>Allies|Axis)\//)?.groups?.team;
-      break;
-    case "TEAMSWITCH":
-      team = log.message.match(/>\D(?<team>Allies|Axis)/)?.groups?.team;
-      break;
-    case "CHAT":
-    case "CHAT[Allies]":
-    case "CHAT[Allies][Team]":
-    case "CHAT[Allies][Unit]":
-    case "CHAT[Axis]":
-    case "CHAT[Axis][Team]":
-    case "CHAT[Axis][Unit]":
-      team = log.action.match(/(?<team>Allies|Axis)/)?.groups?.team;
-      break;
-    default:
-      team = "Unknown";
-      break;
-  }
-
-  return team ?? "Unknown";
-};
-
 const removePlayerIds = (message) => {
   // Combine both regex patterns into one
   return message.replace(

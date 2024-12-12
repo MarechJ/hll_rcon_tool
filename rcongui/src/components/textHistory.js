@@ -2,22 +2,6 @@ import _ from "lodash";
 
 const PREFIX = "autocomplete_";
 
-const getAllNamespaces = () => {
-  let namespaces = ["punishments", "welcome", "broadcast", "watchlist"];
-
-  return namespaces.filter((v) => {
-    if (!v || v.includes("undefined")) {
-      return false;
-    }
-    const texts = new TextHistory(v).getTexts();
-
-    if (texts.length === 0) {
-      return false;
-    }
-    return true;
-  });
-};
-
 class TextHistory {
   constructor(namespace) {
     this.namespace = PREFIX + namespace;
@@ -59,4 +43,4 @@ class TextHistory {
 }
 
 export default TextHistory;
-export { TextHistory, getAllNamespaces };
+export { TextHistory };

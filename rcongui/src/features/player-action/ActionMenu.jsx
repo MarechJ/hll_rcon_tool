@@ -1,4 +1,3 @@
-import * as React from "react";
 import IconButton from "@mui/material/IconButton";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
@@ -18,6 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useActionDialog } from "@/hooks/useActionDialog";
 import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
 import PersonIcon from "@mui/icons-material/Person";
+import {useMemo, useState} from "react";
 
 const HorizontalActionMenu = styled(Stack)(({ theme }) => ({
   width: "fit-content",
@@ -34,7 +34,7 @@ export function ActionMenu({
   ...props
 }) {
   const { permissions: user } = useAuth();
-  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -43,7 +43,7 @@ export function ActionMenu({
     setAnchorEl(null);
   };
 
-  const filteredActionList = React.useMemo(
+  const filteredActionList = useMemo(
     () => actionList.filter(hasPermission(user)),
     [actionList, user]
   );
@@ -93,42 +93,6 @@ export function ActionMenu({
   );
 }
 
-export function ActionPanel({ handleActionClick, actionList, ...props }) {
-  const { permissions: user } = useAuth();
-
-  const filteredActionList = React.useMemo(
-    () => actionList.filter(hasPermission(user)),
-    [actionList, user]
-  );
-
-  return (
-    <HorizontalActionMenu direction={"row"}>
-      {filteredActionList.map((action) => (
-        <React.Fragment key={action.name}>
-          <Divider orientation="vertical" flexItem />
-          <Tooltip
-            title={action.name[0].toUpperCase() + action.name.substring(1)}
-          >
-            <IconButton
-              size="small"
-              disableRipple
-              sx={{ borderRadius: 0 }}
-              onClick={() => handleActionClick(action)}
-            >
-              {action.icon}
-            </IconButton>
-          </Tooltip>
-        </React.Fragment>
-      ))}
-      {filteredActionList.length === 0 && (
-        <Paper sx={{ p: 1 }}>
-          <Typography>No actions available</Typography>
-        </Paper>
-      )}
-    </HorizontalActionMenu>
-  );
-}
-
 /**
  * @typedef {Object} Player
  * @property {string} player_id - The unique identifier for the player
@@ -141,7 +105,7 @@ export function ActionPanel({ handleActionClick, actionList, ...props }) {
  * If the withProfile prop is true, a profile button will be added to the menu.
  * The profile button will open the player sidebar with the player's id.
  * @param {Player|Player[]} recipients - The player or players to perform actions on.
- * @param {React.ReactNode} renderButton - A custom button to render instead of the default one.
+ * @param {ReactNode} renderButton - A custom button to render instead of the default one.
  * @param {boolean} withProfile - Whether to include a profile button in the menu.
  * @param {string} orientation - The orientation of the menu. Can be "vertical" or "horizontal".
  * @param {object} props - Additional props to pass to the menu button.
@@ -157,7 +121,7 @@ export function ActionMenuButton({
   const { permissions: user } = useAuth();
   const { openDialog } = useActionDialog();
   const { openWithId } = usePlayerSidebar();
-  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
   const handleClick = (event) => {
@@ -178,7 +142,7 @@ export function ActionMenuButton({
     openWithId(recipients.player_id);
   };
 
-  const filteredActionList = React.useMemo(
+  const filteredActionList = useMemo(
     () => actions.filter(hasPermission(user)),
     [actions, user]
   );

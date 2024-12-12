@@ -1,5 +1,3 @@
-import React from "react";
-import clsx from "clsx";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import {
@@ -9,6 +7,7 @@ import {
   CardContent,
   Collapse,
 } from "@mui/material";
+import {useEffect, useState} from "react";
 
 const CollapseCard = ({
   title,
@@ -16,13 +15,13 @@ const CollapseCard = ({
   onExpand,
   startOpen = false,
 }) => {
-  const [expanded, setExpanded] = React.useState(false);
+  const [expanded, setExpanded] = useState(false);
   const handleExpandClick = () => {
     setExpanded(!expanded);
     onExpand();
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     setExpanded(startOpen);
   }, [startOpen]);
 

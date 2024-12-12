@@ -1,5 +1,4 @@
-import React, { Fragment } from "react";
-import List from "@mui/material/List";
+import {Fragment, useState} from "react";
 import ListItem from "@mui/material/ListItem";
 import ListItemSecondaryAction from "@mui/material/ListItemSecondaryAction";
 import ListItemText from "@mui/material/ListItemText";
@@ -12,12 +11,12 @@ import {
   faQuestionCircle,
   faStar,
 } from "@fortawesome/free-solid-svg-icons";
-import { faSteam, faXbox, faWindows } from "@fortawesome/free-brands-svg-icons";
+import { faSteam, faWindows } from "@fortawesome/free-brands-svg-icons";
 import Link from "@mui/material/Link";
 import Icon from "@mui/material/Icon";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
-import { getEmojiFlag } from "../../utils/emoji";
-import { List as IList, Map } from "immutable";
+import { getEmojiFlag } from "@/utils/emoji";
+import { Map } from "immutable";
 import { getName } from "country-list";
 import Popover from "@mui/material/Popover";
 import Typography from "@mui/material/Typography";
@@ -37,7 +36,7 @@ import Grid from "@mui/material/Grid2";
 const zeroPad = (num, places) => String(num).padStart(places, "0");
 
 function WithPopOver(props) {
-  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
 
   const handlePopoverOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -50,7 +49,7 @@ function WithPopOver(props) {
   const open = Boolean(anchorEl);
 
   return (
-    <React.Fragment>
+    <Fragment>
       <Typography
         style={{ display: "inline" }}
         aria-owns={open ? "mouse-over-popover" : undefined}
@@ -77,7 +76,7 @@ function WithPopOver(props) {
       >
         <Typography>{props.content}</Typography>
       </Popover>
-    </React.Fragment>
+    </Fragment>
   );
 }
 
@@ -314,16 +313,16 @@ const PlayerItem = ({
       <ListItemText
         id={`checkbox-list-label-${player_id}`}
         primary={
-          <React.Fragment>
+          <Fragment>
             <WithPopOver content={formatPunitions(profile)}>{name}</WithPopOver>
             {" - "}
             {getCountry(player)}
             {" - "}
             {player.get("is_vip") ? (
-              <React.Fragment>
+              <Fragment>
                 <FontAwesomeIcon icon={faStar} />
                 {" - "}
-              </React.Fragment>
+              </Fragment>
             ) : (
               ""
             )}
@@ -336,10 +335,10 @@ const PlayerItem = ({
                 icon={player_id.length === 17 ? faSteam : faWindows}
               />
             </Link>
-          </React.Fragment>
+          </Fragment>
         }
         secondary={
-          <React.Fragment>
+          <Fragment>
             <span>
               {seconds_to_time(profile.get("current_playtime_seconds"))} - #
               {profile.get("sessions_count")} - {getBans(player)}
@@ -356,7 +355,7 @@ const PlayerItem = ({
                 <Flag key={d} data={d} onDeleteFlag={onDeleteFlag} />
               ))}
             </div>
-          </React.Fragment>
+          </Fragment>
         }
       />
       {playerHasExtraInfo ? (
@@ -450,69 +449,4 @@ const getSortedPlayers = (players, sortType) => {
   return myPlayers;
 };
 
-const CompactList = ({
-  players,
-  handleAction,
-  sortType,
-  onFlag: onFlagClick,
-  onDeleteFlag: onDeleteFlagClick,
-  onBlacklist: onBlacklistClick,
-  onVipDialogOpen,
-}) => {
-  const myPlayers = React.useMemo(() => {
-    let myPlayers = players;
-    try {
-      myPlayers = getSortedPlayers(players, sortType);
-    } catch (err) {
-      console.log("Unable to sort ", err);
-    }
-    return myPlayers;
-  }, [players, sortType]);
-
-  const sizes = {
-    xs: 0,
-    sm: 3,
-    md: 1,
-    lg: 4,
-    xl: 10,
-  };
-
-  return (
-    <List>
-      {myPlayers.map((player) => (
-        <PlayerItem
-          nbButtons={sizes["sm"]}
-          player={player}
-          key={player.get("player_id")}
-          handleAction={(actionType) =>
-            handleAction(
-              actionType,
-              player.get("name"),
-              null,
-              null,
-              2,
-              player.get("player_id")
-            )
-          }
-          onFlag={() =>
-            onFlagClick(
-              Map({
-                player_id: player.get("player_id"),
-                names: (player.get("profile")
-                  ? player.get("profile")
-                  : new Map()
-                ).get("names", IList([Map({ name: player.get("name") })])),
-              })
-            )
-          }
-          onDeleteFlag={onDeleteFlagClick}
-          onBlacklist={() => onBlacklistClick(player)}
-          onVipDialogOpen={() => onVipDialogOpen(player)}
-        />
-      ))}
-    </List>
-  );
-};
-
-export default CompactList;
-export { PlayerItem, CompactList, ScoreListText, ScoreChips, KDChips };
+export { PlayerItem, ScoreListText, ScoreChips, KDChips };

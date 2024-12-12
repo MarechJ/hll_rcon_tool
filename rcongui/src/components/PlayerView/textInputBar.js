@@ -1,5 +1,3 @@
-import React from "react";
-import Grid from "@mui/material/Grid2";
 import TextField from "@mui/material/TextField";
 import "react-toastify/dist/ReactToastify.css";
 import TextHistory from "../textHistory";
@@ -7,12 +5,8 @@ import Autocomplete from '@mui/material/Autocomplete';
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 
-import InputLabel from "@mui/material/InputLabel";
-import MenuItem from "@mui/material/MenuItem";
-import FormHelperText from "@mui/material/FormHelperText";
-import FormControl from "@mui/material/FormControl";
-import Select from "@mui/material/Select";
-import { getSharedMessages } from "../../utils/fetchUtils";
+import { getSharedMessages } from "@/utils/fetchUtils";
+import {Fragment, useEffect, useState} from "react";
 
 const Reason = ({
   handleMessageChange,
@@ -27,13 +21,13 @@ const Reason = ({
     ? textHistory.getTexts()
     : new TextHistory("punishments").getTexts();
 
-  const [sharedMessages, setSharedMessages] = React.useState([]);
-  React.useEffect(() => {
+  const [sharedMessages, setSharedMessages] = useState([]);
+  useEffect(() => {
     getSharedMessages("punishments").then((data) => setSharedMessages(data));
   }, []);
 
   return (
-    (<React.Fragment>
+    (<Fragment>
       <Autocomplete
         freeSolo
         fullWidth
@@ -71,77 +65,8 @@ const Reason = ({
       ) : (
         ""
       )}
-    </React.Fragment>)
+    </Fragment>)
   );
 };
 
-const TextInputBar = ({
-  handleChange,
-  total,
-  showCount,
-  handleMessageChange,
-  sortType,
-  handleSortTypeChange,
-}) => {
-  /* todo refactor */
-  return (
-    (<Grid spacing={2} size={12}>
-      <Grid container justifyContent="flex-start" direction="row" alignItems="center">
-        <Grid
-          size={{
-            xs: 12,
-            lg: 3
-          }}>
-          <FormControl >
-            <InputLabel>Sort</InputLabel>
-            <Select
-              value={sortType}
-              onChange={(e) => handleSortTypeChange(e.target.value)}
-            >
-              <MenuItem value="">
-                <em>None</em>
-              </MenuItem>
-              <MenuItem value={"asc_alpha"}>Asc. Alpha</MenuItem>
-              <MenuItem value={"desc_alpha"}>Desc. Alpha</MenuItem>
-              <MenuItem value={"asc_time"}>Asc. Time</MenuItem>
-              <MenuItem value={"desc_time"}>Desc. Time</MenuItem>
-              <MenuItem value={"asc_country"}>Asc. Country</MenuItem>
-              <MenuItem value={"desc_country"}>Desc. Country</MenuItem>
-              <MenuItem value={"asc_sessions"}>Asc. #Sessions</MenuItem>
-              <MenuItem value={"desc_sessions"}>Desc. #Sessions</MenuItem>
-              <MenuItem value={"asc_penalties"}>Asc. Penalties</MenuItem>
-              <MenuItem value={"desc_penalties"}>Desc. Penalties</MenuItem>
-              <MenuItem value={"asc_vips"}>Asc. VIPs</MenuItem>
-              <MenuItem value={"desc_vips"}>Desc. VIPs</MenuItem>
-            </Select>
-            <FormHelperText>Sort the player list</FormHelperText>
-          </FormControl>
-        </Grid>
-        <Grid
-          size={{
-            xs: 12,
-            md: 3
-          }}>
-          <TextField
-            label="Filter"
-            helperText={`Showing: ${showCount} / ${total}`}
-            onChange={(event) => {
-              event.preventDefault();
-              handleChange(event.target.value);
-            }}
-          />
-        </Grid>
-        <Grid
-          size={{
-            xs: 12,
-            lg: 6
-          }}>
-          <Reason handleMessageChange={handleMessageChange} />
-        </Grid>
-      </Grid>
-    </Grid>)
-  );
-};
-
-export default TextInputBar;
-export { TextInputBar, Reason };
+export { Reason };

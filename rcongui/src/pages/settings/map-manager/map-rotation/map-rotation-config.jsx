@@ -1,11 +1,11 @@
-import * as React from "react";
 import {get, handle_http_errors, postData, showResponse,} from "@/utils/fetchUtils";
 import {Typography} from "@mui/material";
 import Padlock from "@/components/shared/Padlock";
 import Grid from "@mui/material/Grid2";
+import {useEffect, useState} from "react";
 
 const MapRotationSettings = () => {
-  const [shuffleEnabled, setShuffleEnabled] = React.useState(false);
+  const [shuffleEnabled, setShuffleEnabled] = useState(false);
 
   const loadToState = (command, showSuccess, stateSetter) => {
     return get(command)
@@ -30,7 +30,7 @@ const MapRotationSettings = () => {
     getShuffleEnabled();
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     loadAllData();
   }, []);
 

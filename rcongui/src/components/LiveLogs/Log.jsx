@@ -2,7 +2,7 @@ import { styled } from '@mui/material/styles';
 import Line from "./LogLine"
 import dayjs from 'dayjs';
 
-const TIME_FORMAT = 'HH:mm:ss, MMM DD';
+export const TIME_FORMAT = 'HH:mm:ss, MMM DD';
 
 const getTeamForLog = (log) => {
   let team;
@@ -59,7 +59,7 @@ const getLogSeverity = (log) => {
   }
 };
 
-const actionToEmoji = {
+export const actionToEmoji = {
   ADMIN: '🚨',
   'ADMIN MISC': '🚨',
   'ADMIN IDLE': '💤',
@@ -95,7 +95,7 @@ const actionToEmoji = {
   UNKNOWN: '❓',
 };
 
-const Action = styled('span', {
+export const Action = styled('span', {
   shouldForwardProp: (props) => props !== 'type',
 })(({ theme, type }) => ({
   width: '16em',

@@ -1,4 +1,3 @@
-import * as React from "react";
 import { createTheme, ThemeProvider, styled } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import AppBar from "@mui/material/AppBar";
@@ -27,7 +26,6 @@ const StyledAppBar = styled(AppBar)(({ theme }) => ({
 }));
 
 function TemplateFrame({
-  toggleCustomTheme,
   toggleDrawer,
   openDrawer,
   mode,

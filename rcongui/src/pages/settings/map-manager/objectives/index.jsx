@@ -8,7 +8,6 @@ import {
   FormGroup,
   FormLabel,
 } from "@mui/material";
-import React from "react";
 import {
   changeGameLayout,
   getMapObjectives,
@@ -21,6 +20,7 @@ import {
 } from "@/components/MapManager/helpers";
 import { Alert, AlertTitle, Skeleton } from "@mui/material";
 import { styled } from '@mui/material/styles';
+import {useEffect, useState} from "react";
 
 const UPDATE_INTERVAL = 5 * 1000;
 const CONFIRM_DELAY = 10 * 1000;
@@ -76,29 +76,12 @@ const ObjectivesGrid = styled("div")({
   height: "100%",
 });
 
-const ControlGrid = styled("div")(({ theme }) => ({
-  position: "relative",
-  display: "grid",
-  gridTemplateColumns: "repeat(5, 1fr)",
-  gridTemplateRows: "repeat(5, 1fr)",
-  gap: theme.spacing(0.5),
-  width: "100%",
-  height: "100%",
-}));
-
 const ObjectivesContainer = styled("div")({
   position: "relative",
   maxWidth: 650,
   minWidth: 280,
   aspectRatio: "1 / 1",
 });
-
-const ControlContainer = styled("div")(({ theme }) => ({
-  width: "fit-content",
-  display: "flex",
-  flexDirection: "column",
-  gap: theme.spacing(2),
-}));
 
 const ControlButton = styled("button")(({ theme, state }) => 
   ({
@@ -137,15 +120,15 @@ const ControlButton = styled("button")(({ theme, state }) =>
 );
 
 function MapObjectives() {
-  const [currentMap, setCurrentMap] = React.useState(null);
-  const [randomConstraint, setRandomConstraint] = React.useState({
+  const [currentMap, setCurrentMap] = useState(null);
+  const [randomConstraint, setRandomConstraint] = useState({
     1: true,
     2: false,
   });
-  const [objectives, setObjectives] = React.useState(null);
-  const [isSaving, setIsSaving] = React.useState(false);
-  const statusIntervalRef = React.useRef(null);
-  const savingTimeoutRef = React.useRef(null);
+  const [objectives, setObjectives] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const statusIntervalRef = useRef(null);
+  const savingTimeoutRef = useRef(null);
 
   const updateServerStatus = async () => {
     const status = await getServerStatus();
@@ -251,7 +234,7 @@ function MapObjectives() {
     });
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isSaving) {
       savingTimeoutRef.current = setTimeout(
         () => setIsSaving(false),
@@ -261,7 +244,7 @@ function MapObjectives() {
     return () => clearTimeout(savingTimeoutRef.current);
   }, [isSaving]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     updateServerStatus();
     statusIntervalRef.current = setInterval(
       updateServerStatus,
@@ -270,7 +253,7 @@ function MapObjectives() {
     return () => clearInterval(statusIntervalRef.current);
   }, [currentMap]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (currentMap) {
       setObjectives(generateObjectivesGrid(currentMap.map.orientation));
     }

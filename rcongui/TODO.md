@@ -1,5 +1,0 @@
-- [ ] When selecting multiple players from live sessions table, it only selects the main row player(sl, cmd), not the players in the sub rows
-- [ ] Improve search and filter UX for settings/vip
-- [ ] Improve search and filter UX for settings/console-admins
-- [ ] Include Player ID in player profile sidebar when the profile could not be loaded
-- [ ] Make other crcon queries dependent on the crcon connection status

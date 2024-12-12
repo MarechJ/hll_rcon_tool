@@ -1,6 +1,5 @@
-import * as React from 'react';
 import { styled } from '@mui/material/styles';
-import Divider, { dividerClasses } from '@mui/material/Divider';
+import { dividerClasses } from '@mui/material/Divider';
 import Menu from '@mui/material/Menu';
 import MuiMenuItem from '@mui/material/MenuItem';
 import { paperClasses } from '@mui/material/Paper';
@@ -11,13 +10,14 @@ import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import MenuButton from './MenuButton';
 import { useSubmit } from 'react-router-dom';
+import {Fragment, useState} from "react";
 
 const MenuItem = styled(MuiMenuItem)({
   margin: '2px 0',
 });
 
 export default function OptionsMenu() {
-  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
   const submit = useSubmit();
   const open = Boolean(anchorEl);
   const handleClick = (event) => {
@@ -33,7 +33,7 @@ export default function OptionsMenu() {
     submit(formData, { action: '/', method: 'POST' })
   }
   return (
-    <React.Fragment>
+    <Fragment>
       <MenuButton
         aria-label="Open menu"
         onClick={handleClick}
@@ -61,12 +61,6 @@ export default function OptionsMenu() {
           },
         }}
       >
-        {/* <MenuItem onClick={handleClose}>Profile</MenuItem>
-        <MenuItem onClick={handleClose}>My account</MenuItem>
-        <Divider />
-        <MenuItem onClick={handleClose}>Add another account</MenuItem>
-        <MenuItem onClick={handleClose}>Settings</MenuItem>
-        <Divider /> */}
         <MenuItem
           onClick={handleLogout}
           sx={{
@@ -82,6 +76,6 @@ export default function OptionsMenu() {
           </ListItemIcon>
         </MenuItem>
       </Menu>
-    </React.Fragment>
+    </Fragment>
   );
 }

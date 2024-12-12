@@ -1,9 +1,9 @@
-import React, { useState } from "react";
 import { styled } from "@mui/material/styles";
-import { Card, CardHeader, Tabs, Tab, Typography, List, ListItem, ListItemText, Divider, Box } from "@mui/material";
+import { Card, CardHeader, Tabs, Tab, List, ListItem, Divider, Box } from "@mui/material";
 import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
 import dayjs from "dayjs";
 import { logActions } from "@/utils/lib";
+import {Fragment, useState} from "react";
 
 // Styled components
 const StyledCard = styled(Card)({
@@ -54,18 +54,11 @@ const StyledListItem = styled(ListItem)(({ theme }) => ({
  * @returns {JSX.Element} - Rendered component
  */
 const LogsCard = ({ logs }) => {
-  const { openWithId } = usePlayerSidebar();
   const sortedLogs = [...logs].sort((a, b) => a.group.localeCompare(b.group));
   const [selectedTab, setSelectedTab] = useState(0);
 
   const handleTabChange = (event, newValue) => {
     setSelectedTab(newValue);
-  };
-
-  const handleUserClick = (userId) => {
-    if (userId) {
-      openWithId(userId);
-    }
   };
 
   const removePlayerIds = (message) => {
@@ -131,14 +124,14 @@ const LogsCard = ({ logs }) => {
               // In between each element of the array, add the player link
               message.forEach((part, index) => {
                 if (index % 2 === 0) {
-                  output.push(<React.Fragment key={index + "a" + "user_1"}>{part}</React.Fragment>);
+                  output.push(<Fragment key={index + "a" + "user_1"}>{part}</Fragment>);
                 } else {
                   if (log.user_1?.id) {
                     output.push(<PlayerLink playerId={log.user_1?.id} key={index + "b" + "user_1"}>{log.user_1?.name}</PlayerLink>);
                   } else {
-                    output.push(<React.Fragment key={index + "b" + "user_1"}>{log.user_1?.name}</React.Fragment>);
+                    output.push(<Fragment key={index + "b" + "user_1"}>{log.user_1?.name}</Fragment>);
                   }
-                  output.push(<React.Fragment key={index + "c" + "user_1"}>{part}</React.Fragment>);
+                  output.push(<Fragment key={index + "c" + "user_1"}>{part}</Fragment>);
                 }
               });
 
@@ -147,14 +140,14 @@ const LogsCard = ({ logs }) => {
                 output.pop();
                 messageEnd.forEach((part, index) => {
                   if (index % 2 === 0) {
-                    output.push(<React.Fragment key={index + "a" + "user_2"}>{part}</React.Fragment>);
+                    output.push(<Fragment key={index + "a" + "user_2"}>{part}</Fragment>);
                   } else {
                     if (log.user_2?.id) {
                       output.push(<PlayerLink playerId={log.user_2?.id} key={index + "b" + log.user_2?.id}>{log.user_2?.name}</PlayerLink>);
                     } else {
-                      output.push(<React.Fragment key={index + "b" + log.user_2?.id}>{log.user_2?.name}</React.Fragment>);
+                      output.push(<Fragment key={index + "b" + log.user_2?.id}>{log.user_2?.name}</Fragment>);
                     }
-                    output.push(<React.Fragment key={index + "c" + log.user_2?.id}>{part}</React.Fragment>);
+                    output.push(<Fragment key={index + "c" + log.user_2?.id}>{part}</Fragment>);
                   }
                 });
 

@@ -8,7 +8,6 @@ import {
   LinearProgress,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import React from "react";
 import {
   get,
   handle_http_errors,
@@ -20,15 +19,16 @@ import BlacklistListCreateDialog, {
   BlacklistListCreateButton,
 } from "@/components/Blacklist/BlacklistListCreateDialog";
 import { Link } from "react-router-dom";
+import {Fragment, useEffect, useState} from "react";
 
 const BlacklistLists = () => {
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [blacklists, setBlacklists] = React.useState([]);
-  const [servers, setServers] = React.useState({});
-  const [selectedBlacklist, setSelectedBlacklist] = React.useState(null);
-  const [editDialogOpen, setEditDialogOpen] = React.useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [blacklists, setBlacklists] = useState([]);
+  const [servers, setServers] = useState({});
+  const [selectedBlacklist, setSelectedBlacklist] = useState(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editDialogInitialValues, setEditDialogInitialValues] =
-    React.useState();
+    useState();
 
   function handleCloseDeleteDialog() {
     setSelectedBlacklist(null);
@@ -135,7 +135,7 @@ const BlacklistLists = () => {
       .then(loadBlacklists);
   }
 
-  React.useEffect(() => {
+  useEffect(() => {
     setIsLoading(true);
     loadServers()
       .then(loadBlacklists)
@@ -143,7 +143,7 @@ const BlacklistLists = () => {
   }, []);
 
   return (
-    <React.Fragment>
+    <Fragment>
       <Grid container spacing={3} direction="column" justifyContent="center">
         <Grid>
           {isLoading ? <LinearProgress color="secondary" /> : ""}
@@ -219,7 +219,7 @@ const BlacklistLists = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </React.Fragment>
+    </Fragment>
   );
 };
 

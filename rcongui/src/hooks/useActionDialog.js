@@ -1,7 +1,6 @@
 import { ActionDialog } from "@/features/player-action/ActionDialog";
-import { get, handleHttpError } from "@/utils/fetchUtils";
-import { useQueries, useQueryClient } from "@tanstack/react-query";
-import React, { createContext, useEffect, useMemo, useReducer } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import {createContext, useContext, useMemo, useReducer} from "react";
 
 export const DialogContext = createContext();
 
@@ -138,7 +137,7 @@ export const ActionDialogProvider = ({ children }) => {
 };
 
 export const useActionDialog = () => {
-  const context = React.useContext(DialogContext);
+  const context = useContext(DialogContext);
 
   if (!context && process.env.NODE_ENV === "development") {
     // In development, return a fallback or log a warning instead of throwing an error

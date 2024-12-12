@@ -1,5 +1,4 @@
 import { Button, List } from "@mui/material";
-import React from "react";
 import { changeMap } from "@/utils/fetchUtils";
 import MapSearch from "./map-search";
 import { MapListItem } from "@/components/MapManager/map-list-item";
@@ -7,6 +6,7 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { unifiedGamemodeName } from "@/components/MapManager/helpers";
 import { styled } from "@mui/styles";
 import { useOutletContext } from "react-router-dom";
+import {useState} from "react";
 
 const Main = styled("div")(({ theme }) => ({
   display: "flex",
@@ -24,14 +24,13 @@ const Maps = styled(List)(({ theme }) => ({
 
 function MapChange() {
   const { maps } = useOutletContext();
-  const [nameFilter, setNameFilter] = React.useState("");
-  const [modeFilters, setModeFilters] = React.useState({
+  const [nameFilter, setNameFilter] = useState("");
+  const [modeFilters, setModeFilters] = useState({
     warfare: true,
     offensive: false,
     skirmish: false,
   });
-  const [selected, setSelected] = React.useState("");
-  const statusIntervalRef = React.useRef(null);
+  const [selected, setSelected] = useState("");
   const filteredMaps = maps.filter(
     (map) =>
       modeFilters[unifiedGamemodeName(map.game_mode)] &&

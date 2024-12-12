@@ -1,5 +1,5 @@
 import { Typography } from "@mui/material";
-import { blue, grey, orange, red } from '@mui/material/colors';
+import { blue, grey, red } from '@mui/material/colors';
 import { styled, darken, lighten } from '@mui/material/styles';
 
 const getTeamColor = (team) => {

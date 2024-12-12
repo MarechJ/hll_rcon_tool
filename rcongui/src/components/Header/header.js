@@ -1,4 +1,3 @@
-import React from "react";
 import Grid from "@mui/material/Grid2";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
@@ -9,8 +8,8 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import { navMenus } from "./nav-data";
 import { LoginBox } from "./login";
-import { Box } from "@mui/material";
 import { styled } from "@mui/material/styles";
+import {Fragment, useState} from "react";
 
 const StyledToolbar = styled(Toolbar)(({ theme }) => ({
   display: "flex",
@@ -44,8 +43,8 @@ const initialMenuState = navMenus.reduce((state, menu) => {
 
 // TODO: Make this reactive, it's causing the view on mobile to be bigger then it should
 const Header = () => {
-  const [openedMenu, setOpenedMenu] = React.useState(initialMenuState);
-  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [openedMenu, setOpenedMenu] = useState(initialMenuState);
+  const [anchorEl, setAnchorEl] = useState(null);
 
   const handleOpenMenu = (name) => (event) => {
     setOpenedMenu({
@@ -71,7 +70,7 @@ const Header = () => {
           <Nav>
             <nav>
               {navMenus.map((menu) => (
-                <React.Fragment key={menu.name}>
+                <Fragment key={menu.name}>
                   <Button onClick={handleOpenMenu(menu.name)}>
                     {menu.name}
                   </Button>
@@ -93,7 +92,7 @@ const Header = () => {
                       </MenuItem>
                     ))}
                   </Menu>
-                </React.Fragment>
+                </Fragment>
               ))}
             </nav>
             <LoginBox component={RouterLink} />

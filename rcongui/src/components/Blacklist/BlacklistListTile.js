@@ -5,11 +5,11 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import React from "react";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { SYNC_METHODS } from "./BlacklistListCreateDialog";
 import Grid from "@mui/material/Grid2";
+import {Fragment} from "react";
 
 
 const BlacklistListTile = ({
@@ -48,13 +48,13 @@ const BlacklistListTile = ({
             ? <Typography align="left">All</Typography>
             : blacklist.servers.length === 0
             ? <Typography align="left">None</Typography>
-            : <React.Fragment>
+            : <Fragment>
               {blacklist.servers.map((num) => (
                 <Typography key={num} align="left" noWrap>
                   {serverNumberToName(num)}
                 </Typography>
               ))}
-            </React.Fragment>
+            </Fragment>
           }
         </Grid>
         

@@ -8,7 +8,6 @@ import {
   Typography,
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
-import React from "react";
 import { List, Map } from "immutable";
 import Tooltip from "@mui/material/Tooltip";
 import FileCopyIcon from "@mui/icons-material/FileCopy";
@@ -18,6 +17,7 @@ import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { getName } from "country-list";
 import makePlayerProfileUrl from "../../../utils/makePlayerProfileUrl";
+import {Fragment, useState} from "react";
 
 export const getCountry = (country) => {
   if (country === "" || country === null) {
@@ -34,7 +34,7 @@ export const getCountry = (country) => {
 };
 
 export const PlayerHeader = ({ player }) => {
-  const [showAll, setShowAll] = React.useState(false);
+  const [showAll, setShowAll] = useState(false);
   const hasMultipleName = player.get("names") && player.get("names").size > 1;
 
   const playerNames = player.get("names", null)
@@ -69,7 +69,7 @@ export const PlayerHeader = ({ player }) => {
       </ListItemAvatar>
       <ListItemText
         primary={
-          <React.Fragment>
+          <Fragment>
             {showAll ? (
               <Typography variant="body1">
                 {hasMultipleName ? (
@@ -101,7 +101,7 @@ export const PlayerHeader = ({ player }) => {
                 {namesByMatch.get(0, firstName?.get("name"))} {getCountry(country)}
               </Typography>
             )}
-          </React.Fragment>
+          </Fragment>
         }
         secondary={
           <Link

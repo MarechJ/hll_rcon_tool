@@ -4,7 +4,6 @@ import {
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import BlacklistRecordsSearch from "@/components/Blacklist/BlacklistRecordsSearch";
-import React from "react";
 import {
   addPlayerToBlacklist,
   get,
@@ -18,6 +17,7 @@ import { List, fromJS } from "immutable";
 import { BlacklistRecordCreateButton } from "@/components/Blacklist/BlacklistRecordCreateDialog";
 import { Skeleton } from '@mui/material';
 import { Link } from "react-router-dom";
+import {useEffect, useState} from "react";
 
 async function getBlacklistRecords(searchParams) {
   let path = "get_blacklist_records?" + new URLSearchParams(
@@ -42,14 +42,14 @@ const MyPagination = ({ pageSize, total, page, setPage }) => (
 
 const BlacklistRecords = () => {
   // inital state, first render
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   // when fetching loading records
-  const [isFetching, setIsFetching] = React.useState(false);
-  const [blacklists, setBlacklists] = React.useState([]);
-  const [records, setRecords] = React.useState(List());
-  const [totalRecords, setTotalRecords] = React.useState(0);
-  const [page, setPage] = React.useState(1);
-  const [searchQuery, setSearchQuery] = React.useState({
+  const [isFetching, setIsFetching] = useState(false);
+  const [blacklists, setBlacklists] = useState([]);
+  const [records, setRecords] = useState(List());
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [page, setPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState({
     player_id: undefined,
     reason: undefined,
     blacklist_id: undefined,
@@ -57,7 +57,7 @@ const BlacklistRecords = () => {
     page_size: 50,
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!blacklists.length) {
       loadBlacklists();
     }

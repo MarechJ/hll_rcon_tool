@@ -1,18 +1,17 @@
 import { Button, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Switch, TextField } from "@mui/material";
-import React from "react";
-import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
 import Grid from "@mui/material/Grid2";
+import {useState} from "react";
 
 const BlacklistRecordsSearch = ({
   blacklists,
   onSearch,
   disabled,
 }) => {
-  const [playerIdQuery, setPlayerIdQuery] = React.useState("");
-  const [reasonQuery, setReasonQuery] = React.useState("");
-  const [blacklistQuery, setBlacklistQuery] = React.useState("");
-  const [excludeExpired, setExcludeExpired] = React.useState(false);
-  const [pageSize, setPageSize] = React.useState(50);
+  const [playerIdQuery, setPlayerIdQuery] = useState("");
+  const [reasonQuery, setReasonQuery] = useState("");
+  const [blacklistQuery, setBlacklistQuery] = useState("");
+  const [excludeExpired, setExcludeExpired] = useState(false);
+  const [pageSize, setPageSize] = useState(50);
 
   return (
     (<form>

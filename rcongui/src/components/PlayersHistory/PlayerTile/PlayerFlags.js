@@ -1,8 +1,7 @@
 import { Link } from "@mui/material";
-import React from "react";
 import { List } from "immutable";
 import Tooltip from "@mui/material/Tooltip";
-import { getEmojiFlag } from "../../../utils/emoji";
+import { getEmojiFlag } from "@/utils/emoji";
 import Grid from "@mui/material/Grid2";
 
 export const PlayerFlags = ({ player, onDeleteFlag }) => {

@@ -1,12 +1,12 @@
-import React from "react";
 import ListItemText from "@mui/material/ListItemText";
 import "react-toastify/dist/ReactToastify.css";
 import { fromJS, List as IList } from "immutable";
 import Typography from "@mui/material/Typography";
 import Switch from "@mui/material/Switch";
 import Chip from "@mui/material/Chip";
-import { get, postData, showResponse } from "../../utils/fetchUtils";
+import { get, postData, showResponse } from "@/utils/fetchUtils";
 import Grid from "@mui/material/Grid2";
+import {Component} from "react";
 
 const StatusToColor = {
   RUNNING: "primary",
@@ -68,7 +68,7 @@ const Process = ({
   </Grid>
 );
 
-class ServicesList extends React.Component {
+class ServicesList extends Component {
   constructor(props) {
     super(props);
 

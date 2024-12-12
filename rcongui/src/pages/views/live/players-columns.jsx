@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Box,
   Checkbox,
@@ -21,7 +20,6 @@ import {
 } from "@/utils/lib";
 import { SortableHeader } from "@/components/table/styles";
 import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";
-
 
 export const Square = styled(Box)(({ theme }) => ({
   display: "flex",

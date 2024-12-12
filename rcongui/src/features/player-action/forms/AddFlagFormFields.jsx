@@ -1,12 +1,10 @@
-import { Stack, TextField, useTheme } from "@mui/material";
-import { ControlledTextInput } from "@/components/form/core/ControlledTextInput";
-import React, { Suspense, lazy } from "react";
-import { Controller } from "react-hook-form";
-import emojiData from "@emoji-mart/data/sets/15/twitter.json";
-const EmojiPicker = lazy(() => import("@emoji-mart/react"));
-import LushEmojiPicker, { EmojiStyle } from 'emoji-picker-react';
+import {Stack, TextField, useTheme} from "@mui/material";
+import {ControlledTextInput} from "@/components/form/core/ControlledTextInput";
+import {Suspense} from "react";
+import {Controller} from "react-hook-form";
+import LushEmojiPicker, {EmojiStyle} from 'emoji-picker-react';
 
-export const AddFlagFormFields = ({ control, errors, setValue, ...props }) => {
+export const AddFlagFormFields = ({control, errors, setValue, ...props}) => {
   const theme = useTheme();
 
   // It is called 'comment' at the backend but it is really a 'note' for the flag
@@ -21,10 +19,10 @@ export const AddFlagFormFields = ({ control, errors, setValue, ...props }) => {
       <Stack direction={"row"} spacing={1}>
         <Controller
           defaultValue={""}
-          rules={{ required: "Flag is required." }}
+          rules={{required: "Flag is required."}}
           name={"flag"}
           control={control}
-          render={({ field }) => (
+          render={({field}) => (
             <TextField
               onChange={field.onChange} // send value to hook form
               onBlur={field.onBlur} // notify when input is touched/blur
@@ -36,7 +34,7 @@ export const AddFlagFormFields = ({ control, errors, setValue, ...props }) => {
               helperText={hasFlagError && flagError.message}
               error={hasFlagError}
               rows={1}
-              sx={{ width: "60px", fontSize: "2rem" }}
+              sx={{width: "60px", fontSize: "2rem"}}
             />
           )}
         />
@@ -49,7 +47,7 @@ export const AddFlagFormFields = ({ control, errors, setValue, ...props }) => {
           helperText={
             hasNoteError ? noteError.message : "Your note for this flag."
           }
-          sx={{ flexGrow: 1 }}
+          sx={{flexGrow: 1}}
           defaultValue={""}
         />
       </Stack>

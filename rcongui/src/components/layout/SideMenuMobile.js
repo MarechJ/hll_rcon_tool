@@ -1,4 +1,3 @@
-import * as React from "react";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
 import Drawer, { drawerClasses } from "@mui/material/Drawer";
@@ -8,7 +7,7 @@ import MenuContent from "./MenuContent";
 import SelectContent from "./SelectContent";
 import { Box, List, ListItem, ListItemText } from "@mui/material";
 import { Form } from "react-router-dom";
-import { navMenus, publicNavMenus } from "../Header/nav-data";
+import { navMenus } from "../Header/nav-data";
 import NewReleases from "./NewReleases";
 import ConnectionStatus from "./ConnectionStatus";
 
@@ -36,14 +35,6 @@ const MobileDrawer = ({ open, toggleDrawer, children }) => {
         {children}
       </Stack>
     </Drawer>
-  );
-};
-
-export const PublicSideMenuMobile = ({ open, toggleDrawer }) => {
-  return (
-    <MobileDrawer open={open} toggleDrawer={toggleDrawer}>
-      <MenuContent navigationTree={publicNavMenus} />
-    </MobileDrawer>
   );
 };
 

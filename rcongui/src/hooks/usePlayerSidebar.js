@@ -1,6 +1,6 @@
 import { PlayerDetailDrawer } from "@/components/PlayerProfileDrawer";
 import { cmd } from "@/utils/fetchUtils";
-import React, { useEffect, useMemo } from "react";
+import {createContext, useContext, useMemo, useState} from "react";
 import { useGlobalStore } from "./useGlobalState";
 import dayjs from "dayjs";
 import { useQuery } from "@tanstack/react-query";
@@ -33,11 +33,11 @@ import { playerProfileQueryOptions } from "@/queries/player-profile-query";
  * @property {Array<Object>} bans - Player's ban history
  */
 
-export const SidebarContext = React.createContext();
+export const SidebarContext = createContext();
 
 export const PlayerSidebarProvider = ({ children }) => {
-  const [open, setOpen] = React.useState(false);
-  const [playerId, setPlayerId] = React.useState("");
+  const [open, setOpen] = useState(false);
+  const [playerId, setPlayerId] = useState("");
   const serverStatus = useGlobalStore((state) => state.status);
   const onlinePlayers = useGlobalStore((state) => state.onlinePlayers);
   const enabled = open && !!playerId;
@@ -177,7 +177,7 @@ export const PlayerSidebarProvider = ({ children }) => {
 
   const isLoading = isLoadingComments || isLoadingBans || isLoadingProfile || isLoadingMessages;
 
-  const contextValue = React.useMemo(
+  const contextValue = useMemo(
     () => ({
       open,
       close: handleClose,
@@ -202,7 +202,7 @@ export const PlayerSidebarProvider = ({ children }) => {
 };
 
 export const usePlayerSidebar = () => {
-  const context = React.useContext(SidebarContext);
+  const context = useContext(SidebarContext);
 
   if (!context && process.env.NODE_ENV === "development") {
     // In development, return a fallback or log a warning instead of throwing an error

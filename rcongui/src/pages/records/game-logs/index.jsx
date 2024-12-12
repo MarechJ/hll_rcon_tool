@@ -1,4 +1,3 @@
-import React, { useEffect } from "react";
 import {
   postData,
   showResponse,
@@ -16,6 +15,7 @@ import FormControlLabel from "@mui/material/FormControlLabel";
 import Switch from "@mui/material/Switch";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import dayjs from "dayjs";
+import {Component, useState} from "react";
 
 const columns = [
   { field: 'id', headerName: 'ID', width: 70, sortable: false },
@@ -43,16 +43,16 @@ const columns = [
 ];
 
 const LogsFilter = ({ onSubmit, onChange }) => {
-  const [name, setName] = React.useState("");
-  const [playerId, setPlayerId] = React.useState("");
-  const [type, setType] = React.useState("");
-  const [server, setServer] = React.useState("");
-  const [from, setFrom] = React.useState(null);
-  const [till, setTill] = React.useState(null);
-  const [limit, setLimit] = React.useState(1000);
-  const [exactPlayer, setExactPlayer] = React.useState(false);
-  const [exactAction, setExactAction] = React.useState(false);
-  const [order, setOrder] = React.useState("desc");
+  const [name, setName] = useState("");
+  const [playerId, setPlayerId] = useState("");
+  const [type, setType] = useState("");
+  const [server, setServer] = useState("");
+  const [from, setFrom] = useState(null);
+  const [till, setTill] = useState(null);
+  const [limit, setLimit] = useState(1000);
+  const [exactPlayer, setExactPlayer] = useState(false);
+  const [exactAction, setExactAction] = useState(false);
+  const [order, setOrder] = useState("desc");
 
   return (
     (<Grid container spacing={1}>
@@ -200,7 +200,7 @@ const LogsFilter = ({ onSubmit, onChange }) => {
   );
 };
 
-class LogsHistory extends React.Component {
+class LogsHistory extends Component {
   constructor(props) {
     super(props);
 

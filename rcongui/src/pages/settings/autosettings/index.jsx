@@ -1,12 +1,10 @@
-import React from "react";
 import Padlock from "@/components/shared/Padlock";
 import SplitButton from "@/components/shared/SplitButton";
 import { cmd } from "@/utils/fetchUtils";
 import { TEMPLATE_CATEGORY } from "@/utils/lib";
-import { Editor } from "@monaco-editor/react";
 import { Alert, Autocomplete, Box, Button, Paper, Skeleton, TextField, useTheme } from "@mui/material";
 import { Stack } from "@mui/system";
-import { useEffect, useState } from "react";
+import {lazy, Suspense, useEffect, useState} from "react";
 import {
   Await,
   defer,
@@ -16,6 +14,8 @@ import {
   useSubmit,
 } from "react-router-dom";
 import { AsyncClientError } from "@/components/shared/AsyncClientError";
+
+const Editor = lazy(() => import("@monaco-editor/react"));
 
 const INTENT = {
   APPLY_SINGLE: "0",
@@ -174,7 +174,7 @@ const Autosettings = () => {
         theme={theme.palette.mode === "dark" ? "vs-dark" : "vs-light"}
         onChange={(value) => setEditorContent(value)}
       />
-      <React.Suspense fallback={<TemplateSkeleton />}>
+      <Suspense fallback={<TemplateSkeleton />}>
         <Await
           resolve={data.templates}
           errorElement={<AsyncClientError title={"Autosettings Templates"} />}
@@ -211,7 +211,7 @@ const Autosettings = () => {
             );
           }}
         </Await>
-      </React.Suspense>
+      </Suspense>
     </Stack>
   );
 };

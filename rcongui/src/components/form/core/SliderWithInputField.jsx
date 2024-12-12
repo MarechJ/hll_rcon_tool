@@ -1,10 +1,10 @@
-import * as React from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Slider from '@mui/material/Slider';
 import MuiInput from '@mui/material/Input';
 import { styled } from '@mui/styles';
 import Grid from "@mui/material/Grid2"
+import {useState} from "react";
 
 const Input = styled(MuiInput)(() => ({
     width: '58px'
@@ -21,7 +21,7 @@ export default function SliderWithInputField({
   disabled,
   onChange: handleChange,
 }) {
-  const [value, setValue] = React.useState(aValue ?? 0);
+  const [value, setValue] = useState(aValue ?? 0);
 
   const handleSliderChange = (event, newValue) => {
     setValue(newValue);

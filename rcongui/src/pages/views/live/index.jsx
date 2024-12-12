@@ -1,24 +1,22 @@
-import React, { useMemo, useState } from "react";
-import { cmd } from "@/utils/fetchUtils";
-import { columns as playersColumns } from "./players-columns";
-import { Header } from "@/components/game/Header";
-import { extractPlayers, extractTeamState } from "@/utils/extractPlayers";
-import { useLoaderData } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import {useMemo, useState} from "react";
+import {cmd} from "@/utils/fetchUtils";
+import {columns as playersColumns} from "./players-columns";
+import {Header} from "@/components/game/Header";
+import {extractPlayers, extractTeamState} from "@/utils/extractPlayers";
+import {useLoaderData} from "react-router-dom";
+import {useQuery} from "@tanstack/react-query";
 import PlayersTable from "./players-table";
 import LogsTable from "./logs-table";
-import { logsColumns } from "./logs-columns";
-import { useStorageState } from "@/hooks/useStorageState";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import teamViewResponse from "./data.json";
-import { teamsLiveQueryOptions } from "@/queries/teams-live-query";
-import { normalizePlayerProfile } from "@/utils/lib";
-import { getPaginationRowModel, useReactTable } from "@tanstack/react-table";
+import {logsColumns} from "./logs-columns";
+import {useStorageState} from "@/hooks/useStorageState";
+import {teamsLiveQueryOptions} from "@/queries/teams-live-query";
+import {normalizePlayerProfile} from "@/utils/lib";
 import {
   getCoreRowModel,
   getFilteredRowModel,
+  getPaginationRowModel,
   getSortedRowModel,
+  useReactTable
 } from "@tanstack/react-table";
 import Grid from "@mui/material/Grid2";
 import storageKeys from "@/config/storageKeys";
@@ -35,17 +33,15 @@ export const loader = async () => {
     },
   });
 
-  return { initialLogsView: response };
+  return {initialLogsView: response};
 };
 
 const Live = () => {
   // ---------------- VIEW STATE -----------------
-  const { initialLogsView } = useLoaderData();
-  const [playersVisible, setPlayersVisible] = useState(true);
-  const [logsVisible, setLogsVisible] = useState(true);
+  const {initialLogsView} = useLoaderData();
 
   // ---------------- PLAYERS DATA -----------------
-  const { data: teamData } = useQuery({
+  const {data: teamData} = useQuery({
     ...teamsLiveQueryOptions,
     staleTime: 5 * 1000,
     refetchInterval: 10 * 1000,
@@ -53,13 +49,12 @@ const Live = () => {
 
   // const teamData = teamViewResponse.result;
 
-  const playersData = React.useMemo(() => {
+  const playersData = useMemo(() => {
     if (!teamData) return [];
-    const o = extractPlayers(teamData).map((player) => ({
+    return extractPlayers(teamData).map((player) => ({
       ...player,
       profile: normalizePlayerProfile(player?.profile),
     }));
-    return o;
   }, [teamData]);
 
   // ---------------- LOGS DATA -----------------
@@ -75,7 +70,7 @@ const Live = () => {
     }
   );
 
-  const { data: logsView } = useQuery({
+  const {data: logsView} = useQuery({
     queryKey: [
       "logs",
       "live",
@@ -101,14 +96,14 @@ const Live = () => {
   });
 
   // ---------------- GAME HEADER DATA -----------------
-  const { data: gameState } = useQuery({
+  const {data: gameState} = useQuery({
     queryKey: ["game", "state"],
     queryFn: cmd.GET_GAME_STATE,
     staleTime: 5 * 1000,
     refetchInterval: 10 * 1000,
   });
 
-  const gameData = React.useMemo(() => {
+  const gameData = useMemo(() => {
     if (gameState && teamData) {
       return {
         ...gameState,
@@ -169,13 +164,6 @@ const Live = () => {
     },
   });
 
-  const handleFiltersChange = (newParams) => {
-    setLogsSearchParams((prevConfig) => ({
-      ...prevConfig,
-      ...newParams,
-    }));
-  };
-
   const selectedPlayers = useMemo(() => {
     return Object.keys(playersRowSelection)
       .map((key) => {
@@ -190,37 +178,33 @@ const Live = () => {
   return (
     <Grid container spacing={1}>
       <Grid size={12}>
-        <Header data={gameData} />
+        <Header data={gameData}/>
       </Grid>
-      {playersVisible && (
-        <Grid
-          size={{
-            xs: 12,
-            lg: "auto",
-          }}
-        >
-          <PlayersTable
-            table={playersTable}
-            teamData={teamData}
-            selectedPlayers={selectedPlayers}
-          />
-        </Grid>
-      )}
-      {logsVisible && (
-        <Grid
-          size={{
-            xs: 12,
-            lg: "grow",
-          }}
-        >
-          <LogsTable
-            table={logsTable}
-            logsViewData={logsView}
-            searchParams={logsSearchParams}
-            setSearchParams={setLogsSearchParams}
-          />
-        </Grid>
-      )}
+      <Grid
+        size={{
+          xs: 12,
+          lg: "auto",
+        }}
+      >
+        <PlayersTable
+          table={playersTable}
+          teamData={teamData}
+          selectedPlayers={selectedPlayers}
+        />
+      </Grid>
+      <Grid
+        size={{
+          xs: 12,
+          lg: "grow",
+        }}
+      >
+        <LogsTable
+          table={logsTable}
+          logsViewData={logsView}
+          searchParams={logsSearchParams}
+          setSearchParams={setLogsSearchParams}
+        />
+      </Grid>
     </Grid>
   );
 };

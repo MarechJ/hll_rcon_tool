@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import {Fragment, useEffect, useState} from "react";
 import {
   Stack,
   ListItem,
@@ -26,7 +26,7 @@ export const RemoveFlagFormFields = ({ contextData, action, recipients }) => {
     <Stack spacing={2}>
       <List>
         {flags?.map((flag, index) => (
-          <React.Fragment key={flag.id}>
+          <Fragment key={flag.id}>
             {index !== 0 && <Divider flexItem variant="inset" />}
             <ListItem
               secondaryAction={
@@ -56,7 +56,7 @@ export const RemoveFlagFormFields = ({ contextData, action, recipients }) => {
               <ListItemAvatar>{flag.flag}</ListItemAvatar>
               <ListItemText primary={flag.comment} secondary={flag.modified} />
             </ListItem>
-          </React.Fragment>
+          </Fragment>
         ))}
         {flags.length === 0 && <ListItem>This player has no flags</ListItem>}
       </List>

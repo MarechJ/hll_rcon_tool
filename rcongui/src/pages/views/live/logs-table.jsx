@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import storageKeys from "@/config/storageKeys";
 import TableConfigDrawer from "@/components/table/TableConfigDrawer";
-import React, { useEffect, useState } from "react";
+import {Fragment, useEffect, useState} from "react";
 import { useStorageState } from "@/hooks/useStorageState";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -20,7 +20,7 @@ import { LogActionSelectionMenu } from "@/components/table/selection/LogActionSe
 import { LogPlayerSelectionMenu } from "@/components/table/selection/LogPlayerSelectionMenu";
 import { LogActionQuerySelectionMenu } from "@/components/table/selection/LogActionQuerySelectionMenu";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { TablePagination } from "../../../components/table/TablePagination";
+import { TablePagination } from "@/components/table/TablePagination";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import TableAddons from "@/components/table/TableAddons";
 import { LogActionHighlightMenu } from "@/components/table/selection/LogActionHighlightMenu";
@@ -246,7 +246,7 @@ export default function LogsTable({
           />
           <List dense={true} disablePadding={true}>
             {searchParams.actions.map((action, i) => (
-              <React.Fragment key={action}>
+              <Fragment key={action}>
                 {i !== 0 && <Divider component="li" />}
                 <ListItem
                   disableGutters={true}
@@ -264,7 +264,7 @@ export default function LogsTable({
                     primary={`${_logActions[action]} - ${action}`}
                   />
                 </ListItem>
-              </React.Fragment>
+              </Fragment>
             ))}
             {searchParams.actions.length === 0 && (
               <ListItem disableGutters={true}>

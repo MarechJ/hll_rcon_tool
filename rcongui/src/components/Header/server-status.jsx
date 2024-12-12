@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { Typography } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { useQuery } from "@tanstack/react-query";

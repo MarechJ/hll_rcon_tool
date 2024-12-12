@@ -1,6 +1,5 @@
 import { Box, Typography } from "@mui/material";
 import { makeStyles } from '@mui/styles';
-import React from "react";
 import Skeleton from '@mui/material/Skeleton';
 import { MapDetail } from "./map-details";
 

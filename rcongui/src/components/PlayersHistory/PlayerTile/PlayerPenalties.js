@@ -1,5 +1,4 @@
 import Grid from "@mui/material/Grid2";
-import React from "react";
 import { WithPopver } from "../../commonComponent";
 import moment from "moment";
 import { List } from "immutable";

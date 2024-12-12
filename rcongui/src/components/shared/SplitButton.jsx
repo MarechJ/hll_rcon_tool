@@ -1,4 +1,3 @@
-import * as React from 'react';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
@@ -8,6 +7,7 @@ import Paper from '@mui/material/Paper';
 import Popper from '@mui/material/Popper';
 import MenuItem from '@mui/material/MenuItem';
 import MenuList from '@mui/material/MenuList';
+import {Fragment, useState} from "react";
 
 /**
  * 
@@ -15,9 +15,9 @@ import MenuList from '@mui/material/MenuList';
  * @returns 
  */
 export default function SplitButton({ options, disabled }) {
-  const [open, setOpen] = React.useState(false);
-  const anchorRef = React.useRef(null);
-  const [selectedIndex, setSelectedIndex] = React.useState(0);
+  const [open, setOpen] = useState(false);
+  const anchorRef = useRef(null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
   const selectedOption = options[selectedIndex];
 
@@ -39,7 +39,7 @@ export default function SplitButton({ options, disabled }) {
   };
 
   return (
-    <React.Fragment>
+    <Fragment>
       <ButtonGroup
         variant="contained"
         ref={anchorRef}
@@ -92,6 +92,6 @@ export default function SplitButton({ options, disabled }) {
           </Grow>
         )}
       </Popper>
-    </React.Fragment>
+    </Fragment>
   );
 }

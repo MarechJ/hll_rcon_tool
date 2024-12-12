@@ -1,4 +1,3 @@
-import * as React from "react";
 import DraggableList from "./map-rotation-list";
 import { reorder } from "@/components/MapManager/helpers";
 import {
@@ -13,15 +12,16 @@ import { Alert } from '@mui/material';
 import { MapAutocomplete } from "@/components/MapManager/map-autocomplete";
 import Grid from "@mui/material/Grid2";
 import { useOutletContext } from "react-router-dom";
+import {useCallback, useEffect, useMemo, useState} from "react";
 
 const MapRotation = () => {
   const { maps } = useOutletContext();
-  const [currentRotation, setCurrentRotation] = React.useState([]);
-  const [rotation, setRotation] = React.useState([]);
-  const [mapsToAdd, setMapsToAdd] = React.useState([]);
-  const [rotationIsSaving, setRotationIsSaving] = React.useState(false);
-  const [voteMapConfig, setVoteMapConfig] = React.useState({});
-  const [lastRefresh, setLastRefresh] = React.useState(null);
+  const [currentRotation, setCurrentRotation] = useState([]);
+  const [rotation, setRotation] = useState([]);
+  const [mapsToAdd, setMapsToAdd] = useState([]);
+  const [rotationIsSaving, setRotationIsSaving] = useState(false);
+  const [voteMapConfig, setVoteMapConfig] = useState({});
+  const [lastRefresh, setLastRefresh] = useState(null);
 
   const loadToState = (command, showSuccess, stateSetter) => {
     return get(command)
@@ -67,7 +67,7 @@ const MapRotation = () => {
     setLastRefresh(new Date());
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     loadAllData();
     const handle = setInterval(getVoteMapConfig, 10000);
 
@@ -83,16 +83,16 @@ const MapRotation = () => {
     setRotation(newRotation);
   };
 
-  const onRemoveItem = React.useCallback((index) => {
+  const onRemoveItem = useCallback((index) => {
     rotation.splice(index, 1);
     setRotation(Array.from(rotation));
   });
 
-  const onMapChange = React.useCallback((mapLayer) => {
+  const onMapChange = useCallback((mapLayer) => {
     changeMap(mapLayer.id);
   });
 
-  const hasChanged = React.useMemo(
+  const hasChanged = useMemo(
     () =>
       currentRotation.map((o) => o.id).toString() ===
       rotation.map((o) => o.id).toString(),

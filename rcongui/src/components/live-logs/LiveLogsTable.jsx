@@ -1,7 +1,6 @@
-import React from "react";
 import { flexRender } from "@tanstack/react-table";
 import { NoRowsOverlay } from "@/components/NoRowsOverlay";
-import { StyledTable, StyledTd, StyledTh, StyledTr } from "../table/styles";
+import { StyledTd, StyledTh, StyledTr } from "../table/styles";
 import { Box } from "@mui/material";
 import { StyledLogsTable, StyledLogsTr } from "./styles";
 

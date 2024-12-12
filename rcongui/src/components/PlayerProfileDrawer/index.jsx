@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Box,
   IconButton,
@@ -42,6 +41,7 @@ import { CountryFlag } from "@/components/shared/CountryFlag";
 import { generatePlayerActions } from "@/features/player-action/actions";
 import { ClientError } from "../shared/ClientError";
 import { useTheme } from "@mui/material/styles";
+import {Fragment, useState} from "react";
 
 const OnlineStatusBadge = styled(Badge, {
   shouldForwardProp: (props) => props !== "isOnline",
@@ -163,7 +163,7 @@ const BasicProfileDetails = ({
           <dd>
             <dl>
               {flags.map(({ flag, comment: note, modified }, index) => (
-                <React.Fragment key={flag + index}>
+                <Fragment key={flag + index}>
                   {index ? <Divider /> : null}
                   <dt>{flag}</dt>
                   <dd>
@@ -171,7 +171,7 @@ const BasicProfileDetails = ({
                     {modified ? dayjs(modified).format("HH:MM DD.MM.YY") : ""}
                   </dd>
                   {note ? <dd>Note: {note}</dd> : null}
-                </React.Fragment>
+                </Fragment>
               ))}
             </dl>
           </dd>
@@ -195,7 +195,7 @@ const Penalties = ({ punish, kick, tempBan, parmaBan }) => (
 );
 
 const ReceivedActions = ({ actions }) => {
-  const [expanded, setExpanded] = React.useState(false);
+  const [expanded, setExpanded] = useState(false);
   const displayCount = expanded ? actions.length : 2;
 
   return (
@@ -321,7 +321,7 @@ const ProfileError = ({ error, onClose }) => (
 );
 
 const PlayerDetails = ({ player, onClose }) => {
-  const [openedTab, setOpenedTab] = React.useState("profile");
+  const [openedTab, setOpenedTab] = useState("profile");
   const { openDialog } = useActionDialog();
 
   const handleActionClick = (recipients) => (action) => {
@@ -598,13 +598,9 @@ export const PlayerDetailDrawer = () => {
     close,
     player,
     isLoading,
-    commentsError,
-    bansError,
     profileError,
-    messagesError,
   } = usePlayerSidebar();
   const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.down("md"));
 
   return (
     <ResponsiveDrawer

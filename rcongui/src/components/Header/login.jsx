@@ -1,8 +1,5 @@
-import React from "react";
 import "react-toastify/dist/ReactToastify.css";
 import Grid from "@mui/material/Grid2";
-import Link from "@mui/material/Link";
-import { Link as RouterLink } from "react-router-dom";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import {
@@ -10,14 +7,15 @@ import {
   handle_http_errors,
   postData,
   showResponse,
-} from "../../utils/fetchUtils";
+} from "@/utils/fetchUtils";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import { throttle } from "lodash/function";
+import {Component, Fragment} from "react";
 
-export class LoginBox extends React.Component {
+export class LoginBox extends Component {
   constructor(props) {
     super(props);
 
@@ -77,7 +75,7 @@ export class LoginBox extends React.Component {
     const { open, username, password, isLoggedIn } = this.state;
 
     return (
-      <React.Fragment>
+      <Fragment>
         <Button
           color="inherit"
           onClick={() =>
@@ -127,7 +125,7 @@ export class LoginBox extends React.Component {
             </DialogActions>
           </form>
         </Dialog>
-      </React.Fragment>
+      </Fragment>
     );
   }
 }

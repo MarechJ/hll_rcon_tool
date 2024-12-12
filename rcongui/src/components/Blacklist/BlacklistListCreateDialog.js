@@ -1,4 +1,3 @@
-import * as React from 'react';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Dialog from '@mui/material/Dialog';
@@ -8,6 +7,7 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import { Checkbox, FormControl, FormControlLabel, FormGroup, InputLabel, MenuItem, Select, Switch, Typography } from '@mui/material';
 import Grid from "@mui/material/Grid2";
+import {Fragment, useEffect, useState} from "react";
 
 export const SYNC_METHODS = {
   kick_only: "Kick Only",
@@ -30,11 +30,11 @@ export default function BlacklistListCreateDialog({
   titleText="Edit Blacklist",
   submitText="Save",
 }) {
-  const [name, setName] = React.useState("");
-  const [serverNumbers, setServerNumbers] = React.useState(null);
-  const [syncMethod, setSyncMethod] = React.useState("");
+  const [name, setName] = useState("");
+  const [serverNumbers, setServerNumbers] = useState(null);
+  const [syncMethod, setSyncMethod] = useState("");
   
-  React.useEffect(() => {
+  useEffect(() => {
     if (initialValues) {
       if (initialValues.name !== undefined) setName(initialValues.name);
       if (initialValues.servers !== undefined) setServerNumbers(initialValues.servers);
@@ -167,14 +167,14 @@ export function BlacklistListCreateButton({
   onSubmit,
   initialValues,
 }) {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
 
   const handleClickOpen = () => {
     setOpen(true);
   };
 
   return (
-    <React.Fragment>
+    <Fragment>
       <Button 
         variant="contained"
         color="primary"
@@ -192,6 +192,6 @@ export function BlacklistListCreateButton({
         titleText="Create Blacklist"
         submitText="Create List"
       />
-    </React.Fragment>
+    </Fragment>
   )
 }

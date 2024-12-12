@@ -1,15 +1,13 @@
-import * as React from "react";
 import { styled } from "@mui/material/styles";
 import AppBar from "@mui/material/AppBar";
-import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import MuiToolbar from "@mui/material/Toolbar";
 import { tabsClasses } from "@mui/material/Tabs";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
-import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
-import SideMenuMobile, { PublicSideMenuMobile } from "./SideMenuMobile";
+import SideMenuMobile from "./SideMenuMobile";
 import MenuButton from "./MenuButton";
 import NavbarBreadcrumbs from "./NavbarBreadcrumbs";
+import {useState} from "react";
 
 const Toolbar = styled(MuiToolbar)({
   width: "100%",
@@ -63,23 +61,8 @@ const AppNavbarBase = ({ toggleDrawer }) => {
   );
 };
 
-export const PublicAppNavbar = () => {
-  const [open, setOpen] = React.useState(false);
-
-  const toggleDrawer = (newOpen) => () => {
-    setOpen(newOpen);
-  };
-
-  return (
-    <>
-      <AppNavbarBase toggleDrawer={toggleDrawer} />
-      <PublicSideMenuMobile open={open} toggleDrawer={toggleDrawer} />
-    </>
-  );
-};
-
 export default function AppNavbar() {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
 
   const toggleDrawer = (newOpen) => () => {
     setOpen(newOpen);
@@ -90,30 +73,5 @@ export default function AppNavbar() {
       <AppNavbarBase toggleDrawer={toggleDrawer} />
       <SideMenuMobile open={open} toggleDrawer={toggleDrawer} />
     </>
-  );
-}
-
-export function CustomIcon() {
-  return (
-    <Box
-      sx={{
-        width: "1.5rem",
-        height: "1.5rem",
-        bgcolor: "black",
-        borderRadius: "999px",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        alignSelf: "center",
-        backgroundImage:
-          "linear-gradient(135deg, hsl(210, 98%, 60%) 0%, hsl(210, 100%, 35%) 100%)",
-        color: "hsla(210, 100%, 95%, 0.9)",
-        border: "1px solid",
-        borderColor: "hsl(210, 100%, 55%)",
-        boxShadow: "inset 0 2px 5px rgba(255, 255, 255, 0.3)",
-      }}
-    >
-      <DashboardRoundedIcon color="inherit" sx={{ fontSize: "1rem" }} />
-    </Box>
   );
 }

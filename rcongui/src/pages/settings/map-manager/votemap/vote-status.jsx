@@ -1,6 +1,6 @@
-import * as React from "react";
 import { List, Typography, Divider } from "@mui/material";
 import { MapListItem } from "@/components/MapManager/map-list-item";
+import {Fragment} from "react";
 
 export function VoteStatus({ voteStatus, ...props }) {
   return voteStatus.length ? (
@@ -8,7 +8,7 @@ export function VoteStatus({ voteStatus, ...props }) {
       {voteStatus.map((mapStatus, index, array) => {
         const { map, voters } = mapStatus;
         return (
-          <React.Fragment key={`${index}#${map.id}`}>
+          <Fragment key={`${index}#${map.id}`}>
             {index !== 0 && <Divider flexItem variant="inset" />}
             <MapListItem
               mapLayer={map}
@@ -16,7 +16,7 @@ export function VoteStatus({ voteStatus, ...props }) {
                 voters.length
               } vote${voters.length !== 1 ? "s" : ""}`}
             />
-          </React.Fragment>
+          </Fragment>
         );
       })}
     </List>

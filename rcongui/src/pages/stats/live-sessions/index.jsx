@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { teamsLiveQuery } from "@/queries/teams-live-query";
 import {
   getExpandedRowModel,
@@ -12,7 +12,6 @@ import { columns } from "./columns";
 import Table from "@/components/table/Table";
 import { isLeader, normalizePlayerProfile } from "@/utils/lib";
 import { extractPlayers } from "@/utils/extractPlayers";
-import liveTeamResponse from "../../views/live/data.json";
 import { useStorageState } from "@/hooks/useStorageState";
 import storageKeys from "@/config/storageKeys";
 import { TableToolbar } from "@/components/table/TableToolbar";
@@ -21,17 +20,15 @@ import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import { generatePlayerActions } from "@/features/player-action/actions";
 
 const LiveSessionsPage = () => {
-  const { data, isLoading } = teamsLiveQuery({ refetchInterval: 15 * 1000 });
+  const { data } = teamsLiveQuery({ refetchInterval: 15 * 1000 });
 
-  const [tableConfig, setTableConfig] = useStorageState(
+  const [tableConfig] = useStorageState(
     storageKeys.LIVE_PLAYERS_TABLE_CONFIG,
     {
       density: "normal",
       fontSize: "normal",
     }
   );
-
-  // const data = liveTeamResponse.result;
 
   const playersData = useMemo(() => {
     if (!data) return [];

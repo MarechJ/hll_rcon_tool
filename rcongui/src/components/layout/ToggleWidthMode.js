@@ -1,5 +1,3 @@
-import * as React from 'react';
-
 import WidthNormalIcon from '@mui/icons-material/WidthNormal';
 import WidthFullIcon from '@mui/icons-material/WidthFull';
 import MenuButton from './MenuButton';

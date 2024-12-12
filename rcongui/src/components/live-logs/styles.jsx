@@ -1,6 +1,5 @@
-import { darken, styled } from "@mui/material";
+import { styled } from "@mui/material";
 import { getDensityPadding } from "../table/styles";
-import { red } from "@mui/material/colors";
 
 export const StyledLogsTable = styled("table", {
   shouldForwardProp: (prop) =>

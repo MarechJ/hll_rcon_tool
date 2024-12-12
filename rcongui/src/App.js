@@ -1,4 +1,3 @@
-import React from 'react';
 import { RouterProvider } from 'react-router-dom';
 import dayjs from 'dayjs';
 import relativeTimePlugin from 'dayjs/plugin/relativeTime';
@@ -9,6 +8,7 @@ import localforage from 'localforage';
 import siteConfig from './config/siteConfig';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { queryClient } from './queryClient';
+import {StrictMode} from "react";
 
 const App = () => {
   // Dayjs plugins
@@ -25,12 +25,12 @@ const App = () => {
   });
 
   return (
-    <React.StrictMode>
+    <StrictMode>
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={adminRouter} />
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
-    </React.StrictMode>
+    </StrictMode>
   );
 };
 

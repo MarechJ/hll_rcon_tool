@@ -1,7 +1,6 @@
 import {
   Avatar,
   Box,
-  darken,
   IconButton,
   ListItem,
   ListItemAvatar,

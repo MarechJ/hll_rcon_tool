@@ -1,5 +1,5 @@
 import {Unwrapped} from "@jsonforms/material-renderers";
-import React, {useCallback} from "react";
+import {useCallback} from "react";
 import {JsonFormsDispatch, withJsonFormsAnyOfProps, withJsonFormsControlProps} from "@jsonforms/react";
 import {and, createCombinatorRenderInfos, rankWith, schemaMatches, schemaTypeIs, uiTypeIs} from "@jsonforms/core";
 

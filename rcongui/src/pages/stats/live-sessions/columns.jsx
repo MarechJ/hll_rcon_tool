@@ -1,27 +1,18 @@
-import React from "react";
 import {
   Box,
   Checkbox,
   IconButton,
-  Stack,
   styled,
-  Tooltip,
-  Typography,
 } from "@mui/material";
-import { Star, Warning } from "@mui/icons-material";
-import { yellow } from "@mui/material/colors";
 import dayjs from "dayjs";
 import { ActionMenuButton } from "@/features/player-action/ActionMenu";
 import { generatePlayerActions } from "@/features/player-action/actions";
-import { CountryFlag } from "@/components/shared/CountryFlag";
 import {
   getPlayerTier,
-  hasRecentWarnings,
   teamToNation,
   tierColors,
 } from "@/utils/lib";
 import { SortableHeader } from "@/components/table/styles";
-import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 

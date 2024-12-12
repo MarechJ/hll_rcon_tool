@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link, Skeleton, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import {
@@ -6,13 +5,14 @@ import {
   handle_http_errors,
   showResponse,
 } from '@/utils/fetchUtils';
+import {useEffect, useState} from "react";
 
 const Footer = () => {
-  const [loading, setLoading] = React.useState(true);
-  const [repoData, setRepoData] = React.useState([]);
-  const [apiVersion, setApiVersion] = React.useState('N/A');
+  const [loading, setLoading] = useState(true);
+  const [repoData, setRepoData] = useState([]);
+  const [apiVersion, setApiVersion] = useState('N/A');
 
-  React.useEffect(() => {
+  useEffect(() => {
     async function onLoad() {
       setLoading(true);
       try {

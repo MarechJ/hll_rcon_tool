@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Button,
   Card,
@@ -14,25 +13,22 @@ import {
   TextField,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { DesktopDateTimePicker } from '@mui/x-date-pickers/DesktopDateTimePicker';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import {DesktopDateTimePicker} from '@mui/x-date-pickers/DesktopDateTimePicker';
+import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
+import {LocalizationProvider} from '@mui/x-date-pickers/LocalizationProvider';
 import data from '@emoji-mart/data'
 import EmojiPicker from "@emoji-mart/react";
 import Grid from "@mui/material/Grid2";
+import {useState} from "react";
 
 const SearchBar = ({
   name,
   playerId,
-  lastSeenFrom,
-  lastSeenUntil,
   blacklistedOnly,
   pageSize,
   setPageSize,
   setName,
   setPlayerId,
-  setLastSeenFrom,
-  setLastSeenUntil,
   setBlacklistedOnly,
   isWatchedOnly,
   setIsWatchedOnly,
@@ -46,8 +42,7 @@ const SearchBar = ({
   country,
   setCountry,
 }) => {
-  const [showEmojiPicker, setShowEmojiPicker] = React.useState(false);
-  //const toggleEmojis = () => setShowEmojiPicker(!showEmojiPicker)
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   return (
     (<form>
@@ -111,20 +106,20 @@ const SearchBar = ({
                 title="Pick emojis"
                 action={
                   <IconButton onClick={() => setShowEmojiPicker(false)} size="large">
-                    <CloseIcon />
+                    <CloseIcon/>
                   </IconButton>
                 }
               />
               <CardContent>
-              <EmojiPicker
-                style={{ border: '1px solid red' }}
-                dynamicWidth={true}
-                perLine={8}
-                data={data}
-                onEmojiSelect={(emoji) =>
-                  setFlags(flags + emoji.native + ",")
-                }
-              />
+                <EmojiPicker
+                  style={{border: '1px solid red'}}
+                  dynamicWidth={true}
+                  perLine={8}
+                  data={data}
+                  onEmojiSelect={(emoji) =>
+                    setFlags(flags + emoji.native + ",")
+                  }
+                />
               </CardContent>
             </Card>
           ) : (

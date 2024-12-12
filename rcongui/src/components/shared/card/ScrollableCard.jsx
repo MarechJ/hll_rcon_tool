@@ -1,4 +1,3 @@
-import React from "react";
 import { CardHeader } from "@mui/material";
 import PropTypes from "prop-types";
 import { BaseCard, ScrollableContent } from "./styles";
@@ -6,7 +5,7 @@ import { BaseCard, ScrollableContent } from "./styles";
 /**
  * A card component with scrollable content
  * @param {Object} props - Component props
- * @param {React.ReactNode} props.children - Content to be rendered inside the card
+ * @param {ReactNode} props.children - Content to be rendered inside the card
  * @param {string} props.title - Card title
  * @param {number} props.height - Card height in pixels
  * @param {Object} props.sx - Additional styles for the card

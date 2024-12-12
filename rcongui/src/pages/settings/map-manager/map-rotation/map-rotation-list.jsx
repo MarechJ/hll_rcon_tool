@@ -1,4 +1,3 @@
-import * as React from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { makeStyles } from "@mui/styles";
 import {
@@ -15,6 +14,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import InputIcon from "@mui/icons-material/Input";
 import { MapDescription } from "@/components/MapManager/map-details";
 import { getMapLayerImageSrc } from "@/components/MapManager/helpers";
+import {memo} from "react";
 
 const useStyles = makeStyles((theme) => ({
   draggingListItem: {
@@ -31,7 +31,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const DraggableList = React.memo(
+const DraggableList = memo(
   ({ maps, onDragEnd, onRemove, onChange, isSaved }) => {
     const classes = useStyles();
 

@@ -1,5 +1,4 @@
 import { ImageList, ImageListItem } from "@mui/material";
-import React from "react";
 import { ActionButton } from "./PlayerTile/ActionButton";
 import { PlayerHeader } from "./PlayerTile/PlayerHeader";
 import { PlayerFlags } from "./PlayerTile/PlayerFlags";
@@ -7,6 +6,7 @@ import { PlayerSighthings } from "./PlayerTile/PlayerSighthings";
 import { PlayerPenalties } from "./PlayerTile/PlayerPenalties";
 import { PlayerBan } from "./PlayerTile/PlayerBan";
 import Grid from "@mui/material/Grid2";
+import {Fragment} from "react";
 
 const PlayerGrid = ({
   players,
@@ -48,7 +48,7 @@ const PlayerGrid = ({
                   justifyContent="space-between"
                 >
                   <PlayerHeader player={player} />
-                  <React.Fragment>
+                  <Fragment>
                     <PlayerFlags player={player} onDeleteFlag={onDeleteFlag} />
                     <PlayerBan bans={bans} player={player} />
                     <PlayerSighthings player={player} />
@@ -77,7 +77,7 @@ const PlayerGrid = ({
                         />
                       </Grid>
                     </Grid>
-                  </React.Fragment>
+                  </Fragment>
                 </Grid>
               </ImageListItem>
             );

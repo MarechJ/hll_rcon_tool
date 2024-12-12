@@ -1,5 +1,5 @@
 import siteConfig from '@/config/siteConfig';
-import React from 'react';
+import {useEffect, useState} from "react";
 
 const prefix = siteConfig.appName + '.';
 const withPrefix = (key) => prefix + key
@@ -13,16 +13,15 @@ const getItem = (key) => {
         ${key} value in your local storage was not able to read.\n${key} has been reset.
         `);
     localStorage.removeItem(withPrefix(key));
-    return;
   }
 };
 
 export const useStorageState = (key, initialState) => {
-  const [value, setValue] = React.useState(
+  const [value, setValue] = useState(
     getItem(key) ?? initialState
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     localStorage.setItem(withPrefix(key), JSON.stringify(value));
   }, [key, value]);
 
