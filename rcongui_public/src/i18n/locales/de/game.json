@@ -1,6 +1,6 @@
 {
     "gameNotFound": "Spiel {{ id }} nicht gefunden",
-    "loading": "Lädt...",
+    "loading": "Lade...",
     "selectPlayer": "Spieler auswählen",
     "searchPlayer": "Spieler suchen",
     "noPlayersFound": "Keine Spieler gefunden",
@@ -30,7 +30,7 @@
         "score": "Punkte",
         "weapon": "Waffe",
         "vehicle": "Fahrzeug",
-        "armor": "Panzerung",
+        "armor": "Panzer",
         "commander": "Kommandant",
         "offense": "Angriff",
         "defense": "Verteidigung",
