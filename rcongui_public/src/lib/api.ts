@@ -1,8 +1,9 @@
-import { CRCON_Response } from '@/types/api'
 import axios from 'axios'
+import { CRCON_Response } from '@/types/api'
+import { isLocal } from './env'
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_CRCON_API_URL || process.env.REACT_APP_API_URL || '/api',
+  baseURL: isLocal ? '/api' : import.meta.env.VITE_CRCON_API_URL || process.env.REACT_APP_API_URL || '/api',
   headers: {
     'Content-Type': 'application/json',
   },

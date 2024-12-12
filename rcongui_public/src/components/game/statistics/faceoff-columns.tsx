@@ -9,14 +9,14 @@ const nColSize = 40
 export const columns: ColumnDef<Faceoff>[] = [
   {
     accessorKey: 'name',
-    header: () => {
+    header: function NameHeader() {
       const { t } = useTranslation('game')
       return t('playersTable.player')
     },
   },
   {
     accessorKey: 'kills',
-    header: ({ column }) => {
+    header: function KillsHeader({ column }) {
       const { t } = useTranslation('game')
       return (
         <Header
@@ -31,7 +31,7 @@ export const columns: ColumnDef<Faceoff>[] = [
   },
   {
     accessorKey: 'deaths',
-    header: ({ column }) => {
+    header: function DeathsHeader({ column }) {
       const { t } = useTranslation('game')
       return (
         <Header
@@ -46,7 +46,7 @@ export const columns: ColumnDef<Faceoff>[] = [
   },
   {
     accessorKey: 'diff',
-    header: ({ column }) => {
+    header: function DiffHeader({ column }) {
       const { t } = useTranslation('game')
       return (
         <Header

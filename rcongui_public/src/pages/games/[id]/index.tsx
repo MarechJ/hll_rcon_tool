@@ -48,13 +48,10 @@ const GameDetail = ({ game }: { game: ScoreboardMapStats }) => {
           />
         </aside>
       </div>
-      <GameStats stats={game.player_stats} getColumns={getCompletedGameColumns} />
+      <GameStats stats={game.player_stats} getColumns={getCompletedGameColumns} gameId={`${game.id}_${dayjs(game.start).format('YYYYMMDD-HHmm')}`} />
     </>
   )
-
 }
-
-
 
 export default function Page() {
   const { gameId } = useLoaderData() as Awaited<ReturnType<ReturnType<typeof clientLoader>>>

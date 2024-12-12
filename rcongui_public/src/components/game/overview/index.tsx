@@ -30,26 +30,30 @@ const MAX_SCORE = 5
 
 const OffensiveArrows = ({ score, map }: { score: Score; map: MapLayer }) => (
   <>
-    {Array(score.allies).fill(null).map((_, index) => (
-      <Arrow
-        key={`score-${index}`}
-        direction={map.attackers === 'allies' ? 'right' : 'left'}
-        team="allies"
-        mode="offensive"
-        order={index}
-        highlighted={index === 4}
-      />
-    ))}
-    {Array(score.axis).fill(null).map((_, index) => (
-      <Arrow
-        key={`score-${index}`}
-        direction={map.attackers === 'allies' ? 'right' : 'left'}
-        team="axis"
-        mode="offensive"
-        highlighted={index === 0}
-        order={(score.allies ?? 0) + index}
-      />
-    ))}
+    {Array(score.allies)
+      .fill(null)
+      .map((_, index) => (
+        <Arrow
+          key={`score-${index}`}
+          direction={map.attackers === 'allies' ? 'right' : 'left'}
+          team="allies"
+          mode="offensive"
+          order={index}
+          highlighted={index === 4}
+        />
+      ))}
+    {Array(score.axis)
+      .fill(null)
+      .map((_, index) => (
+        <Arrow
+          key={`score-${index}`}
+          direction={map.attackers === 'allies' ? 'right' : 'left'}
+          team="axis"
+          mode="offensive"
+          highlighted={index === 0}
+          order={(score.allies ?? 0) + index}
+        />
+      ))}
   </>
 )
 
@@ -60,25 +64,29 @@ const WarfareArrows = ({ score }: { score: Score }) => {
 
   return (
     <>
-      {Array(score.allies).fill(null).map((_, index, arr) => (
-        <Arrow
-          key={`score-${index}`}
-          direction="right"
-          team="allies"
-          mode="warfare"
-          highlighted={index === arr.length - 1 && shouldHighlight}
-        />
-      ))}
+      {Array(score.allies)
+        .fill(null)
+        .map((_, index, arr) => (
+          <Arrow
+            key={`score-${index}`}
+            direction="right"
+            team="allies"
+            mode="warfare"
+            highlighted={index === arr.length - 1 && shouldHighlight}
+          />
+        ))}
       {isTied && <RectangleNeutral />}
-      {Array(score.axis).fill(null).map((_, index) => (
-        <Arrow
-          key={`score-${index}`}
-          direction="left"
-          team="axis"
-          mode="warfare"
-          highlighted={index === 0 && shouldHighlight}
-        />
-      ))}
+      {Array(score.axis)
+        .fill(null)
+        .map((_, index) => (
+          <Arrow
+            key={`score-${index}`}
+            direction="left"
+            team="axis"
+            mode="warfare"
+            highlighted={index === 0 && shouldHighlight}
+          />
+        ))}
     </>
   )
 }
@@ -98,7 +106,7 @@ export default function GameOverview({
 
   const displayArrows = () => {
     if (!score.allies || !score.axis) return null
-  
+
     return (
       <ArrowsContainer>
         {mode === 'offensive' && <OffensiveArrows score={score} map={map} />}

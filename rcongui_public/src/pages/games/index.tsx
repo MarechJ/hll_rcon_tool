@@ -18,7 +18,7 @@ export default function GamesPage() {
         <title>{t('gameHistory')}</title>
       </Helmet>
       <QueryErrorResetBoundary>
-        {({ reset }) => (
+        {() => (
           <ErrorBoundary
             fallbackRender={({ error, resetErrorBoundary }) => (
               <div>

@@ -27,12 +27,24 @@ const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
     const activeGameIndex = childElements.findIndex((el) => el.getAttribute('href') === pathname)
     const activeGameEl = childElements[activeGameIndex]
     if (activeGameEl) {
-      const spacing = 8 // space-x-2
+      // The static container
       const containerWidth = scrollAreaRef.current.getBoundingClientRect().width
+      // The viewport of the scroll area
+      const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]')
+      // The spacing between the items
+      const spacing = 8 // space-x-2
       const itemWidth = activeGameEl.getBoundingClientRect().width + spacing
       const viewableItemsCount = containerWidth / itemWidth
-      const scrollBy = containerWidth * (activeGameIndex / viewableItemsCount) - spacing
-      const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]')
+      const fitsLessThanTwo = viewableItemsCount < 2
+      // This is the amount of pixels to scroll by to leave the active item on the far left
+      let scrollBy = containerWidth * (activeGameIndex / viewableItemsCount) - spacing
+      if (fitsLessThanTwo) {
+        // If the container fit less than two, display the active item in the center
+        scrollBy -= containerWidth / 2 - itemWidth / 2
+      } else {
+        // If the container fit more than two, display the active item as the second item from the left
+        scrollBy -= itemWidth
+      }
       if (viewport) {
         viewport.scrollTo({ behavior: 'smooth', left: scrollBy })
       }
@@ -40,7 +52,7 @@ const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   }, [games, gamesContainerRef, pathname, scrollAreaRef])
 
   return (
-    <ScrollArea ref={scrollAreaRef} className="w-full whitespace-nowrap -mx-4 xl:mx-0 pb-2">
+    <ScrollArea ref={scrollAreaRef} className="w-full whitespace-nowrap sm:-mx-4 xl:mx-0 pb-2">
       <div ref={gamesContainerRef} className="flex flex-row w-max space-x-2">
         {games?.maps.filter(validGame).map((game) => (
           <Link key={game.id} to={`/games/${game.id}`}>

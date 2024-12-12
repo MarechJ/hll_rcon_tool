@@ -1,6 +1,7 @@
 {
     "gameNotFound": "Game {{ id }} not found",
     "loading": "Loading...",
+    "downloadTable": "Download table",
     "selectPlayer": "Select a player",
     "searchPlayer": "Search for a player",
     "noPlayersFound": "No players found",

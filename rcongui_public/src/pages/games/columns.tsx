@@ -28,7 +28,7 @@ export const columns: ColumnDef<ScoreboardMap>[] = [
     },
   },
   {
-    header: () => {
+    header: function MapHeader() {
       const { t } = useTranslation('game')
       return t('matchTable.map')
     },
@@ -36,7 +36,7 @@ export const columns: ColumnDef<ScoreboardMap>[] = [
     accessorKey: 'map',
     minSize: 200,
     size: 200,
-    cell: ({ cell }) => {
+    cell: function MapCell({ cell }) {
       const gameMap = cell.getValue() as MapLayer
       const size = 60
       const ratio = 9 / 16
@@ -58,7 +58,7 @@ export const columns: ColumnDef<ScoreboardMap>[] = [
     },
   },
   {
-    header: () => {
+    header: function ResultHeader() {
       const { t } = useTranslation('game')
       return t('matchTable.result')
     },
@@ -66,7 +66,7 @@ export const columns: ColumnDef<ScoreboardMap>[] = [
     accessorFn: (row) => `${row.result?.allied ?? '?'} - ${row.result?.axis ?? '?'}`,
   },
   {
-    header: () => {
+    header: function StartHeader() {
       const { t } = useTranslation('game')
       return t('matchTable.start')
     },
@@ -74,7 +74,7 @@ export const columns: ColumnDef<ScoreboardMap>[] = [
     cell: ({ cell }) => dayjs(cell.getValue() as string).format('L LT'),
   },
   {
-    header: () => {
+    header: function DurationHeader() {
       const { t } = useTranslation('game')
       return t('matchTable.duration')
     },

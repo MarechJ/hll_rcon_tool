@@ -19,16 +19,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Player } from '@/types/player'
 import DebouncedInput from '@/components/debounced-input'
 import { useTranslation } from 'react-i18next'
-import {Button} from "@/components/ui/button";
-import {downloadGame} from "@/download-game";
-import {Download} from "lucide-react";
+import { Button } from '@/components/ui/button'
+import { Download } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import useGameDownload from '@/hooks/use-game-download'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
+  tableId: string
 }
 
-export function DataTable<TData extends Player, TValue>({ columns, data }: DataTableProps<TData, TValue>) {
+export function DataTable<TData extends Player, TValue>({ columns, data, tableId }: DataTableProps<TData, TValue>) {
+  const { download } = useGameDownload()
+
   const [sorting, setSorting] = React.useState<SortingState>([
     {
       id: 'kills',
@@ -85,12 +89,26 @@ export function DataTable<TData extends Player, TValue>({ columns, data }: DataT
           )}
         </div>
         <div>
-          <Button variant="outline" size={'icon'} onClick={() => downloadGame(data)}>
-            <Download size={20}/>
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  aria-label={t('downloadTable')}
+                  size={'icon'}
+                  onClick={() => download(data, `game-table-${tableId}`)}
+                >
+                  <Download size={20} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <span>{t('downloadTable')}</span>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
-      <Table>
+      <Table id={tableId}>
         <TableHeader className="h-12">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>

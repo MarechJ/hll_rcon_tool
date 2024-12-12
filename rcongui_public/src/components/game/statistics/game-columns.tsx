@@ -15,7 +15,7 @@ const pointColumns: ColumnDef<Player | PlayerWithStatus>[] = [
   {
     accessorKey: 'kills',
     size: threeDigitsWidth,
-    header: ({ column }) => {
+    header: function KillsHeader({ column }) {
       const { t } = useTranslation('game')
       return (
         <Header
@@ -23,7 +23,7 @@ const pointColumns: ColumnDef<Player | PlayerWithStatus>[] = [
           desc={t('playersTable.kills')}
           onClick={() => {
             column.toggleSorting(column.getIsSorted() === 'asc')
-        }}
+          }}
         />
       )
     },
@@ -31,7 +31,7 @@ const pointColumns: ColumnDef<Player | PlayerWithStatus>[] = [
   {
     accessorKey: 'deaths',
     size: fourDigitsWidth,
-    header: ({ column }) => {
+    header: function DeathsHeader({ column }) {
       const { t } = useTranslation('game')
       return (
         <Header
@@ -47,13 +47,13 @@ const pointColumns: ColumnDef<Player | PlayerWithStatus>[] = [
   {
     accessorKey: 'combat',
     size: fourDigitsWidth,
-    header: ({ column }) => {
+    header: function CombatHeader({ column }) {
       const { t } = useTranslation('game')
       return (
         <Header
           src={'/roles/score_combat.png'}
           desc={t('playersTable.combat')}
-        onClick={() => {
+          onClick={() => {
             column.toggleSorting(column.getIsSorted() === 'asc')
           }}
         />
@@ -63,15 +63,15 @@ const pointColumns: ColumnDef<Player | PlayerWithStatus>[] = [
   {
     accessorKey: 'offense',
     size: fourDigitsWidth,
-    header: ({ column }) => {
+    header: function OffenseHeader({ column }) {
       const { t } = useTranslation('game')
       return (
         <Header
           src={'/roles/score_offensive.png'}
           desc={t('playersTable.offense')}
           onClick={() => {
-          column.toggleSorting(column.getIsSorted() === 'asc')
-        }}
+            column.toggleSorting(column.getIsSorted() === 'asc')
+          }}
         />
       )
     },
@@ -79,7 +79,7 @@ const pointColumns: ColumnDef<Player | PlayerWithStatus>[] = [
   {
     accessorKey: 'defense',
     size: fourDigitsWidth,
-    header: ({ column }) => {
+    header: function DefenseHeader({ column }) {
       const { t } = useTranslation('game')
       return (
         <Header
@@ -95,7 +95,7 @@ const pointColumns: ColumnDef<Player | PlayerWithStatus>[] = [
   {
     accessorKey: 'support',
     size: fourDigitsWidth,
-    header: ({ column }) => {
+    header: function SupportHeader({ column }) {
       const { t } = useTranslation('game')
       return (
         <Header
@@ -112,7 +112,7 @@ const pointColumns: ColumnDef<Player | PlayerWithStatus>[] = [
 
 const playerColumn = (handlePlayerClick: (id: string) => void): ColumnDef<Player | PlayerWithStatus> => ({
   accessorKey: 'player',
-  header: () => {
+  header: function NameHeader() {
     const { t } = useTranslation('game')
     return <div>{t('playersTable.player')}</div>
   },
@@ -141,7 +141,7 @@ const statusColumn: ColumnDef<Player | PlayerWithStatus> = {
   meta: {
     filterVariant: 'select',
   },
-  header: () => {
+  header: function StatusHeader() {
     const { t } = useTranslation('game')
     return <div className="sr-only w-4">{t('playersTable.status')}</div>
   },

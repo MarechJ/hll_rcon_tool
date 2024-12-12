@@ -1,4 +1,4 @@
-import { publicInfoQueryOptions, usePublicInfo } from '@/lib/queries/public-info'
+import { publicInfoQueryOptions } from '@/lib/queries/public-info'
 import dayjs from 'dayjs'
 import { Helmet } from 'react-helmet'
 import duration from 'dayjs/plugin/duration'
@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 import LiveGameInfo from './live-game-info'
 import { Spinner } from '@/components/spinner'
 import GameStats from '@/components/game/statistics/game-stats'
-import { QueryErrorResetBoundary, useQueries, useSuspenseQueries, useSuspenseQuery } from '@tanstack/react-query'
+import { QueryErrorResetBoundary, useSuspenseQueries, useSuspenseQuery } from '@tanstack/react-query'
 import { getLiveGameColumns } from '@/components/game/statistics/game-columns'
 import { PlayerWithStatus } from '@/types/player'
 import { liveSessionStatsOptions } from '@/lib/queries/live-session-stats'
@@ -57,7 +57,7 @@ export default function Home() {
           <Helmet>
             <title>{t('currentGame')}</title>
           </Helmet>
-          
+
           {/* LiveGameInfo */}
           <QueryErrorResetBoundary>
             {({ reset }) => (
@@ -93,6 +93,7 @@ export default function Home() {
                   <GameStats
                     stats={liveStats.data.filter((player) => player.time_seconds > 30)}
                     getColumns={getLiveGameColumns}
+                    gameId={`live_${dayjs(game.current_map.start * 1000).format('YYYYMMDD-HHmm')}`}
                   />
                 </React.Suspense>
               </ErrorBoundary>

@@ -12,9 +12,11 @@ import { NoPlayerGameDetail } from './player-detail'
 export default function GameStats({
   stats,
   getColumns,
+  gameId,
 }: {
   stats: Player[] | PlayerWithStatus[]
   getColumns: (handlePlayerClick: (id: string) => void) => ColumnDef<Player | PlayerWithStatus>[]
+  gameId: string
 }) {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | undefined>()
   const [openDrawer, setOpenDrawer] = useState<boolean>(false)
@@ -31,11 +33,11 @@ export default function GameStats({
   )
 
   return (
-    <section id="game-statistics">
+    <section id={`game-statistics-${gameId}`}>
       <h2 className="sr-only">End of game statistics</h2>
       <div className="relative flex flex-col-reverse lg:flex-row">
         <article className="w-full lg:w-2/3">
-          <DataTable columns={getColumns(handlePlayerClick)} data={stats} />
+          <DataTable columns={getColumns(handlePlayerClick)} data={stats} tableId={gameId} />
         </article>
         <aside className="hidden w-full lg:block lg:w-1/3 min-h-32">
           {selectedPlayer ? <PlayerGameDetail player={selectedPlayer} /> : <NoPlayerGameDetail />}

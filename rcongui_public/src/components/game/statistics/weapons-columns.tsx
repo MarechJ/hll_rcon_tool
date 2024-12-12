@@ -14,14 +14,14 @@ type WeaponKillCount = {
 export const killByColumns: ColumnDef<WeaponKillCount>[] = [
   {
     accessorKey: 'name',
-    header: () => {
+    header: function NameHeader() {
       const { t } = useTranslation('game')
       return t('playerStats.weapon')
     },
   },
   {
     accessorKey: 'count',
-    header: ({ column }) => {
+    header: function KillsHeader({ column }) {
       const { t } = useTranslation('game')
       return (
         <Header
@@ -41,14 +41,14 @@ export const killByColumns: ColumnDef<WeaponKillCount>[] = [
 export const deathByColumns: ColumnDef<WeaponKillCount>[] = [
   {
     accessorKey: 'name',
-    header: () => {
+    header: function NameHeader() {
       const { t } = useTranslation('game')
       return t('playerStats.weapon')
     },
   },
   {
     accessorKey: 'count',
-    header: ({ column }) => {
+    header: function DeathsHeader({ column }) {
       const { t } = useTranslation('game')
       return (
         <Header

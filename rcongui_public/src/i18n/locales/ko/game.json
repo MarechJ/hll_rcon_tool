@@ -59,5 +59,6 @@
         "deathstreak": "연속 사망",
         "teamkills": "팀킬",
         "k/d": "K/D"
-    }
+    },
+    "downloadTable": "테이블 다운로드"
 }
