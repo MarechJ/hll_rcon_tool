@@ -9,7 +9,7 @@ import ListItemIcon, { listItemIconClasses } from '@mui/material/ListItemIcon';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import MenuButton from './MenuButton';
-import { useSubmit } from 'react-router-dom';
+import {useSubmit} from 'react-router-dom';
 import {Fragment, useState} from "react";
 
 const MenuItem = styled(MuiMenuItem)({
@@ -31,6 +31,9 @@ export default function OptionsMenu() {
     const formData = new FormData();
     formData.append('intent', 'logout');
     submit(formData, { action: '/', method: 'POST' })
+  }
+  const handleChangePassword = () => {
+    location.href = '/accounts/password_change';
   }
   return (
     <Fragment>
@@ -61,6 +64,17 @@ export default function OptionsMenu() {
           },
         }}
       >
+        <MenuItem
+          onClick={handleChangePassword}
+          sx={{
+            [`& .${listItemIconClasses.root}`]: {
+              ml: 'auto',
+              minWidth: 0,
+            },
+          }}
+        >
+          <ListItemText>Change password</ListItemText>
+        </MenuItem>
         <MenuItem
           onClick={handleLogout}
           sx={{
