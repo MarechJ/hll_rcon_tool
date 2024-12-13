@@ -20,7 +20,7 @@ import {
 } from "@/components/MapManager/helpers";
 import { Alert, AlertTitle, Skeleton } from "@mui/material";
 import { styled } from '@mui/material/styles';
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 
 const UPDATE_INTERVAL = 5 * 1000;
 const CONFIRM_DELAY = 10 * 1000;
