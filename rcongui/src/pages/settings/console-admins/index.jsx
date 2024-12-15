@@ -66,14 +66,15 @@ export const action = async ({ request }) => {
   return results;
 };
 
-const initialAdmin = {
-  player_id: "",
-  name: "",
-  role: "",
-};
-
 const ConsoleAdminsPage = () => {
   const { admins: serverAdmins, adminGroups } = useLoaderData();
+
+  const initialAdmin = {
+    player_id: "",
+    name: "",
+    role: adminGroups.includes("spectator") ? "spectator" : "",
+  };
+
   const [admins, setAdmins] = useState(serverAdmins);
   const [checked, setChecked] = useState(new Set());
   const [searched, setSearched] = useState("");
