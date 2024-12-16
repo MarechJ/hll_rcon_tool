@@ -969,7 +969,7 @@ LAYERS = {
             environment=Environment.OVERCAST,
         ),
         Layer(
-            id="mortain_offensiveUS_evening",
+            id="mortain_offensiveUS_dusk",
             map=MAPS["mortain"],
             game_mode=GameMode.OFFENSIVE,
             attackers=Team.ALLIES,
@@ -996,7 +996,7 @@ LAYERS = {
             environment=Environment.OVERCAST,
         ),
         Layer(
-            id="mortain_offensiveger_evening",
+            id="mortain_offensiveger_dusk",
             map=MAPS["mortain"],
             game_mode=GameMode.OFFENSIVE,
             attackers=Team.AXIS,
@@ -1021,7 +1021,7 @@ LAYERS = {
             environment=Environment.OVERCAST,
         ),
         Layer(
-            id="mortain_skirmish_evening",
+            id="mortain_skirmish_dusk",
             map=MAPS["mortain"],
             game_mode=GameMode.CONTROL,
             environment=Environment.DUSK,

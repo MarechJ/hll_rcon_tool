@@ -182,12 +182,13 @@ class NoLeaderAutomod:
             author = AUTOMOD_USERNAME + ("-DryRun" if self.config.dry_run else "")
 
             for player in squad["players"]:
+                profile = player.get("profile", {})
                 aplayer = PunishPlayer(
                     player_id=player["player_id"],
                     name=player["name"],
                     squad=squad_name,
                     team=team,
-                    flags=player.get("profile", {}).get("flags", []),
+                    flags=profile.get("flags") if profile else [],
                     role=player.get("role"),
                     lvl=int(player.get("level")),
                     details=PunishDetails(
