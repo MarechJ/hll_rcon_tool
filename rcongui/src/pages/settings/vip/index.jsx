@@ -34,6 +34,7 @@ import {
 } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { getVipExpirationStatus, getVipExpirationStatusColor } from "@/utils/lib";
+import PlayerAutocompletion from "@/components/form/custom/PlayerAutocompletion";
 
 dayjs.extend(relativeTimePlugin);
 dayjs.extend(localizedFormatPlugin);
@@ -306,14 +307,7 @@ const VipPage = () => {
         }}
       >
         <Stack direction={"row"} gap={1} sx={{ mb: 1, p: 0.5 }}>
-          <TextField
-            autoComplete={"off"}
-            value={addFormData.name}
-            onChange={handleInputChange}
-            name={"name"}
-            fullWidth
-            label={"Name"}
-          />
+          <PlayerAutocompletion player={addFormData} setPlayer={setAddFormData}/>
           <TextField
             autoComplete={"off"}
             value={addFormData.player_id}

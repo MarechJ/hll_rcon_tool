@@ -28,6 +28,7 @@ import debounce from "lodash/debounce";
 import { InputFileUpload } from "@/components/shared/InputFileUpload";
 import exportFile from "@/utils/exportFile";
 import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
+import PlayerAutocompletion from "@/components/form/custom/PlayerAutocompletion";
 
 const INTENT = {
   ADD_ADMIN: "add_admin",
@@ -65,14 +66,15 @@ export const action = async ({ request }) => {
   return results;
 };
 
-const initialAdmin = {
-  player_id: "",
-  name: "",
-  role: "",
-};
-
 const ConsoleAdminsPage = () => {
   const { admins: serverAdmins, adminGroups } = useLoaderData();
+
+  const initialAdmin = {
+    player_id: "",
+    name: "",
+    role: adminGroups.includes("spectator") ? "spectator" : "",
+  };
+
   const [admins, setAdmins] = useState(serverAdmins);
   const [checked, setChecked] = useState(new Set());
   const [searched, setSearched] = useState("");
@@ -274,14 +276,7 @@ const ConsoleAdminsPage = () => {
         }}
       >
         <Stack direction={"row"} gap={1} sx={{ mb: 1, p: 0.5 }}>
-          <TextField
-            autoComplete={"off"}
-            value={newAdmin.name}
-            onChange={handleInputChange}
-            name={"name"}
-            fullWidth
-            label={"Name"}
-          />
+          <PlayerAutocompletion player={newAdmin} setPlayer={setNewAdmin}/>
           <TextField
             autoComplete={"off"}
             value={newAdmin.player_id}
