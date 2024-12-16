@@ -307,7 +307,7 @@ const VipPage = () => {
         }}
       >
         <Stack direction={"row"} gap={1} sx={{ mb: 1, p: 0.5 }}>
-          <PlayerAutocompletion state={addFormData} setState={setAddFormData}/>
+          <PlayerAutocompletion player={addFormData} setPlayer={setAddFormData}/>
           <TextField
             autoComplete={"off"}
             value={addFormData.player_id}

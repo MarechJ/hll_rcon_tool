@@ -276,7 +276,7 @@ const ConsoleAdminsPage = () => {
         }}
       >
         <Stack direction={"row"} gap={1} sx={{ mb: 1, p: 0.5 }}>
-          <PlayerAutocompletion state={newAdmin} setState={setNewAdmin}/>
+          <PlayerAutocompletion player={newAdmin} setPlayer={setNewAdmin}/>
           <TextField
             autoComplete={"off"}
             value={newAdmin.player_id}

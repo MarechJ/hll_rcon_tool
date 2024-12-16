@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useRef} from "react";
+import React, {useEffect, useMemo, useRef, useState} from "react";
 import {debounce} from "lodash";
 import {handle_http_errors, postData, showResponse} from "@/utils/fetchUtils";
 import Autocomplete from "@mui/material/Autocomplete";
@@ -6,16 +6,16 @@ import Typography from "@mui/material/Typography";
 import {Avatar, Box} from "@mui/material";
 import TextField from "@mui/material/TextField";
 
-export default function PlayerAutocompletion({state, setState}) {
+export default function PlayerAutocompletion({player, setPlayer}) {
 
-  const [suggestions, setSuggestions] = React.useState([]);
+  const [suggestions, setSuggestions] = useState([]);
 
-  const nameRef = useRef(state.name);
+  const nameRef = useRef(player.name);
 
   useEffect(() => {
     debouncedFetchSuggestions();
-    nameRef.current = state.name;
-  }, [state.name]);
+    nameRef.current = player.name;
+  }, [player.name]);
 
   const fetchSuggestions = () => {
     setSuggestions([]);
@@ -56,7 +56,7 @@ export default function PlayerAutocompletion({state, setState}) {
     options={suggestions}
     filterOptions={(options) => options}
     onChange={(event, value, reason) => {
-      setState(prev => ({...prev,
+      setPlayer(prev => ({...prev,
         name: value?.names[0]?.name ?? '',
         player_id: value?.player_id ?? prev.player_id,
       }));
@@ -74,12 +74,12 @@ export default function PlayerAutocompletion({state, setState}) {
       </Box>
     }
     }
-    inputValue={state.name}
-    onInputChange={(event, value) => setState(prev => ({...prev, name: value}))}
+    inputValue={player.name}
+    onInputChange={(event, value) => setPlayer(prev => ({...prev, name: value}))}
     renderInput={(params) =>
       <TextField
         {...params}
-        value={state.name}
+        value={player.name}
         label={"Name"}
         type="text"
       />}
