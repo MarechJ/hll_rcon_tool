@@ -448,4 +448,9 @@ class RconUser(User):
             ("can_change_game_layout", "Can change game layout"),
             ("can_view_seed_vip_config", "Can view the Seed VIP config"),
             ("can_change_seed_vip_config", "Can change the Seed VIP config"),
+            ("can_view_watch_killrate_config", "Can view the Watch KillRate config"),
+            (
+                "can_change_watch_killrate_config",
+                "Can change the Watch KillRate config",
+            ),
         )
