@@ -38,6 +38,7 @@ from rcon.user_config.webhooks import (
     KillsWebhooksUserConfig,
     WatchlistWebhooksUserConfig,
 )
+from rcon.user_config.watch_killrate import WatchKillRateUserConfig
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +79,7 @@ def seed_default_config():
             SteamUserConfig.seed_db(sess)
             VacGameBansUserConfig.seed_db(sess)
             VoteMapUserConfig.seed_db(sess)
+            WatchKillRateUserConfig.seed_db(sess)
             WatchlistWebhooksUserConfig.seed_db(sess)
 
     except Exception as e:
