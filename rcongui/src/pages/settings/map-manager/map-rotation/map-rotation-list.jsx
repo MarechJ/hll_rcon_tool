@@ -131,8 +131,9 @@ const DraggableList = memo(({maps, onDragEnd, onRemove, onChange, isSaved}) => {
       },
     }),
     useSensor(KeyboardSensor, {
-    coordinateGetter: sortableKeyboardCoordinates,
-  }));
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
 
   return <DndContext
     sensors={sensors}
