@@ -108,9 +108,6 @@ Change most (but not all) game server/CRCON settings, including but not limited 
   - Remove players without at least one character (A-Z or a-z) to avoid all symbol names
   - Player names that contain words (ie : "nazi", "fucker", etc.)
   - Any regular expression you can craft should work!
-- Remove players with names that will not work properly with RCON commands because of RCON bugs:
-  - Player names that end in white space (or end in white space after the game trims the name to RCONs 20 byte maximum)
-  - Player names that (due to an RCON bug) have multi byte unicode code points that the game server chops off (pineapple names)
 - Remove game pass players on connect (if your GSP hasn't exposed the file to turn it off at the server level)
 - Automatically perma ban players who only team kill after connecting
 - Automatically perma ban steam players with X number of VAC and/or game bans within Y days (with a Steam API key configured)

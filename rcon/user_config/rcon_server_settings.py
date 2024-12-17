@@ -3,51 +3,15 @@ from typing import Optional, Type, TypedDict
 from pydantic import BaseModel, BeforeValidator, Field, HttpUrl, field_serializer
 from typing_extensions import Annotated
 
-from rcon.types import RconInvalidNameActionType, WindowsStoreIdActionType
+from rcon.types import WindowsStoreIdActionType
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 from rcon.utils import get_server_number
-
-WHITESPACE_NAME_PLAYER_MESSAGE = """Your name ends in whitespace (or has whitespace in the 20th character)
-
-Because of a bug in the game admin tools this server uses will not work properly,
-you might suffer auto-moderation actions as a false-positive.
-
-Please change your name in Steam and restart your game to avoid this.
-
-Please ask T17 to prioritize fixing this bug."""
-
-PINEAPPLE_NAME_PLAYER_MESSAGE = """Your name has a special character around the 20th character (because it is truncated as it is too long)
-
-Because of a bug in the game, admin tools this server uses will not work properly.
-
-Please change your name in Steam and restart your game to avoid this.
-
-Please ask T17 to prioritize fixing this bug."""
-
-
-INVALID_NAME_AUDIT_MESSAGE = """Player with an invalid name (ends in whitespace or a partial character when truncated) joined: {name} ({player_id}
-This will cause errors with various auto mods (no leader, etc) and the `playerinfo` RCON command will not work.
-The player will show as 'unassigned' in Gameview.
-Action taken = {action}"""
-PINEAPPLE_NAMES_AUDIT_UNBAN_MESSAGE = "Unbanning {name} ({player_id}) that was temp banned since the `kick` command will not work with their name"
 
 WINDOWS_STORE_PLAYER_MESSAGE = "Windows store players are not allowed on this server."
 
 WINDOWS_STORE_AUDIT_MESSAGE = (
     "Windows store player {name} ({player_id} connected, action taken = {action})"
 )
-
-
-class InvalidNameType(TypedDict):
-    enabled: bool
-    action: RconInvalidNameActionType
-    whitespace_name_player_message: str
-    pineapple_name_player_message: str
-    audit_message: str
-    # TODO: maybe they'll fix kicking pineapple names one day lol
-    audit_kick_unban_message: str
-    audit_message_author: str
-    ban_length_hours: int
 
 
 class WindowsStorePlayersType(TypedDict):
@@ -76,13 +40,12 @@ class RconServerSettingsType(TypedDict):
     lock_stats_api: bool
     live_stats_refresh_seconds: int
     live_stats_refresh_current_game_seconds: int
-    invalid_names: InvalidNameType
     windows_store_players: WindowsStorePlayersType
     message_enhancements: MessageEnhancementsType
 
 
 def _upper_case_action(
-    v: str | None, cls: Type[RconInvalidNameActionType | WindowsStoreIdActionType]
+    v: str | None, cls: Type[WindowsStoreIdActionType]
 ):
     if v:
         return cls(v.upper())
@@ -90,30 +53,9 @@ def _upper_case_action(
         return v
 
 
-def upper_case_name_kick_action(v: str | None):
-    """Allow users to enter actions in any case"""
-    return _upper_case_action(v, cls=RconInvalidNameActionType)
-
-
 def upper_case_name_windows_player_action(v: str | None):
     """Allow users to enter actions in any case"""
     return _upper_case_action(v, cls=WindowsStoreIdActionType)
-
-
-class InvalidName(BaseModel):
-    enabled: bool = Field(default=False)
-    action: (
-        Annotated[
-            RconInvalidNameActionType, BeforeValidator(upper_case_name_kick_action)
-        ]
-        | None
-    ) = Field(default=None)
-    whitespace_name_player_message: str = Field(default=WHITESPACE_NAME_PLAYER_MESSAGE)
-    pineapple_name_player_message: str = Field(default=PINEAPPLE_NAME_PLAYER_MESSAGE)
-    audit_message: str = Field(default=INVALID_NAME_AUDIT_MESSAGE)
-    audit_kick_unban_message: str = Field(default=PINEAPPLE_NAMES_AUDIT_UNBAN_MESSAGE)
-    audit_message_author: str = Field(default="CRCON")
-    ban_length_hours: int = Field(default=1)
 
 
 class WindowsStorePlayer(BaseModel):
@@ -151,7 +93,6 @@ class RconServerSettingsUserConfig(BaseUserConfig):
     live_stats_refresh_seconds: int = Field(default=15)
     live_stats_refresh_current_game_seconds: int = Field(default=5)
 
-    invalid_names: InvalidName = Field(default_factory=InvalidName)
     windows_store_players: WindowsStorePlayer = Field(
         default_factory=WindowsStorePlayer
     )
@@ -172,21 +113,6 @@ class RconServerSettingsUserConfig(BaseUserConfig):
             values.keys(),
         )
 
-        raw_invalid_names = values.get("invalid_names")
-        validated_invalid_names = InvalidName(
-            enabled=raw_invalid_names.get("enabled"),
-            action=raw_invalid_names.get("action"),
-            whitespace_name_player_message=raw_invalid_names.get(
-                "whitespace_name_player_message"
-            ),
-            pineapple_name_player_message=raw_invalid_names.get(
-                "pineapple_name_player_message"
-            ),
-            audit_message=raw_invalid_names.get("audit_message"),
-            audit_kick_unban_message=raw_invalid_names.get("audit_kick_unban_message"),
-            audit_message_author=raw_invalid_names.get("audit_message_author"),
-            ban_length_hours=raw_invalid_names.get("ban_length_hours"),
-        )
         raw_win_store_players = values.get("windows_store_players")
         validated_win_store_players = WindowsStorePlayer(
             enabled=raw_win_store_players.get("enabled"),
@@ -216,7 +142,6 @@ class RconServerSettingsUserConfig(BaseUserConfig):
             live_stats_refresh_current_game_seconds=values.get(
                 "live_stats_refresh_current_game_seconds"
             ),
-            invalid_names=validated_invalid_names,
             windows_store_players=validated_win_store_players,
             message_enhancements=validated_message_enhancements,
         )

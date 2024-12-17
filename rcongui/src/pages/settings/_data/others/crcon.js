@@ -45,34 +45,6 @@ const CRCONNotes = `
         */
         "live_stats_refresh_current_game_seconds": 5
 
-        /* This allows you to automatically action players with names that case RCON bugs */
-        "invalid_names": {
-          "enabled": false,
-          /* 
-            null: Do nothing
-            "warn": Message the player when they connect
-            "kick": Kick the player from the server
-            "ban": Temporarily ban the player
-          */
-          "action": null,
-
-          /* The message used when actioning a player whose name ends in white space */
-          "whitespace_name_player_message": "Your name ends in whitespace (or has whitespace in the 20th character)\\n\\nBecause of a bug in the game admin tools this server uses will not work properly,\\nyou might suffer auto-moderation actions as a false-positive.\\n\\nPlease change your name in Steam and restart your game to avoid this.\\n\\nPlease ask T17 to prioritize fixing this bug.",
-          
-          /* The message used when actioning a player whose name is incorrectly shortened by the game server */
-          "pineapple_name_player_message": "Your name has a special character around the 20th character (because it is truncated as it is too long)\\n\\nBecause of a bug in the game, admin tools this server uses will not work properly.\\n\\nPlease change your name in Steam and restart your game to avoid this.\\n\\nPlease ask T17 to prioritize fixing this bug.",
-          
-          /* The message sent to the discord audit log, {name} {player_id} and {action} are valid message variables */
-          "audit_message": "Player with an invalid name (ends in whitespace or a partial character when truncated) joined: {name} ({player_id}\\nThis will cause errors with various auto mods (no leader, etc) and the \`playerinfo\` RCON command will not work.\\nThe player will show as 'unassigned' in Gameview.\\nAction taken = {action}",
-          
-          /* Due to a bug with how the kick command works, if a player can't be kicked they'll be removed by temporarily banning them, {name} {player_id} and {action} are valid message variables */
-          "audit_kick_unban_message": "Unbanning {name} ({player_id}) that was temp banned since the \`kick\` command will not work with their name",
-          "audit_message_author": "CRCON",
-          
-          /* The length in hours if a player is temporarily banned */
-          "ban_length_hours": 1
-        },
-
         /* This allows you to automatically action windows store players when they connect if your GSP is not updated to allow you to edit your Server.ini file */
         "windows_store_players": {
           "enabled": false,
