@@ -272,31 +272,6 @@ class LogsHistory extends Component {
       });
   }
 
-  handleDownload() {
-    postData(`${process.env.REACT_APP_API_URL}get_historical_logs_csv`, {
-      player_name: this.state.name,
-      action: this.state.type,
-      player_id: this.state.playerId,
-      from: this.state.from,
-      till: this.state.till,
-      limit: this.state.limit,
-      time_sort: this.state.timeSort,
-      exact_player: this.state.exactPlayer,
-      exact_action: this.state.exactAction,
-      server_filter: this.state.server,
-    })
-      .then((res) => res.blob())
-      .then((blob) => {
-        const url = window.URL.createObjectURL(new Blob([blob]));
-        const link = document.createElement("a");
-        link.href = url;
-        link.setAttribute("download", `log.csv`);
-        document.body.appendChild(link);
-        link.click();
-        link.parentNode.removeChild(link);
-      });
-  }
-
   componentDidMount() {
     this.getHistoricalLogs();
   }

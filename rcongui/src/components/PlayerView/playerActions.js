@@ -25,6 +25,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import BlockIcon from "@mui/icons-material/Block";
 import StarIcon from "@mui/icons-material/Star";
 import {Component, Fragment, useState} from "react";
+import range from "lodash/range";
 
 const Duration = ({
   durationNumber,
@@ -297,7 +298,7 @@ const PlayerActions = ({
         ) : (
           ""
         )}
-        {_.range(show).map((idx) => (
+        {range(show).map((idx) => (
           <Button
             key={actions[idx][0]}
             disabled={disable && !actions[idx][0].startsWith("switch")}
