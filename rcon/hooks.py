@@ -5,8 +5,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 from threading import Timer
-from typing import Any, Final
-from typing import Any, Final
+from typing import Final
 
 from discord_webhook import DiscordEmbed
 
@@ -46,7 +45,6 @@ from rcon.types import (
     MessageVariableContext,
     MostRecentEvents,
     PlayerFlagType,
-    RconInvalidNameActionType,
     SteamBansType,
     WindowsStoreIdActionType,
 )
@@ -72,8 +70,6 @@ from rcon.user_config.webhooks import CameraWebhooksUserConfig
 from rcon.utils import (
     DefaultStringFormat,
     MapsHistory,
-    is_invalid_name_pineapple,
-    is_invalid_name_whitespace,
 )
 from rcon.vote_map import VoteMap
 from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
@@ -609,11 +605,6 @@ def update_player_steaminfo_on_connect(
         )
 
 
-pendingTimers: dict[str, list[tuple[RconInvalidNameActionType | None, Timer]]] = (
-    defaultdict(list)
-)
-
-
 @on_connected()
 @inject_player_ids
 def windows_store_player_check(rcon: Rcon, _, name: str, player_id: str):
@@ -673,188 +664,6 @@ def windows_store_player_check(rcon: Rcon, _, name: str, player_id: str):
             player_id,
             e,
         )
-
-
-@on_connected()
-@inject_player_ids
-def notify_invalid_names(rcon: Rcon, _, name: str, player_id: str):
-    config = RconServerSettingsUserConfig.load_from_db().invalid_names
-
-    if not config.enabled:
-        return
-
-    is_pineappple_name = is_invalid_name_pineapple(name)
-    is_whitespace_name = is_invalid_name_whitespace(name)
-    if not is_whitespace_name and not is_pineappple_name:
-        return
-
-    action = config.action
-    action_value = action.value if action else None
-
-    logger.info(
-        "Player '%s' (%s) has an invalid name (ends in whitespace or multi byte unicode code point), action=%s",
-        name,
-        player_id,
-        action_value,
-    )
-
-    try:
-        send_to_discord_audit(
-            message=config.audit_message.format_map(
-                DefaultStringFormat(name=name, player_id=player_id, action=action_value)
-            ),
-            command_name=str(action_value),
-        )
-    except Exception:
-        logger.exception(
-            "Unable to send %s %s (%s) to audit", action_value, name, player_id
-        )
-
-    def notify_whitespace_player(action: RconInvalidNameActionType):
-        if action is None:
-            return
-        elif action == RconInvalidNameActionType.kick:
-            try:
-                rcon.kick(
-                    name,
-                    reason=config.whitespace_name_player_message,
-                    by=config.audit_message_author,
-                    player_id=player_id,
-                )
-            except Exception as e:
-                logger.error(
-                    "Could not kick whitespace name player %s/%s: %s",
-                    name,
-                    player_id,
-                    e,
-                )
-        elif action == RconInvalidNameActionType.warn:
-            try:
-                rcon.message_player(
-                    player_id=player_id,
-                    message=config.whitespace_name_player_message,
-                    by=config.audit_message_author,
-                    save_message=False,
-                )
-            except Exception as e:
-                logger.error(
-                    "Could not message whitespace name player %s/%s: %s",
-                    name,
-                    player_id,
-                    e,
-                )
-        elif action == RconInvalidNameActionType.ban:
-            try:
-                rcon.temp_ban(
-                    player_id=player_id,
-                    reason=config.whitespace_name_player_message,
-                    by=config.audit_message_author,
-                    duration_hours=config.ban_length_hours,
-                )
-            except Exception as e:
-                logger.error(
-                    "Could not temp ban whitespace name player %s/%s: %s",
-                    name,
-                    player_id,
-                    e,
-                )
-
-    def notify_pineapple_player(action: RconInvalidNameActionType):
-        if action is None:
-            return
-        elif action == RconInvalidNameActionType.kick:
-            try:
-                # TODO: it is not possible to kick pineapple names, remove them by banning/unbanning
-                rcon.temp_ban(
-                    player_id=player_id,
-                    reason=config.pineapple_name_player_message,
-                    by=config.audit_message_author,
-                    duration_hours=1,
-                )
-            except Exception as e:
-                logger.error(
-                    "Could not temp ban (can't kick pineapple names) player %s/%s: %s",
-                    name,
-                    player_id,
-                    e,
-                )
-        elif action == RconInvalidNameActionType.warn:
-            try:
-                rcon.message_player(
-                    player_id=player_id,
-                    message=config.pineapple_name_player_message,
-                    by=config.audit_message_author,
-                    save_message=False,
-                )
-            except Exception as e:
-                logger.error(
-                    "Could not message pineapple name player %s/%s: %s",
-                    name,
-                    player_id,
-                    e,
-                )
-        elif action == RconInvalidNameActionType.ban:
-            try:
-                rcon.temp_ban(
-                    player_id=player_id,
-                    reason=config.pineapple_name_player_message,
-                    by=config.audit_message_author,
-                    duration_hours=config.ban_length_hours,
-                )
-            except Exception as e:
-                logger.error(
-                    "Could not temp ban player %s/%s: %s",
-                    name,
-                    player_id,
-                    e,
-                )
-
-    # The player might not yet have finished connecting in order to action them.
-    if is_whitespace_name:
-        func = notify_whitespace_player
-    else:
-        func = notify_pineapple_player
-
-    t = Timer(10, func, kwargs={"action": action})
-    pendingTimers[player_id].append((action, t))
-    t.start()
-
-    # TODO: it is not possible to kick pineapple names, remove them by banning/unbanning
-    if is_pineappple_name and action == RconInvalidNameActionType.kick:
-        # Give the game server time to update bans so the ban can be removed automatically
-        # and give the notify timer time to finish so the player is actually banned before
-        # trying to remove it
-        # players can't connect if they're banned so this should never fire and remove a
-        # temp ban from any other reason unless there's another hook temp banning on connect
-        t = Timer(15, rcon.remove_temp_ban, kwargs={"player_id": player_id})
-        send_to_discord_audit(
-            message=config.audit_kick_unban_message,
-            command_name="kick",
-            by=config.audit_message_author,
-        )
-        pendingTimers[player_id].append((action, t))
-        t.start()
-
-
-@on_disconnected
-@inject_player_ids
-def cleanup_pending_timers(rcon: Rcon, struct_log, name, player_id: str):
-    """Cancel pending timers created by notify_player if the player disconnects
-
-    Only messaging the player should be cancelled if they disconnect early
-    Kicking players is non functional (RCON bug) so they're temp banned/pardoned
-    Temporary banning players doesn't create a timer
-    """
-    pts: list[tuple[RconInvalidNameActionType | None, Timer]] = pendingTimers.pop(
-        player_id, []
-    )
-    for action, pt in pts:
-        # TODO: Can't kick pineapple names, don't cancel the thread if the ban removal is pending
-        if action != RconInvalidNameActionType.kick and pt.is_alive():
-            try:
-                pt.cancel()
-            except:
-                pass
 
 
 def _set_real_vips(rcon: Rcon, struct_log):
