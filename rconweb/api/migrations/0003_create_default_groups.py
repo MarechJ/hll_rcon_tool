@@ -198,7 +198,8 @@ GROUPS = [
             "can_add_message_templates",
             "can_delete_message_templates",
             "can_edit_message_templates",
-            
+            "can_view_watch_killrate_config",
+            "can_change_watch_killrate_config",
         ),
     ),
     (
@@ -387,6 +388,8 @@ GROUPS = [
             "can_add_message_templates",
             "can_delete_message_templates",
             "can_edit_message_templates",
+            "can_view_watch_killrate_config",
+            "can_change_watch_killrate_config",
         ),
     ),
     (
