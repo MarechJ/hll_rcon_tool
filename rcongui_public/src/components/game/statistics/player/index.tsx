@@ -95,10 +95,10 @@ export default function PlayerGameDetail({
           <CollapsibleSection name={t('playerStats.encounters')} defaultOpen={true}>
             <SimpleTable columns={faceoffColumns} data={mergeKillsDeaths(player)} />
           </CollapsibleSection>
-          <CollapsibleSection name={t('playerStats.killsByWeapon')}>
+          <CollapsibleSection name={t('playerStats.killsByWeapon')} defaultOpen={true}>
             <SimpleTable columns={killByColumns} data={killsBy} />
           </CollapsibleSection>
-          <CollapsibleSection name={t('playerStats.deathsByWeapon')}>
+          <CollapsibleSection name={t('playerStats.deathsByWeapon')} defaultOpen={true}>
             <SimpleTable columns={deathByColumns} data={deathsBy} />
           </CollapsibleSection>
         </div>
