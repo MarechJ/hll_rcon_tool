@@ -1,10 +1,9 @@
-import React from "react";
-import { Grid, Typography } from "@material-ui/core";
+import { Typography } from "@mui/material";
 import { fromJS } from "immutable";
-import { reduce } from "lodash";
+import reduce from "lodash/reduce";
+import Grid from "@mui/material/Grid2";
 
 export function banListFromServer(data) {
-  // console.log(`banListFromServer ${JSON.stringify(data)}`)
   return fromJS(
     reduce(
       data,
@@ -21,7 +20,7 @@ export function banListFromServer(data) {
   );
 }
 
-export const PlayerBan = ({ classes, bans, player }) => {
+export const PlayerBan = ({ bans, player }) => {
   const playerBans = bans.get(player.get("player_id"));
   const formattedBans = [];
   
@@ -34,19 +33,18 @@ export const PlayerBan = ({ classes, bans, player }) => {
       : formattedBans.push("IS PERMABANNED")
   );
   return (
-    <Grid
-      container
-      justify="space-between"
-      spacing={0}
-      className={classes.noPaddingMargin}
-    >
+    (<Grid
+        container
+        justifyContent="space-between"
+        spacing={0}
+      >
       {formattedBans.map((formattedBan) => (
-        <Grid item xs={6}>
+        <Grid size={6}>
           <Typography variant="h7" color="secondary">
             {formattedBan}
           </Typography>
         </Grid>
       ))}
-    </Grid>
+    </Grid>)
   );
 };

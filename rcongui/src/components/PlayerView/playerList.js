@@ -1,8 +1,7 @@
-import React, { Fragment } from "react";
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
-import ListItemText from "@material-ui/core/ListItemText";
+import {Fragment, useState} from "react";
+import ListItem from "@mui/material/ListItem";
+import ListItemSecondaryAction from "@mui/material/ListItemSecondaryAction";
+import ListItemText from "@mui/material/ListItemText";
 import "react-toastify/dist/ReactToastify.css";
 import { PlayerActions } from "./playerActions";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -12,57 +11,32 @@ import {
   faQuestionCircle,
   faStar,
 } from "@fortawesome/free-solid-svg-icons";
-import { faSteam, faXbox, faWindows } from "@fortawesome/free-brands-svg-icons";
-import Link from "@material-ui/core/Link";
-import withWidth from "@material-ui/core/withWidth";
-import Icon from "@material-ui/core/Icon";
-import OpenInNewIcon from "@material-ui/icons/OpenInNew";
-import { getEmojiFlag } from "../../utils/emoji";
-import { List as IList, Map } from "immutable";
+import { faSteam, faWindows } from "@fortawesome/free-brands-svg-icons";
+import Link from "@mui/material/Link";
+import Icon from "@mui/material/Icon";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import { getEmojiFlag } from "@/utils/emoji";
+import { Map } from "immutable";
 import { getName } from "country-list";
-import Popover from "@material-ui/core/Popover";
-import Typography from "@material-ui/core/Typography";
-import { makeStyles } from "@material-ui/core/styles";
+import Popover from "@mui/material/Popover";
+import Typography from "@mui/material/Typography";
 import { Link as RouterLink } from "react-router-dom";
-import { pure } from "recompose";
 import {
   Avatar,
   Badge,
   Checkbox,
   Chip,
-  Grid,
   ListItemAvatar,
-} from "@material-ui/core";
+} from "@mui/material";
 import makePlayerProfileUrl from "../../utils/makePlayerProfileUrl";
 import moment from "moment";
+import Grid from "@mui/material/Grid2";
+
 
 const zeroPad = (num, places) => String(num).padStart(places, "0");
 
-const useStyles = makeStyles((theme) => ({
-  popover: {
-    pointerEvents: "none",
-  },
-  paper: {
-    padding: theme.spacing(1),
-  },
-  paperBackground: {
-    backgroundColor: theme.palette.type == "dark" ? "" : "grey",
-  },
-  darkBackground: {
-    backgroundColor: theme.palette.type == "dark" ? "" : "grey",
-  },
-  primaryBackground: {
-    backgroundColor: theme.palette.primary.dark,
-  },
-  customBadge: {
-    backgroundColor: "grey",
-    color: "white",
-  },
-}));
-
 function WithPopOver(props) {
-  const classes = useStyles();
-  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
 
   const handlePopoverOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -75,7 +49,7 @@ function WithPopOver(props) {
   const open = Boolean(anchorEl);
 
   return (
-    <React.Fragment>
+    <Fragment>
       <Typography
         style={{ display: "inline" }}
         aria-owns={open ? "mouse-over-popover" : undefined}
@@ -87,10 +61,6 @@ function WithPopOver(props) {
       </Typography>
       <Popover
         id="mouse-over-popover"
-        className={classes.popover}
-        classes={{
-          paper: classes.paper,
-        }}
         open={open}
         anchorEl={anchorEl}
         anchorOrigin={{
@@ -106,7 +76,7 @@ function WithPopOver(props) {
       >
         <Typography>{props.content}</Typography>
       </Popover>
-    </React.Fragment>
+    </Fragment>
   );
 }
 
@@ -157,17 +127,19 @@ const getBans = (profile) => {
   );
 };
 
-const Flag = ({ data, onDeleteFlag }) => (
-  <Link
-    onClick={() =>
-      window.confirm("Delete flag?") ? onDeleteFlag(data.get("id")) : ""
-    }
-  >
-    <WithPopOver content={`Comment: ${data.get("comment")}`}>
-      {getEmojiFlag(data.get("flag"), 22)}
-    </WithPopOver>
-  </Link>
-);
+const Flag = ({ data, onDeleteFlag }) => {
+  return (
+    <Link
+      onClick={() =>
+        window.confirm("Delete flag?") ? onDeleteFlag(data.get("id")) : ""
+      }
+    >
+      <WithPopOver content={`Comment: ${data.get("comment")}`}>
+        {getEmojiFlag(data.get("flag"), 22)}
+      </WithPopOver>
+    </Link>
+  )
+};
 
 const formatPunitions = (profile) => {
   const formatTime = (item) =>
@@ -183,16 +155,15 @@ const formatPunitions = (profile) => {
     ));
 };
 
-const ScoreChips = ({ player, backgroundClass }) => {
+const ScoreChips = ({ player }) => {
   return (
     <Fragment>
-      <Grid item>
+      <Grid>
         <Chip
           size="small"
           variant="outlined"
           avatar={
             <Avatar
-              className={backgroundClass}
               alt="Combat"
               src="icons/roles/score_combat.png"
             />
@@ -200,13 +171,12 @@ const ScoreChips = ({ player, backgroundClass }) => {
           label={player.get("combat", 0)}
         />
       </Grid>
-      <Grid item>
+      <Grid>
         <Chip
           size="small"
           variant="outlined"
           avatar={
             <Avatar
-              className={backgroundClass}
               alt="Offensive"
               src="icons/roles/score_offensive.png"
             />
@@ -214,13 +184,12 @@ const ScoreChips = ({ player, backgroundClass }) => {
           label={player.get("offense", 0)}
         />
       </Grid>
-      <Grid item>
+      <Grid>
         <Chip
           size="small"
           variant="outlined"
           avatar={
             <Avatar
-              className={backgroundClass}
               alt="Defensive"
               src="icons/roles/score_defensive.png"
             />
@@ -228,13 +197,12 @@ const ScoreChips = ({ player, backgroundClass }) => {
           label={player.get("defense", 0)}
         />
       </Grid>
-      <Grid item>
+      <Grid>
         <Chip
           size="small"
           variant="outlined"
           avatar={
             <Avatar
-              className={backgroundClass}
               alt="Support"
               src="icons/roles/score_support.png"
             />
@@ -246,26 +214,25 @@ const ScoreChips = ({ player, backgroundClass }) => {
   );
 };
 
-const KDChips = ({ classes, player }) => {
-  const localClasses = useStyles();
+const KDChips = ({ player }) => {
 
   return (
     <Fragment>
-      <Grid item>
+      <Grid>
         <Chip
           size="small"
           variant="outlined"
           label={`K: ${player.get("kills")}`}
         />
       </Grid>
-      <Grid item>
+      <Grid>
         <Chip
           size="small"
           variant="outlined"
           label={`D: ${player.get("deaths")}`}
         />
       </Grid>
-      <Grid item>
+      <Grid>
         <Chip
           size="small"
           variant="outlined"
@@ -275,7 +242,7 @@ const KDChips = ({ classes, player }) => {
         />
       </Grid>
       {player.get("loadout") ? (
-        <Grid item>
+        <Grid>
           <Chip size="small" label={player.get("loadout", "")} />
         </Grid>
       ) : (
@@ -285,23 +252,20 @@ const KDChips = ({ classes, player }) => {
   );
 };
 
-const ScoreListText = ({ classes, player }) => {
-  const localClasses = useStyles();
+const ScoreListText = ({ player }) => {
 
   return (
     <ListItemText
-      className={localClasses.alignRight}
       primary={
         <Grid container spacing={1}>
           <ScoreChips
-            backgroundClass={localClasses.darkBackground}
             player={player}
           />
         </Grid>
       }
       secondary={
         <Grid container spacing={1}>
-          <KDChips classes={classes} player={player} />
+          <KDChips player={player} />
         </Grid>
       }
     />
@@ -309,14 +273,12 @@ const ScoreListText = ({ classes, player }) => {
 };
 
 const PlayerItem = ({
-  classes,
   player,
   handleAction,
   nbButtons,
   onFlag,
   onDeleteFlag,
   playerHasExtraInfo,
-  avatarBackround,
   onSelect,
   isSelected,
   onBlacklist,
@@ -325,7 +287,6 @@ const PlayerItem = ({
   const profile = player.get("profile") ? player.get("profile") : new Map();
   const name = player.get("name");
   const player_id = player.get("player_id");
-  const localClasses = useStyles();
 
   return (
     <ListItem key={name} dense selected={isSelected}>
@@ -334,7 +295,6 @@ const PlayerItem = ({
           <Badge
             badgeContent={player.get("level", 0)}
             max={999}
-            classes={{ badge: localClasses.customBadge }}
             anchorOrigin={{
               vertical: "bottom",
               horizontal: "right",
@@ -342,7 +302,6 @@ const PlayerItem = ({
           >
             <Avatar
               variant="square"
-              className={avatarBackround || localClasses.darkBackground}
               src={`icons/roles/${player.get("role", "rifleman")}.png`}
             ></Avatar>
           </Badge>
@@ -354,21 +313,20 @@ const PlayerItem = ({
       <ListItemText
         id={`checkbox-list-label-${player_id}`}
         primary={
-          <React.Fragment>
+          <Fragment>
             <WithPopOver content={formatPunitions(profile)}>{name}</WithPopOver>
             {" - "}
             {getCountry(player)}
             {" - "}
             {player.get("is_vip") ? (
-              <React.Fragment>
+              <Fragment>
                 <FontAwesomeIcon icon={faStar} />
                 {" - "}
-              </React.Fragment>
+              </Fragment>
             ) : (
               ""
             )}
             <Link
-              className={classes.marginRight}
               target="_blank"
               color="inherit"
               href={makePlayerProfileUrl(player_id, name)}
@@ -377,10 +335,10 @@ const PlayerItem = ({
                 icon={player_id.length === 17 ? faSteam : faWindows}
               />
             </Link>
-          </React.Fragment>
+          </Fragment>
         }
         secondary={
-          <React.Fragment>
+          <Fragment>
             <span>
               {seconds_to_time(profile.get("current_playtime_seconds"))} - #
               {profile.get("sessions_count")} - {getBans(player)}
@@ -388,20 +346,20 @@ const PlayerItem = ({
             <Link
               color="inherit"
               component={RouterLink}
-              to={`/player/${player.get("player_id")}`}
+              to={`/records/players/${player.get("player_id")}`}
             >
               {player_id} <Icon component={OpenInNewIcon} fontSize="inherit" />
             </Link>
-            <div className={classes.noPaddingMargin}>
+            <div>
               {profile.get("flags", []).map((d) => (
                 <Flag key={d} data={d} onDeleteFlag={onDeleteFlag} />
               ))}
             </div>
-          </React.Fragment>
+          </Fragment>
         }
       />
       {playerHasExtraInfo ? (
-        <ScoreListText classes={classes} player={player} />
+        <ScoreListText player={player} />
       ) : (
         ""
       )}
@@ -491,72 +449,4 @@ const getSortedPlayers = (players, sortType) => {
   return myPlayers;
 };
 
-const CompactList = ({
-  players,
-  classes,
-  handleAction,
-  sortType,
-  width,
-  onFlag: onFlagClick,
-  onDeleteFlag: onDeleteFlagClick,
-  onBlacklist: onBlacklistClick,
-  onVipDialogOpen,
-}) => {
-  const myPlayers = React.useMemo(() => {
-    let myPlayers = players;
-    try {
-      myPlayers = getSortedPlayers(players, sortType);
-    } catch (err) {
-      console.log("Unable to sort ", err);
-    }
-    return myPlayers;
-  }, [players, sortType]);
-
-  const sizes = {
-    xs: 0,
-    sm: 3,
-    md: 1,
-    lg: 4,
-    xl: 10,
-  };
-
-  return (
-    <List className={classes.root}>
-      {myPlayers.map((player) => (
-        <PlayerItem
-          classes={classes}
-          nbButtons={sizes[width]}
-          player={player}
-          key={player.get("player_id")}
-          handleAction={(actionType) =>
-            handleAction(
-              actionType,
-              player.get("name"),
-              null,
-              null,
-              2,
-              player.get("player_id")
-            )
-          }
-          onFlag={() =>
-            onFlagClick(
-              Map({
-                player_id: player.get("player_id"),
-                names: (player.get("profile")
-                  ? player.get("profile")
-                  : new Map()
-                ).get("names", IList([Map({ name: player.get("name") })])),
-              })
-            )
-          }
-          onDeleteFlag={onDeleteFlagClick}
-          onBlacklist={() => onBlacklistClick(player)}
-          onVipDialogOpen={() => onVipDialogOpen(player)}
-        />
-      ))}
-    </List>
-  );
-};
-
-export default withWidth()(pure(CompactList));
-export { PlayerItem, CompactList, ScoreListText, ScoreChips, KDChips };
+export { PlayerItem, ScoreListText, ScoreChips, KDChips };

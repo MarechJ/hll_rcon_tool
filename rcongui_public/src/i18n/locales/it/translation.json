@@ -1,0 +1,27 @@
+{
+  "title": "Hell Let Loose Stats",
+  "now": "Ora",
+  "up-next": "Prossimo",
+  "open": "Apri",
+  "close": "Chiudi",
+  "toggle": "Attiva/Disattiva",
+  "toggleTheme": "Attiva/Disattiva tema",
+  "get-started": "Inizia",
+  "made-by": "Fattorizzato da",
+  "themeMode": {
+    "light": "Chiaro",
+    "dark": "Scuro",
+    "system": "Sistema"
+  },
+  "pagination": {
+    "previous": {
+      "text": "Precedente",
+      "label": "Vai alla pagina precedente"
+    },
+    "next": {
+      "text": "Successivo",
+      "label": "Vai alla pagina successiva"
+    }
+  },
+  "selectLanguage": "Seleziona lingua"
+}

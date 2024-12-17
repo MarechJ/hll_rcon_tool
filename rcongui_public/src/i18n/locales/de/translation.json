@@ -1,0 +1,27 @@
+{
+  "title": "Hell Let Loose Stats",
+  "now": "Jetzt",
+  "up-next": "Nächstes",
+  "open": "Öffnen",
+  "close": "Schließen",
+  "toggle": "Umschalten",
+  "toggleTheme": "Design wechseln",
+  "get-started": "Loslegen",
+  "made-by": "Erstellt von",
+  "themeMode": {
+    "light": "Hell",
+    "dark": "Dunkel",
+    "system": "System"
+  },
+  "pagination": {
+    "previous": {
+      "text": "Zurück",
+      "label": "Zurück zur vorherigen Seite"
+    },
+    "next": {
+      "text": "Nächstes",
+      "label": "Zur nächsten Seite"
+    }
+  },
+  "selectLanguage": "Sprache auswählen"
+}

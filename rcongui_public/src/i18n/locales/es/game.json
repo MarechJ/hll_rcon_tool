@@ -1,0 +1,64 @@
+{
+    "gameNotFound": "Partida {{ id }} no encontrada",
+    "loading": "Cargando...",
+    "selectPlayer": "Seleccionar jugador",
+    "searchPlayer": "Buscar jugador",
+    "noPlayersFound": "No se encontraron jugadores",
+    "onlineStatusFilter": {
+        "online": "En línea",
+        "offline": "Desconectado",
+        "all": "Todos"
+    },
+    "player": "Jugador",
+    "players": "Jugadores",
+    "allies": "Aliados",
+    "axis": "Eje",
+    "weather": {
+        "day": "Día",
+        "night": "Noche",
+        "dusk": "Atardecer",
+        "dawn": "Amanecer",
+        "rain": "Lluvia",
+        "overcast": "Nublado"
+    },
+    "playersTable": {
+        "player": "Jugador",
+        "team": "Equipo",
+        "kills": "Bajas",
+        "deaths": "Muertes",
+        "combat": "Combate",
+        "score": "Puntuación",
+        "weapon": "Arma",
+        "vehicle": "Vehículo",
+        "armor": "Blindaje",
+        "commander": "Comandante",
+        "offense": "Ataque",
+        "defense": "Defensa",
+        "support": "Apoyo",
+        "utility": "Utilidad",
+        "diff": "Diferencia",
+        "status": "Estado"
+    },
+    "matchTable": {
+        "match": "Partida",
+        "map": "Mapa",
+        "mode": "Modo",
+        "duration": "Duración",
+        "result": "Resultado",
+        "start": "Inicio"
+    },
+    "playerStats": {
+        "killsByWeapon": "Bajas por arma",
+        "deathsByWeapon": "Muertes por arma",
+        "encounters": "Encuentros",
+        "weapon": "Arma",
+        "count": "Cantidad"
+    },
+    "score": {
+        "killstreak": "Racha de bajas",
+        "deathstreak": "Racha de muertes",
+        "teamkills": "Fuego amigo",
+        "k/d": "B/M"
+    },
+    "downloadTable": "Descargar tabla"
+}

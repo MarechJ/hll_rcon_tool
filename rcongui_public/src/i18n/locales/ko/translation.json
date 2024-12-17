@@ -1,0 +1,27 @@
+{
+  "title": "Hell Let Loose Stats",
+  "selectLanguage": "언어 선택",
+  "now": "현재",
+  "up-next": "다음",
+  "open": "열기",
+  "close": "닫기",
+  "toggle": "토글",
+  "toggleTheme": "테마 토글",
+  "get-started": "시작하기",
+  "made-by": "만든 사람",
+  "themeMode": {
+    "light": "밝은",
+    "dark": "어두운",
+    "system": "시스템"
+  },
+  "pagination": {
+    "previous": {
+      "text": "이전",
+      "label": "이전 페이지로 이동"
+    },
+    "next": {
+      "text": "다음",
+      "label": "다음 페이지로 이동"
+    }
+  }
+}

@@ -1,5 +1,3 @@
-import React from "react";
-import MomentUtils from "@date-io/moment";
 import {
   Button,
   Card,
@@ -7,35 +5,34 @@ import {
   CardHeader,
   FormControl,
   FormControlLabel,
-  Grid,
   IconButton,
   InputLabel,
   MenuItem,
   Select,
   Switch,
   TextField,
-} from "@material-ui/core";
-import CloseIcon from "@material-ui/icons/Close";
-import { DateTimePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
-import { Picker } from "emoji-mart";
+} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import {DesktopDateTimePicker} from '@mui/x-date-pickers/DesktopDateTimePicker';
+import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
+import {LocalizationProvider} from '@mui/x-date-pickers/LocalizationProvider';
+import Grid from "@mui/material/Grid2";
+import {lazy, Suspense, useEffect, useState} from "react";
+
+const EmojiPicker = lazy(() => import("@emoji-mart/react"));
 
 const SearchBar = ({
   name,
   playerId,
-  lastSeenFrom,
-  lastSeenUntil,
   blacklistedOnly,
   pageSize,
   setPageSize,
   setName,
   setPlayerId,
-  setLastSeenFrom,
-  setLastSeenUntil,
   setBlacklistedOnly,
   isWatchedOnly,
   setIsWatchedOnly,
   onSearch,
-  classes,
   ignoreAccent,
   setIgnoreAccent,
   exactMatch,
@@ -45,26 +42,30 @@ const SearchBar = ({
   country,
   setCountry,
 }) => {
-  const [showEmojiPicker, setShowEmojiPicker] = React.useState(false);
-  //const toggleEmojis = () => setShowEmojiPicker(!showEmojiPicker)
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [data, setData] = useState({});
+
+  useEffect(() => {
+    import('@emoji-mart/data').then((d) => setData(d.default));
+  }, []);
 
   return (
-    <form className={classes.flexContainer}>
+    (<form>
       <Grid
         container
         spacing={1}
         alignContent="center"
         alignItems="center"
-        justify="space-evenly"
+        justifyContent="space-evenly"
       >
-        <Grid item>
+        <Grid>
           <TextField
             label="Search by Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
         </Grid>
-        <Grid item>
+        <Grid>
           <FormControlLabel
             control={
               <Switch
@@ -77,7 +78,7 @@ const SearchBar = ({
             labelPlacement="top"
           />
         </Grid>
-        <Grid item>
+        <Grid>
           <FormControlLabel
             control={
               <Switch
@@ -90,14 +91,14 @@ const SearchBar = ({
             labelPlacement="top"
           />
         </Grid>
-        <Grid item>
+        <Grid>
           <TextField
             label="Search by Player ID"
             value={playerId}
             onChange={(e) => setPlayerId(e.target.value)}
           />
         </Grid>
-        <Grid item>
+        <Grid>
           <TextField
             label="Flag"
             value={flags}
@@ -109,15 +110,23 @@ const SearchBar = ({
               <CardHeader
                 title="Pick emojis"
                 action={
-                  <IconButton onClick={() => setShowEmojiPicker(false)}>
-                    <CloseIcon />
+                  <IconButton onClick={() => setShowEmojiPicker(false)} size="large">
+                    <CloseIcon/>
                   </IconButton>
                 }
               />
               <CardContent>
-                <Picker
-                  onSelect={(emoji) => setFlags(flags + emoji.native + ",")}
-                />
+                <Suspense>
+                  <EmojiPicker
+                    style={{border: '1px solid red'}}
+                    dynamicWidth={true}
+                    perLine={8}
+                    data={data}
+                    onEmojiSelect={(emoji) =>
+                      setFlags(flags + emoji.native + ",")
+                    }
+                  />
+                </Suspense>
               </CardContent>
             </Card>
           ) : (
@@ -125,34 +134,48 @@ const SearchBar = ({
           )}
         </Grid>
 
-        <Grid item>
+        <Grid>
           <TextField
             label="Steam country (iso)"
             value={country}
             onChange={(e) => setCountry(e.target.value)}
           />
         </Grid>
-        <Grid item>
-          <MuiPickersUtilsProvider utils={MomentUtils}>
+        <Grid>
+          {/* <MuiPickersUtilsProvider utils={MomentUtils}>
             <DateTimePicker
               label="Last seen from"
               value={lastSeenFrom}
               onChange={setLastSeenFrom}
               format="YYYY/MM/DD HH:mm"
             />
-          </MuiPickersUtilsProvider>
+          </MuiPickersUtilsProvider> */}
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DesktopDateTimePicker
+              label="Last seen from"
+              onChange={(value) => console.log(value)} // send value to hook form
+              format='LLL'
+            />
+          </LocalizationProvider>
         </Grid>
-        <Grid item>
-          <MuiPickersUtilsProvider utils={MomentUtils}>
+        <Grid>
+          {/* <MuiPickersUtilsProvider utils={MomentUtils}>
             <DateTimePicker
               label="Last seen until"
               value={lastSeenUntil}
               onChange={setLastSeenUntil}
               format="YYYY/MM/DD HH:mm"
             />
-          </MuiPickersUtilsProvider>
+          </MuiPickersUtilsProvider> */}
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DesktopDateTimePicker
+              label="Last seen until"
+              onChange={(value) => console.log(value)} // send value to hook form
+              format='LLL'
+            />
+          </LocalizationProvider>
         </Grid>
-        <Grid item>
+        <Grid>
           <FormControlLabel
             control={
               <Switch
@@ -165,7 +188,7 @@ const SearchBar = ({
             labelPlacement="top"
           />
         </Grid>
-        <Grid item>
+        <Grid>
           <FormControlLabel
             control={
               <Switch
@@ -178,7 +201,11 @@ const SearchBar = ({
             labelPlacement="top"
           />
         </Grid>
-        <Grid item xs={4} xl={1}>
+        <Grid
+          size={{
+            xs: 4,
+            xl: 1
+          }}>
           <FormControl fullWidth>
             <InputLabel>Page size</InputLabel>
             <Select
@@ -197,7 +224,7 @@ const SearchBar = ({
             </Select>
           </FormControl>
         </Grid>
-        <Grid item>
+        <Grid>
           <Button
             type="submit"
             variant="contained"
@@ -212,7 +239,7 @@ const SearchBar = ({
           </Button>
         </Grid>
       </Grid>
-    </form>
+    </form>)
   );
 };
 

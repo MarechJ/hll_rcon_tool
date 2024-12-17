@@ -22,6 +22,7 @@ from django.urls import include, path
 if not os.getenv("HLL_MAINTENANCE_CONTAINER"):
     urlpatterns = [
         path("admin/", admin.site.urls),
+        path('accounts/', include('django.contrib.auth.urls')),
         path("api/", include("api.urls")),
         path("api/logs/", include("directory.urls")),
     ]

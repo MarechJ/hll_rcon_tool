@@ -1,45 +1,40 @@
-import React from "react";
-import clsx from "clsx";
-import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
-import ExpandLessIcon from "@material-ui/icons/ExpandLess";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import {
   IconButton,
   Card,
   CardHeader,
   CardContent,
   Collapse,
-} from "@material-ui/core";
+} from "@mui/material";
+import {useEffect, useState} from "react";
 
 const CollapseCard = ({
-  classes,
   title,
   children,
   onExpand,
   startOpen = false,
 }) => {
-  const [expanded, setExpanded] = React.useState(false);
+  const [expanded, setExpanded] = useState(false);
   const handleExpandClick = () => {
     setExpanded(!expanded);
     onExpand();
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     setExpanded(startOpen);
   }, [startOpen]);
 
   return (
-    <Card>
+    (<Card>
       <CardHeader
         title={title}
         action={
           <IconButton
-            className={clsx(classes.expand, {
-              [classes.expandOpen]: expanded,
-            })}
             onClick={handleExpandClick}
             aria-expanded={expanded}
             aria-label="show more"
-          >
+            size="large">
             {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
           </IconButton>
         }
@@ -47,7 +42,7 @@ const CollapseCard = ({
       <Collapse in={expanded} unmountOnExit>
         <CardContent>{children}</CardContent>
       </Collapse>
-    </Card>
+    </Card>)
   );
 };
 

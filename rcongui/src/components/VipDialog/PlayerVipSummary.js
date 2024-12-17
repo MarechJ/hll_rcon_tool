@@ -1,6 +1,6 @@
 import React from "react";
-import { Box, Typography } from "@material-ui/core";
-import { Skeleton } from "@material-ui/lab";
+import { Box, Typography } from "@mui/material";
+import { Skeleton } from '@mui/material';
 import moment from "moment";
 
 
@@ -33,27 +33,10 @@ function getPlayerNames(player) {
   let output = "No name recorded yet";
 
   if (player?.get("names")) {
-    /* get_history_players.result.names[{
-      created: string
-      id: number
-      last_seen: string
-      name: string
-      player_id: string
-    }]
-    */
     output = player.get("names").map(details => details.get("name")).join(", ")
   }
 
   if (player?.get("name")) {
-    /* get_players.result[{
-      country: null | string
-      is_vip: boolean
-      name: string
-      player_id: string
-      profile: PlayerProfile
-      steam_bans: null | []
-    }]
-    */
     output = player.get("name")
   }
 

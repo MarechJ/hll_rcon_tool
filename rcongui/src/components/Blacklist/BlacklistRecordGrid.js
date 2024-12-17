@@ -1,45 +1,39 @@
-import React from "react";
 import { Link as RouterLink } from "react-router-dom";
-import { Avatar, Grid, GridList, GridListTile, IconButton, Link, List as MaterialList, ListItem, ListItemAvatar, ListItemSecondaryAction, ListItemText, Tooltip, Typography, makeStyles } from "@material-ui/core";
-import "emoji-mart/css/emoji-mart.css";
-import withWidth from "@material-ui/core/withWidth";
-import FileCopyIcon from "@material-ui/icons/FileCopy";
-import KeyboardArrowDownIcon from "@material-ui/icons/KeyboardArrowDown";
-import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
-import AnnouncementIcon from "@material-ui/icons/Announcement";
-import { pure } from "recompose";
+import {
+  Avatar,
+  ImageList,
+  ImageListItem,
+  IconButton,
+  Link,
+  List as MaterialList,
+  ListItem,
+  ListItemAvatar,
+  ListItemSecondaryAction,
+  ListItemText,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import Grid from "@mui/material/Grid2";
+import FileCopyIcon from "@mui/icons-material/FileCopy";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import AnnouncementIcon from "@mui/icons-material/Announcement";
 import makePlayerProfileUrl from "../../utils/makePlayerProfileUrl";
 import { getCountry } from "../PlayersHistory/PlayerTile/PlayerHeader";
 import { List } from "immutable";
 import moment from "moment";
 import BlacklistRecordActionRow from "./BlacklistRecordActionRow";
 import BlacklistRecordCreateDialog from "./BlacklistRecordCreateDialog";
-import { handle_http_errors, postData, showResponse } from "../../utils/fetchUtils";
-
-const useStyles = makeStyles((theme) => ({
-  paperTile: {
-    backgroundColor: theme.palette.background.paper,
-    minHeight: "100%",
-    padding: theme.spacing(2),
-  },
-  root: {
-    display: "flex",
-    flexWrap: "wrap",
-    justifyContent: "space-around",
-    overflow: "hidden",
-  },
-}));
+import { handle_http_errors, postData, showResponse } from "@/utils/fetchUtils";
+import {Fragment, useState} from "react";
 
 const BlacklistRecordTile = ({
-  classes,
   record,
   onEdit,
   onExpire,
   onDelete,
 }) => {
-  const [showAll, setShowAll] = React.useState(false);
-  const myClasses = useStyles();
-
+  const [showAll, setShowAll] = useState(false);
   const expiresAt = record.get("expires_at") ? moment(record.get("expires_at")) : null
   const isExpired = !record.get("is_active")
   const player = record.get("player");
@@ -70,12 +64,11 @@ const BlacklistRecordTile = ({
   }
 
   return (
-    <Grid
+    (<Grid
       container
-      className={myClasses.paperTile}
       style={isExpired ? { background: "linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05))" } : {}}
       direction="column"
-      justify="space-between"
+      justifyContent="space-between"
     >
       <MaterialList>
         <ListItem component={"div"} alignItems="flex-start" style={{ paddingBottom: 0 }}>
@@ -93,7 +86,7 @@ const BlacklistRecordTile = ({
           </ListItemAvatar>
           <ListItemText
             primary={
-              <React.Fragment>
+              <Fragment>
                 {showAll ? (
                   <Typography variant="body1">
                     {hasMultipleNames ? (
@@ -125,13 +118,13 @@ const BlacklistRecordTile = ({
                     {firstName} {getCountry(country)}
                   </Typography>
                 )}
-              </React.Fragment>
+              </Fragment>
             }
             secondary={
               <Link
                 color="inherit"
                 component={RouterLink}
-                to={`/player/${player.get("player_id")}`}
+                to={`/records/players/${player.get("player_id")}`}
               >
                 {player.get("player_id")}
               </Link>
@@ -204,17 +197,17 @@ const BlacklistRecordTile = ({
       </Typography>
       <Grid
         container
-        justify="space-between"
+        justifyContent="space-between"
         spacing={0}
-        className={classes.noPaddingMargin}
+        
       >
         <Grid
           container
-          justify="space-around"
+          justifyContent="space-around"
           spacing={0}
-          className={classes.noPaddingMargin}
+          
         >
-          <Grid item>
+          <Grid>
             <Tooltip title={createdAt.format("LLLL")} arrow>
               <small>
                 Banned {moment.duration(now.diff(createdAt)).humanize()} ago
@@ -222,7 +215,7 @@ const BlacklistRecordTile = ({
               </small>
             </Tooltip>
           </Grid>
-          <Grid item>
+          <Grid>
             <Tooltip title={expiresAt ? expiresAt.format("LLLL") : "Permanent"} arrow>
               <small>
                 {expiresAt
@@ -246,20 +239,17 @@ const BlacklistRecordTile = ({
           onDelete={() => onDelete(record)}
         />
       </Grid>
-    </Grid>
-  )
+    </Grid>)
+  );
 }
 
-const BlacklistRecordGrid = withWidth()(
-  ({
-    classes,
+const BlacklistRecordGrid = ({
     blacklists,
     records,
     onRefresh,
-    width,
   }) => {
-    const [editDialogOpen, setEditDialogOpen] = React.useState(false);
-    const [editDialogInitialValues, setEditDialogInitialValues] = React.useState();
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [editDialogInitialValues, setEditDialogInitialValues] = useState();
 
     function onEditRecord(record) {
       setEditDialogInitialValues({
@@ -317,29 +307,29 @@ const BlacklistRecordGrid = withWidth()(
       md: 3,
       lg: 4,
       xl: 5,
-    }[width];
+    }[2];
 
     return (
-      <React.Fragment>
+      (<Fragment>
         <Grid container>
-          <Grid item xs={12}>
-            <GridList cols={size} cellHeight={210} spacing={12}>
+          <Grid size={12}>
+            <ImageList cols={size} cellHeight={210} spacing={12}>
               {records.map((record) => {
                 return (
-                  <GridListTile
+                  <ImageListItem
                     key={record.get("id")}
                   >
                     <BlacklistRecordTile
-                      classes={classes}
+                      
                       record={record}
                       onEdit={onEditRecord}
                       onExpire={onExpireRecord}
                       onDelete={onDeleteRecord}
                     />
-                  </GridListTile>
+                  </ImageListItem>
                 );
               })}
-            </GridList>
+            </ImageList>
           </Grid>
         </Grid>
         <BlacklistRecordCreateDialog
@@ -352,9 +342,8 @@ const BlacklistRecordGrid = withWidth()(
           submitText="Save"
           disablePlayerId
         />
-      </React.Fragment>
+      </Fragment>)
     );
   }
-);
 
-export default pure(BlacklistRecordGrid);
+export default BlacklistRecordGrid;

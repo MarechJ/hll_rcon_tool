@@ -109,6 +109,7 @@ def get_map_scoreboard(request):
                 failed = True
             else:
                 game = game.to_dict(with_stats=True)
+                game['map'] = parse_layer(game['map_name'])
     except Exception as e:
         game = None
         error = repr(e)

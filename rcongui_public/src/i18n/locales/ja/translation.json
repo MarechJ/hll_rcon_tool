@@ -1,0 +1,27 @@
+{
+  "title": "Hell Let Loose Stats",
+  "selectLanguage": "言語を選択",
+  "now": "現在",
+  "up-next": "次の",
+  "open": "開く",
+  "close": "閉じる",
+  "toggle": "切り替え",
+  "toggleTheme": "テーマ切り替え",
+  "get-started": "始める",
+  "made-by": "作成者",
+  "themeMode": {
+    "light": "明るい",
+    "dark": "暗い",
+    "system": "システム"
+  },
+  "pagination": {
+    "previous": {
+      "text": "前の",
+      "label": "前のページに移動"
+    },
+    "next": {
+      "text": "次の",
+      "label": "次のページに移動"
+    }
+  }
+}

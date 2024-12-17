@@ -1,4 +1,4 @@
-from typing import ClassVar, TypedDict
+from typing import TypedDict
 
 from pydantic import Field, field_validator
 
@@ -16,23 +16,14 @@ VALID_CONDITIONS = ("AND", "OR")
 
 
 class AutoVoteKickUserConfig(BaseUserConfig):
-    """
-    Args:
-        enabled bool: Enable vote kick status by conditions
-        minimum_ingame_mods int:
-            The number of moderators (steam IDs must be set in the admin site)
-            in game for vote kick to be automatically turned off
-        minimum_online_mods int:
-            The number of moderators (steam IDs must be set in the admin site)
-            with CRCON open for vote kick to be automatically turned off
-        condition str:
-            AND or OR for minimum_ingame_mods/minimum_online_mods criteria
-    """
-
-    enabled: bool = Field(default=False, strict=True)
-    minimum_ingame_mods: int = Field(ge=0, default=1)
-    minimum_online_mods: int = Field(ge=0, default=2)
-    condition: str = Field(default="OR")
+    enabled: bool = Field(default=False, strict=True, title="Enable",
+                          description="Enable vote kick status by conditions")
+    minimum_ingame_mods: int = Field(ge=0, default=1, title="Minimum In-Game Moderators",
+                                     description="The number of moderators (Player IDs must be set in the admin site) in game for vote kick to be automatically turned off")
+    minimum_online_mods: int = Field(ge=0, default=2, title="Minimum Online Moderators",
+                                     description="The number of moderators (steam IDs must be set in the admin site) with CRCON open for vote kick to be automatically turned off")
+    condition: str = Field(default="OR", title="Condition",
+                           description="AND or OR for Minimum In-Game Moderators/Minimum Online Moderators criteria")
 
     @field_validator("condition")
     @classmethod
