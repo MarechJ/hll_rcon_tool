@@ -1,4 +1,4 @@
-const TkBansNotes =`
+const TkBansNotes = `
     {
         "enabled": false,
         "message": "Your first action on the server was a TEAM KILL you were banned as a result",
@@ -38,4 +38,4 @@ const TkBansNotes =`
     }
     `
 
-export default TkBansNotes;
+export default TkBansNotes

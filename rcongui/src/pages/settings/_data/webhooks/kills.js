@@ -15,6 +15,6 @@ const killWebhooksNotes = `
     "send_kills": false,
     "send_team_kills": true
 }
-`;
+`
 
-export default killWebhooksNotes;
+export default killWebhooksNotes

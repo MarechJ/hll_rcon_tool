@@ -1,98 +1,80 @@
-import {addPlayerToWatchList, get, handle_http_errors, postData, sendAction, showResponse,} from "@/utils/fetchUtils";
-import {toast} from "react-toastify";
-import Pagination from '@mui/material/Pagination';
-import {Button, Chip, LinearProgress, TextField, Typography,} from "@mui/material";
-import Grid from "@mui/material/Grid2";
-import {ReasonDialog} from "@/components/PlayerView/playerActions";
-import {omitBy} from "lodash/object";
-import SearchBar from "@/components/PlayersHistory/searchBar";
-import {fromJS, List, Map} from "immutable";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import {getEmojiFlag} from "@/utils/emoji";
-import PlayerGrid from "@/components/PlayersHistory/playerGrid";
-import {VipExpirationDialog} from "@/components/VipDialog";
-import {vipListFromServer} from "@/components/VipDialog/vipFromServer";
-import {banListFromServer} from "@/components/PlayersHistory/PlayerTile/PlayerBan";
-import BlacklistRecordCreateDialog from "@/components/Blacklist/BlacklistRecordCreateDialog";
-import {Component, Fragment, lazy, Suspense} from "react";
+import { addPlayerToWatchList, get, handle_http_errors, postData, sendAction, showResponse } from '@/utils/fetchUtils'
+import { toast } from 'react-toastify'
+import Pagination from '@mui/material/Pagination'
+import { Button, Chip, LinearProgress, TextField, Typography } from '@mui/material'
+import Grid from '@mui/material/Grid2'
+import { ReasonDialog } from '@/components/PlayerView/playerActions'
+import { omitBy } from 'lodash/object'
+import SearchBar from '@/components/PlayersHistory/searchBar'
+import { fromJS, List, Map } from 'immutable'
+import Dialog from '@mui/material/Dialog'
+import DialogActions from '@mui/material/DialogActions'
+import DialogContent from '@mui/material/DialogContent'
+import DialogTitle from '@mui/material/DialogTitle'
+import { getEmojiFlag } from '@/utils/emoji'
+import PlayerGrid from '@/components/PlayersHistory/playerGrid'
+import { VipExpirationDialog } from '@/components/VipDialog'
+import { vipListFromServer } from '@/components/VipDialog/vipFromServer'
+import { banListFromServer } from '@/components/PlayersHistory/PlayerTile/PlayerBan'
+import BlacklistRecordCreateDialog from '@/components/Blacklist/BlacklistRecordCreateDialog'
+import { Component, Fragment, lazy, Suspense } from 'react'
 
-const EmojiPicker = lazy(() => import("@emoji-mart/react"));
+const EmojiPicker = lazy(() => import('@emoji-mart/react'))
 
-const PlayerSummary = ({player, flag}) => (
+const PlayerSummary = ({ player, flag }) => (
   <Fragment>
-    <Typography variant="body2">
-      Add flag: {flag ? getEmojiFlag(flag) : <small>Please choose</small>}
+    <Typography variant='body2'>Add flag: {flag ? getEmojiFlag(flag) : <small>Please choose</small>}</Typography>
+    <Typography variant='body2'>
+      To:{' '}
+      {player && player.get('names')
+        ? player.get('names').map((n) => <Chip label={n.get('name')} />)
+        : 'No name recorded'}
     </Typography>
-    <Typography variant="body2">
-      To:{" "}
-      {player && player.get("names")
-        ? player.get("names").map((n) => <Chip label={n.get("name")}/>)
-        : "No name recorded"}
-    </Typography>
-    <Typography variant="body2">
-      Player ID: {player ? player.get("player_id") : ""}
-    </Typography>
+    <Typography variant='body2'>Player ID: {player ? player.get('player_id') : ''}</Typography>
   </Fragment>
-);
+)
 
 class FlagDialog extends Component {
   constructor(props) {
-    super(props);
+    super(props)
     this.state = {
       flag: null,
-      comment: "",
-      data: {},
-    };
+      comment: '',
+      data: {}
+    }
   }
 
   componentDidMount() {
-    import('@emoji-mart/data').then((d) => this.setState((s) => {
-      return {...s, data: d.default};
-    }));
+    import('@emoji-mart/data').then((d) =>
+      this.setState((s) => {
+        return { ...s, data: d.default }
+      })
+    )
   }
 
   render() {
-    const {open, handleClose, handleConfirm, SummaryRenderer} = this.props;
-    const {flag, comment, data} = this.state;
+    const { open, handleClose, handleConfirm, SummaryRenderer } = this.props
+    const { flag, comment, data } = this.state
 
     return (
-      (<Dialog open={open} aria-labelledby="form-dialog-title">
-        <DialogTitle id="form-dialog-title">
-          <SummaryRenderer player={open} flag={flag}/>
+      <Dialog open={open} aria-labelledby='form-dialog-title'>
+        <DialogTitle id='form-dialog-title'>
+          <SummaryRenderer player={open} flag={flag} />
         </DialogTitle>
         <DialogContent>
-          <Grid
-            container
-            alignContent="center"
-            alignItems="center"
-            justifyContent="center"
-            spacing={2}
-          >
+          <Grid container alignContent='center' alignItems='center' justifyContent='center' spacing={2}>
             <Grid size={12}>
-              <TextField
-                label="Comment"
-                value={comment}
-                onChange={(e) => this.setState({comment: e.target.value})}
-              />
+              <TextField label='Comment' value={comment} onChange={(e) => this.setState({ comment: e.target.value })} />
             </Grid>
           </Grid>
-          <Grid
-            container
-            alignContent="center"
-            alignItems="center"
-            justifyContent="center"
-            spacing={2}
-          >
+          <Grid container alignContent='center' alignItems='center' justifyContent='center' spacing={2}>
             <Grid size={12}>
               <Suspense>
                 <EmojiPicker
-                  style={{border: '1px solid red'}}
+                  style={{ border: '1px solid red' }}
                   perLine={8}
                   data={data}
-                  onEmojiSelect={(emoji) => this.setState({flag: emoji.native})}
+                  onEmojiSelect={(emoji) => this.setState({ flag: emoji.native })}
                 />
               </Suspense>
             </Grid>
@@ -101,29 +83,29 @@ class FlagDialog extends Component {
         <DialogActions>
           <Button
             onClick={() => {
-              this.setState({flag: ""});
-              handleClose();
+              this.setState({ flag: '' })
+              handleClose()
             }}
-            color="primary"
+            color='primary'
           >
             Cancel
           </Button>
           <Button
             onClick={() => {
-              handleConfirm(open, flag, comment);
-              this.setState({flag: "", comment: ""});
+              handleConfirm(open, flag, comment)
+              this.setState({ flag: '', comment: '' })
             }}
-            color="primary"
+            color='primary'
           >
             Confirm
           </Button>
         </DialogActions>
-      </Dialog>)
-    );
+      </Dialog>
+    )
   }
 }
 
-const MyPagination = ({pageSize, total, page, setPage}) => (
+const MyPagination = ({ pageSize, total, page, setPage }) => (
   <Pagination
     count={Math.ceil(total / pageSize)}
     page={page}
@@ -131,19 +113,19 @@ const MyPagination = ({pageSize, total, page, setPage}) => (
     showFirstButton
     showLastButton
   />
-);
+)
 
 class PlayersHistory extends Component {
   constructor(props) {
-    super(props);
+    super(props)
 
     this.state = {
       playersHistory: List(),
       total: 0,
       pageSize: 50,
       page: 1,
-      byName: "",
-      byPlayerId: "",
+      byName: '',
+      byPlayerId: '',
       blacklistedOnly: false,
       lastSeenFrom: null,
       lastSeenUntil: null,
@@ -155,133 +137,115 @@ class PlayersHistory extends Component {
       doVIPPlayer: false,
       ignoreAccent: true,
       exactMatch: false,
-      flags: "",
-      country: "",
+      flags: '',
+      country: '',
       bans: new Map(),
       blacklists: [],
       blacklistDialogOpen: false,
-      blacklistDialogInitialValues: undefined,
-    };
+      blacklistDialogInitialValues: undefined
+    }
 
-    this.getPlayerHistory = this.getPlayerHistory.bind(this);
-    this.loadBans = this.loadBans.bind(this);
-    this.blacklistPlayer = this.blacklistPlayer.bind(this);
-    this.unblacklistPlayer = this.unblacklistPlayer.bind(this);
-    this.addFlagToPlayer = this.addFlagToPlayer.bind(this);
-    this.deleteFlag = this.deleteFlag.bind(this);
-    this.loadVips = this.loadVips.bind(this);
-    this.loadBlacklists = this.loadBlacklists.bind(this);
-    this.addVip = this.addVip.bind(this);
-    this.deleteVip = this.deleteVip.bind(this);
-    this.unBanPlayer = this.unBanPlayer.bind(this);
-    this.tempBan = this.tempBan.bind(this);
-    this.permaBan = this.permaBan.bind(this);
-    this.addToWatchlist = this.addToWatchlist.bind(this);
-    this.removeFromWatchList = this.removeFromWatchList.bind(this);
-    this.setDoFlag = this.setDoFlag.bind(this);
-    this.setDoConfirmPlayer = this.setDoConfirmPlayer.bind(this);
-    this.setDoVIPPlayer = this.setDoVIPPlayer.bind(this);
-    this.setIgnoreAccent = this.setIgnoreAccent.bind(this);
-    this.setExactMatch = this.setExactMatch.bind(this);
-    this.setFlags = this.setFlags.bind(this);
-    this.setCountry = this.setCountry.bind(this);
+    this.getPlayerHistory = this.getPlayerHistory.bind(this)
+    this.loadBans = this.loadBans.bind(this)
+    this.blacklistPlayer = this.blacklistPlayer.bind(this)
+    this.unblacklistPlayer = this.unblacklistPlayer.bind(this)
+    this.addFlagToPlayer = this.addFlagToPlayer.bind(this)
+    this.deleteFlag = this.deleteFlag.bind(this)
+    this.loadVips = this.loadVips.bind(this)
+    this.loadBlacklists = this.loadBlacklists.bind(this)
+    this.addVip = this.addVip.bind(this)
+    this.deleteVip = this.deleteVip.bind(this)
+    this.unBanPlayer = this.unBanPlayer.bind(this)
+    this.tempBan = this.tempBan.bind(this)
+    this.permaBan = this.permaBan.bind(this)
+    this.addToWatchlist = this.addToWatchlist.bind(this)
+    this.removeFromWatchList = this.removeFromWatchList.bind(this)
+    this.setDoFlag = this.setDoFlag.bind(this)
+    this.setDoConfirmPlayer = this.setDoConfirmPlayer.bind(this)
+    this.setDoVIPPlayer = this.setDoVIPPlayer.bind(this)
+    this.setIgnoreAccent = this.setIgnoreAccent.bind(this)
+    this.setExactMatch = this.setExactMatch.bind(this)
+    this.setFlags = this.setFlags.bind(this)
+    this.setCountry = this.setCountry.bind(this)
 
-    this.onBlacklist = this.onBlacklist.bind(this);
-    this.onUnBlacklist = this.onUnBlacklist.bind(this);
-    this.deleteFlag = this.deleteFlag.bind(this);
-    this.removeFromWatchList = this.removeFromWatchList.bind(this);
-    this.onUnban = this.onUnban.bind(this);
-    this.onTempBan = this.onTempBan.bind(this);
-    this.onPermaBan = this.onPermaBan.bind(this);
-    this.onAddVip = this.onAddVip.bind(this);
-    this.onDeleteVip = this.onDeleteVip.bind(this);
-    this.onAddToWatchList = this.onAddToWatchList.bind(this);
-    this.onRemoveFromWatchList = this.onRemoveFromWatchList.bind(this);
+    this.onBlacklist = this.onBlacklist.bind(this)
+    this.onUnBlacklist = this.onUnBlacklist.bind(this)
+    this.deleteFlag = this.deleteFlag.bind(this)
+    this.removeFromWatchList = this.removeFromWatchList.bind(this)
+    this.onUnban = this.onUnban.bind(this)
+    this.onTempBan = this.onTempBan.bind(this)
+    this.onPermaBan = this.onPermaBan.bind(this)
+    this.onAddVip = this.onAddVip.bind(this)
+    this.onDeleteVip = this.onDeleteVip.bind(this)
+    this.onAddToWatchList = this.onAddToWatchList.bind(this)
+    this.onRemoveFromWatchList = this.onRemoveFromWatchList.bind(this)
   }
 
   tempBan(playerId, reason, durationHours, comment) {
-    this.postComment(
-      playerId,
-      comment,
-      `Player ID ${playerId} temp banned ${durationHours} for ${reason}`
-    );
+    this.postComment(playerId, comment, `Player ID ${playerId} temp banned ${durationHours} for ${reason}`)
     postData(`${process.env.REACT_APP_API_URL}temp_ban`, {
       player_id: playerId,
       reason: reason,
-      duration_hours: durationHours,
+      duration_hours: durationHours
     })
       .then((response) =>
-        showResponse(
-          response,
-          `Player ID ${playerId} temp banned ${durationHours} for ${reason}`,
-          true
-        )
+        showResponse(response, `Player ID ${playerId} temp banned ${durationHours} for ${reason}`, true)
       )
       .then(this._reloadOnSuccess)
-      .catch((error) => toast.error("Unable to connect to API " + error));
+      .catch((error) => toast.error('Unable to connect to API ' + error))
   }
 
   permaBan(playerId, reason, comment) {
-    this.postComment(
-      playerId,
-      comment,
-      `Player ID ${playerId} perma banned for ${reason}`
-    );
+    this.postComment(playerId, comment, `Player ID ${playerId} perma banned for ${reason}`)
     postData(`${process.env.REACT_APP_API_URL}perma_ban`, {
       player_id: playerId,
-      reason: reason,
+      reason: reason
     })
-      .then((response) =>
-        showResponse(
-          response,
-          `Player ID ${playerId} perma banned for ${reason}`,
-          true
-        )
-      )
+      .then((response) => showResponse(response, `Player ID ${playerId} perma banned for ${reason}`, true))
       .then(this._reloadOnSuccess)
-      .catch((error) => toast.error("Unable to connect to API " + error));
+      .catch((error) => toast.error('Unable to connect to API ' + error))
   }
 
   addVip(player, expirationTimestamp, forwardVIP) {
-    const player_id = player.get("player_id");
-    const name = player.get("names").get(0).get("name");
+    const player_id = player.get('player_id')
+    const name = player.get('names').get(0).get('name')
 
-    return sendAction("add_vip", {
+    return sendAction('add_vip', {
       player_id: player_id,
       description: name,
       expiration: expirationTimestamp,
-      forward: forwardVIP,
-    }).then(this._reloadOnSuccess);
+      forward: forwardVIP
+    }).then(this._reloadOnSuccess)
   }
 
   deleteVip(playerId, forwardVIP) {
-    return sendAction("remove_vip", {
+    return sendAction('remove_vip', {
       player_id: playerId,
-      forward: forwardVIP,
-    }).then(this._reloadOnSuccess);
+      forward: forwardVIP
+    }).then(this._reloadOnSuccess)
   }
 
   _loadToState(command, showSuccess, stateSetter) {
     return get(command)
       .then((res) => showResponse(res, command, showSuccess))
       .then(stateSetter)
-      .catch(handle_http_errors);
+      .catch(handle_http_errors)
   }
 
   loadVips() {
-    return this._loadToState("get_vip_ids", false, (data) =>
+    return this._loadToState('get_vip_ids', false, (data) =>
       this.setState({
-        vips: vipListFromServer(data.result),
+        vips: vipListFromServer(data.result)
       })
-    );
+    )
   }
 
   loadBlacklists() {
-    return this._loadToState("get_blacklists", false, (data) =>
+    return this._loadToState('get_blacklists', false, (data) =>
       this.setState({
-        blacklists: data.result,
+        blacklists: data.result
       })
-    );
+    )
   }
 
   getPlayerHistory() {
@@ -297,8 +261,8 @@ class PlayersHistory extends Component {
       exactMatch,
       ignoreAccent,
       flags,
-      country,
-    } = this.state;
+      country
+    } = this.state
     const params = omitBy(
       {
         page_size: pageSize,
@@ -312,195 +276,165 @@ class PlayersHistory extends Component {
         exact_name_match: exactMatch,
         ignore_accent: ignoreAccent,
         flags: flags,
-        country: country,
+        country: country
       },
-      (v) => v === null || v === "" || v === undefined
-    );
-
-    this.setState({isLoading: true});
-    return postData(
-      `${process.env.REACT_APP_API_URL}get_players_history`,
-      params
+      (v) => v === null || v === '' || v === undefined
     )
-      .then((response) => showResponse(response, "get_players_history"))
+
+    this.setState({ isLoading: true })
+    return postData(`${process.env.REACT_APP_API_URL}get_players_history`, params)
+      .then((response) => showResponse(response, 'get_players_history'))
       .then((data) => {
-        this.setState({isLoading: false});
+        this.setState({ isLoading: false })
         if (data.failed) {
-          return;
+          return
         }
         this.setState({
           playersHistory: fromJS(data.result.players),
           total: data.result.total,
           pageSize: data.result.page_size,
-          page: data.result.page,
-        });
+          page: data.result.page
+        })
       })
       .then(this.loadVips)
       .then(this.loadBans)
-      .catch(handle_http_errors);
+      .catch(handle_http_errors)
   }
 
   loadBans() {
-    return this._loadToState("get_bans", false, (data) =>
+    return this._loadToState('get_bans', false, (data) =>
       this.setState({
-        bans: banListFromServer(data.result),
+        bans: banListFromServer(data.result)
       })
-    );
+    )
   }
 
   _reloadOnSuccess = (data) => {
     if (data.failed) {
-      return;
+      return
     }
-    this.getPlayerHistory().then(this.loadVips).then(this.loadBans);
-  };
+    this.getPlayerHistory().then(this.loadVips).then(this.loadBans)
+  }
 
   addFlagToPlayer(playerObj, flag, comment = null) {
     return postData(`${process.env.REACT_APP_API_URL}flag_player`, {
-      player_id: playerObj.get("player_id"),
+      player_id: playerObj.get('player_id'),
       flag: flag,
-      comment: comment,
+      comment: comment
     })
-      .then((response) => showResponse(response, "flag_player"))
+      .then((response) => showResponse(response, 'flag_player'))
       .then(this._reloadOnSuccess)
-      .catch((error) => toast.error("Unable to connect to API " + error));
+      .catch((error) => toast.error('Unable to connect to API ' + error))
   }
 
   deleteFlag(flag_id) {
     return postData(`${process.env.REACT_APP_API_URL}unflag_player`, {
-      flag_id: flag_id,
+      flag_id: flag_id
     })
-      .then((response) => showResponse(response, "unflag_player"))
+      .then((response) => showResponse(response, 'unflag_player'))
       .then(this._reloadOnSuccess)
-      .catch((error) => toast.error("Unable to connect to API " + error));
+      .catch((error) => toast.error('Unable to connect to API ' + error))
   }
 
   postComment(playerId, comment, action) {
     postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
       player_id: playerId,
-      comment: action,
+      comment: action
     })
       .then((response) => {
-        return showResponse(response, "post_player_comment", false);
+        return showResponse(response, 'post_player_comment', false)
       })
       .then(() => {
-        if (comment && comment !== "" && comment !== null) {
+        if (comment && comment !== '' && comment !== null) {
           postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
             player_id: playerId,
-            comment: comment,
+            comment: comment
           })
             .then((response) => {
-              return showResponse(response, "post_player_comment", false);
+              return showResponse(response, 'post_player_comment', false)
             })
-            .catch((error) => toast.error("Unable to connect to API " + error));
+            .catch((error) => toast.error('Unable to connect to API ' + error))
         }
       })
-      .catch((error) => toast.error("Unable to connect to API " + error));
+      .catch((error) => toast.error('Unable to connect to API ' + error))
   }
 
-  blacklistPlayer({
-    blacklistId,
-    playerId,
-    expiresAt,
-    reason
-  }) {
-    this.postComment(
-      playerId,
-      null,
-      `Player ID ${playerId} blacklist for ${reason}`
-    );
+  blacklistPlayer({ blacklistId, playerId, expiresAt, reason }) {
+    this.postComment(playerId, null, `Player ID ${playerId} blacklist for ${reason}`)
     postData(`${process.env.REACT_APP_API_URL}add_blacklist_record`, {
       blacklist_id: blacklistId,
       player_id: playerId,
       expires_at: expiresAt || null,
       reason
     })
-      .then((response) =>
-        showResponse(response, `Player ID ${playerId} was blacklisted`, true)
-      )
+      .then((response) => showResponse(response, `Player ID ${playerId} was blacklisted`, true))
       .then(this._reloadOnSuccess)
-      .catch(handle_http_errors);
+      .catch(handle_http_errors)
   }
 
   unblacklistPlayer(playerId) {
-    this.postComment(
-      playerId,
-      null,
-      `Expired all blacklists for player ID ${playerId}`
-    );
+    this.postComment(playerId, null, `Expired all blacklists for player ID ${playerId}`)
     postData(`${process.env.REACT_APP_API_URL}unblacklist_player`, {
-      player_id: playerId,
+      player_id: playerId
     })
-      .then((response) =>
-        showResponse(
-          response,
-          `Expired all blacklists for player ID ${playerId}`,
-          true
-        )
-      )
+      .then((response) => showResponse(response, `Expired all blacklists for player ID ${playerId}`, true))
       .then(this._reloadOnSuccess)
-      .catch((error) => toast.error("Unable to connect to API " + error));
+      .catch((error) => toast.error('Unable to connect to API ' + error))
   }
 
   unBanPlayer(playerId) {
-    this.postComment(playerId, null, `Player ID ${playerId} unbanned`);
+    this.postComment(playerId, null, `Player ID ${playerId} unbanned`)
     postData(`${process.env.REACT_APP_API_URL}unban`, {
-      player_id: playerId,
+      player_id: playerId
     })
-      .then((response) =>
-        showResponse(response, `Player ID ${playerId} unbanned`, true)
-      )
+      .then((response) => showResponse(response, `Player ID ${playerId} unbanned`, true))
       .then(this._reloadOnSuccess)
-      .catch((error) => toast.error("Unable to connect to API " + error));
+      .catch((error) => toast.error('Unable to connect to API ' + error))
   }
 
   addToWatchlist(playerId, reason, comment, playerName) {
-    this.postComment(playerId, comment, `Player ID ${playerId} watched`);
-    return addPlayerToWatchList(playerId, reason, playerName).then(
-      this._reloadOnSuccess
-    );
+    this.postComment(playerId, comment, `Player ID ${playerId} watched`)
+    return addPlayerToWatchList(playerId, reason, playerName).then(this._reloadOnSuccess)
   }
 
   removeFromWatchList(playerId, playerName) {
     postData(`${process.env.REACT_APP_API_URL}unwatch_player`, {
       player_id: playerId,
-      player_name: playerName,
+      player_name: playerName
     })
-      .then((response) =>
-        showResponse(response, `Player ID ${playerId} unwatched`, true)
-      )
+      .then((response) => showResponse(response, `Player ID ${playerId} unwatched`, true))
       .then(this._reloadOnSuccess)
-      .catch(handle_http_errors);
+      .catch(handle_http_errors)
   }
 
   setDoFlag(playerToFlag) {
-    return this.setState({doFlag: playerToFlag});
+    return this.setState({ doFlag: playerToFlag })
   }
 
   setDoConfirmPlayer(confirmPlayer) {
-    return this.setState({doConfirmPlayer: confirmPlayer});
+    return this.setState({ doConfirmPlayer: confirmPlayer })
   }
 
   setDoVIPPlayer(doVIPPlayer) {
     return this.setState({
-      doVIPPlayer,
-    });
+      doVIPPlayer
+    })
   }
 
   setIgnoreAccent(ignoreAccent) {
-    return this.setState({ignoreAccent});
+    return this.setState({ ignoreAccent })
   }
 
   setExactMatch(exactMatch) {
-    return this.setState({exactMatch});
+    return this.setState({ exactMatch })
   }
 
   setFlags(flags) {
-    return this.setState({flags});
+    return this.setState({ flags })
   }
 
   setCountry(country) {
-    return this.setState({country});
+    return this.setState({ country })
   }
 
   /* Shortcut function for the grid list */
@@ -508,60 +442,60 @@ class PlayersHistory extends Component {
     this.setState({
       blacklistDialogOpen: true,
       blacklistDialogInitialValues: {
-        playerId: player.get("player_id")
+        playerId: player.get('player_id')
       }
-    });
+    })
     if (!this.state.blacklists.length) {
       this.loadBlacklists()
     }
   }
 
   onUnBlacklist(player) {
-    return this.unblacklistPlayer(player.get("player_id"));
+    return this.unblacklistPlayer(player.get('player_id'))
   }
 
   onUnban(player) {
-    return this.unBanPlayer(player.get("player_id"));
+    return this.unBanPlayer(player.get('player_id'))
   }
 
   onTempBan(player) {
     return this.setDoConfirmPlayer({
-      player: player.get("player_id"),
-      actionType: "temp_ban",
-      player_id: player.get("player_id"),
-    });
+      player: player.get('player_id'),
+      actionType: 'temp_ban',
+      player_id: player.get('player_id')
+    })
   }
 
   onPermaBan(player) {
     return this.setDoConfirmPlayer({
-      player: player.get("player_id"),
-      actionType: "perma_ban",
-      player_id: player.get("player_id"),
-    });
+      player: player.get('player_id'),
+      actionType: 'perma_ban',
+      player_id: player.get('player_id')
+    })
   }
 
   onAddVip(player) {
     return this.setDoVIPPlayer({
-      player,
-    });
+      player
+    })
   }
 
   onDeleteVip(player, forwardVIP) {
-    return this.deleteVip(player.get("player_id"), forwardVIP);
+    return this.deleteVip(player.get('player_id'), forwardVIP)
   }
 
   onAddToWatchList(player) {
-    const playerName = player.get("names")?.get(0)?.get("name");
+    const playerName = player.get('names')?.get(0)?.get('name')
     return this.setDoConfirmPlayer({
       player: playerName,
-      actionType: "watchlist",
-      player_id: player.get("player_id"),
-    });
+      actionType: 'watchlist',
+      player_id: player.get('player_id')
+    })
   }
 
   onRemoveFromWatchList(player) {
-    const playerName = player.get("names")?.get(0)?.get("name");
-    return this.removeFromWatchList(player.get("player_id"), playerName);
+    const playerName = player.get('names')?.get(0)?.get('name')
+    return this.removeFromWatchList(player.get('player_id'), playerName)
   }
 
   render() {
@@ -588,29 +522,29 @@ class PlayersHistory extends Component {
       country,
       blacklists,
       blacklistDialogOpen,
-      blacklistDialogInitialValues,
-    } = this.state;
+      blacklistDialogInitialValues
+    } = this.state
 
     // Perfomance is crappy. It's less crappy after switcing to immutables but still...
     // It should be refactored so that the search bar does not trigger useless renderings
     return (
-      (<Grid container spacing={1}>
+      <Grid container spacing={1}>
         <Grid size={12}>
           <SearchBar
             pageSize={pageSize}
-            setPageSize={(v) => this.setState({pageSize: v})}
+            setPageSize={(v) => this.setState({ pageSize: v })}
             lastSeenFrom={lastSeenFrom}
-            setLastSeenFrom={(v) => this.setState({lastSeenFrom: v})}
+            setLastSeenFrom={(v) => this.setState({ lastSeenFrom: v })}
             lastSeenUntil={lastSeenUntil}
-            setLastSeenUntil={(v) => this.setState({lastSeenUntil: v})}
+            setLastSeenUntil={(v) => this.setState({ lastSeenUntil: v })}
             name={byName}
-            setName={(v) => this.setState({byName: v})}
+            setName={(v) => this.setState({ byName: v })}
             playerId={byPlayerId}
-            setPlayerId={(v) => this.setState({byPlayerId: v})}
+            setPlayerId={(v) => this.setState({ byPlayerId: v })}
             blacklistedOnly={blacklistedOnly}
-            setBlacklistedOnly={(v) => this.setState({blacklistedOnly: v})}
+            setBlacklistedOnly={(v) => this.setState({ blacklistedOnly: v })}
             isWatchedOnly={isWatchedOnly}
-            setIsWatchedOnly={(v) => this.setState({isWatchedOnly: v})}
+            setIsWatchedOnly={(v) => this.setState({ isWatchedOnly: v })}
             onSearch={this.getPlayerHistory}
             exactMatch={exactMatch}
             setExactMatch={this.setExactMatch}
@@ -626,14 +560,12 @@ class PlayersHistory extends Component {
           <MyPagination
             pageSize={pageSize}
             page={page}
-            setPage={(page) =>
-              this.setState({page: page}, this.getPlayerHistory)
-            }
+            setPage={(page) => this.setState({ page: page }, this.getPlayerHistory)}
             total={total}
           />
         </Grid>
         <Grid size={12}>
-          {isLoading ? <LinearProgress color="secondary"/> : ""}
+          {isLoading ? <LinearProgress color='secondary' /> : ''}
           <PlayerGrid
             players={playersHistory}
             onBlacklist={this.onBlacklist}
@@ -655,41 +587,32 @@ class PlayersHistory extends Component {
           <MyPagination
             pageSize={pageSize}
             page={page}
-            setPage={(page) =>
-              this.setState({page: page}, this.getPlayerHistory)
-            }
+            setPage={(page) => this.setState({ page: page }, this.getPlayerHistory)}
             total={total}
           />
         </Grid>
         <ReasonDialog
           open={doConfirmPlayer}
           handleClose={() => this.setDoConfirmPlayer(false)}
-          handleConfirm={(
-            actionType,
-            player,
-            reason,
-            comment,
-            durationHours,
-            playerId
-          ) => {
-            if (actionType === "blacklist") {
-              this.blacklistPlayer(playerId, reason, comment);
-            } else if (actionType === "temp_ban") {
-              this.tempBan(playerId, reason, durationHours, comment);
-            } else if (actionType === "perma_ban") {
-              this.permaBan(playerId, reason, comment);
-            } else if (actionType === "watchlist") {
-              this.addToWatchlist(playerId, reason, comment, player);
+          handleConfirm={(actionType, player, reason, comment, durationHours, playerId) => {
+            if (actionType === 'blacklist') {
+              this.blacklistPlayer(playerId, reason, comment)
+            } else if (actionType === 'temp_ban') {
+              this.tempBan(playerId, reason, durationHours, comment)
+            } else if (actionType === 'perma_ban') {
+              this.permaBan(playerId, reason, comment)
+            } else if (actionType === 'watchlist') {
+              this.addToWatchlist(playerId, reason, comment, player)
             }
-            this.setDoConfirmPlayer(false);
+            this.setDoConfirmPlayer(false)
           }}
         />
         <FlagDialog
           open={doFlag}
           handleClose={() => this.setDoFlag(false)}
           handleConfirm={(playerObj, theFlag, theComment) => {
-            this.addFlagToPlayer(playerObj, theFlag, theComment);
-            this.setDoFlag(false);
+            this.addFlagToPlayer(playerObj, theFlag, theComment)
+            this.setDoFlag(false)
           }}
           SummaryRenderer={PlayerSummary}
         />
@@ -700,22 +623,22 @@ class PlayersHistory extends Component {
           onDeleteVip={this.onDeleteVip}
           handleClose={() => this.setDoVIPPlayer(false)}
           handleConfirm={(playerObj, expirationTimestamp, forwardVIP) => {
-            this.addVip(playerObj, expirationTimestamp, forwardVIP);
-            this.setDoVIPPlayer(false);
+            this.addVip(playerObj, expirationTimestamp, forwardVIP)
+            this.setDoVIPPlayer(false)
           }}
         />
         <BlacklistRecordCreateDialog
           open={blacklistDialogOpen}
-          setOpen={(value) => this.setState({blacklistDialogOpen: value})}
+          setOpen={(value) => this.setState({ blacklistDialogOpen: value })}
           blacklists={blacklists}
           initialValues={blacklistDialogInitialValues}
           onSubmit={this.blacklistPlayer}
           disablePlayerId
         />
-      </Grid>)
-    );
+      </Grid>
+    )
   }
 }
 
-export default PlayersHistory;
-export {FlagDialog, PlayersHistory};
+export default PlayersHistory
+export { FlagDialog, PlayersHistory }

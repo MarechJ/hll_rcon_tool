@@ -1,4 +1,4 @@
-import { getDesignTokens } from './themePrimitives';
+import { getDesignTokens } from './themePrimitives'
 import {
   chartsCustomizations,
   dataGridCustomizations,
@@ -8,8 +8,8 @@ import {
   dataDisplayCustomizations,
   feedbackCustomizations,
   navigationCustomizations,
-  surfacesCustomizations,
-} from './customizations';
+  surfacesCustomizations
+} from './customizations'
 
 export default function getDashboardTheme(mode) {
   return {
@@ -23,10 +23,10 @@ export default function getDashboardTheme(mode) {
       ...dataDisplayCustomizations,
       ...feedbackCustomizations,
       ...navigationCustomizations,
-      ...surfacesCustomizations,
+      ...surfacesCustomizations
     },
     typography: {
-      fontFamily: 'Roboto, Arial, sans-serif',
-    },
-  };
+      fontFamily: 'Roboto, Arial, sans-serif'
+    }
+  }
 }

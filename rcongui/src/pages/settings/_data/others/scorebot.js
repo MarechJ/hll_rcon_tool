@@ -111,7 +111,6 @@ const ScorebotNotes = `
             "https://discord.com/api/webhooks/.../..."
         ]
     }
-`;
+`
 
-
-export default ScorebotNotes;
+export default ScorebotNotes

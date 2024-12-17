@@ -1,33 +1,31 @@
-import TextField from "@mui/material/TextField";
-import "react-toastify/dist/ReactToastify.css";
-import TextHistory from "../textHistory";
-import Autocomplete from '@mui/material/Autocomplete';
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Checkbox from "@mui/material/Checkbox";
+import TextField from '@mui/material/TextField'
+import 'react-toastify/dist/ReactToastify.css'
+import TextHistory from '../textHistory'
+import Autocomplete from '@mui/material/Autocomplete'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import Checkbox from '@mui/material/Checkbox'
 
-import { getSharedMessages } from "@/utils/fetchUtils";
-import {Fragment, useEffect, useState} from "react";
+import { getSharedMessages } from '@/utils/fetchUtils'
+import { Fragment, useEffect, useState } from 'react'
 
 const Reason = ({
   handleMessageChange,
-  helperText = "Leave blank if you want a confirmation popup",
+  helperText = 'Leave blank if you want a confirmation popup',
   message,
-  label = "In Game Message/Punish/Kick/Ban message",
+  label = 'In Game Message/Punish/Kick/Ban message',
   textHistory,
   saveMessage,
-  setSaveMessage,
+  setSaveMessage
 }) => {
-  const autoCompletehistory = textHistory
-    ? textHistory.getTexts()
-    : new TextHistory("punishments").getTexts();
+  const autoCompletehistory = textHistory ? textHistory.getTexts() : new TextHistory('punishments').getTexts()
 
-  const [sharedMessages, setSharedMessages] = useState([]);
+  const [sharedMessages, setSharedMessages] = useState([])
   useEffect(() => {
-    getSharedMessages("punishments").then((data) => setSharedMessages(data));
-  }, []);
+    getSharedMessages('punishments').then((data) => setSharedMessages(data))
+  }, [])
 
   return (
-    (<Fragment>
+    <Fragment>
       <Autocomplete
         freeSolo
         fullWidth
@@ -35,9 +33,9 @@ const Reason = ({
         inputValue={message}
         onInputChange={(e, value) => {
           if (e) {
-            e.preventDefault();
+            e.preventDefault()
           }
-          handleMessageChange(value);
+          handleMessageChange(value)
         }}
         renderInput={(params) => (
           <TextField
@@ -46,27 +44,21 @@ const Reason = ({
             multiline
             minRows={1}
             maxRows={10}
-            margin="dense"
+            margin='dense'
             helperText={helperText}
           />
         )}
       />
       {saveMessage !== undefined ? (
         <FormControlLabel
-          control={
-            <Checkbox
-              checked={saveMessage}
-              onChange={() => setSaveMessage(!saveMessage)}
-              color="primary"
-            />
-          }
-          label="Save message as template"
+          control={<Checkbox checked={saveMessage} onChange={() => setSaveMessage(!saveMessage)} color='primary' />}
+          label='Save message as template'
         />
       ) : (
-        ""
+        ''
       )}
-    </Fragment>)
-  );
-};
+    </Fragment>
+  )
+}
 
-export { Reason };
+export { Reason }

@@ -1,57 +1,57 @@
-import { useEffect, useMemo, useState, useRef } from "react";
-import { useActionData, useSubmit } from "react-router-dom";
+import { useEffect, useMemo, useState, useRef } from 'react'
+import { useActionData, useSubmit } from 'react-router-dom'
 
 export const useSettingsState = (initialSettings) => {
-  const [pendingSettings, setPendingSettings] = useState(initialSettings);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState(null);
-  const submit = useSubmit();
-  const actionData = useActionData();
-  const lastSubmissionRef = useRef(null);
+  const [pendingSettings, setPendingSettings] = useState(initialSettings)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState(null)
+  const submit = useSubmit()
+  const actionData = useActionData()
+  const lastSubmissionRef = useRef(null)
 
   useEffect(() => {
-    setPendingSettings(initialSettings);
-  }, [initialSettings]);
+    setPendingSettings(initialSettings)
+  }, [initialSettings])
 
   useEffect(() => {
     if (actionData && initialSettings) {
       if (lastSubmissionRef.current === actionData.cmd) {
         if (actionData.success) {
-          setError(null);
-          setPendingSettings(initialSettings);
+          setError(null)
+          setPendingSettings(initialSettings)
         } else {
-          setError(actionData.error);
+          setError(actionData.error)
         }
-        setIsSubmitting(false);
-        lastSubmissionRef.current = null;
+        setIsSubmitting(false)
+        lastSubmissionRef.current = null
       }
     }
-  }, [actionData, initialSettings]);
+  }, [actionData, initialSettings])
 
   const isAltered = useMemo(() => {
-    if (isSubmitting) return true;
-    if (typeof initialSettings === "object") {
+    if (isSubmitting) return true
+    if (typeof initialSettings === 'object') {
       for (const key in initialSettings) {
         if (initialSettings[key] !== pendingSettings[key]) {
-          return true;
+          return true
         }
       }
-    } else if (typeof initialSettings === "string") {
-      return initialSettings !== pendingSettings;
+    } else if (typeof initialSettings === 'string') {
+      return initialSettings !== pendingSettings
     }
-    return false;
-  }, [initialSettings, pendingSettings, isSubmitting]);
+    return false
+  }, [initialSettings, pendingSettings, isSubmitting])
 
   const handleSubmit = (payload, options) => {
-    setIsSubmitting(true);
-    lastSubmissionRef.current = payload.cmd;
-    submit(payload, options);
-  };
+    setIsSubmitting(true)
+    lastSubmissionRef.current = payload.cmd
+    submit(payload, options)
+  }
 
   const handleReset = () => {
-    setError(null);
-    setPendingSettings(initialSettings);
-  };
+    setError(null)
+    setPendingSettings(initialSettings)
+  }
 
   return {
     pendingSettings,
@@ -61,6 +61,6 @@ export const useSettingsState = (initialSettings) => {
     setError,
     submit: handleSubmit,
     reset: handleReset,
-    isAltered,
-  };
-};
+    isAltered
+  }
+}

@@ -1,8 +1,8 @@
-import { styled } from "@mui/material/styles";
-import Popper from "@mui/material/Popper";
-import ClickAwayListener from "@mui/material/ClickAwayListener";
-import Box from "@mui/material/Box";
-import { Fragment, useState } from "react";
+import { styled } from '@mui/material/styles'
+import Popper from '@mui/material/Popper'
+import ClickAwayListener from '@mui/material/ClickAwayListener'
+import Box from '@mui/material/Box'
+import { Fragment, useState } from 'react'
 
 const StyledPopper = styled(Popper)(({ theme }) => ({
   border: `1px solid #e1e4e8`,
@@ -12,38 +12,31 @@ const StyledPopper = styled(Popper)(({ theme }) => ({
   width: 300,
   zIndex: theme.zIndex.modal,
   fontSize: 12,
-  ...theme.applyStyles("dark", {
+  ...theme.applyStyles('dark', {
     border: `1px solid #30363d`,
     boxShadow: `0 8px 24px rgb(1, 4, 9)`,
-    color: "#c9d1d9",
-  }),
-}));
+    color: '#c9d1d9'
+  })
+}))
 
-export const PopoverMenu = ({
-  id,
-  children,
-  renderButton,
-  description,
-  onOpen,
-  onClose,
-}) => {
-  const [anchorEl, setAnchorEl] = useState(null);
+export const PopoverMenu = ({ id, children, renderButton, description, onOpen, onClose }) => {
+  const [anchorEl, setAnchorEl] = useState(null)
 
   const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
-    onOpen?.();
-  };
+    setAnchorEl(event.currentTarget)
+    onOpen?.()
+  }
 
   const handleClose = () => {
     if (anchorEl) {
-      anchorEl.focus();
+      anchorEl.focus()
     }
-    setAnchorEl(null);
-    onClose?.();
-  };
+    setAnchorEl(null)
+    onClose?.()
+  }
 
-  const open = Boolean(anchorEl);
-  id = open ? id : undefined;
+  const open = Boolean(anchorEl)
+  id = open ? id : undefined
 
   return (
     <Fragment>
@@ -52,15 +45,15 @@ export const PopoverMenu = ({
         id={id}
         open={open}
         anchorEl={anchorEl}
-        placement="bottom-start"
+        placement='bottom-start'
         popperOptions={{
           modifiers: [
             {
-              name: "flip",
+              name: 'flip',
               enabled: true,
-              options: { fallbackPlacements: ["top", "bottom"] },
-            },
-          ],
+              options: { fallbackPlacements: ['top', 'bottom'] }
+            }
+          ]
         }}
       >
         <ClickAwayListener onClickAway={handleClose}>
@@ -68,11 +61,11 @@ export const PopoverMenu = ({
             <Box
               sx={(t) => ({
                 borderBottom: `1px solid #30363d`,
-                padding: "8px 10px",
+                padding: '8px 10px',
                 fontWeight: 600,
-                ...t.applyStyles("light", {
-                  borderBottom: `1px solid #eaecef`,
-                }),
+                ...t.applyStyles('light', {
+                  borderBottom: `1px solid #eaecef`
+                })
               })}
             >
               {description}
@@ -82,5 +75,5 @@ export const PopoverMenu = ({
         </ClickAwayListener>
       </StyledPopper>
     </Fragment>
-  );
-};
+  )
+}

@@ -1,3 +1,3 @@
-import PlayerInfo from "../../pages/records/players/[playerId]";
+import PlayerInfo from '../../pages/records/players/[playerId]'
 
-export default PlayerInfo;
+export default PlayerInfo

@@ -36,6 +36,6 @@ const VacBansNotes = `
             "🤡"
         ]
     }
-    `;
+    `
 
-    export default VacBansNotes;
+export default VacBansNotes

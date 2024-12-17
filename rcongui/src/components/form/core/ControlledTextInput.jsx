@@ -1,14 +1,7 @@
-import { TextField } from '@mui/material';
-import { Controller } from 'react-hook-form';
+import { TextField } from '@mui/material'
+import { Controller } from 'react-hook-form'
 
-export function ControlledTextInput({
-  control,
-  name,
-  disabled,
-  rules,
-  defaultValue,
-  ...props
-}) {
+export function ControlledTextInput({ control, name, disabled, rules, defaultValue, ...props }) {
   return (
     <Controller
       disabled={disabled}
@@ -28,5 +21,5 @@ export function ControlledTextInput({
         />
       )}
     />
-  );
+  )
 }

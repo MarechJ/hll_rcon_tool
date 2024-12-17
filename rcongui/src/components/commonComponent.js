@@ -1,22 +1,18 @@
-import {
-  Checkbox,
-  FormControlLabel,
-  Popover,
-} from "@mui/material";
-import {Fragment, useState} from "react";
+import { Checkbox, FormControlLabel, Popover } from '@mui/material'
+import { Fragment, useState } from 'react'
 
 export const WithPopver = ({ popoverContent, children }) => {
-  const [anchorEl, setAnchorEl] = useState(null);
+  const [anchorEl, setAnchorEl] = useState(null)
 
   const handlePopoverOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
+    setAnchorEl(event.currentTarget)
+  }
 
   const handlePopoverClose = () => {
-    setAnchorEl(null);
-  };
+    setAnchorEl(null)
+  }
 
-  const open = Boolean(anchorEl);
+  const open = Boolean(anchorEl)
 
   return (
     <Fragment>
@@ -24,16 +20,16 @@ export const WithPopver = ({ popoverContent, children }) => {
         {children}
       </div>
       <Popover
-        id="mouse-over-popover"
+        id='mouse-over-popover'
         open={open}
         anchorEl={anchorEl}
         anchorOrigin={{
-          vertical: "bottom",
-          horizontal: "left",
+          vertical: 'bottom',
+          horizontal: 'left'
         }}
         transformOrigin={{
-          vertical: "top",
-          horizontal: "left",
+          vertical: 'top',
+          horizontal: 'left'
         }}
         onClose={handlePopoverClose}
         disableRestoreFocus
@@ -41,19 +37,19 @@ export const WithPopver = ({ popoverContent, children }) => {
         {popoverContent}
       </Popover>
     </Fragment>
-  );
-};
+  )
+}
 
-export const ForwardCheckBox = ({ bool, onChange, label = "Forward to all servers" }) => (
+export const ForwardCheckBox = ({ bool, onChange, label = 'Forward to all servers' }) => (
   <FormControlLabel
     control={
       <Checkbox
         checked={bool}
         onChange={(e) => {
-          onChange(e.target.checked);
+          onChange(e.target.checked)
         }}
       />
     }
     label={label}
   />
-);
+)

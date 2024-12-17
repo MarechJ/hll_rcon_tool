@@ -47,4 +47,4 @@ const RconChatCommandsNotes = `
   }
   `
 
-  export default RconChatCommandsNotes;
+export default RconChatCommandsNotes

@@ -34,6 +34,6 @@ const logLineWebhooksNotes = `
         }
     ]
 }
-`;
+`
 
-export default logLineWebhooksNotes;
+export default logLineWebhooksNotes

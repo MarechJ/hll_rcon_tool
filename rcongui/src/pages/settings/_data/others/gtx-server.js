@@ -16,6 +16,6 @@ const gtxServerNotes = `
         "port": 9933
           
     }
-    `;
+    `
 
-export default gtxServerNotes;
+export default gtxServerNotes

@@ -82,6 +82,6 @@ The server is now live and the regular rules apply."
   }
   
 
-`;
+`
 
-export default SeedVipNotes;
+export default SeedVipNotes

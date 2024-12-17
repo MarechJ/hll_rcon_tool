@@ -98,4 +98,4 @@ const CRCONNotes = `
     }
     `
 
-export default CRCONNotes;
+export default CRCONNotes

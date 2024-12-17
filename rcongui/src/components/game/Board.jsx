@@ -1,20 +1,20 @@
-import { Typography, Divider, Stack, Box } from "@mui/material";
-import { styled } from "@mui/material";
-import Grid from "@mui/material/Grid2";
+import { Typography, Divider, Stack, Box } from '@mui/material'
+import { styled } from '@mui/material'
+import Grid from '@mui/material/Grid2'
 
 const StyledStack = styled(Stack)(({ theme }) => ({
   padding: 0,
   maxWidth: theme.breakpoints.values.md,
-  margin: "0 auto",
-  [theme.breakpoints.up("md")]: {
+  margin: '0 auto',
+  [theme.breakpoints.up('md')]: {
     paddingRight: theme.spacing(1),
-    paddingLeft: theme.spacing(1),
-  },
-}));
+    paddingLeft: theme.spacing(1)
+  }
+}))
 
 const SmallText = styled(Typography)(({ theme }) => ({
-  fontSize: theme.typography.pxToRem(12),
-}));
+  fontSize: theme.typography.pxToRem(12)
+}))
 
 /**
  * @typedef {Object} BoardData
@@ -27,7 +27,7 @@ const SmallText = styled(Typography)(({ theme }) => ({
  */
 
 /**
- * 
+ *
  * @param {BoardData} data - The data object containing the game information.
  * @param {Object} props - Additional props.
  * @returns {JSX.Element} The rendered Board component.
@@ -35,84 +35,78 @@ const SmallText = styled(Typography)(({ theme }) => ({
 export const Board = ({ data, ...props }) => {
   return (
     <StyledStack>
-      <SmallText textAlign={"center"} fontWeight={"bold"}>
+      <SmallText textAlign={'center'} fontWeight={'bold'}>
         {data.raw_time_remaining}
       </SmallText>
-      <Divider variant="middle" />
-      <Grid
-        container
-        columnSpacing={1}
-        justifyContent={"center"}
-        sx={{ py: 0.5 }}
-        alignContent={"center"}
-      >
+      <Divider variant='middle' />
+      <Grid container columnSpacing={1} justifyContent={'center'} sx={{ py: 0.5 }} alignContent={'center'}>
         <Grid
           size={4}
           sx={{
-            display: "flex",
-            justifyContent: "start",
-            alignItems: "start",
+            display: 'flex',
+            justifyContent: 'start',
+            alignItems: 'start'
           }}
         >
           <Box
             width={24}
             height={24}
-            component={"img"}
-            alt="Allies"
+            component={'img'}
+            alt='Allies'
             src={`/icons/teams/${data.current_map.map.allies.name}.webp`}
           />
         </Grid>
-        <Grid container sx={{ textAlign: "center" }} size={4}>
+        <Grid container sx={{ textAlign: 'center' }} size={4}>
           <Grid size={5}>
-            <Typography component={"span"} fontWeight={"bold"}>{data.allied_score}</Typography>
+            <Typography component={'span'} fontWeight={'bold'}>
+              {data.allied_score}
+            </Typography>
           </Grid>
           <Grid size={2}>
-            <Typography component={"span"}>:</Typography>
+            <Typography component={'span'}>:</Typography>
           </Grid>
           <Grid size={5}>
-            <Typography component={"span"} fontWeight={"bold"}>{data.axis_score}</Typography>
+            <Typography component={'span'} fontWeight={'bold'}>
+              {data.axis_score}
+            </Typography>
           </Grid>
         </Grid>
         <Grid
           size={4}
           sx={{
-            display: "flex",
-            justifyContent: "end",
-            alignItems: "start",
+            display: 'flex',
+            justifyContent: 'end',
+            alignItems: 'start'
           }}
         >
           <Box
             width={24}
             height={24}
-            component={"img"}
-            alt="Axis"
+            component={'img'}
+            alt='Axis'
             src={`/icons/teams/${data.current_map.map.axis.name}.webp`}
           />
         </Grid>
       </Grid>
-      <Divider variant="middle" />
+      <Divider variant='middle' />
       <Grid container>
         <Grid size={3}>
-          <SmallText textAlign={"left"} sx={{ pl: 0.75 }}>
+          <SmallText textAlign={'left'} sx={{ pl: 0.75 }}>
             {`[${data.num_allied_players ?? 0}]`}
           </SmallText>
         </Grid>
         <Grid size={6}>
-          <SmallText textAlign={"center"}>
-            {data.current_map.map.pretty_name}
-          </SmallText>
+          <SmallText textAlign={'center'}>{data.current_map.map.pretty_name}</SmallText>
         </Grid>
         <Grid size={3}>
-          <SmallText textAlign={"right"} sx={{ pr: 0.75 }}>
+          <SmallText textAlign={'right'} sx={{ pr: 0.75 }}>
             {`[${data.num_axis_players ?? 0}]`}
           </SmallText>
         </Grid>
       </Grid>
-        <Grid size={12}>
-          <SmallText textAlign={"center"}>
-            {data.current_map.game_mode.toUpperCase()}
-          </SmallText>
-        </Grid>
+      <Grid size={12}>
+        <SmallText textAlign={'center'}>{data.current_map.game_mode.toUpperCase()}</SmallText>
+      </Grid>
     </StyledStack>
-  );
-};
+  )
+}

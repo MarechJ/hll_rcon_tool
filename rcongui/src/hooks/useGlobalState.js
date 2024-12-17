@@ -1,8 +1,8 @@
-import { teamsLiveQueryOptions } from "@/queries/teams-live-query";
-import { cmd } from "@/utils/fetchUtils";
-import { useQueries, useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
-import { create } from "zustand";
+import { teamsLiveQueryOptions } from '@/queries/teams-live-query'
+import { cmd } from '@/utils/fetchUtils'
+import { useQueries, useQuery } from '@tanstack/react-query'
+import { useEffect } from 'react'
+import { create } from 'zustand'
 
 // Create the Zustand store
 export const useGlobalStore = create((set) => ({
@@ -21,81 +21,81 @@ export const useGlobalStore = create((set) => ({
   updateGameState: (data) => set(() => ({ gameState: data })),
   updateOnlineIngameMods: (data) => set(() => ({ onlineIngameMods: data })),
   updateOnlineCrconMods: (data) => set(() => ({ onlineCrconMods: data })),
-  updateOnlinePlayers: (data) => set(() => ({ onlinePlayers: data })),
-}));
+  updateOnlinePlayers: (data) => set(() => ({ onlinePlayers: data }))
+}))
 
-const staleTime = 15 * 1000;
-const refetchInterval = 30 * 1000;
+const staleTime = 15 * 1000
+const refetchInterval = 30 * 1000
 
 // Define your global queries with onSuccess callbacks
 const globalQueries = [
   {
-    queryKey: ["server", "state"],
+    queryKey: ['server', 'state'],
     queryFn: cmd.GET_GAME_SERVER_STATUS,
     select: (data) => {
-      useGlobalStore.setState((state) => ({ status: data }));
-      return data;
-    },
+      useGlobalStore.setState((state) => ({ status: data }))
+      return data
+    }
   },
   {
-    queryKey: ["game", "state"],
+    queryKey: ['game', 'state'],
     queryFn: cmd.GET_GAME_STATE,
     select: (data) => {
-      useGlobalStore.setState((state) => ({ gameState: data }));
-      return data;
-    },
+      useGlobalStore.setState((state) => ({ gameState: data }))
+      return data
+    }
   },
   {
-    queryKey: ["server", "list"],
+    queryKey: ['server', 'list'],
     queryFn: cmd.GET_GAME_SERVER_LIST,
     select: (data) => {
-      useGlobalStore.setState((state) => ({ servers: data }));
-      return data;
-    },
+      useGlobalStore.setState((state) => ({ servers: data }))
+      return data
+    }
   },
   {
-    queryKey: ["ingame-mods", "live"],
+    queryKey: ['ingame-mods', 'live'],
     queryFn: cmd.GET_INGAME_MODS,
     select: (data) => {
-      useGlobalStore.setState((state) => ({ onlineIngameMods: data }));
-      return data;
-    },
+      useGlobalStore.setState((state) => ({ onlineIngameMods: data }))
+      return data
+    }
   },
   {
-    queryKey: ["crcon-mods", "live"],
+    queryKey: ['crcon-mods', 'live'],
     queryFn: cmd.GET_CRCON_MODS,
     select: (data) => {
-      useGlobalStore.setState((state) => ({ onlineCrconMods: data }));
-      return data;
-    },
+      useGlobalStore.setState((state) => ({ onlineCrconMods: data }))
+      return data
+    }
   },
-  teamsLiveQueryOptions,
-];
+  teamsLiveQueryOptions
+]
 
 export const GlobalState = () => {
   const { data, isSuccess: isCrconConnected } = useQuery({
-    queryKey: ["crcon", "state"],
+    queryKey: ['crcon', 'state'],
     queryFn: cmd.GET_CRCON_SERVER_CONNECTION,
     refetchInterval,
-    retry: 1,
-  });
+    retry: 1
+  })
 
   useEffect(() => {
     if (isCrconConnected) {
-      useGlobalStore.setState({ serverState: data });
+      useGlobalStore.setState({ serverState: data })
     } else {
-      useGlobalStore.setState({ serverState: null });
+      useGlobalStore.setState({ serverState: null })
     }
-  }, [isCrconConnected]);
+  }, [isCrconConnected])
 
   useQueries({
     queries: globalQueries.map((query) => ({
       staleTime,
       refetchInterval,
       enabled: isCrconConnected,
-      ...query,
-    })),
-  });
+      ...query
+    }))
+  })
 
-  return null;
-};
+  return null
+}

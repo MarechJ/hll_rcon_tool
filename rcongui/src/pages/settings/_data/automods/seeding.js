@@ -309,4 +309,4 @@ const SeedingAutomod = `
         }
     `
 
-    export default SeedingAutomod;
+export default SeedingAutomod

@@ -1,3 +1,3 @@
-import MessageHistory from "./MessageHistory";
+import MessageHistory from './MessageHistory'
 
-export default MessageHistory;
+export default MessageHistory

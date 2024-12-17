@@ -1,4 +1,4 @@
-import { ControlledCheckbox } from '@/components/form/core/ControlledCheckbox';
+import { ControlledCheckbox } from '@/components/form/core/ControlledCheckbox'
 
 export const ForwardField = ({ control, errors, ...props }) => {
   return (
@@ -10,5 +10,5 @@ export const ForwardField = ({ control, errors, ...props }) => {
       label={'Apply to all servers'}
       {...props}
     />
-  );
-};
+  )
+}

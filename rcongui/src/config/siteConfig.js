@@ -1,5 +1,5 @@
 export default {
-    appName: 'crcon',
-    repoOwner: 'MarechJ',
-    repoName: 'hll_rcon_tool',
+  appName: 'crcon',
+  repoOwner: 'MarechJ',
+  repoName: 'hll_rcon_tool'
 }

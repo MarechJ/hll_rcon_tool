@@ -1,16 +1,8 @@
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import { Controller } from 'react-hook-form';
+import FormControlLabel from '@mui/material/FormControlLabel'
+import Checkbox from '@mui/material/Checkbox'
+import { Controller } from 'react-hook-form'
 
-export function ControlledCheckbox({
-  control,
-  name,
-  disabled,
-  rules,
-  defaultValue,
-  label,
-  ...props
-}) {
+export function ControlledCheckbox({ control, name, disabled, rules, defaultValue, label, ...props }) {
   return (
     <Controller
       disabled={disabled}
@@ -35,5 +27,5 @@ export function ControlledCheckbox({
         />
       )}
     />
-  );
+  )
 }
