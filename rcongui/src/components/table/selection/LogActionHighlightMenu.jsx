@@ -1,18 +1,23 @@
 import {
+  Box,
+  Button,
+  Checkbox,
   List,
   ListItem,
   ListItemButton,
-  Box,
   ListItemIcon,
-  Checkbox,
   ListItemText,
-  ToggleButtonGroup,
   ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
 } from "@mui/material";
-import { PopoverMenu } from "@/components/shared/PopoverMenu";
+import {PopoverMenu} from "@/components/shared/PopoverMenu";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
-import { Tooltip, Button } from "@mui/material";
-import { logActions } from "@/utils/lib";
+import {logActions} from "@/utils/lib";
+
+function fromValue(v) {
+  return v === true ? "on" : "off";
+}
 
 /**
  * @param {Object} props
@@ -25,37 +30,35 @@ export const LogActionHighlightMenu = ({
   onActionSelect,
   onToggle,
   toggleValue,
-}) => (
+}) =>
   <PopoverMenu
     id="log-action-highlight-picker"
     description="Pick an action to highlight its logs"
-    renderButton={(props) => (
-      <Button {...props}>
-        <Tooltip title="Highlight action">
-          <AutoFixHighIcon />
-        </Tooltip>
-      </Button>
-    )}
+    renderButton={(props) => <Button {...props}>
+      <Tooltip title="Highlight action">
+        <AutoFixHighIcon/>
+      </Tooltip>
+    </Button>}
   >
     <ToggleButtonGroup
-      value={toggleValue === true ? "on" : "off"}
+      value={fromValue(toggleValue)}
       size="small"
       exclusive
       onChange={(e, value) => {
-        onToggle(value);
+        onToggle(value === null ? fromValue(toggleValue) : value);
       }}
       aria-label="logs table highlight change"
       fullWidth
     >
       <ToggleButton
-        sx={{ borderRadius: 0 }}
+        sx={{borderRadius: 0}}
         value="on"
         aria-label="highlighted table"
       >
         ON
       </ToggleButton>
       <ToggleButton
-        sx={{ borderRadius: 0 }}
+        sx={{borderRadius: 0}}
         value="off"
         aria-label="normal table"
       >
@@ -70,7 +73,7 @@ export const LogActionHighlightMenu = ({
         overflowY: "auto",
         overflowX: "hidden",
         maxHeight: 300,
-        "& ul": { padding: 0 },
+        "& ul": {padding: 0},
       }}
     >
       {[
@@ -93,50 +96,47 @@ export const LogActionHighlightMenu = ({
           // Neither is selected, so compare alphabetically
           return a.localeCompare(b);
         }),
-      ].map((actionName) => (
-        <ListItem
-          key={`${actionName}`}
-          dense
-          disableGutters
-          sx={{ "& .MuiButtonBase-root": { opacity: 1 } }}
-        >
-          <ListItemButton onClick={() => onActionSelect(actionName)}>
-            <ListItemIcon>
-              <Checkbox
-                edge="start"
-                checked={actionOptions[actionName]}
-                tabIndex={-1}
-                disableRipple
-                inputProps={{ "aria-labelledby": `picker-${actionName}` }}
-              />
-            </ListItemIcon>
+      ].map((actionName) => <ListItem
+        key={`${actionName}`}
+        dense
+        disableGutters
+        sx={{"& .MuiButtonBase-root": {opacity: 1}}}
+      >
+        <ListItemButton onClick={() => onActionSelect(actionName)}>
+          <ListItemIcon>
+            <Checkbox
+              edge="start"
+              checked={actionOptions[actionName]}
+              tabIndex={-1}
+              disableRipple
+              inputProps={{"aria-labelledby": `picker-${actionName}`}}
+            />
+          </ListItemIcon>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              overflow: "hidden",
+              px: 0,
+              py: 0.25,
+              gap: 1,
+            }}
+          >
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
                 overflow: "hidden",
-                px: 0,
-                py: 0.25,
-                gap: 1,
+                whiteSpace: "nowrap",
+                textOverflow: "ellipsis",
               }}
             >
-              <Box
-                sx={{
-                  overflow: "hidden",
-                  whiteSpace: "nowrap",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                <ListItemText id={`picker-${actionName}`}>
-                  {logActions[actionName]}
-                  {" - "}
-                  {actionName}
-                </ListItemText>
-              </Box>
+              <ListItemText id={`picker-${actionName}`}>
+                {logActions[actionName]}
+                {" - "}
+                {actionName}
+              </ListItemText>
             </Box>
-          </ListItemButton>
-        </ListItem>
-      ))}
+          </Box>
+        </ListItemButton>
+      </ListItem>)}
     </List>
-  </PopoverMenu>
-);
+  </PopoverMenu>;
