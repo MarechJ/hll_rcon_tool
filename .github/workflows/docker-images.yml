@@ -38,7 +38,7 @@ jobs:
           push: true
           tags: |
             cericmathey/hll_rcon_tool_frontend:${{  github.ref_name }}
-            ${{ contains(github.ref_name, 'rc') && '' || 'cericmathey/hll_rcon_tool:latest' }}
+            ${{ contains(github.ref_name, 'rc') && '' || 'cericmathey/hll_rcon_tool_frontend:latest' }}
       - name: Update repo description
         uses: peter-evans/dockerhub-description@v3
         if: ${{ ! contains(github.ref_name, 'rc') }}
