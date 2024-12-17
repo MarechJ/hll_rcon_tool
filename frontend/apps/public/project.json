@@ -1,9 +1,0 @@
-{
-  "name": "public",
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "apps/public",
-  "projectType": "application",
-  "tags": [],
-  "// targets": "to see all targets run: nx show project public --web",
-  "targets": {}
-}
