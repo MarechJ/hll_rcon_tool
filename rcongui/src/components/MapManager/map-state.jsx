@@ -1,10 +1,10 @@
-import { Box, createStyles, makeStyles, Typography } from "@material-ui/core";
-import React from "react";
-import Skeleton from "@material-ui/lab/Skeleton";
+import { Box, Typography } from "@mui/material";
+import { makeStyles } from '@mui/styles';
+import Skeleton from '@mui/material/Skeleton';
 import { MapDetail } from "./map-details";
 
 const useStyles = makeStyles((theme) =>
-  createStyles({
+  ({
     main: {
       maxWidth: theme.breakpoints.values.sm,
       display: "flex",
@@ -37,7 +37,7 @@ export function MapState({ gameState }) {
   const classes = useStyles();
 
   if (!gameState) {
-    return <Skeleton variant="rect" height={60} />;
+    return <Skeleton variant="rectangular" height={60} />;
   }
 
   return (

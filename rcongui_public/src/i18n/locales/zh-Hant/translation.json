@@ -1,0 +1,27 @@
+{
+  "title": "Hell Let Loose 統計",
+  "selectLanguage": "選擇語言",
+  "now": "現在",
+  "up-next": "接下來",
+  "open": "打開",
+  "close": "關閉",
+  "toggle": "切換",
+  "toggleTheme": "切換主題",
+  "get-started": "開始",
+  "made-by": "由",
+  "themeMode": {
+    "light": "淺色",
+    "dark": "深色",
+    "system": "系統"
+  },
+  "pagination": {
+    "previous": {
+      "text": "上一頁",
+      "label": "前往上一頁"
+    },
+    "next": {
+      "text": "下一頁",
+      "label": "前往下一頁"
+    }
+  }
+}

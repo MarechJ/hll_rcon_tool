@@ -1,12 +1,12 @@
-import React from "react";
-import { Grid } from "@material-ui/core";
-import ListItemText from "@material-ui/core/ListItemText";
+import ListItemText from "@mui/material/ListItemText";
 import "react-toastify/dist/ReactToastify.css";
 import { fromJS, List as IList } from "immutable";
-import Typography from "@material-ui/core/Typography";
-import Switch from "@material-ui/core/Switch";
-import Chip from "@material-ui/core/Chip";
-import { get, postData, showResponse } from "../../utils/fetchUtils";
+import Typography from "@mui/material/Typography";
+import Switch from "@mui/material/Switch";
+import Chip from "@mui/material/Chip";
+import { get, postData, showResponse } from "@/utils/fetchUtils";
+import Grid from "@mui/material/Grid2";
+import {Component} from "react";
 
 const StatusToColor = {
   RUNNING: "primary",
@@ -26,24 +26,20 @@ const Process = ({
   status,
   isOn,
   onToggle,
-  classes,
 }) => (
   <Grid
     container
-    justify="space-around"
+    justifyContent="space-around"
     spacing={1}
-    className={classes.padding}
   >
-    <Grid item xs={12} spacing={1}>
+    <Grid spacing={1} size={12}>
       <Grid container>
-        <Grid item xs={6}>
+        <Grid size={6}>
           <Grid
             container
-            className={`${classes.alignLeft} ${classes.noPaddingMarginBottom}`}
           >
-            <Grid item xs={12}>
+            <Grid size={12}>
               <Typography
-                className={classes.noPaddingMarginBottom}
                 variant="h6"
               >
                 {name}
@@ -51,20 +47,20 @@ const Process = ({
               <ListItemText
                 primary=""
                 secondary={description}
-                className={classes.noPaddingMargin}
+                
               />
             </Grid>
           </Grid>
         </Grid>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <Chip label={status} color={StatusToColor[status]} />
           <ListItemText
             primary=""
             secondary={upTime}
-            className={classes.noPaddingMargin}
+            
           />
         </Grid>
-        <Grid item xs={2}>
+        <Grid size={2}>
           <Switch checked={isOn} onChange={onToggle} name="Start/Stop" />
         </Grid>
       </Grid>
@@ -72,7 +68,7 @@ const Process = ({
   </Grid>
 );
 
-class ServicesList extends React.Component {
+class ServicesList extends Component {
   constructor(props) {
     super(props);
 
@@ -128,14 +124,13 @@ class ServicesList extends React.Component {
 
   render() {
     const { services } = this.state;
-    const { classes } = this.props;
 
     return (
-      <Grid container spacing={1}>
-        <Grid item xs={12}>
+      (<Grid container spacing={1}>
+        <Grid size={12}>
           {services.map((s) => (
             <Process
-              classes={classes}
+              key={s.get("name")}
               name={s.get("name")}
               description={s.get("info")}
               status={s.get("statename")}
@@ -149,7 +144,7 @@ class ServicesList extends React.Component {
             />
           ))}
         </Grid>
-      </Grid>
+      </Grid>)
     );
   }
 }

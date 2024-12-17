@@ -1,24 +1,17 @@
-import * as React from "react";
-import Button from "@material-ui/core/Button";
-import TextField from "@material-ui/core/TextField";
-import Dialog from "@material-ui/core/Dialog";
-import DialogActions from "@material-ui/core/DialogActions";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogContentText from "@material-ui/core/DialogContentText";
-import DialogTitle from "@material-ui/core/DialogTitle";
-import {
-  FormControl,
-  Grid,
-  InputLabel,
-  makeStyles,
-  MenuItem,
-  Select,
-  Typography,
-} from "@material-ui/core";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
+import { FormControl, InputLabel, MenuItem, Select, Typography } from "@mui/material";
 import moment from "moment";
-import { getServerStatus, getSharedMessages } from "../../utils/fetchUtils";
+import { getServerStatus, getSharedMessages } from "@/utils/fetchUtils";
 import TextHistory from "../textHistory";
-import { TimePickerButtons } from "../shared/time-picker-buttons";
+import { TimePickerButtons } from "@/components/shared/TimePickerButtons";
+import Grid from "@mui/material/Grid2";
+import {Fragment, useEffect, useState} from "react";
 
 const presetTimes = [
   [1, "hour"],
@@ -61,12 +54,6 @@ function BlacklistServerWarning({ blacklist, currentServer }) {
   );
 }
 
-const useStyles = makeStyles((theme) => ({
-  selectEmpty: {
-    marginTop: theme.spacing(2.7),
-  },
-}));
-
 export default function BlacklistRecordCreateDialog({
   open,
   setOpen,
@@ -78,21 +65,20 @@ export default function BlacklistRecordCreateDialog({
   disablePlayerId,
   hasManyIDs = false,
 }) {
-  const [blacklist, setBlacklist] = React.useState("");
-  const [playerId, setPlayerId] = React.useState("");
-  const [expiresAt, setExpiresAt] = React.useState("");
-  const [reason, setReason] = React.useState("");
-  const [currentServer, setCurrentServer] = React.useState({});
-  const [punishMessages, setPunishMessages] = React.useState([]);
-  const [selectedMessage, setSelectedMessage] = React.useState("");
-  const classes = useStyles();
+  const [blacklist, setBlacklist] = useState("");
+  const [playerId, setPlayerId] = useState("");
+  const [expiresAt, setExpiresAt] = useState("");
+  const [reason, setReason] = useState("");
+  const [currentServer, setCurrentServer] = useState({});
+  const [punishMessages, setPunishMessages] = useState([]);
+  const [selectedMessage, setSelectedMessage] = useState("");
 
   const handlePunishMessageChange = (event) => {
     setSelectedMessage(event.target.value ?? "");
     setReason(punishMessages[event.target.value] ?? "");
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (open) {
       const messageType = "punishments";
       const locallyStoredMessages = new TextHistory(messageType).getTexts();
@@ -108,7 +94,7 @@ export default function BlacklistRecordCreateDialog({
     }
   }, [open]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (initialValues) {
       if (initialValues.blacklistId !== undefined) {
         const blacklist = blacklists?.find(
@@ -127,7 +113,7 @@ export default function BlacklistRecordCreateDialog({
     }
   }, [open]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (blacklists?.length == 1) {
       setBlacklist(blacklists[0]);
     }
@@ -142,7 +128,7 @@ export default function BlacklistRecordCreateDialog({
   };
 
   return (
-    <Dialog
+    (<Dialog
       open={open}
       onClose={handleClose}
       PaperProps={{
@@ -184,7 +170,7 @@ export default function BlacklistRecordCreateDialog({
         </FormControl>
 
         {blacklist && (
-          <React.Fragment>
+          <Fragment>
             <BlacklistServerWarning
               blacklist={blacklist}
               currentServer={currentServer}
@@ -206,7 +192,7 @@ export default function BlacklistRecordCreateDialog({
             />
             {/* EXPIRY */}
             <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <TextField
                   margin="dense"
                   id="expiresAt"
@@ -222,7 +208,7 @@ export default function BlacklistRecordCreateDialog({
                   variant="standard"
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={12}>
                 {presetTimes.map(([amount, unit], index) => (
                   <TimePickerButtons
                     key={unit + index}
@@ -240,7 +226,7 @@ export default function BlacklistRecordCreateDialog({
             </Grid>
             {/* REASON */}
             <Grid container spacing={2} alignItems="top">
-              <Grid item xs={8}>
+              <Grid size={8}>
                 <TextField
                   required
                   multiline
@@ -258,7 +244,7 @@ export default function BlacklistRecordCreateDialog({
               {duration}, {expires}, {ban_id}, {blacklist_name}"
                 />
               </Grid>
-              <Grid item xs={4}>
+              <Grid size={4}>
                 <Select
                   id="saved-messages-select"
                   value={selectedMessage}
@@ -266,7 +252,6 @@ export default function BlacklistRecordCreateDialog({
                   inputProps={{ "aria-label": "Saved Messages" }}
                   fullWidth
                   displayEmpty
-                  className={classes.selectEmpty}
                 >
                   <MenuItem value="">
                     <em>Saved Messages</em>
@@ -285,7 +270,7 @@ export default function BlacklistRecordCreateDialog({
                 </Select>
               </Grid>
             </Grid>
-          </React.Fragment>
+          </Fragment>
         )}
       </DialogContent>
       <DialogActions>
@@ -294,7 +279,7 @@ export default function BlacklistRecordCreateDialog({
           {submitText}
         </Button>
       </DialogActions>
-    </Dialog>
+    </Dialog>)
   );
 }
 
@@ -305,14 +290,14 @@ export function BlacklistRecordCreateButton({
   disablePlayerId,
   children,
 }) {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
 
   const handleClickOpen = () => {
     setOpen(true);
   };
 
   return (
-    <React.Fragment>
+    <Fragment>
       <Button
         variant="contained"
         color="primary"
@@ -329,6 +314,6 @@ export function BlacklistRecordCreateButton({
         initialValues={initialValues}
         disablePlayerId={disablePlayerId}
       />
-    </React.Fragment>
+    </Fragment>
   );
 }

@@ -7,10 +7,13 @@ docker-templates/
 *.log
 *.pyc
 events/
-rcongui/node_modules/
 *.tar
 *.gz
 db_data_bu/
 config/
+
 rcongui/dist/
-rcongui/build/
+rcongui/node_modules/
+
+rcongui_public/dist/
+rcongui_public/node_modules/

@@ -1,12 +1,13 @@
-import * as React from 'react';
-import Button from '@material-ui/core/Button';
-import TextField from '@material-ui/core/TextField';
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import { Checkbox, FormControl, FormControlLabel, FormGroup, Grid, InputLabel, MenuItem, Select, Switch, Typography } from '@material-ui/core';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+import { Checkbox, FormControl, FormControlLabel, FormGroup, InputLabel, MenuItem, Select, Switch, Typography } from '@mui/material';
+import Grid from "@mui/material/Grid2";
+import {Fragment, useEffect, useState} from "react";
 
 export const SYNC_METHODS = {
   kick_only: "Kick Only",
@@ -29,11 +30,11 @@ export default function BlacklistListCreateDialog({
   titleText="Edit Blacklist",
   submitText="Save",
 }) {
-  const [name, setName] = React.useState("");
-  const [serverNumbers, setServerNumbers] = React.useState(null);
-  const [syncMethod, setSyncMethod] = React.useState("");
+  const [name, setName] = useState("");
+  const [serverNumbers, setServerNumbers] = useState(null);
+  const [syncMethod, setSyncMethod] = useState("");
   
-  React.useEffect(() => {
+  useEffect(() => {
     if (initialValues) {
       if (initialValues.name !== undefined) setName(initialValues.name);
       if (initialValues.servers !== undefined) setServerNumbers(initialValues.servers);
@@ -67,23 +68,23 @@ export default function BlacklistListCreateDialog({
   }
 
   return (
-    <Dialog
-      open={open}
-      onClose={handleClose}
-      PaperProps={{
-        component: 'form',
-        onSubmit: (event) => {
-          event.preventDefault();
-          const data = {
-            name,
-            servers: serverNumbers,
-            syncMethod,
-          }
-          onSubmit(data);
-          handleClose();
-        },
-      }}
-    >
+    (<Dialog
+        open={open}
+        onClose={handleClose}
+        PaperProps={{
+          component: 'form',
+          onSubmit: (event) => {
+            event.preventDefault();
+            const data = {
+              name,
+              servers: serverNumbers,
+              syncMethod,
+            }
+            onSubmit(data);
+            handleClose();
+          },
+        }}
+      >
       <DialogTitle>{titleText}</DialogTitle>
       <DialogContent>
         <DialogContentText>
@@ -91,8 +92,8 @@ export default function BlacklistListCreateDialog({
           scalability than regular bans.
         </DialogContentText>
 
-        <Grid container justify="space-between" spacing={4}>
-          <Grid item xs={6}>
+        <Grid container justifyContent="space-between" spacing={4}>
+          <Grid size={6}>
             <TextField
               required
               id="name"
@@ -105,7 +106,7 @@ export default function BlacklistListCreateDialog({
               variant="standard"
             />
           </Grid>
-          <Grid item xs={6}>
+          <Grid size={6}>
             <FormControl required fullWidth>
               <InputLabel>Sync Method</InputLabel>
               <Select
@@ -120,14 +121,14 @@ export default function BlacklistListCreateDialog({
             </FormControl>
           </Grid>
         </Grid>
-          <Typography variant="caption" color="textSecondary">
+          <Typography variant="caption">
             {SYNC_METHOD_DESCRIPTIONS[syncMethod]}
           </Typography>
         <br/>
         <Typography variant="h6">Servers</Typography>
 
         <Grid container alignContent="flex-start">
-          <Grid item xs={6}>
+          <Grid size={6}>
             <FormGroup>
               {Object.entries(servers).map(([number, name]) => (
                 <FormControlLabel key={number} label={name} control={
@@ -140,7 +141,7 @@ export default function BlacklistListCreateDialog({
               ))}
             </FormGroup>
           </Grid>
-          <Grid item xs={6}>
+          <Grid size={6}>
             <FormControlLabel
               label="Enable on all servers"
               control={
@@ -157,7 +158,7 @@ export default function BlacklistListCreateDialog({
         <Button onClick={handleClose}>Cancel</Button>
         <Button type="submit" disabled={name === "" || syncMethod === ""}>{submitText}</Button>
       </DialogActions>
-    </Dialog>
+    </Dialog>)
   );
 }
 
@@ -166,14 +167,14 @@ export function BlacklistListCreateButton({
   onSubmit,
   initialValues,
 }) {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
 
   const handleClickOpen = () => {
     setOpen(true);
   };
 
   return (
-    <React.Fragment>
+    <Fragment>
       <Button 
         variant="contained"
         color="primary"
@@ -191,6 +192,6 @@ export function BlacklistListCreateButton({
         titleText="Create Blacklist"
         submitText="Create List"
       />
-    </React.Fragment>
+    </Fragment>
   )
 }

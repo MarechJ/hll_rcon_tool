@@ -1,23 +1,21 @@
-import React from "react";
 import "react-toastify/dist/ReactToastify.css";
-import Grid from "@material-ui/core/Grid";
-import Link from "@material-ui/core/Link";
-import { Link as RouterLink } from "react-router-dom";
-import TextField from "@material-ui/core/TextField";
-import Button from "@material-ui/core/Button";
+import Grid from "@mui/material/Grid2";
+import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
 import {
   get,
   handle_http_errors,
   postData,
   showResponse,
-} from "../../utils/fetchUtils";
-import Dialog from "@material-ui/core/Dialog";
-import DialogActions from "@material-ui/core/DialogActions";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogTitle from "@material-ui/core/DialogTitle";
-import { throttle } from "lodash/function";
+} from "@/utils/fetchUtils";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import throttle from "lodash/throttle";
+import {Component, Fragment} from "react";
 
-export class LoginBox extends React.Component {
+export class LoginBox extends Component {
   constructor(props) {
     super(props);
 
@@ -77,7 +75,7 @@ export class LoginBox extends React.Component {
     const { open, username, password, isLoggedIn } = this.state;
 
     return (
-      <React.Fragment>
+      <Fragment>
         <Button
           color="inherit"
           onClick={() =>
@@ -96,7 +94,7 @@ export class LoginBox extends React.Component {
           >
             <DialogContent>
               <Grid container spacing={1}>
-                <Grid item>
+                <Grid>
                   <TextField
                     autoFocus
                     size="small"
@@ -127,7 +125,7 @@ export class LoginBox extends React.Component {
             </DialogActions>
           </form>
         </Dialog>
-      </React.Fragment>
+      </Fragment>
     );
   }
 }

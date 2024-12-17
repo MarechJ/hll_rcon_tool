@@ -1,18 +1,12 @@
-import React from "react";
 import {
-  Button,
   Checkbox,
   FormControlLabel,
-  Grid,
   Popover,
-  Tooltip,
-} from "@material-ui/core";
-import Chip from "@material-ui/core/Chip";
-import Autocomplete from "@material-ui/lab/Autocomplete";
-import TextField from "@material-ui/core/TextField";
+} from "@mui/material";
+import {Fragment, useState} from "react";
 
-export const WithPopver = ({ classes, popoverContent, children }) => {
-  const [anchorEl, setAnchorEl] = React.useState(null);
+export const WithPopver = ({ popoverContent, children }) => {
+  const [anchorEl, setAnchorEl] = useState(null);
 
   const handlePopoverOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -25,16 +19,12 @@ export const WithPopver = ({ classes, popoverContent, children }) => {
   const open = Boolean(anchorEl);
 
   return (
-    <React.Fragment>
+    <Fragment>
       <div onMouseEnter={handlePopoverOpen} onMouseLeave={handlePopoverClose}>
         {children}
       </div>
       <Popover
         id="mouse-over-popover"
-        className={classes.popover}
-        classes={{
-          paper: classes.paper,
-        }}
         open={open}
         anchorEl={anchorEl}
         anchorOrigin={{
@@ -50,81 +40,9 @@ export const WithPopver = ({ classes, popoverContent, children }) => {
       >
         {popoverContent}
       </Popover>
-    </React.Fragment>
+    </Fragment>
   );
 };
-
-export const ManualPlayerInput = ({
-  name,
-  setName,
-  playerId,
-  setPlayerId,
-  reason,
-  setReason,
-  sharedMessages,
-  textHistory,
-  onSubmit,
-  actionName,
-  tooltipText,
-  classes,
-}) => (
-  <Grid container spacing={1} justify="space-between">
-    <Grid item xs={6} md={3}>
-      <TextField
-        id="playerId"
-        label="Player ID"
-        helperText="Required"
-        value={playerId}
-        required
-        fullWidth
-        onChange={(e) => setPlayerId(e.target.value)}
-      />
-    </Grid>
-    <Grid item xs={6} md={3}>
-      <TextField
-        id="name"
-        label="Player name"
-        helperText="Optional"
-        value={name}
-        fullWidth
-        onChange={(e) => setName(e.target.value)}
-      />
-    </Grid>
-    <Grid item xs={12} md={4}>
-      <Autocomplete
-        freeSolo
-        fullWidth
-        options={sharedMessages.concat(textHistory.getTexts())}
-        inputValue={reason}
-        required
-        onInputChange={(e, value) => setReason(value)}
-        renderInput={(params) => (
-          <TextField {...params} label="Reason" helperText="Required" />
-        )}
-      />
-    </Grid>
-    <Grid
-      item
-      xs={12}
-      md={2}
-      className={`${classes.padding} ${classes.margin}`}
-    >
-      <Tooltip fullWidth title={tooltipText} arrow>
-        <Button
-          color="secondary"
-          variant="outlined"
-          disabled={playerId === "" || reason === ""}
-          onClick={() => {
-            onSubmit();
-            textHistory.saveText(reason);
-          }}
-        >
-          {actionName}
-        </Button>
-      </Tooltip>
-    </Grid>
-  </Grid>
-);
 
 export const ForwardCheckBox = ({ bool, onChange, label = "Forward to all servers" }) => (
   <FormControlLabel
@@ -139,41 +57,3 @@ export const ForwardCheckBox = ({ bool, onChange, label = "Forward to all server
     label={label}
   />
 );
-
-export const WordList = ({
-  words,
-  onWordsChange,
-  label,
-  placeholder,
-  helperText,
-}) => {
-  return (
-    <Autocomplete
-      multiple
-      freeSolo
-      options={[]}
-      autoSelect
-      onChange={(e, val) => onWordsChange(val)}
-      value={words}
-      renderTags={(value, getTagProps) =>
-        value.map((option, index) => (
-          <Chip
-            color="primary"
-            size="small"
-            variant="outlined"
-            label={option}
-            {...getTagProps({ index })}
-          />
-        ))
-      }
-      renderInput={(params) => (
-        <TextField
-          {...params}
-          label={label}
-          placeholder={placeholder}
-          helperText={helperText}
-        />
-      )}
-    />
-  );
-};

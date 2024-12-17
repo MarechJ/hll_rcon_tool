@@ -10,7 +10,16 @@ from rcon.audit import ingame_mods, online_mods
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.discord import audit_user_config_differences
 from rcon.gtx import GTXFtp
-from rcon.models import enter_session
+from rcon.message_templates import (
+    add_message_template,
+    delete_message_template,
+    edit_message_template,
+    get_all_message_templates,
+    get_message_template,
+    get_message_template_categories,
+    get_message_templates,
+)
+from rcon.models import MessageTemplate, enter_session
 from rcon.player_history import (
     add_flag_to_player,
     get_players_by_appearance,
@@ -21,10 +30,13 @@ from rcon.scoreboard import TimeWindowStats
 from rcon.settings import SERVER_INFO
 from rcon.types import (
     AdminUserType,
+    AllMessageTemplateTypes,
     BlacklistSyncMethod,
     BlacklistType,
     BlacklistWithRecordsType,
     GameServerBanType,
+    MessageTemplateCategory,
+    MessageTemplateType,
     ParsedLogsType,
     PlayerCommentType,
     PlayerFlagType,
@@ -32,7 +44,6 @@ from rcon.types import (
     ServerInfoType,
     VoteMapStatusType,
 )
-from rcon.user_config.watch_killrate import WatchKillRateUserConfig
 from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
 from rcon.user_config.auto_kick import AutoVoteKickUserConfig
 from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
@@ -62,6 +73,7 @@ from rcon.user_config.steam import SteamUserConfig
 from rcon.user_config.utils import BaseUserConfig, validate_user_config
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.vote_map import VoteMapUserConfig
+from rcon.user_config.watch_killrate import WatchKillRateUserConfig
 from rcon.user_config.webhooks import (
     AdminPingWebhooksUserConfig,
     AuditWebhooksUserConfig,
@@ -1884,3 +1896,47 @@ class RconAPI(Rcon):
 
     def get_objective_row(self, row: int):
         return super().get_objective_row(int(row))
+
+    def get_message_templates(
+        self, category: MessageTemplateCategory
+    ) -> list[MessageTemplateType]:
+        """Get all possible message type categories"""
+        return get_message_templates(category=category)
+
+    def get_message_template_categories(self) -> list[MessageTemplateCategory]:
+        return get_message_template_categories()
+
+    def get_message_template(self, id: int) -> MessageTemplateType | None:
+        """Return the message template for the specified record if it exists"""
+        res = get_message_template(id=id)
+
+        return res.to_dict() if res else None
+
+    def get_all_message_templates(self) -> AllMessageTemplateTypes:
+        """Get all message templates by category"""
+        return get_all_message_templates()
+
+    def add_message_template(
+        self, title: str, content: str, category: str | MessageTemplateCategory, by: str
+    ) -> int:
+        """Add a new message template and return the ID of the new record"""
+        return add_message_template(
+            title=title, content=content, category=category, author=by
+        )
+
+    def delete_message_template(self, id: int) -> bool:
+        """Delete a specific message template"""
+        return delete_message_template(id=id)
+
+    def edit_message_template(
+        self,
+        id: int,
+        title: str | None,
+        content: str | None,
+        category: str | MessageTemplateCategory | None,
+        by: str,
+    ) -> None:
+        """Add a new message template and return the ID of the new record"""
+        return edit_message_template(
+            id=id, title=title, content=content, category=category, author=by
+        )

@@ -1,49 +1,42 @@
-import {
-  Avatar,
-  Box,
-  Divider,
-  makeStyles,
-  Typography,
-} from "@material-ui/core";
+import { Avatar, Box, Typography } from "@mui/material";
+import { styled } from '@mui/material/styles';
 import { getMapLayerImageSrc, unifiedGamemodeName } from "./helpers";
 
-const useStyles = makeStyles((theme) => ({
-  descriptionRoot: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: theme.spacing(0.5),
-    textTransform: "capitalize",
-  },
-  mapBox: {
-    display: "flex",
-    gap: theme.spacing(1),
-    alignItems: "center",
-  },
-  mapBoxAvatar: {
-    display: "none",
-    [theme.breakpoints.up("sm")]: {
-      display: "block",
-    },
+const DescriptionRoot = styled("span")(({ theme }) => ({
+  display: "flex",
+  flexWrap: "wrap",
+  gap: theme.spacing(0.5),
+  textTransform: "capitalize",
+}));
+
+const MapBox = styled(Box)(({ theme }) => ({
+  display: "flex",
+  gap: theme.spacing(1),
+  alignItems: "center",
+}));
+
+const StyledAvatar = styled(Avatar)(({ theme }) => ({
+  display: "none",
+  [theme.breakpoints.up("sm")]: {
+    display: "block",
   },
 }));
 
 export function MapDescription({ mapLayer }) {
-  const classes = useStyles();
-
   const gameMode = unifiedGamemodeName(mapLayer.game_mode);
 
   return (
-    <Box className={classes.descriptionRoot}>
+    <DescriptionRoot>
       <Typography variant="caption">{gameMode}</Typography>
       {gameMode === "offensive" && (
         <>
-          <Divider orientation="vertical" flexItem />
+          {" | "}
           <Typography variant="caption">{mapLayer.attackers}</Typography>
         </>
       )}
-      <Divider orientation="vertical" flexItem />
+      {" | "}
       <Typography variant="caption">{mapLayer.environment}</Typography>
-    </Box>
+    </DescriptionRoot>
   );
 }
 
@@ -52,15 +45,13 @@ export function MapAvatar({ mapLayer, ...props }) {
 }
 
 export function MapDetail({ mapLayer }) {
-  const classes = useStyles();
-
   return (
-    <Box className={classes.mapBox}>
-      <MapAvatar mapLayer={mapLayer} className={classes.mapBoxAvatar} />
+    <MapBox>
+      <MapAvatar mapLayer={mapLayer} component={StyledAvatar} />
       <Box>
         <Typography variant="subtitle1">{mapLayer.map.pretty_name}</Typography>
         <MapDescription mapLayer={mapLayer} />
       </Box>
-    </Box>
+    </MapBox>
   );
 }

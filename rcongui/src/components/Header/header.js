@@ -1,44 +1,40 @@
-import React from "react";
-import Grid from "@material-ui/core/Grid";
-import AppBar from "@material-ui/core/AppBar";
-import Toolbar from "@material-ui/core/Toolbar";
-import Link from "@material-ui/core/Link";
+import Grid from "@mui/material/Grid2";
+import AppBar from "@mui/material/AppBar";
+import Toolbar from "@mui/material/Toolbar";
 import { Link as RouterLink } from "react-router-dom";
-import Button from "@material-ui/core/Button";
+import Button from "@mui/material/Button";
 import ServerStatus from "./server-status";
-import Menu from "@material-ui/core/Menu";
-import MenuItem from "@material-ui/core/MenuItem";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import { navMenus } from "./nav-data";
 import { LoginBox } from "./login";
-import { Box, createStyles, makeStyles } from "@material-ui/core";
+import { styled } from "@mui/material/styles";
+import {Fragment, useState} from "react";
 
-const useStyles = makeStyles((theme) =>
-  createStyles({
-    root: {
-      display: "flex",
-      flexGrow: 1,
-      flexDirection: "column",
-      justifyContent: "center",
-      alignItems: "start",
-      padding: theme.spacing(0.25),
-      minHeight: 0,
-      gap: theme.spacing(0.25),
-      [theme.breakpoints.up("md")]: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        gap: theme.spacing(2),
-        padding: theme.spacing(0.5),
-      },
-    },
-    nav: {
-      display: "flex",
-      flexDirection: "row",
-      flexGrow: 1,
-      justifyContent: "space-between",
-    },
-  })
-);
+const StyledToolbar = styled(Toolbar)(({ theme }) => ({
+  display: "flex",
+  flexGrow: 1,
+  flexDirection: "column",
+  justifyContent: "center",
+  alignItems: "start",
+  padding: theme.spacing(0.25),
+  minHeight: 0,
+  gap: theme.spacing(0.25),
+  [theme.breakpoints.up("md")]: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: theme.spacing(2),
+    padding: theme.spacing(0.5),
+  }
+}));
+
+const Nav = styled('div')({
+  display: "flex",
+  flexDirection: "row",
+  flexGrow: 1,
+  justifyContent: "space-between",
+});
 
 const initialMenuState = navMenus.reduce((state, menu) => {
   state[menu.name] = false;
@@ -46,10 +42,9 @@ const initialMenuState = navMenus.reduce((state, menu) => {
 }, {});
 
 // TODO: Make this reactive, it's causing the view on mobile to be bigger then it should
-const Header = ({ classes }) => {
-  const [openedMenu, setOpenedMenu] = React.useState(initialMenuState);
-  const [anchorEl, setAnchorEl] = React.useState(null);
-  const localClasses = useStyles();
+const Header = () => {
+  const [openedMenu, setOpenedMenu] = useState(initialMenuState);
+  const [anchorEl, setAnchorEl] = useState(null);
 
   const handleOpenMenu = (name) => (event) => {
     setOpenedMenu({
@@ -70,13 +65,13 @@ const Header = ({ classes }) => {
   return (
     <Grid container>
       <AppBar position="static">
-        <Toolbar className={localClasses.root}>
+        <StyledToolbar>
           <ServerStatus />
-          <Box className={localClasses.nav}>
+          <Nav>
             <nav>
               {navMenus.map((menu) => (
-                <React.Fragment key={menu.name}>
-                  <Button color="inherit" onClick={handleOpenMenu(menu.name)}>
+                <Fragment key={menu.name}>
+                  <Button onClick={handleOpenMenu(menu.name)}>
                     {menu.name}
                   </Button>
                   <Menu
@@ -87,28 +82,22 @@ const Header = ({ classes }) => {
                     onClose={handleCloseMenu(menu.name)}
                     PaperProps={{
                       style: {
-                        minWidth: "20ch",
+                        minWidth: '20ch',
                       },
                     }}
                   >
                     {menu.links.map((link) => (
-                      <MenuItem
-                        component={RouterLink}
-                        to={link.to}
-                        key={link.to}
-                        color="inherit"
-                        onClick={handleCloseMenu(menu.name)}
-                      >
+                      <MenuItem component={RouterLink} to={link.to} key={link.to} onClick={handleCloseMenu(menu.name)}>
                         {link.name}
                       </MenuItem>
                     ))}
                   </Menu>
-                </React.Fragment>
+                </Fragment>
               ))}
             </nav>
-            <LoginBox classes={classes} component={RouterLink} />
-          </Box>
-        </Toolbar>
+            <LoginBox component={RouterLink} />
+          </Nav>
+        </StyledToolbar>
       </AppBar>
     </Grid>
   );

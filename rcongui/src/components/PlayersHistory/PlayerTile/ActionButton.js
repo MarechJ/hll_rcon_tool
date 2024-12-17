@@ -1,14 +1,12 @@
-import { ButtonGroup, Button } from "@material-ui/core";
-import React from "react";
-import FlagIcon from "@material-ui/icons/Flag";
-import Tooltip from "@material-ui/core/Tooltip";
-import StarIcon from "@material-ui/icons/Star";
-import StarBorder from "@material-ui/icons/StarBorder";
-import HowToRegIcon from "@material-ui/icons/HowToReg";
-import AccessTimeIcon from "@material-ui/icons/AccessTime";
-import BlockIcon from "@material-ui/icons/Block";
-import VisibilityIcon from "@material-ui/icons/Visibility";
-import ReportIcon from "@material-ui/icons/Report";
+import { ButtonGroup, Button } from "@mui/material";
+import FlagIcon from "@mui/icons-material/Flag";
+import Tooltip from "@mui/material/Tooltip";
+import StarIcon from "@mui/icons-material/Star";
+import HowToRegIcon from "@mui/icons-material/HowToReg";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import BlockIcon from "@mui/icons-material/Block";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import ReportIcon from "@mui/icons-material/Report";
 
 
 export const ActionButton = ({
@@ -21,7 +19,6 @@ export const ActionButton = ({
   onflag,
   isVip,
   onAddVip,
-  onDeleteVip,
   isWatched,
   onAddToWatchList,
   onRemoveFromWatchList,

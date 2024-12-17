@@ -11,7 +11,6 @@ from discord_webhook import DiscordEmbed
 
 import rcon.steam_utils as steam_utils
 from discord.utils import escape_markdown
-
 from rcon.arguments import max_arg_index, replace_params
 from rcon.blacklist import (
     apply_blacklist_punishment,
@@ -77,8 +76,8 @@ from rcon.utils import (
 from rcon.vote_map import VoteMap
 from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
 
-
 logger = logging.getLogger(__name__)
+ARG_RE = re.compile(r"\$(\d+)")
 
 
 @on_chat
