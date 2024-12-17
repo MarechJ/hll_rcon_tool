@@ -17,7 +17,7 @@ export const killByColumns: ColumnDef<WeaponKillCount>[] = [
     header: function NameHeader() {
       const { t } = useTranslation('game')
       return t('playerStats.weapon')
-    },
+    }
   },
   {
     accessorKey: 'count',
@@ -33,9 +33,9 @@ export const killByColumns: ColumnDef<WeaponKillCount>[] = [
         />
       )
     },
-    cell: ({ cell }) => <div className="text-center px-1">{String(cell.getValue())}</div>,
-    size: nColSize,
-  },
+    cell: ({ cell }) => <div className='text-center px-1'>{String(cell.getValue())}</div>,
+    size: nColSize
+  }
 ]
 
 export const deathByColumns: ColumnDef<WeaponKillCount>[] = [
@@ -44,7 +44,7 @@ export const deathByColumns: ColumnDef<WeaponKillCount>[] = [
     header: function NameHeader() {
       const { t } = useTranslation('game')
       return t('playerStats.weapon')
-    },
+    }
   },
   {
     accessorKey: 'count',
@@ -60,7 +60,7 @@ export const deathByColumns: ColumnDef<WeaponKillCount>[] = [
         />
       )
     },
-    cell: ({ cell }) => <div className="text-center px-1">{String(cell.getValue())}</div>,
-    size: nColSize,
-  },
+    cell: ({ cell }) => <div className='text-center px-1'>{String(cell.getValue())}</div>,
+    size: nColSize
+  }
 ]

@@ -7,7 +7,7 @@ const resources = {
   notfound,
   translation,
   navigation,
-  game,
+  game
 } as const
 
 export default resources

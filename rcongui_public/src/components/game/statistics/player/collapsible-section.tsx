@@ -6,7 +6,7 @@ import React from 'react'
 export function CollapsibleSection({
   name,
   defaultOpen,
-  children,
+  children
 }: {
   name: string
   defaultOpen?: boolean
@@ -17,10 +17,10 @@ export function CollapsibleSection({
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <CollapsibleTrigger asChild>
-        <Button variant="ghost" size="default" className="w-full justify-start rounded-none pl-1">
+        <Button variant='ghost' size='default' className='w-full justify-start rounded-none pl-1'>
           {name}
-          <ChevronsUpDownIcon className="h-4 w-4" />
-          <span className="sr-only">Toggle {name}</span>
+          <ChevronsUpDownIcon className='h-4 w-4' />
+          <span className='sr-only'>Toggle {name}</span>
         </Button>
       </CollapsibleTrigger>
       <CollapsibleContent>{children}</CollapsibleContent>

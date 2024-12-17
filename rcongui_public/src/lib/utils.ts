@@ -8,7 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 export const downloadCSV = (data: string, filename: string) => {
   const bytes = new TextEncoder().encode(data)
   const blob = new Blob([bytes], {
-    type: 'application/csv;charset=utf-8',
+    type: 'application/csv;charset=utf-8'
   })
   const url = window.URL.createObjectURL(blob)
   const a = document.createElement('a')

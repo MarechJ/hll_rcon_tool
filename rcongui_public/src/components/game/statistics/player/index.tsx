@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next'
 
 export default function PlayerGameDetail({
   player,
-  isMobile,
+  isMobile
 }: {
   player: Player | PlayerWithStatus
   isMobile?: boolean
@@ -26,7 +26,7 @@ export default function PlayerGameDetail({
   const killsBy = player
     ? Object.entries(player.weapons).map((entry) => ({
         name: entry[0],
-        count: entry[1],
+        count: entry[1]
       }))
     : []
   killsBy.sort((a, b) => b.count - a.count)
@@ -34,31 +34,31 @@ export default function PlayerGameDetail({
   const deathsBy = player
     ? Object.entries(player.death_by_weapons || {}).map((entry) => ({
         name: entry[0],
-        count: entry[1],
+        count: entry[1]
       }))
     : []
   deathsBy.sort((a, b) => b.count - a.count)
 
   return (
-    <div className="divide-y pb-2 lg:sticky lg:top-14 border lg:border-l-0">
+    <div className='divide-y pb-2 lg:sticky lg:top-14 border lg:border-l-0'>
       {!isMobile && (
-        <div className="flex justify-between items-center gap-1 px-2 h-12">
-          <div className="flex justify-center items-center gap-2 grow">
+        <div className='flex justify-between items-center gap-1 px-2 h-12'>
+          <div className='flex justify-center items-center gap-2 grow'>
             {isPlayerWithStatus(player) && player.is_online ? (
-              <Status player={player} className="animate-ping" />
+              <Status player={player} className='animate-ping' />
             ) : isPlayerWithStatus(player) ? (
               <Status player={player} />
             ) : null}
-            <h3 className="text-xl text-center">{player.player}</h3>
+            <h3 className='text-xl text-center'>{player.player}</h3>
           </div>
-          <div className="flex flex-row justify-center items-center">
+          <div className='flex flex-row justify-center items-center'>
             <Button size={'icon'} variant={'outline'} asChild>
               {isSteamPlayer(player) ? (
-                <a href={getSteamProfileUrl(player.player_id)} target="_blank" rel="noreferrer">
-                  <SimpleIcon icon={siSteam} size={20} className="dark:fill-current" />
+                <a href={getSteamProfileUrl(player.player_id)} target='_blank' rel='noreferrer'>
+                  <SimpleIcon icon={siSteam} size={20} className='dark:fill-current' />
                 </a>
               ) : (
-                <a href={getXboxProfileUrl(player.player)} target="_blank" rel="noreferrer">
+                <a href={getXboxProfileUrl(player.player)} target='_blank' rel='noreferrer'>
                   <Gamepad2Icon />
                 </a>
               )}
@@ -66,23 +66,23 @@ export default function PlayerGameDetail({
           </div>
         </div>
       )}
-      <ScrollArea className="h-player-detail">
-        <div className="divide-y">
-          <section className="flex flex-row divide-x justify-around h-10">
+      <ScrollArea className='h-player-detail'>
+        <div className='divide-y'>
+          <section className='flex flex-row divide-x justify-around h-10'>
             {points.map((point) => (
-              <div key={point.key} className="flex flex-col w-1/6 justify-center items-center">
+              <div key={point.key} className='flex flex-col w-1/6 justify-center items-center'>
                 <img
                   src={point.icon}
                   width={12}
                   height={12}
                   alt={t(point.transKey)}
-                  className="mb-[2px] bg-primary dark:bg-transparent"
+                  className='mb-[2px] bg-primary dark:bg-transparent'
                 />
-                <div className="text-sm">{player[point.key]}</div>
+                <div className='text-sm'>{player[point.key]}</div>
               </div>
             ))}
           </section>
-          <section className="flex flex-row justify-around h-20">
+          <section className='flex flex-row justify-around h-20'>
             {scores.map((score) => {
               const Icon = score.icon
               return (

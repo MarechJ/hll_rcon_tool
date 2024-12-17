@@ -6,7 +6,7 @@ import {
   DrawerDescription,
   DrawerFooter,
   DrawerHeader,
-  DrawerTitle,
+  DrawerTitle
 } from '@/components/ui/drawer'
 import { Button } from '@/components/ui/button'
 import { SimpleIcon } from '@/components/simple-icon'
@@ -20,8 +20,8 @@ import { useTranslation } from 'react-i18next'
 export function NoPlayerGameDetail() {
   const { t } = useTranslation('game')
   return (
-    <div className="w-full px-10 py-5 text-center border lg:border-l-0 lg:sticky lg:top-14">
-      <div className="grid items-center border border-dashed w-full h-40 text-2xl">{t('selectPlayer')}</div>
+    <div className='w-full px-10 py-5 text-center border lg:border-l-0 lg:sticky lg:top-14'>
+      <div className='grid items-center border border-dashed w-full h-40 text-2xl'>{t('selectPlayer')}</div>
     </div>
   )
 }
@@ -29,7 +29,7 @@ export function NoPlayerGameDetail() {
 export function MobilePlayerGameDetail({
   open,
   setOpen,
-  player,
+  player
 }: {
   open: boolean
   setOpen: (open: boolean) => void
@@ -38,40 +38,40 @@ export function MobilePlayerGameDetail({
   const { t } = useTranslation('translation')
   return (
     <Drawer open={open} onOpenChange={(open) => setOpen(open)}>
-      <DrawerContent className="max-h-[75vh]">
-        <div className="mx-auto w-full overflow-y-auto [scrollbar-width:thin]">
+      <DrawerContent className='max-h-[75vh]'>
+        <div className='mx-auto w-full overflow-y-auto [scrollbar-width:thin]'>
           <DrawerHeader>
             <DrawerTitle>
-              <div className="flex justify-center items-center gap-2 grow">
+              <div className='flex justify-center items-center gap-2 grow'>
                 {isPlayerWithStatus(player) && player.is_online ? (
-                  <Status player={player} className="animate-ping" />
+                  <Status player={player} className='animate-ping' />
                 ) : isPlayerWithStatus(player) ? (
                   <Status player={player} />
                 ) : null}
-                <h3 className="text-xl text-center">{player.player}</h3>
+                <h3 className='text-xl text-center'>{player.player}</h3>
               </div>
             </DrawerTitle>
-            <DrawerDescription className="sr-only">Game statistics for {player.player}</DrawerDescription>
-            <div className="flex flex-row justify-center items-center">
+            <DrawerDescription className='sr-only'>Game statistics for {player.player}</DrawerDescription>
+            <div className='flex flex-row justify-center items-center'>
               <Button size={'icon'} variant={'outline'} asChild>
                 {isSteamPlayer(player) ? (
-                  <a href={getSteamProfileUrl(player.player_id)} target="_blank" rel="noreferrer">
-                    <SimpleIcon icon={siSteam} size={20} className="dark:fill-current" />
+                  <a href={getSteamProfileUrl(player.player_id)} target='_blank' rel='noreferrer'>
+                    <SimpleIcon icon={siSteam} size={20} className='dark:fill-current' />
                   </a>
                 ) : (
-                  <a href={getXboxProfileUrl(player.player)} target="_blank" rel="noreferrer">
+                  <a href={getXboxProfileUrl(player.player)} target='_blank' rel='noreferrer'>
                     <Gamepad2Icon />
                   </a>
                 )}
               </Button>
             </div>
           </DrawerHeader>
-          <div className="p-4 pb-0">
+          <div className='p-4 pb-0'>
             <PlayerGameDetail player={player} isMobile={true} />
           </div>
           <DrawerFooter>
             <DrawerClose asChild>
-              <Button variant="outline" onClick={() => setOpen(false)}>
+              <Button variant='outline' onClick={() => setOpen(false)}>
                 {t('close')}
               </Button>
             </DrawerClose>

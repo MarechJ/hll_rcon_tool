@@ -1,64 +1,64 @@
 {
-    "gameNotFound": "게임 {{ id }}을(를) 찾을 수 없습니다",
-    "loading": "로딩 중...",
-    "selectPlayer": "플레이어 선택",
-    "searchPlayer": "플레이어 검색",
-    "noPlayersFound": "플레이어를 찾을 수 없습니다",
-    "onlineStatusFilter": {
-        "online": "온라인",
-        "offline": "오프라인",
-        "all": "전체"
-    },
+  "gameNotFound": "게임 {{ id }}을(를) 찾을 수 없습니다",
+  "loading": "로딩 중...",
+  "selectPlayer": "플레이어 선택",
+  "searchPlayer": "플레이어 검색",
+  "noPlayersFound": "플레이어를 찾을 수 없습니다",
+  "onlineStatusFilter": {
+    "online": "온라인",
+    "offline": "오프라인",
+    "all": "전체"
+  },
+  "player": "플레이어",
+  "players": "플레이어",
+  "allies": "연합군",
+  "axis": "추축군",
+  "weather": {
+    "day": "낮",
+    "night": "밤",
+    "dusk": "황혼",
+    "dawn": "새벽",
+    "rain": "비",
+    "overcast": "흐림"
+  },
+  "playersTable": {
     "player": "플레이어",
-    "players": "플레이어",
-    "allies": "연합군",
-    "axis": "추축군",
-    "weather": {
-        "day": "낮",
-        "night": "밤",
-        "dusk": "황혼",
-        "dawn": "새벽",
-        "rain": "비",
-        "overcast": "흐림"
-    },
-    "playersTable": {
-        "player": "플레이어",
-        "team": "팀",
-        "kills": "처치",
-        "deaths": "사망",
-        "combat": "전투",
-        "score": "점수",
-        "weapon": "무기",
-        "vehicle": "차량",
-        "armor": "기갑",
-        "commander": "지휘관",
-        "offense": "공격",
-        "defense": "방어",
-        "support": "지원",
-        "utility": "유틸리티",
-        "diff": "차이",
-        "status": "상태"
-    },
-    "matchTable": {
-        "match": "매치",
-        "map": "맵",
-        "mode": "모드",
-        "duration": "시간",
-        "result": "결과",
-        "start": "시작"
-    },
-    "playerStats": {
-        "killsByWeapon": "무기별 처치",
-        "deathsByWeapon": "무기별 사망",
-        "encounters": "교전",
-        "weapon": "무기",
-        "count": "횟수"
-    },
-    "score": {
-        "killstreak": "연속 처치",
-        "deathstreak": "연속 사망",
-        "teamkills": "팀킬",
-        "k/d": "K/D"
-    },
-    "downloadTable": "테이블 다운로드"
+    "team": "팀",
+    "kills": "처치",
+    "deaths": "사망",
+    "combat": "전투",
+    "score": "점수",
+    "weapon": "무기",
+    "vehicle": "차량",
+    "armor": "기갑",
+    "commander": "지휘관",
+    "offense": "공격",
+    "defense": "방어",
+    "support": "지원",
+    "utility": "유틸리티",
+    "diff": "차이",
+    "status": "상태"
+  },
+  "matchTable": {
+    "match": "매치",
+    "map": "맵",
+    "mode": "모드",
+    "duration": "시간",
+    "result": "결과",
+    "start": "시작"
+  },
+  "playerStats": {
+    "killsByWeapon": "무기별 처치",
+    "deathsByWeapon": "무기별 사망",
+    "encounters": "교전",
+    "weapon": "무기",
+    "count": "횟수"
+  },
+  "score": {
+    "killstreak": "연속 처치",
+    "deathstreak": "연속 사망",
+    "teamkills": "팀킬",
+    "k/d": "K/D"
+  },
+  "downloadTable": "테이블 다운로드"
 }

@@ -15,13 +15,13 @@ function DropdownThemeToggle() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon">
-          <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          <span className="sr-only">{t('toggleTheme')}</span>
+        <Button variant='outline' size='icon'>
+          <Sun className='h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0' />
+          <Moon className='absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100' />
+          <span className='sr-only'>{t('toggleTheme')}</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align='end'>
         <DropdownMenuItem onClick={() => setTheme('light')}>{t('themeMode.light')}</DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme('dark')}>{t('themeMode.dark')}</DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme('system')}>{t('themeMode.system')}</DropdownMenuItem>
@@ -36,18 +36,18 @@ const SelectThemeToggle = () => {
 
   return (
     <div>
-      <Label className="flex flex-row gap-2 py-1" htmlFor="theme-selector">
-        <SunMoon className="size-4" />
+      <Label className='flex flex-row gap-2 py-1' htmlFor='theme-selector'>
+        <SunMoon className='size-4' />
         {t('toggleTheme')}
       </Label>
       <Select value={theme} onValueChange={setTheme}>
-        <SelectTrigger id="theme-selector" className="w-full">
+        <SelectTrigger id='theme-selector' className='w-full'>
           <SelectValue placeholder={t('toggleTheme')} />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="light">{t('themeMode.light')}</SelectItem>
-        <SelectItem value="dark">{t('themeMode.dark')}</SelectItem>
-          <SelectItem value="system">{t('themeMode.system')}</SelectItem>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value='light'>{t('themeMode.light')}</SelectItem>
+          <SelectItem value='dark'>{t('themeMode.dark')}</SelectItem>
+          <SelectItem value='system'>{t('themeMode.system')}</SelectItem>
         </SelectContent>
       </Select>
     </div>

@@ -8,7 +8,7 @@ export const Header = ({ header, desc, onClick }: { header: string; desc?: strin
   <TooltipProvider>
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button variant="ghost" size="icon" onClick={onClick} className="border px-1 min-w-10">
+        <Button variant='ghost' size='icon' onClick={onClick} className='border px-1 min-w-10'>
           {header}
         </Button>
       </TooltipTrigger>
@@ -23,7 +23,7 @@ export const IconHeader = ({ src, desc, onClick }: { src: string; desc: string; 
   <TooltipProvider>
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button size="icon" className="size-6 dark:bg-transparent dark:border" onClick={onClick}>
+        <Button size='icon' className='size-6 dark:bg-transparent dark:border' onClick={onClick}>
           <img alt={desc} src={src} width={16} height={16} />
         </Button>
       </TooltipTrigger>

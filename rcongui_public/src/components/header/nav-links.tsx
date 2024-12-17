@@ -18,7 +18,7 @@ export function NavLinks() {
           'text-sm font-medium transition-colors focus:ring-primary',
           isNotActive && 'text-muted-foreground',
           !link.disabled && 'hover:text-primary',
-          link.disabled && 'text-muted-foreground/50',
+          link.disabled && 'text-muted-foreground/50'
         )}
         asChild
       >

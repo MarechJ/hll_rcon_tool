@@ -31,11 +31,11 @@ export function ServerStatus() {
   return (
     <span>
       {status === 'idle' ? (
-        <CirclePauseIcon className="size-4 text-orange-500" />
+        <CirclePauseIcon className='size-4 text-orange-500' />
       ) : status === 'live' ? (
-        <CirclePlayIcon className="size-4 text-green-500" />
+        <CirclePlayIcon className='size-4 text-green-500' />
       ) : (
-        <CircleAlertIcon className="size-4 text-red-500" />
+        <CircleAlertIcon className='size-4 text-red-500' />
       )}
     </span>
   )

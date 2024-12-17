@@ -28,8 +28,8 @@ const GameDetail = ({ game }: { game: ScoreboardMapStats }) => {
     mode: game.map.game_mode,
     score: {
       allies: game.result?.allied,
-      axis: game.result?.axis,
-    },
+      axis: game.result?.axis
+    }
   }
 
   return (
@@ -37,18 +37,22 @@ const GameDetail = ({ game }: { game: ScoreboardMapStats }) => {
       <Helmet>
         <title>{`${tNavigation('gameDetail')} - ${dayjs(game.start).format('L')} - ${game.map.map.pretty_name}`}</title>
       </Helmet>
-      <div className="flex flex-col-reverse lg:flex-row divide-y lg:divide-y-0">
+      <div className='flex flex-col-reverse lg:flex-row divide-y lg:divide-y-0'>
         <GameOverview {...gameOverviewProps} />
-        <aside className="flex flex-row w-full lg:w-1/3 divide-x">
+        <aside className='flex flex-row w-full lg:w-1/3 divide-x'>
           <MapFigure
             text={dayjs(game.start).format('LLL')}
             src={`/maps/${game.map.image_name}`}
             name={game.map.map.pretty_name}
-            className="w-full h-32 lg:h-full"
+            className='w-full h-32 lg:h-full'
           />
         </aside>
       </div>
-      <GameStats stats={game.player_stats} getColumns={getCompletedGameColumns} gameId={`${game.id}_${dayjs(game.start).format('YYYYMMDD-HHmm')}`} />
+      <GameStats
+        stats={game.player_stats}
+        getColumns={getCompletedGameColumns}
+        gameId={`${game.id}_${dayjs(game.start).format('YYYYMMDD-HHmm')}`}
+      />
     </>
   )
 }

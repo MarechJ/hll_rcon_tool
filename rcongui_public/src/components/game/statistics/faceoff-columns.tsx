@@ -12,7 +12,7 @@ export const columns: ColumnDef<Faceoff>[] = [
     header: function NameHeader() {
       const { t } = useTranslation('game')
       return t('playersTable.player')
-    },
+    }
   },
   {
     accessorKey: 'kills',
@@ -20,14 +20,14 @@ export const columns: ColumnDef<Faceoff>[] = [
       const { t } = useTranslation('game')
       return (
         <Header
-          header="K"
+          header='K'
           desc={t('playersTable.kills')}
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
         />
       )
     },
-    cell: (info) => <div className="text-center px-1">{String(info.getValue())}</div>,
-    size: nColSize,
+    cell: (info) => <div className='text-center px-1'>{String(info.getValue())}</div>,
+    size: nColSize
   },
   {
     accessorKey: 'deaths',
@@ -35,14 +35,14 @@ export const columns: ColumnDef<Faceoff>[] = [
       const { t } = useTranslation('game')
       return (
         <Header
-          header="D"
+          header='D'
           desc={t('playersTable.deaths')}
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
         />
       )
     },
-    cell: (info) => <div className="text-center px-1">{String(info.getValue())}</div>,
-    size: nColSize,
+    cell: (info) => <div className='text-center px-1'>{String(info.getValue())}</div>,
+    size: nColSize
   },
   {
     accessorKey: 'diff',
@@ -50,7 +50,7 @@ export const columns: ColumnDef<Faceoff>[] = [
       const { t } = useTranslation('game')
       return (
         <Header
-          header="+/-"
+          header='+/-'
           desc={t('playersTable.diff')}
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
         />
@@ -61,6 +61,6 @@ export const columns: ColumnDef<Faceoff>[] = [
       const textColor = diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : ''
       return <div className={clsx(textColor, 'text-center px-1')}>{diff}</div>
     },
-    size: nColSize,
-  },
+    size: nColSize
+  }
 ]

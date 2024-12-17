@@ -11,7 +11,7 @@ import { Label } from '../ui/label'
 
 const getLocaleDisplayName = (locale: string, displayLocale?: string) => {
   const displayName = new Intl.DisplayNames([displayLocale || locale], {
-    type: 'language',
+    type: 'language'
   }).of(locale)!
   return displayName.charAt(0).toLocaleUpperCase() + displayName.slice(1)
 }
@@ -23,7 +23,7 @@ const DropdownLanguageSelector = () => {
   const localesAndNames = useMemo(() => {
     return LANGUAGES.map((locale) => ({
       locale,
-      name: getLocaleDisplayName(locale),
+      name: getLocaleDisplayName(locale)
     }))
   }, [])
 
@@ -36,12 +36,12 @@ const DropdownLanguageSelector = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon">
-          <Languages className="h-[1.2rem] w-[1.2rem]" />
-          <span className="sr-only">{t('selectLanguage')}</span>
+        <Button variant='outline' size='icon'>
+          <Languages className='h-[1.2rem] w-[1.2rem]' />
+          <span className='sr-only'>{t('selectLanguage')}</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align='end'>
         {localesAndNames.map(({ locale, name }) => {
           const isSelected = currentLanguage === locale
           return (
@@ -64,15 +64,15 @@ const SelectLanguageSelector = () => {
   const { t } = useTranslation('translation')
   return (
     <div>
-      <Label className="flex flex-row gap-2 py-1" htmlFor="language-selector">
-        <Languages className="size-4" />
+      <Label className='flex flex-row gap-2 py-1' htmlFor='language-selector'>
+        <Languages className='size-4' />
         {t('selectLanguage')}
       </Label>
       <Select value={i18n.language} onValueChange={i18n.changeLanguage}>
-        <SelectTrigger id="language-selector" className="w-full">
+        <SelectTrigger id='language-selector' className='w-full'>
           <SelectValue placeholder={t('selectLanguage')} />
         </SelectTrigger>
-        <SelectContent className="max-h-[200px]">
+        <SelectContent className='max-h-[200px]'>
           {LANGUAGES.map((locale) => (
             <SelectItem key={locale} value={locale}>
               {getLocaleDisplayName(locale)}

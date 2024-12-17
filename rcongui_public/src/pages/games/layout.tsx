@@ -52,8 +52,8 @@ const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   }, [games, gamesContainerRef, pathname, scrollAreaRef])
 
   return (
-    <ScrollArea ref={scrollAreaRef} className="w-full whitespace-nowrap sm:-mx-4 xl:mx-0 pb-2">
-      <div ref={gamesContainerRef} className="flex flex-row w-max space-x-2">
+    <ScrollArea ref={scrollAreaRef} className='w-full whitespace-nowrap sm:-mx-4 xl:mx-0 pb-2'>
+      <div ref={gamesContainerRef} className='flex flex-row w-max space-x-2'>
         {games?.maps.filter(validGame).map((game) => (
           <Link key={game.id} to={`/games/${game.id}`}>
             <MapFigure
@@ -65,7 +65,7 @@ const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
           </Link>
         ))}
       </div>
-      <ScrollBar orientation="horizontal" />
+      <ScrollBar orientation='horizontal' />
     </ScrollArea>
   )
 }

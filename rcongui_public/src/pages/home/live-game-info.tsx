@@ -7,7 +7,7 @@ export default function LiveGameInfo({ game }: { game: PublicInfo }) {
   const { t } = useTranslation('translation')
 
   const remainingTime = `${String(Math.floor(game.time_remaining / 3600))}:${String(
-    Math.floor((game.time_remaining % 3600) / 60),
+    Math.floor((game.time_remaining % 3600) / 60)
   ).padStart(2, '0')}:${String(game.time_remaining % 60).padStart(2, '0')}`
   const allies = game.current_map.map.map.allies
   const axis = game.current_map.map.map.axis
@@ -16,10 +16,10 @@ export default function LiveGameInfo({ game }: { game: PublicInfo }) {
 
   return (
     <>
-      <article id="game-state">
-        <h2 className="sr-only">Game Info</h2>
-        <div className="flex flex-col-reverse lg:flex-row divide-y lg:divide-y-0">
-          <section className="w-full lg:w-2/3">
+      <article id='game-state'>
+        <h2 className='sr-only'>Game Info</h2>
+        <div className='flex flex-col-reverse lg:flex-row divide-y lg:divide-y-0'>
+          <section className='w-full lg:w-2/3'>
             <GameOverview
               map={game.current_map.map}
               allies={allies}
@@ -32,18 +32,18 @@ export default function LiveGameInfo({ game }: { game: PublicInfo }) {
               time={remainingTime}
             />
           </section>
-          <aside className="flex flex-row w-full lg:w-1/3 divide-x">
+          <aside className='flex flex-row w-full lg:w-1/3 divide-x'>
             <MapFigure
               text={t('now')}
               src={`/maps/${game.current_map.map.image_name}`}
               name={game.current_map.map.pretty_name}
-              className="w-1/2 max-h-16 lg:max-h-full"
+              className='w-1/2 max-h-16 lg:max-h-full'
             />
             <MapFigure
               text={t('up-next')}
               src={`/maps/${game.next_map.map.image_name}`}
               name={game.next_map.map.pretty_name}
-              className="w-1/2 max-h-16 lg:max-h-full"
+              className='w-1/2 max-h-16 lg:max-h-full'
               muted
             />
           </aside>

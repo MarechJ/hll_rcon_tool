@@ -6,7 +6,7 @@ import {
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
-  useReactTable,
+  useReactTable
 } from '@tanstack/react-table'
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -27,12 +27,12 @@ export function SimpleTable<TData, TValue>({ columns, data }: SimpleTableProps<T
     getSortedRowModel: getSortedRowModel(),
     getCoreRowModel: getCoreRowModel(),
     state: {
-      sorting,
-    },
+      sorting
+    }
   })
 
   return (
-    <div className="w-full">
+    <div className='w-full'>
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -52,7 +52,7 @@ export function SimpleTable<TData, TValue>({ columns, data }: SimpleTableProps<T
             table.getRowModel().rows.map((row) => (
               <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="p-1">
+                  <TableCell key={cell.id} className='p-1'>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
@@ -60,7 +60,7 @@ export function SimpleTable<TData, TValue>({ columns, data }: SimpleTableProps<T
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length} className="p-1 text-center">
+              <TableCell colSpan={columns.length} className='p-1 text-center'>
                 -
               </TableCell>
             </TableRow>

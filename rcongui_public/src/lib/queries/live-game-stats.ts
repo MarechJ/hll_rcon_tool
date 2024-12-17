@@ -18,12 +18,12 @@ export const liveGameStatsOptions = queryOptions({
   queryKey: queryKeys.liveStats,
   queryFn: fetchLiveGameStats,
   staleTime: STALE_TIME,
-  refetchInterval: REFETCH_INTERVAL,
+  refetchInterval: REFETCH_INTERVAL
 })
 
 export function useLiveGameStats() {
   const { data, ...rest } = useQuery({
-    ...liveGameStatsOptions,
+    ...liveGameStatsOptions
   })
 
   return [data, rest] as const
