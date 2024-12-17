@@ -11,8 +11,9 @@ import OptionsMenu from './OptionsMenu'
 import { useAuth } from '@/hooks/useAuth'
 import { navMenus } from '../Header/nav-data'
 import { List, ListItem, ListItemText } from '@mui/material'
-import NewReleases from './NewReleases'
-import ConnectionStatus from './ConnectionStatus'
+import NewReleases from './sidebar/NewReleases'
+import ConnectionStatus from './sidebar/ConnectionStatus'
+import AboutDialog from './sidebar/About'
 
 const drawerWidth = 240
 
@@ -62,6 +63,7 @@ export default function SideMenu({ open }) {
           <ListItemText sx={{ marginLeft: -0.5 }} primary={<ConnectionStatus />} />
         </ListItem>
         <NewReleases />
+        <AboutDialog />
       </List>
       <Divider />
       <Box

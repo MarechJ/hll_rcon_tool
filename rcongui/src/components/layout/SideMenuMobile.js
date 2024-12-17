@@ -8,8 +8,9 @@ import SelectContent from './SelectContent'
 import { Box, List, ListItem, ListItemText } from '@mui/material'
 import { Form } from 'react-router-dom'
 import { navMenus } from '../Header/nav-data'
-import NewReleases from './NewReleases'
-import ConnectionStatus from './ConnectionStatus'
+import NewReleases from './sidebar/NewReleases'
+import ConnectionStatus from './sidebar/ConnectionStatus'
+import AboutDialog from './sidebar/About'
 
 const MobileDrawer = ({ open, toggleDrawer, children }) => {
   return (
@@ -48,6 +49,7 @@ function AdminSideMenuMobile({ open, toggleDrawer }) {
             <ListItemText sx={{ marginLeft: -0.5 }} primary={<ConnectionStatus />} />
           </ListItem>
           <NewReleases />
+          <AboutDialog />
         </List>
         <Divider />
         <Box
