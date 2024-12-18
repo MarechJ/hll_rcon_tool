@@ -112,6 +112,7 @@ export interface PlayerBase {
   death_by: Record<string, number>
   weapons: Record<Weapon, number>
   death_by_weapons: Record<Weapon, number> | null
+  team?: 'axis' | 'allies' | 'mixed' | 'unknown'
 }
 
 // Live player interface with online status
