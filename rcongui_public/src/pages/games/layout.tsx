@@ -24,7 +24,7 @@ const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   useEffect(() => {
     if (!games || !gamesContainerRef.current || !scrollAreaRef.current || !pathname) return
     const childElements = Array.from(gamesContainerRef.current?.children)
-    const activeGameIndex = childElements.findIndex((el) => el.getAttribute('href') === pathname)
+    const activeGameIndex = childElements.findIndex((el) => el.getAttribute('href') !== null && pathname.includes(el.getAttribute('href') as string));
     const activeGameEl = childElements[activeGameIndex]
     if (activeGameEl) {
       // The static container
@@ -60,7 +60,7 @@ const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
               text={dayjs(game.start).format('LLL')}
               src={`/maps/${game.map.image_name}`}
               name={`${game.map.map.pretty_name} (${game.result?.allied ?? '?'}:${game.result?.axis ?? '?'})`}
-              className={cn('group h-12 w-64', pathname === `/games/${game.id}` && 'border-2 border-primary')}
+              className={cn('group h-12 w-64', pathname.includes(`/games/${game.id}`) && 'border-2 border-primary')}
             />
           </Link>
         ))}
