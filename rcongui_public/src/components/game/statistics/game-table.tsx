@@ -16,7 +16,7 @@ import React, {Fragment, useState} from 'react'
 
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
 
-import {Player} from '@/types/player'
+import {Player, TeamEnum} from '@/types/player'
 import {useTranslation} from 'react-i18next'
 import {Button} from '@/components/ui/button'
 import {Download} from 'lucide-react'
@@ -90,9 +90,9 @@ export function DataTable<TData extends Player, TValue>({columns, data, tableId}
               <SelectContent>
                 <SelectItem value="all">{t('onlineStatusFilter.all')}</SelectItem>
                 {teamOptions.map(option =>
-                  <SelectItem value={option}>
+                  <SelectItem value={option.toUpperCase()}>
                     <div className="flex">
-                      <TeamIndicator team={option} className="block m-auto"/>
+                      <TeamIndicator team={option.toUpperCase() as TeamEnum} className="block m-auto"/>
                       <div className="pl-3">{t(option)}</div>
                     </div>
                   </SelectItem>

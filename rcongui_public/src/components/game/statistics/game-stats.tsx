@@ -1,21 +1,27 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { DataTable } from './game-table'
-import { Player, PlayerWithStatus } from '@/types/player'
+import {useMemo, useState} from 'react'
+import {DataTable} from './game-table'
+import {Player, PlayerWithStatus, TeamEnum} from '@/types/player'
 import useMediaQuery from '@/hooks/use-media-query'
-import { ColumnDef } from '@tanstack/react-table'
+import {ColumnDef} from '@tanstack/react-table'
 import PlayerGameDetail from './player'
-import { MobilePlayerGameDetail } from './player-detail'
-import { NoPlayerGameDetail } from './player-detail'
+import {MobilePlayerGameDetail, NoPlayerGameDetail} from './player-detail'
 import {
   ALL_GB_ArmorWeapon,
   ALL_GB_Weapon,
   ALL_GER_ArmorWeapon,
-  ALL_GER_Weapon, ALL_RUS_ArmorWeapon, ALL_RUS_Weapon,
+  ALL_GER_Weapon,
+  ALL_RUS_ArmorWeapon,
+  ALL_RUS_Weapon,
   ALL_US_ArmorWeapon,
-  ALL_US_Weapon, GB_ArmorWeapon, GB_Weapon, GER_ArmorWeapon,
-  GER_Weapon, RUS_ArmorWeapon, RUS_Weapon,
+  ALL_US_Weapon,
+  GB_ArmorWeapon,
+  GB_Weapon,
+  GER_ArmorWeapon,
+  GER_Weapon,
+  RUS_ArmorWeapon,
+  RUS_Weapon,
   US_ArmorWeapon,
   US_Weapon,
   Weapon
@@ -47,7 +53,7 @@ export default function GameStats({
     [stats, selectedPlayerId],
   )
 
-  const calcTeam = (kills: number, weapons: Record<Weapon, number>)  => {
+  const calcTeam = (kills: number, weapons: Record<Weapon, number>): TeamEnum  => {
     const threshold = 0.8;
 
     let axisKills = 0;
@@ -64,16 +70,16 @@ export default function GameStats({
         alliesKills += count;
       }
       if (axisKills >= kills * threshold) {
-        return 'axis';
+        return TeamEnum.AXIS;
       }
       if (alliesKills >= kills * threshold) {
-        return 'allies';
+        return TeamEnum.ALLIES;
       }
     }
     if (axisKills > 0 && alliesKills > 0) {
-      return 'mixed';
+      return TeamEnum.MIXED;
     }
-    return 'unknown';
+    return TeamEnum.UNKNOWN;
   }
 
   const statsWithTeam: Player[] | null = useMemo(
