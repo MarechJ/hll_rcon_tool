@@ -24,6 +24,7 @@ import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from '@/compon
 import useGameDownload from '@/hooks/use-game-download'
 import TagList from "@/components/tag-list";
 import {Input} from "@/components/ui/input";
+import {TeamIndicator} from "@/components/game/statistics/team-indicator";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -62,6 +63,9 @@ export function DataTable<TData extends Player, TValue>({columns, data, tableId}
   const {t} = useTranslation('game')
 
   const hasIsOnline = table.getAllColumns().find((c) => c.id === 'is_online')
+  const hasTeam = table.getAllColumns().find((c) => c.id === 'team')
+  const teamOptions = ["axis", "allies", "mixed", "unknown"] as const;
+
   return (
     <div className="border w-full divide-y">
       <div className="flex flex-row justify-between items-center p-2">
@@ -75,6 +79,24 @@ export function DataTable<TData extends Player, TValue>({columns, data, tableId}
                 <SelectItem value="all">{t('onlineStatusFilter.all')}</SelectItem>
                 <SelectItem value="online">{t('onlineStatusFilter.online')}</SelectItem>
                 <SelectItem value="offline">{t('onlineStatusFilter.offline')}</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+          {hasTeam && (
+            <Select onValueChange={(value) => table.getColumn('team')?.setFilterValue(value)}>
+              <SelectTrigger className="w-60">
+                <SelectValue placeholder={t('playersTable.team')}/>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('onlineStatusFilter.all')}</SelectItem>
+                {teamOptions.map(option =>
+                  <SelectItem value={option}>
+                    <div className="flex">
+                      <TeamIndicator team={option} className="block m-auto"/>
+                      <div className="pl-3">{t(option)}</div>
+                    </div>
+                  </SelectItem>
+                )}
               </SelectContent>
             </Select>
           )}

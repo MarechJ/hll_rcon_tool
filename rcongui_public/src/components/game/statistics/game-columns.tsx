@@ -151,9 +151,16 @@ const teamColumn: ColumnDef<Player | PlayerWithStatus> = {
     return <div>{t('playersTable.team')}</div>
   },
   size: 20,
+  filterFn: (row, columnId, filterValue) => {
+    if (!filterValue || filterValue === 'all') {
+      return true
+    }
+    const cellValue = String(row.getValue(columnId));
+    return cellValue === filterValue;
+  },
   cell: ({row}) => {
     const player = row.original
-    return <TeamIndicator player={player} className="block"/>;
+    return <TeamIndicator team={player.team} className="block"/>;
   },
 };
 

@@ -3,17 +3,17 @@ import {Player, PlayerWithStatus} from '@/types/player'
 import { cn } from '@/lib/utils'
 
 type TeamIndicatorProps = {
-  player: Player
+  team?: string
 } & React.HTMLAttributes<HTMLSpanElement>
 
-export function TeamIndicator({ player, ...props }: TeamIndicatorProps) {
-  if (player.team === 'axis') {
+export function TeamIndicator({ team, ...props }: TeamIndicatorProps) {
+  if (team === 'axis') {
     return <span className={cn('w-4 size-2 rounded bg-red-600', props.className)}></span>
-  } else if (player.team === 'allies') {
+  } else if (team === 'allies') {
     return <span className={cn('w-4 size-2 rounded bg-blue-600', props.className)}></span>
-  } else if (player.team === 'mixed') {
+  } else if (team === 'mixed') {
     return <span className={cn('w-4 size-2 rounded bg-yellow-400', props.className)}></span>
-  } else if (player.team === 'unknown') {
+  } else if (team === 'unknown') {
     return <span className={cn('w-4 size-2 rounded bg-gray-500', props.className)}></span>
   }
   return null;
