@@ -27,6 +27,7 @@ import {
   Weapon
 } from "@/types/weapon";
 import {Route, Routes} from "react-router";
+import {TeamStats} from "@/components/game/statistics/team/team-stats";
 
 export default function GameStats({
   stats,
@@ -96,7 +97,7 @@ export default function GameStats({
         <article className="w-full lg:w-2/3">
           <Routes>
             <Route index element={<DataTable columns={getColumns(handlePlayerClick)} data={statsWithTeam ?? stats} tableId={gameId} />} />
-            <Route path={"charts"} element={<DataTable columns={getColumns(handlePlayerClick)} data={statsWithTeam ?? stats} tableId={gameId} />} />
+            <Route path={"charts"} element={<TeamStats stats={statsWithTeam ?? []} handlePlayerClick={handlePlayerClick}/>} />
           </Routes>
         </article>
         <aside className="hidden w-full lg:block lg:w-1/3 min-h-32">
