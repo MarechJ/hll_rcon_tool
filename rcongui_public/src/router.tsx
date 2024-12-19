@@ -36,7 +36,7 @@ export const routerObjects: RouteObject[] = [
             loader: gameClientLoader(queryClient),
           },
           {
-            path: ':id',
+            path: ':id/*',
             element: <GameDetail />,
             loader: gameDetailClientLoader(queryClient),
           },

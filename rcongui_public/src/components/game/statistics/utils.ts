@@ -1,5 +1,9 @@
-import { Faceoff, Player, ServerFinalStats } from '@/types/player'
+import {Faceoff, Player, ServerFinalStats, TeamEnum} from '@/types/player'
 import { Weapon, WeaponCategory } from '@/types/weapon'
+
+import colors from 'tailwindcss/colors'
+import {cn} from "@/lib/utils";
+import React from "react";
 
 // LIST OF WEAPONS
 // https://gist.github.com/timraay/5634d85eab552b5dfafb9fd61273dc52#available-weapons
@@ -424,4 +428,18 @@ export function mergeKillsDeaths(player: Player) {
   })
   merged.sort((a, b) => b.kills - a.kills)
   return merged
+}
+
+const teamColors: Record<TeamEnum, string> = {
+  [TeamEnum.AXIS]: colors.red[600],
+  [TeamEnum.ALLIES]: colors.blue[600],
+  [TeamEnum.MIXED]: colors.yellow[400],
+  [TeamEnum.UNKNOWN]: colors.gray[500],
+};
+
+export function getColorForTeam(team: TeamEnum | undefined): string {
+  if (team === undefined) {
+    return colors.purple[600];
+  }
+  return teamColors[team];
 }

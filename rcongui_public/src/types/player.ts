@@ -112,6 +112,14 @@ export interface PlayerBase {
   death_by: Record<string, number>
   weapons: Record<Weapon, number>
   death_by_weapons: Record<Weapon, number> | null
+  team?: TeamEnum
+}
+
+export enum TeamEnum {
+  AXIS = 'AXIS',
+  ALLIES = 'ALLIES',
+  MIXED = 'MIXED',
+  UNKNOWN = 'UNKNOWN',
 }
 
 // Live player interface with online status
