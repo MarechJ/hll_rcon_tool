@@ -1,13 +1,13 @@
 'use client'
 
-import {ColumnDef} from '@tanstack/react-table'
-import {Player, PlayerWithStatus} from '@/types/player'
-import {IconHeader as Header} from './column-header'
-import {Status} from './player-status'
-import {isPlayerWithStatus} from './player/utils'
-import {Button} from '@/components/ui/button'
-import {useTranslation} from 'react-i18next'
-import {TeamIndicator} from "@/components/game/statistics/team-indicator";
+import { ColumnDef } from '@tanstack/react-table'
+import { Player, PlayerWithStatus, TeamEnum } from '@/types/player'
+import { IconHeader as Header } from './column-header'
+import { Status } from './player-status'
+import { isPlayerWithStatus } from './player/utils'
+import { Button } from '@/components/ui/button'
+import { useTranslation } from 'react-i18next'
+import { TeamIndicator } from '@/components/game/statistics/team-indicator'
 
 const threeDigitsWidth = 40
 const fourDigitsWidth = 50
@@ -160,7 +160,7 @@ const teamColumn: ColumnDef<Player | PlayerWithStatus> = {
   },
   cell: ({row}) => {
     const player = row.original
-    return <TeamIndicator team={player.team} className="block"/>;
+    return <TeamIndicator team={player.team?.confidence === 'strong' ? player.team.team : TeamEnum.MIXED} className="block"/>;
   },
 };
 
