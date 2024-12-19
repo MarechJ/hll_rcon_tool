@@ -135,7 +135,7 @@ const playerColumn = (handlePlayerClick: (id: string) => void): ColumnDef<Player
       </div>
     )
   },
-  filterFn: (row, columnId: string, filterValue: any) => {
+  filterFn: (row, columnId: string, filterValue: string[]) => {
     if (filterValue === undefined || filterValue.length === 0) {
       return true;
     }

@@ -1,9 +1,25 @@
 import {Faceoff, Player, ServerFinalStats, TeamEnum} from '@/types/player'
-import { Weapon, WeaponCategory } from '@/types/weapon'
-
+import {
+  ALL_GB_ArmorWeapon,
+  ALL_GB_Weapon,
+  ALL_GER_ArmorWeapon,
+  ALL_GER_Weapon,
+  ALL_RUS_ArmorWeapon,
+  ALL_RUS_Weapon,
+  ALL_US_ArmorWeapon,
+  ALL_US_Weapon,
+  GB_ArmorWeapon,
+  GB_Weapon,
+  GER_ArmorWeapon,
+  GER_Weapon,
+  RUS_ArmorWeapon,
+  RUS_Weapon,
+  US_ArmorWeapon,
+  US_Weapon,
+  Weapon,
+  WeaponCategory
+} from "@/types/weapon";
 import colors from 'tailwindcss/colors'
-import {cn} from "@/lib/utils";
-import React from "react";
 
 // LIST OF WEAPONS
 // https://gist.github.com/timraay/5634d85eab552b5dfafb9fd61273dc52#available-weapons
@@ -442,4 +458,39 @@ export function getColorForTeam(team: TeamEnum | undefined): string {
     return colors.purple[600];
   }
   return teamColors[team];
+}
+
+export const calcTeam = (kills: number, weapons: Record<Weapon, number>): TeamEnum  => {
+  const threshold = 0.8;
+  let adjustedKills = kills;
+  let axisKills = 0;
+  let alliesKills = 0;
+  const weaponsSorted = Object.entries(weapons).sort(([nameA, countA], [nameB, countB]) => countB - countA);
+  for (const [name, count] of weaponsSorted) {
+    // don't count these weapons as those are both allies and axis weapon
+    if (['SATCHEL', 'BOMBING RUN', 'STRAFING RUN', 'PRECISION STRIKE'].includes(name.toUpperCase())) {
+      adjustedKills -= count;
+      if (adjustedKills === 0) {
+        return TeamEnum.UNKNOWN;
+      }
+    } else if (ALL_GER_Weapon.includes(name as GER_Weapon) || ALL_GER_ArmorWeapon.includes(name as GER_ArmorWeapon)) {
+      axisKills += count;
+    } else if (
+      ALL_US_Weapon.includes(name as US_Weapon) || ALL_US_ArmorWeapon.includes(name as US_ArmorWeapon) ||
+      ALL_RUS_Weapon.includes(name as RUS_Weapon) || ALL_RUS_ArmorWeapon.includes(name as RUS_ArmorWeapon) ||
+      ALL_GB_Weapon.includes(name as GB_Weapon) || ALL_GB_ArmorWeapon.includes(name as GB_ArmorWeapon)
+    ) {
+      alliesKills += count;
+    }
+    if (axisKills >= adjustedKills * threshold) {
+      return TeamEnum.AXIS;
+    }
+    if (alliesKills >= adjustedKills * threshold) {
+      return TeamEnum.ALLIES;
+    }
+  }
+  if (axisKills > 0 && alliesKills > 0) {
+    return TeamEnum.MIXED;
+  }
+  return TeamEnum.UNKNOWN;
 }
