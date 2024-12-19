@@ -20,7 +20,7 @@ import { useTranslation } from 'react-i18next'
 export function NoPlayerGameDetail() {
   const { t } = useTranslation('game')
   return (
-    <div className="w-full px-10 py-5 text-center border lg:border-l-0 lg:sticky lg:top-14">
+    <div className="w-full px-10 py-5 text-center border lg:sticky lg:top-14">
       <div className="grid items-center border border-dashed w-full h-40 text-2xl">{t('selectPlayer')}</div>
     </div>
   )
