@@ -17,6 +17,16 @@ export function KillDeathChart({stats, handlePlayerClick}: {
 
   const referenceLinesKpm = [0.5, 1, 2];
 
+  const generateTicks = (n: number) => {
+    const interval = 50;
+    const ticks = [];
+    for (let i = 1; i < n / interval; i++) {
+      ticks.push(i * interval);
+    }
+    ticks.push(n);
+    return ticks;
+  }
+
   return (
     <div className={"h-[90vh] w-full"}>
       <ResponsiveContainer height={"100%"} width={"100%"}>
@@ -29,8 +39,8 @@ export function KillDeathChart({stats, handlePlayerClick}: {
             left: 20,
           }}
         >
-          <XAxis type="number" dataKey="deaths" name={t("playersTable.deaths")} label={t("playersTable.deaths")} domain={[0, maxDeaths]} tickCount={1}/>
-          <YAxis type="number" dataKey="kills" name={t("playersTable.kills")} label={t("playersTable.kills")} domain={[0, maxKills]} tickCount={1}/>
+          <XAxis type="number" dataKey="deaths" name={t("playersTable.deaths")} label={t("playersTable.deaths")} domain={[0, maxDeaths]} ticks={generateTicks(maxDeaths)}/>
+          <YAxis type="number" dataKey="kills" name={t("playersTable.kills")} label={t("playersTable.kills")} domain={[0, maxKills]} ticks={generateTicks(maxKills)}/>
           {referenceLinesKpm.map(kpm =>
             <ReferenceLine stroke={colors.purple[600]} strokeDasharray={kpm === 1 ? undefined : "3 3"} segment={[{ x: 0, y: 0 }, { x: Math.min(maxKills, maxDeaths), y: Math.min(maxKills,maxDeaths) * kpm }]} ifOverflow="visible">
               <Label>
