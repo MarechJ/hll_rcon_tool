@@ -28,7 +28,7 @@ export function KillDeathChart({stats, handlePlayerClick}: {
   }
 
   return (
-    <div className={"h-[90vh] w-full"}>
+    <div className={"h-[80vh] w-full"}>
       <ResponsiveContainer height={"100%"} width={"100%"}>
         <ComposedChart
           data={stats}
