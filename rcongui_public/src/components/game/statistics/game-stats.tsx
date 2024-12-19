@@ -56,12 +56,15 @@ export default function GameStats({
 
   const calcTeam = (kills: number, weapons: Record<Weapon, number>): TeamEnum  => {
     const threshold = 0.8;
-
+    let adjustedKills = kills;
     let axisKills = 0;
     let alliesKills = 0;
     const weaponsSorted = Object.entries(weapons).sort(([nameA, countA], [nameB, countB]) => countB - countA);
     for (const [name, count] of weaponsSorted) {
-      if (ALL_GER_Weapon.includes(name as GER_Weapon) || ALL_GER_ArmorWeapon.includes(name as GER_ArmorWeapon)) {
+      // don't count these weapons as those are both allies and axis weapon
+      if (['SATCHEL', 'BOMBING RUN', 'STRAFING RUN', 'PRECISION STRIKE'].includes(name.toUpperCase())) {
+        adjustedKills -= count;
+      } else if (ALL_GER_Weapon.includes(name as GER_Weapon) || ALL_GER_ArmorWeapon.includes(name as GER_ArmorWeapon)) {
         axisKills += count;
       } else if (
         ALL_US_Weapon.includes(name as US_Weapon) || ALL_US_ArmorWeapon.includes(name as US_ArmorWeapon) ||
@@ -70,10 +73,10 @@ export default function GameStats({
       ) {
         alliesKills += count;
       }
-      if (axisKills >= kills * threshold) {
+      if (axisKills >= adjustedKills * threshold) {
         return TeamEnum.AXIS;
       }
-      if (alliesKills >= kills * threshold) {
+      if (alliesKills >= adjustedKills * threshold) {
         return TeamEnum.ALLIES;
       }
     }
