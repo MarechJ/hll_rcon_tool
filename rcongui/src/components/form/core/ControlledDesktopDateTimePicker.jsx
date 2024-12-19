@@ -1,16 +1,9 @@
-import { DesktopDateTimePicker } from '@mui/x-date-pickers/DesktopDateTimePicker';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { Controller } from 'react-hook-form';
+import { DesktopDateTimePicker } from '@mui/x-date-pickers/DesktopDateTimePicker'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
+import { Controller } from 'react-hook-form'
 
-export const ControlledDesktopDateTimePicker = ({
-  control,
-  name,
-  disabled,
-  rules,
-  defaultValue,
-  ...props
-}) => {
+export const ControlledDesktopDateTimePicker = ({ control, name, disabled, rules, defaultValue, ...props }) => {
   return (
     <Controller
       disabled={disabled}
@@ -33,5 +26,5 @@ export const ControlledDesktopDateTimePicker = ({
         </LocalizationProvider>
       )}
     />
-  );
-};
+  )
+}

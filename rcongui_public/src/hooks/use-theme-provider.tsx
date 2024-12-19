@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet'
 
 enum ThemeColor {
   LIGHT = '#ffffff',
-  DARK = '#292524',
+  DARK = '#292524'
 }
 
 type Theme = 'light' | 'dark' | 'system'
@@ -24,7 +24,7 @@ interface ThemeProviderProps {
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   children,
   defaultTheme = 'system',
-  storageKey = 'ui-theme',
+  storageKey = 'ui-theme'
 }): JSX.Element => {
   const [theme, setThemeState] = useState<Theme>(() => {
     const savedTheme = localStorage.getItem(storageKey) as Theme | null
@@ -53,7 +53,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
       <Helmet>
-        <meta name="theme-color" content={theme === 'dark' ? ThemeColor.DARK : ThemeColor.LIGHT} />
+        <meta name='theme-color' content={theme === 'dark' ? ThemeColor.DARK : ThemeColor.LIGHT} />
       </Helmet>
       {children}
     </ThemeContext.Provider>

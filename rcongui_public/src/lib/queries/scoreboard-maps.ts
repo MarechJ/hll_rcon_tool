@@ -8,7 +8,7 @@ const DEFAULT_PAGE_SIZE = 50
 
 export async function fetchGames(page?: number, pageSize?: number) {
   const response = await fetchApi<ScoreboardMaps>(
-    `/get_scoreboard_maps?page=${page ?? DEFAULT_PAGE}&limit=${pageSize ?? DEFAULT_PAGE_SIZE}`,
+    `/get_scoreboard_maps?page=${page ?? DEFAULT_PAGE}&limit=${pageSize ?? DEFAULT_PAGE_SIZE}`
   )
 
   if (response.error) {
@@ -32,14 +32,14 @@ export const gameQueries = {
   list: (page?: number | undefined, pageSize?: number | undefined) =>
     queryOptions({
       queryKey: queryKeys.games(page ?? DEFAULT_PAGE, pageSize ?? DEFAULT_PAGE_SIZE),
-      queryFn: () => fetchGames(page ?? DEFAULT_PAGE, pageSize ?? DEFAULT_PAGE_SIZE),
+      queryFn: () => fetchGames(page ?? DEFAULT_PAGE, pageSize ?? DEFAULT_PAGE_SIZE)
     }),
   detail: (gameId: number, enabled?: boolean) =>
     queryOptions({
       queryKey: queryKeys.gameDetail(gameId),
       queryFn: () => fetchGameDetail(gameId),
-      enabled: enabled ?? true,
-    }),
+      enabled: enabled ?? true
+    })
 }
 
 export function useGames(page = DEFAULT_PAGE, pageSize = DEFAULT_PAGE_SIZE) {

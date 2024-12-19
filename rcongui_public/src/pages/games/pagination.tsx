@@ -7,7 +7,7 @@ import {
   PaginationItem,
   PaginationLink,
   PaginationNext,
-  PaginationPrevious,
+  PaginationPrevious
 } from '@/components/ui/pagination'
 import { Button } from '@/components/ui/button'
 import React, { useState } from 'react'
@@ -78,17 +78,17 @@ export default function MatchPagination({ page, maxPages, ...props }: MatchPagin
                 <PaginationEllipsis />
               </Button>
             ) : (
-              <div className="flex flex-row gap-1 items-center">
+              <div className='flex flex-row gap-1 items-center'>
                 <Input
                   placeholder={'...'}
                   value={customPageValue}
                   onChange={handleCustomValueChange}
-                  type="number"
+                  type='number'
                   min={1}
                   max={maxPages}
-                  className="w-20"
+                  className='w-20'
                 />
-                <Button variant={'outline'} size={'icon'} className="text-green-800 hover:text-green-600" asChild>
+                <Button variant={'outline'} size={'icon'} className='text-green-800 hover:text-green-600' asChild>
                   <Link to={`?page=${customPageValue}`} onClick={handleConfirmCustomClick}>
                     <CheckIcon size={16} />
                   </Link>

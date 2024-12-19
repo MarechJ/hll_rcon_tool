@@ -1,5 +1,5 @@
-import dayjs from 'dayjs';
-import {Action, TIME_FORMAT} from "@/components/LiveLogs/Log";
+import dayjs from 'dayjs'
+import { Action, TIME_FORMAT } from '@/components/LiveLogs/Log'
 
 /*
  Log example: 
@@ -41,33 +41,33 @@ import {Action, TIME_FORMAT} from "@/components/LiveLogs/Log";
 */
 
 const removePlayerIds = (message) => {
-    // Combine both regex patterns into one
-    return message.replace(/\((?:(?:Axis|Allies)\/)?(?:[0-9]{17}|[A-Z0-9]{16})\)/g, '');
-};
+  // Combine both regex patterns into one
+  return message.replace(/\((?:(?:Axis|Allies)\/)?(?:[0-9]{17}|[A-Z0-9]{16})\)/g, '')
+}
 
 // Column definitions for the log table
 export const logColumns = [
-    {
-        header: 'Time',
-        accessorKey: 'timestamp_ms',
-        cell: ({ row }) => {
-            return dayjs(row.original.timestamp_ms).format(TIME_FORMAT);
-        },
-    },
-    {
-        header: 'Action',
-        accessorKey: 'action',
-        cell: ({ row }) => {
-            return <Action type={row.original.action}>{row.original.action}</Action>;
-        },
-    },
-    {
-        header: 'Message',
-        accessorKey: 'message',
-        // full width
-        size: "100%",
-        cell: ({ row }) => {
-            return removePlayerIds(row.original.message);
-        },
-    },
-];
+  {
+    header: 'Time',
+    accessorKey: 'timestamp_ms',
+    cell: ({ row }) => {
+      return dayjs(row.original.timestamp_ms).format(TIME_FORMAT)
+    }
+  },
+  {
+    header: 'Action',
+    accessorKey: 'action',
+    cell: ({ row }) => {
+      return <Action type={row.original.action}>{row.original.action}</Action>
+    }
+  },
+  {
+    header: 'Message',
+    accessorKey: 'message',
+    // full width
+    size: '100%',
+    cell: ({ row }) => {
+      return removePlayerIds(row.original.message)
+    }
+  }
+]

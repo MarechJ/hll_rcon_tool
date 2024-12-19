@@ -38,7 +38,7 @@ function prepareData(player_stats: Player[]) {
       'Defensive Points',
       'Offensive Points',
       'Weapons',
-      'Death by Weapons',
+      'Death by Weapons'
     ],
     ...player_stats.map((p) => [
       p.player_id,
@@ -62,8 +62,8 @@ function prepareData(player_stats: Player[]) {
       p.defense,
       p.offense,
       JSON.stringify(p.weapons),
-      JSON.stringify(p.death_by_weapons),
-    ]),
+      JSON.stringify(p.death_by_weapons)
+    ])
   ]
     .map((l) => '"' + l.map((co) => (typeof co === 'string' ? co.replaceAll('"', '""') : co)).join('","') + '"')
     .join('\n')

@@ -15,6 +15,6 @@ const chatWebhooksNotes = `
     /* Whether or not in game chat can @ mention Discord users/roles */
     "allow_mentions": true
 }
-`;
+`
 
-export default chatWebhooksNotes;
+export default chatWebhooksNotes

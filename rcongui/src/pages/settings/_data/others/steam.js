@@ -7,7 +7,6 @@ const SteamNotes = `
         */
         "api_key": "your_api_key_here"
     }
-    `;
+    `
 
-export default SteamNotes;
-
+export default SteamNotes

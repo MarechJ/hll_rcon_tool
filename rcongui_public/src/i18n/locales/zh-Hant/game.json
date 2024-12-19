@@ -1,64 +1,64 @@
 {
-    "gameNotFound": "未找到遊戲 {{ id }}",
-    "loading": "載入中...",
-    "selectPlayer": "選擇玩家",
-    "searchPlayer": "搜尋玩家",
-    "noPlayersFound": "未找到玩家",
-    "onlineStatusFilter": {
-        "online": "線上",
-        "offline": "離線",
-        "all": "全部"
-    },
+  "gameNotFound": "未找到遊戲 {{ id }}",
+  "loading": "載入中...",
+  "selectPlayer": "選擇玩家",
+  "searchPlayer": "搜尋玩家",
+  "noPlayersFound": "未找到玩家",
+  "onlineStatusFilter": {
+    "online": "線上",
+    "offline": "離線",
+    "all": "全部"
+  },
+  "player": "玩家",
+  "players": "玩家",
+  "allies": "盟軍",
+  "axis": "軸心國",
+  "weather": {
+    "day": "白天",
+    "night": "夜晚",
+    "dusk": "黃昏",
+    "dawn": "黎明",
+    "rain": "雨天",
+    "overcast": "陰天"
+  },
+  "playersTable": {
     "player": "玩家",
-    "players": "玩家",
-    "allies": "盟軍",
-    "axis": "軸心國",
-    "weather": {
-        "day": "白天",
-        "night": "夜晚",
-        "dusk": "黃昏",
-        "dawn": "黎明",
-        "rain": "雨天",
-        "overcast": "陰天"
-    },
-    "playersTable": {
-        "player": "玩家",
-        "team": "隊伍",
-        "kills": "擊殺",
-        "deaths": "死亡",
-        "combat": "戰鬥",
-        "score": "得分",
-        "weapon": "武器",
-        "vehicle": "載具",
-        "armor": "裝甲",
-        "commander": "指揮官",
-        "offense": "進攻",
-        "defense": "防守",
-        "support": "支援",
-        "utility": "工具",
-        "diff": "差值",
-        "status": "狀態"
-    },
-    "matchTable": {
-        "match": "對戰",
-        "map": "地圖",
-        "mode": "模式",
-        "duration": "時長",
-        "result": "結果",
-        "start": "開始"
-    },
-    "playerStats": {
-        "killsByWeapon": "武器擊殺統計",
-        "deathsByWeapon": "武器死亡統計",
-        "encounters": "遭遇戰",
-        "weapon": "武器",
-        "count": "次數"
-    },
-    "score": {
-        "killstreak": "連殺",
-        "deathstreak": "連死",
-        "teamkills": "友軍傷害",
-        "k/d": "擊殺/死亡比"
-    },
-    "downloadTable": "下載表格"
+    "team": "隊伍",
+    "kills": "擊殺",
+    "deaths": "死亡",
+    "combat": "戰鬥",
+    "score": "得分",
+    "weapon": "武器",
+    "vehicle": "載具",
+    "armor": "裝甲",
+    "commander": "指揮官",
+    "offense": "進攻",
+    "defense": "防守",
+    "support": "支援",
+    "utility": "工具",
+    "diff": "差值",
+    "status": "狀態"
+  },
+  "matchTable": {
+    "match": "對戰",
+    "map": "地圖",
+    "mode": "模式",
+    "duration": "時長",
+    "result": "結果",
+    "start": "開始"
+  },
+  "playerStats": {
+    "killsByWeapon": "武器擊殺統計",
+    "deathsByWeapon": "武器死亡統計",
+    "encounters": "遭遇戰",
+    "weapon": "武器",
+    "count": "次數"
+  },
+  "score": {
+    "killstreak": "連殺",
+    "deathstreak": "連死",
+    "teamkills": "友軍傷害",
+    "k/d": "擊殺/死亡比"
+  },
+  "downloadTable": "下載表格"
 }

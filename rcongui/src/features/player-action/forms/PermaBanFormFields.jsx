@@ -1,6 +1,6 @@
 import { Stack } from '@mui/material'
 import { ReasonField } from '../fields/ReasonField'
-import { ForwardField } from '../fields/ForwardField';
+import { ForwardField } from '../fields/ForwardField'
 
 export const PermaBanFormFields = (props) => {
   return (
@@ -9,4 +9,4 @@ export const PermaBanFormFields = (props) => {
       <ReasonField {...props} />
     </Stack>
   )
-};
+}

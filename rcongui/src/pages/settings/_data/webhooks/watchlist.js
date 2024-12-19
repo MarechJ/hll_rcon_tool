@@ -22,6 +22,6 @@ const watchlistWebhooksNotes = `
         }
     ]
 }
-`;
+`
 
-export default watchlistWebhooksNotes;
+export default watchlistWebhooksNotes

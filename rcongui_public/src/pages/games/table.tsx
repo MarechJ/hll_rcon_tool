@@ -6,7 +6,7 @@ import {
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
-  useReactTable,
+  useReactTable
 } from '@tanstack/react-table'
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -27,14 +27,14 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
     getSortedRowModel: getSortedRowModel(),
     getCoreRowModel: getCoreRowModel(),
     state: {
-      sorting,
-    },
+      sorting
+    }
   })
 
   return (
-    <div className="border w-full">
+    <div className='border w-full'>
       <Table>
-        <TableHeader className="h-12">
+        <TableHeader className='h-12'>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
@@ -50,9 +50,9 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
         <TableBody>
           {table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'} className="text-sm h-10">
+              <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'} className='text-sm h-10'>
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="py-0">
+                  <TableCell key={cell.id} className='py-0'>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
@@ -60,7 +60,7 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
+              <TableCell colSpan={columns.length} className='h-24 text-center'>
                 No results.
               </TableCell>
             </TableRow>

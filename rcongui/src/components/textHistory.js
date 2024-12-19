@@ -1,38 +1,38 @@
-const PREFIX = "autocomplete_";
+const PREFIX = 'autocomplete_'
 
 class TextHistory {
   constructor(namespace) {
-    this.namespace = PREFIX + namespace;
+    this.namespace = PREFIX + namespace
   }
 
   getTexts() {
-    let texts = localStorage.getItem(this.namespace);
+    let texts = localStorage.getItem(this.namespace)
 
     if (!texts) {
-      texts = [];
-      localStorage.setItem(this.namespace, JSON.stringify(texts));
+      texts = []
+      localStorage.setItem(this.namespace, JSON.stringify(texts))
     } else {
-      texts = JSON.parse(texts);
+      texts = JSON.parse(texts)
     }
 
-    texts.sort((a, b) => a.toLowerCase() > b.toLowerCase());
+    texts.sort((a, b) => a.toLowerCase() > b.toLowerCase())
 
-    return texts;
+    return texts
   }
 
   saveText(text, sharedMessages = []) {
     if (!text || sharedMessages.includes(text)) {
-      return;
+      return
     }
-    const texts = this.getTexts();
-    texts.push(text);
-    localStorage.setItem(this.namespace, JSON.stringify(_.uniq(texts)));
+    const texts = this.getTexts()
+    texts.push(text)
+    localStorage.setItem(this.namespace, JSON.stringify(_.uniq(texts)))
   }
 
   clear() {
-    localStorage.removeItem(this.namespace);
+    localStorage.removeItem(this.namespace)
   }
 }
 
-export default TextHistory;
-export { TextHistory };
+export default TextHistory
+export { TextHistory }

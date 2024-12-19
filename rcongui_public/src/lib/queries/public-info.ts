@@ -18,12 +18,12 @@ export const publicInfoQueryOptions = queryOptions({
   queryKey: queryKeys.publicInfo,
   queryFn: fetchPublicInfo,
   staleTime: STALE_TIME,
-  refetchInterval: REFETCH_INTERVAL,
+  refetchInterval: REFETCH_INTERVAL
 })
 
 export const usePublicInfo = () => {
   const { data, ...rest } = useQuery({
-    ...publicInfoQueryOptions,
+    ...publicInfoQueryOptions
   })
 
   return [data, rest] as const

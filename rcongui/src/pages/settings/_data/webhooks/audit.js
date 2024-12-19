@@ -14,6 +14,6 @@ const auditWebhooksNotes = `
         }
     ]
 }
-`;
+`
 
-export default auditWebhooksNotes;
+export default auditWebhooksNotes

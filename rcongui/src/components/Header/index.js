@@ -1,5 +1,5 @@
-import Header from "./header";
-import Footer from "./footer";
+import Header from './header'
+import Footer from './footer'
 
-export default Header;
-export { Footer };
+export default Header
+export { Footer }

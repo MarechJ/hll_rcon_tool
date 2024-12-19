@@ -21,6 +21,6 @@ const cameraWebhooksNotes = `
         }
     ]
 }
-`;
+`
 
-export default cameraWebhooksNotes;
+export default cameraWebhooksNotes

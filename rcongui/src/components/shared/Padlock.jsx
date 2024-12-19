@@ -1,6 +1,6 @@
-import FormGroup from "@mui/material/FormGroup";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Switch from "@mui/material/Switch";
+import FormGroup from '@mui/material/FormGroup'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import Switch from '@mui/material/Switch'
 
 export default function Padlock({ handleChange, checked, label, color }) {
   return (
@@ -11,11 +11,11 @@ export default function Padlock({ handleChange, checked, label, color }) {
             checked={checked}
             onChange={(e) => handleChange(e.target.checked)}
             name={label}
-            color={color ? color : "primary"}
+            color={color ? color : 'primary'}
           />
         }
         label={label}
       />
     </FormGroup>
-  );
+  )
 }

@@ -11,7 +11,8 @@
     "lint": "eslint --quiet src -c eslintrc.mjs && stylelint src/**/*.less",
     "lint:fix": "eslint --quiet --fix src -c eslintrc.mjs && stylelint --fix src/**/*.less",
     "i18next-resources-for-ts": "i18next-resources-for-ts toc -i ./src/i18n/locales/en -o ./src/types/resources.ts",
-    "translate": "transmart"
+    "translate": "transmart",
+    "format": "prettier src/ --write"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

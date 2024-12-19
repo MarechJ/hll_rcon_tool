@@ -29,6 +29,6 @@ const adminPingWebhooksNotes = `
         "!admin"
     ]
 }
-`;
+`
 
-export default adminPingWebhooksNotes;
+export default adminPingWebhooksNotes

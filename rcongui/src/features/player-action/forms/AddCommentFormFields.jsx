@@ -1,7 +1,5 @@
-import { CommentField } from "../fields/CommentField"
+import { CommentField } from '../fields/CommentField'
 
 export const AddCommentFormFields = (props) => {
-    return (
-        <CommentField rules={{ required: "Comment is required." }} {...props} />
-    )
+  return <CommentField rules={{ required: 'Comment is required.' }} {...props} />
 }

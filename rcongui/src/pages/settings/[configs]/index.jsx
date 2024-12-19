@@ -1,7 +1,7 @@
-import { Outlet } from "react-router-dom"
+import { Outlet } from 'react-router-dom'
 
 const VariousConfigsRoot = () => {
-    return <Outlet />
+  return <Outlet />
 }
 
-export default VariousConfigsRoot;
+export default VariousConfigsRoot

@@ -238,4 +238,4 @@ const levelAutoModNotes = `
         }
     `
 
-export default levelAutoModNotes;
+export default levelAutoModNotes

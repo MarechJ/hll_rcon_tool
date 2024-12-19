@@ -1,5 +1,5 @@
-import { Select, MenuItem, FormControl, InputLabel, FormHelperText } from '@mui/material';
-import { Controller } from 'react-hook-form';
+import { Select, MenuItem, FormControl, InputLabel, FormHelperText } from '@mui/material'
+import { Controller } from 'react-hook-form'
 
 export function ControlledSelect({
   control,
@@ -30,17 +30,17 @@ export function ControlledSelect({
               disabled={disabled}
               error={!!error}
               {...props}
-          >
-            {options.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </Select>
-            {error && <FormHelperText>{error?.message ?? error?.text ?? "Error"}</FormHelperText>}
+            >
+              {options.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+            {error && <FormHelperText>{error?.message ?? error?.text ?? 'Error'}</FormHelperText>}
           </>
         )}
       />
     </FormControl>
-  );
+  )
 }

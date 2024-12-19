@@ -30,4 +30,4 @@ const ChatCommandsNotes = `
   }
   `
 
-  export default ChatCommandsNotes;
+export default ChatCommandsNotes

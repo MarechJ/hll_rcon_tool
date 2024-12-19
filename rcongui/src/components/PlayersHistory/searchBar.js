@@ -10,16 +10,16 @@ import {
   MenuItem,
   Select,
   Switch,
-  TextField,
-} from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
-import {DesktopDateTimePicker} from '@mui/x-date-pickers/DesktopDateTimePicker';
-import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
-import {LocalizationProvider} from '@mui/x-date-pickers/LocalizationProvider';
-import Grid from "@mui/material/Grid2";
-import {lazy, Suspense, useEffect, useState} from "react";
+  TextField
+} from '@mui/material'
+import CloseIcon from '@mui/icons-material/Close'
+import { DesktopDateTimePicker } from '@mui/x-date-pickers/DesktopDateTimePicker'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
+import Grid from '@mui/material/Grid2'
+import { lazy, Suspense, useEffect, useState } from 'react'
 
-const EmojiPicker = lazy(() => import("@emoji-mart/react"));
+const EmojiPicker = lazy(() => import('@emoji-mart/react'))
 
 const SearchBar = ({
   name,
@@ -40,67 +40,43 @@ const SearchBar = ({
   flags,
   setFlags,
   country,
-  setCountry,
+  setCountry
 }) => {
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [data, setData] = useState({});
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [data, setData] = useState({})
 
   useEffect(() => {
-    import('@emoji-mart/data').then((d) => setData(d.default));
-  }, []);
+    import('@emoji-mart/data').then((d) => setData(d.default))
+  }, [])
 
   return (
-    (<form>
-      <Grid
-        container
-        spacing={1}
-        alignContent="center"
-        alignItems="center"
-        justifyContent="space-evenly"
-      >
+    <form>
+      <Grid container spacing={1} alignContent='center' alignItems='center' justifyContent='space-evenly'>
         <Grid>
-          <TextField
-            label="Search by Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
+          <TextField label='Search by Name' value={name} onChange={(e) => setName(e.target.value)} />
         </Grid>
         <Grid>
           <FormControlLabel
             control={
-              <Switch
-                checked={ignoreAccent}
-                onChange={(e) => setIgnoreAccent(e.target.checked)}
-                color="primary"
-              />
+              <Switch checked={ignoreAccent} onChange={(e) => setIgnoreAccent(e.target.checked)} color='primary' />
             }
-            label="Ignore Accents"
-            labelPlacement="top"
+            label='Ignore Accents'
+            labelPlacement='top'
           />
         </Grid>
         <Grid>
           <FormControlLabel
-            control={
-              <Switch
-                checked={exactMatch}
-                onChange={(e) => setExactMatch(e.target.checked)}
-                color="primary"
-              />
-            }
-            label="Exact match"
-            labelPlacement="top"
+            control={<Switch checked={exactMatch} onChange={(e) => setExactMatch(e.target.checked)} color='primary' />}
+            label='Exact match'
+            labelPlacement='top'
           />
         </Grid>
         <Grid>
-          <TextField
-            label="Search by Player ID"
-            value={playerId}
-            onChange={(e) => setPlayerId(e.target.value)}
-          />
+          <TextField label='Search by Player ID' value={playerId} onChange={(e) => setPlayerId(e.target.value)} />
         </Grid>
         <Grid>
           <TextField
-            label="Flag"
+            label='Flag'
             value={flags}
             onChange={(e) => setFlags(e.target.value)}
             onFocus={() => setShowEmojiPicker(true)}
@@ -108,38 +84,32 @@ const SearchBar = ({
           {showEmojiPicker ? (
             <Card>
               <CardHeader
-                title="Pick emojis"
+                title='Pick emojis'
                 action={
-                  <IconButton onClick={() => setShowEmojiPicker(false)} size="large">
-                    <CloseIcon/>
+                  <IconButton onClick={() => setShowEmojiPicker(false)} size='large'>
+                    <CloseIcon />
                   </IconButton>
                 }
               />
               <CardContent>
                 <Suspense>
                   <EmojiPicker
-                    style={{border: '1px solid red'}}
+                    style={{ border: '1px solid red' }}
                     dynamicWidth={true}
                     perLine={8}
                     data={data}
-                    onEmojiSelect={(emoji) =>
-                      setFlags(flags + emoji.native + ",")
-                    }
+                    onEmojiSelect={(emoji) => setFlags(flags + emoji.native + ',')}
                   />
                 </Suspense>
               </CardContent>
             </Card>
           ) : (
-            ""
+            ''
           )}
         </Grid>
 
         <Grid>
-          <TextField
-            label="Steam country (iso)"
-            value={country}
-            onChange={(e) => setCountry(e.target.value)}
-          />
+          <TextField label='Steam country (iso)' value={country} onChange={(e) => setCountry(e.target.value)} />
         </Grid>
         <Grid>
           {/* <MuiPickersUtilsProvider utils={MomentUtils}>
@@ -152,7 +122,7 @@ const SearchBar = ({
           </MuiPickersUtilsProvider> */}
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DesktopDateTimePicker
-              label="Last seen from"
+              label='Last seen from'
               onChange={(value) => console.log(value)} // send value to hook form
               format='LLL'
             />
@@ -169,7 +139,7 @@ const SearchBar = ({
           </MuiPickersUtilsProvider> */}
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DesktopDateTimePicker
-              label="Last seen until"
+              label='Last seen until'
               onChange={(value) => console.log(value)} // send value to hook form
               format='LLL'
             />
@@ -181,37 +151,31 @@ const SearchBar = ({
               <Switch
                 checked={blacklistedOnly}
                 onChange={(e) => setBlacklistedOnly(e.target.checked)}
-                color="primary"
+                color='primary'
               />
             }
-            label="Blacklisted only"
-            labelPlacement="top"
+            label='Blacklisted only'
+            labelPlacement='top'
           />
         </Grid>
         <Grid>
           <FormControlLabel
             control={
-              <Switch
-                checked={isWatchedOnly}
-                onChange={(e) => setIsWatchedOnly(e.target.checked)}
-                color="primary"
-              />
+              <Switch checked={isWatchedOnly} onChange={(e) => setIsWatchedOnly(e.target.checked)} color='primary' />
             }
-            label="Watched only"
-            labelPlacement="top"
+            label='Watched only'
+            labelPlacement='top'
           />
         </Grid>
         <Grid
           size={{
             xs: 4,
             xl: 1
-          }}>
+          }}
+        >
           <FormControl fullWidth>
             <InputLabel>Page size</InputLabel>
-            <Select
-              value={pageSize}
-              onChange={(e) => setPageSize(e.target.value)}
-            >
+            <Select value={pageSize} onChange={(e) => setPageSize(e.target.value)}>
               <MenuItem value={10}>10</MenuItem>
               <MenuItem value={20}>20</MenuItem>
               <MenuItem value={30}>30</MenuItem>
@@ -226,21 +190,21 @@ const SearchBar = ({
         </Grid>
         <Grid>
           <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            size="large"
+            type='submit'
+            variant='contained'
+            color='primary'
+            size='large'
             onClick={(e) => {
-              e.preventDefault();
-              onSearch();
+              e.preventDefault()
+              onSearch()
             }}
           >
             Load results
           </Button>
         </Grid>
       </Grid>
-    </form>)
-  );
-};
+    </form>
+  )
+}
 
-export default SearchBar;
+export default SearchBar

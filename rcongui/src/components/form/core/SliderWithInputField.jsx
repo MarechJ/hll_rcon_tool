@@ -1,13 +1,13 @@
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import Slider from '@mui/material/Slider';
-import MuiInput from '@mui/material/Input';
-import { styled } from '@mui/styles';
-import Grid from "@mui/material/Grid2"
-import {useState} from "react";
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
+import Slider from '@mui/material/Slider'
+import MuiInput from '@mui/material/Input'
+import { styled } from '@mui/styles'
+import Grid from '@mui/material/Grid2'
+import { useState } from 'react'
 
 const Input = styled(MuiInput)(() => ({
-    width: '58px'
+  width: '58px'
 }))
 
 export default function SliderWithInputField({
@@ -19,39 +19,39 @@ export default function SliderWithInputField({
   max,
   step,
   disabled,
-  onChange: handleChange,
+  onChange: handleChange
 }) {
-  const [value, setValue] = useState(aValue ?? 0);
+  const [value, setValue] = useState(aValue ?? 0)
 
   const handleSliderChange = (event, newValue) => {
-    setValue(newValue);
-  };
+    setValue(newValue)
+  }
 
   const handleInputChange = (event) => {
-    setValue(event.target.value === '' ? 0 : Number(event.target.value));
-    handleChange(event);
-  };
+    setValue(event.target.value === '' ? 0 : Number(event.target.value))
+    handleChange(event)
+  }
 
   const handleBlur = () => {
     if (value < min) {
-      setValue(min);
+      setValue(min)
     } else if (value > max) {
-      setValue(max);
+      setValue(max)
     }
-  };
+  }
 
   return (
     <Box>
       <Typography id={`input-slider-${name}`} gutterBottom>
         {label}
       </Typography>
-      <Grid container spacing={4} alignItems="center">
+      <Grid container spacing={4} alignItems='center'>
         <Grid>{icon}</Grid>
         <Grid xs>
           <Slider
             value={typeof value === 'number' ? value : 0}
             onChange={handleSliderChange}
-            aria-labelledby="input-slider"
+            aria-labelledby='input-slider'
             step={step}
             min={min}
             max={max}
@@ -59,16 +59,16 @@ export default function SliderWithInputField({
             marks={[
               {
                 value: min,
-                label: min,
+                label: min
               },
               {
                 value: Math.floor(max / 2),
-                label: Math.floor(max / 2),
+                label: Math.floor(max / 2)
               },
               {
                 value: max,
-                label: max,
-              },
+                label: max
+              }
             ]}
           />
         </Grid>
@@ -77,7 +77,7 @@ export default function SliderWithInputField({
             value={value}
             disabled={disabled}
             name={name}
-            size="small"
+            size='small'
             onChange={handleInputChange}
             onBlur={handleBlur}
             inputProps={{
@@ -85,11 +85,11 @@ export default function SliderWithInputField({
               min: min,
               max: max,
               type: 'number',
-              'aria-labelledby': 'input-slider',
+              'aria-labelledby': 'input-slider'
             }}
           />
         </Grid>
       </Grid>
     </Box>
-  );
+  )
 }

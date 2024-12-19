@@ -30,4 +30,4 @@ const nameKicksNotes = `
     }
     `
 
-    export default nameKicksNotes;
+export default nameKicksNotes

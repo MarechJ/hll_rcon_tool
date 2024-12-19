@@ -1,6 +1,6 @@
-import { alpha } from '@mui/material/styles';
+import { alpha } from '@mui/material/styles'
 
-import { gray, brand } from '../themePrimitives';
+import { gray, brand } from '../themePrimitives'
 
 /* eslint-disable import/prefer-default-export */
 export const treeViewCustomizations = {
@@ -14,7 +14,7 @@ export const treeViewCustomizations = {
           marginLeft: theme.spacing(2),
           padding: theme.spacing(0),
           borderLeft: '1px solid',
-          borderColor: theme.palette.divider,
+          borderColor: theme.palette.divider
         },
         '&:focus-visible .focused': {
           outline: `3px solid ${alpha(brand[500], 0.5)}`,
@@ -22,40 +22,40 @@ export const treeViewCustomizations = {
           '&:hover': {
             backgroundColor: alpha(gray[300], 0.2),
             outline: `3px solid ${alpha(brand[500], 0.5)}`,
-            outlineOffset: '2px',
-          },
-        },
+            outlineOffset: '2px'
+          }
+        }
       }),
       content: ({ theme }) => ({
         marginTop: theme.spacing(1),
         padding: theme.spacing(0.5, 1),
         overflow: 'clip',
         '&:hover': {
-          backgroundColor: alpha(gray[300], 0.2),
+          backgroundColor: alpha(gray[300], 0.2)
         },
         '&.selected': {
           backgroundColor: alpha(gray[300], 0.4),
           '&:hover': {
-            backgroundColor: alpha(gray[300], 0.6),
-          },
+            backgroundColor: alpha(gray[300], 0.6)
+          }
         },
         ...theme.applyStyles('dark', {
           '&:hover': {
-            backgroundColor: alpha(gray[500], 0.2),
+            backgroundColor: alpha(gray[500], 0.2)
           },
           '&:focus-visible': {
             '&:hover': {
-              backgroundColor: alpha(gray[500], 0.2),
-            },
+              backgroundColor: alpha(gray[500], 0.2)
+            }
           },
           '&.selected': {
             backgroundColor: alpha(gray[500], 0.4),
             '&:hover': {
-              backgroundColor: alpha(gray[500], 0.6),
-            },
-          },
-        }),
-      }),
-    },
-  },
-};
+              backgroundColor: alpha(gray[500], 0.6)
+            }
+          }
+        })
+      })
+    }
+  }
+}

@@ -1,5 +1,3 @@
-import { MessageField } from '../fields/MessageField';
+import { MessageField } from '../fields/MessageField'
 
-export const MessageFormFields = (props) => (
-  <MessageField {...props} />
-);
+export const MessageFormFields = (props) => <MessageField {...props} />

@@ -1,20 +1,21 @@
-import ListItem from "@mui/material/ListItem";
-import ListItemAvatar from "@mui/material/ListItemAvatar";
-import ListItemText from "@mui/material/ListItemText";
-import { ListItemButton } from "@mui/material";
-import { MapAvatar, MapDescription } from "./map-details";
+import ListItem from '@mui/material/ListItem'
+import ListItemAvatar from '@mui/material/ListItemAvatar'
+import ListItemText from '@mui/material/ListItemText'
+import { ListItemButton } from '@mui/material'
+import { MapAvatar, MapDescription } from './map-details'
 
-const ListItemComponent = ({ children, secondaryAction, asButton, ...props }) => asButton ? (
-  <ListItem secondaryAction={secondaryAction} disablePadding>
-    <ListItemButton role={undefined} disableRipple dense {...props}>
+const ListItemComponent = ({ children, secondaryAction, asButton, ...props }) =>
+  asButton ? (
+    <ListItem secondaryAction={secondaryAction} disablePadding>
+      <ListItemButton role={undefined} disableRipple dense {...props}>
+        {children}
+      </ListItemButton>
+    </ListItem>
+  ) : (
+    <ListItem secondaryAction={secondaryAction} {...props}>
       {children}
-    </ListItemButton>
-  </ListItem>
-) : (
-  <ListItem secondaryAction={secondaryAction} {...props}>
-    {children}
-  </ListItem>
-);
+    </ListItem>
+  )
 
 export function MapListItem({ mapLayer, primary, secondary, secondaryAction, asButton, ...props }) {
   return (
@@ -27,5 +28,5 @@ export function MapListItem({ mapLayer, primary, secondary, secondaryAction, asB
         secondary={secondary ?? <MapDescription mapLayer={mapLayer} />}
       />
     </ListItemComponent>
-  );
+  )
 }

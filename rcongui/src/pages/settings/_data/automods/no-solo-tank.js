@@ -163,4 +163,4 @@ const NoSoloTankAutoMod = `
         }
     `
 
-    export default NoSoloTankAutoMod;
+export default NoSoloTankAutoMod

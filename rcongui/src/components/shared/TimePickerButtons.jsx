@@ -1,43 +1,40 @@
-import {
-  Button,
-  ButtonGroup,
-} from "@mui/material";
-import dayjs from "dayjs";
+import { Button, ButtonGroup } from '@mui/material'
+import dayjs from 'dayjs'
 
-export const TimePickerButtons = ({
-  amount,
-  unit,
-  expirationTimestamp,
-  setExpirationTimestamp,
-}) => {
-
+export const TimePickerButtons = ({ amount, unit, expirationTimestamp, setExpirationTimestamp }) => {
   const adjustTimestamp = (amount, unit) => {
-    const after = dayjs(expirationTimestamp).add(amount, unit);
-    const now = dayjs();
+    const after = dayjs(expirationTimestamp).add(amount, unit)
+    const now = dayjs()
 
     if (after.isBefore(now)) {
       setExpirationTimestamp(now)
-      return;
+      return
     }
 
-    setExpirationTimestamp(after);
-  };
+    setExpirationTimestamp(after)
+  }
 
   const setTimestamp = (amount, unit) => {
-    setExpirationTimestamp(dayjs().add(amount, unit));
-  };
+    setExpirationTimestamp(dayjs().add(amount, unit))
+  }
 
   return (
-    <ButtonGroup variant="outlined" size="small" style={{ display: "flex", marginBottom: 4 }}>
-      <Button style={{ display: "block", width: "100%", maxWidth: "2rem" }} onClick={() => adjustTimestamp(-amount, unit)}>
+    <ButtonGroup variant='outlined' size='small' style={{ display: 'flex', marginBottom: 4 }}>
+      <Button
+        style={{ display: 'block', width: '100%', maxWidth: '2rem' }}
+        onClick={() => adjustTimestamp(-amount, unit)}
+      >
         -
       </Button>
-      <Button style={{ display: "block", width: "100%" }} onClick={() => setTimestamp(amount, unit)}>
+      <Button style={{ display: 'block', width: '100%' }} onClick={() => setTimestamp(amount, unit)}>
         {amount} {unit}
       </Button>
-      <Button style={{ display: "block", width: "100%", maxWidth: "2rem" }} onClick={() => adjustTimestamp(amount, unit)}>
+      <Button
+        style={{ display: 'block', width: '100%', maxWidth: '2rem' }}
+        onClick={() => adjustTimestamp(amount, unit)}
+      >
         +
       </Button>
     </ButtonGroup>
-  );
-};
+  )
+}

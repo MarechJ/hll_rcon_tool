@@ -1,64 +1,64 @@
 {
-    "gameNotFound": "Game {{ id }} not found",
-    "loading": "Loading...",
-    "downloadTable": "Download table",
-    "selectPlayer": "Select a player",
-    "searchPlayer": "Search for a player",
-    "noPlayersFound": "No players found",
-    "onlineStatusFilter": {
-        "online": "Online",
-        "offline": "Offline",
-        "all": "All"
-    },
+  "gameNotFound": "Game {{ id }} not found",
+  "loading": "Loading...",
+  "downloadTable": "Download table",
+  "selectPlayer": "Select a player",
+  "searchPlayer": "Search for a player",
+  "noPlayersFound": "No players found",
+  "onlineStatusFilter": {
+    "online": "Online",
+    "offline": "Offline",
+    "all": "All"
+  },
+  "player": "Player",
+  "players": "Players",
+  "allies": "Allies",
+  "axis": "Axis",
+  "weather": {
+    "day": "Day",
+    "night": "Night",
+    "dusk": "Dusk",
+    "dawn": "Dawn",
+    "rain": "Rain",
+    "overcast": "Overcast"
+  },
+  "playersTable": {
     "player": "Player",
-    "players": "Players",
-    "allies": "Allies",
-    "axis": "Axis",
-    "weather": {
-        "day": "Day",
-        "night": "Night",
-        "dusk": "Dusk",
-        "dawn": "Dawn",
-        "rain": "Rain",
-        "overcast": "Overcast"
-    },
-    "playersTable": {
-        "player": "Player",
-        "team": "Team",
-        "kills": "Kills",
-        "deaths": "Deaths",
-        "combat": "Combat",
-        "score": "Score",
-        "weapon": "Weapon",
-        "vehicle": "Vehicle",
-        "armor": "Armor",
-        "commander": "Commander",
-        "offense": "Offense",
-        "defense": "Defense",
-        "support": "Support",
-        "utility": "Utility",
-        "diff": "Difference",
-        "status": "Status"
-    },
-    "matchTable": {
-        "match": "Match",
-        "map": "Map",
-        "mode": "Mode",
-        "duration": "Duration",
-        "result": "Result",
-        "start": "Start"
-    },
-    "playerStats": {
-        "killsByWeapon": "Kills by Weapon",
-        "deathsByWeapon": "Deaths by Weapon",
-        "encounters": "Encounters",
-        "weapon": "Weapon",
-        "count": "Count"
-    },
-    "score": {
-        "killstreak": "Killstreak",
-        "deathstreak": "Deathstreak",
-        "teamkills": "Team Kills",
-        "k/d": "K/D"
-    }
+    "team": "Team",
+    "kills": "Kills",
+    "deaths": "Deaths",
+    "combat": "Combat",
+    "score": "Score",
+    "weapon": "Weapon",
+    "vehicle": "Vehicle",
+    "armor": "Armor",
+    "commander": "Commander",
+    "offense": "Offense",
+    "defense": "Defense",
+    "support": "Support",
+    "utility": "Utility",
+    "diff": "Difference",
+    "status": "Status"
+  },
+  "matchTable": {
+    "match": "Match",
+    "map": "Map",
+    "mode": "Mode",
+    "duration": "Duration",
+    "result": "Result",
+    "start": "Start"
+  },
+  "playerStats": {
+    "killsByWeapon": "Kills by Weapon",
+    "deathsByWeapon": "Deaths by Weapon",
+    "encounters": "Encounters",
+    "weapon": "Weapon",
+    "count": "Count"
+  },
+  "score": {
+    "killstreak": "Killstreak",
+    "deathstreak": "Deathstreak",
+    "teamkills": "Team Kills",
+    "k/d": "K/D"
+  }
 }

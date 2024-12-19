@@ -8,13 +8,13 @@ const siteConfig = {
   navLinks: [
     {
       href: '/',
-      labelKey: 'currentGame',
+      labelKey: 'currentGame'
     },
     {
       href: '/games',
-      labelKey: 'gameHistory',
-    },
-  ] as { href: string; labelKey: NavigationKeys; disabled?: boolean }[],
+      labelKey: 'gameHistory'
+    }
+  ] as { href: string; labelKey: NavigationKeys; disabled?: boolean }[]
 }
 
 export default siteConfig

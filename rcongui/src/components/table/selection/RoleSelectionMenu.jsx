@@ -1,9 +1,9 @@
-import { List, ListItem, ListItemButton, Box } from "@mui/material";
-import { PopoverMenu } from "@/components/shared/PopoverMenu";
-import WorkIcon from '@mui/icons-material/Work';
-import { Tooltip, Button } from "@mui/material";
-import { RoleIcon } from "@/components/shared/RoleIcon";
-    
+import { List, ListItem, ListItemButton, Box } from '@mui/material'
+import { PopoverMenu } from '@/components/shared/PopoverMenu'
+import WorkIcon from '@mui/icons-material/Work'
+import { Tooltip, Button } from '@mui/material'
+import { RoleIcon } from '@/components/shared/RoleIcon'
+
 /**
  * @typedef {Object} RoleOption
  * @property {string} role
@@ -18,11 +18,11 @@ import { RoleIcon } from "@/components/shared/RoleIcon";
  */
 export const RoleSelectionMenu = ({ roleOptions, onRoleSelect }) => (
   <PopoverMenu
-    id="role-picker"
-    description="Pick a role to select all players with it"
+    id='role-picker'
+    description='Pick a role to select all players with it'
     renderButton={(props) => (
       <Button {...props}>
-        <Tooltip title="Select by role">
+        <Tooltip title='Select by role'>
           <WorkIcon />
         </Tooltip>
       </Button>
@@ -30,28 +30,24 @@ export const RoleSelectionMenu = ({ roleOptions, onRoleSelect }) => (
   >
     <List
       sx={{
-        width: "100%",
-        bgcolor: "background.paper",
-        position: "relative",
-        overflowY: "auto",
-        overflowX: "hidden",
+        width: '100%',
+        bgcolor: 'background.paper',
+        position: 'relative',
+        overflowY: 'auto',
+        overflowX: 'hidden',
         maxHeight: 300,
-        "& ul": { padding: 0 },
+        '& ul': { padding: 0 }
       }}
     >
       {roleOptions.map((option) => (
-        <ListItem
-          key={option.role}
-          dense
-          disableGutters
-          sx={{ "& .MuiButtonBase-root": { opacity: 1 } }}
-        >
+        <ListItem key={option.role} dense disableGutters sx={{ '& .MuiButtonBase-root': { opacity: 1 } }}>
           <ListItemButton onClick={() => onRoleSelect(option)}>
-            <Box sx={{ display: "flex", alignItems: "center", overflow: "hidden", px: 0, py: 0.25, gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', overflow: 'hidden', px: 0, py: 0.25, gap: 1 }}>
               <RoleIcon role={option.role} />
-              <Box sx={{ overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
-                <Box component="span" fontWeight="bold" textTransform="uppercase">
-                  {option.role}{option.count ? ` (${option.count})` : ""}
+              <Box sx={{ overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                <Box component='span' fontWeight='bold' textTransform='uppercase'>
+                  {option.role}
+                  {option.count ? ` (${option.count})` : ''}
                 </Box>
               </Box>
             </Box>
@@ -60,4 +56,4 @@ export const RoleSelectionMenu = ({ roleOptions, onRoleSelect }) => (
       ))}
     </List>
   </PopoverMenu>
-);
+)

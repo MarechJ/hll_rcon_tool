@@ -22,7 +22,7 @@ export const routerObjects: RouteObject[] = [
         index: true,
         errorElement: <ErrorPage />,
         element: <HomePage />,
-        loader: homeClientLoader(queryClient),
+        loader: homeClientLoader(queryClient)
       },
       {
         path: '/games',
@@ -33,17 +33,17 @@ export const routerObjects: RouteObject[] = [
           {
             index: true,
             element: <GamesList />,
-            loader: gameClientLoader(queryClient),
+            loader: gameClientLoader(queryClient)
           },
           {
             path: ':id',
             element: <GameDetail />,
-            loader: gameDetailClientLoader(queryClient),
-          },
-        ],
-      },
-    ],
-  },
+            loader: gameDetailClientLoader(queryClient)
+          }
+        ]
+      }
+    ]
+  }
 ]
 
 export function createRouter(): ReturnType<typeof createBrowserRouter> {

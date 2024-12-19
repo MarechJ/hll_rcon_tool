@@ -1,106 +1,90 @@
-import dayjs from "dayjs";
-import LocalizedFormat from "dayjs/plugin/localizedFormat";
-import { Link } from "react-router-dom";
-import { Box, Button, Typography } from "@mui/material";
-import { getGameDuration } from "@/utils/lib";
-import { SortableHeader } from "@/components/table/styles";
+import dayjs from 'dayjs'
+import LocalizedFormat from 'dayjs/plugin/localizedFormat'
+import { Link } from 'react-router-dom'
+import { Box, Button, Typography } from '@mui/material'
+import { getGameDuration } from '@/utils/lib'
+import { SortableHeader } from '@/components/table/styles'
 
-dayjs.extend(LocalizedFormat);
+dayjs.extend(LocalizedFormat)
 
 export const gameIdColumn = {
-  accessorKey: "id",
-  header: "ID",
+  accessorKey: 'id',
+  header: 'ID',
   cell: ({ cell }) => {
-    const matchId = cell.getValue();
+    const matchId = cell.getValue()
     return (
-      <Button component={Link} to={`/stats/games/${matchId}`} variant="text">
+      <Button component={Link} to={`/stats/games/${matchId}`} variant='text'>
         {matchId}
       </Button>
-    );
+    )
   },
   meta: {
-    variant: "short",
-  },
-};
+    variant: 'short'
+  }
+}
 
 export const mapColumn = {
-  header: SortableHeader("Map"),
-  id: "map",
-  accessorKey: "map",
+  header: SortableHeader('Map'),
+  id: 'map',
+  accessorKey: 'map',
   minSize: 200,
   size: 200,
-  filterFn: "mapFilter",
+  filterFn: 'mapFilter',
   cell: ({ cell }) => {
-    const matchMap = cell.getValue();
-    const size = 60;
-    const ratio = 9 / 16;
+    const matchMap = cell.getValue()
+    const size = 60
+    const ratio = 9 / 16
     return (
       <Box
         sx={{
-          display: "flex",
-          flexDirection: "row",
+          display: 'flex',
+          flexDirection: 'row',
           gap: 0.5,
-          width: "max-content",
+          width: 'max-content'
         }}
       >
-        <img
-          src={"/maps/icons/" + matchMap.image_name}
-          width={size}
-          height={size * ratio}
-          alt=""
-        />
-        <Box sx={{ display: "flex", flexDirection: "column" }}>
-          <Typography variant="body1" sx={{ fontWeight: 600, lineHeight: 1 }}>
+        <img src={'/maps/icons/' + matchMap.image_name} width={size} height={size * ratio} alt='' />
+        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+          <Typography variant='body1' sx={{ fontWeight: 600, lineHeight: 1 }}>
             {matchMap.map.pretty_name}
           </Typography>
-          <Typography
-            variant="subtitle2"
-            sx={{ display: "flex", flexDirection: "row", fontWeight: 400 }}
-          >
-            <Box component="span" sx={{ paddingRight: 0.5 }}>
-              {matchMap.game_mode[0].toUpperCase() +
-                matchMap.game_mode.slice(1)}
+          <Typography variant='subtitle2' sx={{ display: 'flex', flexDirection: 'row', fontWeight: 400 }}>
+            <Box component='span' sx={{ paddingRight: 0.5 }}>
+              {matchMap.game_mode[0].toUpperCase() + matchMap.game_mode.slice(1)}
             </Box>
-            <Box component="span">{matchMap.environment}</Box>
+            <Box component='span'>{matchMap.environment}</Box>
           </Typography>
         </Box>
       </Box>
-    );
+    )
   },
   meta: {
-    variant: "content",
-  },
-};
+    variant: 'content'
+  }
+}
 
 export const resultColumn = {
-  header: "Result",
-  id: "result",
-  accessorFn: (row) =>
-    `${row.result?.allied ?? "?"} - ${row.result?.axis ?? "?"}`,
+  header: 'Result',
+  id: 'result',
+  accessorFn: (row) => `${row.result?.allied ?? '?'} - ${row.result?.axis ?? '?'}`,
   meta: {
-    variant: "short",
-  },
-};
+    variant: 'short'
+  }
+}
 
 export const startColumn = {
-  header: SortableHeader("Start"),
-  accessorKey: "start",
-  cell: ({ cell }) => dayjs(cell.getValue()).format("L LT"),
+  header: SortableHeader('Start'),
+  accessorKey: 'start',
+  cell: ({ cell }) => dayjs(cell.getValue()).format('L LT'),
   meta: {
-    variant: "name",
-  },
-};
+    variant: 'name'
+  }
+}
 
 export const durationColumn = {
-  header: SortableHeader("Duration"),
-  accessorKey: "duration",
-  cell: ({ row }) => getGameDuration(row.original.start, row.original.end),
-};
+  header: SortableHeader('Duration'),
+  accessorKey: 'duration',
+  cell: ({ row }) => getGameDuration(row.original.start, row.original.end)
+}
 
-export const columns = [
-  gameIdColumn,
-  mapColumn,
-  resultColumn,
-  startColumn,
-  durationColumn,
-];
+export const columns = [gameIdColumn, mapColumn, resultColumn, startColumn, durationColumn]

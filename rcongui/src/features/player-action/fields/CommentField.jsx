@@ -1,8 +1,8 @@
-import { ControlledTextInput } from "@/components/form/core/ControlledTextInput";
+import { ControlledTextInput } from '@/components/form/core/ControlledTextInput'
 
 export const CommentField = ({ control, errors, ...props }) => {
-  const error = errors['comment'];
-  const hasError = !!error;
+  const error = errors['comment']
+  const hasError = !!error
 
   return (
     <ControlledTextInput
@@ -17,5 +17,5 @@ export const CommentField = ({ control, errors, ...props }) => {
       fullWidth
       {...props}
     />
-  );
-};
+  )
+}

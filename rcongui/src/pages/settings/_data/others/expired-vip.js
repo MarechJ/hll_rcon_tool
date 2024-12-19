@@ -13,6 +13,6 @@ const expiredVipNotes = `
         /* If left unset, the webhook defaults to your audit log webhook */      
         "discord_webhook_url": null
     }
-    `;
+    `
 
-    export default expiredVipNotes;
+export default expiredVipNotes

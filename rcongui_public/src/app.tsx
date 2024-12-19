@@ -8,7 +8,7 @@ import { queryClient } from './lib/queryClient'
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="system" storageKey="ui-theme">
+      <ThemeProvider defaultTheme='system' storageKey='ui-theme'>
         <RouterProvider router={createRouter()} />
       </ThemeProvider>
       <ReactQueryDevtools />

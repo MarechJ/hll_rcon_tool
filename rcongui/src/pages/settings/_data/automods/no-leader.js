@@ -197,4 +197,4 @@ const NoLeaderAutoMod = `
         }
     `
 
-    export default NoLeaderAutoMod;
+export default NoLeaderAutoMod

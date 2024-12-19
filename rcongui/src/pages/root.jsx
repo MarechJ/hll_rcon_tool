@@ -1,55 +1,54 @@
-import * as React from "react";
-import { createTheme, ThemeProvider, alpha } from "@mui/material/styles";
-import { Container, Box, Stack, CssBaseline } from "@mui/material";
-import getDashboardTheme from "@/themes/getDashboardTheme";
-import AppNavbar from "@/components/layout/AppNavbar";
-import Header from "@/components/layout/Header";
-import SideMenu from "@/components/layout/SideMenu";
-import TemplateFrame from "@/pages/TemplateFrame";
-import { ToastContainer } from "react-toastify";
-import { defer, Outlet, redirect } from "react-router-dom";
-import { useStorageState } from "@/hooks/useStorageState";
-import { cmd, get } from "@/utils/fetchUtils";
-import "react-toastify/dist/ReactToastify.css";
-import { ActionDialogProvider } from "@/hooks/useActionDialog";
-import { PlayerSidebarProvider } from "@/hooks/usePlayerSidebar";
+import * as React from 'react'
+import { createTheme, ThemeProvider, alpha } from '@mui/material/styles'
+import { Container, Box, Stack, CssBaseline } from '@mui/material'
+import getDashboardTheme from '@/themes/getDashboardTheme'
+import AppNavbar from '@/components/layout/AppNavbar'
+import Header from '@/components/layout/Header'
+import SideMenu from '@/components/layout/SideMenu'
+import TemplateFrame from '@/pages/TemplateFrame'
+import { ToastContainer } from 'react-toastify'
+import { defer, Outlet, redirect } from 'react-router-dom'
+import { useStorageState } from '@/hooks/useStorageState'
+import { cmd, get } from '@/utils/fetchUtils'
+import 'react-toastify/dist/ReactToastify.css'
+import { ActionDialogProvider } from '@/hooks/useActionDialog'
+import { PlayerSidebarProvider } from '@/hooks/usePlayerSidebar'
 
 export const loader = async () => {
-  return null;
-};
+  return null
+}
 
 export const action = async ({ request }) => {
-  const { intent } = Object.fromEntries(await request.formData());
+  const { intent } = Object.fromEntries(await request.formData())
 
-  if (intent === "logout") {
-    const success = await cmd.LOGOUT();
+  if (intent === 'logout') {
+    const success = await cmd.LOGOUT()
 
     if (success) {
-      return redirect("/login");
+      return redirect('/login')
     }
-
   }
-};
+}
 
 export default function Root() {
-  const [mode, setMode] = useStorageState("mode", "dark");
-  const [widthMode, setWidthMode] = useStorageState("width", "xl");
-  const dashboardTheme = createTheme(getDashboardTheme(mode));
-  const [openDrawer, setOpenDrawer] = React.useState(true);
+  const [mode, setMode] = useStorageState('mode', 'dark')
+  const [widthMode, setWidthMode] = useStorageState('width', 'xl')
+  const dashboardTheme = createTheme(getDashboardTheme(mode))
+  const [openDrawer, setOpenDrawer] = React.useState(true)
 
   const toggleDrawer = () => {
-    setOpenDrawer((prev) => !prev);
-  };
+    setOpenDrawer((prev) => !prev)
+  }
 
   const toggleColorMode = () => {
-    const newMode = mode === "dark" ? "light" : "dark";
-    setMode(newMode);
-  };
+    const newMode = mode === 'dark' ? 'light' : 'dark'
+    setMode(newMode)
+  }
 
   const toggleWidthMode = () => {
-    const newMode = widthMode === "xl" ? "false" : "xl";
-    setWidthMode(newMode);
-  };
+    const newMode = widthMode === 'xl' ? 'false' : 'xl'
+    setWidthMode(newMode)
+  }
 
   return (
     <TemplateFrame
@@ -62,29 +61,29 @@ export default function Root() {
     >
       <ThemeProvider theme={dashboardTheme}>
         <CssBaseline enableColorScheme />
-        <Box sx={{ display: "flex" }}>
+        <Box sx={{ display: 'flex' }}>
           <SideMenu open={openDrawer} />
           <AppNavbar />
           {/* Main content */}
           <Box
-            component="main"
+            component='main'
             sx={(theme) => ({
               flexGrow: 1,
               backgroundColor: alpha(theme.palette.background.default, 1),
-              overflow: "auto",
+              overflow: 'auto'
             })}
           >
             <Stack
               spacing={2}
               sx={{
-                alignItems: "center",
+                alignItems: 'center',
                 px: 0,
                 pb: 10,
-                mt: { xs: 8, lg: 0 },
+                mt: { xs: 8, lg: 0 }
               }}
             >
               <Header />
-              <Container maxWidth={widthMode} sx={{ overflowY: "auto", overflowX: "hidden" }}>
+              <Container maxWidth={widthMode} sx={{ overflowY: 'auto', overflowX: 'hidden' }}>
                 <ActionDialogProvider>
                   <PlayerSidebarProvider>
                     <Outlet />
@@ -97,5 +96,5 @@ export default function Root() {
         <ToastContainer />
       </ThemeProvider>
     </TemplateFrame>
-  );
+  )
 }

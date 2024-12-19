@@ -1,9 +1,9 @@
-import {Unwrapped} from "@jsonforms/material-renderers";
-import {useCallback} from "react";
-import {JsonFormsDispatch, withJsonFormsAnyOfProps, withJsonFormsControlProps} from "@jsonforms/react";
-import {and, createCombinatorRenderInfos, rankWith, schemaMatches, schemaTypeIs, uiTypeIs} from "@jsonforms/core";
+import { Unwrapped } from '@jsonforms/material-renderers'
+import { useCallback } from 'react'
+import { JsonFormsDispatch, withJsonFormsAnyOfProps, withJsonFormsControlProps } from '@jsonforms/react'
+import { and, createCombinatorRenderInfos, rankWith, schemaMatches, schemaTypeIs, uiTypeIs } from '@jsonforms/core'
 
-const {MaterialTextControl} = Unwrapped;
+const { MaterialTextControl } = Unwrapped
 
 /**
  * A usual MaterialTextControl used in a anyOfNullRenderer to render a text input which value is null when an empty
@@ -14,22 +14,25 @@ const {MaterialTextControl} = Unwrapped;
  * @returns {Element}
  */
 const nullableTextControl = (props) => {
-  const nullableChange = useCallback((path, newValue) => {
-    if (!newValue) {
-      props.handleChange(path, null);
-    } else {
-      props.handleChange(path, newValue);
-    }
-  }, [props.handleChange]);
-  return <MaterialTextControl {...props} handleChange={nullableChange}/>;
+  const nullableChange = useCallback(
+    (path, newValue) => {
+      if (!newValue) {
+        props.handleChange(path, null)
+      } else {
+        props.handleChange(path, newValue)
+      }
+    },
+    [props.handleChange]
+  )
+  return <MaterialTextControl {...props} handleChange={nullableChange} />
 }
-const NullableTextControl = withJsonFormsControlProps(nullableTextControl);
+const NullableTextControl = withJsonFormsControlProps(nullableTextControl)
 /**
  * Custom tester for a nullable text input, for use in anyOfNullRenderer.
  *
  * @type {Tester}
  */
-const nullableTextTester = and(uiTypeIs('Control'), schemaTypeIs('string'));
+const nullableTextTester = and(uiTypeIs('Control'), schemaTypeIs('string'))
 /**
  * Dispatches rendering of a JSON Form element based on the schema type of one of the anyOf elements.
  * Expects a schema with anyOf with exactly two elements, one of them having the type "null", making the other fields
@@ -47,37 +50,24 @@ const nullableTextTester = and(uiTypeIs('Control'), schemaTypeIs('string'));
  * @param uischemas
  * @returns {Element}
  */
-const anyOfNullRenderer = ({
-  schema,
-  rootSchema,
-  path,
-  renderers,
-  cells,
-  uischema,
-  uischemas,
-}) => {
-  const anyOf = 'anyOf';
-  const anyOfRenderInfos = createCombinatorRenderInfos(
-    schema.anyOf,
-    rootSchema,
-    anyOf,
-    uischema,
-    path,
-    uischemas
-  );
-  const anyOfRenderInfo = anyOfRenderInfos.find((e) => e.schema.type !== 'null');
-  return <JsonFormsDispatch
-    schema={{
-      description: schema.description,
-      title: schema.title,
-      default: null,
-      ...anyOfRenderInfo.schema,
-    }}
-    uischema={anyOfRenderInfo.uischema}
-    path={path}
-    renderers={[{tester: nullableTextTester, renderer: NullableTextControl}, ...renderers]}
-    cells={cells}
-  />
+const anyOfNullRenderer = ({ schema, rootSchema, path, renderers, cells, uischema, uischemas }) => {
+  const anyOf = 'anyOf'
+  const anyOfRenderInfos = createCombinatorRenderInfos(schema.anyOf, rootSchema, anyOf, uischema, path, uischemas)
+  const anyOfRenderInfo = anyOfRenderInfos.find((e) => e.schema.type !== 'null')
+  return (
+    <JsonFormsDispatch
+      schema={{
+        description: schema.description,
+        title: schema.title,
+        default: null,
+        ...anyOfRenderInfo.schema
+      }}
+      uischema={anyOfRenderInfo.uischema}
+      path={path}
+      renderers={[{ tester: nullableTextTester, renderer: NullableTextControl }, ...renderers]}
+      cells={cells}
+    />
+  )
 }
 /**
  * Explicitly tests for an optional field (in pydantic `Any | None` or Optional[Any]) and renders the underlying field.
@@ -85,16 +75,14 @@ const anyOfNullRenderer = ({
 const isAnyOfNullControl = and(
   uiTypeIs('Control'),
   schemaMatches((schema) => {
-      return Object.prototype.hasOwnProperty.call(schema, 'anyOf') &&
-        schema.anyOf.some((e) => e.type === 'null') &&
-        schema.anyOf.length === 2;
-    }
-  )
-);
+    return (
+      Object.prototype.hasOwnProperty.call(schema, 'anyOf') &&
+      schema.anyOf.some((e) => e.type === 'null') &&
+      schema.anyOf.length === 2
+    )
+  })
+)
 
-export const anyOfNullTester = rankWith(
-  3,
-  isAnyOfNullControl
-);
+export const anyOfNullTester = rankWith(3, isAnyOfNullControl)
 
-export const renderer = withJsonFormsAnyOfProps(anyOfNullRenderer);
+export const renderer = withJsonFormsAnyOfProps(anyOfNullRenderer)

@@ -1,64 +1,64 @@
 {
-    "gameNotFound": "Игра {{ id }} не найдена",
-    "loading": "Загрузка...",
-    "selectPlayer": "Выберите игрока",
-    "searchPlayer": "Поиск игрока",
-    "noPlayersFound": "Игроки не найдены",
-    "onlineStatusFilter": {
-        "online": "В сети",
-        "offline": "Не в сети",
-        "all": "Все"
-    },
+  "gameNotFound": "Игра {{ id }} не найдена",
+  "loading": "Загрузка...",
+  "selectPlayer": "Выберите игрока",
+  "searchPlayer": "Поиск игрока",
+  "noPlayersFound": "Игроки не найдены",
+  "onlineStatusFilter": {
+    "online": "В сети",
+    "offline": "Не в сети",
+    "all": "Все"
+  },
+  "player": "Игрок",
+  "players": "Игроки",
+  "allies": "Союзники",
+  "axis": "Силы Оси",
+  "weather": {
+    "day": "День",
+    "night": "Ночь",
+    "dusk": "Сумерки",
+    "dawn": "Рассвет",
+    "rain": "Дождь",
+    "overcast": "Пасмурно"
+  },
+  "playersTable": {
     "player": "Игрок",
-    "players": "Игроки",
-    "allies": "Союзники",
-    "axis": "Силы Оси",
-    "weather": {
-        "day": "День",
-        "night": "Ночь",
-        "dusk": "Сумерки",
-        "dawn": "Рассвет",
-        "rain": "Дождь",
-        "overcast": "Пасмурно"
-    },
-    "playersTable": {
-        "player": "Игрок",
-        "team": "Команда",
-        "kills": "Убийства",
-        "deaths": "Смерти",
-        "combat": "Бой",
-        "score": "Очки",
-        "weapon": "Оружие",
-        "vehicle": "Техника",
-        "armor": "Броня",
-        "commander": "Командир",
-        "offense": "Атака",
-        "defense": "Оборона",
-        "support": "Поддержка",
-        "utility": "Снаряжение",
-        "diff": "Разница",
-        "status": "Статус"
-    },
-    "matchTable": {
-        "match": "Матч",
-        "map": "Карта",
-        "mode": "Режим",
-        "duration": "Длительность",
-        "result": "Результат",
-        "start": "Начало"
-    },
-    "playerStats": {
-        "killsByWeapon": "Убийства по оружию",
-        "deathsByWeapon": "Смерти по оружию",
-        "encounters": "Столкновения",
-        "weapon": "Оружие",
-        "count": "Количество"
-    },
-    "score": {
-        "killstreak": "Серия убийств",
-        "deathstreak": "Серия смертей",
-        "teamkills": "Убийства своих",
-        "k/d": "У/С"
-    },
-    "downloadTable": "Скачать таблицу"
+    "team": "Команда",
+    "kills": "Убийства",
+    "deaths": "Смерти",
+    "combat": "Бой",
+    "score": "Очки",
+    "weapon": "Оружие",
+    "vehicle": "Техника",
+    "armor": "Броня",
+    "commander": "Командир",
+    "offense": "Атака",
+    "defense": "Оборона",
+    "support": "Поддержка",
+    "utility": "Снаряжение",
+    "diff": "Разница",
+    "status": "Статус"
+  },
+  "matchTable": {
+    "match": "Матч",
+    "map": "Карта",
+    "mode": "Режим",
+    "duration": "Длительность",
+    "result": "Результат",
+    "start": "Начало"
+  },
+  "playerStats": {
+    "killsByWeapon": "Убийства по оружию",
+    "deathsByWeapon": "Смерти по оружию",
+    "encounters": "Столкновения",
+    "weapon": "Оружие",
+    "count": "Количество"
+  },
+  "score": {
+    "killstreak": "Серия убийств",
+    "deathstreak": "Серия смертей",
+    "teamkills": "Убийства своих",
+    "k/d": "У/С"
+  },
+  "downloadTable": "Скачать таблицу"
 }

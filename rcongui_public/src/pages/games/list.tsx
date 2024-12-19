@@ -18,7 +18,7 @@ export function validGame(game: ScoreboardMap) {
 export default function GamesList({
   games,
   page,
-  pageSize,
+  pageSize
 }: {
   games: ScoreboardMaps
   page: number
@@ -31,7 +31,7 @@ export default function GamesList({
 
   return (
     <>
-      <MatchPagination page={page} maxPages={maxPages} className="justify-end" />
+      <MatchPagination page={page} maxPages={maxPages} className='justify-end' />
       <MatchTable data={filteredGames} columns={columns} />
       <MatchPagination page={page} maxPages={maxPages} />
     </>

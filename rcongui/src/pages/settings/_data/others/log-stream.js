@@ -12,6 +12,6 @@ const logStreamNotes = `
             See https://github.com/MarechJ/hll_rcon_tool/wiki/Streaming-Logs for a detailed description.
         */
     }
-    `;
+    `
 
-    export default logStreamNotes;
+export default logStreamNotes

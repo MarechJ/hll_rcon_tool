@@ -12,7 +12,7 @@ import { NoPlayerGameDetail } from './player-detail'
 export default function GameStats({
   stats,
   getColumns,
-  gameId,
+  gameId
 }: {
   stats: Player[] | PlayerWithStatus[]
   getColumns: (handlePlayerClick: (id: string) => void) => ColumnDef<Player | PlayerWithStatus>[]
@@ -29,17 +29,17 @@ export default function GameStats({
 
   const selectedPlayer = useMemo(
     () => stats.find((player) => player.player_id === selectedPlayerId),
-    [stats, selectedPlayerId],
+    [stats, selectedPlayerId]
   )
 
   return (
     <section id={`game-statistics-${gameId}`}>
-      <h2 className="sr-only">End of game statistics</h2>
-      <div className="relative flex flex-col-reverse lg:flex-row">
-        <article className="w-full lg:w-2/3">
+      <h2 className='sr-only'>End of game statistics</h2>
+      <div className='relative flex flex-col-reverse lg:flex-row'>
+        <article className='w-full lg:w-2/3'>
           <DataTable columns={getColumns(handlePlayerClick)} data={stats} tableId={gameId} />
         </article>
-        <aside className="hidden w-full lg:block lg:w-1/3 min-h-32">
+        <aside className='hidden w-full lg:block lg:w-1/3 min-h-32'>
           {selectedPlayer ? <PlayerGameDetail player={selectedPlayer} /> : <NoPlayerGameDetail />}
         </aside>
       </div>

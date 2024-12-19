@@ -1,17 +1,17 @@
-import { Fragment } from "react";
-import { flexRender } from "@tanstack/react-table";
-import { NoRowsOverlay } from "@/components/NoRowsOverlay";
-import { StyledTable, StyledTd, StyledTh, StyledTr } from "./styles";
-import { Box } from "@mui/material";
+import { Fragment } from 'react'
+import { flexRender } from '@tanstack/react-table'
+import { NoRowsOverlay } from '@/components/NoRowsOverlay'
+import { StyledTable, StyledTd, StyledTh, StyledTr } from './styles'
+import { Box } from '@mui/material'
 
 const Table = ({ table, config = {}, renderSubComponent }) => {
   return (
     <Box
       sx={{
-        overflowX: "auto",
-        overflowY: "hidden",
-        width: "100%",
-        scrollbarWidth: "thin",
+        overflowX: 'auto',
+        overflowY: 'hidden',
+        width: '100%',
+        scrollbarWidth: 'thin'
       }}
     >
       <StyledTable density={config.density} fontSize={config.fontSize}>
@@ -20,20 +20,12 @@ const Table = ({ table, config = {}, renderSubComponent }) => {
             <StyledTr key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
                 return (
-                  <StyledTh
-                    key={header.id}
-                    variant={header.column.columnDef?.meta?.variant}
-                  >
+                  <StyledTh key={header.id} variant={header.column.columnDef?.meta?.variant}>
                     {header.isPlaceholder ? null : (
-                      <div>
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                      </div>
+                      <div>{flexRender(header.column.columnDef.header, header.getContext())}</div>
                     )}
                   </StyledTh>
-                );
+                )
               })}
             </StyledTr>
           ))}
@@ -43,10 +35,7 @@ const Table = ({ table, config = {}, renderSubComponent }) => {
             <Fragment key={row.id}>
               <StyledTr>
                 {row.getVisibleCells().map((cell) => (
-                  <StyledTd
-                    key={cell.id}
-                    variant={cell.column.columnDef?.meta?.variant}
-                  >
+                  <StyledTd key={cell.id} variant={cell.column.columnDef?.meta?.variant}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </StyledTd>
                 ))}
@@ -54,9 +43,7 @@ const Table = ({ table, config = {}, renderSubComponent }) => {
               {row.getIsExpanded() && renderSubComponent && (
                 <StyledTr>
                   {/* 2nd row is a custom 1 cell row */}
-                  <StyledTd colSpan={row.getVisibleCells().length}>
-                    {renderSubComponent({ row })}
-                  </StyledTd>
+                  <StyledTd colSpan={row.getVisibleCells().length}>{renderSubComponent({ row })}</StyledTd>
                 </StyledTr>
               )}
             </Fragment>
@@ -65,7 +52,7 @@ const Table = ({ table, config = {}, renderSubComponent }) => {
       </StyledTable>
       {table.getRowModel().rows.length === 0 && <NoRowsOverlay />}
     </Box>
-  );
-};
+  )
+}
 
-export default Table;
+export default Table

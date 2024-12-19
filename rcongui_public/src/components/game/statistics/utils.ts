@@ -45,7 +45,7 @@ export const axisWeapons: Set<Weapon> = new Set([
   '88 KWK 36 L/56 [Sd.Kfz.181 Tiger 1]',
   'COAXIAL MG34 [Sd.Kfz.181 Tiger 1]',
   'HULL MG34 [Sd.Kfz.181 Tiger 1]',
-  'MG 42 [Sd.Kfz 251 Half-track]',
+  'MG 42 [Sd.Kfz 251 Half-track]'
 ])
 
 export const tankWeapons = new Set([
@@ -109,7 +109,7 @@ export const tankWeapons = new Set([
   'HULL BESA [Cromwell]',
   // Firefly
   'QF 17-POUNDER [Firefly]',
-  'COAXIAL M1919 [Firefly]',
+  'COAXIAL M1919 [Firefly]'
 ])
 
 export const isArtillery = (weapons: Player['weapons']) => {
@@ -117,7 +117,7 @@ export const isArtillery = (weapons: Player['weapons']) => {
     '150MM HOWITZER [sFH 18]',
     '155MM HOWITZER [M114]',
     '122MM HOWITZER [M1938 (M-30)]',
-    'QF 25-POUNDER [QF 25-Pounder]',
+    'QF 25-POUNDER [QF 25-Pounder]'
   ]
   return artilleryWeapons.some((weapon) => weapon in weapons)
 }
@@ -157,7 +157,7 @@ export const weaponCategories: WeaponCategory[] = [
   'Melee Weapon',
   'Flamethrower',
   'Flare Gun',
-  'UNKNOWN',
+  'UNKNOWN'
 ]
 
 export const weaponCategoryMap: Record<Weapon, WeaponCategory> = {
@@ -380,7 +380,7 @@ export const weaponCategoryMap: Record<Weapon, WeaponCategory> = {
   // Commander
   'BOMBING RUN': 'Commander ability',
   'STRAFING RUN': 'Commander ability',
-  'PRECISION STRIKE': 'Commander ability',
+  'PRECISION STRIKE': 'Commander ability'
 }
 
 type KillCategory = 'infantry' | 'armor' | 'artillery' | 'other'
@@ -419,7 +419,7 @@ export function mergeKillsDeaths(player: Player) {
       name: name,
       kills: killsByPlayer[name] ?? 0,
       deaths: deathsByPlayer[name] ?? 0,
-      diff: (killsByPlayer[name] ?? 0) - (deathsByPlayer[name] ?? 0),
+      diff: (killsByPlayer[name] ?? 0) - (deathsByPlayer[name] ?? 0)
     })
   })
   merged.sort((a, b) => b.kills - a.kills)

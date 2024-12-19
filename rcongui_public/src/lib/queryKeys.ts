@@ -3,5 +3,5 @@ export const queryKeys = {
   liveStats: ['live-stats'],
   liveSessions: ['live-sessions'],
   games: (page: number, pageSize: number) => ['games', page, pageSize],
-  gameDetail: (gameId: number) => ['game', gameId],
+  gameDetail: (gameId: number) => ['game', gameId]
 }

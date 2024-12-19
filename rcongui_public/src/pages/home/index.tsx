@@ -32,14 +32,14 @@ export default function Home() {
 
       const data = allPlayers?.map((player) => ({
         ...player,
-        is_online: onlinePlayersSet.has(player.player_id),
+        is_online: onlinePlayersSet.has(player.player_id)
       }))
 
       return {
         data: data,
-        pending: results.some((result) => result.isPending),
+        pending: results.some((result) => result.isPending)
       }
-    },
+    }
   })
 
   if (isError) {
@@ -49,7 +49,7 @@ export default function Home() {
   return (
     <>
       {isLoading || !game ? (
-        <div className="grid place-items-center w-full h-[200px]">
+        <div className='grid place-items-center w-full h-[200px]'>
           <Spinner />
         </div>
       ) : (
@@ -64,13 +64,13 @@ export default function Home() {
               <ErrorBoundary
                 onReset={reset}
                 fallbackRender={({ error, resetErrorBoundary }) => (
-                  <div className="grid place-items-center w-full h-[200px]">
-                    <div className="text-red-500">{error.message}</div>
+                  <div className='grid place-items-center w-full h-[200px]'>
+                    <div className='text-red-500'>{error.message}</div>
                     <button onClick={resetErrorBoundary}>Try again</button>
                   </div>
                 )}
               >
-                <React.Suspense fallback={<div className="grid place-items-center w-full h-[200px]" />}>
+                <React.Suspense fallback={<div className='grid place-items-center w-full h-[200px]' />}>
                   <LiveGameInfo game={game} />
                 </React.Suspense>
               </ErrorBoundary>
@@ -83,13 +83,13 @@ export default function Home() {
               <ErrorBoundary
                 onReset={reset}
                 fallbackRender={({ error, resetErrorBoundary }) => (
-                  <div className="grid place-items-center w-full h-[200px]">
-                    <div className="text-red-500">{error.message}</div>
+                  <div className='grid place-items-center w-full h-[200px]'>
+                    <div className='text-red-500'>{error.message}</div>
                     <button onClick={resetErrorBoundary}>Try again</button>
                   </div>
                 )}
               >
-                <React.Suspense fallback={<div className="grid place-items-center w-full h-[200px]" />}>
+                <React.Suspense fallback={<div className='grid place-items-center w-full h-[200px]' />}>
                   <GameStats
                     stats={liveStats.data.filter((player) => player.time_seconds > 30)}
                     getColumns={getLiveGameColumns}

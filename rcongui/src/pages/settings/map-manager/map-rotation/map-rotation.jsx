@@ -1,139 +1,127 @@
-import DraggableList from "./map-rotation-list";
-import { reorder } from "@/components/MapManager/helpers";
-import {
-  changeMap,
-  get,
-  handle_http_errors,
-  postData,
-  showResponse,
-} from "@/utils/fetchUtils";
-import { Box, Button, CircularProgress } from "@mui/material";
-import { Alert } from '@mui/material';
-import { MapAutocomplete } from "@/components/MapManager/map-autocomplete";
-import Grid from "@mui/material/Grid2";
-import { useOutletContext } from "react-router-dom";
-import {useCallback, useEffect, useMemo, useState} from "react";
+import DraggableList from './map-rotation-list'
+import { reorder } from '@/components/MapManager/helpers'
+import { changeMap, get, handle_http_errors, postData, showResponse } from '@/utils/fetchUtils'
+import { Box, Button, CircularProgress } from '@mui/material'
+import { Alert } from '@mui/material'
+import { MapAutocomplete } from '@/components/MapManager/map-autocomplete'
+import Grid from '@mui/material/Grid2'
+import { useOutletContext } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 const MapRotation = () => {
-  const { maps } = useOutletContext();
-  const [currentRotation, setCurrentRotation] = useState([]);
-  const [rotation, setRotation] = useState([]);
-  const [mapsToAdd, setMapsToAdd] = useState([]);
-  const [rotationIsSaving, setRotationIsSaving] = useState(false);
-  const [voteMapConfig, setVoteMapConfig] = useState({});
-  const [lastRefresh, setLastRefresh] = useState(null);
+  const { maps } = useOutletContext()
+  const [currentRotation, setCurrentRotation] = useState([])
+  const [rotation, setRotation] = useState([])
+  const [mapsToAdd, setMapsToAdd] = useState([])
+  const [rotationIsSaving, setRotationIsSaving] = useState(false)
+  const [voteMapConfig, setVoteMapConfig] = useState({})
+  const [lastRefresh, setLastRefresh] = useState(null)
 
   const loadToState = (command, showSuccess, stateSetter) => {
     return get(command)
       .then((res) => showResponse(res, command, showSuccess))
       .then((res) => (res.failed === false ? stateSetter(res) : null))
-      .catch(handle_http_errors);
-  };
+      .catch(handle_http_errors)
+  }
 
   const saveRotation = () => {
-    setRotationIsSaving(true);
+    setRotationIsSaving(true)
     return postData(`${process.env.REACT_APP_API_URL}set_maprotation`, {
-      map_names: rotation.map((m) => m.id),
+      map_names: rotation.map((m) => m.id)
     })
       .then((res) => {
-        showResponse(res, `set_maprotation`, true);
-        setRotationIsSaving(false);
-        loadMapRotation();
+        showResponse(res, `set_maprotation`, true)
+        setRotationIsSaving(false)
+        loadMapRotation()
       })
       .catch((e) => {
-        handle_http_errors(e);
-        loadMapRotation();
-        setRotationIsSaving(false);
-      });
-  };
+        handle_http_errors(e)
+        loadMapRotation()
+        setRotationIsSaving(false)
+      })
+  }
 
   const getVoteMapConfig = () => {
-    get("get_votemap_config")
-      .then((res) => showResponse(res, "get_votemap_config", false))
-      .then((data) => (data.failed ? "" : setVoteMapConfig(data.result)))
-      .catch(handle_http_errors);
-  };
+    get('get_votemap_config')
+      .then((res) => showResponse(res, 'get_votemap_config', false))
+      .then((data) => (data.failed ? '' : setVoteMapConfig(data.result)))
+      .catch(handle_http_errors)
+  }
 
   const loadMapRotation = () => {
-    return loadToState("get_map_rotation", false, (data) => {
-      setCurrentRotation(Array.from(data.result));
-      setRotation(Array.from(data.result));
-    });
-  };
+    return loadToState('get_map_rotation', false, (data) => {
+      setCurrentRotation(Array.from(data.result))
+      setRotation(Array.from(data.result))
+    })
+  }
 
   const loadAllData = () => {
-    getVoteMapConfig();
-    loadMapRotation();
-    setLastRefresh(new Date());
-  };
+    getVoteMapConfig()
+    loadMapRotation()
+    setLastRefresh(new Date())
+  }
 
   useEffect(() => {
-    loadAllData();
-    const handle = setInterval(getVoteMapConfig, 10000);
+    loadAllData()
+    const handle = setInterval(getVoteMapConfig, 10000)
 
-    return () => clearInterval(handle);
-  }, []);
+    return () => clearInterval(handle)
+  }, [])
 
   const onDragEnd = ({ destination, source }) => {
     // dropped outside the list
-    if (!destination) return;
+    if (!destination) return
 
-    const newRotation = reorder(rotation, source.index, destination.index);
+    const newRotation = reorder(rotation, source.index, destination.index)
 
-    setRotation(newRotation);
-  };
+    setRotation(newRotation)
+  }
 
   const onRemoveItem = useCallback((index) => {
-    rotation.splice(index, 1);
-    setRotation(Array.from(rotation));
-  });
+    rotation.splice(index, 1)
+    setRotation(Array.from(rotation))
+  })
 
   const onMapChange = useCallback((mapLayer) => {
-    changeMap(mapLayer.id);
-  });
+    changeMap(mapLayer.id)
+  })
 
   const hasChanged = useMemo(
-    () =>
-      currentRotation.map((o) => o.id).toString() ===
-      rotation.map((o) => o.id).toString(),
+    () => currentRotation.map((o) => o.id).toString() === rotation.map((o) => o.id).toString(),
     [currentRotation, rotation]
-  );
+  )
 
   return (
-    (<Grid container spacing={2}>
+    <Grid container spacing={2}>
       <Grid size={12}>
         {voteMapConfig.enabled && (
-          <Alert style={{ margin: "0.25rem 0 1rem 0" }} severity="warning">
+          <Alert style={{ margin: '0.25rem 0 1rem 0' }} severity='warning'>
             You can't change the rotation while votemap is on
           </Alert>
         )}
         <Box
           style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginBottom: "1rem",
+            display: 'flex',
+            justifyContent: 'space-between',
+            marginBottom: '1rem'
           }}
         >
-          <Button size="small" variant="outlined" onClick={loadAllData}>
+          <Button size='small' variant='outlined' onClick={loadAllData}>
             Refresh
           </Button>
-          <Box style={{ display: "flex", gap: "0.5rem" }}>
+          <Box style={{ display: 'flex', gap: '0.5rem' }}>
             <Button
-              variant="outlined"
+              variant='outlined'
               disabled={hasChanged || rotationIsSaving || voteMapConfig.enabled}
-              color={"secondary"}
+              color={'secondary'}
               onClick={saveRotation}
-              size="small"
+              size='small'
             >
-              {rotationIsSaving ? (
-                <CircularProgress size={20} />
-              ) : (
-                "Save rotation"
-              )}
+              {rotationIsSaving ? <CircularProgress size={20} /> : 'Save rotation'}
             </Button>
           </Box>
         </Box>
-        <Box style={{ display: "flex", gap: "0.5rem" }}>
+        <Box style={{ display: 'flex', gap: '0.5rem' }}>
           <MapAutocomplete
             options={maps}
             onChange={(e, v) => setMapsToAdd(v)}
@@ -141,11 +129,11 @@ const MapRotation = () => {
             disabled={voteMapConfig.enabled}
           />
           <Button
-            size="small"
-            variant="outlined"
+            size='small'
+            variant='outlined'
             disabled={voteMapConfig.enabled}
             onClick={() => {
-              setRotation(rotation.concat(mapsToAdd));
+              setRotation(rotation.concat(mapsToAdd))
             }}
             style={{ width: 60 }}
           >
@@ -162,8 +150,8 @@ const MapRotation = () => {
           isSaved={hasChanged}
         />
       </Grid>
-    </Grid>)
-  );
-};
+    </Grid>
+  )
+}
 
-export default MapRotation;
+export default MapRotation

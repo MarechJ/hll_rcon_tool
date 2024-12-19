@@ -1,12 +1,8 @@
-import { alpha } from '@mui/material/styles';
+import { alpha } from '@mui/material/styles'
 
-import {
-  pickersYearClasses,
-  pickersMonthClasses,
-  pickersDayClasses,
-} from '@mui/x-date-pickers';
-import { menuItemClasses } from '@mui/material/MenuItem';
-import { gray, brand } from '../themePrimitives';
+import { pickersYearClasses, pickersMonthClasses, pickersDayClasses } from '@mui/x-date-pickers'
+import { menuItemClasses } from '@mui/material/MenuItem'
+import { gray, brand } from '../themePrimitives'
 
 /* eslint-disable import/prefer-default-export */
 export const datePickersCustomizations = {
@@ -18,19 +14,17 @@ export const datePickersCustomizations = {
         border: `1px solid ${theme.palette.divider}`,
         backgroundImage: 'none',
         background: 'hsl(0, 0%, 100%)',
-        boxShadow:
-          'hsla(220, 30%, 5%, 0.07) 0px 4px 16px 0px, hsla(220, 25%, 10%, 0.07) 0px 8px 16px -5px',
+        boxShadow: 'hsla(220, 30%, 5%, 0.07) 0px 4px 16px 0px, hsla(220, 25%, 10%, 0.07) 0px 8px 16px -5px',
         [`& .${menuItemClasses.root}`]: {
           borderRadius: 6,
-          margin: '0 6px',
+          margin: '0 6px'
         },
         ...theme.applyStyles('dark', {
           background: gray[900],
-          boxShadow:
-            'hsla(220, 30%, 5%, 0.7) 0px 4px 16px 0px, hsla(220, 25%, 10%, 0.8) 0px 8px 16px -5px',
-        }),
-      }),
-    },
+          boxShadow: 'hsla(220, 30%, 5%, 0.7) 0px 4px 16px 0px, hsla(220, 25%, 10%, 0.8) 0px 8px 16px -5px'
+        })
+      })
+    }
   },
   MuiPickersArrowSwitcher: {
     styleOverrides: {
@@ -39,18 +33,18 @@ export const datePickersCustomizations = {
         backgroundColor: 'transparent',
         color: theme.palette.grey[500],
         ...theme.applyStyles('dark', {
-          color: theme.palette.grey[400],
-        }),
-      }),
-    },
+          color: theme.palette.grey[400]
+        })
+      })
+    }
   },
   MuiPickersCalendarHeader: {
     styleOverrides: {
       switchViewButton: {
         padding: 0,
-        border: 'none',
-      },
-    },
+        border: 'none'
+      }
+    }
   },
   MuiPickersMonth: {
     styleOverrides: {
@@ -60,37 +54,37 @@ export const datePickersCustomizations = {
         padding: theme.spacing(0.5),
         borderRadius: theme.shape.borderRadius,
         '&:hover': {
-          backgroundColor: theme.palette.action.hover,
+          backgroundColor: theme.palette.action.hover
         },
         [`&.${pickersMonthClasses.selected}`]: {
           backgroundColor: gray[700],
-          fontWeight: theme.typography.fontWeightMedium,
+          fontWeight: theme.typography.fontWeightMedium
         },
         '&:focus': {
           outline: `3px solid ${alpha(brand[500], 0.5)}`,
           outlineOffset: '2px',
           backgroundColor: 'transparent',
-          [`&.${pickersMonthClasses.selected}`]: { backgroundColor: gray[700] },
+          [`&.${pickersMonthClasses.selected}`]: { backgroundColor: gray[700] }
         },
         ...theme.applyStyles('dark', {
           color: theme.palette.grey[300],
           '&:hover': {
-            backgroundColor: theme.palette.action.hover,
+            backgroundColor: theme.palette.action.hover
           },
           [`&.${pickersMonthClasses.selected}`]: {
             color: theme.palette.common.black,
             fontWeight: theme.typography.fontWeightMedium,
-            backgroundColor: gray[300],
+            backgroundColor: gray[300]
           },
           '&:focus': {
             outline: `3px solid ${alpha(brand[500], 0.5)}`,
             outlineOffset: '2px',
             backgroundColor: 'transparent',
-            [`&.${pickersMonthClasses.selected}`]: { backgroundColor: gray[300] },
-          },
-        }),
-      }),
-    },
+            [`&.${pickersMonthClasses.selected}`]: { backgroundColor: gray[300] }
+          }
+        })
+      })
+    }
   },
   MuiPickersYear: {
     styleOverrides: {
@@ -101,37 +95,37 @@ export const datePickersCustomizations = {
         borderRadius: theme.shape.borderRadius,
         height: 'fit-content',
         '&:hover': {
-          backgroundColor: theme.palette.action.hover,
+          backgroundColor: theme.palette.action.hover
         },
         [`&.${pickersYearClasses.selected}`]: {
           backgroundColor: gray[700],
-          fontWeight: theme.typography.fontWeightMedium,
+          fontWeight: theme.typography.fontWeightMedium
         },
         '&:focus': {
           outline: `3px solid ${alpha(brand[500], 0.5)}`,
           outlineOffset: '2px',
           backgroundColor: 'transparent',
-          [`&.${pickersYearClasses.selected}`]: { backgroundColor: gray[700] },
+          [`&.${pickersYearClasses.selected}`]: { backgroundColor: gray[700] }
         },
         ...theme.applyStyles('dark', {
           color: theme.palette.grey[300],
           '&:hover': {
-            backgroundColor: theme.palette.action.hover,
+            backgroundColor: theme.palette.action.hover
           },
           [`&.${pickersYearClasses.selected}`]: {
             color: theme.palette.common.black,
             fontWeight: theme.typography.fontWeightMedium,
-            backgroundColor: gray[300],
+            backgroundColor: gray[300]
           },
           '&:focus': {
             outline: `3px solid ${alpha(brand[500], 0.5)}`,
             outlineOffset: '2px',
             backgroundColor: 'transparent',
-            [`&.${pickersYearClasses.selected}`]: { backgroundColor: gray[300] },
-          },
-        }),
-      }),
-    },
+            [`&.${pickersYearClasses.selected}`]: { backgroundColor: gray[300] }
+          }
+        })
+      })
+    }
   },
   MuiPickersDay: {
     styleOverrides: {
@@ -141,36 +135,36 @@ export const datePickersCustomizations = {
         padding: theme.spacing(0.5),
         borderRadius: theme.shape.borderRadius,
         '&:hover': {
-          backgroundColor: theme.palette.action.hover,
+          backgroundColor: theme.palette.action.hover
         },
         [`&.${pickersDayClasses.selected}`]: {
           backgroundColor: gray[700],
-          fontWeight: theme.typography.fontWeightMedium,
+          fontWeight: theme.typography.fontWeightMedium
         },
         '&:focus': {
           outline: `3px solid ${alpha(brand[500], 0.5)}`,
           outlineOffset: '2px',
           backgroundColor: 'transparent',
-          [`&.${pickersDayClasses.selected}`]: { backgroundColor: gray[700] },
+          [`&.${pickersDayClasses.selected}`]: { backgroundColor: gray[700] }
         },
         ...theme.applyStyles('dark', {
           color: theme.palette.grey[300],
           '&:hover': {
-            backgroundColor: theme.palette.action.hover,
+            backgroundColor: theme.palette.action.hover
           },
           [`&.${pickersDayClasses.selected}`]: {
             color: theme.palette.common.black,
             fontWeight: theme.typography.fontWeightMedium,
-            backgroundColor: gray[300],
+            backgroundColor: gray[300]
           },
           '&:focus': {
             outline: `3px solid ${alpha(brand[500], 0.5)}`,
             outlineOffset: '2px',
             backgroundColor: 'transparent',
-            [`&.${pickersDayClasses.selected}`]: { backgroundColor: gray[300] },
-          },
-        }),
-      }),
-    },
-  },
-};
+            [`&.${pickersDayClasses.selected}`]: { backgroundColor: gray[300] }
+          }
+        })
+      })
+    }
+  }
+}

@@ -1,64 +1,64 @@
 {
-    "gameNotFound": "Spiel {{ id }} nicht gefunden",
-    "loading": "Lade...",
-    "selectPlayer": "Spieler auswählen",
-    "searchPlayer": "Spieler suchen",
-    "noPlayersFound": "Keine Spieler gefunden",
-    "onlineStatusFilter": {
-        "online": "Online",
-        "offline": "Offline",
-        "all": "Alle"
-    },
+  "gameNotFound": "Spiel {{ id }} nicht gefunden",
+  "loading": "Lade...",
+  "selectPlayer": "Spieler auswählen",
+  "searchPlayer": "Spieler suchen",
+  "noPlayersFound": "Keine Spieler gefunden",
+  "onlineStatusFilter": {
+    "online": "Online",
+    "offline": "Offline",
+    "all": "Alle"
+  },
+  "player": "Spieler",
+  "players": "Spieler",
+  "allies": "Alliierte",
+  "axis": "Achsenmächte",
+  "weather": {
+    "day": "Tag",
+    "night": "Nacht",
+    "dusk": "Dämmerung",
+    "dawn": "Morgendämmerung",
+    "rain": "Regen",
+    "overcast": "Bewölkt"
+  },
+  "playersTable": {
     "player": "Spieler",
-    "players": "Spieler",
-    "allies": "Alliierte",
-    "axis": "Achsenmächte",
-    "weather": {
-        "day": "Tag",
-        "night": "Nacht",
-        "dusk": "Dämmerung",
-        "dawn": "Morgendämmerung",
-        "rain": "Regen",
-        "overcast": "Bewölkt"
-    },
-    "playersTable": {
-        "player": "Spieler",
-        "team": "Team",
-        "kills": "Abschüsse",
-        "deaths": "Tode",
-        "combat": "Kampf",
-        "score": "Punkte",
-        "weapon": "Waffe",
-        "vehicle": "Fahrzeug",
-        "armor": "Panzer",
-        "commander": "Kommandant",
-        "offense": "Angriff",
-        "defense": "Verteidigung",
-        "support": "Unterstützung",
-        "utility": "Hilfsmittel",
-        "diff": "Differenz",
-        "status": "Status"
-    },
-    "matchTable": {
-        "match": "Spiel",
-        "map": "Karte",
-        "mode": "Modus",
-        "duration": "Dauer",
-        "result": "Ergebnis",
-        "start": "Start"
-    },
-    "playerStats": {
-        "killsByWeapon": "Abschüsse nach Waffe",
-        "deathsByWeapon": "Tode nach Waffe",
-        "encounters": "Begegnungen",
-        "weapon": "Waffe",
-        "count": "Anzahl"
-    },
-    "score": {
-        "killstreak": "Abschussserie",
-        "deathstreak": "Todesserie",
-        "teamkills": "Teamkills",
-        "k/d": "K/D"
-    },
-    "downloadTable": "Tabelle herunterladen"
+    "team": "Team",
+    "kills": "Abschüsse",
+    "deaths": "Tode",
+    "combat": "Kampf",
+    "score": "Punkte",
+    "weapon": "Waffe",
+    "vehicle": "Fahrzeug",
+    "armor": "Panzer",
+    "commander": "Kommandant",
+    "offense": "Angriff",
+    "defense": "Verteidigung",
+    "support": "Unterstützung",
+    "utility": "Hilfsmittel",
+    "diff": "Differenz",
+    "status": "Status"
+  },
+  "matchTable": {
+    "match": "Spiel",
+    "map": "Karte",
+    "mode": "Modus",
+    "duration": "Dauer",
+    "result": "Ergebnis",
+    "start": "Start"
+  },
+  "playerStats": {
+    "killsByWeapon": "Abschüsse nach Waffe",
+    "deathsByWeapon": "Tode nach Waffe",
+    "encounters": "Begegnungen",
+    "weapon": "Waffe",
+    "count": "Anzahl"
+  },
+  "score": {
+    "killstreak": "Abschussserie",
+    "deathstreak": "Todesserie",
+    "teamkills": "Teamkills",
+    "k/d": "K/D"
+  },
+  "downloadTable": "Tabelle herunterladen"
 }

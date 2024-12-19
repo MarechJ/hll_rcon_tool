@@ -4,19 +4,19 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   useReactTable,
-  flexRender,
-} from "@tanstack/react-table";
-import { useState } from "react";
+  flexRender
+} from '@tanstack/react-table'
+import { useState } from 'react'
 
 // TODO: Add pagination by 250 rows
 
 // Implementation of Tanstack React Table v8 using basic HTML table elements
 export default function LogTable({ data, columns }) {
-  const [sorting, setSorting] = useState([]);
-  const [filtering, setFiltering] = useState([]);
+  const [sorting, setSorting] = useState([])
+  const [filtering, setFiltering] = useState([])
   const [pagination, setPagination] = useState({
     pageIndex: 0,
-    pageSize: 100,
+    pageSize: 100
   })
   const table = useReactTable({
     data,
@@ -31,24 +31,19 @@ export default function LogTable({ data, columns }) {
     state: {
       sorting,
       filtering,
-      pagination,
-    },
-  });
+      pagination
+    }
+  })
 
   return (
     <div>
-      <table style={{ width: "100%", fontSize: "12px" }}>
+      <table style={{ width: '100%', fontSize: '12px' }}>
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
                 <th key={header.id} style={{ width: header.column.getSize() }}>
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
+                  {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                 </th>
               ))}
             </tr>
@@ -57,7 +52,7 @@ export default function LogTable({ data, columns }) {
         <tbody>
           {table.getRowModel().rows.length ? (
             table.getRowModel().rows.map((row) => (
-              <tr key={row.id} data-state={row.getIsSelected() && "selected"}>
+              <tr key={row.id} data-state={row.getIsSelected() && 'selected'}>
                 {row.getVisibleCells().map((cell) => (
                   <td key={cell.id} style={{ width: cell.column.getSize() }}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -73,68 +68,67 @@ export default function LogTable({ data, columns }) {
         </tbody>
       </table>
       {/* TODO: Replace tailwind className with MUI sx prop */}
-      <div sx={{ height: "8px" }} />
-      <div sx={{ display: "flex", justifyContent: "center", flexGap: 2 }}>
+      <div sx={{ height: '8px' }} />
+      <div sx={{ display: 'flex', justifyContent: 'center', flexGap: 2 }}>
         <button
-          className="border rounded p-1"
-          sx={{ border: "1px solid", borderRadius: "4px", padding: "4px" }}
+          className='border rounded p-1'
+          sx={{ border: '1px solid', borderRadius: '4px', padding: '4px' }}
           onClick={() => table.firstPage()}
           disabled={!table.getCanPreviousPage()}
         >
           {'<<'}
         </button>
         <button
-          className="border rounded p-1"
-          sx={{ border: "1px solid", borderRadius: "4px", padding: "4px" }}
+          className='border rounded p-1'
+          sx={{ border: '1px solid', borderRadius: '4px', padding: '4px' }}
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
         >
           {'<'}
         </button>
         <button
-          className="border rounded p-1"
-          sx={{ border: "1px solid", borderRadius: "4px", padding: "4px" }}
+          className='border rounded p-1'
+          sx={{ border: '1px solid', borderRadius: '4px', padding: '4px' }}
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
         >
           {'>'}
         </button>
         <button
-          className="border rounded p-1"
-          sx={{ border: "1px solid", borderRadius: "4px", padding: "4px" }}
+          className='border rounded p-1'
+          sx={{ border: '1px solid', borderRadius: '4px', padding: '4px' }}
           onClick={() => table.lastPage()}
           disabled={!table.getCanNextPage()}
         >
           {'>>'}
         </button>
-        <span sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <span sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <div>Page</div>
           <strong>
-            {table.getState().pagination.pageIndex + 1} of{' '}
-            {table.getPageCount().toLocaleString()}
+            {table.getState().pagination.pageIndex + 1} of {table.getPageCount().toLocaleString()}
           </strong>
         </span>
-        <span sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <span sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           | Go to page:
           <input
-            type="number"
-            min="1"
+            type='number'
+            min='1'
             max={table.getPageCount()}
             defaultValue={table.getState().pagination.pageIndex + 1}
-            onChange={e => {
+            onChange={(e) => {
               const page = e.target.value ? Number(e.target.value) - 1 : 0
               table.setPageIndex(page)
             }}
-            sx={{ border: "1px solid", borderRadius: "4px", padding: "4px", width: "16ch" }}
+            sx={{ border: '1px solid', borderRadius: '4px', padding: '4px', width: '16ch' }}
           />
         </span>
         <select
           value={table.getState().pagination.pageSize}
-          onChange={e => {
+          onChange={(e) => {
             table.setPageSize(Number(e.target.value))
           }}
         >
-          {[10, 20, 30, 40, 50].map(pageSize => (
+          {[10, 20, 30, 40, 50].map((pageSize) => (
             <option key={pageSize} value={pageSize}>
               Show {pageSize}
             </option>
@@ -142,5 +136,5 @@ export default function LogTable({ data, columns }) {
         </select>
       </div>
     </div>
-  );
+  )
 }
