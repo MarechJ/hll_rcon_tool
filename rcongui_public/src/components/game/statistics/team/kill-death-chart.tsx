@@ -42,7 +42,7 @@ export function KillDeathChart({stats, handlePlayerClick}: {
           <Line dataKey="kills" tooltipType="none" stroke={colors.purple[600]} dot={false} activeDot={false} legendType="none" data={[{kills: 0, deaths: 0}, {kills: maxKills, deaths: maxDeaths}]} />
           <Scatter data={stats}>
             {stats.map((player, index) => (
-              <Cell key={`cell-${index}`} fill={getColorForTeam(player.team)} onClick={() => handlePlayerClick(player.player_id)} onMouse/>
+              <Cell key={`cell-${index}`} fill={getColorForTeam(player.team)} onClick={() => handlePlayerClick(player.player_id)} className="cursor-pointer"/>
             ))}
           </Scatter>
 
