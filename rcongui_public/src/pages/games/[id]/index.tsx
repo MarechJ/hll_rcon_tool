@@ -64,7 +64,7 @@ const GameDetail = ({ game }: { game: ScoreboardMapStats }) => {
             />
           </aside>
       </div>
-      <GameStats stats={game.player_stats} getColumns={getCompletedGameColumns} gameId={`${game.id}_${dayjs(game.start).format('YYYYMMDD-HHmm')}`} live={false}/>
+      <GameStats stats={game.player_stats} getColumns={getCompletedGameColumns} gameId={`${game.id}_${dayjs(game.start).format('YYYYMMDD-HHmm')}`}/>
     </>
   )
 }
