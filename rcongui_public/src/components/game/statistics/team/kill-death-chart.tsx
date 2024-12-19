@@ -1,16 +1,6 @@
 import {Player, PlayerWithStatus} from "@/types/player";
 import React from "react";
-import {
-  CartesianGrid,
-  Cell, ComposedChart,
-  Line,
-  ReferenceLine,
-  ResponsiveContainer,
-  Scatter,
-  Tooltip, TooltipProps,
-  XAxis,
-  YAxis
-} from "recharts";
+import {Cell, ComposedChart, Label, ReferenceLine, ResponsiveContainer, Scatter, XAxis, YAxis} from "recharts";
 import {getColorForTeam} from "@/components/game/statistics/utils";
 import {useTranslation} from "react-i18next";
 import colors from "tailwindcss/colors";
@@ -24,6 +14,8 @@ export function KillDeathChart({stats, handlePlayerClick}: {
 
   const maxKills = Math.max.apply(null, stats.map(player => player.kills));
   const maxDeaths = Math.max.apply(null, stats.map(player => player.deaths));
+
+  const referenceLinesKpm = [0.5, 1, 2];
 
   return (
     <div className={"h-[90vh] w-full"}>
@@ -39,7 +31,13 @@ export function KillDeathChart({stats, handlePlayerClick}: {
         >
           <XAxis type="number" dataKey="deaths" name={t("playersTable.deaths")} label={t("playersTable.deaths")} domain={[0, maxDeaths]} tickCount={1}/>
           <YAxis type="number" dataKey="kills" name={t("playersTable.kills")} label={t("playersTable.kills")} domain={[0, maxKills]} tickCount={1}/>
-          <Line dataKey="kills" tooltipType="none" stroke={colors.purple[600]} dot={false} activeDot={false} legendType="none" data={[{kills: 0, deaths: 0}, {kills: maxKills, deaths: maxDeaths}]} />
+          {referenceLinesKpm.map(kpm =>
+            <ReferenceLine stroke={colors.purple[600]} strokeDasharray={kpm === 1 ? undefined : "3 3"} segment={[{ x: 0, y: 0 }, { x: Math.min(maxKills, maxDeaths), y: Math.min(maxKills,maxDeaths) * kpm }]} ifOverflow="visible">
+              <Label>
+                {kpm + " kpm"}
+              </Label>
+            </ReferenceLine>
+          )}
           <Scatter data={stats}>
             {stats.map((player, index) => (
               <Cell key={`cell-${index}`} fill={getColorForTeam(player.team)} onClick={() => handlePlayerClick(player.player_id)} className="cursor-pointer"/>
