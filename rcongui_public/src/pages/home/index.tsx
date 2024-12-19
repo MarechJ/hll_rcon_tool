@@ -94,7 +94,6 @@ export default function Home() {
                     stats={liveStats.data.filter((player) => player.time_seconds > 30)}
                     getColumns={getLiveGameColumns}
                     gameId={`live_${dayjs(game.current_map.start * 1000).format('YYYYMMDD-HHmm')}`}
-                    live={true}
                   />
                 </React.Suspense>
               </ErrorBoundary>
