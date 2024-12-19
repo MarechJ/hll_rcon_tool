@@ -84,8 +84,10 @@ const MapRotation = () => {
   };
 
   const onRemoveItem = useCallback((index) => {
-    rotation.splice(index, 1);
-    setRotation(Array.from(rotation));
+    setRotation((prevRotation) => {
+      const newRotation = prevRotation.slice(0, index).concat(prevRotation.slice(index + 1));
+      return newRotation;
+    });
   });
 
   const onMapChange = useCallback((mapLayer) => {
