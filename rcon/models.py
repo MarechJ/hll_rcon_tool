@@ -22,6 +22,7 @@ from sqlalchemy.orm import (
 )
 from sqlalchemy.schema import UniqueConstraint
 
+from rcon.maps import Team
 from rcon.types import (
     AuditLogType,
     MessageTemplateType,
@@ -51,7 +52,7 @@ from rcon.types import (
     SteamPlayerSummaryType,
     StructuredLogLineWithMetaData,
     WatchListType,
-    MessageTemplateCategory,
+    MessageTemplateCategory, PlayerTeamAssociation, PlayerTeamConfidence,
 )
 from rcon.utils import (
     SafeStringFormat,
@@ -59,6 +60,7 @@ from rcon.utils import (
     mask_to_server_numbers,
     server_numbers_to_mask,
 )
+from rcon.weapons import WEAPON_SIDE_MAP
 
 logger = logging.getLogger(__name__)
 
@@ -531,7 +533,6 @@ class Maps(Base):
             ),
         }
 
-
 class PlayerStats(Base):
     __tablename__ = "player_stats"
     __table_args__ = (
@@ -577,6 +578,50 @@ class PlayerStats(Base):
     )
     map: Mapped[Maps] = relationship(back_populates="player_stats")
 
+    def detect_team(self) -> PlayerTeamAssociation:
+        def get_value(item):
+            return item[1]
+
+        axis_count = 0
+        allies_count = 0
+        if len(self.weapons) > 0:
+            for weapon in sorted(self.weapons.items(), key=get_value, reverse=True):
+                if WEAPON_SIDE_MAP.get(weapon[0]) == Team.ALLIES:
+                    allies_count += weapon[1]
+                elif WEAPON_SIDE_MAP.get(weapon[0]) == Team.AXIS:
+                    axis_count += weapon[1]
+
+        if len(self.death_by_weapons) > 0:
+            for weapon in sorted(self.death_by_weapons.items(), key=get_value, reverse=True):
+                if WEAPON_SIDE_MAP.get(weapon[0]) is None:
+                    continue
+                op = Team.AXIS if WEAPON_SIDE_MAP.get(weapon[0]) == Team.ALLIES else Team.ALLIES
+                if op == Team.ALLIES:
+                    allies_count += weapon[1]
+                elif op == Team.AXIS:
+                    axis_count += weapon[1]
+
+        if axis_count == 0 and allies_count == 0:
+            return PlayerTeamAssociation(team=Team.UNKNOWN, confidence=PlayerTeamConfidence.STRONG, ratio=0)
+        elif axis_count > allies_count:
+            return PlayerTeamAssociation(
+                team=Team.AXIS,
+                confidence=PlayerTeamConfidence.STRONG if allies_count == 0 else PlayerTeamConfidence.MIXED,
+                ratio=round(axis_count / (axis_count + allies_count) * 100, 2),
+            )
+        elif allies_count > axis_count:
+            return PlayerTeamAssociation(
+                team=Team.ALLIES,
+                confidence=PlayerTeamConfidence.STRONG if axis_count == 0 else PlayerTeamConfidence.MIXED,
+                ratio=round(allies_count / (axis_count + allies_count) * 100, 2),
+            )
+        else:
+            return PlayerTeamAssociation(
+                team=Team.UNKNOWN,
+                confidence=PlayerTeamConfidence.MIXED,
+                ratio=50,
+            )
+
     def to_dict(self) -> PlayerStatsType:
         # TODO: Fix typing
         return {
@@ -614,6 +659,7 @@ class PlayerStats(Base):
             "death_by": self.death_by,
             "weapons": self.weapons,
             "death_by_weapons": self.death_by_weapons,
+            "team": self.detect_team(),
         }
 
 

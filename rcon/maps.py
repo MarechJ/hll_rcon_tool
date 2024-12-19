@@ -98,6 +98,7 @@ class GameMode(str, Enum):
 class Team(str, Enum):
     ALLIES = "allies"
     AXIS = "axis"
+    UNKNOWN = 'unknown'
 
 
 class Environment(str, Enum):

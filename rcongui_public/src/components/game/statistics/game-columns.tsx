@@ -1,12 +1,13 @@
 'use client'
 
-import {ColumnDef} from '@tanstack/react-table'
-import {Player, PlayerWithStatus} from '@/types/player'
-import {IconHeader as Header} from './column-header'
-import {Status} from './player-status'
-import {isPlayerWithStatus} from './player/utils'
-import {Button} from '@/components/ui/button'
-import {useTranslation} from 'react-i18next'
+import { ColumnDef } from '@tanstack/react-table'
+import { Player, PlayerWithStatus, TeamEnum } from '@/types/player'
+import { IconHeader as Header } from './column-header'
+import { Status } from './player-status'
+import { isPlayerWithStatus } from './player/utils'
+import { Button } from '@/components/ui/button'
+import { useTranslation } from 'react-i18next'
+import { TeamIndicator } from '@/components/game/statistics/team-indicator'
 
 const threeDigitsWidth = 40
 const fourDigitsWidth = 50
@@ -134,7 +135,7 @@ const playerColumn = (handlePlayerClick: (id: string) => void): ColumnDef<Player
       </div>
     )
   },
-  filterFn: (row, columnId: string, filterValue: any) => {
+  filterFn: (row, columnId: string, filterValue: string[]) => {
     if (filterValue === undefined || filterValue.length === 0) {
       return true;
     }
@@ -142,6 +143,26 @@ const playerColumn = (handlePlayerClick: (id: string) => void): ColumnDef<Player
     return filterValue.some((v: string) => value.toLowerCase().includes(v.toLowerCase()));
   },
 })
+
+const teamColumn: ColumnDef<Player | PlayerWithStatus> = {
+  accessorKey: 'team',
+  header: function TeamHeader() {
+    const {t} = useTranslation('game')
+    return <div>{t('playersTable.team')}</div>
+  },
+  size: 20,
+  filterFn: (row, columnId, filterValue) => {
+    if (!filterValue || filterValue === 'all') {
+      return true
+    }
+    const cellValue = String(row.getValue(columnId));
+    return cellValue === filterValue;
+  },
+  cell: ({row}) => {
+    const player = row.original
+    return <TeamIndicator team={player.team?.confidence === 'strong' ? player.team.team : TeamEnum.MIXED} className="block"/>;
+  },
+};
 
 const statusColumn: ColumnDef<Player | PlayerWithStatus> = {
   accessorKey: 'is_online',
@@ -174,4 +195,4 @@ export const getLiveGameColumns = (handlePlayerClick: (id: string) => void): Col
 
 export const getCompletedGameColumns = (
   handlePlayerClick: (id: string) => void,
-): ColumnDef<Player | PlayerWithStatus>[] => [playerColumn(handlePlayerClick), ...pointColumns]
+): ColumnDef<Player | PlayerWithStatus>[] => [teamColumn, playerColumn(handlePlayerClick), ...pointColumns]
