@@ -64,6 +64,9 @@ export default function GameStats({
       // don't count these weapons as those are both allies and axis weapon
       if (['SATCHEL', 'BOMBING RUN', 'STRAFING RUN', 'PRECISION STRIKE'].includes(name.toUpperCase())) {
         adjustedKills -= count;
+        if (adjustedKills === 0) {
+          return TeamEnum.UNKNOWN;
+        }
       } else if (ALL_GER_Weapon.includes(name as GER_Weapon) || ALL_GER_ArmorWeapon.includes(name as GER_ArmorWeapon)) {
         axisKills += count;
       } else if (
