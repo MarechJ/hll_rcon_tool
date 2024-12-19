@@ -4,8 +4,6 @@ from rcon.commands import convert_tabs_to_spaces
 from rcon.types import GetDetailedPlayer
 from rcon.utils import (
     exception_in_chain,
-    is_invalid_name_pineapple,
-    is_invalid_name_whitespace,
     parse_raw_player_info,
 )
 
@@ -73,26 +71,6 @@ def test_deeply_chained_implicit():
 )
 def test_convert_tabs_to_spaces(value, expected):
     assert convert_tabs_to_spaces(value) == expected
-
-
-@pytest.mark.parametrize(
-    "name, expected",
-    [("1234567890", False), ("1234567890 ", True), ("1234567890123456789 ", True)],
-)
-def test_is_invalid_name_whitespace(name, expected):
-    assert is_invalid_name_whitespace(name) == expected
-
-
-@pytest.mark.parametrize(
-    "name, expected",
-    [
-        ("12345678901234567890", False),
-        ("123456789012345?", False),
-        ("1234567890123456789?", True),
-    ],
-)
-def test_is_invalid_name_pineapple(name, expected):
-    assert is_invalid_name_pineapple(name) == expected
 
 
 def mock_get_detailed_player(
