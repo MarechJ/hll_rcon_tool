@@ -70,10 +70,13 @@ const Item = ({thisList, isDragging, mapLayer, index, onRemove, onChange, isSave
             edge="end"
             aria-label="set map"
             disabled={!isSaved}
-            onClick={() => onChange({
-              ...mapLayer,
-              id: mapLayer.originalId,
-            })}
+            onClick={(event) => {
+              event.stopPropagation();
+              onChange({
+                ...mapLayer,
+                id: mapLayer.originalId,
+              });
+            }}
             size="large"
           >
             <InputIcon/>
@@ -83,7 +86,10 @@ const Item = ({thisList, isDragging, mapLayer, index, onRemove, onChange, isSave
       <IconButton
         edge="end"
         aria-label="delete"
-        onClick={() => onRemove(index)}
+        onClick={(event) => {
+          event.stopPropagation();
+          onRemove(index);
+        }}
         size="large"
       >
         <DeleteIcon/>
@@ -103,6 +109,9 @@ const Item = ({thisList, isDragging, mapLayer, index, onRemove, onChange, isSave
 const DraggableList = memo(({maps, onDragEnd, onRemove, onChange, isSaved}) => {
   function handleDragEnd(event) {
     const {active, over} = event;
+
+    // if the item is only being clicked, don't do anything
+    if (!over) return;
 
     if (active.id !== over.id) {
       const oldIndex = items.findIndex((m) => m.id === active.id);
