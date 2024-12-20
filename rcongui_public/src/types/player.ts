@@ -116,7 +116,7 @@ export interface PlayerBase {
 }
 
 export interface PlayerTeamAssociation {
-  team: TeamEnum,
+  side: TeamEnum,
   confidence: 'strong' | 'mixed',
 }
 

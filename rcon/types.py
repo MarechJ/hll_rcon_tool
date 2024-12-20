@@ -393,8 +393,8 @@ class PlayerTeamConfidence(enum.Enum):
 
 
 class PlayerTeamAssociation(TypedDict):
-    # Indicates the team the player played for
-    team: Team
+    # Indicates the side the player played for
+    side: Team
     # Confidence that the value in team is actually correct, based on the impact the player had
     # by comparing kills and deaths from the teams the player played for in the round.
     confidence: PlayerTeamConfidence

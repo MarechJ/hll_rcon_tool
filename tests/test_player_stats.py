@@ -11,7 +11,7 @@ from rcon.maps import Team
 def test_detects_no_kills_no_deaths():
     p = PlayerStats(weapons=dict(), death_by_weapons=dict())
 
-    assert p.detect_team() == PlayerTeamAssociation(team=Team.UNKNOWN, confidence=PlayerTeamConfidence.STRONG, ratio=0)
+    assert p.detect_team() == PlayerTeamAssociation(side=Team.UNKNOWN, confidence=PlayerTeamConfidence.STRONG, ratio=0)
 
 
 @pytest.mark.parametrize(
@@ -25,7 +25,7 @@ def test_detects_no_kills_no_deaths():
 def test_detects_weapons(weapon, expected):
     p = PlayerStats(weapons={weapon: 1}, death_by_weapons=dict())
 
-    assert p.detect_team() == PlayerTeamAssociation(team=expected, confidence=PlayerTeamConfidence.STRONG, ratio=100)
+    assert p.detect_team() == PlayerTeamAssociation(side=expected, confidence=PlayerTeamConfidence.STRONG, ratio=100)
 
 
 @pytest.mark.parametrize(
@@ -39,25 +39,25 @@ def test_detects_weapons(weapon, expected):
 def test_detects_death_by_weapon(death, expected):
     p = PlayerStats(weapons=dict(), death_by_weapons={death: 1})
 
-    assert p.detect_team() == PlayerTeamAssociation(team=expected, confidence=PlayerTeamConfidence.STRONG, ratio=100)
+    assert p.detect_team() == PlayerTeamAssociation(side=expected, confidence=PlayerTeamConfidence.STRONG, ratio=100)
 
 
 def test_same_numbers():
     p = PlayerStats(weapons={'M1A1 THOMPSON': 1}, death_by_weapons={'M1A1 THOMPSON': 1})
 
-    assert p.detect_team() == PlayerTeamAssociation(team=Team.UNKNOWN, confidence=PlayerTeamConfidence.MIXED, ratio=50)
+    assert p.detect_team() == PlayerTeamAssociation(side=Team.UNKNOWN, confidence=PlayerTeamConfidence.MIXED, ratio=50)
 
 
 def test_multiple_sides():
     p = PlayerStats(weapons={'M1A1 THOMPSON': 4, 'GEWEHR 43': 3, 'STG44': 3}, death_by_weapons={'GEWEHR 43': 1})
 
-    assert p.detect_team() == PlayerTeamAssociation(team=Team.AXIS, confidence=PlayerTeamConfidence.MIXED, ratio=54.55)
+    assert p.detect_team() == PlayerTeamAssociation(side=Team.AXIS, confidence=PlayerTeamConfidence.MIXED, ratio=54.55)
 
 
 def test_prefer_more_kills():
     p = PlayerStats(weapons={'M1A1 THOMPSON': 1, 'GEWEHR 43': 2}, death_by_weapons=dict())
 
-    assert p.detect_team() == PlayerTeamAssociation(team=Team.AXIS, confidence=PlayerTeamConfidence.MIXED, ratio=66.67)
+    assert p.detect_team() == PlayerTeamAssociation(side=Team.AXIS, confidence=PlayerTeamConfidence.MIXED, ratio=66.67)
 
 
 def test_detect_complex():
@@ -72,7 +72,7 @@ def test_detect_complex():
         'M1 GARAND': 1,
     })
 
-    assert p.detect_team() == PlayerTeamAssociation(team=Team.AXIS, confidence=PlayerTeamConfidence.STRONG, ratio=100)
+    assert p.detect_team() == PlayerTeamAssociation(side=Team.AXIS, confidence=PlayerTeamConfidence.STRONG, ratio=100)
 
 
 def test_detect_complex_inf():
@@ -90,4 +90,4 @@ def test_detect_complex_inf():
         '20MM KWK 30 [Sd.Kfz.121 Luchs]': 1,
     })
 
-    assert p.detect_team() == PlayerTeamAssociation(team=Team.ALLIES, confidence=PlayerTeamConfidence.STRONG, ratio=100)
+    assert p.detect_team() == PlayerTeamAssociation(side=Team.ALLIES, confidence=PlayerTeamConfidence.STRONG, ratio=100)

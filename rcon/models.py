@@ -602,22 +602,22 @@ class PlayerStats(Base):
                     axis_count += weapon[1]
 
         if axis_count == 0 and allies_count == 0:
-            return PlayerTeamAssociation(team=Team.UNKNOWN, confidence=PlayerTeamConfidence.STRONG, ratio=0)
+            return PlayerTeamAssociation(side=Team.UNKNOWN, confidence=PlayerTeamConfidence.STRONG, ratio=0)
         elif axis_count > allies_count:
             return PlayerTeamAssociation(
-                team=Team.AXIS,
+                side=Team.AXIS,
                 confidence=PlayerTeamConfidence.STRONG if allies_count == 0 else PlayerTeamConfidence.MIXED,
                 ratio=round(axis_count / (axis_count + allies_count) * 100, 2),
             )
         elif allies_count > axis_count:
             return PlayerTeamAssociation(
-                team=Team.ALLIES,
+                side=Team.ALLIES,
                 confidence=PlayerTeamConfidence.STRONG if axis_count == 0 else PlayerTeamConfidence.MIXED,
                 ratio=round(allies_count / (axis_count + allies_count) * 100, 2),
             )
         else:
             return PlayerTeamAssociation(
-                team=Team.UNKNOWN,
+                side=Team.UNKNOWN,
                 confidence=PlayerTeamConfidence.MIXED,
                 ratio=50,
             )

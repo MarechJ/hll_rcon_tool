@@ -50,7 +50,7 @@ export function KillDeathChart({stats, handlePlayerClick}: {
           )}
           <Scatter data={stats}>
             {stats.map((player, index) => (
-              <Cell key={`cell-${index}`} fill={getColorForTeam(player.team.confidence === 'strong' ? player.team.team : TeamEnum.MIXED)} onClick={() => handlePlayerClick(player.player_id)} className="cursor-pointer"/>
+              <Cell key={`cell-${index}`} fill={getColorForTeam(player.team.confidence === 'strong' ? player.team.side : TeamEnum.MIXED)} onClick={() => handlePlayerClick(player.player_id)} className="cursor-pointer"/>
             ))}
           </Scatter>
 

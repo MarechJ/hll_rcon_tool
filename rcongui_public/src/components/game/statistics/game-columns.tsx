@@ -159,11 +159,11 @@ const teamColumn: ColumnDef<Player | PlayerWithStatus> = {
     if (filterValue === 'mixed') {
       return cellValue.confidence === 'mixed';
     }
-    return cellValue.team === filterValue && cellValue.confidence === 'strong';
+    return cellValue.side === filterValue && cellValue.confidence === 'strong';
   },
   cell: ({row}) => {
     const player = row.original;
-    return <TeamIndicator team={player.team?.confidence === 'strong' ? player.team.team : TeamEnum.MIXED} className="block"/>;
+    return <TeamIndicator team={player.team?.confidence === 'strong' ? player.team.side : TeamEnum.MIXED} className="block"/>;
   },
 };
 
