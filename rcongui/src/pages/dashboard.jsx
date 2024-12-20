@@ -78,7 +78,7 @@ const TotalPlayersCard = ({ games }) => {
 const GameBalanceCard = ({ games }) => {
   const times = games.map((game) => new Date(game.start)).reverse();
   const scores = games
-    .map((game) => game.result.allied - game.result.axis)
+    .map((game) => game.result?.allied ?? 0 - game.result?.axis ?? 0)
     .reverse();
 
   return (
@@ -180,7 +180,7 @@ const GamesCard = ({ games }) => {
                 </Box>
                 <Divider orientation="vertical" flexItem sx={{ mx: 2 }} />
                 <Typography variant="subtitle2" sx={{ fontSize: 20, whiteSpace: "nowrap" }}>
-                  {game.result.allied} - {game.result.axis}
+                  {game.result?.allied ?? "?"} - {game.result?.axis ?? "?"}
                 </Typography>
                 <Divider orientation="vertical" flexItem sx={{ mx: 2 }} />
                 <Typography variant="subtitle2">

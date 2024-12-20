@@ -1,18 +1,26 @@
 import {
+  Box,
+  Button,
+  Checkbox,
   List,
   ListItem,
   ListItemButton,
-  Box,
   ListItemIcon,
-  Checkbox,
   ListItemText,
-  ToggleButtonGroup,
   ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
+  Badge,
 } from "@mui/material";
 import { PopoverMenu } from "@/components/shared/PopoverMenu";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
-import { Tooltip, Button } from "@mui/material";
 import { logActions } from "@/utils/lib";
+import { useSelectionMenu } from "@/hooks/useSelectionMenu";
+import { SearchInput } from "@/components/shared/SearchInput";
+
+function fromValue(v) {
+  return v === true ? "on" : "off";
+}
 
 /**
  * @param {Object} props
@@ -25,24 +33,42 @@ export const LogActionHighlightMenu = ({
   onActionSelect,
   onToggle,
   toggleValue,
-}) => (
-  <PopoverMenu
-    id="log-action-highlight-picker"
-    description="Pick an action to highlight its logs"
-    renderButton={(props) => (
+}) => {
+  const {
+    search,
+    setSearch,
+    onOpen,
+    onClose,
+    filteredOptions,
+  } = useSelectionMenu(actionOptions);
+
+  return (
+    <PopoverMenu
+      id="log-action-highlight-picker"
+      description="Pick an action to highlight its logs"
+      onOpen={onOpen}
+      onClose={onClose}
+      renderButton={(props) => (
       <Button {...props}>
         <Tooltip title="Highlight action">
-          <AutoFixHighIcon />
+          <Badge
+            color="secondary"
+            variant="dot"
+            invisible={toggleValue === false}
+            anchorOrigin={{ vertical: "top", horizontal: "right" }}
+          >
+            <AutoFixHighIcon />
+          </Badge>
         </Tooltip>
       </Button>
     )}
   >
     <ToggleButtonGroup
-      value={toggleValue === true ? "on" : "off"}
+      value={fromValue(toggleValue)}
       size="small"
       exclusive
       onChange={(e, value) => {
-        onToggle(value);
+        onToggle(value === null ? fromValue(toggleValue) : value);
       }}
       aria-label="logs table highlight change"
       fullWidth
@@ -73,27 +99,12 @@ export const LogActionHighlightMenu = ({
         "& ul": { padding: 0 },
       }}
     >
-      {[
-        ...Object.keys(actionOptions).sort((a, b) => {
-          if (actionOptions[a] && actionOptions[b]) {
-            // Both are selected, so compare them alphabetically
-            return a.localeCompare(b);
-          }
-
-          if (actionOptions[a]) {
-            // Only `a` is selected, move `a` up
-            return -1;
-          }
-
-          if (actionOptions[b]) {
-            // Only `b` is selected, move `b` up
-            return 1;
-          }
-
-          // Neither is selected, so compare alphabetically
-          return a.localeCompare(b);
-        }),
-      ].map((actionName) => (
+      <SearchInput
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search actions"
+      />
+      {filteredOptions.map((actionName) => (
         <ListItem
           key={`${actionName}`}
           dense
@@ -138,5 +149,6 @@ export const LogActionHighlightMenu = ({
         </ListItem>
       ))}
     </List>
-  </PopoverMenu>
-);
+    </PopoverMenu>
+  );
+};

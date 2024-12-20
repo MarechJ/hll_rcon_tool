@@ -105,7 +105,7 @@ export default function GameOverview({
   const { t } = useTranslation('game')
 
   const displayArrows = () => {
-    if (!score.allies || !score.axis) return null
+    if (score.allies === undefined || score.axis === undefined) return null
 
     return (
       <ArrowsContainer>

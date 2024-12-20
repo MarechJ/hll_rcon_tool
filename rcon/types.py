@@ -10,13 +10,6 @@ from typing_extensions import TypedDict
 from rcon.maps import Layer, LayerType
 
 
-# Have to inherit from str to allow for JSON serialization w/ pydantic
-class RconInvalidNameActionType(str, enum.Enum):
-    warn = "WARN"
-    kick = "KICK"
-    ban = "BAN"
-
-
 class WindowsStoreIdActionType(str, enum.Enum):
     kick = "KICK"
     temp_ban = "TEMP BAN"
