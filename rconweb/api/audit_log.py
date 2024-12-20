@@ -1,10 +1,12 @@
 import json
 import logging
+import math
 from functools import wraps
 
 from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, or_, select, func
+from sqlalchemy.orm import query
 
 from rcon.models import AuditLog, enter_session
 
@@ -106,6 +108,7 @@ def get_audit_logs(request):
 
     try:
         with enter_session() as sess:
+            count_stmt = select(func.count(AuditLog.id))
             stmt = select(AuditLog)
 
             if usernames := data.get("usernames"):
@@ -131,16 +134,26 @@ def get_audit_logs(request):
                 else:
                     and_conditions = and_conditions[0]
                 stmt = stmt.filter(and_conditions)
-                logger.debug(stmt)
+                count_stmt = count_stmt.filter(and_conditions)
 
             if data.get("time_sort") == "asc":
                 stmt = stmt.order_by(AuditLog.creation_time.asc())
             else:
                 stmt = stmt.order_by(AuditLog.creation_time.desc())
 
-            stmt = stmt.offset((page - 1) * page_size).limit(page_size)
-            res = sess.execute(stmt).scalars().all()
-            res = [r.to_dict() for r in res]
+            paged_stmt = stmt.offset((page - 1) * page_size).limit(page_size)
+            res = sess.execute(paged_stmt).scalars().all()
+            if data.get('page') is None:
+                res = [r.to_dict() for r in res]
+            else:
+                count = sess.execute(count_stmt).scalar_one()
+                res = {
+                    'audit_logs': [r.to_dict() for r in res],
+                    'page': page,
+                    'page_size': page_size,
+                    'total_pages': math.ceil(count / page_size),
+                    'total_entries': count,
+                }
     except Exception as e:
         logger.exception("Getting audit log failed")
         failed = True
