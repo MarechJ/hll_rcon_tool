@@ -69,11 +69,11 @@ export const CompletedGameDetails = ({ mapLayer, result, start, end, id }) => {
           <Typography variant="h5" sx={{ color: "text.secondary" }}>
             Score:{" "}
             <Box component="span" sx={{ color: "primary.main" }}>
-              Allies {result.allied}
+              Allies {result?.allied ?? "?"}
             </Box>{" "}
             :{" "}
             <Box component="span" sx={{ color: "error.main" }}>
-              {result.axis} Axis
+              {result?.axis ?? "?"} Axis
             </Box>
           </Typography>
         )}
