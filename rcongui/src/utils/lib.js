@@ -239,3 +239,16 @@ export function getGameDuration(start, end) {
 export function isLeader(role) {
   return ["officer", "tankcommander", "spotter", "armycommander"].includes(role);
 }
+
+export function isSteamPlayer(player) {
+  const { player_id: id } = player
+  return id.length === 17 && !Number.isNaN(Number(id))
+}
+
+export function getSteamProfileUrl(id) {
+  return `https://steamcommunity.com/profiles/${id}`
+}
+
+export function getXboxProfileUrl(playerName) {
+  return `https://xboxgamertag.com/search/${playerName}`
+}
