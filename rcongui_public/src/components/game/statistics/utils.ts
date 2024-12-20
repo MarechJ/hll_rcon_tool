@@ -1,24 +1,5 @@
-import {Faceoff, Player, ServerFinalStats, TeamEnum} from '@/types/player'
-import {
-  ALL_GB_ArmorWeapon,
-  ALL_GB_Weapon,
-  ALL_GER_ArmorWeapon,
-  ALL_GER_Weapon,
-  ALL_RUS_ArmorWeapon,
-  ALL_RUS_Weapon,
-  ALL_US_ArmorWeapon,
-  ALL_US_Weapon,
-  GB_ArmorWeapon,
-  GB_Weapon,
-  GER_ArmorWeapon,
-  GER_Weapon,
-  RUS_ArmorWeapon,
-  RUS_Weapon,
-  US_ArmorWeapon,
-  US_Weapon,
-  Weapon,
-  WeaponCategory
-} from "@/types/weapon";
+import { Faceoff, Player, TeamEnum } from '@/types/player'
+import { Weapon, WeaponCategory } from '@/types/weapon'
 import colors from 'tailwindcss/colors'
 
 // LIST OF WEAPONS
