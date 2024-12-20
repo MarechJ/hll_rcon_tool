@@ -2,7 +2,6 @@ import { queryOptions, useQuery } from '@tanstack/react-query'
 import { fetchApi } from '../api'
 import { ScoreboardMaps, ScoreboardMapStats } from '@/types/api'
 import { queryKeys } from '../queryKeys'
-import { calcTeam } from '@/components/game/statistics/utils'
 
 const DEFAULT_PAGE = 1
 const DEFAULT_PAGE_SIZE = 50
@@ -45,10 +44,6 @@ export const gameQueries = {
         const game = await fetchGameDetail(gameId)
         const playerStatsWithTeam = game.player_stats
           .filter(player => player.time_seconds > MIN_TIME_SECONDS)
-          .map(player => ({
-            ...player,
-            team: calcTeam(player.kills, player.weapons),
-          }))
         return {
           ...game,
           player_stats: playerStatsWithTeam,

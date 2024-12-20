@@ -1,7 +1,7 @@
 'use client'
 
 import { ColumnDef } from '@tanstack/react-table'
-import { Player, PlayerWithStatus, TeamEnum } from '@/types/player'
+import { Player, PlayerTeamAssociation, PlayerWithStatus, TeamEnum } from "@/types/player";
 import { IconHeader as Header } from './column-header'
 import { Status } from './player-status'
 import { isPlayerWithStatus } from './player/utils'
@@ -155,11 +155,14 @@ const teamColumn: ColumnDef<Player | PlayerWithStatus> = {
     if (!filterValue || filterValue === 'all') {
       return true
     }
-    const cellValue = String(row.getValue(columnId));
-    return cellValue === filterValue;
+    const cellValue: PlayerTeamAssociation = row.getValue(columnId);
+    if (filterValue === 'mixed') {
+      return cellValue.confidence === 'mixed';
+    }
+    return cellValue.team === filterValue && cellValue.confidence === 'strong';
   },
   cell: ({row}) => {
-    const player = row.original
+    const player = row.original;
     return <TeamIndicator team={player.team?.confidence === 'strong' ? player.team.team : TeamEnum.MIXED} className="block"/>;
   },
 };

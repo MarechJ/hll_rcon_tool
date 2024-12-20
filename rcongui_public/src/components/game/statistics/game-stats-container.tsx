@@ -1,12 +1,8 @@
-import { useOutletContext } from 'react-router'
-import { ScoreboardMapStats } from '@/types/api'
 import React, { useState, useMemo } from 'react'
 import useMediaQuery from '@/hooks/use-media-query'
 import { Player, PlayerWithStatus } from '@/types/player'
-import { calcTeam } from '@/components/game/statistics/utils'
 import PlayerGameDetail from '@/components/game/statistics/player'
 import { MobilePlayerGameDetail, NoPlayerGameDetail } from '@/components/game/statistics/player-detail'
-import { TeamStats } from '@/components/game/statistics/team/team-stats'
 
 interface GameStatsProps {
   game: {
