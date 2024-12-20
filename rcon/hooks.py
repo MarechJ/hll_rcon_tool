@@ -5,7 +5,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 from threading import Timer
-from typing import Final
+from typing import Final, Any
 
 from discord_webhook import DiscordEmbed
 
