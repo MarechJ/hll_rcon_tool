@@ -70,7 +70,13 @@ const Item = ({thisList, isDragging, mapLayer, index, onRemove, onChange, isSave
             edge="end"
             aria-label="set map"
             disabled={!isSaved}
-            onClick={() => onChange(mapLayer)}
+            onClick={(event) => {
+              event.stopPropagation();
+              onChange({
+                ...mapLayer,
+                id: mapLayer.originalId,
+              });
+            }}
             size="large"
           >
             <InputIcon/>
@@ -80,7 +86,10 @@ const Item = ({thisList, isDragging, mapLayer, index, onRemove, onChange, isSave
       <IconButton
         edge="end"
         aria-label="delete"
-        onClick={() => onRemove(index)}
+        onClick={(event) => {
+          event.stopPropagation();
+          onRemove(index);
+        }}
         size="large"
       >
         <DeleteIcon/>
@@ -101,6 +110,9 @@ const DraggableList = memo(({maps, onDragEnd, onRemove, onChange, isSaved}) => {
   function handleDragEnd(event) {
     const {active, over} = event;
 
+    // if the item is only being clicked, don't do anything
+    if (!over) return;
+
     if (active.id !== over.id) {
       const oldIndex = items.findIndex((m) => m.id === active.id);
       const newIndex = items.findIndex((m) => m.id === over.id);
@@ -117,13 +129,20 @@ const DraggableList = memo(({maps, onDragEnd, onRemove, onChange, isSaved}) => {
   }
 
   useEffect(() => {
-    setItems(maps.map((m, idx) => ({...m, id: `${m.id}-${idx}`})));
+    setItems(maps.map((m, idx) => ({...m, originalId: m.id, id: `${m.id}-${idx}`})));
   }, [maps]);
 
   const [items, setItems] = useState([]);
-  const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, {
-    coordinateGetter: sortableKeyboardCoordinates,
-  }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        delay: 100,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
 
   return <DndContext
     sensors={sensors}

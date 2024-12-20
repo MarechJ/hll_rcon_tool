@@ -1,18 +1,23 @@
 import {
+  Box,
+  Button,
+  Checkbox,
   List,
   ListItem,
   ListItemButton,
-  Box,
   ListItemIcon,
-  Checkbox,
   ListItemText,
-  ToggleButtonGroup,
   ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
 } from "@mui/material";
 import { PopoverMenu } from "@/components/shared/PopoverMenu";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
-import { Tooltip, Button } from "@mui/material";
 import { logActions } from "@/utils/lib";
+
+function fromValue(v) {
+  return v === true ? "on" : "off";
+}
 
 /**
  * @param {Object} props
@@ -38,11 +43,11 @@ export const LogActionHighlightMenu = ({
     )}
   >
     <ToggleButtonGroup
-      value={toggleValue === true ? "on" : "off"}
+      value={fromValue(toggleValue)}
       size="small"
       exclusive
       onChange={(e, value) => {
-        onToggle(value);
+        onToggle(value === null ? fromValue(toggleValue) : value);
       }}
       aria-label="logs table highlight change"
       fullWidth
