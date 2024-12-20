@@ -94,6 +94,7 @@ def check_player_conditions(
             min_time_secs=int(config.requirements.minimum_play_time.total_seconds),
             current_time_secs=player.current_playtime_seconds,
         ).is_met()
+        and not any(flag in config.whitelist_flags for flag in player.flags)
     )
 
 
@@ -312,10 +313,12 @@ def get_online_players(
             logger.debug(f"No CRCON profile, skipping {raw_player}")
             continue
         current_playtime_seconds = raw_player["profile"]["current_playtime_seconds"]  # type: ignore
+        flags = set(flag["flag"] for flag in raw_player['profile']["flags"])
         p = Player(
             name=name,
             player_id=player_id,
             current_playtime_seconds=current_playtime_seconds,
+            flags=flags
         )
         players[p.player_id] = p
 
@@ -337,6 +340,7 @@ def get_vips(
                 player_id=vip["player_id"],
                 name=vip["name"],
                 current_playtime_seconds=0,
+                flags=[]
             ),
             expiration_date=vip["vip_expiration"],
         )

@@ -50,6 +50,7 @@ class Player(pydantic.BaseModel):
     name: str
     player_id: str
     current_playtime_seconds: int
+    flags: set[str]
 
 
 class VipPlayer(pydantic.BaseModel):

@@ -78,6 +78,7 @@ class SeedVIPType(TypedDict):
     nice_expiration_date: bool
     player_messages: RawPlayerMessagesType
     reward: RawRewardType
+    whitelist_flags: list[str]
 
 
 class BufferType(pydantic.BaseModel):
@@ -155,7 +156,7 @@ class Reward(pydantic.BaseModel):
 class SeedVIPUserConfig(BaseUserConfig):
     enabled: bool = Field(default=False)
     dry_run: bool = Field(default=True)
-    language: str | None = Field(default="en_US")
+    language: str | None = Field(default=None)
     hooks: list[DiscordWebhook] = Field(default_factory=list)
     player_announce_thresholds: list[int] = Field(default=[10, 20, 30])
     poll_time_seeding: int = Field(default=30, ge=0)
@@ -165,6 +166,7 @@ class SeedVIPUserConfig(BaseUserConfig):
     requirements: Requirements = Field(default_factory=Requirements)
     player_messages: PlayerMessages = Field(default_factory=PlayerMessages)
     reward: Reward = Field(default_factory=Reward)
+    whitelist_flags: list[str] = Field(default_factory=list)
 
     @staticmethod
     def save_to_db(values: SeedVIPType, dry_run=False):
@@ -249,6 +251,7 @@ class SeedVIPUserConfig(BaseUserConfig):
             requirements=validated_requirements,
             player_messages=validated_player_messages,
             reward=validated_reward,
+            whitelist_flags=values.get('whitelist_flags')
         )
 
         if not dry_run:
