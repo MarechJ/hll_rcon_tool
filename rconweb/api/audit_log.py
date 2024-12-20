@@ -4,7 +4,7 @@ from functools import wraps
 
 from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, select
 
 from rcon.models import AuditLog, enter_session
 
@@ -99,10 +99,14 @@ def get_audit_logs(request):
     and_conditions = []
     failed = False
     error = None
+    res = None
+
+    page: int = int(data.get("page", 1))
+    page_size: int = int(data.get("page_size", 10))
 
     try:
         with enter_session() as sess:
-            query = sess.query(AuditLog)
+            stmt = select(AuditLog)
 
             if usernames := data.get("usernames"):
                 usernames = _to_list(usernames)
@@ -126,15 +130,16 @@ def get_audit_logs(request):
                     and_conditions = and_(*and_conditions)
                 else:
                     and_conditions = and_conditions[0]
-                query = query.filter(and_conditions)
-                logger.debug(query)
+                stmt = stmt.filter(and_conditions)
+                logger.debug(stmt)
 
             if data.get("time_sort") == "asc":
-                query = query.order_by(AuditLog.creation_time.asc())
+                stmt = stmt.order_by(AuditLog.creation_time.asc())
             else:
-                query = query.order_by(AuditLog.creation_time.desc())
+                stmt = stmt.order_by(AuditLog.creation_time.desc())
 
-            res = query.all()
+            stmt = stmt.offset((page - 1) * page_size).limit(page_size)
+            res = sess.execute(stmt).scalars().all()
             res = [r.to_dict() for r in res]
     except Exception as e:
         logger.exception("Getting audit log failed")
