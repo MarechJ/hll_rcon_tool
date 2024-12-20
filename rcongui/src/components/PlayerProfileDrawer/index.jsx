@@ -37,11 +37,25 @@ import GavelIcon from "@mui/icons-material/Gavel";
 import { green, red, yellow } from "@mui/material/colors";
 import { useActionDialog } from "@/hooks/useActionDialog";
 import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
-import { CountryFlag } from "@/components/shared/CountryFlag";
 import { generatePlayerActions } from "@/features/player-action/actions";
 import { ClientError } from "../shared/ClientError";
-import { useTheme } from "@mui/material/styles";
-import {Fragment, useState} from "react";
+import { useState } from "react";
+import {
+  getSteamProfileUrl,
+  getXboxProfileUrl,
+  isSteamPlayer,
+} from "@/utils/lib";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSteam, faXbox } from "@fortawesome/free-brands-svg-icons";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import DoneAllIcon from "@mui/icons-material/DoneAll";
+import { Link } from "react-router-dom";
+import { Chip } from "@mui/material";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
+import PersonIcon from "@mui/icons-material/Person";
+import PublicIcon from '@mui/icons-material/Public';
+import FlagIcon from '@mui/icons-material/Flag';
 
 const OnlineStatusBadge = styled(Badge, {
   shouldForwardProp: (props) => props !== "isOnline",
@@ -126,58 +140,95 @@ const BasicProfileDetails = ({
   sessionCount,
   flags,
   totalPlaytime,
+  names,
 }) => {
   return (
-    <dl>
-      <dt>Country</dt>
-      <dd>
-        {country && country !== "private" ? (
-          <>
-            <CountryFlag country={country} />
-            <span style={{ marginLeft: 4 }}>{country}</span>
-          </>
-        ) : (
-          "Unknown"
-        )}
-      </dd>
-      <dt>First Seen</dt>
-      <dd>{firstSeen ? dayjs(firstSeen).format("MMM DD, YYYY") : "N/A"}</dd>
-      <dt>Last Seen</dt>
-      <dd>{lastSeen ? dayjs(lastSeen).format("MMM DD, YYYY") : "N/A"}</dd>
-      <dt>VIP</dt>
-      <dd>{vip ? "Yes" : "No"}</dd>
-      {vip && (
-        <>
-          <dt>VIP Expires</dt>
-          <dd>{dayjs(vip.expiration).fromNow()}</dd>
-          <dd>{dayjs(vip.expiration).format("mm:HH MM DD, YYYY")}</dd>
-        </>
-      )}
-      <dt>Visits</dt>
-      <dd>{sessionCount}</dd>
-      <dt>Playtime in hours</dt>
-      <dd>{Math.round(totalPlaytime / 3600)}</dd>
-      {flags.length > 0 && (
-        <>
-          <dt>Flags</dt>
-          <dd>
-            <dl>
-              {flags.map(({ flag, comment: note, modified }, index) => (
-                <Fragment key={flag + index}>
-                  {index ? <Divider /> : null}
-                  <dt>{flag}</dt>
-                  <dd>
-                    Created:{" "}
-                    {modified ? dayjs(modified).format("HH:MM DD.MM.YY") : ""}
-                  </dd>
-                  {note ? <dd>Note: {note}</dd> : null}
-                </Fragment>
-              ))}
-            </dl>
-          </dd>
-        </>
-      )}
-    </dl>
+    <Stack spacing={3}>
+      <Box component="section">
+        <Typography
+          variant="h6"
+          sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1 }}
+        >
+          <PublicIcon /> Location
+        </Typography>
+        <Typography>{country ?? "Unknown"}</Typography>
+      </Box>
+
+      <Divider />
+
+      <Box component="section">
+        <Typography
+          variant="h6"
+          sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1 }}
+        >
+          <FlagIcon /> Flags
+        </Typography>
+        {flags.map(({ flag, comment, modified }) => (
+          <Stack key={flag}>
+            <Typography>{flag} - {comment}</Typography>
+            <Typography>Modified: {dayjs(modified).format("LLL")}</Typography>
+          </Stack>
+        ))}
+      </Box>
+
+      <Divider />
+
+      <Box component="section">
+        <Typography
+          variant="h6"
+          sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1 }}
+        >
+          <CalendarTodayIcon /> Activity
+        </Typography>
+        <Stack spacing={0.5}>
+          <Typography>First Seen: {dayjs(firstSeen).format("LLL")}</Typography>
+          <Typography>Last Seen: {dayjs(lastSeen).format("LLL")}</Typography>
+          <Typography>Visits: {sessionCount}</Typography>
+          <Typography>Playtime: {Math.floor(totalPlaytime / 3600)} hours</Typography>
+        </Stack>
+      </Box>
+
+      <Divider />
+
+      <Box component="section">
+        <Typography
+          variant="h6"
+          sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1 }}
+        >
+          <WorkspacePremiumIcon /> VIP Status
+        </Typography>
+        <Stack spacing={0.5}>
+          <div>
+            <Chip
+              label={vip ? "VIP" : "Non-VIP"}
+              color={vip ? "primary" : "default"}
+              variant={vip ? "filled" : "outlined"}
+            />
+          </div>
+          {vip && (
+            <Typography variant="body2">
+              Expires: {dayjs(vip.expiration).format("LLL")}
+            </Typography>
+          )}
+        </Stack>
+      </Box>
+
+      <Divider />
+
+      <Box component="section">
+        <Typography
+          variant="h6"
+          sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1 }}
+        >
+          <PersonIcon /> Known Names
+        </Typography>
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+          {names?.map((nameObj) => (
+            <Chip key={nameObj.id} label={nameObj.name} variant="outlined" size="small" />
+          ))}
+        </Box>
+      </Box>
+    </Stack>
   );
 };
 
@@ -322,7 +373,19 @@ const ProfileError = ({ error, onClose }) => (
 
 const PlayerDetails = ({ player, onClose }) => {
   const [openedTab, setOpenedTab] = useState("profile");
+  const [copySuccess, setCopySuccess] = useState(false);
   const { openDialog } = useActionDialog();
+
+  const handleCopyId = async () => {
+    const id = player?.player_id ?? profile.player_id;
+    try {
+      await navigator.clipboard.writeText(id);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy ID:", err);
+    }
+  };
 
   const handleActionClick = (recipients) => (action) => {
     openDialog(action, recipients);
@@ -363,11 +426,58 @@ const PlayerDetails = ({ player, onClose }) => {
             variant="h6"
             sx={{ textOverflow: "ellipsis" }}
           >
-            {name}
+            <Link
+              style={{ color: "inherit" }}
+              to={`/records/players/${player?.player_id ?? profile.player_id}`}
+            >
+              {name}
+            </Link>
           </Typography>
-          <Typography variant="subtitle2">
-            ID: {player?.player_id ?? profile.player_id}
-          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <Typography variant="subtitle2">
+              ID: {player?.player_id ?? profile.player_id}
+            </Typography>
+            <IconButton
+              size="small"
+              onClick={handleCopyId}
+              sx={{
+                padding: "2px",
+                "& .MuiSvgIcon-root": {
+                  fontSize: "0.9rem",
+                },
+              }}
+            >
+              {copySuccess ? (
+                <DoneAllIcon sx={{ color: green["500"] }} />
+              ) : (
+                <ContentCopyIcon />
+              )}
+            </IconButton>
+          </Box>
+          <Box>
+            {isSteamPlayer(player) && (
+              <Button
+                variant={"outline"}
+                LinkComponent={"a"}
+                href={getSteamProfileUrl(player.player_id)}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <FontAwesomeIcon icon={faSteam} />
+              </Button>
+            )}
+            {!isSteamPlayer(player) && (
+              <Button
+                variant={"outline"}
+                LinkComponent={"a"}
+                href={getXboxProfileUrl(player.name)}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <FontAwesomeIcon icon={faXbox} />
+              </Button>
+            )}
+          </Box>
         </Box>
         <IconButton
           sx={{
@@ -450,6 +560,7 @@ const PlayerDetails = ({ player, onClose }) => {
               profile.total_playtime_seconds ?? profile.total_playtime_seconds
             }
             vip={playerVip}
+            names={profile.names}
           />
         </TabPanel>
         {isOnline && (
@@ -593,14 +704,7 @@ const PlayerGameDetails = ({ player }) => {
 };
 
 export const PlayerDetailDrawer = () => {
-  const {
-    open,
-    close,
-    player,
-    isLoading,
-    profileError,
-  } = usePlayerSidebar();
-  const theme = useTheme();
+  const { open, close, player, isLoading, profileError } = usePlayerSidebar();
 
   return (
     <ResponsiveDrawer
