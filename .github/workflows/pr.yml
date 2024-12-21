@@ -64,4 +64,4 @@ jobs:
           PYTHONPATH=. alembic upgrade head
           PYTHONPATH=. python ./manage.py init_db
           PYTHONPATH=. python ./rconweb/manage.py migrate --noinput
-          pytest
+          pytest tests/
