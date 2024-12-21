@@ -13,6 +13,8 @@ import { liveSessionStatsOptions } from '@/lib/queries/live-session-stats'
 import { liveGameStatsOptions } from '@/lib/queries/live-game-stats'
 import React from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
+import GameStatsContainer from '@/components/game/statistics/game-stats-container'
+import { DataTable } from '@/components/game/statistics/game-table'
 
 dayjs.extend(duration)
 
@@ -90,11 +92,18 @@ export default function Home() {
                 )}
               >
                 <React.Suspense fallback={<div className="grid place-items-center w-full h-[200px]" />}>
-                  <GameStats
-                    stats={liveStats.data.filter((player) => player.time_seconds > 30)}
-                    getColumns={getLiveGameColumns}
-                    gameId={`live_${dayjs(game.current_map.start * 1000).format('YYYYMMDD-HHmm')}`}
-                  />
+                  <GameStatsContainer game={{
+                    id: `live_${dayjs(game.current_map.start * 1000).format('YYYYMMDD-HHmm')}`,
+                    player_stats: liveStats.data.filter((player) => player.time_seconds > 15),
+                  }}>
+                    {(props) => (
+                      <DataTable
+                        columns={getLiveGameColumns(props.handlePlayerClick)}
+                        data={liveStats.data.filter((player) => player.time_seconds > 15)}
+                        tableId={`live_${dayjs(game.current_map.start * 1000).format('YYYYMMDD-HHmm')}`}
+                      />
+                    )}
+                  </GameStatsContainer>
                 </React.Suspense>
               </ErrorBoundary>
             )}

@@ -5,6 +5,8 @@ import Layout from './components/layout'
 import GamesLayout from './pages/games/layout'
 import GamesList from './pages/games'
 import GameDetail from './pages/games/[id]'
+import GameDetailLayout from './pages/games/[id]/layout'
+import GameDetailCharts from './pages/games/[id]/charts'
 import { queryClient } from './lib/queryClient'
 import { clientLoader as layoutClientLoader } from './components/layout/clientLoader'
 import { clientLoader as homeClientLoader } from './pages/home/clientLoader'
@@ -36,9 +38,19 @@ export const routerObjects: RouteObject[] = [
             loader: gameClientLoader(queryClient),
           },
           {
-            path: ':id',
-            element: <GameDetail />,
+            path: ':id/*',
+            element: <GameDetailLayout />,
             loader: gameDetailClientLoader(queryClient),
+            children: [
+              {
+                index: true,
+                element: <GameDetail />,
+              },
+              {
+                path: 'charts',
+                element: <GameDetailCharts />,
+              },
+            ],
           },
         ],
       },

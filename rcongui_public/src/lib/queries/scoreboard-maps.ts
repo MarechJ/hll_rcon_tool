@@ -37,7 +37,18 @@ export const gameQueries = {
   detail: (gameId: number, enabled?: boolean) =>
     queryOptions({
       queryKey: queryKeys.gameDetail(gameId),
-      queryFn: () => fetchGameDetail(gameId),
+      queryFn: async () => {
+        // Minimum time to be considered in the game
+        // This is to avoid showing players that are just in the game for a few seconds
+        const MIN_TIME_SECONDS = 15
+        const game = await fetchGameDetail(gameId)
+        const playerStatsWithTeam = game.player_stats
+          .filter(player => player.time_seconds > MIN_TIME_SECONDS)
+        return {
+          ...game,
+          player_stats: playerStatsWithTeam,
+        }
+      },
       enabled: enabled ?? true,
     }),
 }
