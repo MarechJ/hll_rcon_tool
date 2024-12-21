@@ -36,7 +36,7 @@ import {
   ReasonDialog,
 } from "@/components/PlayerView/playerActions";
 import { toast } from "react-toastify";
-import { FlagDialog } from "@/pages/records/players";
+import { FlagDialog } from "@/components/FlagDialog";
 import Padlock from "@/components/shared/Padlock";
 import BlacklistRecordCreateDialog from "@/components/Blacklist/BlacklistRecordCreateDialog";
 

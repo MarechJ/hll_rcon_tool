@@ -1,721 +1,284 @@
-import {addPlayerToWatchList, get, handle_http_errors, postData, sendAction, showResponse,} from "@/utils/fetchUtils";
-import {toast} from "react-toastify";
-import Pagination from '@mui/material/Pagination';
-import {Button, Chip, LinearProgress, TextField, Typography,} from "@mui/material";
-import Grid from "@mui/material/Grid2";
-import {ReasonDialog} from "@/components/PlayerView/playerActions";
-import {omitBy} from "lodash/object";
-import SearchBar from "@/components/PlayersHistory/searchBar";
-import {fromJS, List, Map} from "immutable";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import {getEmojiFlag} from "@/utils/emoji";
-import PlayerGrid from "@/components/PlayersHistory/playerGrid";
-import {VipExpirationDialog} from "@/components/VipDialog";
-import {vipListFromServer} from "@/components/VipDialog/vipFromServer";
-import {banListFromServer} from "@/components/PlayersHistory/PlayerTile/PlayerBan";
-import BlacklistRecordCreateDialog from "@/components/Blacklist/BlacklistRecordCreateDialog";
-import {Component, Fragment, lazy, Suspense} from "react";
-
+import { cmd } from "@/utils/fetchUtils";
+import {
+  Button,
+  TextField,
+  FormControlLabel,
+  Switch,
+  Stack,
+  Grid2 as Grid,
+  Divider,
+  Chip,
+  Popover,
+  IconButton,
+  Skeleton,
+  Typography,
+} from "@mui/material";
+import { Form, useLoaderData } from "react-router-dom";
+import { Autocomplete } from "@mui/material";
+import { CountryFlag } from "@/components/shared/CountryFlag";
+import { useMemo, useState, Suspense, lazy } from "react";
+import countries from "country-list";
+import PlayerCard from "./card";
+import { useGlobalStore } from "@/hooks/useGlobalState";
+import emojiData from "@emoji-mart/data/sets/15/twitter.json";
+import Emoji from "@/components/shared/Emoji";
+import AddReactionIcon from "@mui/icons-material/AddReaction";
 const EmojiPicker = lazy(() => import("@emoji-mart/react"));
 
-const PlayerSummary = ({player, flag}) => (
-  <Fragment>
-    <Typography variant="body2">
-      Add flag: {flag ? getEmojiFlag(flag) : <small>Please choose</small>}
-    </Typography>
-    <Typography variant="body2">
-      To:{" "}
-      {player && player.get("names")
-        ? player.get("names").map((n) => <Chip label={n.get("name")}/>)
-        : "No name recorded"}
-    </Typography>
-    <Typography variant="body2">
-      Player ID: {player ? player.get("player_id") : ""}
-    </Typography>
-  </Fragment>
-);
+// Get all countries for autocomplete
+const countryOptions = countries.getCodes().map((code) => ({
+  code: code.toLowerCase(),
+  name: countries.getName(code),
+}));
 
-class FlagDialog extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      flag: null,
-      comment: "",
-      data: {},
-    };
-  }
+/*
 
-  componentDidMount() {
-    import('@emoji-mart/data').then((d) => this.setState((s) => {
-      return {...s, data: d.default};
-    }));
-  }
+blacklisted: false
+exact_name_match: false
+ignore_accent: true
+is_watched: false
+page: 1
+page_size: 50
+player_id: "1"
+player_name: "a"
+flags: "👍,😍"
+country: "cs" // ISO format
+*/
+export const loader = async ({ request }) => {
+  const url = new URL(request.url);
 
-  render() {
-    const {open, handleClose, handleConfirm, SummaryRenderer} = this.props;
-    const {flag, comment, data} = this.state;
+  const player_name = url.searchParams.get("player_name") ?? "";
+  const player_id = url.searchParams.get("player_id") ?? "";
 
-    return (
-      (<Dialog open={open} aria-labelledby="form-dialog-title">
-        <DialogTitle id="form-dialog-title">
-          <SummaryRenderer player={open} flag={flag}/>
-        </DialogTitle>
-        <DialogContent>
-          <Grid
-            container
-            alignContent="center"
-            alignItems="center"
-            justifyContent="center"
-            spacing={2}
-          >
-            <Grid size={12}>
-              <TextField
-                label="Comment"
-                value={comment}
-                onChange={(e) => this.setState({comment: e.target.value})}
-              />
-            </Grid>
-          </Grid>
-          <Grid
-            container
-            alignContent="center"
-            alignItems="center"
-            justifyContent="center"
-            spacing={2}
-          >
-            <Grid size={12}>
-              <Suspense>
-                <EmojiPicker
-                  style={{border: '1px solid red'}}
-                  perLine={8}
-                  data={data}
-                  onEmojiSelect={(emoji) => this.setState({flag: emoji.native})}
-                />
-              </Suspense>
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => {
-              this.setState({flag: ""});
-              handleClose();
-            }}
-            color="primary"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={() => {
-              handleConfirm(open, flag, comment);
-              this.setState({flag: "", comment: ""});
-            }}
-            color="primary"
-          >
-            Confirm
-          </Button>
-        </DialogActions>
-      </Dialog>)
-    );
-  }
-}
+  const page = url.searchParams.get("page") ?? 1;
+  const page_size = url.searchParams.get("page_size") ?? 50;
 
-const MyPagination = ({pageSize, total, page, setPage}) => (
-  <Pagination
-    count={Math.ceil(total / pageSize)}
-    page={page}
-    onChange={(e, val) => setPage(val)}
-    showFirstButton
-    showLastButton
-  />
-);
+  const flags = url.searchParams.get("flags") ?? "";
+  const country = url.searchParams.get("country") ?? "";
 
-class PlayersHistory extends Component {
-  constructor(props) {
-    super(props);
+  const blacklisted = url.searchParams.get("blacklisted") ?? false;
+  const exact_name_match = url.searchParams.get("exact_name_match") ?? false;
+  const ignore_accent = url.searchParams.get("ignore_accent") ?? false;
+  const is_watched = url.searchParams.get("is_watched") ?? false;
 
-    this.state = {
-      playersHistory: List(),
-      total: 0,
-      pageSize: 50,
-      page: 1,
-      byName: "",
-      byPlayerId: "",
-      blacklistedOnly: false,
-      lastSeenFrom: null,
-      lastSeenUntil: null,
-      isLoading: false,
-      isWatchedOnly: false,
-      vips: new Map(),
-      doFlag: false,
-      doConfirmPlayer: false,
-      doVIPPlayer: false,
-      ignoreAccent: true,
-      exactMatch: false,
-      flags: "",
-      country: "",
-      bans: new Map(),
-      blacklists: [],
-      blacklistDialogOpen: false,
-      blacklistDialogInitialValues: undefined,
-    };
-
-    this.getPlayerHistory = this.getPlayerHistory.bind(this);
-    this.loadBans = this.loadBans.bind(this);
-    this.blacklistPlayer = this.blacklistPlayer.bind(this);
-    this.unblacklistPlayer = this.unblacklistPlayer.bind(this);
-    this.addFlagToPlayer = this.addFlagToPlayer.bind(this);
-    this.deleteFlag = this.deleteFlag.bind(this);
-    this.loadVips = this.loadVips.bind(this);
-    this.loadBlacklists = this.loadBlacklists.bind(this);
-    this.addVip = this.addVip.bind(this);
-    this.deleteVip = this.deleteVip.bind(this);
-    this.unBanPlayer = this.unBanPlayer.bind(this);
-    this.tempBan = this.tempBan.bind(this);
-    this.permaBan = this.permaBan.bind(this);
-    this.addToWatchlist = this.addToWatchlist.bind(this);
-    this.removeFromWatchList = this.removeFromWatchList.bind(this);
-    this.setDoFlag = this.setDoFlag.bind(this);
-    this.setDoConfirmPlayer = this.setDoConfirmPlayer.bind(this);
-    this.setDoVIPPlayer = this.setDoVIPPlayer.bind(this);
-    this.setIgnoreAccent = this.setIgnoreAccent.bind(this);
-    this.setExactMatch = this.setExactMatch.bind(this);
-    this.setFlags = this.setFlags.bind(this);
-    this.setCountry = this.setCountry.bind(this);
-
-    this.onBlacklist = this.onBlacklist.bind(this);
-    this.onUnBlacklist = this.onUnBlacklist.bind(this);
-    this.deleteFlag = this.deleteFlag.bind(this);
-    this.removeFromWatchList = this.removeFromWatchList.bind(this);
-    this.onUnban = this.onUnban.bind(this);
-    this.onTempBan = this.onTempBan.bind(this);
-    this.onPermaBan = this.onPermaBan.bind(this);
-    this.onAddVip = this.onAddVip.bind(this);
-    this.onDeleteVip = this.onDeleteVip.bind(this);
-    this.onAddToWatchList = this.onAddToWatchList.bind(this);
-    this.onRemoveFromWatchList = this.onRemoveFromWatchList.bind(this);
-  }
-
-  tempBan(playerId, reason, durationHours, comment) {
-    this.postComment(
-      playerId,
-      comment,
-      `Player ID ${playerId} temp banned ${durationHours} for ${reason}`
-    );
-    postData(`${process.env.REACT_APP_API_URL}temp_ban`, {
-      player_id: playerId,
-      reason: reason,
-      duration_hours: durationHours,
-    })
-      .then((response) =>
-        showResponse(
-          response,
-          `Player ID ${playerId} temp banned ${durationHours} for ${reason}`,
-          true
-        )
-      )
-      .then(this._reloadOnSuccess)
-      .catch((error) => toast.error("Unable to connect to API " + error));
-  }
-
-  permaBan(playerId, reason, comment) {
-    this.postComment(
-      playerId,
-      comment,
-      `Player ID ${playerId} perma banned for ${reason}`
-    );
-    postData(`${process.env.REACT_APP_API_URL}perma_ban`, {
-      player_id: playerId,
-      reason: reason,
-    })
-      .then((response) =>
-        showResponse(
-          response,
-          `Player ID ${playerId} perma banned for ${reason}`,
-          true
-        )
-      )
-      .then(this._reloadOnSuccess)
-      .catch((error) => toast.error("Unable to connect to API " + error));
-  }
-
-  addVip(player, expirationTimestamp, forwardVIP) {
-    const player_id = player.get("player_id");
-    const name = player.get("names").get(0).get("name");
-
-    return sendAction("add_vip", {
-      player_id: player_id,
-      description: name,
-      expiration: expirationTimestamp,
-      forward: forwardVIP,
-    }).then(this._reloadOnSuccess);
-  }
-
-  deleteVip(playerId, forwardVIP) {
-    return sendAction("remove_vip", {
-      player_id: playerId,
-      forward: forwardVIP,
-    }).then(this._reloadOnSuccess);
-  }
-
-  _loadToState(command, showSuccess, stateSetter) {
-    return get(command)
-      .then((res) => showResponse(res, command, showSuccess))
-      .then(stateSetter)
-      .catch(handle_http_errors);
-  }
-
-  loadVips() {
-    return this._loadToState("get_vip_ids", false, (data) =>
-      this.setState({
-        vips: vipListFromServer(data.result),
-      })
-    );
-  }
-
-  loadBlacklists() {
-    return this._loadToState("get_blacklists", false, (data) =>
-      this.setState({
-        blacklists: data.result,
-      })
-    );
-  }
-
-  getPlayerHistory() {
-    const {
-      pageSize,
+  // In the background, this command is POST request therefore the payload and not params
+  const playersRecords = await cmd.GET_PLAYERS_RECORDS({
+    payload: {
+      player_id,
       page,
-      byName,
-      byPlayerId: byPlayerId,
-      blacklistedOnly,
-      lastSeenFrom,
-      lastSeenUntil,
-      isWatchedOnly,
-      exactMatch,
-      ignoreAccent,
+      page_size,
       flags,
+      blacklisted,
+      exact_name_match,
+      ignore_accent,
+      is_watched,
+      player_name,
       country,
-    } = this.state;
-    const params = omitBy(
-      {
-        page_size: pageSize,
-        page: page,
-        player_name: byName,
-        player_id: byPlayerId,
-        blacklisted: blacklistedOnly,
-        last_seen_from: lastSeenFrom,
-        last_seen_until: lastSeenUntil,
-        is_watched: isWatchedOnly,
-        exact_name_match: exactMatch,
-        ignore_accent: ignoreAccent,
-        flags: flags,
-        country: country,
-      },
-      (v) => v === null || v === "" || v === undefined
-    );
+    },
+  });
 
-    this.setState({isLoading: true});
-    return postData(
-      `${process.env.REACT_APP_API_URL}get_players_history`,
-      params
-    )
-      .then((response) => showResponse(response, "get_players_history"))
-      .then((data) => {
-        this.setState({isLoading: false});
-        if (data.failed) {
-          return;
-        }
-        this.setState({
-          playersHistory: fromJS(data.result.players),
-          total: data.result.total,
-          pageSize: data.result.page_size,
-          page: data.result.page,
-        });
-      })
-      .then(this.loadVips)
-      .then(this.loadBans)
-      .catch(handle_http_errors);
-  }
+  const bans = await cmd.GET_BANS();
 
-  loadBans() {
-    return this._loadToState("get_bans", false, (data) =>
-      this.setState({
-        bans: banListFromServer(data.result),
-      })
-    );
-  }
+  return {
+    players: playersRecords.result.players.map((player) => ({
+      ...player,
+      is_banned: bans.some((ban) => ban.player_id === player.player_id),
+    })),
+    total_pages: playersRecords.result.total_pages,
+  };
+};
 
-  _reloadOnSuccess = (data) => {
-    if (data.failed) {
-      return;
-    }
-    this.getPlayerHistory().then(this.loadVips).then(this.loadBans);
+export default function PlayersRecords() {
+  const { players: playersData } = useLoaderData();
+  const server = useGlobalStore((state) => state.serverState);
+  const [selectedCountry, setSelectedCountry] = useState(null);
+  const [selectedEmoji, setSelectedEmoji] = useState([]);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+
+  const players = useMemo(() => {
+    if (!server) return playersData;
+    return playersData.map((player) => ({
+      ...player,
+      is_vip:
+        player.vips &&
+        player.vips.some((vip) => vip.server_number === server.server_number),
+    }));
+  }, [playersData, server]);
+
+  const handleEmojiButtonClick = (event) => {
+    setAnchorEl(event.currentTarget);
   };
 
-  addFlagToPlayer(playerObj, flag, comment = null) {
-    return postData(`${process.env.REACT_APP_API_URL}flag_player`, {
-      player_id: playerObj.get("player_id"),
-      flag: flag,
-      comment: comment,
-    })
-      .then((response) => showResponse(response, "flag_player"))
-      .then(this._reloadOnSuccess)
-      .catch((error) => toast.error("Unable to connect to API " + error));
-  }
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
 
-  deleteFlag(flag_id) {
-    return postData(`${process.env.REACT_APP_API_URL}unflag_player`, {
-      flag_id: flag_id,
-    })
-      .then((response) => showResponse(response, "unflag_player"))
-      .then(this._reloadOnSuccess)
-      .catch((error) => toast.error("Unable to connect to API " + error));
-  }
+  return (
+    <div>
+      <h1>Players Records</h1>
+      <Form method="GET">
+        <Grid container spacing={2}>
 
-  postComment(playerId, comment, action) {
-    postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
-      player_id: playerId,
-      comment: action,
-    })
-      .then((response) => {
-        return showResponse(response, "post_player_comment", false);
-      })
-      .then(() => {
-        if (comment && comment !== "" && comment !== null) {
-          postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
-            player_id: playerId,
-            comment: comment,
-          })
-            .then((response) => {
-              return showResponse(response, "post_player_comment", false);
-            })
-            .catch((error) => toast.error("Unable to connect to API " + error));
-        }
-      })
-      .catch((error) => toast.error("Unable to connect to API " + error));
-  }
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <TextField label="Player Name" name="player_name" fullWidth />
+          </Grid>
 
-  blacklistPlayer({
-    blacklistId,
-    playerId,
-    expiresAt,
-    reason
-  }) {
-    this.postComment(
-      playerId,
-      null,
-      `Player ID ${playerId} blacklist for ${reason}`
-    );
-    postData(`${process.env.REACT_APP_API_URL}add_blacklist_record`, {
-      blacklist_id: blacklistId,
-      player_id: playerId,
-      expires_at: expiresAt || null,
-      reason
-    })
-      .then((response) =>
-        showResponse(response, `Player ID ${playerId} was blacklisted`, true)
-      )
-      .then(this._reloadOnSuccess)
-      .catch(handle_http_errors);
-  }
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <TextField label="Player ID" name="player_id" fullWidth />
+          </Grid>
 
-  unblacklistPlayer(playerId) {
-    this.postComment(
-      playerId,
-      null,
-      `Expired all blacklists for player ID ${playerId}`
-    );
-    postData(`${process.env.REACT_APP_API_URL}unblacklist_player`, {
-      player_id: playerId,
-    })
-      .then((response) =>
-        showResponse(
-          response,
-          `Expired all blacklists for player ID ${playerId}`,
-          true
-        )
-      )
-      .then(this._reloadOnSuccess)
-      .catch((error) => toast.error("Unable to connect to API " + error));
-  }
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <Autocomplete
+              options={countryOptions}
+              getOptionLabel={(option) => option.name}
+              value={
+                countryOptions.find((c) => c.code === selectedCountry) || null
+              }
+              onChange={(event, newValue) => {
+                setSelectedCountry(newValue?.code || "");
+              }}
+              renderOption={({ key, ...props }, option) => (
+                <li key={key} {...props}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <CountryFlag country={option.code} />
+                    <span>{option.name}</span>
+                  </Stack>
+                </li>
+              )}
+              renderInput={({ key, ...params }) => (
+                <>
+                  <TextField key={key} {...params} label="Country" fullWidth />
+                  {/* A hacky way to submit the country code but display the country name */}
+                  <input
+                    type="hidden"
+                    name="country"
+                    value={selectedCountry ?? ""}
+                  />
+                </>
+              )}
+            />
+          </Grid>
 
-  unBanPlayer(playerId) {
-    this.postComment(playerId, null, `Player ID ${playerId} unbanned`);
-    postData(`${process.env.REACT_APP_API_URL}unban`, {
-      player_id: playerId,
-    })
-      .then((response) =>
-        showResponse(response, `Player ID ${playerId} unbanned`, true)
-      )
-      .then(this._reloadOnSuccess)
-      .catch((error) => toast.error("Unable to connect to API " + error));
-  }
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <Stack
+              sx={{
+                width: "100%",
+                border: (theme) => `1px solid ${theme.palette.divider}`,
+                borderRadius: "4px",
+                p: 1,
+              }}
+              direction="row"
+              spacing={1}
+              alignItems="center"
+              justifyContent="space-between"
+            >
+              <Stack
+                direction="row"
+                spacing={1}
+                alignItems="center"
+                flexWrap="wrap"
+              >
+                {selectedEmoji.map((emoji) => (
+                  <Chip
+                    key={emoji.id}
+                    size={"medium"}
+                    label={<Emoji emoji={emoji} size={18} />}
+                    onDelete={() =>
+                      setSelectedEmoji(
+                        selectedEmoji.filter((e) => e.id !== emoji.id)
+                      )
+                    }
+                  />
+                ))}
+                {selectedEmoji.length === 0 && (
+                  <Typography sx={{ pl: 1 }} variant="body" color="text.secondary">
+                    Filter by flags
+                  </Typography>
+                )}
+              </Stack>
+              <IconButton onClick={handleEmojiButtonClick}>
+                <AddReactionIcon />
+              </IconButton>
+            </Stack>
+            <Popover
+              open={open}
+              anchorEl={anchorEl}
+              onClose={handleClose}
+              anchorOrigin={{
+                vertical: "bottom",
+                horizontal: "left",
+              }}
+            >
+              <Suspense
+                fallback={
+                  <Skeleton variant="rectangular" height={400} width={300} />
+                }
+              >
+                <EmojiPicker
+                  set="twitter"
+                  data={emojiData}
+                  onEmojiSelect={(emoji) => {
+                    // Don't allow duplicates
+                    if (selectedEmoji.some((e) => e.id === emoji.id)) return;
+                    setSelectedEmoji([...selectedEmoji, emoji]);
+                  }}
+                />
+              </Suspense>
+            </Popover>
+            <input type="hidden" name="flags" value={selectedEmoji.map((e) => e.native).join(",")} />
+          </Grid>
 
-  addToWatchlist(playerId, reason, comment, playerName) {
-    this.postComment(playerId, comment, `Player ID ${playerId} watched`);
-    return addPlayerToWatchList(playerId, reason, playerName).then(
-      this._reloadOnSuccess
-    );
-  }
+          <Grid size={{ xs: 6, md: 3, lg: 2 }}>
+            <FormControlLabel
+              control={<Switch name="blacklisted" />}
+              label="Blacklisted only"
+            />
+          </Grid>
 
-  removeFromWatchList(playerId, playerName) {
-    postData(`${process.env.REACT_APP_API_URL}unwatch_player`, {
-      player_id: playerId,
-      player_name: playerName,
-    })
-      .then((response) =>
-        showResponse(response, `Player ID ${playerId} unwatched`, true)
-      )
-      .then(this._reloadOnSuccess)
-      .catch(handle_http_errors);
-  }
+          <Grid size={{ xs: 6, md: 3, lg: 2 }}>
+            <FormControlLabel
+              control={<Switch name="exact_name_match" />}
+              label="Exact name match"
+            />
+          </Grid>
 
-  setDoFlag(playerToFlag) {
-    return this.setState({doFlag: playerToFlag});
-  }
+          <Grid size={{ xs: 6, md: 3, lg: 2 }}>
+            <FormControlLabel
+              control={<Switch name="ignore_accent" defaultChecked />}
+              label="Ignore accent"
+            />
+          </Grid>
 
-  setDoConfirmPlayer(confirmPlayer) {
-    return this.setState({doConfirmPlayer: confirmPlayer});
-  }
-
-  setDoVIPPlayer(doVIPPlayer) {
-    return this.setState({
-      doVIPPlayer,
-    });
-  }
-
-  setIgnoreAccent(ignoreAccent) {
-    return this.setState({ignoreAccent});
-  }
-
-  setExactMatch(exactMatch) {
-    return this.setState({exactMatch});
-  }
-
-  setFlags(flags) {
-    return this.setState({flags});
-  }
-
-  setCountry(country) {
-    return this.setState({country});
-  }
-
-  /* Shortcut function for the grid list */
-  onBlacklist(player) {
-    this.setState({
-      blacklistDialogOpen: true,
-      blacklistDialogInitialValues: {
-        playerId: player.get("player_id")
-      }
-    });
-    if (!this.state.blacklists.length) {
-      this.loadBlacklists()
-    }
-  }
-
-  onUnBlacklist(player) {
-    return this.unblacklistPlayer(player.get("player_id"));
-  }
-
-  onUnban(player) {
-    return this.unBanPlayer(player.get("player_id"));
-  }
-
-  onTempBan(player) {
-    return this.setDoConfirmPlayer({
-      player: player.get("player_id"),
-      actionType: "temp_ban",
-      player_id: player.get("player_id"),
-    });
-  }
-
-  onPermaBan(player) {
-    return this.setDoConfirmPlayer({
-      player: player.get("player_id"),
-      actionType: "perma_ban",
-      player_id: player.get("player_id"),
-    });
-  }
-
-  onAddVip(player) {
-    return this.setDoVIPPlayer({
-      player,
-    });
-  }
-
-  onDeleteVip(player, forwardVIP) {
-    return this.deleteVip(player.get("player_id"), forwardVIP);
-  }
-
-  onAddToWatchList(player) {
-    const playerName = player.get("names")?.get(0)?.get("name");
-    return this.setDoConfirmPlayer({
-      player: playerName,
-      actionType: "watchlist",
-      player_id: player.get("player_id"),
-    });
-  }
-
-  onRemoveFromWatchList(player) {
-    const playerName = player.get("names")?.get(0)?.get("name");
-    return this.removeFromWatchList(player.get("player_id"), playerName);
-  }
-
-  render() {
-    const {
-      playersHistory,
-      pageSize,
-      page,
-      total,
-      byName,
-      byPlayerId,
-      blacklistedOnly,
-      lastSeenFrom,
-      lastSeenUntil,
-      isLoading,
-      isWatchedOnly,
-      doFlag,
-      doConfirmPlayer,
-      doVIPPlayer,
-      vips,
-      bans,
-      ignoreAccent,
-      exactMatch,
-      flags,
-      country,
-      blacklists,
-      blacklistDialogOpen,
-      blacklistDialogInitialValues,
-    } = this.state;
-
-    // Perfomance is crappy. It's less crappy after switcing to immutables but still...
-    // It should be refactored so that the search bar does not trigger useless renderings
-    return (
-      (<Grid container spacing={1}>
-        <Grid size={12}>
-          <SearchBar
-            pageSize={pageSize}
-            setPageSize={(v) => this.setState({pageSize: v})}
-            lastSeenFrom={lastSeenFrom}
-            setLastSeenFrom={(v) => this.setState({lastSeenFrom: v})}
-            lastSeenUntil={lastSeenUntil}
-            setLastSeenUntil={(v) => this.setState({lastSeenUntil: v})}
-            name={byName}
-            setName={(v) => this.setState({byName: v})}
-            playerId={byPlayerId}
-            setPlayerId={(v) => this.setState({byPlayerId: v})}
-            blacklistedOnly={blacklistedOnly}
-            setBlacklistedOnly={(v) => this.setState({blacklistedOnly: v})}
-            isWatchedOnly={isWatchedOnly}
-            setIsWatchedOnly={(v) => this.setState({isWatchedOnly: v})}
-            onSearch={this.getPlayerHistory}
-            exactMatch={exactMatch}
-            setExactMatch={this.setExactMatch}
-            ignoreAccent={ignoreAccent}
-            setIgnoreAccent={this.setIgnoreAccent}
-            country={country}
-            setCountry={this.setCountry}
-            flags={flags}
-            setFlags={this.setFlags}
-          />
+          <Grid size={{ xs: 6, md: 3, lg: 2 }}>
+            <FormControlLabel
+              control={<Switch name="is_watched" />}
+              label="Watched only"
+            />
+          </Grid>
         </Grid>
-        <Grid size={12}>
-          <MyPagination
-            pageSize={pageSize}
-            page={page}
-            setPage={(page) =>
-              this.setState({page: page}, this.getPlayerHistory)
-            }
-            total={total}
-          />
+
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          sx={{ mt: 2 }}
+        >
+          Search
+        </Button>
+      </Form>
+
+      <Divider sx={{ my: 2 }} />
+
+      <section>
+        <Grid container spacing={1}>
+          {players.map((player) => (
+            <Grid key={player.player_id} size={{ xs: 12, sm: 6, md: 4, xl: 3 }}>
+              <PlayerCard player={player} />
+            </Grid>
+          ))}
         </Grid>
-        <Grid size={12}>
-          {isLoading ? <LinearProgress color="secondary"/> : ""}
-          <PlayerGrid
-            players={playersHistory}
-            onBlacklist={this.onBlacklist}
-            onUnBlacklist={this.onUnBlacklist}
-            onDeleteFlag={this.deleteFlag}
-            onRemoveFromWatchList={this.onRemoveFromWatchList}
-            vips={vips}
-            bans={bans}
-            onflag={this.setDoFlag}
-            onUnban={this.onUnban}
-            onTempBan={this.onTempBan}
-            onPermaBan={this.onPermaBan}
-            onAddVip={this.setDoVIPPlayer}
-            onDeleteVip={this.onDeleteVip}
-            onAddToWatchList={this.onAddToWatchList}
-          />
-        </Grid>
-        <Grid size={12}>
-          <MyPagination
-            pageSize={pageSize}
-            page={page}
-            setPage={(page) =>
-              this.setState({page: page}, this.getPlayerHistory)
-            }
-            total={total}
-          />
-        </Grid>
-        <ReasonDialog
-          open={doConfirmPlayer}
-          handleClose={() => this.setDoConfirmPlayer(false)}
-          handleConfirm={(
-            actionType,
-            player,
-            reason,
-            comment,
-            durationHours,
-            playerId
-          ) => {
-            if (actionType === "blacklist") {
-              this.blacklistPlayer(playerId, reason, comment);
-            } else if (actionType === "temp_ban") {
-              this.tempBan(playerId, reason, durationHours, comment);
-            } else if (actionType === "perma_ban") {
-              this.permaBan(playerId, reason, comment);
-            } else if (actionType === "watchlist") {
-              this.addToWatchlist(playerId, reason, comment, player);
-            }
-            this.setDoConfirmPlayer(false);
-          }}
-        />
-        <FlagDialog
-          open={doFlag}
-          handleClose={() => this.setDoFlag(false)}
-          handleConfirm={(playerObj, theFlag, theComment) => {
-            this.addFlagToPlayer(playerObj, theFlag, theComment);
-            this.setDoFlag(false);
-          }}
-          SummaryRenderer={PlayerSummary}
-        />
-        <VipExpirationDialog
-          open={doVIPPlayer}
-          player={doVIPPlayer}
-          vips={vips}
-          onDeleteVip={this.onDeleteVip}
-          handleClose={() => this.setDoVIPPlayer(false)}
-          handleConfirm={(playerObj, expirationTimestamp, forwardVIP) => {
-            this.addVip(playerObj, expirationTimestamp, forwardVIP);
-            this.setDoVIPPlayer(false);
-          }}
-        />
-        <BlacklistRecordCreateDialog
-          open={blacklistDialogOpen}
-          setOpen={(value) => this.setState({blacklistDialogOpen: value})}
-          blacklists={blacklists}
-          initialValues={blacklistDialogInitialValues}
-          onSubmit={this.blacklistPlayer}
-          disablePlayerId
-        />
-      </Grid>)
-    );
-  }
+      </section>
+    </div>
+  );
 }
-
-export default PlayersHistory;
-export {FlagDialog, PlayersHistory};

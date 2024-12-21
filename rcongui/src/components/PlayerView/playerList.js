@@ -15,7 +15,7 @@ import { faSteam, faWindows } from "@fortawesome/free-brands-svg-icons";
 import Link from "@mui/material/Link";
 import Icon from "@mui/material/Icon";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
-import { getEmojiFlag } from "@/utils/emoji";
+import { getEmoji } from "@/utils/emoji";
 import { Map } from "immutable";
 import { getName } from "country-list";
 import Popover from "@mui/material/Popover";
@@ -135,7 +135,7 @@ const Flag = ({ data, onDeleteFlag }) => {
       }
     >
       <WithPopOver content={`Comment: ${data.get("comment")}`}>
-        {getEmojiFlag(data.get("flag"), 22)}
+        {getEmoji(data.get("flag"), 22)}
       </WithPopOver>
     </Link>
   )
