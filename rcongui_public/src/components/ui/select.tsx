@@ -32,6 +32,20 @@ const SelectTrigger = React.forwardRef<
 ))
 SelectTrigger.displayName = SelectPrimitive.Trigger.displayName
 
+const PlainSelectTrigger = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
+>(({ className, children, ...props }, ref) => (
+  <SelectPrimitive.Trigger
+    ref={ref}
+    className={className}
+    {...props}
+  >
+    {children}
+  </SelectPrimitive.Trigger>
+))
+PlainSelectTrigger.displayName = SelectPrimitive.Trigger.displayName
+
 const SelectScrollUpButton = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.ScrollUpButton>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.ScrollUpButton>
@@ -136,6 +150,7 @@ export {
   SelectGroup,
   SelectValue,
   SelectTrigger,
+  PlainSelectTrigger,
   SelectContent,
   SelectLabel,
   SelectItem,

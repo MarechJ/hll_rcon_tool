@@ -7,20 +7,31 @@ import LiveGameInfo from './live-game-info'
 import { Spinner } from '@/components/spinner'
 import GameStats from '@/components/game/statistics/game-stats'
 import { QueryErrorResetBoundary, useSuspenseQueries, useSuspenseQuery } from '@tanstack/react-query'
-import { getLiveGameColumns } from '@/components/game/statistics/game-columns'
+import { getCompletedGameColumns, getLiveGameColumns } from "@/components/game/statistics/game-columns";
 import { PlayerWithStatus } from '@/types/player'
 import { liveSessionStatsOptions } from '@/lib/queries/live-session-stats'
 import { liveGameStatsOptions } from '@/lib/queries/live-game-stats'
-import React from 'react'
+import React, { useState } from "react";
 import { ErrorBoundary } from 'react-error-boundary'
 import GameStatsContainer from '@/components/game/statistics/game-stats-container'
-import { DataTable } from '@/components/game/statistics/game-table'
+import { DataTable, ExtraColumnDef } from "@/components/game/statistics/game-table";
+import { extraColumns } from "@/components/game/statistics/game-columns";
 
 dayjs.extend(duration)
 
 export default function Home() {
   const { t } = useTranslation('navigation')
   const { t: tNotFound } = useTranslation('notfound')
+  const { t: gameT } = useTranslation('game')
+  const [extraColumns, setExtraColumns] = useState<ExtraColumnDef<extraColumns>[]>([{
+    id: 'kpm',
+    label: gameT('playersTable.killsPerMinute'),
+    displayed: false,
+  }, {
+    id: 'dpm',
+    label: gameT('playersTable.deathsPerMinute'),
+    displayed: false,
+  }]);
 
   const { data: game, isLoading, isError } = useSuspenseQuery(publicInfoQueryOptions)
 
@@ -98,7 +109,16 @@ export default function Home() {
                   }}>
                     {(props) => (
                       <DataTable
-                        columns={getLiveGameColumns(props.handlePlayerClick)}
+                        columns={getLiveGameColumns(props.handlePlayerClick, extraColumns.filter((e) => e.displayed).map((e) => e.id))}
+                        extraColumns={extraColumns}
+                        onExtraColumnChange={(extra) => {
+                          setExtraColumns((current) => {
+                            return current.map((c) => ({
+                              ...c,
+                              displayed: extra.includes(c.id),
+                            }));
+                          })
+                        }}
                         data={liveStats.data.filter((player) => player.time_seconds > 15)}
                         tableId={`live_${dayjs(game.current_map.start * 1000).format('YYYYMMDD-HHmm')}`}
                       />
