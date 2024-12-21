@@ -292,7 +292,8 @@ Stay cool and follow the drill. It's a simple installation, many not-so-technica
 
 > [!TIP]
 > All the commands given below are meant to be entered in a Debian-based (like Ubuntu) Linux terminal.
-
+> [!NOTE]
+> all commands must be validated with the [Enter] key.
 ---
 
 ### 1. Download CRCON
@@ -302,8 +303,6 @@ Open an SSH session on your VPS. That's a text-only based terminal we'll use to 
 Windows users can use the `PowerShell` tool that's already available in their StartMenu.
 To launch it, open the StartMenu, search for `PowerShell` and click on its icon.
 Then, to connect to the VPS, just enter this command, where `123.123.123.123` is the VPS IP.
-> [!NOTE]
-> all commands must be validated with the [Enter] key.
 ```
 ssh root@123.123.123.123
 ```
