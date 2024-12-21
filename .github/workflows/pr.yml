@@ -6,29 +6,29 @@ on:
       - 'master'
 
 jobs:
-#  build-admin-ui:
-#    runs-on: ubuntu-latest
-#    defaults:
-#      run:
-#        working-directory: rcongui
-#
-#    steps:
-#      - uses: actions/checkout@v2
-#      - uses: actions/setup-node@v4
-#      - run: npm ci
-#      - run: npm run build
-#
-#  build-public-ui:
-#    runs-on: ubuntu-latest
-#    defaults:
-#      run:
-#        working-directory: rcongui_public
-#
-#    steps:
-#      - uses: actions/checkout@v2
-#      - uses: actions/setup-node@v4
-#      - run: npm ci
-#      - run: npm run build
+  build-admin-ui:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rcongui
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v4
+      - run: npm ci
+      - run: npm run build
+
+  build-public-ui:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rcongui_public
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v4
+      - run: npm ci
+      - run: npm run build
 
   test-backend:
     runs-on: ubuntu-latest
@@ -54,8 +54,8 @@ jobs:
       - name: install requirements
         run: |
           pip install -r requirements.txt -r requirements-dev.txt --no-compile daphne
-#      - name: start dependencies
-#        run: docker compose -f docker-compose.dev.yml up -d postgres redis
+      - name: start dependencies
+        run: docker compose -f docker-compose.dev.yml up -d postgres redis
       - name: run tests
         run: |
           export HLL_DB_URL=postgresql://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}/${HLL_DB_NAME}
