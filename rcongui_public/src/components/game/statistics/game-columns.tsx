@@ -1,7 +1,7 @@
 'use client'
 
-import {ColumnDef} from '@tanstack/react-table'
-import {Player, PlayerTeamAssociation, PlayerWithStatus, TeamEnum} from "@/types/player";
+import {Column, ColumnDef } from '@tanstack/react-table'
+import { Player, PlayerTeamAssociation, PlayerWithStatus, TeamEnum } from '@/types/player'
 import {IconHeader as Header} from './column-header'
 import {Status} from './player-status'
 import {isPlayerWithStatus} from './player/utils'
@@ -14,112 +14,156 @@ import {getTeamFromAssociation} from "@/components/game/statistics/utils";
 const threeDigitsWidth = 40
 const fourDigitsWidth = 50
 
-const pointColumns: ColumnDef<Player | PlayerWithStatus>[] = [
-  {
-    accessorKey: 'kills',
-    size: threeDigitsWidth,
-    header: function KillsHeader({column}) {
-      const {t} = useTranslation('game')
-      return (
-        <Header
-          src={'/roles/infantry.png'}
-          desc={t('playersTable.kills')}
-          onClick={() => {
-            column.toggleSorting(column.getIsSorted() === 'asc')
-          }}
-        />
-      )
-    },
+export type extraColumns = 'kpm' | 'dpm';
+
+function SortableHeader({ column, desc }: { column: Column<Player>; desc: string }) {
+  return (
+    <Button
+      variant={'text'}
+      onClick={() => {
+        column.toggleSorting(column.getIsSorted() === 'asc')
+      }}
+    >
+      {desc}
+    </Button>
+  )
+}
+
+const kpmColumn: ColumnDef<Player | PlayerWithStatus> = {
+  accessorKey: 'kills_per_minute',
+  header: function KpmHeader({ column }) {
+    const { t } = useTranslation('game')
+    return <SortableHeader column={column} desc={t('playersTable.killsPerMinute')} />
   },
-  {
-    accessorKey: 'deaths',
-    size: fourDigitsWidth,
-    header: function DeathsHeader({column}) {
-      const {t} = useTranslation('game')
-      return (
-        <Header
-          src={'/roles/medic.png'}
-          desc={t('playersTable.deaths')}
-          onClick={() => {
-            column.toggleSorting(column.getIsSorted() === 'asc')
-          }}
-        />
-      )
-    },
+  size: 20,
+}
+
+const dpmColumn: ColumnDef<Player | PlayerWithStatus> = {
+  accessorKey: 'deaths_per_minute',
+  header: function KpmHeader({ column }) {
+    const { t } = useTranslation('game')
+    return <SortableHeader column={column} desc={t('playersTable.deathsPerMinute')} />
   },
-  {
-    accessorKey: 'combat',
-    size: fourDigitsWidth,
-    header: function CombatHeader({column}) {
-      const {t} = useTranslation('game')
-      return (
-        <Header
-          src={'/roles/score_combat.png'}
-          desc={t('playersTable.combat')}
-          onClick={() => {
-            column.toggleSorting(column.getIsSorted() === 'asc')
-          }}
-        />
-      )
+  size: 20,
+}
+
+function pointColumns(extras: extraColumns[]): ColumnDef<Player | PlayerWithStatus>[] {
+  const c: ColumnDef<Player | PlayerWithStatus>[] = [
+    {
+      accessorKey: 'kills',
+      size: threeDigitsWidth,
+      header: function KillsHeader({ column }) {
+        const { t } = useTranslation('game')
+        return (
+          <Header
+            src={'/roles/infantry.png'}
+            desc={t('playersTable.kills')}
+            onClick={() => {
+              column.toggleSorting(column.getIsSorted() === 'asc')
+            }}
+          />
+        )
+      },
     },
-  },
-  {
-    accessorKey: 'offense',
-    size: fourDigitsWidth,
-    header: function OffenseHeader({column}) {
-      const {t} = useTranslation('game')
-      return (
-        <Header
-          src={'/roles/score_offensive.png'}
-          desc={t('playersTable.offense')}
-          onClick={() => {
-            column.toggleSorting(column.getIsSorted() === 'asc')
-          }}
-        />
-      )
+  ];
+  if (extras.includes('kpm')) {
+    c.push(kpmColumn);
+  }
+  c.push({
+      accessorKey: 'deaths',
+      size: fourDigitsWidth,
+      header: function DeathsHeader({ column }) {
+        const { t } = useTranslation('game')
+        return (
+          <Header
+            src={'/roles/medic.png'}
+            desc={t('playersTable.deaths')}
+            onClick={() => {
+              column.toggleSorting(column.getIsSorted() === 'asc')
+            }}
+          />
+        )
+      },
+    }
+  );
+  if (extras.includes('dpm')) {
+    c.push(dpmColumn);
+  }
+  c.push({
+      accessorKey: 'combat',
+      size: fourDigitsWidth,
+      header: function CombatHeader({ column }) {
+        const { t } = useTranslation('game')
+        return (
+          <Header
+            src={'/roles/score_combat.png'}
+            desc={t('playersTable.combat')}
+            onClick={() => {
+              column.toggleSorting(column.getIsSorted() === 'asc')
+            }}
+          />
+        )
+      },
     },
-  },
-  {
-    accessorKey: 'defense',
-    size: fourDigitsWidth,
-    header: function DefenseHeader({column}) {
-      const {t} = useTranslation('game')
-      return (
-        <Header
-          src={'/roles/score_defensive.png'}
-          desc={t('playersTable.defense')}
-          onClick={() => {
-            column.toggleSorting(column.getIsSorted() === 'asc')
-          }}
-        />
-      )
+    {
+      accessorKey: 'offense',
+      size: fourDigitsWidth,
+      header: function OffenseHeader({ column }) {
+        const { t } = useTranslation('game')
+        return (
+          <Header
+            src={'/roles/score_offensive.png'}
+            desc={t('playersTable.offense')}
+            onClick={() => {
+              column.toggleSorting(column.getIsSorted() === 'asc')
+            }}
+          />
+        )
+      },
     },
-  },
-  {
-    accessorKey: 'support',
-    size: fourDigitsWidth,
-    header: function SupportHeader({column}) {
-      const {t} = useTranslation('game')
-      return (
-        <Header
-          src={'/roles/score_support.png'}
-          desc={t('playersTable.support')}
-          onClick={() => {
-            column.toggleSorting(column.getIsSorted() === 'asc')
-          }}
-        />
-      )
+    {
+      accessorKey: 'defense',
+      size: fourDigitsWidth,
+      header: function DefenseHeader({ column }) {
+        const { t } = useTranslation('game')
+        return (
+          <Header
+            src={'/roles/score_defensive.png'}
+            desc={t('playersTable.defense')}
+            onClick={() => {
+              column.toggleSorting(column.getIsSorted() === 'asc')
+            }}
+          />
+        )
+      },
     },
-  },
-]
+    {
+      accessorKey: 'support',
+      size: fourDigitsWidth,
+      header: function SupportHeader({ column }) {
+        const { t } = useTranslation('game')
+        return (
+          <Header
+            src={'/roles/score_support.png'}
+            desc={t('playersTable.support')}
+            onClick={() => {
+              column.toggleSorting(column.getIsSorted() === 'asc')
+            }}
+          />
+        )
+      },
+    },
+  );
+  return c;
+}
 
 const playerColumn = (handlePlayerClick: (id: string) => void): ColumnDef<Player | PlayerWithStatus> => ({
   accessorKey: 'player',
   header: function NameHeader() {
-    const {t} = useTranslation('game')
+    const { t } = useTranslation('game')
     return <div>{t('playersTable.player')}</div>
   },
-  cell: ({row}) => {
+  cell: ({ row }) => {
     const name = String(row.getValue('player'))
     const id = String(row.original.player_id)
 
@@ -139,17 +183,17 @@ const playerColumn = (handlePlayerClick: (id: string) => void): ColumnDef<Player
   },
   filterFn: (row, columnId: string, filterValue: string[]) => {
     if (filterValue === undefined || filterValue.length === 0) {
-      return true;
+      return true
     }
-    const value: string = row.getValue(columnId);
-    return filterValue.some((v: string) => value.toLowerCase().includes(v.toLowerCase()));
+    const value: string = row.getValue(columnId)
+    return filterValue.some((v: string) => value.toLowerCase().includes(v.toLowerCase()))
   },
 })
 
 const teamColumn: ColumnDef<Player | PlayerWithStatus> = {
   accessorKey: 'team',
   header: function TeamHeader() {
-    const {t} = useTranslation('game')
+    const { t } = useTranslation('game')
     return <div>{t('playersTable.team')}</div>
   },
   size: 20,
@@ -177,7 +221,7 @@ const killCategoryColumn: ColumnDef<Player | PlayerWithStatus> = {
     const player = row.original;
     return <WeaponTypeBar player={player}/> ;
   },
-};
+}
 
 const statusColumn: ColumnDef<Player | PlayerWithStatus> = {
   accessorKey: 'is_online',
@@ -185,7 +229,7 @@ const statusColumn: ColumnDef<Player | PlayerWithStatus> = {
     filterVariant: 'select',
   },
   header: function StatusHeader() {
-    const {t} = useTranslation('game')
+    const { t } = useTranslation('game')
     return <div className="sr-only w-4">{t('playersTable.status')}</div>
   },
   size: 20,
@@ -196,18 +240,19 @@ const statusColumn: ColumnDef<Player | PlayerWithStatus> = {
     const cellValue = row.getValue(columnId) ? 'online' : 'offline'
     return cellValue === filterValue
   },
-  cell: ({row}) => {
+  cell: ({ row }) => {
     const player = row.original
-    return isPlayerWithStatus(player) ? <Status player={player} className="block"/> : null
+    return isPlayerWithStatus(player) ? <Status player={player} className="block" /> : null
   },
 }
 
-export const getLiveGameColumns = (handlePlayerClick: (id: string) => void): ColumnDef<Player | PlayerWithStatus>[] => [
+export const getLiveGameColumns = (handlePlayerClick: (id: string) => void, extras: extraColumns[] = []): ColumnDef<Player | PlayerWithStatus>[] => [
   statusColumn,
   playerColumn(handlePlayerClick),
-  ...pointColumns,
+  ...pointColumns(extras),
 ]
 
 export const getCompletedGameColumns = (
   handlePlayerClick: (id: string) => void,
-): ColumnDef<Player | PlayerWithStatus>[] => [teamColumn, playerColumn(handlePlayerClick), killCategoryColumn, ...pointColumns]
+  extras: extraColumns[] = [],
+): ColumnDef<Player | PlayerWithStatus>[] => [teamColumn, playerColumn(handlePlayerClick), killCategoryColumn, ...pointColumns(extras)]

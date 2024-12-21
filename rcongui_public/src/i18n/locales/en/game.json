@@ -41,7 +41,9 @@
         "support": "Support",
         "utility": "Utility",
         "diff": "Difference",
-        "status": "Status"
+        "status": "Status",
+        "killsPerMinute": "KPM",
+        "deathsPerMinute": "DPM"
     },
     "weaponType": {
       "infantry": "Infantry",
