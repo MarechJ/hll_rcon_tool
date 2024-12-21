@@ -9,7 +9,7 @@ def test_watchlist_hook():
         "raw": "[2:31:44 hours (1610288198)] DISCONNECTED Boulard",
         "line_without_time": "DISCONNECTED Boulard",
         "action": "DISCONNECTED",
-        "player": "Boulard",
+        "player_name_1": "Boulard",
         "player_id_1": None,
         "player_name_2": None,
         "player_id_2": None,
