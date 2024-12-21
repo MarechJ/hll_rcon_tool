@@ -56,6 +56,7 @@ import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
 import PersonIcon from "@mui/icons-material/Person";
 import PublicIcon from '@mui/icons-material/Public';
 import FlagIcon from '@mui/icons-material/Flag';
+import Emoji from "../shared/Emoji";
 
 const OnlineStatusBadge = styled(Badge, {
   shouldForwardProp: (props) => props !== "isOnline",
@@ -165,7 +166,7 @@ const BasicProfileDetails = ({
         </Typography>
         {flags.map(({ flag, comment, modified }) => (
           <Stack key={flag}>
-            <Typography>{flag} - {comment}</Typography>
+            <Typography><Emoji emoji={flag} /> - {comment}</Typography>
             <Typography>Modified: {dayjs(modified).format("LLL")}</Typography>
           </Stack>
         ))}

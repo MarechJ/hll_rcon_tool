@@ -11,7 +11,10 @@ import LiveView from "./pages/views/live";
 import { loader as liveViewLoader } from "./pages/views/live"
 
 import TeamView from "./pages/views/team";
+
 import PlayerRecords from "./pages/records/players"
+import { loader as playerRecordsLoader } from "./pages/records/players"
+
 import Blacklists from "./pages/records/blacklists/manage"
 import BlacklistRecords from "./pages/records/blacklists"
 import GameLogsRecords from "./pages/records/game-logs"
@@ -133,6 +136,7 @@ const router = createBrowserRouter([
                         path: 'players',
                         handle: { crumb: () => <Link to={'/records/players'}>Players</Link> },
                         element: <PlayerRecords />,
+                        loader: playerRecordsLoader,
                     },
                     {
                         path: 'players/:playerId',
