@@ -9,7 +9,6 @@ import PlayerGameDetail from './player'
 import {MobilePlayerGameDetail, NoPlayerGameDetail} from './player-detail'
 import {Route, Routes} from "react-router";
 import {TeamStats} from "@/components/game/statistics/team/team-stats";
-import {calcTeam} from './utils'
 
 export default function GameStats({
   stats,
