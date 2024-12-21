@@ -33,6 +33,8 @@ from rcon.user_config.webhooks import (
     BaseWebhookUserConfig,
 )
 from rcon.utils import ApiKey
+import rcon.watch_killrate
+
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +53,7 @@ def run_stats_loop():
     except:
         logger.exception("Stats loop stopped")
         sys.exit(1)
+
 
 @cli.command(name="enrich_db_users")
 def run_enrich_db_users():
@@ -117,6 +120,15 @@ def run_seed_vip():
         rcon.seed_vip.service.run()
     except:
         logger.exception("seed VIP stopped")
+        sys.exit(1)
+
+
+@cli.command(name="watch_killrate")
+def watch_killrate():
+    try:
+        rcon.watch_killrate.run()
+    except:
+        logger.exception("Watch_KillRate stopped")
         sys.exit(1)
 
 

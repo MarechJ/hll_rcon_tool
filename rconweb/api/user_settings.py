@@ -29,6 +29,7 @@ from rcon.user_config.standard_messages import (
     StandardWelcomeMessagesUserConfig,
     get_all_message_types,
 )
+from rcon.user_config.watch_killrate import WatchKillRateUserConfig
 from rcon.user_config.steam import SteamUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.vote_map import VoteMapUserConfig
@@ -516,6 +517,19 @@ def describe_seed_vip_config(request):
 
     return api_response(
         result=SeedVIPUserConfig.model_json_schema(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@require_http_methods(["GET"])
+def describe_watch_killrate_config(request):
+    command_name = "describe_watch_killrate_config"
+
+    return api_response(
+        result=WatchKillRateUserConfig.model_json_schema(),
         command=command_name,
         failed=False,
     )
