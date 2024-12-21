@@ -1,0 +1,67 @@
+name: pull-requests
+
+on:
+  pull_request:
+    branches:
+      - 'master'
+
+jobs:
+#  build-admin-ui:
+#    runs-on: ubuntu-latest
+#    defaults:
+#      run:
+#        working-directory: rcongui
+#
+#    steps:
+#      - uses: actions/checkout@v2
+#      - uses: actions/setup-node@v4
+#      - run: npm ci
+#      - run: npm run build
+#
+#  build-public-ui:
+#    runs-on: ubuntu-latest
+#    defaults:
+#      run:
+#        working-directory: rcongui_public
+#
+#    steps:
+#      - uses: actions/checkout@v2
+#      - uses: actions/setup-node@v4
+#      - run: npm ci
+#      - run: npm run build
+
+  test-backend:
+    runs-on: ubuntu-latest
+
+    env:
+      HLL_DB_PASSWORD: rcon_dev
+      HLL_DB_NAME: rcon
+      HLL_DB_USER: rcon
+      HLL_DB_HOST: localhost
+      HLL_DB_HOST_PORT: '5432'
+      HLL_REDIS_HOST: localhost
+      HLL_REDIS_PORT: '6379'
+      HLL_REDIS_HOST_PORT: '6379'
+      HLL_REDIS_DB: '1'
+      SERVER_NUMBER: '1'
+      REDIS_IMAGE: redis:alpine
+      POSTGRES_IMAGE: postgres:12-alpine
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: install requirements
+        run: |
+          pip install -r requirements.txt -r requirements-dev.txt --no-compile daphne
+#      - name: start dependencies
+#        run: docker compose -f docker-compose.dev.yml up -d postgres redis
+      - name: run tests
+        run: |
+          export HLL_DB_URL=postgresql://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}/${HLL_DB_NAME}
+          export HLL_REDIS_URL=redis://${HLL_REDIS_HOST}:${HLL_REDIS_PORT}/${HLL_REDIS_DB}
+          
+          PYTHONPATH=. alembic upgrade head
+          PYTHONPATH=. python ./manage.py init_db
+          PYTHONPATH=. python ./rconweb/manage.py migrate --noinput
+          pytest
