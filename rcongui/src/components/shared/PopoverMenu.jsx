@@ -2,7 +2,7 @@ import { styled } from "@mui/material/styles";
 import Popper from "@mui/material/Popper";
 import ClickAwayListener from "@mui/material/ClickAwayListener";
 import Box from "@mui/material/Box";
-import {Fragment, useState} from "react";
+import { Fragment, useState } from "react";
 
 const StyledPopper = styled(Popper)(({ theme }) => ({
   border: `1px solid #e1e4e8`,
@@ -19,11 +19,19 @@ const StyledPopper = styled(Popper)(({ theme }) => ({
   }),
 }));
 
-export const PopoverMenu = ({ id, children, renderButton, description }) => {
+export const PopoverMenu = ({
+  id,
+  children,
+  renderButton,
+  description,
+  onOpen,
+  onClose,
+}) => {
   const [anchorEl, setAnchorEl] = useState(null);
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
+    onOpen?.();
   };
 
   const handleClose = () => {
@@ -31,6 +39,7 @@ export const PopoverMenu = ({ id, children, renderButton, description }) => {
       anchorEl.focus();
     }
     setAnchorEl(null);
+    onClose?.();
   };
 
   const open = Boolean(anchorEl);
@@ -55,7 +64,7 @@ export const PopoverMenu = ({ id, children, renderButton, description }) => {
         }}
       >
         <ClickAwayListener onClickAway={handleClose}>
-        <div>
+          <div>
             <Box
               sx={(t) => ({
                 borderBottom: `1px solid #30363d`,

@@ -1,18 +1,18 @@
 'use client'
 
-import { Suspense, useEffect, useRef } from 'react'
-import { validGame } from './list'
+import {Suspense, useEffect, useRef} from 'react'
+import {validGame} from './list'
 import MapFigure from '@/components/game/map-figure'
 import dayjs from 'dayjs'
 import localizedFormat from 'dayjs/plugin/localizedFormat'
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
-import { Link, Outlet, useLoaderData, useLocation } from 'react-router'
-import { cn } from '@/lib/utils'
-import { gameQueries } from '@/lib/queries/scoreboard-maps'
-import { clientLoader } from './clientLoader'
-import { QueryErrorResetBoundary, useSuspenseQuery } from '@tanstack/react-query'
-import { ScoreboardMaps } from '@/types/api'
-import { ErrorBoundary } from 'react-error-boundary'
+import {ScrollArea, ScrollBar} from '@/components/ui/scroll-area'
+import {Link, Outlet, useLoaderData, useLocation} from 'react-router'
+import {cn} from '@/lib/utils'
+import {gameQueries} from '@/lib/queries/scoreboard-maps'
+import {clientLoader} from './clientLoader'
+import {QueryErrorResetBoundary, useSuspenseQuery} from '@tanstack/react-query'
+import {ScoreboardMaps} from '@/types/api'
+import {ErrorBoundary} from 'react-error-boundary'
 
 dayjs.extend(localizedFormat)
 
@@ -24,7 +24,7 @@ const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   useEffect(() => {
     if (!games || !gamesContainerRef.current || !scrollAreaRef.current || !pathname) return
     const childElements = Array.from(gamesContainerRef.current?.children)
-    const activeGameIndex = childElements.findIndex((el) => el.getAttribute('href') === pathname)
+    const activeGameIndex = childElements.findIndex((el) => el.getAttribute('href') !== null && pathname.startsWith(el.getAttribute('href') as string));
     const activeGameEl = childElements[activeGameIndex]
     if (activeGameEl) {
       // The static container
@@ -60,7 +60,7 @@ const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
               text={dayjs(game.start).format('LLL')}
               src={`/maps/${game.map.image_name}`}
               name={`${game.map.map.pretty_name} (${game.result?.allied ?? '?'}:${game.result?.axis ?? '?'})`}
-              className={cn('group h-12 w-64', pathname === `/games/${game.id}` && 'border-2 border-primary')}
+              className={cn('group h-12 w-64', pathname.startsWith(`/games/${game.id}`) && 'border-2 border-primary')}
             />
           </Link>
         ))}

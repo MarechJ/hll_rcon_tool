@@ -40,7 +40,7 @@ export default function PlayerGameDetail({
   deathsBy.sort((a, b) => b.count - a.count)
 
   return (
-    <div className="divide-y pb-2 lg:sticky lg:top-14 border lg:border-l-0">
+    <div className="divide-y pb-2 lg:sticky lg:top-14 border">
       {!isMobile && (
         <div className="flex justify-between items-center gap-1 px-2 h-12">
           <div className="flex justify-center items-center gap-2 grow">
@@ -95,10 +95,10 @@ export default function PlayerGameDetail({
           <CollapsibleSection name={t('playerStats.encounters')} defaultOpen={true}>
             <SimpleTable columns={faceoffColumns} data={mergeKillsDeaths(player)} />
           </CollapsibleSection>
-          <CollapsibleSection name={t('playerStats.killsByWeapon')}>
+          <CollapsibleSection name={t('playerStats.killsByWeapon')} defaultOpen={true}>
             <SimpleTable columns={killByColumns} data={killsBy} />
           </CollapsibleSection>
-          <CollapsibleSection name={t('playerStats.deathsByWeapon')}>
+          <CollapsibleSection name={t('playerStats.deathsByWeapon')} defaultOpen={true}>
             <SimpleTable columns={deathByColumns} data={deathsBy} />
           </CollapsibleSection>
         </div>

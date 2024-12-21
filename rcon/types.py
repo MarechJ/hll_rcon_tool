@@ -7,14 +7,7 @@ from typing import List, Literal, Optional
 # over typing.TypedDict. Once we bump our Python image we can replace this.
 from typing_extensions import TypedDict
 
-from rcon.maps import Layer, LayerType
-
-
-# Have to inherit from str to allow for JSON serialization w/ pydantic
-class RconInvalidNameActionType(str, enum.Enum):
-    warn = "WARN"
-    kick = "KICK"
-    ban = "BAN"
+from rcon.maps import Layer, LayerType, Team
 
 
 class WindowsStoreIdActionType(str, enum.Enum):
@@ -387,6 +380,21 @@ class DBLogLineType(TypedDict):
     weapon: Optional[str]
 
 
+class PlayerTeamConfidence(enum.Enum):
+    STRONG = 'strong'
+    MIXED = 'mixed'
+
+
+class PlayerTeamAssociation(TypedDict):
+    # Indicates the side the player played for
+    side: Team
+    # Confidence that the value in team is actually correct, based on the impact the player had
+    # by comparing kills and deaths from the teams the player played for in the round.
+    confidence: PlayerTeamConfidence
+    # The ratio of kills and deaths the player accumulated in the team indicated by the association.
+    ratio: float
+
+
 class PlayerStatsType(TypedDict):
     id: int
     player_id: str
@@ -418,6 +426,7 @@ class PlayerStatsType(TypedDict):
     death_by: Optional[dict]
     weapons: Optional[dict]
     death_by_weapons: Optional[dict]
+    team: Optional[PlayerTeamAssociation]
 
 
 class PlayerStat(TypedDict):

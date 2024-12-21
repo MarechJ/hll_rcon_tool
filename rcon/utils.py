@@ -388,14 +388,6 @@ def dict_differences(old: dict[Any, Any], new: dict[Any, Any]) -> dict[Any, Any]
     return diff
 
 
-def is_invalid_name_whitespace(name: str) -> bool:
-    return name.endswith(" ")
-
-
-def is_invalid_name_pineapple(name: str) -> bool:
-    return len(name) == 20 and name.endswith("?")
-
-
 def default_player_info_dict(player) -> GetDetailedPlayer:
     return {
         "name": player,

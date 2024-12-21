@@ -1,5 +1,6 @@
-import { Faceoff, Player, ServerFinalStats } from '@/types/player'
+import { Faceoff, Player, TeamEnum } from '@/types/player'
 import { Weapon, WeaponCategory } from '@/types/weapon'
+import colors from 'tailwindcss/colors'
 
 // LIST OF WEAPONS
 // https://gist.github.com/timraay/5634d85eab552b5dfafb9fd61273dc52#available-weapons
@@ -403,13 +404,6 @@ export const getKillCategory = (weapon: Weapon): KillCategory => {
   }
 }
 
-export const getLiveStats = (data: ServerFinalStats) => {
-  // Sort players by kill count
-  const players = data.result.player_stats as Player[]
-  players.sort((a, b) => b.kills - a.kills)
-  return players
-}
-
 export function mergeKillsDeaths(player: Player) {
   const { most_killed: killsByPlayer, death_by: deathsByPlayer } = player
   const allPlayerNames = new Set(Object.keys(killsByPlayer).concat(Object.keys(deathsByPlayer)))
@@ -424,4 +418,18 @@ export function mergeKillsDeaths(player: Player) {
   })
   merged.sort((a, b) => b.kills - a.kills)
   return merged
+}
+
+const teamColors: Record<TeamEnum, string> = {
+  [TeamEnum.AXIS]: colors.red[600],
+  [TeamEnum.ALLIES]: colors.blue[600],
+  [TeamEnum.MIXED]: colors.yellow[400],
+  [TeamEnum.UNKNOWN]: colors.gray[500],
+};
+
+export function getColorForTeam(team: TeamEnum | undefined): string {
+  if (team === undefined) {
+    return colors.purple[600];
+  }
+  return teamColors[team];
 }

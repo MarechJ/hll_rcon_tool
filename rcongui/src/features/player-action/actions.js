@@ -13,6 +13,7 @@ import FlagIcon from "@mui/icons-material/Flag";
 import HowToRegIcon from "@mui/icons-material/HowToReg";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import { cmd, execute } from "@/utils/fetchUtils";
 import { MessageFormFields } from "@/features/player-action/forms/MessageFormFields";
 import { PunishFormFields } from "@/features/player-action/forms/PunishFormFields";
@@ -26,6 +27,7 @@ import { AddCommentFormFields } from "@/features/player-action/forms/AddCommentF
 import { BlacklistPlayerFormFields } from "@/features/player-action/forms/BlacklistPlayerFields";
 import { playerProfileQueryOptions } from "@/queries/player-profile-query";
 import { RemoveFlagFormFields } from "./forms/RemoveFlagFormFields";
+import { AddConsoleAdminFormFields } from "./forms/AddConsoleAdminFormFields";
 
 const executeAction = (command) => async (payload) => {
   // In the UI, it does not make sense to ask for a reason and message
@@ -38,7 +40,7 @@ const executeAction = (command) => async (payload) => {
     payload.name = payload.player;
   }
   // v10.x.x 'add_vip' change param from 'name' to 'description'
-  if (command === "add_vip") {
+  if (command === "add_vip" || command === "add_admin") {
     payload.description = payload.player_name;
   }
   return await execute(command, payload);
@@ -215,6 +217,31 @@ export const clearAccountAction = {
   permission: ["can_remove_perma_bans"],
 };
 
+export const addConsoleAdminAction = {
+  name: "Add Admin",
+  description: "Add a console admin to the player.",
+  component: AddConsoleAdminFormFields,
+  icon: <AdminPanelSettingsIcon />,
+  execute: executeAction("add_admin"),
+  permission: ["can_add_admin_roles"],
+  context: [
+    {
+      type: "admin_groups",
+      getQuery: () => ({
+        queryKey: ["get_admin_groups"],
+        queryFn: () => cmd.GET_CONSOLE_ADMIN_GROUPS({ throwRouteError: false }),
+      }),
+    },
+  ],
+};
+
+/**
+ * Generate player actions based on the given parameters.
+ * @param {Object} params - The parameters for generating player actions.
+ * @param {boolean} [params.multiAction=false] - Whether these actions are applied to multiple players.
+ * @param {boolean} [params.onlineAction=false] - Whether these actions are applied to online players.
+ * @returns {Array} An array of player actions.
+ */
 export const generatePlayerActions = (
   { multiAction = false, onlineAction = false } = {
     multiAction: false,
@@ -233,6 +260,7 @@ export const generatePlayerActions = (
         clearAccountAction,
         flagAction,
         commentAction,
+        addConsoleAdminAction,
       ]
     : [
         watchAction,
@@ -246,6 +274,7 @@ export const generatePlayerActions = (
         flagAction,
         unflagAction,
         commentAction,
+        addConsoleAdminAction,
       ];
 
   const gameActions = [

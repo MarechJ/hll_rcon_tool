@@ -1,34 +1,57 @@
 import {
-    List,
-    ListItem,
-    ListItemButton,
-    Box,
-    ListItemIcon,
-    Checkbox,
-    ListItemText,
-  } from "@mui/material";
-  import { PopoverMenu } from "@/components/shared/PopoverMenu";
-  import Person4Icon from '@mui/icons-material/Person4';
-  import { Tooltip, Button } from "@mui/material";
-  
-  /**
-   * @param {Object} props
-   * @param {Object} props.actionOptions
-   * @param {Function} props.onActionSelect
-   * @returns {JSX.Element}
-   */
-  export const LogPlayerSelectionMenu = ({ actionOptions, onActionSelect }) => (
+  List,
+  ListItem,
+  ListItemButton,
+  Box,
+  ListItemIcon,
+  Checkbox,
+  ListItemText,
+  Badge,
+} from "@mui/material";
+import { PopoverMenu } from "@/components/shared/PopoverMenu";
+import Person4Icon from "@mui/icons-material/Person4";
+import { Tooltip, Button } from "@mui/material";
+import { SearchInput } from "@/components/shared/SearchInput";
+import { useSelectionMenu } from "@/hooks/useSelectionMenu";
+
+/**
+ * @param {Object} props
+ * @param {Object} props.actionOptions
+ * @param {Function} props.onActionSelect
+ * @returns {JSX.Element}
+ */
+export const LogPlayerSelectionMenu = ({ actionOptions, onActionSelect }) => {
+  const {
+    search,
+    setSearch,
+    onOpen,
+    onClose,
+    hasSelected,
+    filteredOptions,
+  } = useSelectionMenu(actionOptions);
+
+  return (
     <PopoverMenu
       id="log-player-picker"
       description="Pick a player to filter the logs"
+      onOpen={onOpen}
+      onClose={onClose}
       renderButton={(props) => (
         <Button {...props}>
           <Tooltip title="Filter by player">
-            <Person4Icon />
+            <Badge
+              color="secondary"
+              variant="dot"
+              invisible={!hasSelected}
+              anchorOrigin={{ vertical: "top", horizontal: "right" }}
+            >
+              <Person4Icon />
+            </Badge>
           </Tooltip>
         </Button>
       )}
     >
+      <SearchInput value={search} onChange={(e) => setSearch(e.target.value)} />
       <List
         sx={{
           width: "100%",
@@ -40,27 +63,7 @@ import {
           "& ul": { padding: 0 },
         }}
       >
-        {[
-          ...Object.keys(actionOptions).sort((a, b) => {
-            if (actionOptions[a] && actionOptions[b]) {
-              // Both are selected, so compare them alphabetically
-              return a.localeCompare(b);
-            }
-  
-            if (actionOptions[a]) {
-              // Only `a` is selected, move `a` up
-              return -1;
-            }
-  
-            if (actionOptions[b]) {
-              // Only `b` is selected, move `b` up
-              return 1;
-            }
-  
-            // Neither is selected, so compare alphabetically
-            return a.localeCompare(b);
-          }),
-        ].map((actionName) => (
+        {filteredOptions.map((actionName) => (
           <ListItem
             key={`${actionName}`}
             dense
@@ -74,7 +77,9 @@ import {
                   checked={actionOptions[actionName]}
                   tabIndex={-1}
                   disableRipple
-                  inputProps={{ "aria-labelledby": `picker-player-${actionName}` }}
+                  inputProps={{
+                    "aria-labelledby": `picker-player-${actionName}`,
+                  }}
                 />
               </ListItemIcon>
               <Box
@@ -105,4 +110,4 @@ import {
       </List>
     </PopoverMenu>
   );
-  
+};

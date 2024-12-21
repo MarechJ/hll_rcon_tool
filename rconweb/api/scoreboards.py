@@ -1,17 +1,15 @@
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 
-from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
 
-from rcon.maps import parse_layer, safe_get_map_name
+from rcon.maps import parse_layer
 from rcon.models import Maps, enter_session
-from rcon.scoreboard import LiveStats, TimeWindowStats, get_cached_live_game_stats
+from rcon.scoreboard import LiveStats, get_cached_live_game_stats
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.utils import MapsHistory
-
-from .auth import api_response, login_required, stats_login_required
+from .auth import api_response, stats_login_required
 from .decorators import require_http_methods
 from .views import _get_data
 
