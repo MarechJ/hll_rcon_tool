@@ -90,7 +90,7 @@ export function DataTable<TData extends Player, TValue, TExtraColumnId extends s
 
   return (
     <div className="border w-full divide-y">
-      <div className="flex flex-row justify-between items-center p-2">
+      <div className="flex flex-row justify-between items-center p-2 flex-wrap gap-y-3">
         <div className="flex flex-row items-center gap-3">
           {hasIsOnline && (
             <Select onValueChange={(value) => table.getColumn('is_online')?.setFilterValue(value)}>

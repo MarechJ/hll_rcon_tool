@@ -22,7 +22,7 @@ export default function TagList({
     onChange(value);
   }, [value])
 
-  return <div className={'flex gap-1'}>
+  return <div className={'flex gap-1 flex-wrap'}>
     {value.map((v) => <RemovableBadge key={v} value={v} onClick={() => {
       setValue((o) => o.filter((ov) => ov !== v));
     }}/>)}
