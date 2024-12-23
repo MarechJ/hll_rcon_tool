@@ -20,7 +20,7 @@ rq-scheduler==0.14.0
 paramiko==3.5.0
 ftpretty==0.4.0
 pytz>=2023.3
-pydantic==2.10.3
+pydantic==2.10.4
 discord.py==2.4.0
 # django-directory
 # django-dirctory is currently incompatible with Django 4.0+, PR is pending to fix django-directory upstream
