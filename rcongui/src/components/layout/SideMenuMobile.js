@@ -8,7 +8,6 @@ import SelectContent from './SelectContent'
 import { Box, List, ListItem, ListItemText } from '@mui/material'
 import { Form } from 'react-router-dom'
 import { navMenus } from '../Header/nav-data'
-import NewReleases from './sidebar/NewReleases'
 import ConnectionStatus from './sidebar/ConnectionStatus'
 import AboutDialog from './sidebar/About'
 
@@ -51,7 +50,6 @@ function AdminSideMenuMobile({ open, toggleDrawer }) {
               primary={<ConnectionStatus />}
             />
           </ListItem>
-          <NewReleases />
           <AboutDialog />
         </List>
         <Divider />
