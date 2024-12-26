@@ -33,7 +33,9 @@ export const AddVipFormFields = ({ control, errors, setValue, getValues }) => {
             amount={amount}
             unit={unit}
             expirationTimestamp={getValues()?.expiration ?? dayjs()}
-            setExpirationTimestamp={(value) => { setValue('expiration', value, { shouldTouch: true }) }}
+            // shouldValidate is needed to trigger rerendering
+            // so the getValues()?.expiration is updated
+            setExpirationTimestamp={(value) => { setValue('expiration', value, { shouldTouch: true, shouldValidate: true }) }}
           />
         ))}
         <Button
