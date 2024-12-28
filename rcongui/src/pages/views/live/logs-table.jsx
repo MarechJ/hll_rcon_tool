@@ -76,10 +76,10 @@ export default function LogsTable({
     }));
   };
 
-  const handleClientPlayerFilterChange = (actionName) => {
+  const handleClientPlayerFilterChange = (playerName) => {
     setPlayerOptions((prev) => ({
       ...prev,
-      [actionName]: !prev[actionName],
+      [playerName]: !prev[playerName],
     }));
   };
 
@@ -114,9 +114,8 @@ export default function LogsTable({
         acc[player] = false;
         return acc;
       }, {}) ?? {};
-
     setPlayerOptions((prev) => {
-      for (const [name, selected] in prev) {
+      for (const [name, selected] of Object.entries(prev)) {
         if (name in incomingPlayers) {
           incomingPlayers[name] = selected;
         }
