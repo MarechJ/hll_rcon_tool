@@ -132,7 +132,7 @@ const Autosettings = () => {
           <Button
             variant="contained"
             color="secondary"
-            href="https://github.com/MarechJ/hll_rcon_tool/wiki/User-Guide-:-Autosettings"
+            href="https://github.com/MarechJ/hll_rcon_tool/wiki/User-Guide-%E2%80%90-Main-interface-%E2%80%90-Settings-%E2%80%90-Autosettings"
             component={"a"}
           >
             Read docs
