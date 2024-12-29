@@ -13,6 +13,17 @@ const removePlayerIds = (message) => {
   );
 };
 
+const playerNameFilter = (row, columnId, filterValue = []) => {
+  // If no filter value, show all rows
+  if (!filterValue.length) return true;
+  
+  const player1 = row.original.player_name_1;
+  const player2 = row.original.player_name_2;
+  
+  // Check if either player name matches the filter value
+  return filterValue.includes(player1) || filterValue.includes(player2);
+};
+
 // Column definitions for the log table
 export const logsColumns = [
   {
@@ -43,7 +54,7 @@ export const logsColumns = [
         />
       ) : row.original.player_name_1 ? <span>{row.original.player_name_1}</span> : null;
     },
-    filterFn: "arrIncludesSome",
+    filterFn: playerNameFilter,
     meta: {
       variant: "name"
     },
@@ -63,6 +74,7 @@ export const logsColumns = [
   {
     header: "That Player",
     accessorKey: "player_name_2",
+    filterFn: playerNameFilter,
     cell: ({ row }) => {
       return row.original.player_name_2 && row.original.player_id_2 ? (
         <ActionMenuButton

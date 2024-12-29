@@ -136,6 +136,7 @@ export default function LogsTable({
       .filter(([_, selected]) => selected)
       .map(([name]) => name);
     table.getColumn("player_name_1")?.setFilterValue(selectedPlayers);
+    table.getColumn("player_name_2")?.setFilterValue(selectedPlayers);
   }, [playerOptions]);
 
   const highlightedActionOptions = Object.entries(logActions).reduce((acc, [name]) => {
