@@ -8,6 +8,7 @@ import {
   Stack,
   Divider,
   Typography,
+  Box,
 } from "@mui/material";
 import StarIcon from "@mui/icons-material/Star";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -15,8 +16,12 @@ import NoAccountsIcon from "@mui/icons-material/NoAccounts";
 import GavelIcon from "@mui/icons-material/Gavel";
 import dayjs from "dayjs";
 import Emoji from "@/components/shared/Emoji";
+import CopyableText from "../CopyableText";
+import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
 
 export default function PlayerCard({ player }) {
+  const { openWithId } = usePlayerSidebar();
+
   const name = player.names.length > 0 && player.names[0].name;
   const avatar = player?.steaminfo?.profile?.avatar ?? name;
   const flags = player?.flags;
@@ -25,19 +30,44 @@ export default function PlayerCard({ player }) {
   const isBanned = player?.is_banned;
   const isVip = player.is_vip;
   const penalties = player?.penalty_count;
-  const firstSeen = dayjs(player.first_seen_timestamp_ms).format("LL");
+  const firstSeen = dayjs(player.first_seen_timestamp_ms).format("MMM DD, YYYY");
   const lastSeen = dayjs(player.last_seen_timestamp_ms).fromNow();
   const totalPlaytime = dayjs
     .duration(player.total_playtime_seconds * 1000)
     .asHours()
     .toFixed(1);
-    console.log(flags)
+
   return (
     <Card sx={{ height: "100%", width: "100%" }}>
       <CardHeader
         avatar={<Avatar src={avatar}>{name.charAt(0)}</Avatar>}
-        title={name}
-        subheader={player.player_id}
+        title={
+          <Box
+            component="button"
+            onClick={() => openWithId(player.player_id)}
+            sx={{
+              textTransform: "none",
+              fontSize: "1rem",
+              border: "none",
+              padding: 0,
+              background: "none",
+              cursor: "pointer",
+              color: "text.primary",
+              fontWeight: 500,
+              "&:hover": {
+                textDecoration: "underline",
+                color: "text.primary",
+                background: "none",
+              },
+            }}
+          >
+            {name}
+          </Box>
+        }
+        subheader={<CopyableText text={player.player_id} />}
+        subheaderTypographyProps={{
+          fontSize: "0.7rem",
+        }}
         titleTypographyProps={{
           fontSize: 18,
         }}
@@ -58,10 +88,10 @@ export default function PlayerCard({ player }) {
           alignItems={"center"}
           justifyContent={"center"}
           spacing={1}
-          sx={{ p: 1, height: 30 }}
+          sx={{ pt: 1, height: 30 }}
         >
           {flags?.map(({ flag }) => (
-            <Typography variant="body" color="text.secondary">
+            <Typography key={flag} variant="body" color="text.secondary">
               <Emoji emoji={flag} size={18} />
             </Typography>
           ))}

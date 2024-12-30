@@ -6,23 +6,35 @@ import {
   Switch,
   Stack,
   Grid2 as Grid,
-  Divider,
   Chip,
   Popover,
   IconButton,
   Skeleton,
   Typography,
+  LinearProgress,
 } from "@mui/material";
-import { Form, useLoaderData } from "react-router-dom";
+import {
+  Form,
+  useLoaderData,
+  useNavigate,
+  useNavigation,
+  useSubmit,
+} from "react-router-dom";
 import { Autocomplete } from "@mui/material";
 import { CountryFlag } from "@/components/shared/CountryFlag";
 import { useMemo, useState, Suspense, lazy } from "react";
 import countries from "country-list";
-import PlayerCard from "./card";
+import PlayerCard from "@/components/shared/card/PlayerCard";
 import { useGlobalStore } from "@/hooks/useGlobalState";
 import emojiData from "@emoji-mart/data/sets/15/twitter.json";
 import Emoji from "@/components/shared/Emoji";
 import AddReactionIcon from "@mui/icons-material/AddReaction";
+
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import dayjs from "dayjs";
+
 const EmojiPicker = lazy(() => import("@emoji-mart/react"));
 
 // Get all countries for autocomplete
@@ -31,50 +43,50 @@ const countryOptions = countries.getCodes().map((code) => ({
   name: countries.getName(code),
 }));
 
-/*
-
-blacklisted: false
-exact_name_match: false
-ignore_accent: true
-is_watched: false
-page: 1
-page_size: 50
-player_id: "1"
-player_name: "a"
-flags: "👍,😍"
-country: "cs" // ISO format
-*/
 export const loader = async ({ request }) => {
   const url = new URL(request.url);
 
   const player_name = url.searchParams.get("player_name") ?? "";
   const player_id = url.searchParams.get("player_id") ?? "";
 
+  const last_seen_from = url.searchParams.get("last_seen_from") ?? "";
+  const last_seen_till = url.searchParams.get("last_seen_till") ?? "";
+
   const page = url.searchParams.get("page") ?? 1;
   const page_size = url.searchParams.get("page_size") ?? 50;
 
-  const flags = url.searchParams.get("flags") ?? "";
+  const flags = url.searchParams.get("flags")
+    ? url.searchParams.get("flags").split(",")
+    : [];
   const country = url.searchParams.get("country") ?? "";
 
   const blacklisted = url.searchParams.get("blacklisted") ?? false;
   const exact_name_match = url.searchParams.get("exact_name_match") ?? false;
-  const ignore_accent = url.searchParams.get("ignore_accent") ?? false;
+  const ignore_accent = url.searchParams.get("ignore_accent") ?? true;
   const is_watched = url.searchParams.get("is_watched") ?? false;
+
+  const fields = {
+    player_id,
+    page,
+    page_size,
+    flags,
+    blacklisted,
+    exact_name_match,
+    ignore_accent,
+    is_watched,
+    player_name,
+    country,
+    last_seen_from,
+    last_seen_till,
+  };
 
   // In the background, this command is POST request therefore the payload and not params
   const playersRecords = await cmd.GET_PLAYERS_RECORDS({
-    payload: {
-      player_id,
-      page,
-      page_size,
-      flags,
-      blacklisted,
-      exact_name_match,
-      ignore_accent,
-      is_watched,
-      player_name,
-      country,
-    },
+    payload: Object.fromEntries(
+      Object.entries(fields).filter(
+        ([_, value]) => value !== "" && value !== null
+      )
+    ),
   });
 
   const bans = await cmd.GET_BANS();
@@ -85,14 +97,27 @@ export const loader = async ({ request }) => {
       is_banned: bans.some((ban) => ban.player_id === player.player_id),
     })),
     total_pages: playersRecords.result.total_pages,
+    fields,
   };
 };
 
 export default function PlayersRecords() {
-  const { players: playersData } = useLoaderData();
+  const { players: playersData, fields } = useLoaderData();
+  const submit = useSubmit();
+  const navigation = useNavigation();
   const server = useGlobalStore((state) => state.serverState);
-  const [selectedCountry, setSelectedCountry] = useState(null);
-  const [selectedEmoji, setSelectedEmoji] = useState([]);
+  const [formFields, setFormFields] = useState({
+    player_name: fields.player_name || '',
+    player_id: fields.player_id || '',
+    blacklisted: !!fields.blacklisted,
+    exact_name_match: !!fields.exact_name_match,
+    ignore_accent: !!fields.ignore_accent,
+    is_watched: !!fields.is_watched,
+    last_seen_from: fields.last_seen_from ? dayjs(fields.last_seen_from) : null,
+    last_seen_till: fields.last_seen_till ? dayjs(fields.last_seen_till) : null,
+  });
+  const [selectedCountry, setSelectedCountry] = useState(fields.country);
+  const [selectedEmoji, setSelectedEmoji] = useState(fields.flags);
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
@@ -114,21 +139,53 @@ export default function PlayersRecords() {
     setAnchorEl(null);
   };
 
+  const handleReset = () => {
+    setFormFields({
+      player_name: '',
+      player_id: '',
+      blacklisted: false,
+      exact_name_match: false,
+      ignore_accent: true,
+      is_watched: false,
+      last_seen_from: null,
+      last_seen_till: null,
+    });
+    setSelectedCountry('');
+    setSelectedEmoji([]);
+    submit(null, { method: 'GET' });
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value, checked } = e.target;
+    setFormFields(prev => ({
+      ...prev,
+      [name]: e.target.type === 'checkbox' ? checked : value
+    }));
+  };
+
   return (
     <div>
       <h1>Players Records</h1>
-      <Form method="GET">
-        <Grid container spacing={2}>
 
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <TextField label="Player Name" name="player_name" fullWidth />
-          </Grid>
+      <Stack direction={{ xs: "column", lg: "row" }} spacing={1} sx={{ mt: 2 }}>
+        <Form method="GET">
+          <Stack spacing={2} sx={{ width: { xs: "100%", lg: "300px" } }}>
+            <TextField
+              value={formFields.player_name}
+              onChange={handleInputChange}
+              label="Player Name"
+              name="player_name"
+              fullWidth
+            />
 
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <TextField label="Player ID" name="player_id" fullWidth />
-          </Grid>
+            <TextField
+              value={formFields.player_id}
+              onChange={handleInputChange}
+              label="Player ID"
+              name="player_id"
+              fullWidth
+            />
 
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <Autocomplete
               options={countryOptions}
               getOptionLabel={(option) => option.name}
@@ -158,9 +215,7 @@ export default function PlayersRecords() {
                 </>
               )}
             />
-          </Grid>
 
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <Stack
               sx={{
                 width: "100%",
@@ -192,7 +247,11 @@ export default function PlayersRecords() {
                   />
                 ))}
                 {selectedEmoji.length === 0 && (
-                  <Typography sx={{ pl: 1 }} variant="body" color="text.secondary">
+                  <Typography
+                    sx={{ pl: 1 }}
+                    variant="body"
+                    color="text.secondary"
+                  >
                     Filter by flags
                   </Typography>
                 )}
@@ -226,59 +285,128 @@ export default function PlayersRecords() {
                 />
               </Suspense>
             </Popover>
-            <input type="hidden" name="flags" value={selectedEmoji.map((e) => e.native).join(",")} />
-          </Grid>
+            <input
+              type="hidden"
+              name="flags"
+              value={selectedEmoji.map((e) => e.native).join(",")}
+            />
 
-          <Grid size={{ xs: 6, md: 3, lg: 2 }}>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DateTimePicker
+                value={formFields.last_seen_from}
+                onChange={(newValue) => 
+                  setFormFields(prev => ({ ...prev, last_seen_from: newValue }))
+                }
+                label="Last seen from"
+                name="last_seen_from"
+                format="MMMM DD, YYYY HH:mm"
+                timezone="UTC"
+                slotProps={{
+                  textField: { fullWidth: true }
+                }}
+              />
+            </LocalizationProvider>
+
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DateTimePicker
+                value={formFields.last_seen_till}
+                onChange={(newValue) => 
+                  setFormFields(prev => ({ ...prev, last_seen_till: newValue }))
+                }
+                label="Last seen till"
+                name="last_seen_till"
+                format="MMMM DD, YYYY HH:mm"
+                timezone="UTC"
+                slotProps={{
+                  textField: { fullWidth: true }
+                }}
+              />
+            </LocalizationProvider>
+
             <FormControlLabel
-              control={<Switch name="blacklisted" />}
+              control={
+                <Switch
+                  name="blacklisted"
+                  checked={formFields.blacklisted}
+                  onChange={handleInputChange}
+                />
+              }
               label="Blacklisted only"
             />
-          </Grid>
 
-          <Grid size={{ xs: 6, md: 3, lg: 2 }}>
             <FormControlLabel
-              control={<Switch name="exact_name_match" />}
+              control={
+                <Switch
+                  name="exact_name_match"
+                  checked={formFields.exact_name_match}
+                  onChange={handleInputChange}
+                />
+              }
               label="Exact name match"
             />
-          </Grid>
 
-          <Grid size={{ xs: 6, md: 3, lg: 2 }}>
             <FormControlLabel
-              control={<Switch name="ignore_accent" defaultChecked />}
+              control={
+                <Switch
+                  name="ignore_accent"
+                  checked={formFields.ignore_accent}
+                  onChange={handleInputChange}
+                />
+              }
               label="Ignore accent"
             />
-          </Grid>
 
-          <Grid size={{ xs: 6, md: 3, lg: 2 }}>
             <FormControlLabel
-              control={<Switch name="is_watched" />}
+              control={
+                <Switch
+                  name="is_watched"
+                  checked={formFields.is_watched}
+                  onChange={handleInputChange}
+                />
+              }
               label="Watched only"
             />
+          </Stack>
+
+          <Stack direction="column" spacing={1} sx={{ mt: 2 }}>
+            {navigation.state === "loading" && (
+              <LinearProgress sx={{ ml: 2 }} />
+            )}
+            <Button
+              variant="contained"
+              color="secondary"
+              sx={{ mt: 2 }}
+              onClick={handleReset}
+              disabled={navigation.state === "loading"}
+            >
+              Reset
+            </Button>
+
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              sx={{ mt: 2 }}
+              disabled={navigation.state === "loading"}
+            >
+              Search
+            </Button>
+          </Stack>
+        </Form>
+
+        <section>
+          <Grid container spacing={1}>
+            {players.map((player) => (
+              <Grid
+                key={player.player_id}
+                size={{ xs: 12, sm: 6, md: 4, lg: "auto" }}
+              >
+                <PlayerCard player={player} />
+              </Grid>
+            ))}
           </Grid>
-        </Grid>
-
-        <Button
-          type="submit"
-          variant="contained"
-          color="primary"
-          sx={{ mt: 2 }}
-        >
-          Search
-        </Button>
-      </Form>
-
-      <Divider sx={{ my: 2 }} />
-
-      <section>
-        <Grid container spacing={1}>
-          {players.map((player) => (
-            <Grid key={player.player_id} size={{ xs: 12, sm: 6, md: 4, xl: 3 }}>
-              <PlayerCard player={player} />
-            </Grid>
-          ))}
-        </Grid>
-      </section>
+        </section>
+      </Stack>
     </div>
   );
 }
