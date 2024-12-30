@@ -153,7 +153,7 @@ const SelectBox = React.forwardRef<HTMLInputElement, SelectBoxProps>(
             </div>
             <CommandList>
               <CommandEmpty>
-                {emptyPlaceholder ?? "No results found."}
+                {emptyPlaceholder ?? t('noResultsFound')}
               </CommandEmpty>
               <CommandGroup>
                 <ScrollArea>
