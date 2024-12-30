@@ -1,13 +1,20 @@
-import {Stack, TextField, useTheme} from "@mui/material";
-import {ControlledTextInput} from "@/components/form/core/ControlledTextInput";
-import {lazy, Suspense, useEffect} from "react";
-import {Controller} from "react-hook-form";
+import {
+  Box,
+  Skeleton,
+  Stack,
+  Typography,
+  useTheme,
+} from "@mui/material";
+import { ControlledTextInput } from "@/components/form/core/ControlledTextInput";
+import { lazy, Suspense } from "react";
+import { Controller } from "react-hook-form";
+import emojiData from "@emoji-mart/data/sets/15/twitter.json";
+import Emoji from "@/components/shared/Emoji";
 
-const LushEmojiPicker = lazy(() => import('emoji-picker-react'));
+const EmojiPicker = lazy(() => import("@emoji-mart/react"));
 
-export const AddFlagFormFields = ({control, errors, setValue}) => {
+export const AddFlagFormFields = ({ control, errors, setValue }) => {
   const theme = useTheme();
-  let EmojiStyle = {};
 
   // It is called 'comment' at the backend but it is really a 'note' for the flag
   const noteError = errors["comment"];
@@ -16,32 +23,49 @@ export const AddFlagFormFields = ({control, errors, setValue}) => {
   const flagError = errors["flag"];
   const hasFlagError = !!flagError;
 
-  useEffect(() => {
-    import('emoji-picker-react').then((epr) => EmojiStyle = epr.EmojiStyle);
-  }, []);
-
   return (
     <Stack alignContent={"center"} spacing={2}>
       <Stack direction={"row"} spacing={1}>
         <Controller
           defaultValue={""}
-          rules={{required: "Flag is required."}}
+          rules={{ required: "Flag is required." }}
           name={"flag"}
           control={control}
-          render={({field}) => (
-            <TextField
-              onChange={field.onChange} // send value to hook form
-              onBlur={field.onBlur} // notify when input is touched/blur
-              value={field.value} // input value
-              name={field.name} // send down the input name
-              inputRef={field.ref} // send input ref, so we can focus on input when error appear
-              disabled={true}
-              label={"Flag"}
-              helperText={hasFlagError && flagError.message}
-              error={hasFlagError}
-              rows={1}
-              sx={{width: "60px", fontSize: "2rem"}}
-            />
+          render={({ field }) => (
+            <>
+              <Stack direction={"column"} alignItems={"start"} spacing={0.25}>
+                <Box
+                  sx={{
+                    border: (theme) => `1px solid ${theme.palette.grey[500]}`,
+                    px: 2,
+                    py: 1.75,
+                    color: (theme) => theme.palette.grey[400],
+                    borderRadius: 1,
+                    height: "3.5rem",
+                    width: "6.5rem",
+                    borderColor: (theme) =>
+                      hasFlagError
+                        ? theme.palette.error.main
+                        : theme.palette.grey[500],
+                  }}
+                >
+                  {field.value ? <Emoji emoji={field.value} size={24} /> : "Flag"}
+                </Box>
+                <Typography
+                  variant="caption"
+                  sx={{ color: (theme) => hasFlagError ? theme.palette.error.main : theme.palette.grey[400], px: 1 }}
+                >
+                  {hasFlagError ? flagError.message : "Emoji"}
+                </Typography>
+              </Stack>
+              <input
+                onChange={field.onChange} // send value to hook form
+                onBlur={field.onBlur} // notify when input is touched/blur
+                value={field.value} // input value
+                name={field.name} // send down the input name
+                hidden
+              />
+            </>
           )}
         />
         <ControlledTextInput
@@ -53,24 +77,27 @@ export const AddFlagFormFields = ({control, errors, setValue}) => {
           helperText={
             hasNoteError ? noteError.message : "Your note for this flag."
           }
-          sx={{flexGrow: 1}}
+          sx={{ flexGrow: 1 }}
           defaultValue={""}
         />
       </Stack>
-      <Suspense fallback={<div>Loading emoji picker...</div>}>
-        <LushEmojiPicker
-          width={"100%"}
-          emojiStyle={EmojiStyle.TWITTER}
-          emojiVersion="15"
-          skinTonesDisabled={true}
-          theme={theme.palette.mode}
-          onEmojiClick={({emoji}) =>
-            setValue("flag", emoji, {
-              shouldTouch: true,
-              shouldValidate: true,
-            })
-          }
-        />
+      <Suspense
+        fallback={<Skeleton variant="rectangular" height={400} width={300} />}
+      >
+        <Box sx={{ "& em-emoji-picker": { width: "100%" } }}>
+          <EmojiPicker
+            set="twitter"
+            theme={theme.palette.mode}
+            dynamicWidth={true}
+            data={emojiData}
+            onEmojiSelect={(emoji) => {
+              setValue("flag", emoji.native, {
+                shouldTouch: true,
+                shouldValidate: true,
+              });
+            }}
+          />
+        </Box>
       </Suspense>
     </Stack>
   );

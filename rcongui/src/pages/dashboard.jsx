@@ -10,6 +10,7 @@ import {
   Box,
   Typography,
   Divider,
+  Stack,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { Link } from "react-router-dom";
@@ -22,6 +23,7 @@ import LogsCard from "@/components/shared/card/LogsCard";
 import ScrollableCard from "@/components/shared/card/ScrollableCard";
 import { MapAvatar } from "@/components/MapManager/map-details";
 import { gameQueryOptions } from "@/queries/game-query";
+import Emoji from "@/components/shared/Emoji";
 
 const CHART_HEIGHT = 275;
 
@@ -258,6 +260,10 @@ const Dashboard = () => {
       }, {})
     ).map(([flag, players]) => ({
       group: flag,
+      label: <Stack direction={"row"} alignItems={"center"} spacing={0.5}>
+        <Emoji emoji={flag} size={16} />
+        <Typography variant="subtitle2">({players.length})</Typography>
+      </Stack>,
       users: players,
     }));
   }, [onlinePlayers]);
@@ -345,6 +351,7 @@ const Dashboard = () => {
 
       logs.push({
         group: "ADMIN",
+        label: `Admin (${adminLogs.length})`,
         logs: adminLogs,
       });
 
@@ -361,10 +368,10 @@ const Dashboard = () => {
     <Grid container sx={{ overflow: "hidden" }} spacing={2}>
       <Grid size={SMALL_CARD_SIZE}>
         <OnlineUsersCard
-          title="Online"
+          title="VIPs & Watched"
           onlineUsers={[
-            { group: "VIP", users: vips },
-            { group: "Watched", users: watchedPlayers },
+            { group: "VIP", label: `VIP (${vips.length})`, users: vips },
+            { group: "Watched", label: `Watched (${watchedPlayers.length})`, users: watchedPlayers },
           ]}
         />
       </Grid>
@@ -376,9 +383,10 @@ const Dashboard = () => {
         <OnlineUsersCard
           title="Moderators"
           onlineUsers={[
-            { group: "CRCON", users: crconMods, manageLink: "/admin" },
+            { group: "CRCON", label: `CRCON (${crconMods.length})`, users: crconMods, manageLink: "/admin" },
             {
               group: "In-Game",
+              label: `In-Game (${ingameMods.length})`,
               users: ingameMods,
               manageLink: "/settings/console-admins",
             },
