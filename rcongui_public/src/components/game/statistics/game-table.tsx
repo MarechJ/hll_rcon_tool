@@ -99,7 +99,7 @@ export function DataTable<TData extends Player, TValue>({columns, data, tableId}
             </Select>
           )}
           {hasTeam && (
-            <Select onValueChange={(value) => table.getColumn('team')?.setFilterValue(value)}>
+            <Select onValueChange={(value) => table.getColumn('team')?.setFilterValue(value)} defaultValue={"all"}>
               <SelectTrigger className="w-60">
                 <SelectValue placeholder={t('playersTable.team')}/>
               </SelectTrigger>
