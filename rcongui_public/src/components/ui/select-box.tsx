@@ -1,4 +1,4 @@
-import React from "react";
+import React, {Fragment, ReactNode} from "react";
 
 import {cn} from "@/lib/utils";
 
@@ -7,6 +7,7 @@ import {Popover, PopoverContent, PopoverTrigger,} from "@/components/ui/popover"
 import {ScrollArea} from "@/components/ui/scroll-area";
 import {CheckIcon, FilterIcon, XIcon} from "lucide-react";
 import {useTranslation} from "react-i18next";
+import useMediaQuery from "@/hooks/use-media-query";
 
 interface Option {
   value: string;
@@ -38,6 +39,10 @@ const SelectBox = React.forwardRef<HTMLInputElement, SelectBoxProps>(
     },
     ref
   ) => {
+    const MAX_TAGS_SMALL_SCREEN = 1;
+
+    const isSmallScreen = useMediaQuery('screen and (max-width: 1023px)');
+
     const [searchTerm, setSearchTerm] = React.useState<string>("");
     const [isOpen, setIsOpen] = React.useState(false);
 
@@ -79,28 +84,35 @@ const SelectBox = React.forwardRef<HTMLInputElement, SelectBoxProps>(
             >
               {value && value.length > 0 ? (
                 multiple ? (
-                  options
-                    .filter(
-                      (option) =>
-                        Array.isArray(value) && value.includes(option.value)
-                    )
-                    ?.map((option) => (
-                      <span
-                        key={option.value}
-                        className="inline-flex items-center gap-1 rounded-md border pt-0.5 pb-1 pl-2 pr-1 text-xs font-medium text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                      >
-                        <span>{option.label}</span>
-                        <span
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleSelect(option.value);
-                          }}
-                          className="flex items-center rounded-sm px-[1px] text-muted-foreground/60 hover:text-foreground"
+                  <Fragment>
+                    {options
+                      .filter(
+                        (option) =>
+                          Array.isArray(value) && value.includes(option.value)
+                      )
+                      .slice(0, isSmallScreen ? MAX_TAGS_SMALL_SCREEN : undefined)
+                      ?.map((option) => (
+                        <Tag
+                          key={option.value}
                         >
-                          <XIcon className={"size-4"}/>
-                        </span>
-                      </span>
-                    ))
+                          <span>{option.label}</span>
+                          <span
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleSelect(option.value);
+                            }}
+                            className="flex items-center rounded-sm px-[1px] text-muted-foreground/60 hover:text-foreground"
+                          >
+                            <XIcon className={"size-4"}/>
+                          </span>
+                        </Tag>
+                      ))}
+                    {isSmallScreen && value.length > MAX_TAGS_SMALL_SCREEN &&
+                      <Tag>
+                        <span className={"pr-2"}>+{value.length - MAX_TAGS_SMALL_SCREEN}</span>
+                      </Tag>
+                    }
+                  </Fragment>
                 ) : (
                   options.find((opt) => opt.value === value)?.label
                 )
@@ -202,6 +214,14 @@ const SelectBox = React.forwardRef<HTMLInputElement, SelectBoxProps>(
     );
   }
 );
+
+const Tag = ({ children }: { children: ReactNode }) => {
+  return (
+    <span className={"inline-flex items-center gap-1 rounded-md border pt-0.5 pb-1 pl-2 pr-1 text-xs font-medium text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"}>
+      {children}
+    </span>
+  );
+};
 
 SelectBox.displayName = "SelectBox";
 
