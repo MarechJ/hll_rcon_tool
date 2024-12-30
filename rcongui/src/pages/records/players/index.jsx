@@ -34,6 +34,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import dayjs from "dayjs";
+import NavPagination from "@/pages/stats/games/nav-pagination";
 
 const EmojiPicker = lazy(() => import("@emoji-mart/react"));
 
@@ -52,8 +53,12 @@ export const loader = async ({ request }) => {
   const last_seen_from = url.searchParams.get("last_seen_from") ?? "";
   const last_seen_till = url.searchParams.get("last_seen_till") ?? "";
 
-  const page = url.searchParams.get("page") ?? 1;
-  const page_size = url.searchParams.get("page_size") ?? 50;
+  const page = url.searchParams.get("page")
+    ? Number(url.searchParams.get("page"))
+    : 1;
+  const page_size = url.searchParams.get("page_size")
+    ? Number(url.searchParams.get("page_size"))
+    : 50;
 
   const flags = url.searchParams.get("flags")
     ? url.searchParams.get("flags").split(",")
@@ -96,19 +101,23 @@ export const loader = async ({ request }) => {
       ...player,
       is_banned: bans.some((ban) => ban.player_id === player.player_id),
     })),
-    total_pages: playersRecords.result.total_pages,
+    total_pages:
+      page_size > 0
+        ? Math.ceil(Number(playersRecords.result.total) / page_size)
+        : 1,
+    page: Number(page),
     fields,
   };
 };
 
 export default function PlayersRecords() {
-  const { players: playersData, fields } = useLoaderData();
+  const { players: playersData, fields, total_pages, page } = useLoaderData();
   const submit = useSubmit();
   const navigation = useNavigation();
   const server = useGlobalStore((state) => state.serverState);
   const [formFields, setFormFields] = useState({
-    player_name: fields.player_name || '',
-    player_id: fields.player_id || '',
+    player_name: fields.player_name || "",
+    player_id: fields.player_id || "",
     blacklisted: !!fields.blacklisted,
     exact_name_match: !!fields.exact_name_match,
     ignore_accent: !!fields.ignore_accent,
@@ -141,8 +150,8 @@ export default function PlayersRecords() {
 
   const handleReset = () => {
     setFormFields({
-      player_name: '',
-      player_id: '',
+      player_name: "",
+      player_id: "",
       blacklisted: false,
       exact_name_match: false,
       ignore_accent: true,
@@ -150,16 +159,16 @@ export default function PlayersRecords() {
       last_seen_from: null,
       last_seen_till: null,
     });
-    setSelectedCountry('');
+    setSelectedCountry("");
     setSelectedEmoji([]);
-    submit(null, { method: 'GET' });
+    submit(null, { method: "GET" });
   };
 
   const handleInputChange = (e) => {
     const { name, value, checked } = e.target;
-    setFormFields(prev => ({
+    setFormFields((prev) => ({
       ...prev,
-      [name]: e.target.type === 'checkbox' ? checked : value
+      [name]: e.target.type === "checkbox" ? checked : value,
     }));
   };
 
@@ -294,15 +303,18 @@ export default function PlayersRecords() {
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DateTimePicker
                 value={formFields.last_seen_from}
-                onChange={(newValue) => 
-                  setFormFields(prev => ({ ...prev, last_seen_from: newValue }))
+                onChange={(newValue) =>
+                  setFormFields((prev) => ({
+                    ...prev,
+                    last_seen_from: newValue,
+                  }))
                 }
                 label="Last seen from"
                 name="last_seen_from"
                 format="MMMM DD, YYYY HH:mm"
                 timezone="UTC"
                 slotProps={{
-                  textField: { fullWidth: true }
+                  textField: { fullWidth: true },
                 }}
               />
             </LocalizationProvider>
@@ -310,15 +322,18 @@ export default function PlayersRecords() {
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DateTimePicker
                 value={formFields.last_seen_till}
-                onChange={(newValue) => 
-                  setFormFields(prev => ({ ...prev, last_seen_till: newValue }))
+                onChange={(newValue) =>
+                  setFormFields((prev) => ({
+                    ...prev,
+                    last_seen_till: newValue,
+                  }))
                 }
                 label="Last seen till"
                 name="last_seen_till"
                 format="MMMM DD, YYYY HH:mm"
                 timezone="UTC"
                 slotProps={{
-                  textField: { fullWidth: true }
+                  textField: { fullWidth: true },
                 }}
               />
             </LocalizationProvider>
@@ -395,16 +410,18 @@ export default function PlayersRecords() {
         </Form>
 
         <section>
+          <NavPagination page={page} maxPages={total_pages} />
           <Grid container spacing={1}>
             {players.map((player) => (
               <Grid
                 key={player.player_id}
                 size={{ xs: 12, sm: 6, md: 4, lg: "auto" }}
-              >
-                <PlayerCard player={player} />
-              </Grid>
-            ))}
+                  >
+                    <PlayerCard player={player} />
+                </Grid>
+              ))}
           </Grid>
+          <NavPagination page={page} maxPages={total_pages} />
         </section>
       </Stack>
     </div>

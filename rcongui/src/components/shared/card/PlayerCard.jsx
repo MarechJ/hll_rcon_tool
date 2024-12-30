@@ -22,7 +22,7 @@ import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
 export default function PlayerCard({ player }) {
   const { openWithId } = usePlayerSidebar();
 
-  const name = player.names.length > 0 && player.names[0].name;
+  const name = player.names.length > 0 ? player.names[0].name : "???";
   const avatar = player?.steaminfo?.profile?.avatar ?? name;
   const flags = player?.flags;
   const isWatched = player?.watchlist && player?.watchlist?.is_watched;
