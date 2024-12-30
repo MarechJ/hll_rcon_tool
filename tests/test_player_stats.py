@@ -111,7 +111,8 @@ def test_detect_ignores_some_other_side():
         'MG42': 1,
         'SATCHEL': 1,
         'BOMBING RUN': 1,
-        # this is a teamkill or a wrongly attributed kill and should not result in a MIXED team confidence
+        # this is a teamkill or a wrongly attributed kill or a kill by an explosion of a vehicle or something
+        # it should not result in a MIXED team confidence
         'Sherman M4A3(75)W': 1,
     })
 
