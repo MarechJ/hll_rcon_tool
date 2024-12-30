@@ -38,7 +38,7 @@ const PaginationNext = styled((props) => (
 });
 
 const PaginationEllipsis = styled((props) => (
-  <IconButton size="small" component={Link} {...props}>
+  <IconButton size="small" {...props}>
     <MoreHorizIcon />
   </IconButton>
 ))({
@@ -48,7 +48,7 @@ const PaginationEllipsis = styled((props) => (
   p: 2,
 });
 
-export default function NavPagination({ page, maxPages, ...props }) {
+export default function NavPagination({ page, maxPages, disabled, ...props }) {
   const [insertCustom, setInsertCustom] = useState(false);
   const [customPageValue, setCustomPageValue] = useState(page);
   const search = useLocation().search;
@@ -80,17 +80,15 @@ export default function NavPagination({ page, maxPages, ...props }) {
   return (
     <Stack
       direction={"row"}
-      justifyContent={"end"}
       alignItems={"center"}
-      gap={0.5}
-      flexGrow={1}
-      sx={{ px: 2 }}
+      gap={0.5}      
       {...props}
     >
       {page > 1 && <PaginationPrevious to={goToPage(page - 1)} />}
       <PaginationItem
         variant={page === 1 ? "contained" : "outlined"}
         to={goToPage(1)}
+        disabled={disabled}
       >
         1
       </PaginationItem>
@@ -98,6 +96,7 @@ export default function NavPagination({ page, maxPages, ...props }) {
         <PaginationItem
           variant={page === 2 ? "contained" : "outlined"}
           to={goToPage(2)}
+          disabled={disabled}
         >
           2
         </PaginationItem>
@@ -106,6 +105,7 @@ export default function NavPagination({ page, maxPages, ...props }) {
         <PaginationItem
           variant={page === page ? "contained" : "outlined"}
           to={goToPage(page)}
+          disabled={disabled}
         >
           {page}
         </PaginationItem>
@@ -117,7 +117,7 @@ export default function NavPagination({ page, maxPages, ...props }) {
               <PaginationEllipsis />
             </Button>
           ) : (
-            <Stack direction={"row"} gap={0.5} alignItems={"center"}>
+            <Stack direction={"row"} gap={0.5} alignItems={"center"} sx={{ px: 2 }}>
               <Input
                 placeholder={"..."}
                 value={customPageValue}
@@ -130,14 +130,19 @@ export default function NavPagination({ page, maxPages, ...props }) {
               <Button
                 variant={"outlined"}
                 size={"small"}
-                sx={{ color: green[800], "&:hover": { color: green[600] } }}
+                sx={{
+                  color: green[800],
+                  "&:hover": { color: green[600] },
+                  width: 20,
+                  height: 20,
+                  borderRadius: 0,
+                }}
+                LinkComponent={Link}
+                to={goToPage(customPageValue)}
+                onClick={handleConfirmCustomClick}
+                disabled={disabled}
               >
-                <Link
-                  to={goToPage(customPageValue)}
-                  onClick={handleConfirmCustomClick}
-                >
-                  <CheckIcon size={16} />
-                </Link>
+                <CheckIcon size={16} />
               </Button>
             </Stack>
           )}
@@ -147,11 +152,14 @@ export default function NavPagination({ page, maxPages, ...props }) {
         <PaginationItem
           variant={page === maxPages ? "contained" : "outlined"}
           to={goToPage(maxPages)}
-      >
+          disabled={disabled}
+        >
           {maxPages}
         </PaginationItem>
       )}
-      {page < maxPages && <PaginationNext to={goToPage(page + 1)} />}
+      {page < maxPages && (
+        <PaginationNext to={goToPage(page + 1)} disabled={disabled} />
+      )}
     </Stack>
   );
 }

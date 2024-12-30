@@ -22,7 +22,7 @@ import {
 } from "react-router-dom";
 import { Autocomplete } from "@mui/material";
 import { CountryFlag } from "@/components/shared/CountryFlag";
-import { useMemo, useState, Suspense, lazy } from "react";
+import { useMemo, useState, Suspense, lazy, memo } from "react";
 import countries from "country-list";
 import PlayerCard from "@/components/shared/card/PlayerCard";
 import { useGlobalStore } from "@/hooks/useGlobalState";
@@ -35,6 +35,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import dayjs from "dayjs";
 import NavPagination from "@/pages/stats/games/nav-pagination";
+import { Box } from "@mui/system";
 
 const EmojiPicker = lazy(() => import("@emoji-mart/react"));
 
@@ -43,6 +44,25 @@ const countryOptions = countries.getCodes().map((code) => ({
   code: code.toLowerCase(),
   name: countries.getName(code),
 }));
+
+// Create a memoized version of PlayerCard
+const MemoizedPlayerCard = memo(PlayerCard);
+
+// Create a separate component for the players section
+const PlayersGrid = memo(({ players, ...props }) => {
+  return (
+    <Grid container spacing={1} {...props}>
+      {players.map((player) => (
+        <Grid
+          key={player.player_id}
+          size={{ xs: 12, sm: 6, md: 4, lg: "auto" }}
+        >
+          <MemoizedPlayerCard player={player} />
+        </Grid>
+      ))}
+    </Grid>
+  );
+});
 
 export const loader = async ({ request }) => {
   const url = new URL(request.url);
@@ -174,8 +194,6 @@ export default function PlayersRecords() {
 
   return (
     <div>
-      <h1>Players Records</h1>
-
       <Stack direction={{ xs: "column", lg: "row" }} spacing={1} sx={{ mt: 2 }}>
         <Form method="GET">
           <Stack spacing={2} sx={{ width: { xs: "100%", lg: "300px" } }}>
@@ -384,9 +402,6 @@ export default function PlayersRecords() {
           </Stack>
 
           <Stack direction="column" spacing={1} sx={{ mt: 2 }}>
-            {navigation.state === "loading" && (
-              <LinearProgress sx={{ ml: 2 }} />
-            )}
             <Button
               variant="contained"
               color="secondary"
@@ -409,20 +424,23 @@ export default function PlayersRecords() {
           </Stack>
         </Form>
 
-        <section>
-          <NavPagination page={page} maxPages={total_pages} />
-          <Grid container spacing={1}>
-            {players.map((player) => (
-              <Grid
-                key={player.player_id}
-                size={{ xs: 12, sm: 6, md: 4, lg: "auto" }}
-                  >
-                    <PlayerCard player={player} />
-                </Grid>
-              ))}
-          </Grid>
-          <NavPagination page={page} maxPages={total_pages} />
-        </section>
+        <Stack component="section" id="players-section" spacing={1} sx={{ width: "100%" }}>
+          <Box sx={{ height: 4 }}>
+            {navigation.state === "loading" && <LinearProgress sx={{ height: 4 }} />}
+          </Box>
+          <NavPagination
+            page={page}
+            maxPages={total_pages}
+            disabled={navigation.state === "loading"}
+          />
+          <PlayersGrid players={players} />
+          <Box sx={{ flexGrow: 1 }} />
+          <NavPagination
+            page={page}
+            maxPages={total_pages}
+            disabled={navigation.state === "loading"}
+          />
+        </Stack>
       </Stack>
     </div>
   );

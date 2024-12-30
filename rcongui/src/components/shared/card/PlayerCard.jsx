@@ -17,10 +17,9 @@ import GavelIcon from "@mui/icons-material/Gavel";
 import dayjs from "dayjs";
 import Emoji from "@/components/shared/Emoji";
 import CopyableText from "../CopyableText";
-import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
+import { Link } from "react-router-dom";
 
 export default function PlayerCard({ player }) {
-  const { openWithId } = usePlayerSidebar();
 
   const name = player.names.length > 0 ? player.names[0].name : "???";
   const avatar = player?.steaminfo?.profile?.avatar ?? name;
@@ -43,22 +42,12 @@ export default function PlayerCard({ player }) {
         avatar={<Avatar src={avatar}>{name.charAt(0)}</Avatar>}
         title={
           <Box
-            component="button"
-            onClick={() => openWithId(player.player_id)}
+            component={Link}
+            to={`/records/players/${player.player_id}`}
             sx={{
-              textTransform: "none",
               fontSize: "1rem",
-              border: "none",
-              padding: 0,
-              background: "none",
-              cursor: "pointer",
               color: "text.primary",
               fontWeight: 500,
-              "&:hover": {
-                textDecoration: "underline",
-                color: "text.primary",
-                background: "none",
-              },
             }}
           >
             {name}
