@@ -601,26 +601,29 @@ class PlayerStats(Base):
                 elif op == Team.AXIS:
                     axis_count += weapon[1]
 
+        assoc: PlayerTeamAssociation
         if axis_count == 0 and allies_count == 0:
             return PlayerTeamAssociation(side=Team.UNKNOWN, confidence=PlayerTeamConfidence.STRONG, ratio=0)
         elif axis_count > allies_count:
-            return PlayerTeamAssociation(
+            assoc = PlayerTeamAssociation(
                 side=Team.AXIS,
-                confidence=PlayerTeamConfidence.STRONG if allies_count == 0 else PlayerTeamConfidence.MIXED,
+                confidence=PlayerTeamConfidence.MIXED,
                 ratio=round(axis_count / (axis_count + allies_count) * 100, 2),
             )
         elif allies_count > axis_count:
-            return PlayerTeamAssociation(
+            assoc = PlayerTeamAssociation(
                 side=Team.ALLIES,
-                confidence=PlayerTeamConfidence.STRONG if axis_count == 0 else PlayerTeamConfidence.MIXED,
+                confidence=PlayerTeamConfidence.MIXED,
                 ratio=round(allies_count / (axis_count + allies_count) * 100, 2),
             )
         else:
-            return PlayerTeamAssociation(
+            assoc = PlayerTeamAssociation(
                 side=Team.UNKNOWN,
                 confidence=PlayerTeamConfidence.MIXED,
                 ratio=50,
             )
+        assoc['confidence'] = PlayerTeamConfidence.STRONG if assoc['ratio'] > 85 else PlayerTeamConfidence.MIXED
+        return assoc
 
     def to_dict(self) -> PlayerStatsType:
         # TODO: Fix typing
