@@ -9,6 +9,7 @@ import {
   Divider,
   Typography,
   Box,
+  Badge,
 } from "@mui/material";
 import StarIcon from "@mui/icons-material/Star";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -18,9 +19,9 @@ import dayjs from "dayjs";
 import Emoji from "@/components/shared/Emoji";
 import CopyableText from "../CopyableText";
 import { Link } from "react-router-dom";
+import { CountryFlag } from "../CountryFlag";
 
 export default function PlayerCard({ player }) {
-
   const name = player.names.length > 0 ? player.names[0].name : "???";
   const avatar = player?.steaminfo?.profile?.avatar ?? name;
   const flags = player?.flags;
@@ -29,8 +30,11 @@ export default function PlayerCard({ player }) {
   const isBanned = player?.is_banned;
   const isVip = player.is_vip;
   const penalties = player?.penalty_count;
-  const firstSeen = dayjs(player.first_seen_timestamp_ms).format("MMM DD, YYYY");
+  const firstSeen = dayjs(player.first_seen_timestamp_ms).format(
+    "MMM DD, YYYY"
+  );
   const lastSeen = dayjs(player.last_seen_timestamp_ms).fromNow();
+  const country = player?.steaminfo?.profile?.country;
   const totalPlaytime = dayjs
     .duration(player.total_playtime_seconds * 1000)
     .asHours()
@@ -39,7 +43,15 @@ export default function PlayerCard({ player }) {
   return (
     <Card sx={{ height: "100%", width: "100%" }}>
       <CardHeader
-        avatar={<Avatar src={avatar}>{name.charAt(0)}</Avatar>}
+        avatar={
+          <Badge
+            overlap="circular"
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+            badgeContent={country ? <CountryFlag country={country} /> : null}
+          >
+            <Avatar src={avatar}>{name.charAt(0)}</Avatar>
+          </Badge>
+        }
         title={
           <Box
             component={Link}

@@ -38,14 +38,13 @@ const PaginationNext = styled((props) => (
 });
 
 const PaginationEllipsis = styled((props) => (
-  <IconButton size="small" {...props}>
+  <IconButton {...props}>
     <MoreHorizIcon />
   </IconButton>
 ))({
-  width: 20,
+  width: 40,
   height: 20,
   borderRadius: 0,
-  p: 2,
 });
 
 export default function NavPagination({ page, maxPages, disabled, ...props }) {
@@ -113,9 +112,7 @@ export default function NavPagination({ page, maxPages, disabled, ...props }) {
       {page !== maxPages - 1 && page !== maxPages && (
         <div>
           {!insertCustom ? (
-            <Button size={"small"} onClick={() => setInsertCustom(true)}>
-              <PaginationEllipsis />
-            </Button>
+              <PaginationEllipsis onClick={() => setInsertCustom(true)} />
           ) : (
             <Stack direction={"row"} gap={0.5} alignItems={"center"} sx={{ px: 2 }}>
               <Input
