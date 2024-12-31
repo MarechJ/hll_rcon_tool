@@ -11,30 +11,52 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table'
-import React, {Fragment, useState} from 'react'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import React, { Fragment, useState } from 'react'
 
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
+import {
+  PlainSelectTrigger,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
-import {Player, TeamEnum} from '@/types/player'
-import {useTranslation} from 'react-i18next'
-import {Button} from '@/components/ui/button'
-import {Download} from 'lucide-react'
-import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from '@/components/ui/tooltip'
+import { Player, TeamEnum } from '@/types/player'
+import { useTranslation } from 'react-i18next'
+import { Button } from '@/components/ui/button'
+import { Download, List } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import useGameDownload from '@/hooks/use-game-download'
-import TagList from "@/components/tag-list";
-import {Input} from "@/components/ui/input";
-import {TeamIndicator} from "@/components/game/statistics/team-indicator";
+import TagList from '@/components/tag-list'
+import { Input } from '@/components/ui/input'
+import { TeamIndicator } from '@/components/game/statistics/team-indicator'
+import { Checkbox } from '@/components/ui/checkbox'
 
-interface DataTableProps<TData, TValue> {
+interface DataTableProps<TData, TValue, TExtraColumnId> {
   columns: ColumnDef<TData, TValue>[]
+  extraColumns?: ExtraColumnDef<TExtraColumnId>[]
+  onExtraColumnChange?: (extra: ExtraColumnDef<TExtraColumnId>['id'][]) => void
   data: TData[]
   tableId: string
 }
 
-export function DataTable<TData extends Player, TValue>({columns, data, tableId}: DataTableProps<TData, TValue>) {
-  const {download} = useGameDownload()
-  const [filter, setFilter] = useState<string | number>('');
+export interface ExtraColumnDef<TExtraColumnId> {
+  id: TExtraColumnId
+  displayed: boolean
+  label: string
+}
+
+export function DataTable<TData extends Player, TValue, TExtraColumnId extends string>({
+  columns,
+  extraColumns,
+  onExtraColumnChange,
+  data,
+  tableId,
+}: DataTableProps<TData, TValue, TExtraColumnId>) {
+  const { download } = useGameDownload()
+  const [filter, setFilter] = useState<string | number>('')
 
   const [sorting, setSorting] = React.useState<SortingState>([
     {
@@ -60,20 +82,20 @@ export function DataTable<TData extends Player, TValue>({columns, data, tableId}
     },
   })
 
-  const {t} = useTranslation('game')
+  const { t } = useTranslation('game')
 
   const hasIsOnline = table.getAllColumns().find((c) => c.id === 'is_online')
   const hasTeam = table.getAllColumns().find((c) => c.id === 'team')
-  const teamOptions = ["axis", "allies", "mixed", "unknown"] as const;
+  const teamOptions = ['axis', 'allies', 'mixed', 'unknown'] as const
 
   return (
     <div className="border w-full divide-y">
-      <div className="flex flex-row justify-between items-center p-2">
+      <div className="flex flex-row justify-between items-center p-2 flex-wrap gap-y-3">
         <div className="flex flex-row items-center gap-3">
           {hasIsOnline && (
             <Select onValueChange={(value) => table.getColumn('is_online')?.setFilterValue(value)}>
               <SelectTrigger className="w-24">
-                <SelectValue placeholder={t('playersTable.status')}/>
+                <SelectValue placeholder={t('playersTable.status')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('onlineStatusFilter.all')}</SelectItem>
@@ -85,18 +107,18 @@ export function DataTable<TData extends Player, TValue>({columns, data, tableId}
           {hasTeam && (
             <Select onValueChange={(value) => table.getColumn('team')?.setFilterValue(value)}>
               <SelectTrigger className="w-60">
-                <SelectValue placeholder={t('playersTable.team')}/>
+                <SelectValue placeholder={t('playersTable.team')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('onlineStatusFilter.all')}</SelectItem>
-                {teamOptions.map(option =>
+                {teamOptions.map((option) => (
                   <SelectItem value={option}>
                     <div className="flex">
-                      <TeamIndicator team={option as TeamEnum} className="block m-auto"/>
+                      <TeamIndicator team={option as TeamEnum} className="block m-auto" />
                       <div className="pl-3">{t(option)}</div>
                     </div>
                   </SelectItem>
-                )}
+                ))}
               </SelectContent>
             </Select>
           )}
@@ -104,28 +126,29 @@ export function DataTable<TData extends Player, TValue>({columns, data, tableId}
             <Fragment>
               <Input
                 className="grow max-w-60 border shadow rounded"
-                onChange={({target}) => {
-                  setFilter(target.value);
+                onChange={({ target }) => {
+                  setFilter(target.value)
                 }}
-                onKeyUp={({key}) => {
+                onKeyUp={({ key }) => {
                   if (key !== 'Enter' || filter === '' || filter === undefined) {
-                    return;
+                    return
                   }
-                  const orig = table.getColumn('player')?.getFilterValue() as [] ?? []
-                  table.getColumn('player')?.setFilterValue([...orig, filter]);
-                  setFilter('');
+                  const orig = (table.getColumn('player')?.getFilterValue() as []) ?? []
+                  table.getColumn('player')?.setFilterValue([...orig, filter])
+                  setFilter('')
                 }}
                 placeholder={`${t('searchPlayer')}...`}
                 value={filter}
                 type="text"
               />
               <TagList
-                value={((table.getColumn('player')?.getFilterValue() as []) ?? [])}
-                onChange={(v) => table.getColumn('player')?.setFilterValue(v)}/>
+                value={(table.getColumn('player')?.getFilterValue() as []) ?? []}
+                onChange={(v) => table.getColumn('player')?.setFilterValue(v)}
+              />
             </Fragment>
           )}
         </div>
-        <div>
+        <div className={'inline-flex gap-3'}>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -135,7 +158,7 @@ export function DataTable<TData extends Player, TValue>({columns, data, tableId}
                   size={'icon'}
                   onClick={() => download(data, `game-table-${tableId}`)}
                 >
-                  <Download size={20}/>
+                  <Download size={20} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -143,6 +166,36 @@ export function DataTable<TData extends Player, TValue>({columns, data, tableId}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+          {extraColumns && (
+            <Select>
+              <PlainSelectTrigger className={'rounded-md border border-input bg-background px-3 py-2 hover:bg-accent'}>
+                <List size={20} />
+              </PlainSelectTrigger>
+              <SelectContent className={'px-4 py-2 pl-2'}>
+                {extraColumns.map((column) => (
+                  <div>
+                    <Checkbox
+                      value={column.id}
+                      checked={column.displayed}
+                      onCheckedChange={(state) => {
+                        let displayed = extraColumns?.filter((c) => c.displayed).map((c) => c.id)
+                        if (state === true && !displayed.includes(column.id)) {
+                          displayed.push(column.id)
+                        } else if (state === false && displayed.includes(column.id)) {
+                          displayed = displayed.filter((c) => c !== column.id)
+                        }
+                        onExtraColumnChange?.(displayed)
+                      }}
+                    >
+                      <div className="flex">
+                        <div className="pl-3">{column.label}</div>
+                      </div>
+                    </Checkbox>
+                  </div>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
       <Table id={tableId}>
@@ -152,7 +205,7 @@ export function DataTable<TData extends Player, TValue>({columns, data, tableId}
               <TableHead className="w-4">{'#'}</TableHead>
               {headerGroup.headers.map((header) => {
                 return (
-                  <TableHead key={header.id} style={{width: header.column.getSize()}}>
+                  <TableHead key={header.id} style={{ width: header.column.getSize() }}>
                     {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 )
@@ -166,7 +219,7 @@ export function DataTable<TData extends Player, TValue>({columns, data, tableId}
               <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'} className="text-sm h-10">
                 <TableCell className="w-4">{index + 1}</TableCell>
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="py-0" style={{width: cell.column.getSize()}}>
+                  <TableCell key={cell.id} className="py-0" style={{ width: cell.column.getSize() }}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
