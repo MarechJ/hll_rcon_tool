@@ -1,6 +1,6 @@
 import { Button, IconButton, Input, Stack, styled } from "@mui/material";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
@@ -38,19 +38,25 @@ const PaginationNext = styled((props) => (
 });
 
 const PaginationEllipsis = styled((props) => (
-  <IconButton size="small" component={Link} {...props}>
+  <IconButton {...props}>
     <MoreHorizIcon />
   </IconButton>
 ))({
-  width: 20,
+  width: 40,
   height: 20,
   borderRadius: 0,
-  p: 2,
 });
 
-export default function NavPagination({ page, maxPages, ...props }) {
+export default function NavPagination({ page, maxPages, disabled, ...props }) {
   const [insertCustom, setInsertCustom] = useState(false);
   const [customPageValue, setCustomPageValue] = useState(page);
+  const search = useLocation().search;
+
+  const goToPage = (page) => {
+    const params = new URLSearchParams(search);
+    params.set("page", page);
+    return `?${params.toString()}`;
+  };
 
   const handleConfirmCustomClick = () => {
     setInsertCustom(false);
@@ -68,27 +74,28 @@ export default function NavPagination({ page, maxPages, ...props }) {
     );
   };
 
+  if (maxPages === 0) return null;
+
   return (
     <Stack
       direction={"row"}
-      justifyContent={"end"}
       alignItems={"center"}
-      gap={0.5}
-      flexGrow={1}
-      sx={{ px: 2 }}
+      gap={0.5}      
       {...props}
     >
-      {page > 1 && <PaginationPrevious to={`?page=${page - 1}`} />}
+      {page > 1 && <PaginationPrevious to={goToPage(page - 1)} />}
       <PaginationItem
         variant={page === 1 ? "contained" : "outlined"}
-        to={`?page=${1}`}
+        to={goToPage(1)}
+        disabled={disabled}
       >
         1
       </PaginationItem>
       {page === 1 && 2 < maxPages && (
         <PaginationItem
           variant={page === 2 ? "contained" : "outlined"}
-          to={`?page=${2}`}
+          to={goToPage(2)}
+          disabled={disabled}
         >
           2
         </PaginationItem>
@@ -96,7 +103,8 @@ export default function NavPagination({ page, maxPages, ...props }) {
       {page > 1 && page < maxPages && (
         <PaginationItem
           variant={page === page ? "contained" : "outlined"}
-          to={`?page=${page}`}
+          to={goToPage(page)}
+          disabled={disabled}
         >
           {page}
         </PaginationItem>
@@ -104,11 +112,9 @@ export default function NavPagination({ page, maxPages, ...props }) {
       {page !== maxPages - 1 && page !== maxPages && (
         <div>
           {!insertCustom ? (
-            <Button size={"small"} onClick={() => setInsertCustom(true)}>
-              <PaginationEllipsis />
-            </Button>
+              <PaginationEllipsis onClick={() => setInsertCustom(true)} />
           ) : (
-            <Stack direction={"row"} gap={0.5} alignItems={"center"}>
+            <Stack direction={"row"} gap={0.5} alignItems={"center"} sx={{ px: 2 }}>
               <Input
                 placeholder={"..."}
                 value={customPageValue}
@@ -121,26 +127,36 @@ export default function NavPagination({ page, maxPages, ...props }) {
               <Button
                 variant={"outlined"}
                 size={"small"}
-                sx={{ color: green[800], "&:hover": { color: green[600] } }}
+                sx={{
+                  color: green[800],
+                  "&:hover": { color: green[600] },
+                  width: 20,
+                  height: 20,
+                  borderRadius: 0,
+                }}
+                LinkComponent={Link}
+                to={goToPage(customPageValue)}
+                onClick={handleConfirmCustomClick}
+                disabled={disabled}
               >
-                <Link
-                  to={`?page=${customPageValue}`}
-                  onClick={handleConfirmCustomClick}
-                >
-                  <CheckIcon size={16} />
-                </Link>
+                <CheckIcon size={16} />
               </Button>
             </Stack>
           )}
         </div>
       )}
-      <PaginationItem
-        variant={page === maxPages ? "contained" : "outlined"}
-        to={`?page=${maxPages}`}
-      >
-        {maxPages}
-      </PaginationItem>
-      {page < maxPages && <PaginationNext to={`?page=${page + 1}`} />}
+      {maxPages > 1 && (
+        <PaginationItem
+          variant={page === maxPages ? "contained" : "outlined"}
+          to={goToPage(maxPages)}
+          disabled={disabled}
+        >
+          {maxPages}
+        </PaginationItem>
+      )}
+      {page < maxPages && (
+        <PaginationNext to={goToPage(page + 1)} disabled={disabled} />
+      )}
     </Stack>
   );
 }
