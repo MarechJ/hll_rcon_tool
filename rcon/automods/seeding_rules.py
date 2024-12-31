@@ -33,7 +33,7 @@ from rcon.types import GameStateType, GetDetailedPlayer, Roles
 from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig
 
 SEEDING_RULES_RESET_SECS = 120
-AUTOMOD_USERNAME = "SeedingRulesAutomod"
+AUTOMOD_USERNAME = "AutoMod_SeedingRules"
 SEEDING_RULE_NAMES = ["disallowed_roles", "disallowed_weapons", "enforce_cap_fight"]
 
 

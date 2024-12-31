@@ -26,7 +26,7 @@ from rcon.types import GameStateType, GetDetailedPlayer
 from rcon.user_config.auto_mod_level import AutoModLevelUserConfig, Roles
 
 LEVEL_THRESHOLDS_RESET_SECS = 120
-AUTOMOD_USERNAME = "LevelThresholdsAutomod"
+AUTOMOD_USERNAME = "AutoMod_LevelThresholds"
 
 
 class LevelThresholdsAutomod:
