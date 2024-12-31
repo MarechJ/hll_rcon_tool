@@ -34,7 +34,7 @@ export default function PlayerCard({ player }) {
     "MMM DD, YYYY"
   );
   const lastSeen = dayjs(player.last_seen_timestamp_ms).fromNow();
-  const country = player?.steaminfo?.profile?.country;
+  const country = player?.steaminfo?.country;
   const totalPlaytime = dayjs
     .duration(player.total_playtime_seconds * 1000)
     .asHours()
