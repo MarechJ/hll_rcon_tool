@@ -138,8 +138,8 @@ def test_populate_next_map(monkeypatch, map_name, expected):
     logger.error(f"{parse_layer(map_name)=}")
     monkeypatch.setattr(
         rcon.message_variables.Rcon,
-        "next_map",
-        parse_layer(map_name),
+        "get_next_map",
+        lambda x: parse_layer(map_name),
     )
     assert populate_message_variables([var.value]).get(var) == expected
 
