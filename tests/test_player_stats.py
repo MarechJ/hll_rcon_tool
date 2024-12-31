@@ -91,3 +91,29 @@ def test_detect_complex_inf():
     })
 
     assert p.detect_team() == PlayerTeamAssociation(side=Team.ALLIES, confidence=PlayerTeamConfidence.STRONG, ratio=100)
+
+
+def test_detect_ignores_some_other_side():
+    p = PlayerStats(weapons={
+        'M1 GARAND': 45,
+        'M1A1 THOMPSON': 4,
+        'MK2 GRENADE': 3,
+        'BAZOOKA': 2,
+    }, death_by_weapons={
+        'GEWEHR 43': 28,
+        'MP40': 7,
+        'KARABINER 98K': 7,
+        'FG42 x4': 6,
+        '150MM HOWITZER [sFH 18]': 5,
+        'STG44': 3,
+        'COAXIAL MG34 [Sd.Kfz.181 Tiger 1]': 2,
+        '88 KWK 36 L/56 [Sd.Kfz.181 Tiger 1]': 2,
+        'MG42': 1,
+        'SATCHEL': 1,
+        'BOMBING RUN': 1,
+        # this is a teamkill or a wrongly attributed kill or a kill by an explosion of a vehicle or something
+        # it should not result in a MIXED team confidence
+        'Sherman M4A3(75)W': 1,
+    })
+
+    assert p.detect_team() == PlayerTeamAssociation(side=Team.ALLIES, confidence=PlayerTeamConfidence.STRONG, ratio=99.12)

@@ -1,9 +1,11 @@
+import datetime
 from unittest import mock
 
 from rcon.game_logs import (
     BanTeamKillOnConnectUserConfig,
     auto_ban_if_tks_right_after_connection,
 )
+from rcon.types import StructuredLogLineWithMetaData
 from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectWhiteList, TimeFrame
 
 
@@ -32,7 +34,7 @@ def test_ban_excluded_weapon(*args):
         "player_name_1": "[ARC] DYDSO ★ツ",
         "player_id_1": 76561198091327692,
         "player_name_2": "Francky Mc Fly",
-        "player_id_1": 76561198091327692,
+        "player_id_2": 76561198091327692,
         "weapon": "None",
         "raw": "[646 ms (1612695641)] TEAM KILL: [ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
         "content": "[ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
@@ -49,7 +51,7 @@ def test_ban_excluded_weapon(*args):
             "player_name_2": None,
             "weapon": None,
             "player_id_1": None,
-            "player_id_1": None,
+            "player_id_2": None,
             "raw": "[600 ms (1612695428)] CONNECTED [ARC] DYDSO ★ツ",
             "content": "[ARC] DYDSO ★ツ",
             "server": "1",
@@ -69,14 +71,15 @@ def test_ban_excluded_weapon(*args):
 
 @mock.patch("rcon.game_logs.get_player_profile", autospec=True, return_value=None)
 def test_ban_success(*args):
-    tk_log = {
+    tk_log: StructuredLogLineWithMetaData = {
         "version": 1,
         "timestamp_ms": 1612695641000,
+        "event_time": datetime.datetime.fromtimestamp(1612695641),
         "action": "TEAM KILL",
         "player_name_1": "[ARC] DYDSO ★ツ",
         "player_id_1": "76561198091327692",
         "player_name_2": "Francky Mc Fly",
-        "player_id_1": "76561198091327692",
+        "player_id_2": "76561198091327692",
         "weapon": "G43",
         "raw": "[646 ms (1612695641)] TEAM KILL: [ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
         "content": "[ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
@@ -94,7 +97,7 @@ def test_ban_success(*args):
             "player_name_2": None,
             "weapon": None,
             "player_id_1": None,
-            "player_id_1": None,
+            "player_id_2": None,
             "raw": "[600 ms (1612695428)] CONNECTED [ARC] DYDSO ★ツ",
             "content": "[ARC] DYDSO ★ツ",
             "server": "1",
@@ -135,7 +138,7 @@ def test_ban_success_temp_ban(*args):
         "player_name_1": "[ARC] DYDSO ★ツ",
         "player_id_1": "76561198091327692",
         "player_name_2": "Francky Mc Fly",
-        "player_id_1": "76561198091327692",
+        "player_id_2": "76561198091327692",
         "weapon": "G43",
         "raw": "[646 ms (1612695641)] TEAM KILL: [ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
         "content": "[ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
@@ -153,7 +156,7 @@ def test_ban_success_temp_ban(*args):
             "player_name_2": None,
             "weapon": None,
             "player_id_1": None,
-            "player_id_1": None,
+            "player_id_2": None,
             "raw": "[600 ms (1612695428)] CONNECTED [ARC] DYDSO ★ツ",
             "content": "[ARC] DYDSO ★ツ",
             "server": "1",
@@ -196,7 +199,7 @@ def test_ban_ignored_kill(*args):
         "player_name_1": "[ARC] DYDSO ★ツ",
         "player_id_1": "76561198091327692",
         "player_name_2": "Francky Mc Fly",
-        "player_id_1": "76561198091327692",
+        "player_id_2": "76561198091327692",
         "weapon": "G43",
         "raw": "[646 ms (1612695641)] TEAM KILL: [ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
         "content": "[ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
@@ -210,7 +213,7 @@ def test_ban_ignored_kill(*args):
             "player_name_1": "[ARC] DYDSO ★ツ",
             "player_id_1": "76561198091327692",
             "player_name_2": "Francky Mc Fly",
-            "player_id_1": "76561198091327692",
+            "player_id_2": "76561198091327692",
             "weapon": "G43",
             "raw": "[646 ms (1612695641)] TEAM KILL: [ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
             "content": "[ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
@@ -225,7 +228,7 @@ def test_ban_ignored_kill(*args):
             "player_name_2": None,
             "weapon": None,
             "player_id_1": None,
-            "player_id_1": None,
+            "player_id_2": None,
             "raw": "[600 ms (1612695428)] CONNECTED [ARC] DYDSO ★ツ",
             "content": "[ARC] DYDSO ★ツ",
             "server": "1",
@@ -257,14 +260,15 @@ def test_ban_ignored_kill(*args):
 
 @mock.patch("rcon.game_logs.get_player_profile", autospec=True, return_value=None)
 def test_ban_count_one_death(*args):
-    tk_log = {
+    tk_log: StructuredLogLineWithMetaData = {
         "version": 1,
         "timestamp_ms": 1612695641000,
+        "event_time": datetime.datetime.fromtimestamp(1612695641),
         "action": "TEAM KILL",
         "player_name_1": "[ARC] DYDSO ★ツ",
         "player_id_1": "76561198091327692",
         "player_name_2": "Francky Mc Fly",
-        "player_id_1": "76561198091327692",
+        "player_id_2": "76561198091327692",
         "weapon": "G43",
         "raw": "[646 ms (1612695641)] TEAM KILL: [ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
         "content": "[ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
@@ -294,7 +298,7 @@ def test_ban_count_one_death(*args):
             "player_name_2": None,
             "weapon": None,
             "player_id_1": None,
-            "player_id_1": None,
+            "player_id_2": None,
             "raw": "[600 ms (1612695428)] CONNECTED [ARC] DYDSO ★ツ",
             "content": "[ARC] DYDSO ★ツ",
             "server": "1",
@@ -336,7 +340,7 @@ def test_ban_ignored_2_death(*args):
         "player_name_1": "[ARC] DYDSO ★ツ",
         "player_id_1": "76561198091327692",
         "player_name_2": "Francky Mc Fly",
-        "player_id_1": "76561198091327692",
+        "player_id_2": "76561198091327692",
         "weapon": "G43",
         "raw": "[646 ms (1612695641)] TEAM KILL: [ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
         "content": "[ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
@@ -377,7 +381,7 @@ def test_ban_ignored_2_death(*args):
             "player_name_2": None,
             "weapon": None,
             "player_id_1": None,
-            "player_id_1": None,
+            "player_id_2": None,
             "raw": "[600 ms (1612695428)] CONNECTED [ARC] DYDSO ★ツ",
             "content": "[ARC] DYDSO ★ツ",
             "server": "1",

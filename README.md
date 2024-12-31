@@ -148,21 +148,25 @@ Change most (but not all) game server/CRCON settings, including but not limited 
 
 ## Some images
 
+### Homepage
+
+![Homepage](/images/README_Home_2024-12-27.png)
+
 ### Manage your games and players in realtime
 
-![Live view page](/images/Rcon.png)
+![Live view page](/images/README_Views_Live_2024-12-27.png)
 
 ### Manage your players database
 
-![Player history overview](/images/Rcon3.png)
+![Player history overview](/images/README_Records_Players_2024-12-27.png)
 
 ### Automatic server settings
 
-![Settings](/images/Rcon2.png)
+![Settings](/images/README_Settings_General_2024-12-27.png)
 
 ### Permanent logs
 
-![Historical logs](/images/Rcon4.png)
+![Historical logs](/images/README_Records_GameLogs_2024-12-27.png)
 
 ## Features to come (maybe)
 
