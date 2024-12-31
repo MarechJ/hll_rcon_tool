@@ -1,6 +1,7 @@
 import { InputBase, Box, styled, IconButton } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
+import React from "react";
 
 const SearchWrapper = styled(Box)({
   display: "flex",
@@ -19,7 +20,7 @@ const StyledInput = styled(InputBase)({
   }
 })
 
-export function SearchInput({ ...props }) {
+export const SearchInput = React.forwardRef(({ ...props }, ref) => {
   const { sx, onClear, ...rest } = props;
   return (
     <SearchWrapper sx={sx}>
@@ -27,6 +28,7 @@ export function SearchInput({ ...props }) {
         <SearchIcon />
       </Box>
       <StyledInput
+        inputRef={ref}
         placeholder={props.placeholder ?? "Search"}
         inputProps={{
           "aria-label": props.placeholder?.toLowerCase() ?? "search",
@@ -36,4 +38,6 @@ export function SearchInput({ ...props }) {
       />
     </SearchWrapper>
   );
-}
+});
+
+SearchInput.displayName = 'SearchInput';
