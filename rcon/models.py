@@ -60,7 +60,7 @@ from rcon.utils import (
     mask_to_server_numbers,
     server_numbers_to_mask,
 )
-from rcon.weapons import WEAPON_SIDE_MAP
+from rcon.weapons import WEAPON_SIDE_MAP, ALL_WEAPONS, WeaponType
 
 logger = logging.getLogger(__name__)
 
@@ -625,6 +625,17 @@ class PlayerStats(Base):
         assoc['confidence'] = PlayerTeamConfidence.STRONG if assoc['ratio'] > 85 else PlayerTeamConfidence.MIXED
         return assoc
 
+    def calc_kills_by_type(self) -> dict[WeaponType, int]:
+        kills_by_type = defaultdict(int)
+
+        for weapon_name, count in self.weapons.items():
+            if weapon_name in ALL_WEAPONS:
+                weapon_type = ALL_WEAPONS[weapon_name]
+                kills_by_type[weapon_type.value] += count
+
+        return dict(kills_by_type)
+
+
     def to_dict(self) -> PlayerStatsType:
         # TODO: Fix typing
         return {
@@ -638,6 +649,7 @@ class PlayerStats(Base):
             ),
             "map_id": self.map_id,
             "kills": self.kills,
+            "kills_by_type": self.calc_kills_by_type(),
             "kills_streak": self.kills_streak,
             "deaths": self.deaths,
             "deaths_without_kill_streak": self.deaths_without_kill_streak,
