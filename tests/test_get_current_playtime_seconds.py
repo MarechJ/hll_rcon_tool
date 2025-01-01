@@ -22,6 +22,3 @@ def test_get_current_playtime_seconds():
     playtime = player.get_current_playtime_seconds()
     print(f"Playtime for ended session: {playtime} seconds")
     assert playtime == 0, "Playtime should be 0 for ended sessions"
-
-# Run the test function
-test_get_current_playtime_seconds()
