@@ -1,4 +1,4 @@
-import { Weapon, WeaponCategory } from './weapon'
+import {Weapon, WeaponCategory, WeaponType} from './weapon'
 
 type Team = {
   name: string
@@ -89,6 +89,7 @@ export interface PlayerBase {
   map_id: number
   kills: number
   kills_streak: number
+  kills_by_type: Record<WeaponType, number>
   deaths: number
   deaths_without_kill_streak: number
   teamkills: number
