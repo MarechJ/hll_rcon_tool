@@ -27,7 +27,7 @@ from rcon.types import GameStateType
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 
 LEADER_WATCH_RESET_SECS = 120
-AUTOMOD_USERNAME = "NoLeaderWatch"
+AUTOMOD_USERNAME = "AutoMod_NoLeaderWatch"
 
 
 class NoLeaderAutomod:
