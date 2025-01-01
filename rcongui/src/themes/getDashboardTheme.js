@@ -19,7 +19,7 @@ export default function getDashboardTheme(mode) {
       ...dataGridCustomizations,
       ...datePickersCustomizations,
       ...treeViewCustomizations,
-      // ...inputsCustomizations,
+      ...inputsCustomizations,
       ...dataDisplayCustomizations,
       ...feedbackCustomizations,
       ...navigationCustomizations,
