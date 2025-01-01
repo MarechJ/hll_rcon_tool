@@ -1,13 +1,14 @@
 'use client'
 
-import { ColumnDef } from '@tanstack/react-table'
-import { Player, PlayerTeamAssociation, PlayerWithStatus, TeamEnum } from "@/types/player";
-import { IconHeader as Header } from './column-header'
-import { Status } from './player-status'
-import { isPlayerWithStatus } from './player/utils'
-import { Button } from '@/components/ui/button'
-import { useTranslation } from 'react-i18next'
-import { TeamIndicator } from '@/components/game/statistics/team-indicator'
+import {ColumnDef} from '@tanstack/react-table'
+import {Player, PlayerTeamAssociation, PlayerWithStatus} from "@/types/player";
+import {IconHeader as Header} from './column-header'
+import {Status} from './player-status'
+import {isPlayerWithStatus} from './player/utils'
+import {Button} from '@/components/ui/button'
+import {useTranslation} from 'react-i18next'
+import {TeamIndicator} from '@/components/game/statistics/team-indicator'
+import {getTeamFromAssociation} from "@/components/game/statistics/utils";
 
 const threeDigitsWidth = 40
 const fourDigitsWidth = 50
@@ -156,14 +157,11 @@ const teamColumn: ColumnDef<Player | PlayerWithStatus> = {
       return true
     }
     const cellValue: PlayerTeamAssociation = row.getValue(columnId);
-    if (filterValue === 'mixed') {
-      return cellValue.confidence === 'mixed';
-    }
-    return cellValue.side === filterValue && cellValue.confidence === 'strong';
+    return getTeamFromAssociation(cellValue) === filterValue;
   },
   cell: ({row}) => {
     const player = row.original;
-    return <TeamIndicator team={player.team?.confidence === 'strong' ? player.team.side : TeamEnum.MIXED} className="block"/>;
+    return <TeamIndicator team={getTeamFromAssociation(player.team)} className="block"/>;
   },
 };
 

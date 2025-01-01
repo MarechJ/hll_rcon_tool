@@ -12,7 +12,7 @@ import {
 } from '@tanstack/react-table'
 
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table'
-import React, {Fragment, useState} from 'react'
+import React, {useEffect, useMemo, useState} from 'react'
 
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
 
@@ -21,10 +21,10 @@ import {useTranslation} from 'react-i18next'
 import {Button} from '@/components/ui/button'
 import {Download} from 'lucide-react'
 import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from '@/components/ui/tooltip'
+import {getTeamFromAssociation} from "@/components/game/statistics/utils";
 import useGameDownload from '@/hooks/use-game-download'
-import TagList from "@/components/tag-list";
-import {Input} from "@/components/ui/input";
 import {TeamIndicator} from "@/components/game/statistics/team-indicator";
+import SelectBox from "@/components/ui/select-box";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -34,7 +34,22 @@ interface DataTableProps<TData, TValue> {
 
 export function DataTable<TData extends Player, TValue>({columns, data, tableId}: DataTableProps<TData, TValue>) {
   const {download} = useGameDownload()
-  const [filter, setFilter] = useState<string | number>('');
+
+  const [playerFilter, setPlayerFilter] = useState<string[]>([]);
+
+  useEffect(() => {
+    table.getColumn('player')?.setFilterValue(playerFilter);
+  }, [playerFilter]);
+
+  // Adding selected players as option to keep the selected options visible when switching between different games
+  // Otherwise selected option would be not visible e.g. a selected player is in game1, but not in game2
+  const playerFilterOptions = data
+    .map(player => ({value: player.player, label: player.player}))
+    .concat(
+      playerFilter
+        .filter(name => !data.some(player => player.player === name))
+        .map(name => ({value: name, label: name}))
+    );
 
   const [sorting, setSorting] = React.useState<SortingState>([
     {
@@ -65,11 +80,12 @@ export function DataTable<TData extends Player, TValue>({columns, data, tableId}
   const hasIsOnline = table.getAllColumns().find((c) => c.id === 'is_online')
   const hasTeam = table.getAllColumns().find((c) => c.id === 'team')
   const teamOptions = ["axis", "allies", "mixed", "unknown"] as const;
+  const teamCounts = useMemo(() => teamOptions.map(team => data.filter(player => getTeamFromAssociation(player.team) === team).length), [data]);
 
   return (
     <div className="border w-full divide-y">
-      <div className="flex flex-row justify-between items-center p-2">
-        <div className="flex flex-row items-center gap-3">
+      <div className="flex flex-row justify-between items-start p-2 gap-3">
+        <div className="flex flex-row items-start gap-3">
           {hasIsOnline && (
             <Select onValueChange={(value) => table.getColumn('is_online')?.setFilterValue(value)}>
               <SelectTrigger className="w-24">
@@ -88,12 +104,16 @@ export function DataTable<TData extends Player, TValue>({columns, data, tableId}
                 <SelectValue placeholder={t('playersTable.team')}/>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{t('onlineStatusFilter.all')}</SelectItem>
-                {teamOptions.map(option =>
+                <SelectItem value="all">
+                  <div className={"pl-5"}>
+                    {t('onlineStatusFilter.all')} ({data.length})
+                  </div>
+                </SelectItem>
+                {teamOptions.map((option, index) =>
                   <SelectItem value={option}>
                     <div className="flex">
                       <TeamIndicator team={option as TeamEnum} className="block m-auto"/>
-                      <div className="pl-3">{t(option)}</div>
+                      <div className="pl-3">{t(option)} ({teamCounts[index]})</div>
                     </div>
                   </SelectItem>
                 )}
@@ -101,28 +121,13 @@ export function DataTable<TData extends Player, TValue>({columns, data, tableId}
             </Select>
           )}
           {table.getColumn('player') && (
-            <Fragment>
-              <Input
-                className="grow max-w-60 border shadow rounded"
-                onChange={({target}) => {
-                  setFilter(target.value);
-                }}
-                onKeyUp={({key}) => {
-                  if (key !== 'Enter' || filter === '' || filter === undefined) {
-                    return;
-                  }
-                  const orig = table.getColumn('player')?.getFilterValue() as [] ?? []
-                  table.getColumn('player')?.setFilterValue([...orig, filter]);
-                  setFilter('');
-                }}
-                placeholder={`${t('searchPlayer')}...`}
-                value={filter}
-                type="text"
-              />
-              <TagList
-                value={((table.getColumn('player')?.getFilterValue() as []) ?? [])}
-                onChange={(v) => table.getColumn('player')?.setFilterValue(v)}/>
-            </Fragment>
+            <SelectBox
+              options={playerFilterOptions}
+              multiple
+              value={playerFilter}
+              onChange={(values) => Array.isArray(values) && setPlayerFilter(values)}
+              placeholder={`${t('searchPlayer')}...`}
+            />
           )}
         </div>
         <div>
