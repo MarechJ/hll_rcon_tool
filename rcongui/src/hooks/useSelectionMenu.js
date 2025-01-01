@@ -1,8 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 
 export const useSelectionMenu = (options) => {
   const [search, setSearch] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const searchInputRef = useRef(null);
 
   const sortedOptions = useMemo(() => {
     if (!isOpen) return [];
@@ -26,6 +27,9 @@ export const useSelectionMenu = (options) => {
 
   const onOpen = () => {
     setIsOpen(true);
+    setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 0);
   };
 
   const onClose = () => {
@@ -40,5 +44,6 @@ export const useSelectionMenu = (options) => {
     filteredOptions,
     onOpen,
     onClose,
+    searchInputRef,
   };
 };
