@@ -25,7 +25,7 @@ export const AddVipFormFields = ({ control, errors, setValue, getValues }) => {
           style={{ display: "block", width: "100%", marginBottom: 4 }}
           onClick={() => setValue('expiration', dayjs().add(15, "minutes"))}
         >
-          Help to join!
+          Help to skip the queue!
         </Button>
         {presetTimes.map(([amount, unit], index) => (
           <TimePickerButtons
@@ -33,7 +33,9 @@ export const AddVipFormFields = ({ control, errors, setValue, getValues }) => {
             amount={amount}
             unit={unit}
             expirationTimestamp={getValues()?.expiration ?? dayjs()}
-            setExpirationTimestamp={(value) => { setValue('expiration', value, { shouldTouch: true }) }}
+            // shouldValidate is needed to trigger rerendering
+            // so the getValues()?.expiration is updated
+            setExpirationTimestamp={(value) => { setValue('expiration', value, { shouldTouch: true, shouldValidate: true }) }}
           />
         ))}
         <Button
@@ -43,7 +45,7 @@ export const AddVipFormFields = ({ control, errors, setValue, getValues }) => {
           style={{ display: "block", width: "100%" }}
           onClick={() => setValue('expiration', dayjs("3000-01-01T00:00:00+00:00"))}
         >
-          Indefinite
+          Never expires
         </Button>
       </Box>
     </Stack>

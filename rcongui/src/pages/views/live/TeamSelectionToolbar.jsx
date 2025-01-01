@@ -8,77 +8,51 @@ import { levelToRank } from "@/utils/lib";
 import TableAddons from "@/components/table/TableAddons";
 
 export const TeamSelectionToolbar = ({ table, teamData }) => {
-  const handleTeamSelect = (selectedTeam) => {
-    if (!selectedTeam) return;
-
+  // handleGenericSelect is a generic function that allows for the selection of a row based on a key and value.
+  // It is used to select rows based on the team, unit, country, role, and rank.
+  const handleGenericSelect = (key, value, rowTransform = (row) => row.original[key]) => {
+    const allRows = table.getRowModel().rows;
+    const matchingRows = allRows.filter(row => rowTransform(row) === value);
+    
     table.setRowSelection((prev) => {
-      const allRows = table.getRowModel().rows;
-
-      // If any row of this team is already selected, deselect all team members
-      const hasSelectedTeamMembers = allRows.some(
-        (row) => row.original.team === selectedTeam && prev[row.id]
-      );
-
+      const hasSomeNotSelected = matchingRows.some(row => !prev[row.id]);
+      
       return allRows.reduce((acc, row) => {
-        acc[row.id] =
-          row.original.team === selectedTeam
-            ? !hasSelectedTeamMembers
-            : prev[row.id];
+        acc[row.id] = rowTransform(row) === value ? hasSomeNotSelected : prev[row.id];
         return acc;
       }, {});
     });
+  };
+
+  const handleTeamSelect = (selectedTeam) => {
+    if (!selectedTeam) return;
+    handleGenericSelect('team', selectedTeam);
   };
 
   const handleUnitSelect = (selectedUnit) => {
+    if (!selectedUnit) return;
     const getIdentifier = (o) => `${o.team}-${o.unit_name}`;
-    const squad = teamData[selectedUnit.team].squads[selectedUnit.unit_name];
-    if (!squad) return;
-    const players = squad.players;
-    table.setRowSelection((prev) => {
-      const allRows = table.getRowModel().rows;
-      const hasSomeNotSelected = players.some(
-        (player) => !prev[player.player_id]
-      );
-
-      return allRows.reduce((acc, row) => {
-        acc[row.original.player_id] =
-          getIdentifier(row.original) === getIdentifier(selectedUnit)
-            ? hasSomeNotSelected
-            : prev[row.original.player_id];
-        return acc;
-      }, {});
-    });
+    handleGenericSelect(
+      'unit', 
+      `${selectedUnit.team}-${selectedUnit.unit_name}`,
+      row => getIdentifier(row.original)
+    );
   };
 
   const handleCountrySelect = (selectedCountry) => {
-    const { country } = selectedCountry;
-    const allRows = table.getRowModel().rows;
-    const countryRows = allRows.filter(
-      (row) => row.original.country === country
-    );
-    table.setRowSelection((prev) => {
-      const hasSomeNotSelected = countryRows.some((row) => !prev[row.id]);
-
-      return allRows.reduce((acc, row) => {
-        acc[row.id] =
-          row.original.country === country ? hasSomeNotSelected : prev[row.id];
-        return acc;
-      }, {});
-    });
+    handleGenericSelect('country', selectedCountry.country);
   };
 
   const handleRoleSelect = (selectedRole) => {
-    const { role } = selectedRole;
-    const allRows = table.getRowModel().rows;
-    const roleRows = allRows.filter((row) => row.original.role === role);
-    table.setRowSelection((prev) => {
-      const hasSomeNotSelected = roleRows.some((row) => !prev[row.id]);
-      return allRows.reduce((acc, row) => {
-        acc[row.id] =
-          row.original.role === role ? hasSomeNotSelected : prev[row.id];
-        return acc;
-      }, {});
-    });
+    handleGenericSelect('role', selectedRole.role);
+  };
+
+  const handleRankSelect = (selectedRank) => {
+    handleGenericSelect(
+      'rank', 
+      selectedRank.rank,
+      row => levelToRank(row.original.level)
+    );
   };
 
   const countryOptions = useMemo(() => {
@@ -185,7 +159,7 @@ export const TeamSelectionToolbar = ({ table, teamData }) => {
         roleOptions={roleOptions}
         onRoleSelect={handleRoleSelect}
       />
-      <RankSelectionMenu rankOptions={rankOptions} onRankSelect={() => {}} />
+      <RankSelectionMenu rankOptions={rankOptions} onRankSelect={handleRankSelect} />
     </TableAddons>
   );
 };

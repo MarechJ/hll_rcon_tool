@@ -76,10 +76,10 @@ export default function LogsTable({
     }));
   };
 
-  const handleClientPlayerFilterChange = (actionName) => {
+  const handleClientPlayerFilterChange = (playerName) => {
     setPlayerOptions((prev) => ({
       ...prev,
-      [actionName]: !prev[actionName],
+      [playerName]: !prev[playerName],
     }));
   };
 
@@ -114,9 +114,8 @@ export default function LogsTable({
         acc[player] = false;
         return acc;
       }, {}) ?? {};
-
     setPlayerOptions((prev) => {
-      for (const [name, selected] in prev) {
+      for (const [name, selected] of Object.entries(prev)) {
         if (name in incomingPlayers) {
           incomingPlayers[name] = selected;
         }
@@ -137,6 +136,7 @@ export default function LogsTable({
       .filter(([_, selected]) => selected)
       .map(([name]) => name);
     table.getColumn("player_name_1")?.setFilterValue(selectedPlayers);
+    table.getColumn("player_name_2")?.setFilterValue(selectedPlayers);
   }, [playerOptions]);
 
   const highlightedActionOptions = Object.entries(logActions).reduce((acc, [name]) => {
