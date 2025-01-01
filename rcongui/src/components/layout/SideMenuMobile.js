@@ -1,15 +1,15 @@
-import Button from "@mui/material/Button";
-import Divider from "@mui/material/Divider";
-import Drawer, { drawerClasses } from "@mui/material/Drawer";
-import Stack from "@mui/material/Stack";
-import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
-import MenuContent from "./MenuContent";
-import SelectContent from "./SelectContent";
-import { Box, List, ListItem, ListItemText } from "@mui/material";
-import { Form } from "react-router-dom";
-import { navMenus } from "../Header/nav-data";
-import NewReleases from "./NewReleases";
-import ConnectionStatus from "./ConnectionStatus";
+import Button from '@mui/material/Button'
+import Divider from '@mui/material/Divider'
+import Drawer, { drawerClasses } from '@mui/material/Drawer'
+import Stack from '@mui/material/Stack'
+import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
+import MenuContent from './MenuContent'
+import SelectContent from './SelectContent'
+import { Box, List, ListItem, ListItemText } from '@mui/material'
+import { Form } from 'react-router-dom'
+import { navMenus } from '../Header/nav-data'
+import ConnectionStatus from './sidebar/ConnectionStatus'
+import AboutDialog from './sidebar/About'
 
 const MobileDrawer = ({ open, toggleDrawer, children }) => {
   return (
@@ -50,7 +50,7 @@ function AdminSideMenuMobile({ open, toggleDrawer }) {
               primary={<ConnectionStatus />}
             />
           </ListItem>
-          <NewReleases />
+          <AboutDialog />
         </List>
         <Divider />
         <Box
