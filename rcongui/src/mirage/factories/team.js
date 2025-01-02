@@ -2,6 +2,16 @@ import { faker } from '@faker-js/faker';
 import { generateSquad } from './squad';
 import { generatePlayer } from './player';
 
+const SPECIAL_USERNAMES = [
+  'X',  // Single character
+  '[VLK]Player',  // Starts with non-alphanumeric
+  '*StarPlayer*',  // Starts with non-alphanumeric
+  '_UnderscoreUser',  // Starts with non-alphanumeric
+  '~TildeUser',  // Starts with non-alphanumeric
+  '. . .', // Only dots and spaces
+  '[', // Single bracket
+];
+
 // Generate initial team state
 export const generateTeam = () => {
   const state = {
@@ -20,6 +30,15 @@ export const generateTeam = () => {
     deaths: 0,
     count: 0
   };
+
+  // Add special username players to random squads
+  SPECIAL_USERNAMES.forEach(specialName => {
+    const randomSquad = faker.helpers.arrayElement(Object.keys(state.squads));
+    const squadData = state.squads[randomSquad];
+    const specialPlayer = generatePlayer(randomSquad, squadData.type);
+    specialPlayer.name = specialName;
+    squadData.players.push(specialPlayer);
+  });
 
   // Calculate team totals
   Object.values(state.squads).forEach(squad => {
