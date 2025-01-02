@@ -14,7 +14,7 @@ const Table = ({ table, config = {}, renderSubComponent }) => {
         scrollbarWidth: "thin",
       }}
     >
-      <StyledTable density={config.density} fontSize={config.fontSize}>
+      <StyledTable density={config.density} fontSize={config.fontSize} data-expanded-view={String(config.expandedView)}>
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
             <StyledTr key={headerGroup.id}>

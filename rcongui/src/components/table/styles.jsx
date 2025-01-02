@@ -46,8 +46,8 @@ export function getDensityPadding(density, theme) {
   switch (density) {
     case "dense":
       return {
-        paddingRight: theme.spacing(0.25),
-        paddingLeft: theme.spacing(0.25),
+        paddingRight: theme.spacing(0.5),
+        paddingLeft: theme.spacing(0.5),
         paddingTop: theme.spacing(0.25),
         paddingBottom: theme.spacing(0.25),
       };
@@ -109,6 +109,8 @@ export const StyledTh = styled("th", {
     width: getVariantWidth(variant),
     minWidth: getVariantMinWidth(variant),
     textAlign: variant === "icon" ? "center" : "left",
+    paddingLeft: variant === "icon" ? 0 : undefined,
+    paddingRight: variant === "icon" ? 0 : undefined,
   };
 });
 

@@ -6,6 +6,8 @@ import { useState } from "react";
 import { useStorageState } from "@/hooks/useStorageState";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import SettingsIcon from "@mui/icons-material/Settings"
+import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
+import UnfoldLessIcon from '@mui/icons-material/UnfoldLess';
 import { TeamSelectionToolbar } from "./TeamSelectionToolbar";
 import { ActionMenuButton } from "@/features/player-action/ActionMenu";
 import { generatePlayerActions } from "@/features/player-action/actions";
@@ -20,6 +22,7 @@ const PlayersTable = ({ table, teamData, selectedPlayers }) => {
     {
       density: "normal",
       fontSize: "normal",
+      expandedView: false,
     }
   );
 
@@ -69,6 +72,19 @@ const PlayersTable = ({ table, teamData, selectedPlayers }) => {
           />
           <IconButton
             size="small"
+            aria-label={tableConfig.expandedView ? "Collapse" : "Expand"}
+            aria-description={tableConfig.expandedView ? "Hide extra details" : "Show extra details"}
+            sx={{ p: 0.5, borderRadius: 0 }}
+            onClick={() => {
+              setTableConfig((prev) => ({ ...prev, expandedView: !prev.expandedView }));
+            }}
+          >
+            {tableConfig.expandedView ? <UnfoldLessIcon sx={{ fontSize: 16 }} /> : <UnfoldMoreIcon sx={{ fontSize: 16 }} />}  
+          </IconButton>
+          <IconButton
+            size="small"
+            aria-label="Table settings"
+            aria-description="Configure the table"
             sx={{ p: 0.5, borderRadius: 0 }}
             onClick={handleTableConfigClick}
           >
