@@ -174,6 +174,8 @@ class PlayerID(Base):
 
     def get_current_playtime_seconds(self) -> int:
         if self.sessions:
+            if self.sessions[0].end:
+                return 0
             start = self.sessions[0].start or self.sessions[0].created
             return int((datetime.now() - start).total_seconds())
         return 0

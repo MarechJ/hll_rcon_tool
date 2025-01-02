@@ -1,8 +1,8 @@
-import { Player, PlayerWithStatus, TeamEnum } from '@/types/player'
+import {Player, PlayerWithStatus} from '@/types/player'
 import React from 'react'
-import { Cell, ComposedChart, Label, ReferenceLine, ResponsiveContainer, Scatter, XAxis, YAxis } from 'recharts'
-import { getColorForTeam } from '@/components/game/statistics/utils'
-import { useTranslation } from 'react-i18next'
+import {Cell, ComposedChart, Label, ReferenceLine, ResponsiveContainer, Scatter, XAxis, YAxis} from 'recharts'
+import {getColorForTeam, getTeamFromAssociation} from '@/components/game/statistics/utils'
+import {useTranslation} from 'react-i18next'
 import colors from 'tailwindcss/colors'
 
 export function KillDeathChart({stats, handlePlayerClick}: {
@@ -50,7 +50,7 @@ export function KillDeathChart({stats, handlePlayerClick}: {
           )}
           <Scatter data={stats}>
             {stats.map((player, index) => (
-              <Cell key={`cell-${index}`} fill={getColorForTeam(player.team.confidence === 'strong' ? player.team.side : TeamEnum.MIXED)} onClick={() => handlePlayerClick(player.player_id)} className="cursor-pointer"/>
+              <Cell key={`cell-${index}`} fill={getColorForTeam(getTeamFromAssociation(player.team))} onClick={() => handlePlayerClick(player.player_id)} className="cursor-pointer"/>
             ))}
           </Scatter>
 

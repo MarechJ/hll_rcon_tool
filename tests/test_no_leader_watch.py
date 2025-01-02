@@ -1197,7 +1197,7 @@ def test_watcher(team_view):
             role="heavymachinegunner",
             lvl=88,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1211,7 +1211,7 @@ def test_watcher(team_view):
             role="rifleman",
             lvl=82,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1225,7 +1225,7 @@ def test_watcher(team_view):
             role="assault",
             lvl=69,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1239,7 +1239,7 @@ def test_watcher(team_view):
             role="engineer",
             lvl=59,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1253,7 +1253,7 @@ def test_watcher(team_view):
             role="antitank",
             lvl=71,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1267,7 +1267,7 @@ def test_watcher(team_view):
             role="rifleman",
             lvl=102,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1281,7 +1281,7 @@ def test_watcher(team_view):
             role="assault",
             lvl=110,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1295,7 +1295,7 @@ def test_watcher(team_view):
             role="officer",
             lvl=43,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1309,7 +1309,7 @@ def test_watcher(team_view):
             role="engineer",
             lvl=170,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1323,7 +1323,7 @@ def test_watcher(team_view):
             role="antitank",
             lvl=129,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1337,7 +1337,7 @@ def test_watcher(team_view):
             role="heavymachinegunner",
             lvl=67,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1351,7 +1351,7 @@ def test_watcher(team_view):
             role="spotter",
             lvl=123,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1365,7 +1365,7 @@ def test_watcher(team_view):
             role="sniper",
             lvl=184,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1572,7 +1572,7 @@ def test_watcher_no_kick(team_view):
             role="heavymachinegunner",
             lvl=88,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1586,7 +1586,7 @@ def test_watcher_no_kick(team_view):
             role="rifleman",
             lvl=82,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1600,7 +1600,7 @@ def test_watcher_no_kick(team_view):
             role="assault",
             lvl=69,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1614,7 +1614,7 @@ def test_watcher_no_kick(team_view):
             role="engineer",
             lvl=59,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1628,7 +1628,7 @@ def test_watcher_no_kick(team_view):
             role="antitank",
             lvl=71,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1642,7 +1642,7 @@ def test_watcher_no_kick(team_view):
             role="rifleman",
             lvl=102,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1656,7 +1656,7 @@ def test_watcher_no_kick(team_view):
             role="assault",
             lvl=110,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1670,7 +1670,7 @@ def test_watcher_no_kick(team_view):
             role="officer",
             lvl=43,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1684,7 +1684,7 @@ def test_watcher_no_kick(team_view):
             role="engineer",
             lvl=170,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1698,7 +1698,7 @@ def test_watcher_no_kick(team_view):
             role="antitank",
             lvl=129,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1712,7 +1712,7 @@ def test_watcher_no_kick(team_view):
             role="heavymachinegunner",
             lvl=67,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1726,7 +1726,7 @@ def test_watcher_no_kick(team_view):
             role="automaticrifleman",
             lvl=10,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1740,7 +1740,7 @@ def test_watcher_no_kick(team_view):
             role="spotter",
             lvl=123,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1754,7 +1754,7 @@ def test_watcher_no_kick(team_view):
             role="sniper",
             lvl=184,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1827,7 +1827,7 @@ def test_watcher_resets(team_view):
             role="heavymachinegunner",
             lvl=88,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1841,7 +1841,7 @@ def test_watcher_resets(team_view):
             role="rifleman",
             lvl=82,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1855,7 +1855,7 @@ def test_watcher_resets(team_view):
             role="assault",
             lvl=69,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1869,7 +1869,7 @@ def test_watcher_resets(team_view):
             role="engineer",
             lvl=59,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1883,7 +1883,7 @@ def test_watcher_resets(team_view):
             role="antitank",
             lvl=71,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1897,7 +1897,7 @@ def test_watcher_resets(team_view):
             role="rifleman",
             lvl=102,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1911,7 +1911,7 @@ def test_watcher_resets(team_view):
             role="assault",
             lvl=110,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1925,7 +1925,7 @@ def test_watcher_resets(team_view):
             role="officer",
             lvl=43,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1939,7 +1939,7 @@ def test_watcher_resets(team_view):
             role="engineer",
             lvl=170,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1953,7 +1953,7 @@ def test_watcher_resets(team_view):
             role="antitank",
             lvl=129,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1967,7 +1967,7 @@ def test_watcher_resets(team_view):
             role="heavymachinegunner",
             lvl=67,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1981,7 +1981,7 @@ def test_watcher_resets(team_view):
             role="automaticrifleman",
             lvl=10,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,

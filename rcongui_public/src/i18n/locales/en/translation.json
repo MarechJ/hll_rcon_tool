@@ -5,6 +5,8 @@
   "open": "Open",
   "close": "Close",
   "toggle": "Toggle",
+  "search": "Search",
+  "noResultsFound": "No results found.",
   "toggleTheme": "Toggle Theme",
   "selectLanguage": "Select Language",
   "get-started": "Get Started",

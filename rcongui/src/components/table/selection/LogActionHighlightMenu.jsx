@@ -40,6 +40,7 @@ export const LogActionHighlightMenu = ({
     onOpen,
     onClose,
     filteredOptions,
+    searchInputRef,
   } = useSelectionMenu(actionOptions);
 
   return (
@@ -103,6 +104,7 @@ export const LogActionHighlightMenu = ({
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder="Search actions"
+        ref={searchInputRef}
       />
       {filteredOptions.map((actionName) => (
         <ListItem
