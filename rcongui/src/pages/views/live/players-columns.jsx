@@ -1,6 +1,7 @@
 import {
   Box,
   Checkbox,
+  IconButton,
   Stack,
   styled,
   Tooltip,
@@ -14,11 +15,13 @@ import { generatePlayerActions } from "@/features/player-action/actions";
 import { CountryFlag } from "@/components/shared/CountryFlag";
 import {
   getPlayerTier,
+  getSteamProfileUrl,
   hasRecentWarnings,
+  isSteamPlayer,
   teamToNation,
   tierColors,
 } from "@/utils/lib";
-import { SortableHeader } from "@/components/table/styles";
+import { SortableHeader, TextButton } from "@/components/table/styles";
 import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";
 import Emoji from "@/components/shared/Emoji";
 
@@ -26,9 +29,9 @@ export const Square = styled(Box)(({ theme }) => ({
   display: "flex",
   alignItems: "start",
   justifyContent: "center",
-  width: 16,
-  height: 16,
-  lineHeight: "16px",
+  width: "1em",
+  height: "1em",
+  lineHeight: "1em",
   fontWeight: "bold",
   backgroundColor: theme.palette.background.paper,
 }));
@@ -50,6 +53,9 @@ const Center = styled(Box)(() => ({
   justifyItems: "center",
   alignContent: "center",
 }));
+
+const iconFontSize = "1em";
+const emojiFontSize = "0.85em";
 
 export const columns = [
   {
@@ -156,7 +162,7 @@ export const columns = [
     aggregationFn: "mean",
     cell: ({ row }) => {
       return (
-        <LevelColored level={row.original.level}>
+        <LevelColored level={row.original.level} sx={{ paddingLeft: "0.75em" }}>
           {row.original.level}
         </LevelColored>
       );
@@ -180,8 +186,9 @@ export const columns = [
           orientation="horizontal"
           disableRipple={true}
           sx={{
-            width: 12,
-            height: 12,
+            width: "1em",
+            height: "1em",
+            fontSize: "1em",
           }}
         />
       );
@@ -195,17 +202,11 @@ export const columns = [
     header: SortableHeader("Name"),
     accessorKey: "name",
     cell: ({ row }) => {
+      const { openWithId } = usePlayerSidebar();
       return (
-        <Box
-          sx={{
-            textOverflow: "ellipsis",
-            overflow: "hidden",
-            textWrap: "nowrap",
-            width: "20ch",
-          }}
-        >
-          <span>{row.original.name}</span>
-        </Box>
+        <TextButton onClick={() => openWithId(row.original.player_id)}>
+          {row.original.name}
+        </TextButton>
       );
     },
   },
@@ -215,7 +216,7 @@ export const columns = [
     accessorKey: "profile.received_actions",
     cell: ({ row }) => {
       return hasRecentWarnings(row.original.profile.received_actions) ? (
-        <Warning sx={{ fontSize: 12, color: yellow["500"] }} />
+        <Warning sx={{ color: (theme) => theme.palette.mode === "dark" ? yellow["500"] : "inherit", fontSize: iconFontSize }} />
       ) : null;
     },
     meta: {
@@ -228,11 +229,8 @@ export const columns = [
     accessorKey: "profile.watchlist",
     cell: ({ row }) => {
       return row.original.profile?.watchlist && row.original.profile?.watchlist?.is_watched ? (
-        <RemoveRedEyeIcon sx={{ fontSize: 12 }} />
+        <RemoveRedEyeIcon sx={{ fontSize: iconFontSize }} />
       ) : null;
-    },
-    meta: {
-      variant: "icon",
     },
   },
   {
@@ -244,9 +242,6 @@ export const columns = [
         <CountryFlag country={row.original.country} />
       ) : null;
     },
-    meta: {
-      variant: "icon",
-    },
   },
   {
     id: "vip",
@@ -254,11 +249,8 @@ export const columns = [
     accessorKey: "is_vip",
     cell: ({ row }) => {
       return row.original.is_vip ? (
-        <Star sx={{ fontSize: 12, color: yellow["500"] }} />
+        <Star sx={{ color: (theme) => theme.palette.mode === "dark" ? yellow["500"] : "inherit", fontSize: iconFontSize }} />
       ) : null;
-    },
-    meta: {
-      variant: "icon",
     },
   },
   {
@@ -277,7 +269,7 @@ export const columns = [
             </Tooltip>
           ))}
           {flags.length - flagsCount > 0 ? (
-            <Typography variant="caption" sx={{ fontSize: 12, pr: 0.5 }}>{`+${flags.length - flagsCount}`}</Typography>
+            <Typography variant="caption" sx={{ pr: 0.5, fontSize: emojiFontSize }}>{`+${flags.length - flagsCount}`}</Typography>
           ) : null}
         </Stack>
       );
