@@ -3,9 +3,12 @@ import { getSquadLeaderRole, getAvailableRoles } from '../data/roles';
 import { generateProfile } from './profile';
 
 export const generatePlayer = (squadName, squadType, isLeader = false) => {
-  const name = faker.internet.userName();
-  const playerId = faker.string.numeric(17);
-  
+  const name = faker.internet.username();
+
+  const steamId = "7656119" + faker.string.numeric(10);
+  const otherId = faker.string.alphanumeric({ length: 32, casing: "lower" });
+  const playerId = faker.helpers.arrayElement([steamId, otherId]);
+
   let role;
   if (isLeader) {
     role = getSquadLeaderRole(squadType);
@@ -17,7 +20,7 @@ export const generatePlayer = (squadName, squadType, isLeader = false) => {
   return {
     name,
     player_id: playerId,
-    country: faker.helpers.arrayElement([null, "US", "DE", "RU", "CZ", "FR", "GB"]),
+    country: faker.helpers.arrayElement([null, faker.location.countryCode()]),
     steam_bans: null,
     profile: generateProfile(playerId, name),
     is_vip: faker.datatype.boolean(),

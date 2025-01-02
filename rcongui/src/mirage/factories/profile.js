@@ -15,7 +15,7 @@ const generateNames = (playerId, currentName) => {
   if (faker.datatype.boolean(0.3)) {
     const oldName = {
       id: faker.number.int({ min: 1, max: 30000 }),
-      name: faker.internet.userName(),
+      name: faker.internet.username(),
       player_id: playerId,
       created: faker.date.past({ years: 1 }).toISOString(),
       last_seen: faker.date.recent({ days: 90 }).toISOString()
@@ -31,7 +31,7 @@ const generateFlags = () => {
     const numFlags = faker.number.int({ min: 1, max: 3 });
     return Array(numFlags).fill(null).map(() => ({
       id: faker.number.int({ min: 1, max: 100 }),
-      flag: faker.helpers.arrayElement(['😍', '🎮', '⭐', '🎯', '🏆', '👑']),
+      flag: faker.internet.emoji(),
       comment: faker.helpers.arrayElement(['', 'Good player', 'Regular']),
       modified: faker.date.recent().toISOString()
     }));
@@ -69,7 +69,7 @@ const generateWatchlist = (playerId) => {
         "Team killing history",
         "Under observation"
       ]),
-      by: faker.internet.userName(),
+      by: faker.internet.username(),
       count: faker.number.int({ min: 0, max: 10 })
     };
   }
@@ -93,10 +93,10 @@ const generateReceivedActions = () => {
         by = "SeedingRulesAutomod";
       } else if (actionType === "MESSAGE") {
         reason = faker.helpers.arrayElement(ADMIN_MESSAGES);
-        by = faker.internet.userName();
+        by = faker.internet.username();
       } else {
         reason = faker.helpers.arrayElement(PUNISHMENT_REASONS);
-        by = faker.internet.userName();
+        by = faker.internet.username();
       }
 
       return {
@@ -108,6 +108,74 @@ const generateReceivedActions = () => {
     }).sort((a, b) => new Date(b.time) - new Date(a.time));
   }
   return [];
+};
+
+const generateSteamInfo = (playerId, type = "public") => {
+  const baseInfo = {
+    id: faker.number.int({ min: 1, max: 30000 }),
+    created: faker.date.past().toISOString(),
+    updated: faker.helpers.arrayElement([null, faker.date.recent().toISOString()]),
+  };
+
+  switch (type) {
+    case "public": {
+      const avatarHash = faker.string.alphanumeric(40).toLowerCase();
+      return {
+        ...baseInfo,
+        profile: {
+          avatar: `https://avatars.steamstatic.com/${avatarHash}.jpg`,
+          avatarmedium: `https://avatars.steamstatic.com/${avatarHash}_medium.jpg`,
+          avatarfull: `https://avatars.steamstatic.com/${avatarHash}_full.jpg`,
+          avatarhash: avatarHash,
+          gameid: "686810",
+          steamid: playerId,
+          realname: faker.person.fullName(),
+          loccityid: faker.number.int({ min: 1000, max: 99999 }),
+          lastlogoff: faker.date.future().getTime() / 1000,
+          profileurl: `https://steamcommunity.com/id/${playerId}/`,
+          personaname: faker.helpers.arrayElement([
+            `[${faker.string.alpha(3).toUpperCase()}] ${faker.internet.username()}`,
+            faker.internet.username(),
+          ]),
+          timecreated: faker.date.past().getTime() / 1000,
+          gameserverip: `${faker.internet.ip()}:${faker.number.int({ min: 1000, max: 9999 })}`,
+          locstatecode: faker.helpers.arrayElement(["U3", "NY", "CA", "TX"]),
+          personastate: faker.number.int({ min: 0, max: 6 }),
+          profilestate: 1,
+          gameextrainfo: "Hell Let Loose",
+          primaryclanid: faker.string.numeric(18),
+          loccountrycode: faker.location.countryCode(),
+          gameserversteamid: faker.string.numeric(17),
+          personastateflags: 0,
+          communityvisibilitystate: 3
+        },
+        country: faker.location.countryCode(),
+        bans: {
+          SteamId: playerId,
+          VACBanned: false,
+          EconomyBan: "none",
+          CommunityBanned: false,
+          NumberOfVACBans: 0,
+          DaysSinceLastBan: 0,
+          NumberOfGameBans: 0
+        },
+        has_bans: false
+      };
+    }
+
+    case "private":
+      return {
+        ...baseInfo,
+        profile: null,
+        country: null,
+        bans: null,
+        has_bans: false
+      };
+
+    case "none":
+    default:
+      return null;
+  }
 };
 
 export const generateProfile = (playerId, playerName) => ({
@@ -132,6 +200,9 @@ export const generateProfile = (playerId, playerName) => ({
   blacklist: null,
   flags: generateFlags(),
   watchlist: generateWatchlist(playerId),
-  steaminfo: null,
+  steaminfo: generateSteamInfo(
+    playerId, 
+    faker.helpers.arrayElement(['public', 'private', 'none'])
+  ),
   vips: []
 }); 
