@@ -121,7 +121,10 @@ const Live = () => {
   }, [gameState, teamData]);
 
   // ---------------- PLAYERS TABLE STATE -----------------
-  const [playersSorting, setPlayersSorting] = useState([]);
+  const [playersSorting, setPlayersSorting] = useState([{
+    id: "time",
+    desc: true,
+  }]);
   const [playersRowSelection, setPlayersRowSelection] = useState({});
   const [playersColumnFilters, setPlayersColumnFilters] = useState([]);
 
