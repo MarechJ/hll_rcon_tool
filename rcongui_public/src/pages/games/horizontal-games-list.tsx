@@ -24,7 +24,7 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
         pathname.startsWith(href)
       )?.[1];
       if (targetElement) {
-        targetElement.scrollIntoView({ behavior: "smooth", inline: "center" });
+        targetElement.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
       }
     }
   }, [pathname]);
