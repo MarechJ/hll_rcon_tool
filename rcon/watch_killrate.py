@@ -2,20 +2,20 @@
     Ported with some tweaks/additions from https://github.com/ElGuillermo/HLL_CRCON_Discord_watch_killrate/blob/main/hll_rcon_tool/custom_tools/watch_killrate.py
 """
 
-from logging import getLogger
-from rcon.api_commands import get_rcon_api, RconAPI
-from rcon.types import GetDetailedPlayer
-from collections import Counter
-from rcon.user_config.watch_killrate import WatchKillRateUserConfig
-from rcon.rcon import SERVER_INFO
-from datetime import datetime
-from collections import defaultdict
 import sys
+from collections import Counter, defaultdict
 from datetime import datetime, timedelta
+from logging import getLogger
 from time import sleep
+
 import discord
-from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
+from rcon.api_commands import RconAPI, get_rcon_api
+from rcon.cache_utils import invalidates, ttl_cache
+from rcon.rcon import SERVER_INFO
 from rcon.scoreboard import current_game_stats
+from rcon.types import GetDetailedPlayer
+from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
+from rcon.user_config.watch_killrate import WatchKillRateUserConfig
 
 logger = getLogger(__name__)
 
@@ -142,15 +142,18 @@ _LAST_REPORTED_CACHE: defaultdict[str, datetime | None] = defaultdict(lambda: No
 
 def reset_cache():
     global _LAST_REPORTED_CACHE
-    _LAST_REPORTED_CACHE = defaultdict(lambda: None)
+    with invalidates(get_cache_value):
+        _LAST_REPORTED_CACHE = defaultdict(lambda: None)
 
 
+@ttl_cache(ttl=10, cache_falsy=False)
 def get_cache_value(player_id: str) -> datetime | None:
     return _LAST_REPORTED_CACHE[player_id]
 
 
 def set_cache_value(player_id: str, last_reported: datetime):
-    _LAST_REPORTED_CACHE[player_id] = last_reported
+    with invalidates(get_cache_value):
+        _LAST_REPORTED_CACHE[player_id] = last_reported
 
 
 def make_embed(
@@ -370,6 +373,9 @@ def run():
 
     while True:
         config = WatchKillRateUserConfig.load_from_db()
+
+        if not config.enabled:
+            break
 
         watch_killrate(
             api=api,

@@ -1,10 +1,13 @@
 from typing import Optional, TypedDict
+
 from pydantic import Field
+
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 from rcon.user_config.webhooks import DiscordMentionWebhook, WebhookMentionType
 
 
 class WatchKillRateType(TypedDict):
+    enabled: bool
     match_start_cooldown_secs: int
     watch_interval_secs: int
     report_cooldown_mins: int
@@ -23,6 +26,7 @@ class WatchKillRateType(TypedDict):
 
 
 class WatchKillRateUserConfig(BaseUserConfig):
+    enabled: bool = Field(default=False)
     match_start_cooldown_secs: int = Field(default=180, ge=0)
     watch_interval_secs: int = Field(default=60, ge=2)
     report_cooldown_mins: int = Field(default=15, ge=1)
@@ -59,6 +63,7 @@ class WatchKillRateUserConfig(BaseUserConfig):
             )
 
         validated_conf = WatchKillRateUserConfig(
+            enabled=values.get("enabled"),
             match_start_cooldown_secs=values.get("match_start_cooldown_secs"),
             watch_interval_secs=values.get("watch_interval_secs"),
             report_cooldown_mins=values.get("report_cooldown_mins"),
