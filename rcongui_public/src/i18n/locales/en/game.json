@@ -28,6 +28,7 @@
         "player": "Player",
         "team": "Team",
         "kills": "Kills",
+        "killsByCategory": "Kills by category",
         "deaths": "Deaths",
         "combat": "Combat",
         "score": "Score",
@@ -41,6 +42,14 @@
         "utility": "Utility",
         "diff": "Difference",
         "status": "Status"
+    },
+    "weaponType": {
+      "infantry": "Infantry",
+      "explosive": "Explosive",
+      "machineGun": "Machine Gun",
+      "armor": "Armor",
+      "commander": "Commander",
+      "artillery": "Artillery"
     },
     "matchTable": {
         "match": "Match",

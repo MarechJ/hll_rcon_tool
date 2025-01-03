@@ -80,6 +80,8 @@ def test_detect_complex_inf():
         'M1 GARAND': 31,
         'BAZOOKA': 1,
         'MK2 GRENADE': 1,
+        'M1A1 THOMPSON': 1,
+        'BROWNING M1919': 2,
     }, death_by_weapons={
         'GEWEHR 43': 9,
         'MG42': 1,
@@ -91,6 +93,12 @@ def test_detect_complex_inf():
     })
 
     assert p.detect_team() == PlayerTeamAssociation(side=Team.ALLIES, confidence=PlayerTeamConfidence.STRONG, ratio=100)
+    assert p.calc_kills_by_type() == {
+        'bazooka': 1,
+        'grenade': 1,
+        'machine_gun': 2,
+        'infantry': 32,
+    }
 
 
 def test_detect_ignores_some_other_side():

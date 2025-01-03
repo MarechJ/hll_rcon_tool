@@ -150,7 +150,7 @@ export function DataTable<TData extends Player, TValue>({columns, data, tableId}
           </TooltipProvider>
         </div>
       </div>
-      <Table id={tableId}>
+      <Table id={tableId} style={{height: '100%'}}>
         <TableHeader className="h-12">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
