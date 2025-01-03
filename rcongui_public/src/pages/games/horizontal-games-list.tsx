@@ -5,7 +5,7 @@ import {ScrollArea, ScrollBar} from "@/components/ui/scroll-area";
 import {validGame} from "@/pages/games/list";
 import MapFigure from "@/components/game/map-figure";
 import dayjs from "dayjs";
-import {cn} from "@/lib/utils";
+import {cn, dayjsLocal} from "@/lib/utils";
 import localizedFormat from "dayjs/plugin/localizedFormat";
 import {useTranslation} from "react-i18next";
 
@@ -53,7 +53,7 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   }, []);
 
   const visibleDates = Object.entries(hiddenDates).filter(([key, value], index) => !value && (index + 1 === Object.entries(hiddenDates).length || Object.values(hiddenDates)[index + 1]));
-  const stickyDate = visibleDates.length ? dayjs(visibleDates[0][0]) : null;
+  const stickyDate = visibleDates.length ? dayjsLocal(visibleDates[0][0]) : null;
 
   return (
     <ScrollArea ref={scrollAreaRef} className="w-full whitespace-nowrap sm:-mx-4 xl:mx-0 pb-2">
@@ -72,11 +72,11 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
                 }
               }}
             />
-            {!dayjs(game.start).isSame(dayjs(validGames[index + 1]?.start), 'day') &&
+            {!dayjsLocal(game.start).isSame(dayjsLocal(validGames[index + 1]?.start), 'day') &&
               <DateCard
                 key={game.start}
                 dateString={game.start}
-                isSticky={dayjs(stickyDate).isSame(dayjs(game.start), 'day')}
+                isSticky={!!stickyDate && stickyDate.isSame(dayjsLocal(game.start), 'day')}
               />
             }
           </>
@@ -96,7 +96,7 @@ const GameCard = React.forwardRef(
       <Link to={`/games/${game.id}`} data-date={game.start}>
         <div ref={ref} key={game.id} data-date={game.start}/>
         <MapFigure
-          text={dayjs(game.start).format("LT")}
+          text={dayjsLocal(game.start).format("LT")}
           src={`/maps/${game.map.image_name}`}
           name={`${game.map.map.pretty_name} (${game.result?.allied ?? '?'}:${game.result?.axis ?? '?'})`}
           className={cn(
@@ -111,7 +111,7 @@ const GameCard = React.forwardRef(
 
 const DateCard = ({ dateString, isSticky }: { dateString: string, isSticky: boolean }) => {
   const { t } = useTranslation('translation');
-  const date = dayjs(dateString);
+  const date = dayjsLocal(dateString);
 
   return (
     <div className={cn(
