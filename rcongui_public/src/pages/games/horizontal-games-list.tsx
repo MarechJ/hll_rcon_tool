@@ -94,7 +94,7 @@ const GameCard = React.forwardRef(
   ) => {
     return (
       <Link to={`/games/${game.id}`} data-date={game.start}>
-        <div ref={ref} key={game.id} data-date={game.start} className={"left-5 relative"}/>
+        <div ref={ref} key={game.id} data-date={game.start}/>
         <MapFigure
           text={dayjs(game.start).format("LT")}
           src={`/maps/${game.map.image_name}`}
@@ -115,8 +115,8 @@ const DateCard = ({ dateString, isSticky }: { dateString: string, isSticky: bool
 
   return (
     <div className={cn(
-      "w-10 h-20 m-auto items-center text-center flex flex-col",
-      isSticky && "sticky right-0 shadow-sm bg-background"
+      "w-10 h-20 m-auto items-center text-center flex flex-col bg-background z-20",
+      isSticky && "sticky right-0 shadow-sm z-10"
     )}>
       <div className="font-mono font-bold text-sm">{(t(`weekday.${date.day()}` as unknown as TemplateStringsArray) as string).toUpperCase()}</div>
       <div className="font-bold text-2xl">{date.date()}</div>
