@@ -33,7 +33,10 @@ import {
   LocalizationProvider,
 } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { getVipExpirationStatus, getVipExpirationStatusColor } from "@/utils/lib";
+import {
+  getVipExpirationStatus,
+  getVipExpirationStatusColor,
+} from "@/utils/lib";
 import PlayerAutocompletion from "@/components/form/custom/PlayerAutocompletion";
 
 dayjs.extend(relativeTimePlugin);
@@ -256,10 +259,10 @@ const VipPage = () => {
     >
       <Stack
         component={Paper}
-        direction={"row"}
+        direction={["column", "row"]}
         sx={{ p: 1, mb: 1 }}
         justifyContent={"end"}
-        alignItems={"center"}
+        alignItems={["stretch", "center"]}
         gap={1}
       >
         <InputFileUpload
@@ -275,27 +278,27 @@ const VipPage = () => {
         >
           Download
         </Button>
-        <Box>
-          <SplitButton
-            disabled={!hasChanges}
-            options={[
-              {
-                name: "Apply",
-                buttonProps: {
-                  onClick: submitChanges(INTENT.APPLY_SINGLE),
-                  disabled: !hasChanges,
-                },
+        <SplitButton
+          disabled={!hasChanges}
+          options={[
+            {
+              name: "Apply",
+              buttonProps: {
+                onClick: submitChanges(INTENT.APPLY_SINGLE),
+                disabled: !hasChanges,
+                fullWidth: true,
               },
-              {
-                name: "Apply all servers",
-                buttonProps: {
-                  onClick: submitChanges(INTENT.APPLY_ALL),
-                  disabled: !hasChanges,
-                },
+            },
+            {
+              name: "Apply all servers",
+              buttonProps: {
+                onClick: submitChanges(INTENT.APPLY_ALL),
+                disabled: !hasChanges,
+                fullWidth: true,
               },
-            ]}
-          />
-        </Box>
+            },
+          ]}
+        />
       </Stack>
       <Stack
         direction={"column"}
@@ -306,31 +309,52 @@ const VipPage = () => {
           padding: 1,
         }}
       >
-        <Stack direction={"row"} gap={1} sx={{ mb: 1, p: 0.5 }}>
-          <PlayerAutocompletion player={addFormData} setPlayer={setAddFormData}/>
-          <TextField
-            autoComplete={"off"}
-            value={addFormData.player_id}
-            onChange={handleInputChange}
-            name={"player_id"}
-            fullWidth
-            label={"ID"}
-          />
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DesktopDateTimePicker
-              name={"vip_expiration"}
-              label={"Expiration"}
-              format="LLL"
-              value={dayjs(addFormData.vip_expiration)}
-              onChange={(dayjsValue) =>
+        <Stack direction={"column"} gap={1} sx={{ mb: 1, p: 0.5 }}>
+          <Stack direction={{ xs: "column", md: "row" }} gap={1}>
+            <PlayerAutocompletion
+              player={addFormData}
+              setPlayer={setAddFormData}
+            />
+            <TextField
+              autoComplete={"off"}
+              value={addFormData.player_id}
+              onChange={handleInputChange}
+              name={"player_id"}
+              fullWidth
+              label={"ID"}
+            />
+          </Stack>
+          <Stack direction={{ xs: "column", md: "row" }} gap={1}>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DesktopDateTimePicker
+                name={"vip_expiration"}
+                label={"Expiration"}
+                format="LLL"
+                value={dayjs(addFormData.vip_expiration)}
+                maxDate={dayjs("3000-01-01T00:00:00+00:00")}
+                onChange={(dayjsValue) =>
+                  setAddFormData((prev) => ({
+                    ...prev,
+                    vip_expiration: dayjsValue.format(),
+                  }))
+                }
+                sx={{ minWidth: 300, flexGrow: 1 }}
+              />
+            </LocalizationProvider>
+            <Button
+              onClick={() =>
                 setAddFormData((prev) => ({
                   ...prev,
-                  vip_expiration: dayjsValue.format(),
+                  vip_expiration: dayjs("3000-01-01T00:00:00+00:00"),
                 }))
               }
-              sx={{ minWidth: 300 }}
-            />
-          </LocalizationProvider>
+              variant="outlined"
+              color="secondary"
+              sx={{ minWidth: "fit-content" }}
+            >
+              Never Expires
+            </Button>
+          </Stack>
           <Button
             onClick={handleAddItem}
             disabled={!isValidAddFormInput}
