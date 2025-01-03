@@ -169,7 +169,7 @@ export const blacklistAction = {
   component: BlacklistPlayerFormFields,
   icon: <AccountBalanceIcon />,
   execute: executeAction("add_blacklist_record"),
-  permission: ["can_add_blacklist_record"],
+  permission: ["can_add_blacklist_records"],
   context: [
     {
       type: "blacklists",
