@@ -7,7 +7,6 @@ import MapFigure from "@/components/game/map-figure";
 import dayjs from "dayjs";
 import {cn} from "@/lib/utils";
 import localizedFormat from "dayjs/plugin/localizedFormat";
-import {Calendar} from "lucide-react";
 import {useTranslation} from "react-i18next";
 
 dayjs.extend(localizedFormat)
@@ -97,7 +96,7 @@ const GameCard = React.forwardRef(
       <Link to={`/games/${game.id}`} data-date={game.start}>
         <div ref={ref} key={game.id} data-date={game.start} className={"left-5 relative"}/>
         <MapFigure
-          text={dayjs(game.start).format("LLL")}
+          text={dayjs(game.start).format("LT")}
           src={`/maps/${game.map.image_name}`}
           name={`${game.map.map.pretty_name} (${game.result?.allied ?? '?'}:${game.result?.axis ?? '?'})`}
           className={cn(
@@ -119,9 +118,9 @@ const DateCard = ({ dateString, isSticky }: { dateString: string, isSticky: bool
       "w-10 h-20 m-auto items-center text-center flex flex-col",
       isSticky && "sticky right-0 shadow-sm bg-background"
     )}>
-      <Calendar />
-      <div>{date.date()}</div>
-      <div>{(t(`month.${date.month()}` as unknown as TemplateStringsArray) as string).toUpperCase()}</div>
+      <div className="font-mono font-bold text-sm">{(t(`weekday.${date.day()}` as unknown as TemplateStringsArray) as string).toUpperCase()}</div>
+      <div className="font-bold text-2xl">{date.date()}</div>
+      <div className="font-mono font-bold text-lg">{(t(`month.${date.month()}` as unknown as TemplateStringsArray) as string).toUpperCase()}</div>
     </div>
   );
 }
