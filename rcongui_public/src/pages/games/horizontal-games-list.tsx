@@ -56,8 +56,8 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   const stickyDate = visibleDates.length ? dayjs(visibleDates[0][0]) : null;
 
   return (
-    <ScrollArea ref={scrollAreaRef} className="w-full whitespace-nowrap sm:-mx-4 xl:mx-0 pb-2">
-      <div className="flex flex-row w-max space-x-2">
+    <ScrollArea ref={scrollAreaRef} className="w-full whitespace-nowrap sm:-mx-4 xl:mx-0 pb-2 relative overflow-hidden z-0">
+      <div className="flex flex-row w-max">
         {validGames.map((game, index) => (
           <>
             <GameCard
@@ -73,11 +73,22 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
               }}
             />
             {!dayjs(game.start).isSame(dayjs(validGames[index + 1]?.start), 'day') &&
-              <DateCard
-                key={game.start}
-                dateString={game.start}
-                isSticky={dayjs(stickyDate).isSame(dayjs(game.start), 'day')}
-              />
+              <>
+                <DateCard
+                  zIndex={validGames.length - index}
+                  key={game.start}
+                  dateString={game.start}
+                  isSticky={false}
+                />
+                {!!stickyDate && stickyDate.isSame(dayjs(game.start), 'day') &&
+                  <DateCard
+                    zIndex={validGames.length - index}
+                    key={game.start}
+                    dateString={game.start}
+                    isSticky={true}
+                  />
+                }
+              </>
             }
           </>
         ))}
@@ -95,32 +106,41 @@ const GameCard = React.forwardRef(
     return (
       <Link to={`/games/${game.id}`} data-date={game.start}>
         <div ref={ref} key={game.id} data-date={game.start}/>
-        <MapFigure
-          text={dayjs(game.start).format("LT")}
-          src={`/maps/${game.map.image_name}`}
-          name={`${game.map.map.pretty_name} (${game.result?.allied ?? '?'}:${game.result?.axis ?? '?'})`}
-          className={cn(
-            "group h-20 w-64",
-            pathname.startsWith(`/games/${game.id}`) && "border-2 border-primary"
-          )}
-        />
+        <div className="px-0.5">
+          <MapFigure
+            text={dayjs(game.start).format("LT")}
+            src={`/maps/${game.map.image_name}`}
+            name={`${game.map.map.pretty_name} (${game.result?.allied ?? '?'}:${game.result?.axis ?? '?'})`}
+            className={cn(
+              "group h-20 w-64",
+              pathname.startsWith(`/games/${game.id}`) && "border-2 border-primary"
+            )}
+          />
+        </div>
       </Link>
     );
   }
 );
 
-const DateCard = ({ dateString, isSticky }: { dateString: string, isSticky: boolean }) => {
+const DateCard = ({ dateString, zIndex, isSticky }: { dateString: string, zIndex: number, isSticky: boolean }) => {
   const { t } = useTranslation('translation');
   const date = dayjs(dateString);
 
   return (
-    <div className={cn(
-      "w-10 h-20 m-auto items-center text-center flex flex-col bg-background z-20",
-      isSticky && "sticky right-0 shadow-sm z-10"
-    )}>
-      <div className="font-mono font-bold text-sm">{(t(`weekday.${date.day()}` as unknown as TemplateStringsArray) as string).toUpperCase()}</div>
-      <div className="font-bold text-2xl">{date.date()}</div>
-      <div className="font-mono font-bold text-lg">{(t(`month.${date.month()}` as unknown as TemplateStringsArray) as string).toUpperCase()}</div>
-    </div>
+    <>
+      <div
+        className={
+          cn(
+            "w-14 h-20 m-auto items-center text-center flex flex-col bg-background",
+            isSticky && "absolute right-0 shadow-sm"
+          )
+        }
+        style={{zIndex: zIndex}}
+      >
+        <div className="font-mono font-bold text-sm">{(t(`weekday.${date.day()}` as unknown as TemplateStringsArray) as string).toUpperCase()}</div>
+        <div className="font-bold text-2xl">{date.date()}</div>
+        <div className="font-mono font-bold text-lg">{(t(`month.${date.month()}` as unknown as TemplateStringsArray) as string).toUpperCase()}</div>
+      </div>
+    </>
   );
 }
