@@ -1,13 +1,14 @@
 'use client'
 
 import {ColumnDef} from '@tanstack/react-table'
-import {Player, PlayerTeamAssociation, PlayerWithStatus} from "@/types/player";
+import {Player, PlayerTeamAssociation, PlayerWithStatus, TeamEnum} from "@/types/player";
 import {IconHeader as Header} from './column-header'
 import {Status} from './player-status'
 import {isPlayerWithStatus} from './player/utils'
 import {Button} from '@/components/ui/button'
 import {useTranslation} from 'react-i18next'
 import {TeamIndicator} from '@/components/game/statistics/team-indicator'
+import {WeaponTypeBar} from "@/components/game/statistics/weapon-type-bar";
 import {getTeamFromAssociation} from "@/components/game/statistics/utils";
 
 const threeDigitsWidth = 40
@@ -165,6 +166,19 @@ const teamColumn: ColumnDef<Player | PlayerWithStatus> = {
   },
 };
 
+const killCategoryColumn: ColumnDef<Player | PlayerWithStatus> = {
+  accessorKey: 'kills_by_category',
+  header: function KillCategoryHeader() {
+    const {t} = useTranslation('game')
+    return <div>{t('playersTable.killsByCategory')}</div>
+  },
+  size: 100,
+  cell: ({row}) => {
+    const player = row.original;
+    return <WeaponTypeBar player={player}/> ;
+  },
+};
+
 const statusColumn: ColumnDef<Player | PlayerWithStatus> = {
   accessorKey: 'is_online',
   meta: {
@@ -196,4 +210,4 @@ export const getLiveGameColumns = (handlePlayerClick: (id: string) => void): Col
 
 export const getCompletedGameColumns = (
   handlePlayerClick: (id: string) => void,
-): ColumnDef<Player | PlayerWithStatus>[] => [teamColumn, playerColumn(handlePlayerClick), ...pointColumns]
+): ColumnDef<Player | PlayerWithStatus>[] => [teamColumn, playerColumn(handlePlayerClick), killCategoryColumn, ...pointColumns]
