@@ -90,11 +90,12 @@ const GameCard = React.forwardRef(
     { game, pathname }: { game: ScoreboardMap; pathname: string },
     ref: React.Ref<HTMLDivElement>
   ) => {
+    const { t } = useTranslation('translation');
     return (
       <Link to={`/games/${game.id}`} data-date={game.start}>
         <div ref={ref} key={game.id} data-date={game.start}/>
         <MapFigure
-          text={dayjsLocal(game.start).format("LT") + ' (' + dayjs(game.end).diff(dayjs(game.start), 'minutes')+ ' min)'}
+          text={`${dayjsLocal(game.start).format("LT")} (${dayjs(game.end).diff(dayjs(game.start), 'minutes')} ${t('time.minuteShort')})`}
           src={`/maps/${game.map.image_name}`}
           name={`${game.map.map.pretty_name} (${game.result?.allied ?? '?'}:${game.result?.axis ?? '?'})`}
           className={cn(
@@ -108,7 +109,6 @@ const GameCard = React.forwardRef(
 );
 
 const DateCard = ({ dateString, isSticky }: { dateString: string, isSticky: boolean }) => {
-  const { t } = useTranslation('translation');
   const date = dayjsLocal(dateString);
   const globalLocaleData = dayjs.localeData();
 

@@ -25,5 +25,8 @@
       "text": "Next",
       "label": "Go to next page"
     }
+  },
+  "time": {
+    "minuteShort": "min"
   }
 }
