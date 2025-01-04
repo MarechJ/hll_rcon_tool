@@ -94,7 +94,7 @@ const GameCard = React.forwardRef(
       <Link to={`/games/${game.id}`} data-date={game.start}>
         <div ref={ref} key={game.id} data-date={game.start}/>
         <MapFigure
-          text={dayjsLocal(game.start).format("LT")}
+          text={dayjsLocal(game.start).format("LT") + ' (' + dayjs(game.end).diff(dayjs(game.start), 'minutes')+ ' min)'}
           src={`/maps/${game.map.image_name}`}
           name={`${game.map.map.pretty_name} (${game.result?.allied ?? '?'}:${game.result?.axis ?? '?'})`}
           className={cn(
