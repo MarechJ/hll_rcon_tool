@@ -18,7 +18,7 @@ from . import (
     vips,
 )
 from .auth import api_response
-from .decorators import ENDPOINT_HTTP_METHODS
+from .decorators import ENDPOINT_HTTP_METHODS, ENDPOINT_PERMISSIONS_LOOKUP
 
 logger = getLogger("rconweb")
 
@@ -63,6 +63,12 @@ def get_api_documentation(request):
         # but almost all of our endpoints share the name with functions, and those that don't map
         # to entirely different things like `login -> do_login` that are out of scope of RconAPI
         item["auto_settings_capable"] = name in dir(RconAPI)
+
+        try:
+            item["permissions_required"] = ENDPOINT_PERMISSIONS_LOOKUP[func.__name__]
+        except KeyError:
+            # Not all endpoints require a permission
+            item["permissions_required"] = []
 
         try:
             item["allowed_http_methods"] = ENDPOINT_HTTP_METHODS[func.__name__]
