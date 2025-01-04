@@ -5,13 +5,12 @@ from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 from threading import Timer
-from typing import Final, Any
+from typing import Any, Final
 
 from discord_webhook import DiscordEmbed
 
 import rcon.steam_utils as steam_utils
 from discord.utils import escape_markdown
-
 from rcon.arguments import max_arg_index, replace_params
 from rcon.blacklist import (
     apply_blacklist_punishment,
@@ -274,6 +273,14 @@ def remind_vote_map(rcon: Rcon, struct_log):
     vote_map = VoteMap()
     vote_map.apply_with_retry()
     vote_map.vote_map_reminder(rcon, force=True)
+
+
+@on_match_start
+def reset_watch_killrate_cooldown():
+    """Reset the last reported time cache for new matches"""
+    from rcon.watch_killrate import reset_cache
+
+    reset_cache()
 
 
 @on_match_start
