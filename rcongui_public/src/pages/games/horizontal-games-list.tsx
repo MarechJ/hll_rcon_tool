@@ -6,10 +6,8 @@ import {validGame} from "@/pages/games/list";
 import MapFigure from "@/components/game/map-figure";
 import dayjs from "dayjs";
 import {cn, dayjsLocal} from "@/lib/utils";
-import localizedFormat from "dayjs/plugin/localizedFormat";
 import {useTranslation} from "react-i18next";
 
-dayjs.extend(localizedFormat)
 export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   const { pathname } = useLocation()
   const [hiddenDates, setHiddenDates] = useState<Record<string, boolean>>({});
@@ -112,15 +110,16 @@ const GameCard = React.forwardRef(
 const DateCard = ({ dateString, isSticky }: { dateString: string, isSticky: boolean }) => {
   const { t } = useTranslation('translation');
   const date = dayjsLocal(dateString);
+  const globalLocaleData = dayjs.localeData();
 
   return (
     <div className={cn(
       "w-10 h-20 m-auto items-center text-center flex flex-col bg-background z-20",
       isSticky && "sticky right-0 shadow-sm z-10"
     )}>
-      <div className="font-mono font-bold text-sm">{(t(`weekday.${date.day()}` as unknown as TemplateStringsArray) as string).toUpperCase()}</div>
+      <div className="font-mono font-bold text-sm">{globalLocaleData.weekdaysShort()[date.day()].replace('.', '').toUpperCase()}</div>
       <div className="font-bold text-2xl">{date.date()}</div>
-      <div className="font-mono font-bold text-lg">{(t(`month.${date.month()}` as unknown as TemplateStringsArray) as string).toUpperCase()}</div>
+      <div className="font-mono font-bold text-lg">{globalLocaleData.monthsShort()[date.month()].replace('.', '').toUpperCase()}</div>
     </div>
   );
 }

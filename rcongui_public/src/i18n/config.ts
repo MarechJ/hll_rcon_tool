@@ -5,6 +5,11 @@ import resourcesToBackend from 'i18next-resources-to-backend'
 
 export const LANGUAGES = ['en', 'de', 'fr', 'es', 'zh-Hans', 'zh-Hant', 'ja', 'ko', 'pt', 'it', 'ru', 'cs']
 
+/**
+ *  Also add import in {@link LocaleHandler}
+ */
+export const DAYJS_LANGUAGES = ['en', 'de', 'fr', 'es', 'zh', 'ja', 'ko', 'pt', 'it', 'ru', 'cs'];
+
 i18next
   .use(LanguageDetector)
   .use(initReactI18next)
