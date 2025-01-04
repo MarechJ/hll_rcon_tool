@@ -7,6 +7,7 @@ import MapFigure from "@/components/game/map-figure";
 import dayjs from "dayjs";
 import {cn, dayjsLocal} from "@/lib/utils";
 import {useTranslation} from "react-i18next";
+import {useLocale} from "@/i18n/locale-provider";
 
 export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   const { pathname } = useLocation()
@@ -110,7 +111,7 @@ const GameCard = React.forwardRef(
 
 const DateCard = ({ dateString, isSticky }: { dateString: string, isSticky: boolean }) => {
   const date = dayjsLocal(dateString);
-  const globalLocaleData = dayjs.localeData();
+  const globalLocaleData = useLocale().globalLocaleData;
 
   return (
     <div className={cn(

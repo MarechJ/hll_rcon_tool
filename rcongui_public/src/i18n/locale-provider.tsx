@@ -1,6 +1,6 @@
 import {useTranslation} from "react-i18next";
 import dayjs from "dayjs";
-import {useEffect} from "react";
+import {createContext, ReactNode, useContext, useEffect} from "react";
 import 'dayjs/locale/en';
 import 'dayjs/locale/de';
 import 'dayjs/locale/fr';
@@ -23,12 +23,28 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.extend(localeData);
 
+interface LocaleContextType {
+  globalLocaleData: dayjs.GlobalLocaleDataReturn;
+}
+
+const LocaleContext = createContext<LocaleContextType | null>(null);
+
+export const useLocale = () => {
+  const context = useContext(LocaleContext);
+
+  if (!context) {
+    throw new Error('useLocale must be used within a LocaleProvider');
+  }
+
+  return context;
+};
+
 /**
  * handles localization of dayjs
  */
-export const LocaleHandler = () => {
+export const LocaleProvider = ({ children }: { children: ReactNode}) => {
 
-  const { i18n } = useTranslation()
+  const { i18n } = useTranslation();
 
   const handleLanguageChanged = () => {
     const userLocale = i18n.language.split('-')[0];
@@ -44,5 +60,11 @@ export const LocaleHandler = () => {
     };
   }, [handleLanguageChanged]);
 
-  return null;
+  const globalLocaleData = dayjs.localeData();
+
+  return (
+    <LocaleContext.Provider value={{ globalLocaleData }}>
+      {children}
+    </LocaleContext.Provider>
+  );
 };
