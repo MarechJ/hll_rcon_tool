@@ -49,7 +49,7 @@ An extended RCON tool for [Hell Let Loose](https://www.hellletloose.com/), meant
 ## Join us on Discord
 
 For feedback, troubleshooting and information about updates and general Hell Let Loose hosting info :  
-<https://discord.gg/rfTaA5HF>
+<https://discord.gg/r8v3TkPk>
 
 ## Support and contribute
 
