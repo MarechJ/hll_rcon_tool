@@ -98,7 +98,7 @@ class GameMode(str, Enum):
 class Team(str, Enum):
     ALLIES = "allies"
     AXIS = "axis"
-    UNKNOWN = 'unknown'
+    UNKNOWN = "unknown"
 
 
 class Environment(str, Enum):
@@ -144,7 +144,7 @@ class Map(pydantic.BaseModel):
 
     def __eq__(self, other) -> bool:
         if isinstance(other, (Map, str)):
-            return str(self) == str(other)
+            return str(self).lower() == str(other).lower()
         return NotImplemented
 
 
@@ -166,7 +166,7 @@ class Layer(pydantic.BaseModel):
 
     def __eq__(self, other) -> bool:
         if isinstance(other, (Layer, str)):
-            return str(self) == str(other)
+            return str(self).lower() == str(other).lower()
         return NotImplemented
 
     if TYPE_CHECKING:
@@ -227,7 +227,7 @@ class Layer(pydantic.BaseModel):
 
 
 MAPS = {
-    m.id: m
+    m.id.lower(): m
     for m in (
         Map(
             id=UNKNOWN_MAP_NAME,
@@ -413,7 +413,7 @@ MAPS = {
 }
 
 LAYERS = {
-    l.id: l
+    l.id.lower(): l
     for l in (
         # In older versions (prior to v9.8.0) map names could be recorded as bla_
         # if the map name could not be retrieved from the game server
@@ -1143,13 +1143,15 @@ def parse_layer(layer_name: str | Layer) -> Layer:
     elif is_server_loading_map(map_name=layer_name):
         return LAYERS[UNKNOWN_MAP_NAME]
 
-    layer = LAYERS.get(layer_name)
+    layer = LAYERS.get(layer_name.lower())
     if layer:
         return layer
 
     getLogger().warning("Unknown layer %s", layer_name)
 
-    layer_match = RE_LAYER_NAME_LARGE.match(layer_name) or RE_LAYER_NAME_SMALL.match(layer_name)
+    layer_match = RE_LAYER_NAME_LARGE.match(layer_name) or RE_LAYER_NAME_SMALL.match(
+        layer_name
+    )
     if not layer_match:
         return _parse_legacy_layer(layer_name)
 
@@ -1207,7 +1209,7 @@ def _parse_legacy_layer(layer_name: str):
     layer_data = layer_match.groupdict()
 
     name = layer_data["name"]
-    map_ = MAPS.get(layer_data["name"])
+    map_ = MAPS.get(layer_data["name"].lower())
     if not map_:
         map_ = Map(
             id=name,

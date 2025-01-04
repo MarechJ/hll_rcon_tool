@@ -5,7 +5,7 @@ import {ScrollArea, ScrollBar} from "@/components/ui/scroll-area";
 import {validGame} from "@/pages/games/list";
 import MapFigure from "@/components/game/map-figure";
 import dayjs from "dayjs";
-import {cn} from "@/lib/utils";
+import {cn, dayjsLocal} from "@/lib/utils";
 import localizedFormat from "dayjs/plugin/localizedFormat";
 import {useTranslation} from "react-i18next";
 
@@ -24,7 +24,7 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
         pathname.startsWith(href)
       )?.[1];
       if (targetElement) {
-        targetElement.scrollIntoView({ behavior: "smooth", inline: "center" });
+        targetElement.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
       }
     }
   }, [pathname]);
@@ -53,7 +53,7 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   }, []);
 
   const visibleDates = Object.entries(hiddenDates).filter(([key, value], index) => !value && (index + 1 === Object.entries(hiddenDates).length || Object.values(hiddenDates)[index + 1]));
-  const stickyDate = visibleDates.length ? dayjs(visibleDates[0][0]) : null;
+  const stickyDate = visibleDates.length ? dayjsLocal(visibleDates[0][0]) : null;
 
   return (
     <ScrollArea ref={scrollAreaRef} className="w-full whitespace-nowrap sm:-mx-4 xl:mx-0 pb-2 relative overflow-hidden z-0">
@@ -72,7 +72,7 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
                 }
               }}
             />
-            {!dayjs(game.start).isSame(dayjs(validGames[index + 1]?.start), 'day') &&
+            {!dayjsLocal(game.start).isSame(dayjsLocal(validGames[index + 1]?.start), 'day') &&
               <>
                 <DateCard
                   zIndex={validGames.length - index}
@@ -80,7 +80,7 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
                   dateString={game.start}
                   isSticky={false}
                 />
-                {!!stickyDate && stickyDate.isSame(dayjs(game.start), 'day') &&
+                {!!stickyDate && stickyDate.isSame(dayjsLocal(game.start), 'day') &&
                   <DateCard
                     zIndex={validGames.length - index}
                     key={game.start}
@@ -108,7 +108,7 @@ const GameCard = React.forwardRef(
         <div ref={ref} key={game.id} data-date={game.start}/>
         <div className="px-0.5">
           <MapFigure
-            text={dayjs(game.start).format("LT")}
+            text={dayjsLocal(game.start).format("LT")}
             src={`/maps/${game.map.image_name}`}
             name={`${game.map.map.pretty_name} (${game.result?.allied ?? '?'}:${game.result?.axis ?? '?'})`}
             className={cn(
@@ -124,7 +124,7 @@ const GameCard = React.forwardRef(
 
 const DateCard = ({ dateString, zIndex, isSticky }: { dateString: string, zIndex: number, isSticky: boolean }) => {
   const { t } = useTranslation('translation');
-  const date = dayjs(dateString);
+  const date = dayjsLocal(dateString);
 
   return (
     <>
