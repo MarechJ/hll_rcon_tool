@@ -1,14 +1,15 @@
 'use client'
 
-import { ColumnDef } from '@tanstack/react-table'
+import {ColumnDef} from '@tanstack/react-table'
 import dayjs from 'dayjs'
 import LocalizedFormat from 'dayjs/plugin/localizedFormat'
-import { Button } from '@/components/ui/button'
-import { Link } from 'react-router'
-import { getGameDuration } from './utils'
-import { ScoreboardMap } from '@/types/api'
-import { MapLayer } from '@/types/mapLayer'
-import { useTranslation } from 'react-i18next'
+import {Button} from '@/components/ui/button'
+import {Link} from 'react-router'
+import {getGameDuration} from './utils'
+import {ScoreboardMap} from '@/types/api'
+import {MapLayer} from '@/types/mapLayer'
+import {useTranslation} from 'react-i18next'
+import {dayjsLocal} from "@/lib/utils";
 
 dayjs.extend(LocalizedFormat)
 
@@ -71,7 +72,7 @@ export const columns: ColumnDef<ScoreboardMap>[] = [
       return t('matchTable.start')
     },
     accessorKey: 'start',
-    cell: ({ cell }) => dayjs(cell.getValue() as string).format('L LT'),
+    cell: ({ cell }) => dayjsLocal(cell.getValue() as string).format('L LT'),
   },
   {
     header: function DurationHeader() {
