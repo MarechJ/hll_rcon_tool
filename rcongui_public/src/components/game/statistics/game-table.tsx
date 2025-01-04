@@ -32,6 +32,7 @@ import {getTeamFromAssociation} from "@/components/game/statistics/utils";
 import useGameDownload from '@/hooks/use-game-download'
 import {TeamIndicator} from "@/components/game/statistics/team-indicator";
 import SelectBox from "@/components/ui/select-box";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface DataTableProps<TData, TValue, TExtraColumnId> {
   columns: ColumnDef<TData, TValue>[]
