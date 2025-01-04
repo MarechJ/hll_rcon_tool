@@ -1,11 +1,10 @@
 from dateutil import parser
-from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon.api_commands import get_rcon_api
 
 from .auth import api_csv_response, login_required
-from .decorators import require_content_type, require_http_methods
+from .decorators import permission_required, require_content_type, require_http_methods
 from .utils import _get_data
 
 

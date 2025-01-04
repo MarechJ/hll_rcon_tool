@@ -6,7 +6,6 @@ from typing import Dict, List
 
 from dateutil import parser, relativedelta
 from django import forms
-from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
@@ -21,7 +20,7 @@ from rcon.workers import get_job_results, worker_bulk_vip
 
 from .audit_log import record_audit
 from .auth import api_response, login_required
-from .decorators import require_content_type, require_http_methods
+from .decorators import permission_required, require_content_type, require_http_methods
 from .views import rcon_api
 
 logger = logging.getLogger("rconweb")

@@ -8,7 +8,6 @@ from subprocess import PIPE, run
 from typing import Any, Callable
 
 import pydantic
-from django.contrib.auth.decorators import permission_required
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -35,7 +34,7 @@ from rconweb.settings import TAG_VERSION
 
 from .audit_log import auto_record_audit, record_audit
 from .auth import AUTHORIZATION, RconJsonResponse, api_response, login_required
-from .decorators import require_content_type, require_http_methods
+from .decorators import permission_required, require_content_type, require_http_methods
 from .multi_servers import forward_command
 from .utils import _get_data
 

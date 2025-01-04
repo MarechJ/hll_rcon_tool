@@ -4,14 +4,13 @@ from copy import deepcopy
 from typing import Any
 
 import requests
-from django.contrib.auth.decorators import permission_required
 from django.http import QueryDict
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon.utils import ApiKey
 
 from .auth import AUTHORIZATION, api_response, login_required
-from .decorators import require_http_methods
+from .decorators import permission_required, require_http_methods
 
 logger = logging.getLogger("rcon")
 

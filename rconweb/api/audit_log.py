@@ -5,13 +5,13 @@ from functools import wraps
 
 from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
-from sqlalchemy import and_, or_, select, func
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import query
 
 from rcon.models import AuditLog, enter_session
 
 from .auth import api_response, login_required
-from .decorators import require_http_methods
+from .decorators import permission_required, require_http_methods
 from .utils import _get_data
 
 logger = logging.getLogger("rconweb")
@@ -143,16 +143,16 @@ def get_audit_logs(request):
 
             paged_stmt = stmt.offset((page - 1) * page_size).limit(page_size)
             res = sess.execute(paged_stmt).scalars().all()
-            if data.get('page') is None:
+            if data.get("page") is None:
                 res = [r.to_dict() for r in res]
             else:
                 count = sess.execute(count_stmt).scalar_one()
                 res = {
-                    'audit_logs': [r.to_dict() for r in res],
-                    'page': page,
-                    'page_size': page_size,
-                    'total_pages': math.ceil(count / page_size),
-                    'total_entries': count,
+                    "audit_logs": [r.to_dict() for r in res],
+                    "page": page,
+                    "page_size": page_size,
+                    "total_pages": math.ceil(count / page_size),
+                    "total_entries": count,
                 }
     except Exception as e:
         logger.exception("Getting audit log failed")

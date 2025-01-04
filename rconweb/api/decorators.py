@@ -1,6 +1,9 @@
 import logging
 from functools import wraps
 
+from django.contrib.auth.decorators import (
+    permission_required as django_permission_required,
+)
 from django.views.decorators.http import (
     require_http_methods as django_require_http_methods,
 )
@@ -8,12 +11,36 @@ from django.views.decorators.http import (
 logger = logging.getLogger("rconweb")
 
 ENDPOINT_HTTP_METHODS: dict[str, list[str]] = {}
+ENDPOINT_PERMISSIONS_LOOKUP = {}
+
+
+def permission_required(
+    perm: str | list[str] | set[str], login_url=None, raise_exception=False
+):
+    def decorator(
+        func,
+    ):
+        if isinstance(perm, str):
+            ENDPOINT_PERMISSIONS_LOOKUP[func.__name__] = [perm]
+        else:
+            ENDPOINT_PERMISSIONS_LOOKUP[func.__name__] = perm
+
+        @wraps(func)
+        @django_permission_required(
+            perm, login_url=login_url, raise_exception=raise_exception
+        )
+        def inner(*args, **kwargs):
+            return func(*args, **kwargs)
+
+        return inner
+
+    return decorator
 
 
 def require_http_methods(request_method_list: list[str]):
     def decorator(
         func,
-    ):  # -> _Wrapped[Callable[..., Any], Any, Callable[..., Any], Any]:  # -> _Wrapped[Callable[..., Any], Any, Callable[..., Any], Any]:  # -> _Wrapped[Callable[..., Any], Any, Callable[..., Any], Any]:
+    ):
         if func.__name__ in ENDPOINT_HTTP_METHODS:
             # TODO: I have only seen this error when launching 4+ game servers within the same install
             # I haven't done any looking to figure out why it happens, it should be unique to each Python
