@@ -13,10 +13,41 @@ dayjs.extend(localizedFormat)
 export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   const { pathname } = useLocation()
   const [hiddenDates, setHiddenDates] = useState<Record<string, boolean>>({});
+  const [hoverGameDate, setHoverGameDate] = useState<string | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  // is used for sticky dates (position upper left corner of MapCard)
   const gameRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const gameBoundingRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
   const validGames = games.maps.filter(validGame);
+
+  /**
+   *  onMouseLeave/onMouseEnter is not triggered during scrolling
+   *  so we have to check manually while scrolling if mouse is within GameCard
+   */
+  useEffect(() => {
+    const handleMouseMove = (e: any) => {
+      gameBoundingRefs.current.forEach((item, key) => {
+        const rect = item.getBoundingClientRect();
+        if (
+          e.clientX >= rect.left &&
+          e.clientX <= rect.right &&
+          e.clientY >= rect.top &&
+          e.clientY <= rect.bottom
+        ) {
+          if (hoverGameDate !== validGames[key].start) {
+            setHoverGameDate(validGames[key].start);
+          }
+        }
+      });
+    };
+
+    window.addEventListener('wheel', handleMouseMove);
+
+    return () => {
+      window.removeEventListener('wheel', handleMouseMove);
+    };
+  }, []);
 
   useEffect(() => {
     if (scrollAreaRef.current && gameRefs.current.size > 0) {
@@ -56,36 +87,48 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   const stickyDate = visibleDates.length ? dayjsLocal(visibleDates[0][0]) : null;
 
   return (
-    <ScrollArea ref={scrollAreaRef} className="w-full whitespace-nowrap sm:-mx-4 xl:mx-0 pb-2 relative overflow-hidden z-0">
+    <ScrollArea ref={scrollAreaRef} className="w-full whitespace-nowrap sm:-mx-4 xl:mx-0 pb-2 relative overflow-hidden z-auto">
       <div className="flex flex-row w-max">
         {validGames.map((game, index) => (
           <>
-            <GameCard
-              key={game.id}
-              game={game}
-              pathname={pathname}
-              ref={(element) => {
-                if (element) {
-                  gameRefs.current.set(`/games/${game.id}`, element);
-                } else {
-                  gameRefs.current.delete(`/games/${game.id}`);
-                }
-              }}
-            />
+            <div ref={(element: any) => {
+              if (element) {
+                gameBoundingRefs.current.set(index, element);
+              } else {
+                gameBoundingRefs.current.delete(index);
+              }
+            }}>
+              <GameCard
+                key={game.id}
+                game={game}
+                pathname={pathname}
+                onMouseEnter={() => setHoverGameDate(game.start)}
+                onMouseLeave={() => setHoverGameDate(null)}
+                ref={(element) => {
+                  if (element) {
+                    gameRefs.current.set(`/games/${game.id}`, element);
+                  } else {
+                    gameRefs.current.delete(`/games/${game.id}`);
+                  }
+                }}
+              />
+            </div>
             {!dayjsLocal(game.start).isSame(dayjsLocal(validGames[index + 1]?.start), 'day') &&
               <>
                 <DateCard
                   zIndex={validGames.length - index}
                   key={game.start}
                   dateString={game.start}
-                  isSticky={false}
+                  highlight={!!hoverGameDate && dayjsLocal(hoverGameDate).isSame(dayjsLocal(game.start), 'day')}
+                  sticky={false}
                 />
                 {!!stickyDate && stickyDate.isSame(dayjsLocal(game.start), 'day') &&
                   <DateCard
                     zIndex={validGames.length - index}
-                    key={game.start}
+                    key={`sticky-${game.start}`}
                     dateString={game.start}
-                    isSticky={true}
+                    sticky={true}
+                    highlight={!!hoverGameDate && dayjsLocal(hoverGameDate).isSame(dayjsLocal(game.start), 'day')}
                   />
                 }
               </>
@@ -100,13 +143,18 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
 
 const GameCard = React.forwardRef(
   (
-    { game, pathname }: { game: ScoreboardMap; pathname: string },
+    { game, pathname, onMouseEnter, onMouseLeave }: { game: ScoreboardMap; pathname: string; onMouseEnter: () => void, onMouseLeave: () => void },
     ref: React.Ref<HTMLDivElement>
   ) => {
     return (
-      <Link to={`/games/${game.id}`} data-date={game.start}>
-        <div ref={ref} key={game.id} data-date={game.start}/>
+      <Link
+        to={`/games/${game.id}`}
+        data-date={game.start}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+      >
         <div className="px-0.5">
+          <div ref={ref} key={game.id} data-date={game.start}/>
           <MapFigure
             text={dayjsLocal(game.start).format("LT")}
             src={`/maps/${game.map.image_name}`}
@@ -119,28 +167,24 @@ const GameCard = React.forwardRef(
         </div>
       </Link>
     );
-  }
-);
+});
 
-const DateCard = ({ dateString, zIndex, isSticky }: { dateString: string, zIndex: number, isSticky: boolean }) => {
+const DateCard = ({ dateString, zIndex, highlight, sticky }: { dateString: string, zIndex: number, highlight: boolean, sticky: boolean }) => {
   const { t } = useTranslation('translation');
   const date = dayjsLocal(dateString);
 
   return (
-    <>
-      <div
-        className={
-          cn(
-            "w-14 h-20 m-auto items-center text-center flex flex-col bg-background",
-            isSticky && "absolute right-0 shadow-sm"
-          )
-        }
-        style={{zIndex: zIndex}}
-      >
-        <div className="font-mono font-bold text-sm">{(t(`weekday.${date.day()}` as unknown as TemplateStringsArray) as string).toUpperCase()}</div>
-        <div className="font-bold text-2xl">{date.date()}</div>
-        <div className="font-mono font-bold text-lg">{(t(`month.${date.month()}` as unknown as TemplateStringsArray) as string).toUpperCase()}</div>
-      </div>
-    </>
+    <div
+      className={cn(
+        "w-14 h-20 m-auto items-center text-center flex flex-col bg-background z-20",
+        sticky && "absolute right-0 shadow-sm",
+        highlight && "text-primary",
+      )}
+      style={{zIndex: zIndex}}
+    >
+      <div className="font-mono font-bold text-sm">{(t(`weekday.${date.day()}` as unknown as TemplateStringsArray) as string).toUpperCase()}</div>
+      <div className="font-bold text-2xl">{date.date()}</div>
+      <div className="font-mono font-bold text-lg">{(t(`month.${date.month()}` as unknown as TemplateStringsArray) as string).toUpperCase()}</div>
+    </div>
   );
 }
