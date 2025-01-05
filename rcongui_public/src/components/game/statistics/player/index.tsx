@@ -5,8 +5,7 @@ import { points, scores, isSteamPlayer, getSteamProfileUrl, getXboxProfileUrl } 
 import { Button } from '@/components/ui/button'
 import { SimpleIcon } from '@/components/simple-icon'
 import { siSteam } from 'simple-icons'
-import { Gamepad2Icon } from 'lucide-react'
-import { CollapsibleSection } from './collapsible-section'
+import {ChevronDownIcon, Gamepad2Icon} from 'lucide-react'
 import { SimpleTable } from '@/components/game/statistics/simple-table'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { IconStatistic } from '../icon'
@@ -14,6 +13,8 @@ import { columns as faceoffColumns } from '../faceoff-columns'
 import { deathByColumns, killByColumns } from '../weapons-columns'
 import { mergeKillsDeaths } from '../utils'
 import { useTranslation } from 'react-i18next'
+import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from "@/components/ui/accordion";
+import {AccordionHeader} from "@radix-ui/react-accordion";
 
 export default function PlayerGameDetail({
   player,
@@ -92,15 +93,38 @@ export default function PlayerGameDetail({
               )
             })}
           </section>
-          <CollapsibleSection name={t('playerStats.encounters')} defaultOpen={true}>
-            <SimpleTable columns={faceoffColumns} data={mergeKillsDeaths(player)} />
-          </CollapsibleSection>
-          <CollapsibleSection name={t('playerStats.killsByWeapon')} defaultOpen={true}>
-            <SimpleTable columns={killByColumns} data={killsBy} />
-          </CollapsibleSection>
-          <CollapsibleSection name={t('playerStats.deathsByWeapon')} defaultOpen={true}>
-            <SimpleTable columns={deathByColumns} data={deathsBy} />
-          </CollapsibleSection>
+          <Accordion type="single" collapsible>
+            <AccordionItem value="encounters">
+              <AccordionHeader>
+                <AccordionTrigger>
+                  {t('playerStats.encounters')}
+                </AccordionTrigger>
+              </AccordionHeader>
+              <AccordionContent>
+                <SimpleTable columns={faceoffColumns} data={mergeKillsDeaths(player)}/>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="killsByWeapon">
+              <AccordionHeader>
+                <AccordionTrigger>
+                  {t('playerStats.killsByWeapon')}
+                </AccordionTrigger>
+              </AccordionHeader>
+              <AccordionContent>
+                <SimpleTable columns={killByColumns} data={killsBy} />
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="deathsByWeapon">
+              <AccordionHeader>
+                <AccordionTrigger>
+                  {t('playerStats.deathsByWeapon')}
+                </AccordionTrigger>
+              </AccordionHeader>
+              <AccordionContent>
+                <SimpleTable columns={deathByColumns} data={deathsBy} />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
       </ScrollArea>
     </div>
