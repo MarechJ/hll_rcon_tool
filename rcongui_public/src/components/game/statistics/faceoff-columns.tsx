@@ -22,7 +22,7 @@ export const columns: ColumnDef<Faceoff>[] = [
         <Header
           header="K"
           desc={t('playersTable.kills')}
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          onClick={() => column.toggleSorting(column.getIsSorted() !== 'desc')}
         />
       )
     },
@@ -37,7 +37,7 @@ export const columns: ColumnDef<Faceoff>[] = [
         <Header
           header="D"
           desc={t('playersTable.deaths')}
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          onClick={() => column.toggleSorting(column.getIsSorted() !== 'desc')}
         />
       )
     },
@@ -52,7 +52,7 @@ export const columns: ColumnDef<Faceoff>[] = [
         <Header
           header="+/-"
           desc={t('playersTable.diff')}
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          onClick={() => column.toggleSorting(column.getIsSorted() !== 'desc')}
         />
       )
     },

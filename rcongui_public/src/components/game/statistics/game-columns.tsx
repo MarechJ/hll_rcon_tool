@@ -21,7 +21,7 @@ function SortableHeader({ column, desc }: { column: Column<Player>; desc: string
     <Button
       variant={'text'}
       onClick={() => {
-        column.toggleSorting(column.getIsSorted() === 'asc')
+        column.toggleSorting(column.getIsSorted() !== 'desc')
       }}
     >
       {desc}
@@ -59,7 +59,7 @@ function pointColumns(extras: extraColumns[]): ColumnDef<Player | PlayerWithStat
             src={'/roles/infantry.png'}
             desc={t('playersTable.kills')}
             onClick={() => {
-              column.toggleSorting(column.getIsSorted() === 'asc')
+              column.toggleSorting(column.getIsSorted() !== 'desc')
             }}
           />
         )
@@ -79,7 +79,7 @@ function pointColumns(extras: extraColumns[]): ColumnDef<Player | PlayerWithStat
             src={'/roles/medic.png'}
             desc={t('playersTable.deaths')}
             onClick={() => {
-              column.toggleSorting(column.getIsSorted() === 'asc')
+              column.toggleSorting(column.getIsSorted() !== 'desc')
             }}
           />
         )
@@ -99,7 +99,7 @@ function pointColumns(extras: extraColumns[]): ColumnDef<Player | PlayerWithStat
             src={'/roles/score_combat.png'}
             desc={t('playersTable.combat')}
             onClick={() => {
-              column.toggleSorting(column.getIsSorted() === 'asc')
+              column.toggleSorting(column.getIsSorted() !== 'desc')
             }}
           />
         )
@@ -115,7 +115,7 @@ function pointColumns(extras: extraColumns[]): ColumnDef<Player | PlayerWithStat
             src={'/roles/score_offensive.png'}
             desc={t('playersTable.offense')}
             onClick={() => {
-              column.toggleSorting(column.getIsSorted() === 'asc')
+              column.toggleSorting(column.getIsSorted() !== 'desc')
             }}
           />
         )
@@ -131,7 +131,7 @@ function pointColumns(extras: extraColumns[]): ColumnDef<Player | PlayerWithStat
             src={'/roles/score_defensive.png'}
             desc={t('playersTable.defense')}
             onClick={() => {
-              column.toggleSorting(column.getIsSorted() === 'asc')
+              column.toggleSorting(column.getIsSorted() !== 'desc')
             }}
           />
         )
@@ -147,7 +147,7 @@ function pointColumns(extras: extraColumns[]): ColumnDef<Player | PlayerWithStat
             src={'/roles/score_support.png'}
             desc={t('playersTable.support')}
             onClick={() => {
-              column.toggleSorting(column.getIsSorted() === 'asc')
+              column.toggleSorting(column.getIsSorted() !== 'desc')
             }}
           />
         )
