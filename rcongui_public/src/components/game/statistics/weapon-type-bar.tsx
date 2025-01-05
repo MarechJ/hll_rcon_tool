@@ -54,7 +54,7 @@ export function WeaponTypeBar({ player }: WeaponTypeBarProps) {
       </TooltipTrigger>
       <TooltipContent>
         {Object.entries(simpleWeaponTypeMap).map(([_, props]) =>
-          <div className="flex items-center">
+          <div className="flex items-center" key={props.t}>
             <span className="w-4 size-2" style={{background: props.color}}/>
             <span className="ml-2">{props.t}</span>
           </div>
