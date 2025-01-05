@@ -70,9 +70,9 @@ def set_auto_settings(request):
         return api_response(error="Invalid server number", failed=True, status_code=400)
     do_restart_service = data.get("restart_service", True)
     do_forward = data.get("forward", False)
-    if do_forward == "false":
+    if do_forward == "false" or do_forward == "0":
         do_forward = False
-    if do_forward == "true":
+    if do_forward == "true" or do_forward == "1":
         do_forward = True
     if not isinstance(do_forward, bool):
         return api_response(error="forward needs to be a boolean value or empty", failed=True, status_code=400)
