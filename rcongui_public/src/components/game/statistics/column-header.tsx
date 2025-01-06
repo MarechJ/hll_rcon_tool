@@ -4,6 +4,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 import { Button } from '@/components/ui/button'
 import {cn} from "@/lib/utils";
+import { HTMLAttributes, ReactNode } from "react";
 
 export const Header = ({ header, desc, onClick }: { header: string; desc?: string; onClick?: () => void }) => (
   <TooltipProvider>
@@ -20,17 +21,22 @@ export const Header = ({ header, desc, onClick }: { header: string; desc?: strin
   </TooltipProvider>
 )
 
-type IconHeaderProps = {
-  icon: React.ReactNode;
+interface IconHeaderBaseProps {
   desc: string;
   onClick: () => void;
-} | {
-  src: string;
-  desc: string;
-  onClick: () => void;
-};
+}
 
-export const IconHeader = ({ desc, onClick, className, ...props }: IconHeaderProps & React.HTMLAttributes<HTMLDivElement>) => {
+interface IconHeaderIconProps {
+  icon: ReactNode;
+}
+
+interface IconHeaderLinkProps {
+  src: string;
+}
+
+type IconHeaderProps = IconHeaderBaseProps & (IconHeaderIconProps | IconHeaderLinkProps)
+
+export const IconHeader = ({ desc, onClick, className, ...props }: IconHeaderProps & HTMLAttributes<HTMLDivElement>) => {
   return <div className={className}>
     <TooltipProvider>
       <Tooltip>
