@@ -106,7 +106,7 @@ export function DataTable<TData extends Player, TValue, TExtraColumnId extends s
 
   return (
     <div className="border w-full divide-y">
-      <div className="flex flex-row justify-between items-start p-2 flex-wrap gap-3">
+      <div className="flex flex-row justify-between items-start p-2 gap-3">
         <div className="flex flex-row items-start gap-3">
           {hasIsOnline && (
             <Select onValueChange={(value) => table.getColumn('is_online')?.setFilterValue(value)}>
@@ -132,7 +132,7 @@ export function DataTable<TData extends Player, TValue, TExtraColumnId extends s
                   </div>
                 </SelectItem>
                 {teamOptions.map((option, index) =>
-                  <SelectItem value={option}>
+                  <SelectItem key={option} value={option}>
                     <div className="flex">
                       <TeamIndicator team={option as TeamEnum} className="block m-auto" />
                       <div className="pl-3">{t(option)} ({teamCounts[index]})</div>
@@ -177,7 +177,7 @@ export function DataTable<TData extends Player, TValue, TExtraColumnId extends s
               </PlainSelectTrigger>
               <SelectContent className={'px-4 py-2 pl-2'}>
                 {extraColumns.map((column) => (
-                  <div>
+                  <div key={column.id}>
                     <Checkbox
                       value={column.id}
                       checked={column.displayed}

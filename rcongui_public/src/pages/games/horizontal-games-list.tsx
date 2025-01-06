@@ -89,8 +89,8 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
     <ScrollArea ref={scrollAreaRef} className="w-full whitespace-nowrap sm:-mx-4 xl:mx-0 pb-2 relative overflow-hidden z-auto">
       <div className="flex flex-row w-max">
         {validGames.map((game, index) => (
-          <>
-            <div ref={(element: any) => {
+          <React.Fragment key={game.id}>
+            <div key={game.id} ref={(element: any) => {
               if (element) {
                 gameBoundingRefs.current.set(index, element);
               } else {
@@ -98,7 +98,6 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
               }
             }}>
               <GameCard
-                key={game.id}
                 game={game}
                 pathname={pathname}
                 onMouseEnter={() => setHoverGameDate(game.start)}
@@ -115,16 +114,16 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
             {!dayjsLocal(game.start).isSame(dayjsLocal(validGames[index + 1]?.start), 'day') &&
               <>
                 <DateCard
-                  zIndex={validGames.length - index}
                   key={game.start}
+                  zIndex={validGames.length - index}
                   dateString={game.start}
                   highlight={!!hoverGameDate && dayjsLocal(hoverGameDate).isSame(dayjsLocal(game.start), 'day')}
                   sticky={false}
                 />
                 {!!stickyDate && stickyDate.isSame(dayjsLocal(game.start), 'day') &&
                   <DateCard
-                    zIndex={validGames.length - index}
                     key={`sticky-${game.start}`}
+                    zIndex={validGames.length - index}
                     dateString={game.start}
                     sticky={true}
                     highlight={!!hoverGameDate && dayjsLocal(hoverGameDate).isSame(dayjsLocal(game.start), 'day')}
@@ -132,7 +131,7 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
                 }
               </>
             }
-          </>
+          </React.Fragment>
         ))}
       </div>
       <ScrollBar orientation="horizontal"/>
