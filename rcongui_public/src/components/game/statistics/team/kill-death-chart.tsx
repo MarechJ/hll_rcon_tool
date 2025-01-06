@@ -1,8 +1,8 @@
-import { Player, PlayerWithStatus, TeamEnum } from '@/types/player'
+import {Player, PlayerWithStatus} from '@/types/player'
 import React from 'react'
-import { Cell, ComposedChart, Label, ReferenceLine, ResponsiveContainer, Scatter, XAxis, YAxis } from 'recharts'
-import { getColorForTeam } from '@/components/game/statistics/utils'
-import { useTranslation } from 'react-i18next'
+import {Cell, ComposedChart, Label, ReferenceLine, ResponsiveContainer, Scatter, XAxis, YAxis} from 'recharts'
+import {getColorForTeam, getTeamFromAssociation} from '@/components/game/statistics/utils'
+import {useTranslation} from 'react-i18next'
 import colors from 'tailwindcss/colors'
 
 export function KillDeathChart({stats, handlePlayerClick}: {
@@ -15,7 +15,7 @@ export function KillDeathChart({stats, handlePlayerClick}: {
   const maxKills = Math.max.apply(null, stats.map(player => player.kills));
   const maxDeaths = Math.max.apply(null, stats.map(player => player.deaths));
 
-  const referenceLinesKpm = [0.5, 1, 2];
+  const referenceLinesKd = [0.5, 1, 2];
 
   const generateTicks = (n: number) => {
     const interval = 50;
@@ -41,16 +41,16 @@ export function KillDeathChart({stats, handlePlayerClick}: {
         >
           <XAxis type="number" dataKey="deaths" name={t("playersTable.deaths")} label={t("playersTable.deaths")} domain={[0, maxDeaths]} ticks={generateTicks(maxDeaths)}/>
           <YAxis type="number" dataKey="kills" name={t("playersTable.kills")} label={t("playersTable.kills")} domain={[0, maxKills]} ticks={generateTicks(maxKills)}/>
-          {referenceLinesKpm.map(kpm =>
-            <ReferenceLine stroke={colors.purple[600]} strokeDasharray={kpm === 1 ? undefined : "3 3"} segment={[{ x: 0, y: 0 }, { x: Math.min(maxKills, maxDeaths), y: Math.min(maxKills,maxDeaths) * kpm }]} ifOverflow="visible">
+          {referenceLinesKd.map(kd =>
+            <ReferenceLine stroke={colors.purple[600]} strokeDasharray={kd === 1 ? undefined : "3 3"} segment={[{ x: 0, y: 0 }, { x: Math.min(maxKills, maxDeaths), y: Math.min(maxKills,maxDeaths) * kd }]} ifOverflow="visible">
               <Label>
-                {kpm + " kpm"}
+                {kd + " K/D"}
               </Label>
             </ReferenceLine>
           )}
           <Scatter data={stats}>
             {stats.map((player, index) => (
-              <Cell key={`cell-${index}`} fill={getColorForTeam(player.team.confidence === 'strong' ? player.team.side : TeamEnum.MIXED)} onClick={() => handlePlayerClick(player.player_id)} className="cursor-pointer"/>
+              <Cell key={`cell-${index}`} fill={getColorForTeam(getTeamFromAssociation(player.team))} onClick={() => handlePlayerClick(player.player_id)} className="cursor-pointer"/>
             ))}
           </Scatter>
 

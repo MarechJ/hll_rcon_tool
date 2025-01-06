@@ -28,6 +28,7 @@ export const LogPlayerSelectionMenu = ({ actionOptions, onActionSelect }) => {
     onClose,
     hasSelected,
     filteredOptions,
+    searchInputRef,
   } = useSelectionMenu(actionOptions);
 
   return (
@@ -51,7 +52,11 @@ export const LogPlayerSelectionMenu = ({ actionOptions, onActionSelect }) => {
         </Button>
       )}
     >
-      <SearchInput value={search} onChange={(e) => setSearch(e.target.value)} />
+      <SearchInput
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        ref={searchInputRef}
+      />
       <List
         sx={{
           width: "100%",

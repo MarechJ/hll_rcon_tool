@@ -29,13 +29,18 @@ export const LogActionSelectionMenu = ({ actionOptions, onActionSelect }) => {
     onClose,
     hasSelected,
     filteredOptions,
+    searchInputRef,
   } = useSelectionMenu(actionOptions);
+
+  const handleOpen = () => {
+    onOpen();
+  }
 
   return (
     <PopoverMenu
       id="log-action-picker"
       description="Pick an action to filter the logs"
-      onOpen={onOpen}
+      onOpen={handleOpen}
       onClose={onClose}
       renderButton={(props) => (
         <Button {...props}>
@@ -52,7 +57,11 @@ export const LogActionSelectionMenu = ({ actionOptions, onActionSelect }) => {
         </Button>
       )}
     >
-      <SearchInput value={search} onChange={(e) => setSearch(e.target.value)} />
+      <SearchInput 
+        ref={searchInputRef}
+        value={search} 
+        onChange={(e) => setSearch(e.target.value)} 
+      />
       <List
         sx={{
           width: "100%",

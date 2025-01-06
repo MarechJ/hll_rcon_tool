@@ -40,8 +40,18 @@ const executeAction = (command) => async (payload) => {
     payload.name = payload.player;
   }
   // v10.x.x 'add_vip' change param from 'name' to 'description'
-  if (command === "add_vip" || command === "add_admin") {
+  if (command === "add_admin") {
     payload.description = payload.player_name;
+  }
+  if (command === "add_vip") {
+    if ("prefix" in payload && "suffix" in payload) {
+      payload.description =
+        (payload.prefix ?? "") +
+        payload.player_name +
+        (payload.suffix ?? "");
+    } else {
+      payload.description = payload.player_name;
+    }
   }
   return await execute(command, payload);
 };
@@ -159,7 +169,7 @@ export const blacklistAction = {
   component: BlacklistPlayerFormFields,
   icon: <AccountBalanceIcon />,
   execute: executeAction("add_blacklist_record"),
-  permission: ["can_add_blacklist_record"],
+  permission: ["can_add_blacklist_records"],
   context: [
     {
       type: "blacklists",

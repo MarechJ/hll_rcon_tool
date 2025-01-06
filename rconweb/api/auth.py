@@ -157,6 +157,8 @@ class RconJsonResponse(HttpResponse):
             return o.model_dump()
         elif isinstance(o, datetime.timedelta):
             return o.total_seconds()
+        elif isinstance(o, set):
+            return [val for val in sorted(o)]
         else:
             raise ValueError(f"Cannot serialize {o}, {type(o)} to JSON")
 

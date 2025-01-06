@@ -1,5 +1,5 @@
-import { Faceoff, Player, TeamEnum } from '@/types/player'
-import { Weapon, WeaponCategory } from '@/types/weapon'
+import {Faceoff, Player, PlayerTeamAssociation, TeamEnum} from '@/types/player'
+import {Weapon, WeaponCategory} from '@/types/weapon'
 import colors from 'tailwindcss/colors'
 
 // LIST OF WEAPONS
@@ -432,4 +432,11 @@ export function getColorForTeam(team: TeamEnum | undefined): string {
     return colors.purple[600];
   }
   return teamColors[team];
+}
+
+export function getTeamFromAssociation(team: PlayerTeamAssociation | undefined): TeamEnum {
+  if (team === undefined) {
+    return TeamEnum.UNKNOWN;
+  }
+  return team.confidence === 'strong' ? team.side : TeamEnum.MIXED;
 }
