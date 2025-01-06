@@ -3,6 +3,7 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 import { Button } from '@/components/ui/button'
+import {cn} from "@/lib/utils";
 
 export const Header = ({ header, desc, onClick }: { header: string; desc?: string; onClick?: () => void }) => (
   <TooltipProvider>
@@ -19,17 +20,25 @@ export const Header = ({ header, desc, onClick }: { header: string; desc?: strin
   </TooltipProvider>
 )
 
-export const IconHeader = ({ src, desc, onClick }: { src: string; desc: string; onClick: () => void }) => (
-  <TooltipProvider>
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button size="icon" className="size-6 dark:bg-transparent dark:border" onClick={onClick}>
-          <img alt={desc} src={src} width={16} height={16} />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>
-        <span>{desc}</span>
-      </TooltipContent>
-    </Tooltip>
-  </TooltipProvider>
+interface IconHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
+  src: string;
+  desc: string;
+  onClick: () => void;
+}
+
+export const IconHeader = ({ src, desc, onClick, className }: IconHeaderProps) => (
+  <div className={className}>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button size="icon" className={cn("size-6 dark:bg-transparent dark:border")} onClick={onClick}>
+            <img alt={desc} src={src} width={16} height={16} />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <span>{desc}</span>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  </div>
 )

@@ -18,14 +18,17 @@ export type extraColumns = 'kpm' | 'dpm';
 
 function SortableHeader({ column, desc }: { column: Column<Player>; desc: string }) {
   return (
-    <Button
-      variant={'text'}
-      onClick={() => {
-        column.toggleSorting(column.getIsSorted() !== 'desc')
-      }}
-    >
-      {desc}
-    </Button>
+    <div className="text-right">
+      <Button
+        variant={'text'}
+        onClick={() => {
+          column.toggleSorting(column.getIsSorted() !== 'desc')
+        }}
+        className="px-0"
+      >
+        {desc}
+      </Button>
+    </div>
   )
 }
 
@@ -58,6 +61,7 @@ function pointColumns(extras: extraColumns[]): ColumnDef<Player | PlayerWithStat
           <Header
             src={'/roles/infantry.png'}
             desc={t('playersTable.kills')}
+            className={"text-right"}
             onClick={() => {
               column.toggleSorting(column.getIsSorted() !== 'desc')
             }}
@@ -78,6 +82,7 @@ function pointColumns(extras: extraColumns[]): ColumnDef<Player | PlayerWithStat
           <Header
             src={'/roles/medic.png'}
             desc={t('playersTable.deaths')}
+            className={"text-right"}
             onClick={() => {
               column.toggleSorting(column.getIsSorted() !== 'desc')
             }}
@@ -98,6 +103,7 @@ function pointColumns(extras: extraColumns[]): ColumnDef<Player | PlayerWithStat
           <Header
             src={'/roles/score_combat.png'}
             desc={t('playersTable.combat')}
+            className={"text-right"}
             onClick={() => {
               column.toggleSorting(column.getIsSorted() !== 'desc')
             }}
@@ -114,6 +120,7 @@ function pointColumns(extras: extraColumns[]): ColumnDef<Player | PlayerWithStat
           <Header
             src={'/roles/score_offensive.png'}
             desc={t('playersTable.offense')}
+            className={"text-right"}
             onClick={() => {
               column.toggleSorting(column.getIsSorted() !== 'desc')
             }}
@@ -130,6 +137,7 @@ function pointColumns(extras: extraColumns[]): ColumnDef<Player | PlayerWithStat
           <Header
             src={'/roles/score_defensive.png'}
             desc={t('playersTable.defense')}
+            className={"text-right"}
             onClick={() => {
               column.toggleSorting(column.getIsSorted() !== 'desc')
             }}
@@ -146,6 +154,7 @@ function pointColumns(extras: extraColumns[]): ColumnDef<Player | PlayerWithStat
           <Header
             src={'/roles/score_support.png'}
             desc={t('playersTable.support')}
+            className={"text-right"}
             onClick={() => {
               column.toggleSorting(column.getIsSorted() !== 'desc')
             }}
@@ -194,7 +203,7 @@ const teamColumn: ColumnDef<Player | PlayerWithStatus> = {
   accessorKey: 'team',
   header: function TeamHeader() {
     const { t } = useTranslation('game')
-    return <div>{t('playersTable.team')}</div>
+    return <div className={"text-center"}>{t('playersTable.team')}</div>
   },
   size: 20,
   filterFn: (row, columnId, filterValue) => {
@@ -206,7 +215,9 @@ const teamColumn: ColumnDef<Player | PlayerWithStatus> = {
   },
   cell: ({row}) => {
     const player = row.original;
-    return <TeamIndicator team={getTeamFromAssociation(player.team)} className="block"/>;
+    return <div className={"text-center"}>
+      <TeamIndicator team={getTeamFromAssociation(player.team)} className="inline-block"/>
+    </div>;
   },
 };
 

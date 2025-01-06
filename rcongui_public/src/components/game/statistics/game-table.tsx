@@ -206,10 +206,10 @@ export function DataTable<TData extends Player, TValue, TExtraColumnId extends s
         <TableHeader className="h-12">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
-              <TableHead className="w-4">{'#'}</TableHead>
+              <TableHead className="w-4 text-center pr-0">{'#'}</TableHead>
               {headerGroup.headers.map((header) => {
                 return (
-                  <TableHead key={header.id} style={{ width: header.column.getSize() }}>
+                  <TableHead key={header.id} style={{ width: header.column.getSize() }} className="px-1.5">
                     {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 )
@@ -221,9 +221,9 @@ export function DataTable<TData extends Player, TValue, TExtraColumnId extends s
           {table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row, index) => (
               <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'} className="text-sm h-10">
-                <TableCell className="w-4">{index + 1}</TableCell>
+                <TableCell className="w-4 text-center pr-0">{index + 1}</TableCell>
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="py-0" style={{ width: cell.column.getSize() }}>
+                  <TableCell key={cell.id} className="py-0" style={{ width: cell.column.getSize(), textAlign: "right" }}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
