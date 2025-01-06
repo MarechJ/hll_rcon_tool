@@ -5,7 +5,6 @@ import duration from 'dayjs/plugin/duration'
 import { useTranslation } from 'react-i18next'
 import LiveGameInfo from './live-game-info'
 import { Spinner } from '@/components/spinner'
-import GameStats from '@/components/game/statistics/game-stats'
 import { QueryErrorResetBoundary, useSuspenseQueries, useSuspenseQuery } from '@tanstack/react-query'
 import { getCompletedGameColumns, getLiveGameColumns } from "@/components/game/statistics/game-columns";
 import { PlayerWithStatus } from '@/types/player'
