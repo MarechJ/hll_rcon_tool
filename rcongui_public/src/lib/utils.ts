@@ -1,9 +1,6 @@
 import {type ClassValue, clsx} from 'clsx'
 import {twMerge} from 'tailwind-merge'
 import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
-
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
@@ -23,9 +20,6 @@ export const downloadCSV = (data: string, filename: string) => {
   window.URL.revokeObjectURL(url)
   a.remove()
 }
-
-dayjs.extend(utc);
-dayjs.extend(timezone);
 
 export const dayjsLocal = (date: string) => {
   const tz = dayjs.tz.guess();

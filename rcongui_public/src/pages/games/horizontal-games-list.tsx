@@ -6,10 +6,9 @@ import {validGame} from "@/pages/games/list";
 import MapFigure from "@/components/game/map-figure";
 import dayjs from "dayjs";
 import {cn, dayjsLocal} from "@/lib/utils";
-import localizedFormat from "dayjs/plugin/localizedFormat";
 import {useTranslation} from "react-i18next";
+import {useLocale} from "@/i18n/locale-provider";
 
-dayjs.extend(localizedFormat)
 export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   const { pathname } = useLocation()
   const [hiddenDates, setHiddenDates] = useState<Record<string, boolean>>({});
@@ -145,6 +144,7 @@ const GameCard = React.forwardRef(
     { game, pathname, onMouseEnter, onMouseLeave }: { game: ScoreboardMap; pathname: string; onMouseEnter: () => void, onMouseLeave: () => void },
     ref: React.Ref<HTMLDivElement>
   ) => {
+    const { t } = useTranslation('translation');
     return (
       <Link
         to={`/games/${game.id}`}
@@ -155,7 +155,7 @@ const GameCard = React.forwardRef(
         <div className="px-0.5">
           <div ref={ref} key={game.id} data-date={game.start}/>
           <MapFigure
-            text={dayjsLocal(game.start).format("LT")}
+            text={`${dayjsLocal(game.start).format("LT")} (${dayjs(game.end).diff(dayjs(game.start), 'minutes')} ${t('time.minuteShort')})`}
             src={`/maps/${game.map.image_name}`}
             name={`${game.map.map.pretty_name} (${game.result?.allied ?? '?'}:${game.result?.axis ?? '?'})`}
             className={cn(
@@ -169,8 +169,8 @@ const GameCard = React.forwardRef(
 });
 
 const DateCard = ({ dateString, zIndex, highlight, sticky }: { dateString: string, zIndex: number, highlight: boolean, sticky: boolean }) => {
-  const { t } = useTranslation('translation');
   const date = dayjsLocal(dateString);
+  const globalLocaleData = useLocale().globalLocaleData;
 
   return (
     <div
@@ -181,9 +181,9 @@ const DateCard = ({ dateString, zIndex, highlight, sticky }: { dateString: strin
       )}
       style={{zIndex: zIndex}}
     >
-      <div className="font-mono font-bold text-sm">{(t(`weekday.${date.day()}` as unknown as TemplateStringsArray) as string).toUpperCase()}</div>
+      <div className="font-mono font-bold text-sm">{globalLocaleData.weekdaysShort()[date.day()].replace('.', '').toUpperCase()}</div>
       <div className="font-bold text-2xl">{date.date()}</div>
-      <div className="font-mono font-bold text-lg">{(t(`month.${date.month()}` as unknown as TemplateStringsArray) as string).toUpperCase()}</div>
+      <div className="font-mono font-bold text-lg">{globalLocaleData.monthsShort()[date.month()].replace('.', '').toUpperCase()}</div>
     </div>
   );
 }
