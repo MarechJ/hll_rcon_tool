@@ -10,6 +10,7 @@ import {useTranslation} from 'react-i18next'
 import {TeamIndicator} from '@/components/game/statistics/team-indicator'
 import {WeaponTypeBar} from "@/components/game/statistics/weapon-type-bar";
 import {getTeamFromAssociation} from "@/components/game/statistics/utils";
+import {ScaleIcon} from "lucide-react";
 
 const threeDigitsWidth = 40
 const fourDigitsWidth = 50
@@ -54,14 +55,29 @@ function pointColumns(): ColumnDef<Player | PlayerWithStatus>[] {
       },
     },
     {
-      id: 'kills_per_minute',
-      meta: { label: t('playersTable.killsPerMinute')},
-      accessorKey: 'kills_per_minute',
-      header: function KpmHeader({ column }) {
+      id: 'kill_death_ratio',
+      meta: { label: t('score.k/d')},
+      accessorKey: 'kill_death_ratio',
+      size: fourDigitsWidth,
+      header: function DeathsHeader({ column }) {
         const { t } = useTranslation('game')
-        return <SortableHeader column={column} desc={t('playersTable.killsPerMinute')} />
+        return (
+          <Header
+            icon={<ScaleIcon/>}
+            desc={t('score.k/d')}
+            className={"text-right"}
+            onClick={() => {
+              column.toggleSorting(column.getIsSorted() !== 'desc')
+            }}
+          />
+        )
       },
-      size: 20,
+      cell: ({row}) => {
+        const player = row.original;
+        return <div className={"text-right whitespace-pre"}>
+          {player.kill_death_ratio.toFixed(1)}
+        </div>;
+      },
     },
     {
       id: 'deaths',
@@ -81,6 +97,16 @@ function pointColumns(): ColumnDef<Player | PlayerWithStatus>[] {
           />
         )
       },
+    },
+    {
+      id: 'kills_per_minute',
+      meta: { label: t('playersTable.killsPerMinute')},
+      accessorKey: 'kills_per_minute',
+      header: function KpmHeader({ column }) {
+        const { t } = useTranslation('game')
+        return <SortableHeader column={column} desc={t('playersTable.killsPerMinute')} />
+      },
+      size: 20,
     },
     {
       id: 'deaths_per_minute',

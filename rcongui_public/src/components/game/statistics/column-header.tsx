@@ -20,19 +20,23 @@ export const Header = ({ header, desc, onClick }: { header: string; desc?: strin
   </TooltipProvider>
 )
 
-interface IconHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
+type IconHeaderProps = {
+  icon: React.ReactNode;
+  desc: string;
+  onClick: () => void;
+} | {
   src: string;
   desc: string;
   onClick: () => void;
-}
+};
 
-export const IconHeader = ({ src, desc, onClick, className }: IconHeaderProps) => (
-  <div className={className}>
+export const IconHeader = ({ desc, onClick, className, ...props }: IconHeaderProps & React.HTMLAttributes<HTMLDivElement>) => {
+  return <div className={className}>
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
           <Button size="icon" className={cn("size-6 dark:bg-transparent dark:border")} onClick={onClick}>
-            <img alt={desc} src={src} width={16} height={16} />
+            {'icon' in props ? props.icon : <img alt={desc} src={props.src} width={16} height={16}/>}
           </Button>
         </TooltipTrigger>
         <TooltipContent>
@@ -41,4 +45,4 @@ export const IconHeader = ({ src, desc, onClick, className }: IconHeaderProps) =
       </Tooltip>
     </TooltipProvider>
   </div>
-)
+}
