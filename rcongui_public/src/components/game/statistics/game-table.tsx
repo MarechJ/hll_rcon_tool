@@ -34,27 +34,17 @@ import {TeamIndicator} from "@/components/game/statistics/team-indicator";
 import SelectBox from "@/components/ui/select-box";
 import { Checkbox } from "@/components/ui/checkbox";
 
-interface DataTableProps<TData, TValue, TExtraColumnId> {
+interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
-  extraColumns?: ExtraColumnDef<TExtraColumnId>[]
-  onExtraColumnChange?: (extra: ExtraColumnDef<TExtraColumnId>['id'][]) => void
   data: TData[]
   tableId: string
 }
 
-export interface ExtraColumnDef<TExtraColumnId> {
-  id: TExtraColumnId
-  displayed: boolean
-  label: string
-}
-
-export function DataTable<TData extends Player, TValue, TExtraColumnId extends string>({
+export function DataTable<TData extends Player, TValue>({
   columns,
-  extraColumns,
-  onExtraColumnChange,
   data,
   tableId,
-}: DataTableProps<TData, TValue, TExtraColumnId>) {
+}: DataTableProps<TData, TValue>) {
   const { download } = useGameDownload()
 
   const [playerFilter, setPlayerFilter] = useState<string[]>([]);
@@ -94,6 +84,14 @@ export function DataTable<TData extends Player, TValue, TExtraColumnId extends s
     state: {
       sorting,
       columnFilters,
+    },
+    initialState: {
+      columnVisibility: {
+        ["combat"]: false,
+        ["defense"]: false,
+        ["offense"]: false,
+        ["support"]: false,
+      },
     },
   })
 
@@ -170,29 +168,21 @@ export function DataTable<TData extends Player, TValue, TExtraColumnId extends s
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          {extraColumns && (
+          {!!table.getAllColumns().find(col => col.getCanHide()) && (
             <Select>
               <PlainSelectTrigger className={'rounded-md border border-input bg-background px-3 py-2 hover:bg-accent'}>
                 <List size={20} />
               </PlainSelectTrigger>
               <SelectContent className={'px-4 py-2 pl-2'}>
-                {extraColumns.map((column) => (
+                {table.getAllColumns().filter(col => col.getCanHide()).map((column) => (
                   <div key={column.id}>
                     <Checkbox
-                      value={column.id}
-                      checked={column.displayed}
-                      onCheckedChange={(state) => {
-                        let displayed = extraColumns?.filter((c) => c.displayed).map((c) => c.id)
-                        if (state === true && !displayed.includes(column.id)) {
-                          displayed.push(column.id)
-                        } else if (state === false && displayed.includes(column.id)) {
-                          displayed = displayed.filter((c) => c !== column.id)
-                        }
-                        onExtraColumnChange?.(displayed)
-                      }}
+                      checked={column.getIsVisible()}
+                      disabled={!column.getCanHide()}
+                      onClick={column.getToggleVisibilityHandler()}
                     >
                       <div className="flex">
-                        <div className="pl-3">{column.label}</div>
+                        <div className="pl-3">{column.columnDef.meta?.label}</div>
                       </div>
                     </Checkbox>
                   </div>

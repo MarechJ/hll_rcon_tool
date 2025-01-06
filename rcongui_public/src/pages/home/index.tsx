@@ -13,24 +13,13 @@ import { liveGameStatsOptions } from '@/lib/queries/live-game-stats'
 import React, { useState } from "react";
 import { ErrorBoundary } from 'react-error-boundary'
 import GameStatsContainer from '@/components/game/statistics/game-stats-container'
-import { DataTable, ExtraColumnDef } from "@/components/game/statistics/game-table";
-import { extraColumns } from "@/components/game/statistics/game-columns";
+import { DataTable } from "@/components/game/statistics/game-table";
 
 dayjs.extend(duration)
 
 export default function Home() {
   const { t } = useTranslation('navigation')
   const { t: tNotFound } = useTranslation('notfound')
-  const { t: gameT } = useTranslation('game')
-  const [extraColumns, setExtraColumns] = useState<ExtraColumnDef<extraColumns>[]>([{
-    id: 'kpm',
-    label: gameT('playersTable.killsPerMinute'),
-    displayed: false,
-  }, {
-    id: 'dpm',
-    label: gameT('playersTable.deathsPerMinute'),
-    displayed: false,
-  }]);
 
   const { data: game, isLoading, isError } = useSuspenseQuery(publicInfoQueryOptions)
 
@@ -108,16 +97,7 @@ export default function Home() {
                   }}>
                     {(props) => (
                       <DataTable
-                        columns={getLiveGameColumns(props.handlePlayerClick, extraColumns.filter((e) => e.displayed).map((e) => e.id))}
-                        extraColumns={extraColumns}
-                        onExtraColumnChange={(extra) => {
-                          setExtraColumns((current) => {
-                            return current.map((c) => ({
-                              ...c,
-                              displayed: extra.includes(c.id),
-                            }));
-                          })
-                        }}
+                        columns={getLiveGameColumns(props.handlePlayerClick)}
                         data={liveStats.data.filter((player) => player.time_seconds > 15)}
                         tableId={`live_${dayjs(game.current_map.start * 1000).format('YYYYMMDD-HHmm')}`}
                       />

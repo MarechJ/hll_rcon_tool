@@ -14,8 +14,6 @@ import {getTeamFromAssociation} from "@/components/game/statistics/utils";
 const threeDigitsWidth = 40
 const fourDigitsWidth = 50
 
-export type extraColumns = 'kpm' | 'dpm';
-
 function SortableHeader({ column, desc }: { column: Column<Player>; desc: string }) {
   return (
     <div className="text-right">
@@ -32,27 +30,13 @@ function SortableHeader({ column, desc }: { column: Column<Player>; desc: string
   )
 }
 
-const kpmColumn: ColumnDef<Player | PlayerWithStatus> = {
-  accessorKey: 'kills_per_minute',
-  header: function KpmHeader({ column }) {
-    const { t } = useTranslation('game')
-    return <SortableHeader column={column} desc={t('playersTable.killsPerMinute')} />
-  },
-  size: 20,
-}
+function pointColumns(): ColumnDef<Player | PlayerWithStatus>[] {
+  const { t } = useTranslation('game');
 
-const dpmColumn: ColumnDef<Player | PlayerWithStatus> = {
-  accessorKey: 'deaths_per_minute',
-  header: function KpmHeader({ column }) {
-    const { t } = useTranslation('game')
-    return <SortableHeader column={column} desc={t('playersTable.deathsPerMinute')} />
-  },
-  size: 20,
-}
-
-function pointColumns(extras: extraColumns[]): ColumnDef<Player | PlayerWithStatus>[] {
-  const c: ColumnDef<Player | PlayerWithStatus>[] = [
+  return [
     {
+      id: 'kills',
+      meta: { label: t('playersTable.kills')},
       accessorKey: 'kills',
       size: threeDigitsWidth,
       header: function KillsHeader({ column }) {
@@ -69,11 +53,19 @@ function pointColumns(extras: extraColumns[]): ColumnDef<Player | PlayerWithStat
         )
       },
     },
-  ];
-  if (extras.includes('kpm')) {
-    c.push(kpmColumn);
-  }
-  c.push({
+    {
+      id: 'kills_per_minute',
+      meta: { label: t('playersTable.killsPerMinute')},
+      accessorKey: 'kills_per_minute',
+      header: function KpmHeader({ column }) {
+        const { t } = useTranslation('game')
+        return <SortableHeader column={column} desc={t('playersTable.killsPerMinute')} />
+      },
+      size: 20,
+    },
+    {
+      id: 'deaths',
+      meta: { label: t('playersTable.deaths')},
       accessorKey: 'deaths',
       size: fourDigitsWidth,
       header: function DeathsHeader({ column }) {
@@ -89,12 +81,20 @@ function pointColumns(extras: extraColumns[]): ColumnDef<Player | PlayerWithStat
           />
         )
       },
-    }
-  );
-  if (extras.includes('dpm')) {
-    c.push(dpmColumn);
-  }
-  c.push({
+    },
+    {
+      id: 'deaths_per_minute',
+      meta: { label: t('playersTable.deathsPerMinute')},
+      accessorKey: 'deaths_per_minute',
+      header: function KpmHeader({ column }) {
+        const { t } = useTranslation('game')
+        return <SortableHeader column={column} desc={t('playersTable.deathsPerMinute')} />
+      },
+      size: 20,
+    },
+    {
+      id: 'combat',
+      meta: { label: t('playersTable.combat')},
       accessorKey: 'combat',
       size: fourDigitsWidth,
       header: function CombatHeader({ column }) {
@@ -112,6 +112,8 @@ function pointColumns(extras: extraColumns[]): ColumnDef<Player | PlayerWithStat
       },
     },
     {
+      id: 'offense',
+      meta: { label: t('playersTable.offense')},
       accessorKey: 'offense',
       size: fourDigitsWidth,
       header: function OffenseHeader({ column }) {
@@ -129,6 +131,8 @@ function pointColumns(extras: extraColumns[]): ColumnDef<Player | PlayerWithStat
       },
     },
     {
+      id: 'defense',
+      meta: { label: t('playersTable.defense')},
       accessorKey: 'defense',
       size: fourDigitsWidth,
       header: function DefenseHeader({ column }) {
@@ -146,6 +150,8 @@ function pointColumns(extras: extraColumns[]): ColumnDef<Player | PlayerWithStat
       },
     },
     {
+      id: 'support',
+      meta: { label: t('playersTable.support')},
       accessorKey: 'support',
       size: fourDigitsWidth,
       header: function SupportHeader({ column }) {
@@ -162,11 +168,11 @@ function pointColumns(extras: extraColumns[]): ColumnDef<Player | PlayerWithStat
         )
       },
     },
-  );
-  return c;
+  ];
 }
 
 const playerColumn = (handlePlayerClick: (id: string) => void): ColumnDef<Player | PlayerWithStatus> => ({
+  id: 'player',
   accessorKey: 'player',
   header: function NameHeader() {
     const { t } = useTranslation('game')
@@ -197,48 +203,59 @@ const playerColumn = (handlePlayerClick: (id: string) => void): ColumnDef<Player
     const value: string = row.getValue(columnId)
     return filterValue.some((v: string) => value.toLowerCase().includes(v.toLowerCase()))
   },
+  enableHiding: false,
 })
 
-const teamColumn: ColumnDef<Player | PlayerWithStatus> = {
-  accessorKey: 'team',
-  header: function TeamHeader() {
-    const { t } = useTranslation('game')
-    return <div className={"text-center"}>{t('playersTable.team')}</div>
-  },
-  size: 20,
-  filterFn: (row, columnId, filterValue) => {
-    if (!filterValue || filterValue === 'all') {
-      return true
-    }
-    const cellValue: PlayerTeamAssociation = row.getValue(columnId);
-    return getTeamFromAssociation(cellValue) === filterValue;
-  },
-  cell: ({row}) => {
-    const player = row.original;
-    return <div className={"text-center"}>
-      <TeamIndicator team={getTeamFromAssociation(player.team)} className="inline-block"/>
-    </div>;
-  },
-};
+const teamColumn = (): ColumnDef<Player | PlayerWithStatus> => {
+  const { t } = useTranslation('game');
 
-const killCategoryColumn: ColumnDef<Player | PlayerWithStatus> = {
-  accessorKey: 'kills_by_category',
-  header: function KillCategoryHeader() {
-    const {t} = useTranslation('game')
-    return <div>{t('playersTable.killsByCategory')}</div>
-  },
-  size: 100,
-  cell: ({row}) => {
-    const player = row.original;
-    return <WeaponTypeBar player={player}/> ;
-  },
+  return {
+    id: 'team',
+    meta: { label: t('playersTable.team')},
+    accessorKey: 'team',
+    header: function TeamHeader() {
+      const {t} = useTranslation('game')
+      return <div className={"text-center"}>{t('playersTable.team')}</div>
+    },
+    size: 20,
+    filterFn: (row, columnId, filterValue) => {
+      if (!filterValue || filterValue === 'all') {
+        return true
+      }
+      const cellValue: PlayerTeamAssociation = row.getValue(columnId);
+      return getTeamFromAssociation(cellValue) === filterValue;
+    },
+    cell: ({row}) => {
+      const player = row.original;
+      return <div className={"text-center"}>
+        <TeamIndicator team={getTeamFromAssociation(player.team)} className="inline-block"/>
+      </div>;
+    },
+  };
 }
 
+const killCategoryColumn =(): ColumnDef<Player | PlayerWithStatus> => {
+  const { t } = useTranslation('game');
+
+  return {
+    id: 'kills_by_category',
+    meta: { label: t('playersTable.killsByCategory')},
+    accessorKey: 'kills_by_category',
+    header: function KillCategoryHeader() {
+      const {t} = useTranslation('game')
+      return <div>{t('playersTable.killsByCategory')}</div>
+    },
+    size: 100,
+    cell: ({row}) => {
+      const player = row.original;
+      return <WeaponTypeBar player={player}/>;
+    },
+  }
+};
+
 const statusColumn: ColumnDef<Player | PlayerWithStatus> = {
+  id: 'is_online',
   accessorKey: 'is_online',
-  meta: {
-    filterVariant: 'select',
-  },
   header: function StatusHeader() {
     const { t } = useTranslation('game')
     return <div className="sr-only w-4">{t('playersTable.status')}</div>
@@ -255,15 +272,15 @@ const statusColumn: ColumnDef<Player | PlayerWithStatus> = {
     const player = row.original
     return isPlayerWithStatus(player) ? <Status player={player} className="block" /> : null
   },
+  enableHiding: false,
 }
 
-export const getLiveGameColumns = (handlePlayerClick: (id: string) => void, extras: extraColumns[] = []): ColumnDef<Player | PlayerWithStatus>[] => [
+export const getLiveGameColumns = (handlePlayerClick: (id: string) => void): ColumnDef<Player | PlayerWithStatus>[] => [
   statusColumn,
   playerColumn(handlePlayerClick),
-  ...pointColumns(extras),
+  ...pointColumns(),
 ]
 
 export const getCompletedGameColumns = (
   handlePlayerClick: (id: string) => void,
-  extras: extraColumns[] = [],
-): ColumnDef<Player | PlayerWithStatus>[] => [teamColumn, playerColumn(handlePlayerClick), killCategoryColumn, ...pointColumns(extras)]
+): ColumnDef<Player | PlayerWithStatus>[] => [teamColumn(), playerColumn(handlePlayerClick), killCategoryColumn(), ...pointColumns()]
