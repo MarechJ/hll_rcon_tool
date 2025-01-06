@@ -166,6 +166,7 @@ export const cmd = {
   SET_VIP_SLOTS_NUM: (params) => requestFactory({ method: "POST", cmd: "set_vip_slots_num", ...params }),
   SET_VOTEKICK_AUTOTOGGLE_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_votekick_autotoggle_config", ...params }),
   SET_VOTEKICK_ENABLED: (params) => requestFactory({ method: "POST", cmd: "set_votekick_enabled", ...params }),
+  SET_VOTEKICK_THRESHOLDS: (params) => requestFactory({ method: "POST", cmd: "set_votekick_thresholds", ...params }),
   SET_WELCOME_MESSAGE: (params) => requestFactory({ method: "POST", cmd: "set_welcome_message", ...params }),
   TOGGLE_SERVICE: (params) => requestFactory({ method: "POST", cmd: "do_service", ...params }),
   UNFLAG_PLAYER: (params) => requestFactory({ method: "POST", cmd: "unflag_player", ...params }),

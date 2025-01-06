@@ -76,11 +76,11 @@ const Autosettings = () => {
   const submit = useSubmit();
   const theme = useTheme();
 
-  const handleApplyClick = (intent) => (e) => {
+  const handleApplyClick = (intent) => () => {
     setSubmitting(true);
     const formData = new FormData();
     formData.append("intent", intent);
-    formData.append("forward", intent === INTENT.APPLY_ALL);
+    formData.append("forward", intent === INTENT.APPLY_ALL ? "true" : "false");
     formData.append("settings", editorContent);
     submit(formData, {method: "post"});
   };
@@ -132,7 +132,7 @@ const Autosettings = () => {
           <Button
             variant="contained"
             color="secondary"
-            href="https://github.com/MarechJ/hll_rcon_tool/wiki/User-Guide-:-Autosettings"
+            href="https://github.com/MarechJ/hll_rcon_tool/wiki/User-Guide-%E2%80%90-Main-interface-%E2%80%90-Settings-%E2%80%90-Autosettings"
             component={"a"}
           >
             Read docs

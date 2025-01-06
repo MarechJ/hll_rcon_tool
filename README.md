@@ -148,21 +148,25 @@ Change most (but not all) game server/CRCON settings, including but not limited 
 
 ## Some images
 
+### Homepage
+
+![Homepage](/images/README_Home_2024-12-27.png)
+
 ### Manage your games and players in realtime
 
-![Live view page](/images/Rcon.png)
+![Live view page](/images/README_Views_Live_2024-12-27.png)
 
 ### Manage your players database
 
-![Player history overview](/images/Rcon3.png)
+![Player history overview](/images/README_Records_Players_2024-12-27.png)
 
 ### Automatic server settings
 
-![Settings](/images/Rcon2.png)
+![Settings](/images/README_Settings_General_2024-12-27.png)
 
 ### Permanent logs
 
-![Historical logs](/images/Rcon4.png)
+![Historical logs](/images/README_Records_GameLogs_2024-12-27.png)
 
 ## Features to come (maybe)
 
@@ -292,7 +296,8 @@ Stay cool and follow the drill. It's a simple installation, many not-so-technica
 
 > [!TIP]
 > All the commands given below are meant to be entered in a Debian-based (like Ubuntu) Linux terminal.
-
+> [!NOTE]
+> all commands must be validated with the [Enter] key.
 ---
 
 ### 1. Download CRCON
@@ -302,8 +307,6 @@ Open an SSH session on your VPS. That's a text-only based terminal we'll use to 
 Windows users can use the `PowerShell` tool that's already available in their StartMenu.
 To launch it, open the StartMenu, search for `PowerShell` and click on its icon.
 Then, to connect to the VPS, just enter this command, where `123.123.123.123` is the VPS IP.
-> [!NOTE]
-> all commands must be validated with the [Enter] key.
 ```
 ssh root@123.123.123.123
 ```

@@ -14,6 +14,8 @@
     "players": "Players",
     "allies": "Allies",
     "axis": "Axis",
+    "mixed": "Mixed",
+    "unknown": "Unknown",
     "weather": {
         "day": "Day",
         "night": "Night",
@@ -26,6 +28,7 @@
         "player": "Player",
         "team": "Team",
         "kills": "Kills",
+        "killsByCategory": "Kills by category",
         "deaths": "Deaths",
         "combat": "Combat",
         "score": "Score",
@@ -38,7 +41,17 @@
         "support": "Support",
         "utility": "Utility",
         "diff": "Difference",
-        "status": "Status"
+        "status": "Status",
+        "killsPerMinute": "KPM",
+        "deathsPerMinute": "DPM"
+    },
+    "weaponType": {
+      "infantry": "Infantry",
+      "explosive": "Explosive",
+      "machineGun": "Machine Gun",
+      "armor": "Armor",
+      "commander": "Commander",
+      "artillery": "Artillery"
     },
     "matchTable": {
         "match": "Match",

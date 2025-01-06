@@ -209,7 +209,7 @@ def get_players_by_appearance(
                     BlacklistRecord.player_id_id == PlayerID.id,
                     or_(
                         BlacklistRecord.expires_at.is_(None),
-                        BlacklistRecord.expires_at < func.now(),
+                        BlacklistRecord.expires_at > func.now(),
                     ),
                 )
                 .exists()

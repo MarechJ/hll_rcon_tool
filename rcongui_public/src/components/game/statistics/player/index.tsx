@@ -40,7 +40,7 @@ export default function PlayerGameDetail({
   deathsBy.sort((a, b) => b.count - a.count)
 
   return (
-    <div className="divide-y pb-2 lg:sticky lg:top-14 border lg:border-l-0">
+    <div className="divide-y pb-2 lg:sticky lg:top-14 border">
       {!isMobile && (
         <div className="flex justify-between items-center gap-1 px-2 h-12">
           <div className="flex justify-center items-center gap-2 grow">

@@ -9,7 +9,7 @@ const logStreamNotes = `
             - refresh_frequency_sec: The poll rate for asking for new logs from the game server
             - refresh_since_mins The number of minutes of logs to request from the game service each loop
 
-            See https://github.com/MarechJ/hll_rcon_tool/wiki/Streaming-Logs for a detailed description.
+            See https://github.com/MarechJ/hll_rcon_tool/wiki/Developer-Guides-%E2%80%90-Streaming-Logs for a detailed description.
         */
     }
     `;

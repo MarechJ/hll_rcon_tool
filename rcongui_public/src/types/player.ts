@@ -1,4 +1,4 @@
-import { Weapon, WeaponCategory } from './weapon'
+import {Weapon, WeaponCategory, WeaponType} from './weapon'
 
 type Team = {
   name: string
@@ -89,6 +89,7 @@ export interface PlayerBase {
   map_id: number
   kills: number
   kills_streak: number
+  kills_by_type: Record<WeaponType, number>
   deaths: number
   deaths_without_kill_streak: number
   teamkills: number
@@ -112,6 +113,19 @@ export interface PlayerBase {
   death_by: Record<string, number>
   weapons: Record<Weapon, number>
   death_by_weapons: Record<Weapon, number> | null
+  team: PlayerTeamAssociation
+}
+
+export interface PlayerTeamAssociation {
+  side: TeamEnum,
+  confidence: 'strong' | 'mixed',
+}
+
+export enum TeamEnum {
+  AXIS = 'axis',
+  ALLIES = 'allies',
+  MIXED = 'mixed',
+  UNKNOWN = 'unknown',
 }
 
 // Live player interface with online status
