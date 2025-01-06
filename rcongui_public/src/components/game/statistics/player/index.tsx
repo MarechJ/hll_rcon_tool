@@ -5,7 +5,7 @@ import { points, scores, isSteamPlayer, getSteamProfileUrl, getXboxProfileUrl } 
 import { Button } from '@/components/ui/button'
 import { SimpleIcon } from '@/components/simple-icon'
 import { siSteam } from 'simple-icons'
-import {ChevronDownIcon, Gamepad2Icon} from 'lucide-react'
+import { Gamepad2Icon} from 'lucide-react'
 import { SimpleTable } from '@/components/game/statistics/simple-table'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { IconStatistic } from '../icon'
@@ -101,7 +101,7 @@ export default function PlayerGameDetail({
                 </AccordionTrigger>
               </AccordionHeader>
               <AccordionContent>
-                <SimpleTable columns={faceoffColumns} data={mergeKillsDeaths(player)}/>
+                <SimpleTable columns={faceoffColumns} data={mergeKillsDeaths(player)} initialSortedColumn="kills"/>
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="killsByWeapon">
@@ -111,7 +111,7 @@ export default function PlayerGameDetail({
                 </AccordionTrigger>
               </AccordionHeader>
               <AccordionContent>
-                <SimpleTable columns={killByColumns} data={killsBy} />
+                <SimpleTable columns={killByColumns} data={killsBy} initialSortedColumn="count"/>
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="deathsByWeapon">
@@ -121,7 +121,7 @@ export default function PlayerGameDetail({
                 </AccordionTrigger>
               </AccordionHeader>
               <AccordionContent>
-                <SimpleTable columns={deathByColumns} data={deathsBy} />
+                <SimpleTable columns={deathByColumns} data={deathsBy} initialSortedColumn="count"/>
               </AccordionContent>
             </AccordionItem>
           </Accordion>
