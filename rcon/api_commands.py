@@ -745,7 +745,7 @@ class RconAPI(Rcon):
         new_config = VoteMapUserConfig.load_from_db()
 
         # on -> off or off -> on
-        if old_config.enabled != new_config:
+        if old_config.enabled != new_config.enabled:
             self.reset_votemap_state()
 
         return True
