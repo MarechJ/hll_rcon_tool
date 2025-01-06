@@ -140,6 +140,7 @@ export const cmd = {
   GET_SERVER_NAME: (params) => requestFactory({ method: "GET", cmd: "get_name", ...params }),
   GET_SERVER_SETTINGS: (params) => requestFactory({ method: "GET", cmd: "get_server_settings", ...params }),
   GET_SERVICES: (params) => requestFactory({ method: "GET", cmd: "get_services", ...params }),
+  GET_VERSION: (params) => requestFactory({ method: "GET", cmd: "get_version", ...params }),
   GET_VIPS: (params) => requestFactory({ method: "GET", cmd: "get_vip_ids", ...params }),
   GET_VOTEKICK_AUTOTOGGLE_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_votekick_autotoggle_config", ...params }),
   GET_WELCOME_MESSAGE: (params) => requestFactory({ method: "GET", cmd: "get_welcome_message", ...params }),
