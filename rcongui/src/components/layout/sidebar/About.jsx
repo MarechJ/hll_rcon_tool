@@ -143,6 +143,9 @@ export default function AboutDialog() {
             {releases.length > 0 && (
               <>
                 <Suspense fallback={<Skeleton variant="rectangular" height={200} />}>
+                  <Divider sx={{ my: 2 }} />
+                  <Typography variant='h6'>Latest Release {releases[0].name}</Typography>
+                  <Typography variant='subtitle2' sx={{ mb: 2 }}>{dayjs(releases[0].published_at).format('LLL')}</Typography>
                   <ReleaseNotes release={releases[0]} />
                 </Suspense>
               </>
