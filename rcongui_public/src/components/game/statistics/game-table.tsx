@@ -34,27 +34,17 @@ import {TeamIndicator} from "@/components/game/statistics/team-indicator";
 import SelectBox from "@/components/ui/select-box";
 import { Checkbox } from "@/components/ui/checkbox";
 
-interface DataTableProps<TData, TValue, TExtraColumnId> {
+interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
-  extraColumns?: ExtraColumnDef<TExtraColumnId>[]
-  onExtraColumnChange?: (extra: ExtraColumnDef<TExtraColumnId>['id'][]) => void
   data: TData[]
   tableId: string
 }
 
-export interface ExtraColumnDef<TExtraColumnId> {
-  id: TExtraColumnId
-  displayed: boolean
-  label: string
-}
-
-export function DataTable<TData extends Player, TValue, TExtraColumnId extends string>({
+export function DataTable<TData extends Player, TValue>({
   columns,
-  extraColumns,
-  onExtraColumnChange,
   data,
   tableId,
-}: DataTableProps<TData, TValue, TExtraColumnId>) {
+}: DataTableProps<TData, TValue>) {
   const { download } = useGameDownload()
 
   const [playerFilter, setPlayerFilter] = useState<string[]>([]);
@@ -95,6 +85,14 @@ export function DataTable<TData extends Player, TValue, TExtraColumnId extends s
       sorting,
       columnFilters,
     },
+    initialState: {
+      columnVisibility: {
+        ["combat"]: false,
+        ["defense"]: false,
+        ["offense"]: false,
+        ["support"]: false,
+      },
+    },
   })
 
   const { t } = useTranslation('game')
@@ -107,7 +105,7 @@ export function DataTable<TData extends Player, TValue, TExtraColumnId extends s
   return (
     <div className="border w-full divide-y">
       <div className="flex flex-row justify-between items-start p-2 gap-3">
-        <div className="flex flex-row items-start gap-3">
+        <div className="flex flex-row items-start gap-3 flex-1">
           {hasIsOnline && (
             <Select onValueChange={(value) => table.getColumn('is_online')?.setFilterValue(value)}>
               <SelectTrigger className="w-24">
@@ -122,7 +120,7 @@ export function DataTable<TData extends Player, TValue, TExtraColumnId extends s
           )}
           {hasTeam && (
             <Select onValueChange={(value) => table.getColumn('team')?.setFilterValue(value)}>
-              <SelectTrigger className="w-60">
+              <SelectTrigger className="max-w-40">
                 <SelectValue placeholder={t('playersTable.team')} />
               </SelectTrigger>
               <SelectContent>
@@ -138,7 +136,7 @@ export function DataTable<TData extends Player, TValue, TExtraColumnId extends s
                       <div className="pl-3">{t(option)} ({teamCounts[index]})</div>
                     </div>
                   </SelectItem>
-                )})
+                )}
               </SelectContent>
             </Select>
           )}
@@ -170,29 +168,21 @@ export function DataTable<TData extends Player, TValue, TExtraColumnId extends s
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          {extraColumns && (
+          {!!table.getAllColumns().find(col => col.getCanHide()) && (
             <Select>
               <PlainSelectTrigger className={'rounded-md border border-input bg-background px-3 py-2 hover:bg-accent'}>
                 <List size={20} />
               </PlainSelectTrigger>
               <SelectContent className={'px-4 py-2 pl-2'}>
-                {extraColumns.map((column) => (
+                {table.getAllColumns().filter(col => col.getCanHide()).map((column) => (
                   <div key={column.id}>
                     <Checkbox
-                      value={column.id}
-                      checked={column.displayed}
-                      onCheckedChange={(state) => {
-                        let displayed = extraColumns?.filter((c) => c.displayed).map((c) => c.id)
-                        if (state === true && !displayed.includes(column.id)) {
-                          displayed.push(column.id)
-                        } else if (state === false && displayed.includes(column.id)) {
-                          displayed = displayed.filter((c) => c !== column.id)
-                        }
-                        onExtraColumnChange?.(displayed)
-                      }}
+                      checked={column.getIsVisible()}
+                      disabled={!column.getCanHide()}
+                      onClick={column.getToggleVisibilityHandler()}
                     >
                       <div className="flex">
-                        <div className="pl-3">{column.label}</div>
+                        <div className="pl-3">{column.columnDef.meta?.label}</div>
                       </div>
                     </Checkbox>
                   </div>
@@ -206,10 +196,10 @@ export function DataTable<TData extends Player, TValue, TExtraColumnId extends s
         <TableHeader className="h-12">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
-              <TableHead className="w-4">{'#'}</TableHead>
+              <TableHead className="w-4 text-center pr-0">{'#'}</TableHead>
               {headerGroup.headers.map((header) => {
                 return (
-                  <TableHead key={header.id} style={{ width: header.column.getSize() }}>
+                  <TableHead key={header.id} style={{ width: header.column.getSize() }} className="px-1.5">
                     {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 )
@@ -221,9 +211,9 @@ export function DataTable<TData extends Player, TValue, TExtraColumnId extends s
           {table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row, index) => (
               <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'} className="text-sm h-10">
-                <TableCell className="w-4">{index + 1}</TableCell>
+                <TableCell className="w-4 text-center pr-0">{index + 1}</TableCell>
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="py-0" style={{ width: cell.column.getSize() }}>
+                  <TableCell key={cell.id} className="py-0" style={{ width: cell.column.getSize(), textAlign: "right" }}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}

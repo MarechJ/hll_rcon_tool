@@ -27,10 +27,12 @@ export function WeaponTypeBar({ player }: WeaponTypeBarProps) {
   };
 
   const killsBySimpleStatus = new Map<SimpleWeaponType, number>;
+  let totalCategorizedKills = 0;
 
   Object.entries(player.kills_by_type).forEach(([type, count]) => {
     const simpleType = weaponTypeToSimpleWeaponType[type as WeaponType];
     killsBySimpleStatus.set(simpleType as SimpleWeaponType, (killsBySimpleStatus.get(simpleType) ?? 0) + count);
+    totalCategorizedKills += count;
   });
 
   return <TooltipProvider>
@@ -53,15 +55,17 @@ export function WeaponTypeBar({ player }: WeaponTypeBarProps) {
         </div>
       </TooltipTrigger>
       <TooltipContent>
-        {Object.entries(simpleWeaponTypeMap).map(([_, props]) =>
+        {Object.entries(simpleWeaponTypeMap).map(([type, props]) =>
           <div className="flex items-center" key={props.t}>
             <span className="w-4 size-2" style={{background: props.color}}/>
-            <span className="ml-2">{props.t}</span>
+            <span className="mx-2">{props.t}</span>
+            <span className="ml-auto">{killsBySimpleStatus.has(type as SimpleWeaponType) && ` (${killsBySimpleStatus.get(type as SimpleWeaponType)})`}</span>
           </div>
         )}
         <div className="flex items-center">
           <span className="w-4 size-2 bg-gray-500"/>
-          <span className="ml-2">{t("unknown")}</span>
+          <span className="mx-2">{t("unknown")}</span>
+          <span className="ml-auto">{totalCategorizedKills < player.kills && ` (${player.kills - totalCategorizedKills})`}</span>
         </div>
       </TooltipContent>
     </Tooltip>
