@@ -60,26 +60,45 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   }, [pathname]);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(entry => {
-          const dateId = entry.target.getAttribute('data-date');
-          if (dateId) {
+    const scrollArea = scrollAreaRef.current;
+    if (!scrollArea) return;
+
+    const handleScroll = (() => {
+      let timeout: NodeJS.Timeout | null = null;
+      return () => {
+        if (!timeout) {
+          timeout = setTimeout(() => {
+            const container = scrollArea.getBoundingClientRect();
+            const updates: Record<string, boolean> = {};
+            
+            gameRefs.current.forEach((ref, key) => {
+              const rect = ref.getBoundingClientRect();
+              // Check if the element is fully visible in the scroll area
+              const isVisible = rect.left >= container.left && 
+                              rect.right <= container.right;
+              const dateId = ref.getAttribute('data-date');
+              if (dateId) {
+                updates[dateId] = !isVisible;
+              }
+            });
+
             setHiddenDates(prev => ({
               ...prev,
-              [dateId]: !entry.isIntersecting
+              ...updates
             }));
-          }
-        });
-      },
-      { threshold: 1, root: scrollAreaRef.current }
-    );
 
-    gameRefs.current.values().forEach((ref) => {
-      if (ref) observer.observe(ref);
-    });
+            timeout = null;
+          }, 150);
+        }
+      };
+    })();
 
-    return () => observer.disconnect();
+    scrollArea.addEventListener('scroll', handleScroll);
+    handleScroll(); // Initial check
+
+    return () => {
+      scrollArea.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   const visibleDates = Object.entries(hiddenDates).filter(([key, value], index) => !value && (index + 1 === Object.entries(hiddenDates).length || Object.values(hiddenDates)[index + 1]));
