@@ -105,7 +105,7 @@ export function DataTable<TData extends Player, TValue>({
   return (
     <div className="border w-full divide-y">
       <div className="flex flex-row justify-between items-start p-2 gap-3">
-        <div className="flex flex-row items-start gap-3">
+        <div className="flex flex-row items-start gap-3 flex-1">
           {hasIsOnline && (
             <Select onValueChange={(value) => table.getColumn('is_online')?.setFilterValue(value)}>
               <SelectTrigger className="w-24">
@@ -120,7 +120,7 @@ export function DataTable<TData extends Player, TValue>({
           )}
           {hasTeam && (
             <Select onValueChange={(value) => table.getColumn('team')?.setFilterValue(value)}>
-              <SelectTrigger className="w-60">
+              <SelectTrigger className="max-w-40">
                 <SelectValue placeholder={t('playersTable.team')} />
               </SelectTrigger>
               <SelectContent>
@@ -136,7 +136,7 @@ export function DataTable<TData extends Player, TValue>({
                       <div className="pl-3">{t(option)} ({teamCounts[index]})</div>
                     </div>
                   </SelectItem>
-                )})
+                )}
               </SelectContent>
             </Select>
           )}
