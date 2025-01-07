@@ -100,8 +100,8 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
             <GameCard
               game={game}
               pathname={pathname}
-              onMouseEnter={() => setHoverGameDate(game.start)}
-              onMouseLeave={() => setHoverGameDate(null)}
+              onMouseEnter={React.useCallback(() => setHoverGameDate(game.start), [game])}
+              onMouseLeave={React.useCallback(() => setHoverGameDate(null), [])}
               ref={(element: any) => {
                 if (element) {
                   gameRefs.current.set(index, element);
@@ -138,7 +138,7 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   );
 }
 
-const GameCard = React.forwardRef(
+const GameCard = React.memo(React.forwardRef(
   (
     { game, pathname, onMouseEnter, onMouseLeave }: { game: ScoreboardMap; pathname: string; onMouseEnter: () => void, onMouseLeave: () => void },
     ref: React.Ref<HTMLDivElement>
@@ -163,7 +163,7 @@ const GameCard = React.forwardRef(
         </div>
       </Link>
     );
-});
+}));
 
 const DateCard = ({ dateString, zIndex, highlight, sticky }: { dateString: string, zIndex: number, highlight: boolean, sticky: boolean }) => {
   const date = dayjsLocal(dateString);
