@@ -33,6 +33,7 @@ import useGameDownload from '@/hooks/use-game-download'
 import {TeamIndicator} from "@/components/game/statistics/team-indicator";
 import SelectBox from "@/components/ui/select-box";
 import { Checkbox } from "@/components/ui/checkbox";
+import {useStorageState} from "@/hooks/use-storage-state";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -70,7 +71,14 @@ export function DataTable<TData extends Player, TValue>({
     },
   ])
 
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+
+  const [columnVisibility, setColumnVisibility] = useStorageState('column-visibility', {
+    ["combat"]: false,
+    ["defense"]: false,
+    ["offense"]: false,
+    ["support"]: false,
+  });
 
   const table = useReactTable({
     data,
@@ -84,15 +92,9 @@ export function DataTable<TData extends Player, TValue>({
     state: {
       sorting,
       columnFilters,
+      columnVisibility,
     },
-    initialState: {
-      columnVisibility: {
-        ["combat"]: false,
-        ["defense"]: false,
-        ["offense"]: false,
-        ["support"]: false,
-      },
-    },
+    onColumnVisibilityChange: setColumnVisibility,
   })
 
   const { t } = useTranslation('game')
