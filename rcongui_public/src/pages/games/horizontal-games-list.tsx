@@ -12,6 +12,8 @@ import {useLocale} from "@/i18n/locale-provider";
 export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   const { pathname } = useLocation()
   const [hiddenDates, setHiddenDates] = useState<Record<string, boolean>>({});
+  const hiddenDatesRef = useRef(hiddenDates);
+  hiddenDatesRef.current = hiddenDates;
   const [hoverGameDate, setHoverGameDate] = useState<string | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   // is used for sticky dates (position upper left corner of MapCard)
@@ -21,12 +23,16 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   const validGames = games.maps.filter(validGame);
 
   /**
+   *  highlights the corresponding date when hovering over a game while scrolling
    *  onMouseLeave/onMouseEnter is not triggered during scrolling
    *  so we have to check manually while scrolling if mouse is within GameCard
    */
   useEffect(() => {
     const handleMouseMove = (e: any) => {
       gameBoundingRefs.current.forEach((item, key) => {
+        if (hiddenDatesRef.current[validGames[key].start]) {
+          return;
+        }
         const rect = item.getBoundingClientRect();
         if (
           e.clientX >= rect.left &&
@@ -46,7 +52,7 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
     return () => {
       window.removeEventListener('wheel', handleMouseMove);
     };
-  }, []);
+  }, [hoverGameDate, validGames]);
 
   useEffect(() => {
     if (scrollAreaRef.current && gameRefs.current.size > 0) {
@@ -59,6 +65,9 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
     }
   }, [pathname]);
 
+  /**
+   *  check which games are visible/hidden to determine sticky date
+   */
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
