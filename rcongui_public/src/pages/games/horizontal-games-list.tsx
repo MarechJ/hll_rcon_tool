@@ -16,9 +16,7 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   hiddenDatesRef.current = hiddenDates;
   const [hoverGameDate, setHoverGameDate] = useState<string | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  // is used for sticky dates (position upper left corner of MapCard)
-  const gameRefs = useRef<Map<string, HTMLDivElement>>(new Map());
-  const gameBoundingRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const gameRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
   const validGames = games.maps.filter(validGame);
 
@@ -29,7 +27,7 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
    */
   useEffect(() => {
     const handleMouseMove = (e: any) => {
-      gameBoundingRefs.current.forEach((item, key) => {
+      gameRefs.current.forEach((item, key) => {
         if (hiddenDatesRef.current[validGames[key].start]) {
           return;
         }
@@ -56,8 +54,8 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
 
   useEffect(() => {
     if (scrollAreaRef.current && gameRefs.current.size > 0) {
-      const targetElement = Array.from(gameRefs.current.entries()).find(([href, _]) =>
-        pathname.startsWith(href)
+      const targetElement = Array.from(gameRefs.current.entries()).find(([index, _]) =>
+        pathname.split('/')[2] === String(validGames[index].id)
       )?.[1];
       if (targetElement) {
         targetElement.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
@@ -81,7 +79,7 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
           }
         });
       },
-      { threshold: 1, root: scrollAreaRef.current }
+      { threshold: 0, root: scrollAreaRef.current }
     );
 
     gameRefs.current.values().forEach((ref) => {
@@ -99,27 +97,19 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
       <div className="flex flex-row w-max">
         {validGames.map((game, index) => (
           <React.Fragment key={game.id}>
-            <div key={game.id} ref={(element: any) => {
-              if (element) {
-                gameBoundingRefs.current.set(index, element);
-              } else {
-                gameBoundingRefs.current.delete(index);
-              }
-            }}>
-              <GameCard
-                game={game}
-                pathname={pathname}
-                onMouseEnter={() => setHoverGameDate(game.start)}
-                onMouseLeave={() => setHoverGameDate(null)}
-                ref={(element) => {
-                  if (element) {
-                    gameRefs.current.set(`/games/${game.id}`, element);
-                  } else {
-                    gameRefs.current.delete(`/games/${game.id}`);
-                  }
-                }}
-              />
-            </div>
+            <GameCard
+              game={game}
+              pathname={pathname}
+              onMouseEnter={() => setHoverGameDate(game.start)}
+              onMouseLeave={() => setHoverGameDate(null)}
+              ref={(element: any) => {
+                if (element) {
+                  gameRefs.current.set(index, element);
+                } else {
+                  gameRefs.current.delete(index);
+                }
+              }}
+            />
             {!dayjsLocal(game.start).isSame(dayjsLocal(validGames[index + 1]?.start), 'day') &&
               <>
                 <DateCard
@@ -157,19 +147,17 @@ const GameCard = React.forwardRef(
     return (
       <Link
         to={`/games/${game.id}`}
-        data-date={game.start}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       >
-        <div className="px-0.5">
-          <div ref={ref} key={game.id} data-date={game.start}/>
+        <div className="px-0.5" ref={ref} data-date={game.start}>
           <MapFigure
             text={`${dayjsLocal(game.start).format("LT")} (${dayjs(game.end).diff(dayjs(game.start), 'minutes')} ${t('time.minuteShort')})`}
             src={`/maps/${game.map.image_name}`}
             name={`${game.map.map.pretty_name} (${game.result?.allied ?? '?'}:${game.result?.axis ?? '?'})`}
             className={cn(
               "group h-20 w-64",
-              pathname.startsWith(`/games/${game.id}`) && "border-2 border-primary"
+              pathname.split('/')[2] === String(game.id) && "border-2 border-primary"
             )}
           />
         </div>
