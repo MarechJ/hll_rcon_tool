@@ -19,7 +19,7 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   const gameRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
   const validGames = useMemo(() => games.maps.filter(validGame), [games.maps]);
-  const cardsData = useMemo(() =>
+  const cards = useMemo(() =>
       validGames.flatMap((game, index) =>
         dayjsLocal(game.start).isSame(dayjsLocal(validGames[index + 1]?.start), 'day')
           ? [game]
@@ -105,38 +105,38 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   return (
     <ScrollArea ref={scrollAreaRef} className="w-full whitespace-nowrap sm:-mx-4 xl:mx-0 pb-2 relative overflow-hidden z-0">
       <div className="flex flex-row w-max">
-        {cardsData.map((cardData, index) => {
-          return typeof cardData !== 'string' ?
+        {cards.map((card, index) => {
+          return typeof card !== 'string' ?
             <div
               ref={(element: any) => {
                 if (element) {
-                  gameRefs.current.set(cardData.id, element);
+                  gameRefs.current.set(card.id, element);
                 } else {
-                  gameRefs.current.delete(cardData.id);
+                  gameRefs.current.delete(card.id);
                 }
               }}
-              data-id={cardData.id}
+              data-id={card.id}
             >
               <GameCard
-                game={cardData}
+                game={card}
                 pathname={pathname}
-                onMouseEnter={React.useCallback(() => setHoverGameDate(cardData.start), [cardData])}
+                onMouseEnter={React.useCallback(() => setHoverGameDate(card.start), [card])}
                 onMouseLeave={React.useCallback(() => setHoverGameDate(null), [])}
               />
             </div>
             :
             <DateCard
-              key={cardData}
-              zIndex={cardsData.length - index}
-              date={dayjsLocal(cardData)}
-              highlight={!!hoverGameDate && dayjsLocal(hoverGameDate).isSame(dayjsLocal(cardData), 'day')}
+              key={card}
+              zIndex={cards.length - index}
+              date={dayjsLocal(card)}
+              highlight={!!hoverGameDate && dayjsLocal(hoverGameDate).isSame(dayjsLocal(card), 'day')}
               sticky={false}
             />
         })}
         {stickyDateString &&
           <DateCard
             key={`sticky-${stickyDateString}`}
-            zIndex={cardsData.length - cardsData.findIndex(card => typeof card === 'string' && dayjsLocal(card).isSame(dayjsLocal(stickyDateString), 'day'))}
+            zIndex={cards.length - cards.findIndex(card => typeof card === 'string' && dayjsLocal(card).isSame(dayjsLocal(stickyDateString), 'day'))}
             date={dayjsLocal(stickyDateString)}
             sticky={true}
             highlight={!!hoverGameDate && dayjsLocal(hoverGameDate).isSame(dayjsLocal(stickyDateString), 'day')}
