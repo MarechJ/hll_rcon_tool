@@ -4,7 +4,7 @@ import React, {useEffect, useRef, useState} from "react";
 import {ScrollArea, ScrollBar} from "@/components/ui/scroll-area";
 import {validGame} from "@/pages/games/list";
 import MapFigure from "@/components/game/map-figure";
-import dayjs from "dayjs";
+import dayjs, {Dayjs} from "dayjs";
 import {cn, dayjsLocal} from "@/lib/utils";
 import {useTranslation} from "react-i18next";
 import {useLocale} from "@/i18n/locale-provider";
@@ -19,6 +19,7 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   const gameRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
   const validGames = games.maps.filter(validGame);
+  const cardsData = validGames.flatMap((game, index) => dayjsLocal(game.start).isSame(dayjsLocal(validGames[index + 1]?.start), 'day') ? [game] : [game, game.start]);
 
   /**
    *  highlights the corresponding date when hovering over a game while scrolling
@@ -27,8 +28,8 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
    */
   useEffect(() => {
     const handleMouseMove = (e: any) => {
-      gameRefs.current.forEach((item, key) => {
-        if (hiddenGamesRef.current[validGames[key].id]) {
+      gameRefs.current.forEach((item, gameId) => {
+        if (hiddenGamesRef.current[gameId]) {
           return;
         }
         const rect = item.getBoundingClientRect();
@@ -38,8 +39,9 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
           e.clientY >= rect.top &&
           e.clientY <= rect.bottom
         ) {
-          if (hoverGameDate !== validGames[key].start) {
-            setHoverGameDate(validGames[key].start);
+          const game = validGames.find(game => game.id === gameId);
+          if (game && hoverGameDate !== game.start) {
+            setHoverGameDate(game.start);
           }
         }
       });
@@ -54,8 +56,8 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
 
   useEffect(() => {
     if (scrollAreaRef.current && gameRefs.current.size > 0) {
-      const targetElement = Array.from(gameRefs.current.entries()).find(([index, _]) =>
-        pathname.split('/')[2] === String(validGames[index].id)
+      const targetElement = Array.from(gameRefs.current.entries()).find(([gameId, _]) =>
+        pathname.split('/')[2] === String(gameId)
       )?.[1];
       if (targetElement) {
         targetElement.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
@@ -90,48 +92,44 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   }, []);
 
   const visibleGames = Object.entries(hiddenGames).filter(([key, value]) => !value);
-  const stickyDate = visibleGames.length ? dayjsLocal(validGames.find(game => game.id === Number(visibleGames[0][0]))?.start ?? '') : null;
+  const stickyDateString = !!visibleGames[0] && validGames.find(game => game.id === Number(visibleGames[0][0]))?.start;
 
   return (
     <ScrollArea ref={scrollAreaRef} className="w-full whitespace-nowrap sm:-mx-4 xl:mx-0 pb-2 relative overflow-hidden z-auto">
       <div className="flex flex-row w-max">
-        {validGames.map((game, index) => (
-          <React.Fragment key={game.id}>
+        {cardsData.map((cardData, index) => {
+          return typeof cardData !== 'string' ?
             <GameCard
-              game={game}
+              game={cardData}
               pathname={pathname}
-              onMouseEnter={React.useCallback(() => setHoverGameDate(game.start), [game])}
+              onMouseEnter={React.useCallback(() => setHoverGameDate(cardData.start), [cardData])}
               onMouseLeave={React.useCallback(() => setHoverGameDate(null), [])}
               ref={(element: any) => {
                 if (element) {
-                  gameRefs.current.set(index, element);
+                  gameRefs.current.set(cardData.id, element);
                 } else {
-                  gameRefs.current.delete(index);
+                  gameRefs.current.delete(cardData.id);
                 }
               }}
             />
-            {!dayjsLocal(game.start).isSame(dayjsLocal(validGames[index + 1]?.start), 'day') &&
-              <>
-                <DateCard
-                  key={game.start}
-                  zIndex={validGames.length - index}
-                  dateString={game.start}
-                  highlight={!!hoverGameDate && dayjsLocal(hoverGameDate).isSame(dayjsLocal(game.start), 'day')}
-                  sticky={false}
-                />
-                {!!stickyDate && stickyDate.isSame(dayjsLocal(game.start), 'day') &&
-                  <DateCard
-                    key={`sticky-${game.start}`}
-                    zIndex={validGames.length - index}
-                    dateString={game.start}
-                    sticky={true}
-                    highlight={!!hoverGameDate && dayjsLocal(hoverGameDate).isSame(dayjsLocal(game.start), 'day')}
-                  />
-                }
-              </>
-            }
-          </React.Fragment>
-        ))}
+            :
+            <DateCard
+              key={cardData}
+              zIndex={cardsData.length - index}
+              date={dayjsLocal(cardData)}
+              highlight={!!hoverGameDate && dayjsLocal(hoverGameDate).isSame(dayjsLocal(cardData), 'day')}
+              sticky={false}
+            />
+        })}
+        {stickyDateString &&
+          <DateCard
+            key={`sticky-${stickyDateString}`}
+            zIndex={cardsData.length - cardsData.findIndex(card => typeof card === 'string' && dayjsLocal(card).isSame(dayjsLocal(stickyDateString), 'day'))}
+            date={dayjsLocal(stickyDateString)}
+            sticky={true}
+            highlight={!!hoverGameDate && dayjsLocal(hoverGameDate).isSame(dayjsLocal(stickyDateString), 'day')}
+          />
+        }
       </div>
       <ScrollBar orientation="horizontal"/>
     </ScrollArea>
@@ -165,8 +163,7 @@ const GameCard = React.memo(React.forwardRef(
     );
 }));
 
-const DateCard = ({ dateString, zIndex, highlight, sticky }: { dateString: string, zIndex: number, highlight: boolean, sticky: boolean }) => {
-  const date = dayjsLocal(dateString);
+const DateCard = ({ date, zIndex, highlight, sticky }: { date: Dayjs, zIndex: number, highlight: boolean, sticky: boolean }) => {
   const globalLocaleData = useLocale().globalLocaleData;
 
   return (
