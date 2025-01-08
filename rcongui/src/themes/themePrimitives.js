@@ -26,8 +26,8 @@ export const gray = {
   500: 'hsl(220, 20%, 42%)',
   600: 'hsl(220, 20%, 35%)',
   700: 'hsl(220, 20%, 25%)',
-  800: 'hsl(220, 30%, 6%)',
-  900: 'hsl(220, 35%, 3%)',
+  800: 'hsl(220, 30%, 15%)',
+  900: 'hsl(220, 35%, 10%)',
 };
 
 export const green = {
@@ -139,14 +139,14 @@ export const getDesignTokens = (mode) => {
       background: {
         default: 'hsl(0, 0%, 99%)',
         paper: 'hsl(220, 35%, 97%)',
-        ...(mode === 'dark' && { default: gray[900], paper: 'hsl(220, 30%, 7%)' }),
+        ...(mode === 'dark' && { default: gray[900], paper: 'hsl(220, 30%, 8%)' }),
       },
       text: {
         primary: gray[800],
         secondary: gray[600],
         warning: orange[400],
         ...(mode === 'dark' && {
-          primary: 'hsl(0, 0%, 100%)',
+          primary: 'hsl(0, 0%, 85%)',
           secondary: gray[400],
         }),
       },
