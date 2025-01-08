@@ -59,9 +59,9 @@ export const orange = {
 export const red = {
   50: 'hsl(0, 100%, 97%)',
   100: 'hsl(0, 92%, 90%)',
-  200: 'hsl(0, 94%, 80%)',
-  300: 'hsl(0, 90%, 65%)',
-  400: 'hsl(0, 90%, 40%)',
+  200: 'hsl(0, 94%, 85%)',
+  300: 'hsl(0, 94%, 74%)',
+  400: 'hsl(0, 94%, 40%)',
   500: 'hsl(0, 90%, 30%)',
   600: 'hsl(0, 91%, 25%)',
   700: 'hsl(0, 94%, 18%)',
@@ -117,8 +117,8 @@ export const getDesignTokens = (mode) => {
         main: red[400],
         dark: red[800],
         ...(mode === 'dark' && {
-          light: red[400],
-          main: red[500],
+          light: red[200],
+          main: red[300],
           dark: red[700],
         }),
       },
