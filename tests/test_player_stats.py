@@ -3,7 +3,7 @@ import os
 import pytest
 
 os.environ["HLL_MAINTENANCE_CONTAINER"] = "1"
-from rcon.models import PlayerStats
+from rcon.models import PlayerStats, calc_weapon_type_usage
 from rcon.types import PlayerTeamAssociation, PlayerTeamConfidence
 from rcon.maps import Team
 
@@ -84,20 +84,27 @@ def test_detect_complex_inf():
         'BROWNING M1919': 2,
     }, death_by_weapons={
         'GEWEHR 43': 9,
-        'MG42': 1,
+        'MG42': 3,
         'MP40': 1,
         'STG44': 1,
-        'FG42 x4': 1,
+        'FG42 x4': 2,
         '150MM HOWITZER [sFH 18]': 1,
         '20MM KWK 30 [Sd.Kfz.121 Luchs]': 1,
     })
 
     assert p.detect_team() == PlayerTeamAssociation(side=Team.ALLIES, confidence=PlayerTeamConfidence.STRONG, ratio=100)
-    assert p.calc_kills_by_type() == {
+    assert calc_weapon_type_usage(p.weapons) == {
         'bazooka': 1,
         'grenade': 1,
         'machine_gun': 2,
         'infantry': 32,
+    }
+    assert calc_weapon_type_usage(p.death_by_weapons) == {
+        'artillery': 1,
+        'armor': 1,
+        'infantry': 11,
+        'machine_gun': 3,
+        'sniper': 2,
     }
 
 
