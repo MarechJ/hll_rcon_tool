@@ -11,9 +11,9 @@ import {useLocale} from "@/i18n/locale-provider";
 
 export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   const { pathname } = useLocation()
-  const [hiddenGames, setHiddenGames] = useState<Record<number, boolean>>({});
-  const hiddenGamesRef = useRef(hiddenGames);
-  hiddenGamesRef.current = hiddenGames;
+  const [gamesVisibility, setGamesVisibility] = useState<Record<number, boolean>>({});
+  const gamesVisibilityRef = useRef(gamesVisibility);
+  gamesVisibilityRef.current = gamesVisibility;
   const [hoverGameDate, setHoverGameDate] = useState<string | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const gameRefs = useRef<Map<number, HTMLDivElement>>(new Map());
@@ -29,7 +29,7 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   useEffect(() => {
     const handleMouseMove = (e: any) => {
       gameRefs.current.forEach((item, gameId) => {
-        if (hiddenGamesRef.current[gameId]) {
+        if (!gamesVisibilityRef.current[gameId]) {
           return;
         }
         const rect = item.getBoundingClientRect();
@@ -74,9 +74,9 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
         entries.forEach(entry => {
           const gameId = entry.target.getAttribute('data-id');
           if (gameId) {
-            setHiddenGames(prev => ({
+            setGamesVisibility(prev => ({
               ...prev,
-              [Number(gameId)]: !entry.isIntersecting
+              [Number(gameId)]: entry.isIntersecting
             }));
           }
         });
@@ -91,11 +91,12 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
     return () => observer.disconnect();
   }, []);
 
-  const visibleGames = Object.entries(hiddenGames).filter(([key, value]) => !value);
-  const stickyDateString = !!visibleGames[0] && validGames.find(game => game.id === Number(visibleGames[0][0]))?.start;
+
+  const visibleGames = Object.entries(gamesVisibility).filter(([_, visible]) => visible);
+  const stickyDateString = !!visibleGames.length && validGames.find(game => game.id === Number(visibleGames[0][0]))?.start;
 
   return (
-    <ScrollArea ref={scrollAreaRef} className="w-full whitespace-nowrap sm:-mx-4 xl:mx-0 pb-2 relative overflow-hidden z-auto">
+    <ScrollArea ref={scrollAreaRef} className="w-full whitespace-nowrap sm:-mx-4 xl:mx-0 pb-2 relative overflow-hidden z-0">
       <div className="flex flex-row w-max">
         {cardsData.map((cardData, index) => {
           return typeof cardData !== 'string' ?
