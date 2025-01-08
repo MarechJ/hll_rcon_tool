@@ -1,6 +1,6 @@
 import {ScoreboardMap, ScoreboardMaps} from "@/types/api";
 import {Link, useLocation} from "react-router";
-import React, {useEffect, useRef, useState} from "react";
+import React, {useEffect, useMemo, useRef, useState} from "react";
 import {ScrollArea, ScrollBar} from "@/components/ui/scroll-area";
 import {validGame} from "@/pages/games/list";
 import MapFigure from "@/components/game/map-figure";
@@ -18,8 +18,15 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const gameRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
-  const validGames = games.maps.filter(validGame);
-  const cardsData = validGames.flatMap((game, index) => dayjsLocal(game.start).isSame(dayjsLocal(validGames[index + 1]?.start), 'day') ? [game] : [game, game.start]);
+  const validGames = useMemo(() => games.maps.filter(validGame), [games.maps]);
+  const cardsData = useMemo(() =>
+      validGames.flatMap((game, index) =>
+        dayjsLocal(game.start).isSame(dayjsLocal(validGames[index + 1]?.start), 'day')
+          ? [game]
+          : [game, game.start]
+      ),
+    [validGames]
+  );
 
   /**
    *  highlights the corresponding date when hovering over a game while scrolling
