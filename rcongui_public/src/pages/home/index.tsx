@@ -5,16 +5,15 @@ import duration from 'dayjs/plugin/duration'
 import { useTranslation } from 'react-i18next'
 import LiveGameInfo from './live-game-info'
 import { Spinner } from '@/components/spinner'
-import GameStats from '@/components/game/statistics/game-stats'
 import { QueryErrorResetBoundary, useSuspenseQueries, useSuspenseQuery } from '@tanstack/react-query'
-import { getLiveGameColumns } from '@/components/game/statistics/game-columns'
+import { getCompletedGameColumns, getLiveGameColumns } from "@/components/game/statistics/game-columns";
 import { PlayerWithStatus } from '@/types/player'
 import { liveSessionStatsOptions } from '@/lib/queries/live-session-stats'
 import { liveGameStatsOptions } from '@/lib/queries/live-game-stats'
-import React from 'react'
+import React, { useState } from "react";
 import { ErrorBoundary } from 'react-error-boundary'
 import GameStatsContainer from '@/components/game/statistics/game-stats-container'
-import { DataTable } from '@/components/game/statistics/game-table'
+import { DataTable } from "@/components/game/statistics/game-table";
 
 dayjs.extend(duration)
 

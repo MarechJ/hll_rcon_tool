@@ -1,14 +1,13 @@
 import json
 import os
 
-from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon.user_config.auto_settings import AutoSettingsConfig
 
 from .audit_log import record_audit
 from .auth import api_response, login_required
-from .decorators import require_content_type, require_http_methods
+from .decorators import permission_required, require_content_type, require_http_methods
 from .multi_servers import forward_request
 from .services import get_supervisor_client
 from .utils import _get_data
@@ -71,6 +70,12 @@ def set_auto_settings(request):
         return api_response(error="Invalid server number", failed=True, status_code=400)
     do_restart_service = data.get("restart_service", True)
     do_forward = data.get("forward", False)
+    if do_forward == "false" or do_forward == "0":
+        do_forward = False
+    if do_forward == "true" or do_forward == "1":
+        do_forward = True
+    if not isinstance(do_forward, bool):
+        return api_response(error="forward needs to be a boolean value or empty", failed=True, status_code=400)
 
     settings = data.get("settings")
     if not settings:

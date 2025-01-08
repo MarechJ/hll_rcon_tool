@@ -35,16 +35,18 @@ export const BlacklistPlayerFormFields = ({ control, errors, setValue, getValues
             value: String(blacklist.id),
         })) ?? []}
       />
-      <ExpirationField control={control} errors={errors} />
+      <ExpirationField name="expires_at" control={control} errors={errors} />
       <Box>
         {presetTimes.map(([amount, unit], index) => (
           <TimePickerButtons
             key={unit + index}
             amount={amount}
             unit={unit}
-            expirationTimestamp={getValues()?.expiration ?? dayjs()}
+            expirationTimestamp={getValues()?.expires_at ?? dayjs()}
             setExpirationTimestamp={(value) => {
-              setValue("expiration", value, { shouldTouch: true });
+              // shouldValidate is needed to trigger rerendering
+              // so the getValues()?.expires_at is updated
+              setValue("expires_at", value, { shouldTouch: true, shouldValidate: true });
             }}
           />
         ))}
