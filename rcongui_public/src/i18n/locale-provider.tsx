@@ -22,6 +22,13 @@ dayjs.extend(localizedFormat);
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.extend(localeData);
+// mix 'en' date related translations with 'it' date format
+dayjs.locale('en24h', {
+  ...dayjs.Ls.en,
+  formats: {
+    ...dayjs.Ls.it.formats,
+  },
+});
 
 interface LocaleContextType {
   globalLocaleData: dayjs.GlobalLocaleDataReturn;
