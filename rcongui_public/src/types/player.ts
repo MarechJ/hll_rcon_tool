@@ -1,4 +1,4 @@
-import {Weapon, WeaponCategory, WeaponType} from './weapon'
+import {Weapon, WeaponType} from './weapon'
 
 type Team = {
   name: string
@@ -179,7 +179,6 @@ export interface Profile {
 type TeamsStats = {
   kills: number
   deaths: number
-  weaponCategories: Partial<Record<WeaponCategory, number>>
   killsCategory: {
     infantry: number
     armor: number
@@ -193,12 +192,6 @@ type TeamsStats = {
     defensive: number
   }
   players: Player[]
-}
-
-export type MatchStats = {
-  allies: TeamsStats
-  axis: TeamsStats
-  weapons: Partial<Record<Weapon, number>>
 }
 
 export type Faceoff = {
