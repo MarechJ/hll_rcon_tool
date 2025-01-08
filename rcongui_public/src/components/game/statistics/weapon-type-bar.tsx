@@ -1,19 +1,19 @@
-import React from 'react'
-import {PlayerBase} from '@/types/player'
+import React, {memo} from 'react'
 import colors from "tailwindcss/colors";
 import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip";
 import {SimpleWeaponType, WeaponType, weaponTypeToSimpleWeaponType} from "@/types/weapon";
 import {useTranslation} from "react-i18next";
 
 type WeaponTypeBarProps = {
-  player: PlayerBase
+  totalKills: number,
+  killsByType: Record<WeaponType, number>,
 }
 
-export function WeaponTypeBar({ player }: WeaponTypeBarProps) {
+export const WeaponTypeBar = memo(({ totalKills, killsByType }: WeaponTypeBarProps) => {
 
   const {t} = useTranslation("game");
 
-  if (!player.kills || !player.kills_by_type) {
+  if (!totalKills || !killsByType) {
     return null;
   }
 
@@ -29,7 +29,7 @@ export function WeaponTypeBar({ player }: WeaponTypeBarProps) {
   const killsBySimpleStatus = new Map<SimpleWeaponType, number>;
   let totalCategorizedKills = 0;
 
-  Object.entries(player.kills_by_type).forEach(([type, count]) => {
+  Object.entries(killsByType).forEach(([type, count]) => {
     const simpleType = weaponTypeToSimpleWeaponType[type as WeaponType];
     killsBySimpleStatus.set(simpleType as SimpleWeaponType, (killsBySimpleStatus.get(simpleType) ?? 0) + count);
     totalCategorizedKills += count;
@@ -47,7 +47,7 @@ export function WeaponTypeBar({ player }: WeaponTypeBarProps) {
               .map(([type, value], index) => {
                 return <div
                   key={index}
-                  style={{width: `${value / player.kills * 100}%`, background: simpleWeaponTypeMap[type as SimpleWeaponType].color}}
+                  style={{width: `${value / totalKills * 100}%`, background: simpleWeaponTypeMap[type as SimpleWeaponType].color}}
                 />
               }
             )}
@@ -65,9 +65,9 @@ export function WeaponTypeBar({ player }: WeaponTypeBarProps) {
         <div className="flex items-center">
           <span className="w-4 size-2 bg-gray-500"/>
           <span className="mx-2">{t("unknown")}</span>
-          <span className="ml-auto">{totalCategorizedKills < player.kills && ` (${player.kills - totalCategorizedKills})`}</span>
+          <span className="ml-auto">{totalCategorizedKills < totalKills && ` (${totalKills - totalCategorizedKills})`}</span>
         </div>
       </TooltipContent>
     </Tooltip>
   </TooltipProvider>
-}
+});

@@ -9,6 +9,7 @@ import {
   getSortedRowModel,
   SortingState,
   useReactTable,
+  VisibilityState,
 } from '@tanstack/react-table'
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -28,11 +29,12 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Download, List } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import {getTeamFromAssociation} from "@/components/game/statistics/utils";
+import { getTeamFromAssociation } from '@/components/game/statistics/utils'
 import useGameDownload from '@/hooks/use-game-download'
-import {TeamIndicator} from "@/components/game/statistics/team-indicator";
-import SelectBox from "@/components/ui/select-box";
-import { Checkbox } from "@/components/ui/checkbox";
+import { TeamIndicator } from '@/components/game/statistics/team-indicator'
+import SelectBox from '@/components/ui/select-box'
+import { Checkbox } from '@/components/ui/checkbox'
+import { useStorageState } from '@/hooks/use-storage-state'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -40,27 +42,23 @@ interface DataTableProps<TData, TValue> {
   tableId: string
 }
 
-export function DataTable<TData extends Player, TValue>({
-  columns,
-  data,
-  tableId,
-}: DataTableProps<TData, TValue>) {
+export function DataTable<TData extends Player, TValue>({ columns, data, tableId }: DataTableProps<TData, TValue>) {
   const { download } = useGameDownload()
 
-  const [playerFilter, setPlayerFilter] = useState<string[]>([]);
+  const [playerFilter, setPlayerFilter] = useState<string[]>([])
 
   useEffect(() => {
-    table.getColumn('player')?.setFilterValue(playerFilter);
-  }, [playerFilter]);
+    table.getColumn('player')?.setFilterValue(playerFilter)
+  }, [playerFilter])
 
   // Adding selected players as option to keep the selected options visible when switching between different games
   // Otherwise selected option would be not visible e.g. a selected player is in game1, but not in game2
   const playerFilterOptions = data
-    .map(player => ({value: player.player, label: player.player}))
+    .map((player) => ({ value: player.player, label: player.player }))
     .concat(
       playerFilter
-        .filter(name => !data.some(player => player.player === name))
-        .map(name => ({value: name, label: name}))
+        .filter((name) => !data.some((player) => player.player === name))
+        .map((name) => ({ value: name, label: name })),
     )
 
   const [sorting, setSorting] = React.useState<SortingState>([
@@ -71,6 +69,13 @@ export function DataTable<TData extends Player, TValue>({
   ])
 
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+
+  const [columnVisibility, setColumnVisibility] = useStorageState<VisibilityState>('column-visibility', {
+    ['combat']: false,
+    ['defense']: false,
+    ['offense']: false,
+    ['support']: false,
+  })
 
   const table = useReactTable({
     data,
@@ -84,23 +89,20 @@ export function DataTable<TData extends Player, TValue>({
     state: {
       sorting,
       columnFilters,
+      columnVisibility,
     },
-    initialState: {
-      columnVisibility: {
-        ["combat"]: false,
-        ["defense"]: false,
-        ["offense"]: false,
-        ["support"]: false,
-      },
-    },
+    onColumnVisibilityChange: setColumnVisibility,
   })
 
   const { t } = useTranslation('game')
 
   const hasIsOnline = table.getAllColumns().find((c) => c.id === 'is_online')
   const hasTeam = table.getAllColumns().find((c) => c.id === 'team')
-  const teamOptions = ['axis', 'allies', 'mixed', 'unknown'] as const;
-  const teamCounts = useMemo(() => teamOptions.map(team => data.filter(player => getTeamFromAssociation(player.team) === team).length), [data]);
+  const teamOptions = ['axis', 'allies', 'mixed', 'unknown'] as const
+  const teamCounts = useMemo(
+    () => teamOptions.map((team) => data.filter((player) => getTeamFromAssociation(player.team) === team).length),
+    [data],
+  )
 
   return (
     <div className="border w-full divide-y">
@@ -125,18 +127,20 @@ export function DataTable<TData extends Player, TValue>({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">
-                  <div className={"pl-5"}>
+                  <div className={'pl-5'}>
                     {t('onlineStatusFilter.all')} ({data.length})
                   </div>
                 </SelectItem>
-                {teamOptions.map((option, index) =>
+                {teamOptions.map((option, index) => (
                   <SelectItem key={option} value={option}>
                     <div className="flex">
                       <TeamIndicator team={option as TeamEnum} className="block m-auto" />
-                      <div className="pl-3">{t(option)} ({teamCounts[index]})</div>
+                      <div className="pl-3">
+                        {t(option)} ({teamCounts[index]})
+                      </div>
                     </div>
                   </SelectItem>
-                )}
+                ))}
               </SelectContent>
             </Select>
           )}
@@ -168,31 +172,31 @@ export function DataTable<TData extends Player, TValue>({
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          {!!table.getAllColumns().find(col => col.getCanHide()) && (
+          {!!table.getAllColumns().find((col) => col.getCanHide()) && (
             <Select>
               <PlainSelectTrigger className={'rounded-md border border-input bg-background px-3 py-2 hover:bg-accent'}>
                 <List size={20} />
               </PlainSelectTrigger>
-              <SelectContent className={'px-4 py-2 pl-2'}>
-                {table.getAllColumns().filter(col => col.getCanHide()).map((column) => (
-                  <div key={column.id}>
-                    <Checkbox
-                      checked={column.getIsVisible()}
-                      disabled={!column.getCanHide()}
+              <SelectContent className={'py-2'}>
+                {table
+                  .getAllColumns()
+                  .filter((col) => col.getCanHide())
+                  .map((column) => (
+                    <div
+                      key={column.id}
                       onClick={column.getToggleVisibilityHandler()}
+                      className="px-2 flex items-center cursor-pointer select-none hover:bg-accent"
                     >
-                      <div className="flex">
-                        <div className="pl-3">{column.columnDef.meta?.label}</div>
-                      </div>
-                    </Checkbox>
-                  </div>
-                ))}
+                      <Checkbox checked={column.getIsVisible()} disabled={!column.getCanHide()} />
+                      <span className="pl-3">{column.columnDef.meta?.label}</span>
+                    </div>
+                  ))}
               </SelectContent>
             </Select>
           )}
         </div>
       </div>
-      <Table id={tableId} style={{height: '100%'}}>
+      <Table id={tableId} style={{ height: '100%' }}>
         <TableHeader className="h-12">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
@@ -213,7 +217,11 @@ export function DataTable<TData extends Player, TValue>({
               <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'} className="text-sm h-10">
                 <TableCell className="w-4 text-center pr-0">{index + 1}</TableCell>
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="py-0" style={{ width: cell.column.getSize(), textAlign: "right" }}>
+                  <TableCell
+                    key={cell.id}
+                    className="py-0"
+                    style={{ width: cell.column.getSize(), textAlign: 'right' }}
+                  >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
