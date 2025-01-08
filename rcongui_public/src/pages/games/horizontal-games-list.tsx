@@ -9,6 +9,8 @@ import {cn, dayjsLocal} from "@/lib/utils";
 import {useTranslation} from "react-i18next";
 import {useLocale} from "@/i18n/locale-provider";
 
+const pathRegex = (gameId: number) => new RegExp(`^/games/${gameId}(?:/|$)`);
+
 export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   const { pathname } = useLocation()
   const [gamesVisibility, setGamesVisibility] = useState<Record<number, boolean>>({});
@@ -64,7 +66,7 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   useEffect(() => {
     if (scrollAreaRef.current && gameRefs.current.size > 0) {
       const targetElement = Array.from(gameRefs.current.entries()).find(([gameId, _]) =>
-        pathname.split('/')[2] === String(gameId)
+        pathRegex(gameId).test(pathname)
       )?.[1];
       if (targetElement) {
         targetElement.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
@@ -166,7 +168,7 @@ const GameCard = React.memo(
             name={`${game.map.map.pretty_name} (${game.result?.allied ?? '?'}:${game.result?.axis ?? '?'})`}
             className={cn(
               "group h-20 w-64",
-              pathname.split('/')[2] === String(game.id) && "border-2 border-primary"
+              pathRegex(game.id).test(pathname) && "border-2 border-primary"
             )}
           />
         </div>
