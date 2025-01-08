@@ -100,11 +100,7 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
       <div className="flex flex-row w-max">
         {cardsData.map((cardData, index) => {
           return typeof cardData !== 'string' ?
-            <GameCard
-              game={cardData}
-              pathname={pathname}
-              onMouseEnter={React.useCallback(() => setHoverGameDate(cardData.start), [cardData])}
-              onMouseLeave={React.useCallback(() => setHoverGameDate(null), [])}
+            <div
               ref={(element: any) => {
                 if (element) {
                   gameRefs.current.set(cardData.id, element);
@@ -112,7 +108,15 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
                   gameRefs.current.delete(cardData.id);
                 }
               }}
-            />
+              data-id={cardData.id}
+            >
+              <GameCard
+                game={cardData}
+                pathname={pathname}
+                onMouseEnter={React.useCallback(() => setHoverGameDate(cardData.start), [cardData])}
+                onMouseLeave={React.useCallback(() => setHoverGameDate(null), [])}
+              />
+            </div>
             :
             <DateCard
               key={cardData}
@@ -137,10 +141,9 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   );
 }
 
-const GameCard = React.memo(React.forwardRef(
+const GameCard = React.memo(
   (
-    { game, pathname, onMouseEnter, onMouseLeave }: { game: ScoreboardMap; pathname: string; onMouseEnter: () => void, onMouseLeave: () => void },
-    ref: React.Ref<HTMLDivElement>
+    { game, pathname, onMouseEnter, onMouseLeave }: { game: ScoreboardMap; pathname: string; onMouseEnter: () => void, onMouseLeave: () => void }
   ) => {
     const { t } = useTranslation('translation');
     return (
@@ -149,7 +152,7 @@ const GameCard = React.memo(React.forwardRef(
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       >
-        <div className="px-0.5" ref={ref} data-id={game.id}>
+        <div className="px-0.5">
           <MapFigure
             text={`${dayjsLocal(game.start).format("LT")} (${dayjs(game.end).diff(dayjs(game.start), 'minutes')} ${t('time.minuteShort')})`}
             src={`/maps/${game.map.image_name}`}
@@ -162,7 +165,7 @@ const GameCard = React.memo(React.forwardRef(
         </div>
       </Link>
     );
-}));
+});
 
 const DateCard = ({ date, zIndex, highlight, sticky }: { date: Dayjs, zIndex: number, highlight: boolean, sticky: boolean }) => {
   const globalLocaleData = useLocale().globalLocaleData;
