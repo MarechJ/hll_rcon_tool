@@ -8,7 +8,7 @@ import {
   getFilteredRowModel,
   getSortedRowModel,
   SortingState,
-  useReactTable,
+  useReactTable, VisibilityState,
 } from '@tanstack/react-table'
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -73,7 +73,7 @@ export function DataTable<TData extends Player, TValue>({
 
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
 
-  const [columnVisibility, setColumnVisibility] = useStorageState('column-visibility', {
+  const [columnVisibility, setColumnVisibility] = useStorageState<VisibilityState>('column-visibility', {
     ["combat"]: false,
     ["defense"]: false,
     ["offense"]: false,

@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {Dispatch, SetStateAction, useEffect, useState} from "react";
 
 const prefix = 'public-crcon.';
 const withPrefix = (key: string) => prefix + key
@@ -21,8 +21,8 @@ const getItem = (key: string) => {
   }
 };
 
-export const useStorageState = (key: string, initialState: any) => {
-  const [value, setValue] = useState(
+export function useStorageState<T> (key: string, initialState: T): [T, Dispatch<SetStateAction<T>>] {
+  const [value, setValue] = useState<T>(
     getItem(key) ?? initialState
   );
 
@@ -31,4 +31,4 @@ export const useStorageState = (key: string, initialState: any) => {
   }, [key, value]);
 
   return [value, setValue];
-};
+}
