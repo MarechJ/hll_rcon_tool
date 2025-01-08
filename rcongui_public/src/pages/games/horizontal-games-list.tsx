@@ -11,9 +11,9 @@ import {useLocale} from "@/i18n/locale-provider";
 
 export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   const { pathname } = useLocation()
-  const [hiddenDates, setHiddenDates] = useState<Record<string, boolean>>({});
-  const hiddenDatesRef = useRef(hiddenDates);
-  hiddenDatesRef.current = hiddenDates;
+  const [hiddenGames, setHiddenGames] = useState<Record<number, boolean>>({});
+  const hiddenGamesRef = useRef(hiddenGames);
+  hiddenGamesRef.current = hiddenGames;
   const [hoverGameDate, setHoverGameDate] = useState<string | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const gameRefs = useRef<Map<number, HTMLDivElement>>(new Map());
@@ -28,7 +28,7 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   useEffect(() => {
     const handleMouseMove = (e: any) => {
       gameRefs.current.forEach((item, key) => {
-        if (hiddenDatesRef.current[validGames[key].start]) {
+        if (hiddenGamesRef.current[validGames[key].id]) {
           return;
         }
         const rect = item.getBoundingClientRect();
@@ -70,11 +70,11 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach(entry => {
-          const dateId = entry.target.getAttribute('data-date');
-          if (dateId) {
-            setHiddenDates(prev => ({
+          const gameId = entry.target.getAttribute('data-id');
+          if (gameId) {
+            setHiddenGames(prev => ({
               ...prev,
-              [dateId]: !entry.isIntersecting
+              [Number(gameId)]: !entry.isIntersecting
             }));
           }
         });
@@ -89,8 +89,8 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
     return () => observer.disconnect();
   }, []);
 
-  const visibleDates = Object.entries(hiddenDates).filter(([key, value], index) => !value && (index + 1 === Object.entries(hiddenDates).length || Object.values(hiddenDates)[index + 1]));
-  const stickyDate = visibleDates.length ? dayjsLocal(visibleDates[0][0]) : null;
+  const visibleGames = Object.entries(hiddenGames).filter(([key, value]) => !value);
+  const stickyDate = visibleGames.length ? dayjsLocal(validGames.find(game => game.id === Number(visibleGames[0][0]))?.start ?? '') : null;
 
   return (
     <ScrollArea ref={scrollAreaRef} className="w-full whitespace-nowrap sm:-mx-4 xl:mx-0 pb-2 relative overflow-hidden z-auto">
@@ -150,7 +150,7 @@ const GameCard = React.memo(React.forwardRef(
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       >
-        <div className="px-0.5" ref={ref} data-date={game.start}>
+        <div className="px-0.5" ref={ref} data-id={game.id}>
           <MapFigure
             text={`${dayjsLocal(game.start).format("LT")} (${dayjs(game.end).diff(dayjs(game.start), 'minutes')} ${t('time.minuteShort')})`}
             src={`/maps/${game.map.image_name}`}
