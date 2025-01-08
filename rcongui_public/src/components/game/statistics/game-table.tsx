@@ -33,6 +33,7 @@ import useGameDownload from '@/hooks/use-game-download'
 import {TeamIndicator} from "@/components/game/statistics/team-indicator";
 import SelectBox from "@/components/ui/select-box";
 import { Checkbox } from "@/components/ui/checkbox";
+import {useGameStatsContext} from "@/components/game/statistics/game-stats-container";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -94,6 +95,24 @@ export function DataTable<TData extends Player, TValue>({
       },
     },
   })
+
+  const { focusedPlayerId, setFocusedPlayerId } = useGameStatsContext();
+
+  useEffect(() => {
+    if (focusedPlayerId === null) {
+      return;
+    }
+    const element = document.getElementById('row-' + focusedPlayerId);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      const style = ['border-2', 'border-primary', 'bg-accent'];
+      element.classList.add(...style);
+      setTimeout(() => {
+        element.classList.remove(...style);
+      }, 2000);
+    }
+    setFocusedPlayerId(null);
+  }, [focusedPlayerId]);
 
   const { t } = useTranslation('game')
 
@@ -210,7 +229,7 @@ export function DataTable<TData extends Player, TValue>({
         <TableBody>
           {table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row, index) => (
-              <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'} className="text-sm h-10">
+              <TableRow key={row.id} id={'row-' + row.original.player_id} data-state={row.getIsSelected() && 'selected'} className="text-sm h-10">
                 <TableCell className="w-4 text-center pr-0">{index + 1}</TableCell>
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id} className="py-0" style={{ width: cell.column.getSize(), textAlign: "right" }}>

@@ -16,6 +16,7 @@ import { getSteamProfileUrl, getXboxProfileUrl, isPlayerWithStatus, isSteamPlaye
 import { Gamepad2Icon } from 'lucide-react'
 import PlayerGameDetail from './player'
 import { useTranslation } from 'react-i18next'
+import {useGameStatsContext} from "@/components/game/statistics/game-stats-container";
 
 export function NoPlayerGameDetail() {
   const { t } = useTranslation('game')
@@ -36,6 +37,9 @@ export function MobilePlayerGameDetail({
   player: Player | PlayerWithStatus
 }) {
   const { t } = useTranslation('translation')
+
+  const { focusPlayerByName } = useGameStatsContext();
+
   return (
     <Drawer open={open} onOpenChange={(open) => setOpen(open)}>
       <DrawerContent className="max-h-[75vh]">
@@ -48,7 +52,13 @@ export function MobilePlayerGameDetail({
                 ) : isPlayerWithStatus(player) ? (
                   <Status player={player} />
                 ) : null}
-                <h3 className="text-xl text-center">{player.player}</h3>
+                <Button
+                  variant="text"
+                  className="pl-0 h-0 text-xl"
+                  onClick={() => focusPlayerByName(player.player)}
+                >
+                  {player.player}
+                </Button>
               </div>
             </DrawerTitle>
             <DrawerDescription className="sr-only">Game statistics for {player.player}</DrawerDescription>
