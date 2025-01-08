@@ -29,6 +29,7 @@
         "team": "Team",
         "kills": "Kills",
         "killsByCategory": "Kills by category",
+        "deathsByCategory": "Deaths by category",
         "deaths": "Deaths",
         "combat": "Combat",
         "score": "Score",
