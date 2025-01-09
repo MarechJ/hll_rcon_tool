@@ -91,6 +91,7 @@ export interface PlayerBase {
   kills_streak: number
   kills_by_type: Record<WeaponType, number>
   deaths: number
+  deaths_by_type: Record<WeaponType, number>
   deaths_without_kill_streak: number
   teamkills: number
   teamkills_streak: number

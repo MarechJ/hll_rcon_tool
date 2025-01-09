@@ -1,5 +1,6 @@
 import { RouterProvider } from 'react-router-dom';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 import relativeTimePlugin from 'dayjs/plugin/relativeTime';
 import durationPlugin from 'dayjs/plugin/duration';
 import adminRouter from "./router"
@@ -14,6 +15,7 @@ const App = () => {
   // Dayjs plugins
   dayjs.extend(relativeTimePlugin);
   dayjs.extend(durationPlugin);
+  dayjs.extend(utc);
 
   // Configure LocalForage
   localforage.config({

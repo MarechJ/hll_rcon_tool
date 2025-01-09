@@ -31,10 +31,11 @@ function SortableHeader({ column, desc }: { column: Column<Player>; desc: string
   )
 }
 
-function pointColumns(): ColumnDef<Player | PlayerWithStatus>[] {
+function pointColumns(completed: boolean): ColumnDef<Player | PlayerWithStatus>[] {
   const { t } = useTranslation('game');
 
   return [
+    ...completed ? [killCategoryColumn()] : [],
     {
       id: 'kills',
       meta: { label: t('playersTable.kills')},
@@ -98,6 +99,7 @@ function pointColumns(): ColumnDef<Player | PlayerWithStatus>[] {
         )
       },
     },
+    ...completed ? [deathCategoryColumn()] : [],
     {
       id: 'kills_per_minute',
       meta: { label: t('playersTable.killsPerMinute')},
@@ -260,7 +262,7 @@ const teamColumn = (): ColumnDef<Player | PlayerWithStatus> => {
   };
 }
 
-const killCategoryColumn =(): ColumnDef<Player | PlayerWithStatus> => {
+const killCategoryColumn = (): ColumnDef<Player | PlayerWithStatus> => {
   const { t } = useTranslation('game');
 
   return {
@@ -274,7 +276,26 @@ const killCategoryColumn =(): ColumnDef<Player | PlayerWithStatus> => {
     size: 100,
     cell: ({row}) => {
       const player = row.original;
-      return <WeaponTypeBar player={player}/>;
+      return <WeaponTypeBar totalKills={player.kills} killsByType={player.kills_by_type}/>;
+    },
+  }
+};
+
+const deathCategoryColumn = (): ColumnDef<Player | PlayerWithStatus> => {
+  const { t } = useTranslation('game');
+
+  return {
+    id: 'deaths_by_category',
+    meta: { label: t('playersTable.deathsByCategory')},
+    accessorKey: 'deaths_by_category',
+    header: function DeathCategoryHeader() {
+      const {t} = useTranslation('game')
+      return <div>{t('playersTable.deathsByCategory')}</div>
+    },
+    size: 100,
+    cell: ({row}) => {
+      const player = row.original;
+      return <WeaponTypeBar totalKills={player.deaths} killsByType={player.deaths_by_type}/>;
     },
   }
 };
@@ -304,9 +325,9 @@ const statusColumn: ColumnDef<Player | PlayerWithStatus> = {
 export const getLiveGameColumns = (handlePlayerClick: (id: string) => void): ColumnDef<Player | PlayerWithStatus>[] => [
   statusColumn,
   playerColumn(handlePlayerClick),
-  ...pointColumns(),
+  ...pointColumns(false),
 ]
 
 export const getCompletedGameColumns = (
   handlePlayerClick: (id: string) => void,
-): ColumnDef<Player | PlayerWithStatus>[] => [teamColumn(), playerColumn(handlePlayerClick), killCategoryColumn(), ...pointColumns()]
+): ColumnDef<Player | PlayerWithStatus>[] => [teamColumn(), playerColumn(handlePlayerClick), ...pointColumns(true)]
