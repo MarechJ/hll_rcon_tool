@@ -17,16 +17,14 @@ import { TableToolbar } from "@/components/table/TableToolbar";
 import { ActionMenuButton } from "@/features/player-action/ActionMenu";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import { generatePlayerActions } from "@/features/player-action/actions";
+import localStorageConfig from "@/config/localStorage";
 
 const LiveSessionsPage = () => {
   const { data } = teamsLiveQuery({ refetchInterval: 15 * 1000 });
 
   const [tableConfig] = useStorageState(
-    storageKeys.LIVE_PLAYERS_TABLE_CONFIG,
-    {
-      density: "normal",
-      fontSize: "normal",
-    }
+    localStorageConfig.LIVE_PLAYERS_TABLE_CONFIG.key,
+    localStorageConfig.LIVE_PLAYERS_TABLE_CONFIG.defaultValue
   );
 
   const playersData = useMemo(() => {

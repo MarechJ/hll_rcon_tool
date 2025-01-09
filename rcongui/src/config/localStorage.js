@@ -36,7 +36,12 @@ export default {
   },
   LIVE_LOGS_SEARCH_PARAMS: {
     key: "live-logs-search-params",
-    defaultValue: {},
+    defaultValue: {
+      players: [],
+      actions: [],
+      inclusive: true,
+      limit: 500,
+    },
   },
   GAMES_TABLE_CONFIG: {
     key: "games-table-config",
