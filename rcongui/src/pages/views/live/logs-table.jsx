@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import storageKeys from "@/config/storageKeys";
 import TableConfigDrawer from "@/components/table/TableConfigDrawer";
-import {Fragment, useEffect, useState} from "react";
+import {Fragment, memo, useEffect, useState} from "react";
 import { useStorageState } from "@/hooks/useStorageState";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -42,7 +42,24 @@ const updateActionSelection = (action) => (prev) => {
   };
 }
 
-export default function LogsTable({
+const updateFilterActionSelection = (action) => (prev) => {
+  const isToggled = prev.filters.actions.selected.includes(action);
+  const actions = isToggled
+    ? prev.filters.actions.selected.filter((aAction) => aAction !== action)
+    : prev.filters.actions.selected.concat(action);
+  return {
+    ...prev,
+    filters: {
+      ...prev.filters,
+      actions: {
+        ...prev.filters.actions,
+        selected: actions,
+      },
+    },
+  };
+}
+
+function LogsTable({
   table,
   logsViewData,
   searchParams,
@@ -58,10 +75,15 @@ export default function LogsTable({
       rowsPerPage: "100",
       highlighted: false,
       actions: [],
+      filters: {
+        actions: {
+          selected: [],
+          enabled: true,
+        },
+      },
     }
   );
 
-  const [logActionOptions, setLogActionOptions] = useState(logActions);
   const [playerOptions, setPlayerOptions] = useState({});
 
   const handleTableConfigClick = () => {
@@ -70,10 +92,7 @@ export default function LogsTable({
   };
 
   const handleClientActionFilterChange = (actionName) => {
-    setLogActionOptions((prev) => ({
-      ...prev,
-      [actionName]: !prev[actionName],
-    }));
+    setTableConfig(updateFilterActionSelection(actionName));
   };
 
   const handleClientPlayerFilterChange = (playerName) => {
@@ -125,11 +144,12 @@ export default function LogsTable({
   }, [logsViewData.players]);
 
   useEffect(() => {
-    const selectedActions = Object.entries(logActionOptions)
-      .filter(([_, selected]) => selected)
-      .map(([name]) => name);
-    table.getColumn("action")?.setFilterValue(selectedActions);
-  }, [logActionOptions]);
+    if (tableConfig.filters.actions.enabled) {
+      table.getColumn("action")?.setFilterValue(tableConfig.filters.actions.selected);
+    } else {
+      table.getColumn("action")?.setFilterValue(null);
+    }
+  }, [tableConfig.filters.actions.selected, tableConfig.filters.actions.enabled]);
 
   useEffect(() => {
     const selectedPlayers = Object.entries(playerOptions)
@@ -144,12 +164,30 @@ export default function LogsTable({
     return acc;
   }, {})
 
+  const filterActionOptions = Object.entries(logActions).reduce((acc, [name]) => {
+    acc[name] = tableConfig.filters.actions.selected.includes(name);
+    return acc;
+  }, {})
+
   return (
     <>
       <TableAddons>
         <LogActionSelectionMenu
-          actionOptions={logActionOptions}
+          actionOptions={filterActionOptions}
           onActionSelect={handleClientActionFilterChange}
+          toggleValue={tableConfig.filters.actions.enabled}
+          onToggle={() => {
+            setTableConfig(prev => ({
+              ...prev,
+              filters: {
+                ...prev.filters,
+                actions: {
+                  ...prev.filters.actions,
+                  enabled: !prev.filters.actions.enabled,
+                },
+              },
+            }))
+          }}
         />
         <LogPlayerSelectionMenu
           actionOptions={playerOptions}
@@ -297,3 +335,5 @@ export default function LogsTable({
     </>
   );
 }
+
+export default memo(LogsTable);

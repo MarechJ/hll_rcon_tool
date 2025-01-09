@@ -2,7 +2,7 @@ import Table from "@/components/table/Table";
 import TableConfigDrawer from "@/components/table/TableConfigDrawer";
 import storageKeys from "@/config/storageKeys";
 import { IconButton, Stack } from "@mui/material";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { useStorageState } from "@/hooks/useStorageState";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import SettingsIcon from "@mui/icons-material/Settings"
@@ -106,4 +106,4 @@ const PlayersTable = ({ table, teamData, selectedPlayers }) => {
   )
 };
 
-export default PlayersTable;
+export default memo(PlayersTable);
