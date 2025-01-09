@@ -27,6 +27,8 @@ dayjs.locale('en24h', {
   ...dayjs.Ls.en,
   formats: {
     ...dayjs.Ls.it.formats,
+    LT: 'H:mm',
+    LTS: 'H:mm:ss',
   },
 });
 
