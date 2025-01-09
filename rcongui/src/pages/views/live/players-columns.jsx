@@ -20,6 +20,7 @@ import {
 } from "@/utils/lib";
 import { SortableHeader } from "@/components/table/styles";
 import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";
+import Emoji from "@/components/shared/Emoji";
 
 export const Square = styled(Box)(({ theme }) => ({
   display: "flex",
@@ -267,12 +268,12 @@ export const columns = [
     cell: ({ row }) => {
       const flags = row.original.profile.flags;
       if (!flags || flags.length === 0) return null;
-      const flagsCount = 2;
+      const flagsCount = 5;
       return (
-        <Stack spacing={0.25} direction={"row"} alignItems={"center"}>
+        <Stack spacing={0.5} direction={"row"} alignItems={"center"}>
           {flags.slice(0, flagsCount).map(({ flag, comment: note, modified }) => (
             <Tooltip title={note} key={modified}>
-              <Box>{flag}</Box>
+              <Emoji emoji={flag} size={14} />
             </Tooltip>
           ))}
           {flags.length - flagsCount > 0 ? (
