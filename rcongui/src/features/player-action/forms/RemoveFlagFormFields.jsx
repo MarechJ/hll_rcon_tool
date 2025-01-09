@@ -11,6 +11,7 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useQueryClient } from "@tanstack/react-query";
 import { cmd } from "@/utils/fetchUtils";
+import Emoji from "@/components/shared/Emoji";
 
 export const RemoveFlagFormFields = ({ contextData, action, recipients }) => {
   const queryClient = useQueryClient();
@@ -53,7 +54,7 @@ export const RemoveFlagFormFields = ({ contextData, action, recipients }) => {
                 </IconButton>
               }
             >
-              <ListItemAvatar>{flag.flag}</ListItemAvatar>
+              <ListItemAvatar>{<Emoji emoji={flag.flag} size={24} />}</ListItemAvatar>
               <ListItemText primary={flag.comment} secondary={flag.modified} />
             </ListItem>
           </Fragment>

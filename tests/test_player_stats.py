@@ -3,7 +3,7 @@ import os
 import pytest
 
 os.environ["HLL_MAINTENANCE_CONTAINER"] = "1"
-from rcon.models import PlayerStats
+from rcon.models import PlayerStats, calc_weapon_type_usage
 from rcon.types import PlayerTeamAssociation, PlayerTeamConfidence
 from rcon.maps import Team
 
@@ -80,14 +80,55 @@ def test_detect_complex_inf():
         'M1 GARAND': 31,
         'BAZOOKA': 1,
         'MK2 GRENADE': 1,
+        'M1A1 THOMPSON': 1,
+        'BROWNING M1919': 2,
     }, death_by_weapons={
         'GEWEHR 43': 9,
-        'MG42': 1,
+        'MG42': 3,
         'MP40': 1,
         'STG44': 1,
-        'FG42 x4': 1,
+        'FG42 x4': 2,
         '150MM HOWITZER [sFH 18]': 1,
         '20MM KWK 30 [Sd.Kfz.121 Luchs]': 1,
     })
 
     assert p.detect_team() == PlayerTeamAssociation(side=Team.ALLIES, confidence=PlayerTeamConfidence.STRONG, ratio=100)
+    assert calc_weapon_type_usage(p.weapons) == {
+        'bazooka': 1,
+        'grenade': 1,
+        'machine_gun': 2,
+        'infantry': 32,
+    }
+    assert calc_weapon_type_usage(p.death_by_weapons) == {
+        'artillery': 1,
+        'armor': 1,
+        'infantry': 11,
+        'machine_gun': 3,
+        'sniper': 2,
+    }
+
+
+def test_detect_ignores_some_other_side():
+    p = PlayerStats(weapons={
+        'M1 GARAND': 45,
+        'M1A1 THOMPSON': 4,
+        'MK2 GRENADE': 3,
+        'BAZOOKA': 2,
+    }, death_by_weapons={
+        'GEWEHR 43': 28,
+        'MP40': 7,
+        'KARABINER 98K': 7,
+        'FG42 x4': 6,
+        '150MM HOWITZER [sFH 18]': 5,
+        'STG44': 3,
+        'COAXIAL MG34 [Sd.Kfz.181 Tiger 1]': 2,
+        '88 KWK 36 L/56 [Sd.Kfz.181 Tiger 1]': 2,
+        'MG42': 1,
+        'SATCHEL': 1,
+        'BOMBING RUN': 1,
+        # this is a teamkill or a wrongly attributed kill or a kill by an explosion of a vehicle or something
+        # it should not result in a MIXED team confidence
+        'Sherman M4A3(75)W': 1,
+    })
+
+    assert p.detect_team() == PlayerTeamAssociation(side=Team.ALLIES, confidence=PlayerTeamConfidence.STRONG, ratio=99.12)

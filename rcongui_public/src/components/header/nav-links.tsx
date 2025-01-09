@@ -13,6 +13,7 @@ export function NavLinks() {
     const isNotActive = pathname.pathname !== link.href
     return (
       <Button
+        key={link.href}
         variant={'text'}
         className={cn(
           'text-sm font-medium transition-colors focus:ring-primary',

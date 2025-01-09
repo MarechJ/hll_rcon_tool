@@ -4,14 +4,16 @@ import Root from "./pages/root"
 import { loader as rootLoader } from "./pages/root"
 import { action as rootAction } from "./pages/root"
 
-import ErrorPage from "./pages/error";
 import Dashboard from "./pages/dashboard";
 
 import LiveView from "./pages/views/live";
 import { loader as liveViewLoader } from "./pages/views/live"
 
 import TeamView from "./pages/views/team";
+
 import PlayerRecords from "./pages/records/players"
+import { loader as playerRecordsLoader } from "./pages/records/players"
+
 import Blacklists from "./pages/records/blacklists/manage"
 import BlacklistRecords from "./pages/records/blacklists"
 import GameLogsRecords from "./pages/records/game-logs"
@@ -45,7 +47,6 @@ import MapVotemap from "./pages/settings/map-manager/votemap"
 import ConfigDetail from "./pages/settings/[configs]/detail"
 import { loader as configLoader } from "./pages/settings/[configs]/detail"
 import { action as configAction } from "./pages/settings/[configs]/detail"
-import { ErrorElement as SharedErrorElement } from "./pages/settings/[configs]/detail"
 
 import PlayerProfile from "./pages/records/players/[playerId]"
 import { loader as playerProfileLoader } from "./pages/records/players/[playerId]"
@@ -86,6 +87,7 @@ import { action as vipSettingsAction } from "./pages/settings/vip"
 
 import { AuthProvider } from "@/hooks/useAuth";
 import { GlobalState } from "@/hooks/useGlobalState";
+import RouteError from "@/components/shared/RouteError";
 
 const router = createBrowserRouter([
     {
@@ -96,7 +98,7 @@ const router = createBrowserRouter([
                 <Root />
             </AuthProvider>
         ),
-        errorElement: <ErrorPage />,
+        errorElement: <RouteError />,
         action: rootAction,
         loader: rootLoader,
         children: [
@@ -104,11 +106,11 @@ const router = createBrowserRouter([
                 path: '',
                 index: true,
                 element: <Dashboard />,
-                errorElement: <SharedErrorElement />,
+                errorElement: <RouteError />,
             },
             {
                 path: 'views',
-                errorElement: <SharedErrorElement />,
+                errorElement: <RouteError />,
                 handle: { crumb: () => <span>Views</span> },
                 children: [
                     {
@@ -116,23 +118,27 @@ const router = createBrowserRouter([
                         handle: { crumb: () => <Link to={'/views/live'}>Live</Link> },
                         element: <LiveView />,
                         loader: liveViewLoader,
+                        errorElement: <RouteError />,
                     },
                     {
                         path: 'team',
                         handle: { crumb: () => <Link to={'/views/team'}>Team</Link> },
-                        element: <TeamView />
+                        element: <TeamView />,
+                        errorElement: <RouteError />,
                     }
                 ]
             },
             {
                 path: "records",
-                errorElement: <SharedErrorElement />,
+                errorElement: <RouteError />,
                 handle: { crumb: () => <span>Records</span> },
                 children: [
                     {
                         path: 'players',
                         handle: { crumb: () => <Link to={'/records/players'}>Players</Link> },
                         element: <PlayerRecords />,
+                        errorElement: <RouteError />,
+                        loader: playerRecordsLoader,
                     },
                     {
                         path: 'players/:playerId',
@@ -140,32 +146,37 @@ const router = createBrowserRouter([
                         loader: playerProfileLoader,
                         action: playerProfileAction,
                         handle: { crumb: (data) => [<Link to={'/records/players'}>Players</Link>, <Link to={'/records/players/' + data?.profile?.player_id}>{data?.profile?.names[0]?.name ?? ''}</Link>] },
+                        errorElement: <RouteError />,
                     },
                     {
                         path: 'blacklists',
                         handle: { crumb: () => <Link to={'/records/blacklists'}>Blacklists</Link> },
                         element: <BlacklistRecords />,
+                        errorElement: <RouteError />,
                     },
                     {
                         path: 'blacklists/manage',
                         handle: { crumb: () => [<Link to={'/records/blacklists'}>Blacklists</Link>, <span>Manage</span>] },
                         element: <Blacklists />,
+                        errorElement: <RouteError />,
                     },
                     {
                         path: 'game-logs',
                         handle: { crumb: () => <Link to={'/records/game-log'}>Game Logs</Link> },
                         element: <GameLogsRecords />,
+                        errorElement: <RouteError />,
                     },
                     {
                         path: 'audit-logs',
                         handle: { crumb: () => <Link to={'/records/audit-log'}>Audit Logs</Link> },
                         element: <AuditLogsRecords />,
+                        errorElement: <RouteError />,
                     },
                 ],
             },
             {
                 path: 'settings',
-                errorElement: <SharedErrorElement />,
+                errorElement: <RouteError />,
                 handle: { crumb: () => <span>Settings</span> },
                 children: [
                     {
@@ -175,6 +186,7 @@ const router = createBrowserRouter([
                         loader: settingsLoader,
                         action: settingsAction,
                         index: true,
+                        errorElement: <RouteError />,
                     },
                     {
                         path: 'services',
@@ -182,6 +194,7 @@ const router = createBrowserRouter([
                         element: <ServicesSettings />,
                         loader: servicesLoader,
                         action: servicesAction,
+                        errorElement: <RouteError />,
                     },
                     {
                         path: 'vip',
@@ -189,6 +202,7 @@ const router = createBrowserRouter([
                         element: <VipSettings />,
                         loader: vipSettingsLoader,
                         action: vipSettingsAction,
+                        errorElement: <RouteError />,
                     },
                     {
                         path: 'console-admins',
@@ -196,6 +210,7 @@ const router = createBrowserRouter([
                         element: <ConsoleAdminSettings />,
                         loader: consoleAdminSettingsLoader,
                         action: consoleAdminSettingsAction,
+                        errorElement: <RouteError />,
                     },
                     {
                         path: 'profanity-filter',
@@ -203,6 +218,7 @@ const router = createBrowserRouter([
                         element: <ProfanityFilterSettings />,
                         loader: profanityFilterLoader,
                         action: profanityFilterAction,
+                        errorElement: <RouteError />,
                     },
                     {
                         path: 'welcome-message',
@@ -210,6 +226,7 @@ const router = createBrowserRouter([
                         element: <WelcomeMessageSettings />,
                         loader: welcomeMessageLoader,
                         action: welcomeMessageAction,
+                        errorElement: <RouteError />,
                     },
                     {
                         path: 'broadcast-message',
@@ -217,6 +234,7 @@ const router = createBrowserRouter([
                         element: <BroadcastMessageSettings />,
                         loader: broadcastMessageLoader,
                         action: broadcastMessageAction,
+                        errorElement: <RouteError />,
                     },
                     {
                         path: 'autosettings',
@@ -224,6 +242,7 @@ const router = createBrowserRouter([
                         element: <AutoSettings />,
                         loader: autosettingsLoader,
                         action: autosettingsAction,
+                        errorElement: <RouteError />,
                     },
                     {
                         path: 'maps',
@@ -234,21 +253,25 @@ const router = createBrowserRouter([
                                 path: 'change',
                                 handle: { crumb: () => <Link to={'/settings/maps/change'}>Change</Link> },
                                 element: <MapChange />,
+                                errorElement: <RouteError />,
                             },
                             {
                                 path: 'rotation',
                                 handle: { crumb: () => <Link to={'/settings/maps/rotation'}>Rotation</Link> },
                                 element: <MapRotation />,
+                                errorElement: <RouteError />,
                             },
                             {
                                 path: 'objectives',
                                 handle: { crumb: () => <Link to={'/settings/maps/objectives'}>Objectives</Link> },
                                 element: <MapObjectives />,
+                                errorElement: <RouteError />,
                             },
                             {
                                 path: 'votemap',
                                 handle: { crumb: () => <Link to={'/settings/maps/votemap'}>Votemap</Link> },
                                 element: <MapVotemap />,
+                                errorElement: <RouteError />,
                             }
                         ]
                     },
@@ -262,7 +285,7 @@ const router = createBrowserRouter([
                                 handle: { crumb: () => <span>Detail</span> },
                                 loader: templatesLoader,
                                 action: templatesAction,
-                                errorElement: <SharedErrorElement />,
+                                errorElement: <RouteError />,
                                 element: <TemplatesDetail />,
                             },
                         ]
@@ -272,13 +295,13 @@ const router = createBrowserRouter([
             {
                 path: '/settings/:category/:type',
                 element: <ConfigDetail />,
-                errorElement: <SharedErrorElement />,
+                errorElement: <RouteError />,
                 loader: configLoader,
                 action: configAction,
             },
             {
                 path: 'stats',
-                errorElement: <SharedErrorElement />,
+                errorElement: <RouteError />,
                 handle: { crumb: () => <span>Stats</span> },
                 children: [
                     {
@@ -286,11 +309,13 @@ const router = createBrowserRouter([
                         handle: { crumb: () => <Link to={'/stats/live-game'}>Live Game</Link> },
                         element: <LiveGamePage />,
                         loader: liveGameLoader,
+                        errorElement: <RouteError />,
                     },
                     {
                         path: 'live-sessions',
                         handle: { crumb: () => <Link to={'/stats/live-sessions'}>Live Sessions</Link> },
                         element: <LiveSessionStats />,
+                        errorElement: <RouteError />,
                     },
                     {
                         path: 'games',
@@ -302,11 +327,13 @@ const router = createBrowserRouter([
                                 index: true,
                                 loader: gamesLoader,
                                 element: <GamesPage />,
+                                errorElement: <RouteError />,
                             },
                             {
                                 path: ':gameId',
                                 handle: { crumb: (data) => <span>{data?.gameId}</span> },
                                 element: <GameDetailsPage />,
+                                errorElement: <RouteError />,
                             }
                         ]
                     }
@@ -317,7 +344,7 @@ const router = createBrowserRouter([
     {
         path: '/login',
         element: <Login />,
-        errorElement: <ErrorPage />,
+        errorElement: <RouteError />,
         action: loginAction,
         loader: loginLoader,
     },

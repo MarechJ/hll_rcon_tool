@@ -60,7 +60,7 @@ from rcon.utils import (
     mask_to_server_numbers,
     server_numbers_to_mask,
 )
-from rcon.weapons import WEAPON_SIDE_MAP
+from rcon.weapons import WEAPON_SIDE_MAP, ALL_WEAPONS, WeaponType
 
 logger = logging.getLogger(__name__)
 
@@ -174,6 +174,8 @@ class PlayerID(Base):
 
     def get_current_playtime_seconds(self) -> int:
         if self.sessions:
+            if self.sessions[0].end:
+                return 0
             start = self.sessions[0].start or self.sessions[0].created
             return int((datetime.now() - start).total_seconds())
         return 0
@@ -533,6 +535,17 @@ class Maps(Base):
             ),
         }
 
+
+def calc_weapon_type_usage(weapons: dict[str, int]) -> dict[WeaponType, int]:
+    kills_by_type = defaultdict(int)
+
+    for weapon_name, count in weapons.items():
+        if weapon_name in ALL_WEAPONS:
+            weapon_type = ALL_WEAPONS[weapon_name]
+            kills_by_type[weapon_type.value] += count
+
+    return dict(kills_by_type)
+
 class PlayerStats(Base):
     __tablename__ = "player_stats"
     __table_args__ = (
@@ -601,26 +614,29 @@ class PlayerStats(Base):
                 elif op == Team.AXIS:
                     axis_count += weapon[1]
 
+        assoc: PlayerTeamAssociation
         if axis_count == 0 and allies_count == 0:
             return PlayerTeamAssociation(side=Team.UNKNOWN, confidence=PlayerTeamConfidence.STRONG, ratio=0)
         elif axis_count > allies_count:
-            return PlayerTeamAssociation(
+            assoc = PlayerTeamAssociation(
                 side=Team.AXIS,
-                confidence=PlayerTeamConfidence.STRONG if allies_count == 0 else PlayerTeamConfidence.MIXED,
+                confidence=PlayerTeamConfidence.MIXED,
                 ratio=round(axis_count / (axis_count + allies_count) * 100, 2),
             )
         elif allies_count > axis_count:
-            return PlayerTeamAssociation(
+            assoc = PlayerTeamAssociation(
                 side=Team.ALLIES,
-                confidence=PlayerTeamConfidence.STRONG if axis_count == 0 else PlayerTeamConfidence.MIXED,
+                confidence=PlayerTeamConfidence.MIXED,
                 ratio=round(allies_count / (axis_count + allies_count) * 100, 2),
             )
         else:
-            return PlayerTeamAssociation(
+            assoc = PlayerTeamAssociation(
                 side=Team.UNKNOWN,
                 confidence=PlayerTeamConfidence.MIXED,
                 ratio=50,
             )
+        assoc['confidence'] = PlayerTeamConfidence.STRONG if assoc['ratio'] > 85 else PlayerTeamConfidence.MIXED
+        return assoc
 
     def to_dict(self) -> PlayerStatsType:
         # TODO: Fix typing
@@ -635,8 +651,10 @@ class PlayerStats(Base):
             ),
             "map_id": self.map_id,
             "kills": self.kills,
+            "kills_by_type": calc_weapon_type_usage(self.weapons),
             "kills_streak": self.kills_streak,
             "deaths": self.deaths,
+            "deaths_by_type": calc_weapon_type_usage(self.death_by_weapons),
             "deaths_without_kill_streak": self.deaths_without_kill_streak,
             "teamkills": self.teamkills,
             "teamkills_streak": self.teamkills_streak,

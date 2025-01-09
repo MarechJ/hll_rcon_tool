@@ -1,13 +1,9 @@
 import {
   Form,
-  isRouteErrorResponse,
   json,
-  Link,
   useActionData,
   useLoaderData,
-  useLocation,
   useRevalidator,
-  useRouteError,
   useSubmit,
 } from "react-router-dom";
 import {lazy, Suspense, useEffect, useState} from "react";
@@ -307,33 +303,5 @@ const ConfigPage = () => {
   );
 };
 
-export function ErrorElement() {
-  const error = useRouteError();
-  const location = useLocation();
-
-  if (
-    isRouteErrorResponse(error) &&
-    error.status >= 400 &&
-    error.status < 500
-  ) {
-    // the response json is automatically parsed to
-    // `error.data`, you also have access to the status
-    return (
-      <Stack spacing={2} alignItems={"center"} justifyContent={"center"}>
-        <Typography variant="h3">{error.status}</Typography>
-        <Typography variant="h4">{error.data.text ?? error.data.message ?? error.statusText}</Typography>
-        <Typography>{error.data.command ?? error.data}</Typography>
-        <Typography>{error.data.name ?? error.data.error}</Typography>
-        <Button variant="contained" LinkComponent={Link} to={location.pathname}>
-          Try again!
-        </Button>
-      </Stack>
-    );
-  }
-
-  // rethrow to let the parent error boundary handle it
-  // when it's not a special case for this route
-  throw error;
-}
 
 export default ConfigPage;

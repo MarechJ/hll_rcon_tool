@@ -1,6 +1,6 @@
-import { type ClassValue, clsx } from 'clsx'
-import { twMerge } from 'tailwind-merge'
-
+import {type ClassValue, clsx} from 'clsx'
+import {twMerge} from 'tailwind-merge'
+import dayjs from 'dayjs';
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
@@ -20,3 +20,8 @@ export const downloadCSV = (data: string, filename: string) => {
   window.URL.revokeObjectURL(url)
   a.remove()
 }
+
+export const dayjsLocal = (date: string) => {
+  const tz = dayjs.tz.guess();
+  return dayjs.utc(date).tz(tz);
+};

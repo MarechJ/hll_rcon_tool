@@ -28,6 +28,7 @@ import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
 import CopyableText from "@/components/shared/CopyableText";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSteam, faXbox } from "@fortawesome/free-brands-svg-icons";
+import Emoji from "@/components/shared/Emoji";
 
 export const Square = styled(Box)(({ theme }) => ({
   display: "flex",
@@ -336,16 +337,14 @@ export const columns = [
     cell: ({ row }) => {
       const flags = row.original.profile.flags;
       if (!flags || flags.length === 0) return null;
-      const flagsCount = 2;
+      const flagsCount = 5;
       return (
-        <Stack spacing={0.25} direction={"row"} alignItems={"center"}>
-          {flags
-            .slice(0, flagsCount)
-            .map(({ flag, comment: note, modified }) => (
-              <Tooltip title={note} key={modified}>
-                <Box>{flag}</Box>
-              </Tooltip>
-            ))}
+        <Stack spacing={0.5} direction={"row"} alignItems={"center"}>
+          {flags.slice(0, flagsCount).map(({ flag, comment: note, modified }) => (
+            <Tooltip title={note} key={modified}>
+              <Emoji emoji={flag} size={14} />
+            </Tooltip>
+          ))}
           {flags.length - flagsCount > 0 ? (
             <Typography
               variant="caption"

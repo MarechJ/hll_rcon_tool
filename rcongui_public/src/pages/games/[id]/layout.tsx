@@ -4,7 +4,7 @@ import MapFigure from '@/components/game/map-figure'
 import {gameQueries} from '@/lib/queries/scoreboard-maps'
 import {getGameDuration} from '../utils'
 import GameOverview from '@/components/game/overview'
-import {Link, Outlet, useLoaderData, useLocation, useNavigate} from 'react-router'
+import {Link, Outlet, useLoaderData, useLocation} from 'react-router'
 import {Helmet} from 'react-helmet'
 import {useTranslation} from 'react-i18next'
 import {clientLoader} from './clientLoader'
@@ -13,6 +13,7 @@ import {ErrorBoundary} from 'react-error-boundary'
 import {ScoreboardMapStats} from '@/types/api'
 import {ChartLineIcon, TableIcon} from "lucide-react";
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
+import {dayjsLocal} from "@/lib/utils";
 
 dayjs.extend(localizedFormat)
 
@@ -56,7 +57,7 @@ const GameDetailLayout = ({ game }: { game: ScoreboardMapStats }) => {
         </div>
           <aside className="flex flex-row w-full lg:w-1/3 divide-x">
             <MapFigure
-              text={dayjs(game.start).format('LLL')}
+              text={dayjsLocal(game.start).format('LLL')}
               src={`/maps/${game.map.image_name}`}
               name={game.map.map.pretty_name}
               className="w-full h-32 lg:h-full"

@@ -100,6 +100,8 @@ export const action = async ({ request }) => {
           payload.value = value;
           executeCommand = cmd.SET_VIP_SLOTS_NUM;
           break;
+        default:
+          throw new ProgrammingError(`Trying to execute invalid command: ${key}`);
       }
       return executeCommand({ payload, throwRouteError: false });
     });
