@@ -105,7 +105,7 @@ export function DataTable<TData extends Player, TValue>({
     const element = document.getElementById('row-' + focusedPlayerId);
     if (element) {
       element.scrollIntoView({ behavior: "smooth", block: "center" });
-      const style = ['border-2', 'border-primary', 'bg-accent'];
+      const style = ['bg-accent','outline-2', '-outline-offset-2', 'outline-primary', 'outline'];
       element.classList.add(...style);
       setTimeout(() => {
         element.classList.remove(...style);
