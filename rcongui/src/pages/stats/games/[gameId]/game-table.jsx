@@ -1,6 +1,5 @@
 import Table from "@/components/table/Table";
 import TableConfigDrawer from "@/components/table/TableConfigDrawer";
-import storageKeys from "@/config/storageKeys";
 import { Divider, IconButton } from "@mui/material";
 import { useState } from "react";
 import { useStorageState } from "@/hooks/useStorageState";
@@ -13,6 +12,7 @@ import { TablePagination } from "@/components/table/TablePagination";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import { Box, Typography } from "@mui/material";
 import {downloadGame} from "@/features/download-game";
+import localStorageConfig from "@/config/localStorage";
 
 const renderSubComponent = ({ row }) => {
   // Create a custom component that renders the player's stats
@@ -165,13 +165,7 @@ const renderSubComponent = ({ row }) => {
 const PlayersTable = ({ table, selectedPlayers }) => {
   const [tableConfigDrawerOpen, setTableConfigDrawerOpen] = useState(false);
 
-  const [tableConfig, setTableConfig] = useStorageState(
-    storageKeys.PLAYERS_TABLE_CONFIG,
-    {
-      density: "normal",
-      fontSize: "normal",
-    }
-  );
+  const [tableConfig, setTableConfig] = useStorageState(localStorageConfig.GAMES_TABLE_CONFIG.key, localStorageConfig.GAMES_TABLE_CONFIG.defaultValue);
 
   const handleTableConfigClick = () => {
     // toggle config drawer

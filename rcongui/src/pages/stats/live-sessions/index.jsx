@@ -13,7 +13,6 @@ import Table from "@/components/table/Table";
 import { isLeader, normalizePlayerProfile } from "@/utils/lib";
 import { extractPlayers } from "@/utils/extractPlayers";
 import { useStorageState } from "@/hooks/useStorageState";
-import storageKeys from "@/config/storageKeys";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import { ActionMenuButton } from "@/features/player-action/ActionMenu";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
