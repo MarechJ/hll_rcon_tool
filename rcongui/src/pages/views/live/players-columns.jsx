@@ -16,7 +16,6 @@ import { CountryFlag } from "@/components/shared/CountryFlag";
 import {
   getPlayerTier,
   getSteamProfileUrl,
-  getXboxProfileUrl,
   hasRecentWarnings,
   isSteamPlayer,
   teamToNation,
@@ -27,7 +26,8 @@ import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";
 import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
 import CopyableText from "@/components/shared/CopyableText";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSteam, faXbox } from "@fortawesome/free-brands-svg-icons";
+import { faSteam } from "@fortawesome/free-brands-svg-icons";
+import { faGamepad } from "@fortawesome/free-solid-svg-icons";
 import Emoji from "@/components/shared/Emoji";
 
 export const Square = styled(Box)(({ theme }) => ({
@@ -223,21 +223,36 @@ export const columns = [
     header: SortableHeader("🖥️"),
     accessorFn: (row) => (isSteamPlayer(row) ? "Steam" : "Xbox"),
     cell: ({ row }) => {
-      const url = isSteamPlayer(row.original)
-        ? getSteamProfileUrl(row.original.player_id)
-        : getXboxProfileUrl(row.original.name);
-      const icon = isSteamPlayer(row.original) ? faSteam : faXbox;
-      return (
+      const isSteam = isSteamPlayer(row.original)
+
+      return isSteam ? (
         <IconButton
           LinkComponent={"a"}
           size="small"
           sx={{ fontSize: "0.75rem" }}
-          href={url}
+          href={getSteamProfileUrl(row.original.player_id)}
           target="_blank"
           rel="noopener noreferrer"
         >
-          <FontAwesomeIcon icon={icon} />
+          <FontAwesomeIcon icon={faSteam} />
         </IconButton>
+      ) : (
+        <Box
+          sx={{
+            fontSize: "0.75rem",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: '50%',
+            padding: '5px',
+            transition: 'background-color 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+            '&:hover': {
+              backgroundColor: 'action.hover'
+            }
+          }}
+          component={FontAwesomeIcon}
+          icon={faGamepad}
+        />
       );
     },
   },
