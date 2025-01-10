@@ -48,6 +48,8 @@ An extended RCON tool for [Hell Let Loose](https://www.hellletloose.com/), meant
 
 ## Join us on Discord
 
+🆘 If you're having an issue installing or using CRCON, [please read this](https://github.com/MarechJ/hll_rcon_tool/wiki/Troubleshooting-&-Help-%E2%80%90-Need-help-%3F-%E2%80%90-Report-an-issue) before asking for help on Discord.
+
 For feedback, troubleshooting and information about updates and general Hell Let Loose hosting info :  
 <https://discord.gg/r8v3TkPk>
 
