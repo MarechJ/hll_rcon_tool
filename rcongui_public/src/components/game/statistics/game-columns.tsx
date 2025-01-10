@@ -1,7 +1,7 @@
 'use client'
 
 import {Column, ColumnDef } from '@tanstack/react-table'
-import { Player, PlayerTeamAssociation, PlayerWithStatus, TeamEnum } from '@/types/player'
+import {Player, PlayerTeamAssociation, PlayerWithStatus} from '@/types/player'
 import {IconHeader as Header} from './column-header'
 import {Status} from './player-status'
 import {isPlayerWithStatus} from './player/utils'
@@ -11,6 +11,8 @@ import {TeamIndicator} from '@/components/game/statistics/team-indicator'
 import {WeaponTypeBar} from "@/components/game/statistics/weapon-type-bar";
 import {getTeamFromAssociation} from "@/components/game/statistics/utils";
 import {ScaleIcon} from "lucide-react";
+import {Awards} from "@/components/game/statistics/award";
+import {PlayerBaseWithAwards} from "@/pages/games/[id]";
 
 const threeDigitsWidth = 40
 const fourDigitsWidth = 50
@@ -211,7 +213,7 @@ const playerColumn = (handlePlayerClick: (id: string) => void): ColumnDef<Player
     const id = String(row.original.player_id)
 
     return (
-      <div className="flex flex-row items-center gap-1">
+      <div className="text-left">
         <Button
           variant={'text'}
           className="pl-0"
@@ -233,6 +235,22 @@ const playerColumn = (handlePlayerClick: (id: string) => void): ColumnDef<Player
   },
   enableHiding: false,
 })
+
+const awardColumn = (): ColumnDef<Player | PlayerBaseWithAwards | PlayerWithStatus>  => {
+  const { t } = useTranslation('game');
+  return {
+    id: 'award',
+    meta: {label: t('playersTable.awards')},
+    header: function NameHeader() {
+      const {t} = useTranslation('game')
+      return <div className="text-right">{t('playersTable.awards')}</div>
+    },
+    cell: ({row}) => {
+      return 'awards' in row.original ? <Awards player={row.original}/> : null
+    },
+    size: 20,
+  }
+};
 
 const teamColumn = (): ColumnDef<Player | PlayerWithStatus> => {
   const { t } = useTranslation('game');
@@ -330,4 +348,4 @@ export const getLiveGameColumns = (handlePlayerClick: (id: string) => void): Col
 
 export const getCompletedGameColumns = (
   handlePlayerClick: (id: string) => void,
-): ColumnDef<Player | PlayerWithStatus>[] => [teamColumn(), playerColumn(handlePlayerClick), ...pointColumns(true)]
+): ColumnDef<Player | PlayerWithStatus | PlayerBaseWithAwards>[] => [teamColumn(), playerColumn(handlePlayerClick), awardColumn(), ...pointColumns(true)]
