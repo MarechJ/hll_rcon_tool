@@ -11,6 +11,8 @@ type WeaponTypeBarProps = {
 
 export const WeaponTypeBar = memo(({ totalKills, killsByType }: WeaponTypeBarProps) => {
 
+  const GAP_SIZE = 2.5;
+
   const {t} = useTranslation("game");
 
   if (!totalKills || !killsByType) {
@@ -35,22 +37,32 @@ export const WeaponTypeBar = memo(({ totalKills, killsByType }: WeaponTypeBarPro
     totalCategorizedKills += count;
   });
 
+  const displayedBars = Array.from(killsBySimpleStatus.entries())
+    .filter(([_, value]) => value > 0)
+    .sort(([a, n1], [b, n2]) =>
+      simpleWeaponTypeMap[a].order - simpleWeaponTypeMap[b].order
+    );
+
+  const gapAmount = displayedBars.length - 1 + (totalCategorizedKills < totalKills ? 1 : 0);
+
   return <TooltipProvider>
     <Tooltip>
       <TooltipTrigger asChild>
         <div className={"h-full w-full flex items-center pr-4"}>
-          <div className="h-1 w-full flex rounded-full overflow-hidden bg-gray-500">
-            {Array.from(killsBySimpleStatus.entries())
-              .sort(([a, n1], [b, n2]) =>
-                simpleWeaponTypeMap[a].order - simpleWeaponTypeMap[b].order
-              )
-              .map(([type, value], index) => {
-                return <div
-                  key={index}
-                  style={{width: `${value / totalKills * 100}%`, background: simpleWeaponTypeMap[type as SimpleWeaponType].color}}
+          <div className="h-1 w-full flex rounded-full overflow-hidden">
+            {displayedBars.map(([type, value], index) => {
+              return <React.Fragment key={index}>
+                <div
+                  style={{
+                    width: `calc(${value / totalKills} * (100% - ${gapAmount * GAP_SIZE}px))`,
+                    background: simpleWeaponTypeMap[type as SimpleWeaponType].color
+                  }}
                 />
+                {(totalCategorizedKills < totalKills || index + 1 < displayedBars.length) && <div style={{width: GAP_SIZE + 'px'}}/>}
+              </React.Fragment>
               }
             )}
+            <div className="bg-gray-500 flex-grow"/>
           </div>
         </div>
       </TooltipTrigger>
