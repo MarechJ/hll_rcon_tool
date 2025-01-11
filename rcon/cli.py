@@ -127,10 +127,15 @@ def run_blacklists():
 
 
 @cli.command(name="log_recorder")
-@click.option("-t", "--frequency-min", default=5)
+@click.option("-t", "--frequency-min", required=False)
+@click.option("-i", "--interval", default=10)
 @click.option("-n", "--now", is_flag=True)
-def run_log_recorder(frequency_min, now):
-    LogRecorder(frequency_min*60).run(run_immediately=now)
+def run_log_recorder(interval, frequency_min, now):
+    if frequency_min and interval:
+        raise Exception("Cannot have frequency-min and interval at the same time")
+    if frequency_min:
+        interval = frequency_min*60
+    LogRecorder(interval).run(run_immediately=now)
 
 
 def init(force=False):

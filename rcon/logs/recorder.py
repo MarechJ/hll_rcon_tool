@@ -63,6 +63,7 @@ class LogRecorder:
         player_ids = sess.query(PlayerID).filter(PlayerID.player_id.in_(list(players.keys())))
         for pid in player_ids:
             players[pid.player_id] = pid
+
         return players
 
     def _save_logs(self, sess, to_store: list[StructuredLogLineWithMetaData]):
@@ -70,6 +71,12 @@ class LogRecorder:
 
         for log in to_store:
             try:
+                player_1: PlayerID | None = None
+                player_2: PlayerID | None = None
+                if log["player_id_1"]:
+                    player_1 = players[log["player_id_1"]]
+                if log["player_id_2"]:
+                    player_2 = players[log["player_id_2"]]
                 sess.add(
                     LogLine(
                         version=log["version"],
@@ -79,8 +86,8 @@ class LogRecorder:
                         type=log["action"],
                         player1_name=log["player_name_1"],
                         player2_name=log["player_name_2"],
-                        player_1=players[log["player_id_1"]],
-                        player_2=players[log["player_id_2"]],
+                        player_1=player_1,
+                        player_2=player_2,
                         raw=log["raw"],
                         content=log["message"],
                         server=os.getenv("SERVER_NUMBER"),
@@ -99,9 +106,9 @@ class LogRecorder:
 
         while True:
             now = datetime.datetime.now()
-            if not (now - last_run).total_seconds() > self.dump_frequency_seconds * 60:
+            if not (now - last_run).total_seconds() > self.dump_frequency_seconds:
                 logger.debug("Not due for recording yet")
-                time.sleep(30)
+                time.sleep(5)
                 continue
             with enter_session() as sess:
                 to_store = self._get_new_logs(sess)
