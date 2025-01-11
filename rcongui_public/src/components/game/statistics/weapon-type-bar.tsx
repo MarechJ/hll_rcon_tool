@@ -19,11 +19,16 @@ export const WeaponTypeBar = memo(({ totalKills, killsByType }: WeaponTypeBarPro
     return null;
   }
 
+  /**
+   *  Sorted by a specific order. Please consider this before sorting it by value:
+   *  It is sorted from direct to indirect weapon categories
+   *  Sniper is super accurate, infantry less accurate, mg is more spray and then explosions sorted by splash size
+   */
   const simpleWeaponTypeMap: Record<SimpleWeaponType, {color: string, order: number, t: string}> = {
     [SimpleWeaponType.Sniper]: { color: colors.emerald[500], order: 0, t: t("weaponType.sniper") },
     [SimpleWeaponType.Infantry]: { color: colors.lime[500], order: 1, t: t("weaponType.infantry") },
-    [SimpleWeaponType.Explosive]: { color: colors.amber[600], order: 2, t: t("weaponType.explosive") },
-    [SimpleWeaponType.MachineGun]: { color: colors.red[600], order: 3, t: t("weaponType.machineGun") },
+    [SimpleWeaponType.MachineGun]: { color: colors.red[600], order: 2, t: t("weaponType.machineGun") },
+    [SimpleWeaponType.Explosive]: { color: colors.amber[600], order: 3, t: t("weaponType.explosive") },
     [SimpleWeaponType.Armor]: { color: colors.cyan[400], order: 4, t: t("weaponType.armor") },
     [SimpleWeaponType.Artillery]: { color: colors.fuchsia[600], order: 5, t: t("weaponType.artillery") },
     [SimpleWeaponType.Commander]: { color: colors.amber[300], order: 6, t: t("weaponType.commander") },
@@ -40,6 +45,9 @@ export const WeaponTypeBar = memo(({ totalKills, killsByType }: WeaponTypeBarPro
 
   const displayedBars = Array.from(killsBySimpleStatus.entries())
     .filter(([_, value]) => value > 0)
+    /**
+    *  Sorted by a specific order. Please read comment at {@link simpleWeaponTypeMap}
+    */
     .sort(([a, n1], [b, n2]) =>
       simpleWeaponTypeMap[a].order - simpleWeaponTypeMap[b].order
     );
