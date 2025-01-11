@@ -21,6 +21,7 @@ export enum SimpleWeaponType {
   Commander = "commander",
   Artillery = "artillery",
   MachineGun = "machine_gun",
+  Sniper = "sniper",
 }
 
 export const weaponTypeToSimpleWeaponType: Record<WeaponType, SimpleWeaponType> = {
@@ -28,7 +29,7 @@ export const weaponTypeToSimpleWeaponType: Record<WeaponType, SimpleWeaponType> 
   [WeaponType.Bazooka]: SimpleWeaponType.Explosive,
   [WeaponType.Grenade]: SimpleWeaponType.Explosive,
   [WeaponType.MachineGun]: SimpleWeaponType.MachineGun,
-  [WeaponType.Sniper]: SimpleWeaponType.Infantry,
+  [WeaponType.Sniper]: SimpleWeaponType.Sniper,
   [WeaponType.Mine]: SimpleWeaponType.Explosive,
   [WeaponType.PAK]: SimpleWeaponType.Explosive,
   [WeaponType.Satchel]: SimpleWeaponType.Explosive,
