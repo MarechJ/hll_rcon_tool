@@ -40,13 +40,13 @@ export const Awards = memo(({ player }: AwardsProps)=> {
 });
 
 export const statsMap = {
-  kills: { icon: <TrophyIcon/> },
-  kills_streak: { icon: <ZapIcon/> },
-  deaths: { icon: <InfinityIcon/> },
-  deaths_without_kill_streak: { icon: <Milk/> },
-  teamkills: { icon: <HeartOffIcon/> },
-  deaths_by_tk: { icon: <HeartCrackIcon/> },
-  kill_death_ratio: { icon: <DrumstickIcon/> },
+  'kills': { icon: <TrophyIcon/> },
+  'kills_streak': { icon: <ZapIcon/> },
+  'deaths': { icon: <InfinityIcon/> },
+  'deaths_without_kill_streak': { icon: <Milk/> },
+  'teamkills': { icon: <HeartOffIcon/> },
+  'deaths_by_tk': { icon: <HeartCrackIcon/> },
+  'kill_death_ratio': { icon: <DrumstickIcon/> },
   'kills_by_type.infantry': { icon: <BicepsFlexedIcon/> },
   'kills_by_type.commander': { icon: <PlaneLandingIcon/> },
   'kills_by_type.bazooka': { icon: <RocketIcon/> },
@@ -58,11 +58,13 @@ export const statsMap = {
   'kills_by_type.mine': { icon: <SunsetIcon/> },
   'kills_by_type.pak': { icon: <Lightbulb/> },
   'kills_by_type.satchel': { icon: <Timer/> },
-  support: { icon: <PackageIcon/> },
-  zero_deaths: { icon: <CloverIcon/> },
-  zero_kills: { icon: <BabyIcon/> },
-  kd_of_one: { icon: <ScaleIcon/> },
-} as const;
+  'support': { icon: <PackageIcon/> },
+  'zero_deaths': { icon: <CloverIcon/> },
+  'zero_kills': { icon: <BabyIcon/> },
+  'kd_of_one': { icon: <ScaleIcon/> },
+};
+
+type StatKey = keyof typeof statsMap;
 
 interface AwardProps {
   stat: string,
@@ -96,7 +98,7 @@ type AwardIconProps = {
 
 function AwardIcon({ stat, className, style, ...props }: AwardIconProps) {
   return <div className={cn("rounded-full bg-foreground text-center items-center", className)} style={{ padding: '2.5px' }} {...props}>
-    {cloneElement((statsMap as any)[stat]?.icon as React.ReactElement ?? <HelpCircleIcon/>, {
+    {cloneElement(statsMap[stat as StatKey]?.icon as React.ReactElement ?? <HelpCircleIcon/>, {
       className: 'text-background size-full'
     })}
   </div>;

@@ -18,79 +18,18 @@ export function getGameDuration(start: string, end: string) {
   return formattedTime
 }
 
-const allowedStats = [
-  "kills_streak",
-  "deaths",
-  "deaths_without_kill_streak",
-  "teamkills",
-  "deaths_by_tk",
-  "kill_death_ratio",
-  "kills_by_type",
-  "support",
-  "zero_deaths",
-  "zero_kills",
-  "kd_of_one"
-  // "kills" is already covered by various kills_by_type
-  // "longest_life_secs", // too inaccurate
-  // "shortest_life_secs", // too inaccurate
-  // "combat", // covered by other awards (most likely tanker or AT)
-  // "offense", // it is just the time being in enemy territory
-  // "defense", // it is just the time being in friendly territory
-  // "time_seconds", // most players are there the whole round
-];
-
-// stats which would be boring/useless, if tanks, artillery or commander would be included
-const infOnlyStats = [
-  "kills_streak",
-  "kill_death_ratio",
-  "teamkills",
-  "support",
-  "zero_deaths",
-];
-
 function isMostlyInfantry( player: PlayerBase ) {
   return ((player.kills_by_type.armor ?? 0) + (player.kills_by_type.commander ?? 0) + (player.kills_by_type.artillery ?? 0)) / player.kills < 0.3;
 }
 
 export const enrichPlayersWithAwards = (game: ScoreboardMapStats) => {
-  const isShortGame = dayjs(game.end).diff(dayjs(game.start), 'minutes') < 30;
+  const isShortGame = dayjs(game.end).diff(dayjs(game.start), 'minutes') < 25;
 
   if (isShortGame) {
     return game.player_stats.map(player => ({...player, awards: []}));
   }
 
-  const maxStatsValues: Partial<Record<keyof PlayerBase, {amount: number, playerIds: string[]}>> = {};
-
-  game.player_stats.forEach((player) => {
-    Object.entries(player).forEach(([key, value]) => {
-      if (!allowedStats.includes(key)) {
-        return;
-      }
-      if (infOnlyStats.includes(key) && !isMostlyInfantry(player)) {
-        return;
-      }
-      if (typeof value === 'number') {
-        const maxValue = maxStatsValues[key as keyof PlayerBase];
-        if (!maxValue || maxValue.amount < value) {
-          maxStatsValues[key as keyof PlayerBase] = { amount: value, playerIds: [player.player_id] };
-        } else if (maxValue.amount === value) {
-          maxValue.playerIds.push(player.player_id);
-        }
-      } else if (value && typeof value === 'object') {
-        Object.entries(value as Record<string, number>).forEach(([nestedKey, nestedValue]) => {
-          if (typeof nestedValue === 'number') {
-            const compositeKey = `${key}.${nestedKey}` as keyof PlayerBase;
-            const maxValue = maxStatsValues[compositeKey as keyof PlayerBase];
-            if (!maxValue || maxValue.amount < nestedValue) {
-              maxStatsValues[compositeKey as keyof PlayerBase] = { amount: nestedValue, playerIds: [player.player_id] };
-            } else if (maxValue.amount === nestedValue) {
-              maxValue.playerIds.push(player.player_id);
-            }
-          }
-        });
-      }
-    });
-  });
+  const maxStatsValues = calcMaxStatsValues(game.player_stats);
 
   const playersWithMaxValues = Object.entries(maxStatsValues).flatMap(([_, value]) => value.playerIds);
 
@@ -121,3 +60,73 @@ export const enrichPlayersWithAwards = (game: ScoreboardMapStats) => {
     return enrichedPlayer;
   });
 }
+
+
+const allowedStats = [
+  "kills_streak",
+  "deaths",
+  "deaths_without_kill_streak",
+  "teamkills",
+  "deaths_by_tk",
+  "kill_death_ratio",
+  "kills_by_type",
+  "support",
+  "zero_deaths",
+  "zero_kills",
+  "kd_of_one"
+  // "kills" is already covered by various kills_by_type
+  // "longest_life_secs", // too inaccurate
+  // "shortest_life_secs", // too inaccurate
+  // "combat", // covered by other awards (most likely tanker or AT)
+  // "offense", // it is just the time being in enemy territory
+  // "defense", // it is just the time being in friendly territory
+  // "time_seconds", // most players are there the whole round
+];
+
+// stats which would be boring/useless, if tanks, artillery or commander would be included
+const infOnlyStats = [
+  "kills_streak",
+  "kill_death_ratio",
+  "teamkills",
+  "support",
+  "zero_deaths",
+];
+
+/**
+ *  For each stat calc the max value and the playerIds which have this max value
+ */
+const calcMaxStatsValues = (stats: PlayerBase[]) => {
+  const result: Partial<Record<keyof PlayerBase, {amount: number, playerIds: string[]}>> = {};
+
+  stats.forEach((player) => {
+    Object.entries(player).forEach(([key, value]) => {
+      if (!allowedStats.includes(key)) {
+        return;
+      }
+      if (infOnlyStats.includes(key) && !isMostlyInfantry(player)) {
+        return;
+      }
+      if (typeof value === 'number') {
+        calcMaxValue(result, key, value, player.player_id);
+      } else if (value && typeof value === 'object') {
+        Object.entries(value as Record<string, number>).forEach(([nestedKey, nestedValue]) => {
+          if (typeof nestedValue === 'number') {
+            const compositeKey = `${key}.${nestedKey}` as keyof PlayerBase;
+            calcMaxValue(result, compositeKey, nestedValue, player.player_id);
+          }
+        });
+      }
+    });
+  });
+  return result;
+}
+
+const calcMaxValue = (result: Partial<Record<keyof PlayerBase, {amount: number, playerIds: string[]}>>, key: string, value: number, playerId: string) => {
+  const currentMaxValue = result[key as keyof PlayerBase];
+  if (!currentMaxValue || currentMaxValue.amount < value) {
+    result[key as keyof PlayerBase] = { amount: value, playerIds: [playerId] };
+  } else if (currentMaxValue.amount === value) {
+    currentMaxValue.playerIds.push(playerId);
+  }
+}
+

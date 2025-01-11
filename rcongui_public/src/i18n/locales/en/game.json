@@ -163,7 +163,7 @@
                 "text": "{{amount}} kills with PAK"
             },
             "satchel": {
-                "title": "Only 30s",
+                "title": "Only 30 seconds",
                 "text": "{{amount}} kills with satchels"
             }
         }
