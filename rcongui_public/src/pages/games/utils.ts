@@ -44,7 +44,7 @@ const infOnlyStats = [
   "kills_streak",
   "kill_death_ratio",
   "teamkills",
-  "supplies",
+  "support",
   "zero_deaths",
 ];
 
@@ -54,7 +54,7 @@ function isMostlyInfantry( player: PlayerBase ) {
 
 export const enrichPlayersWithAwards = (game: ScoreboardMapStats) => {
   const isShortGame = dayjs(game.end).diff(dayjs(game.start), 'minutes') < 30;
-  
+
   if (isShortGame) {
     return game.player_stats.map(player => ({...player, awards: []}));
   }
