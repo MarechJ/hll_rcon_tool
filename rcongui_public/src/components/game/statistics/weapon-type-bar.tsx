@@ -59,7 +59,7 @@ export const WeaponTypeBar = memo(({ totalKills, killsByType }: WeaponTypeBarPro
                     background: simpleWeaponTypeMap[type as SimpleWeaponType].color
                   }}
                 />
-                {(totalCategorizedKills < totalKills || index + 1 < displayedBars.length) && <div style={{width: GAP_SIZE + 'px'}}/>}
+                {index < gapAmount && <div style={{width: GAP_SIZE + 'px'}}/>}
               </React.Fragment>
               }
             )}
