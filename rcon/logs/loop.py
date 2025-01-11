@@ -227,7 +227,7 @@ class LogLoop:
         logger.info("Registered hooks: %s", HOOKS)
 
     @staticmethod
-    def get_log_history_list() -> FixedLenList:
+    def get_log_history_list() -> FixedLenList[StructuredLogLineWithMetaData]:
         return FixedLenList(key=LogLoop.log_history_key, max_len=100_000)
 
     def run(self, loop_frequency_secs=2, cleanup_frequency_minutes=10):

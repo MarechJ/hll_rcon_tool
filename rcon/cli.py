@@ -130,7 +130,7 @@ def run_blacklists():
 @click.option("-t", "--frequency-min", default=5)
 @click.option("-n", "--now", is_flag=True)
 def run_log_recorder(frequency_min, now):
-    LogRecorder(frequency_min, now).run()
+    LogRecorder(frequency_min*60).run(run_immediately=now)
 
 
 def init(force=False):
