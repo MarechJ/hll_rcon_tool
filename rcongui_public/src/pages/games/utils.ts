@@ -52,7 +52,7 @@ export const enrichPlayersWithAwards = (game: ScoreboardMapStats) => {
 
     if (playersWithMaxValues.includes(player.player_id)) {
       enrichedPlayer.awards.push(...Object.entries(maxStatsValues)
-        .filter(([_, value]) => value.playerIds.includes(player.player_id))
+        .filter(([_, value]) => value.amount > 0 && value.playerIds.includes(player.player_id))
         .map(([key, value]) => ({type: key, amount: value.amount}))
       );
     }
@@ -89,7 +89,6 @@ const infOnlyStats = [
   "kill_death_ratio",
   "teamkills",
   "support",
-  "zero_deaths",
 ];
 
 /**
