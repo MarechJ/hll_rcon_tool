@@ -73,7 +73,20 @@ const allowedStats = [
   "support",
   "zero_deaths",
   "zero_kills",
-  "kd_of_one"
+  "kd_of_one",
+  "kills_by_type.commander",
+  "kills_by_type.bazooka",
+  "kills_by_type.grenade",
+  "kills_by_type.mine",
+  "kills_by_type.pak",
+  "kills_by_type.satchel",
+
+  // 'kills_by_type.infantry' already easily identifiable by the weapon type bar, would make awards to cluttered
+  // 'kills_by_type.sniper' already easily identifiable by the weapon type bar, would make awards to cluttered
+  // 'kills_by_type.artillery' already easily identifiable by the weapon type bar, would make awards to cluttered
+  // 'kills_by_type.armor' already easily identifiable by the weapon type bar, would make awards to cluttered
+  // 'kills_by_type.machine_gun' already easily identifiable by the weapon type bar, would make awards to cluttered
+
   // "kills" is already covered by various kills_by_type
   // "longest_life_secs", // too inaccurate
   // "shortest_life_secs", // too inaccurate
@@ -111,6 +124,9 @@ const calcMaxStatsValues = (stats: PlayerBase[]) => {
         Object.entries(value as Record<string, number>).forEach(([nestedKey, nestedValue]) => {
           if (typeof nestedValue === 'number') {
             const compositeKey = `${key}.${nestedKey}` as keyof PlayerBase;
+            if (!allowedStats.includes(compositeKey)) {
+              return;
+            }
             calcMaxValue(result, compositeKey, nestedValue, player.player_id);
           }
         });

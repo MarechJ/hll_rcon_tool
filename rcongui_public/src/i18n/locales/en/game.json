@@ -122,10 +122,6 @@
             "text": "K/D ratio of 1"
         },
         "kills_by_type": {
-            "infantry": {
-                "title": "Frontline Hero",
-                "text": "{{amount}} kills with guns and rifles"
-            },
             "commander": {
                 "title": "Bombs away!",
                 "text": "{{amount}} kills with commander abilities"
@@ -137,22 +133,6 @@
             "grenade": {
                 "title": "Frag out!",
                 "text": "{{amount}} kills with grenades"
-            },
-            "sniper": {
-                "title": "Bullseye",
-                "text": "{{amount}} kills with sniper rifle"
-            },
-            "artillery": {
-                "title": "Make it rain",
-                "text": "{{amount}} kills with artillery"
-            },
-            "armor": {
-                "title": "Keep the gears turning",
-                "text": "{{amount}} kills with tank"
-            },
-            "machine_gun": {
-                "title": "Farming some blueberries",
-                "text": "{{amount}} kills with machine gun"
             },
             "mine": {
                 "title": "Watch your step",
