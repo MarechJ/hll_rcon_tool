@@ -159,14 +159,14 @@ const VipPage = () => {
       const uploadData = text
         .split("\n")
         .map((row) => {
-          const [id, name, expiration] = row.split("\t");
-          if (!id || !name || !expiration) {
+          const [id, name, vip_expiration] = row.split("\t");
+          if (!id || !name || !vip_expiration) {
             return null;
           }
           return {
             player_id: id,
             name,
-            expiration,
+            vip_expiration,
           };
         })
         .filter((obj) => obj !== null);

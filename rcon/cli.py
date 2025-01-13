@@ -86,11 +86,6 @@ def run_log_stream():
         sys.exit(1)
 
 
-@cli.command(name="deprecated_log_loop")
-def run_logs_eventloop():
-    game_logs.event_loop()
-
-
 @cli.command(name="broadcast_loop")
 def run_broadcast_loop():
     broadcast.run()
