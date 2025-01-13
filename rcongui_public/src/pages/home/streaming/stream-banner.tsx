@@ -14,12 +14,16 @@ interface StreamSettings {
   pauseWidth: number,
   text: string,
   showAvatars: boolean,
+  playerFilter: string[],
 }
 
 export default function StreamBanner({ playerAmount, settings }: StreamBannerProps) {
   const { liveStats } = useOutletContext<GameLiveOutletContext>();
 
-  const displayedPlayers = liveStats.data.sort((a, b) => b.kills - a.kills).slice(0, playerAmount);
+  const displayedPlayers = liveStats.data
+    .filter(player => !settings.playerFilter.includes(player.player))
+    .sort((a, b) => b.kills - a.kills)
+    .slice(0, playerAmount);
 
   return <div className="w-full h-12 inline-flex flex-nowrap bg-white overflow-hidden">
     <Stream players={displayedPlayers} settings={settings}/>
