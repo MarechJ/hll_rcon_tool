@@ -20,6 +20,7 @@ export default function Streaming() {
   const [pauseWidth, setPauseWidth] = useState<number>(150);
   const [text, setText] = useState<string>('TOP KILLS:');
   const [showAvatars, setShowAvatars] = useState(false);
+  const [showWeapons, setShowWeapons] = useState(false);
 
   const playerFilterOptions = liveStats.data
     .map((player) => ({ value: player.player, label: player.player }))
@@ -64,6 +65,12 @@ export default function Streaming() {
         </span>
         <Switch checked={showAvatars} onCheckedChange={setShowAvatars}/>
       </div>
+      <div className="w-52 h-10 text-nowrap items-center flex">
+        <span className="pr-4">
+          {t('showWeapons')}:
+        </span>
+        <Switch checked={showWeapons} onCheckedChange={setShowWeapons}/>
+      </div>
       <div className="flex-1">
         <SelectBox
           options={playerFilterOptions}
@@ -75,7 +82,8 @@ export default function Streaming() {
       </div>
     </div>
     <div className="w-full border-x border-b gap-3 p-2">
-      <StreamBanner playerAmount={playerAmount} settings={{animationDuration, text, showAvatars, pauseWidth, playerFilter}}/>
+      <StreamBanner playerAmount={playerAmount}
+                    settings={{animationDuration, text, showAvatars, showWeapons, pauseWidth, playerFilter}}/>
     </div>
   </div>
 }

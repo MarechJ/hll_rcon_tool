@@ -14,6 +14,7 @@ interface StreamSettings {
   pauseWidth: number,
   text: string,
   showAvatars: boolean,
+  showWeapons: boolean,
   playerFilter: string[],
 }
 
@@ -52,11 +53,21 @@ const Stream = ({ players, settings }: StreamProps) => {
             src={player.steaminfo?.profile?.avatar}
           />
           <AvatarFallback delayMs={600} className="bg-black">
-            <CircleHelp className="text-white"/>
+            <CircleHelp className="text-wh  ite"/>
           </AvatarFallback>
         </Avatar>}
-        <div className="overflow-hidden">
-          {player.player}
+        <div className="block">
+          <div>
+            {player.player}
+          </div>
+          {settings.showWeapons && <div className="text-gray-500 text-xs">
+            {
+              Object.entries(player.weapons)
+                .sort(([n1, v1], [n2, v2]) => v2 - v1)[0]?.[0]
+                .match(/\[(.*?)\]/)?.[1] || Object.entries(player.weapons)
+                .sort(([n1, v1], [n2, v2]) => v2 - v1)[0]?.[0]
+            }
+          </div>}
         </div>
       </div>
     ))}
