@@ -2,6 +2,12 @@ import { PublicInfo } from '@/types/api'
 import GameOverview from '@/components/game/overview'
 import MapFigure from '@/components/game/map-figure'
 import { useTranslation } from 'react-i18next'
+import React from "react";
+import {Link} from "react-router";
+import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
+import {TableIcon} from "lucide-react";
+import {siTwitch} from "simple-icons";
+import {SimpleIcon} from "@/components/simple-icon";
 
 export default function LiveGameInfo({ game }: { game: PublicInfo }) {
   const { t } = useTranslation('translation')
@@ -31,6 +37,18 @@ export default function LiveGameInfo({ game }: { game: PublicInfo }) {
               score={{ axis: game.score.axis, allies: game.score.allied }}
               time={remainingTime}
             />
+            <ToggleGroup type="single" variant="outline" className="p-4">
+              <ToggleGroupItem value={`/`} asChild>
+                <Link to={`/`}>
+                  <TableIcon size={20}/>
+                </Link>
+              </ToggleGroupItem>
+              <ToggleGroupItem value={`/streaming`} asChild>
+                <Link to={`/streaming`}>
+                  <SimpleIcon icon={siTwitch} size={20} className="dark:fill-current" />
+                </Link>
+              </ToggleGroupItem>
+            </ToggleGroup>
           </section>
           <aside className="flex flex-row w-full lg:w-1/3 divide-x">
             <MapFigure
