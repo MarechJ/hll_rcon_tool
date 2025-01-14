@@ -192,23 +192,6 @@ const ConfigPage = () => {
     setMode(mode);
   }
 
-  const visualTheme = createTheme({
-    ...theme,
-    components: {
-      ...theme.components,
-      ...{
-        MuiFormControl: {
-          ...theme.components.MuiFormControl,
-          styleOverrides: {
-            root: {
-              marginTop: "14px",
-            },
-          },
-        },
-      },
-    },
-  });
-
   return (
     <Stack direction={"column"} spacing={4}>
       <Form method="post" onSubmit={handleSubmit}>
@@ -242,19 +225,28 @@ const ConfigPage = () => {
             </Box>
           )}
           {mode === "visual" ? (
-            <ThemeProvider theme={visualTheme}>
+            <Box sx={{
+              "& .MuiFormControl-root": {
+                marginTop: "14px",
+              },
+            }}>
               <JsonForms
-                data={jsonData}
-                onChange={({ data }) => {
-                  setEditorContent(JSON.stringify(data, null, 2));
-                  setJsonData(data);
-                }}
-                schema={schema}
-                uischema={Generate.uiSchema(schema)}
-                renderers={[...customRenderers, ...materialRenderers]}
-                cells={materialCells}
-              />
-            </ThemeProvider>
+              data={jsonData}
+              onChange={({ data }) => {
+                setEditorContent(JSON.stringify(data, null, 2));
+                setJsonData(data);
+              }}
+              sx={{
+                "& .jfa-label": {
+                  fontSize: "14px",
+                },
+              }}
+              schema={schema}
+              uischema={Generate.uiSchema(schema)}
+              renderers={[...customRenderers, ...materialRenderers]}
+              cells={materialCells}
+            />
+            </Box>
           ) : (
             <Suspense>
               <Editor

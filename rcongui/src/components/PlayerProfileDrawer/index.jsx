@@ -3,7 +3,6 @@ import {
   IconButton,
   Typography,
   Drawer,
-  Toolbar,
   Divider,
   Avatar,
   Tabs,
@@ -25,7 +24,7 @@ import {
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
 import { TabContext, TabPanel } from "@mui/lab";
-import { styled, useMediaQuery } from "@mui/system";
+import { styled } from "@mui/material/styles";
 import { ActionMenu } from "@/features/player-action/ActionMenu";
 import dayjs from "dayjs";
 import StarIcon from "@mui/icons-material/Star";
@@ -714,7 +713,6 @@ export const PlayerDetailDrawer = () => {
       anchor="right"
       onClose={close}
     >
-      <Toolbar />
       {isLoading && !player ? (
         <LoadingSkeleton onClose={close} />
       ) : profileError ? (

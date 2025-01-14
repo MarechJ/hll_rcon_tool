@@ -1,18 +1,16 @@
 import * as React from "react";
-import { createTheme, ThemeProvider, alpha } from "@mui/material/styles";
-import { Container, Box, Stack, CssBaseline } from "@mui/material";
-import getDashboardTheme from "@/themes/getDashboardTheme";
+import { Container, Box, Stack, CssBaseline, alpha } from "@mui/material";
 import AppNavbar from "@/components/layout/AppNavbar";
 import Header from "@/components/layout/Header";
 import SideMenu from "@/components/layout/SideMenu";
-import TemplateFrame from "@/pages/TemplateFrame";
 import { ToastContainer } from "react-toastify";
-import { defer, Outlet, redirect } from "react-router-dom";
+import { Outlet, redirect } from "react-router-dom";
 import { useStorageState } from "@/hooks/useStorageState";
-import { cmd, get } from "@/utils/fetchUtils";
+import { cmd } from "@/utils/fetchUtils";
 import "react-toastify/dist/ReactToastify.css";
 import { ActionDialogProvider } from "@/hooks/useActionDialog";
 import { PlayerSidebarProvider } from "@/hooks/usePlayerSidebar";
+import AppTheme from "@/themes/AppTheme";
 
 export const loader = async () => {
   return null;
@@ -27,14 +25,20 @@ export const action = async ({ request }) => {
     if (success) {
       return redirect("/login");
     }
-
   }
 };
+
+const schemes = [
+  { name: 'Default', value: 'default' },
+  { name: 'GitHub', value: 'github' },
+  { name: 'Lime', value: 'lime' },
+  { name: 'High Contrast', value: 'highContrast' },
+];
 
 export default function Root() {
   const [mode, setMode] = useStorageState("mode", "dark");
   const [widthMode, setWidthMode] = useStorageState("width", "xl");
-  const dashboardTheme = createTheme(getDashboardTheme(mode));
+  const [colorScheme, setColorScheme] = useStorageState("colorScheme", "default");
   const [openDrawer, setOpenDrawer] = React.useState(true);
 
   const toggleDrawer = () => {
@@ -51,51 +55,58 @@ export default function Root() {
     setWidthMode(newMode);
   };
 
+  const onColorSchemeChange = (scheme) => {
+    setColorScheme(scheme);
+  };
+
   return (
-    <TemplateFrame
-      mode={mode}
-      widthMode={widthMode}
-      toggleColorMode={toggleColorMode}
-      toggleWidthMode={toggleWidthMode}
-      toggleDrawer={toggleDrawer}
-      openDrawer={openDrawer}
-    >
-      <ThemeProvider theme={dashboardTheme}>
-        <CssBaseline enableColorScheme />
-        <Box sx={{ display: "flex" }}>
-          <SideMenu open={openDrawer} />
-          <AppNavbar />
-          {/* Main content */}
-          <Box
-            component="main"
-            sx={(theme) => ({
-              flexGrow: 1,
-              backgroundColor: alpha(theme.palette.background.default, 1),
-              overflow: "auto",
-            })}
+    <AppTheme selectedScheme={colorScheme}>
+      <CssBaseline enableColorScheme />
+      <Box sx={{ display: "flex" }}>
+        <SideMenu open={openDrawer} />
+        <AppNavbar />
+        {/* Main content */}
+        <Box
+          component="main"
+          sx={(theme) => ({
+            flexGrow: 1,
+            backgroundColor: theme.vars
+              ? `rgba(${theme.vars.palette.background.defaultChannel} / 1)`
+              : alpha(theme.palette.background.default, 1),
+            overflow: "auto",
+          })}
+        >
+          <Stack
+            spacing={2}
+            sx={{
+              alignItems: "center",
+              mx: 3,
+              pb: 5,
+              mt: { xs: 8, lg: 0 },
+            }}
           >
-            <Stack
-              spacing={2}
-              sx={{
-                alignItems: "center",
-                px: 0,
-                pb: 10,
-                mt: { xs: 8, lg: 0 },
-              }}
-            >
-              <Header />
-              <Container maxWidth={widthMode} sx={{ overflowY: "auto", overflowX: "hidden" }}>
-                <ActionDialogProvider>
-                  <PlayerSidebarProvider>
-                    <Outlet />
-                  </PlayerSidebarProvider>
-                </ActionDialogProvider>
-              </Container>
-            </Stack>
-          </Box>
+            <Header
+              widthMode={widthMode}
+              toggleWidthMode={toggleWidthMode}
+              mode={mode}
+              toggleColorMode={toggleColorMode}
+              toggleDrawer={toggleDrawer}
+              openDrawer={openDrawer}
+              colorScheme={colorScheme}
+              onColorSchemeChange={onColorSchemeChange}
+              colorSchemes={schemes}
+            />
+            <Container maxWidth={widthMode}>
+              <ActionDialogProvider>
+                <PlayerSidebarProvider>
+                  <Outlet />
+                </PlayerSidebarProvider>
+              </ActionDialogProvider>
+            </Container>
+          </Stack>
         </Box>
-        <ToastContainer />
-      </ThemeProvider>
-    </TemplateFrame>
+      </Box>
+      <ToastContainer />
+    </AppTheme>
   );
 }

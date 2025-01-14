@@ -34,7 +34,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import dayjs from "dayjs";
 import NavPagination from "@/pages/stats/games/nav-pagination";
-import { Box } from "@mui/system";
+import { Box } from "@mui/material";
 
 const EmojiPicker = lazy(() => import("@emoji-mart/react"));
 

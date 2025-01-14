@@ -1,9 +1,7 @@
 import { alpha } from '@mui/material/styles';
 
-import { gray, brand } from '../themePrimitives';
-
 /* eslint-disable import/prefer-default-export */
-export const treeViewCustomizations = {
+export const treeViewCustomizations = ({ gray, brand }) => ({
   MuiTreeItem2: {
     styleOverrides: {
       root: ({ theme }) => ({
@@ -58,4 +56,4 @@ export const treeViewCustomizations = {
       }),
     },
   },
-};
+});

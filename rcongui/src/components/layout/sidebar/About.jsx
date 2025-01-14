@@ -17,7 +17,7 @@ import { cmd } from '@/utils/fetchUtils'
 import { useQuery } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { useGithubReleases } from '@/hooks/useGithubReleases'
-import { Box } from '@mui/system'
+import { Box } from '@mui/material'
 import NewReleasesIcon from "@mui/icons-material/NewReleases";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { Suspense } from 'react';
