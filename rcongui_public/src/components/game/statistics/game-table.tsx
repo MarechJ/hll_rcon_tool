@@ -26,16 +26,14 @@ import {
 
 import { Player, TeamEnum } from '@/types/player'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@/components/ui/button'
-import { Download, List } from 'lucide-react'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { List } from 'lucide-react'
 import { getTeamFromAssociation } from '@/components/game/statistics/utils'
-import useGameDownload from '@/hooks/use-game-download'
 import { TeamIndicator } from '@/components/game/statistics/team-indicator'
 import SelectBox from '@/components/ui/select-box'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useGameStatsContext } from "@/components/game/statistics/game-stats-container";
 import { useStorageState } from '@/hooks/use-storage-state'
+import { DownloadButton } from "@/components/game/statistics/download-button";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -44,8 +42,6 @@ interface DataTableProps<TData, TValue> {
 }
 
 export function DataTable<TData extends Player, TValue>({ columns, data, tableId }: DataTableProps<TData, TValue>) {
-  const { download } = useGameDownload()
-
   const [playerFilter, setPlayerFilter] = useState<string[]>([])
 
   useEffect(() => {
@@ -174,23 +170,7 @@ export function DataTable<TData extends Player, TValue>({ columns, data, tableId
           )}
         </div>
         <div className={'inline-flex gap-3'}>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  aria-label={t('downloadTable')}
-                  size={'icon'}
-                  onClick={() => download(data, `game-table-${tableId}`)}
-                >
-                  <Download size={20} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <span>{t('downloadTable')}</span>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <DownloadButton data={data} tableId={tableId}/>
           {!!table.getAllColumns().find((col) => col.getCanHide()) && (
             <Select>
               <PlainSelectTrigger className={'rounded-md border border-input bg-background px-3 py-2 hover:bg-accent'}>
