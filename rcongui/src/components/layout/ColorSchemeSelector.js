@@ -6,10 +6,20 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import ColorLensIcon from '@mui/icons-material/ColorLens';
 import CheckIcon from '@mui/icons-material/Check';
+import { useAppStore } from "@/hooks/useAppState";
 
-export default function ColorSchemeSelector({ currentScheme, onSchemeChange, colorSchemes }) {
+const schemes = [
+  { name: 'Default', value: 'default' },
+  { name: 'GitHub', value: 'github' },
+  { name: 'Lime', value: 'lime' },
+  { name: 'High Contrast', value: 'highContrast' },
+];
+
+export default function ColorSchemeSelector() {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
+  const colorScheme = useAppStore((state) => state.colorScheme);
+  const setColorScheme = useAppStore((state) => state.setColorScheme);
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -20,7 +30,7 @@ export default function ColorSchemeSelector({ currentScheme, onSchemeChange, col
   };
 
   const handleSchemeSelect = (scheme) => {
-    onSchemeChange(scheme);
+    setColorScheme(scheme);
     handleClose();
   };
 
@@ -51,13 +61,13 @@ export default function ColorSchemeSelector({ currentScheme, onSchemeChange, col
           },
         }}
       >
-        {colorSchemes.map((scheme) => (
+        {schemes.map((scheme) => (
           <MenuItem
             key={scheme.value}
-            selected={currentScheme === scheme.value}
+            selected={colorScheme === scheme.value}
             onClick={() => handleSchemeSelect(scheme.value)}
           >
-            <ListItemIcon sx={{ visibility: currentScheme === scheme.value ? 'visible' : 'hidden' }}>
+            <ListItemIcon sx={{ visibility: colorScheme === scheme.value ? 'visible' : 'hidden' }}>
               <CheckIcon fontSize="small" />
             </ListItemIcon>
             <ListItemText>{scheme.name}</ListItemText>

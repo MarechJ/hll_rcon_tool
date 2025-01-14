@@ -6,18 +6,12 @@ import ColorSchemeSelector from "./ColorSchemeSelector";
 import MenuButton from "./MenuButton";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
+import { useAppStore } from "@/hooks/useAppState";
 
-export default function Header({
-  widthMode,
-  toggleWidthMode,
-  mode,
-  toggleColorMode,
-  toggleDrawer,
-  openDrawer,
-  colorScheme = 'default',
-  onColorSchemeChange,
-  colorSchemes,
-}) {
+export default function Header() {
+  const openDrawer = useAppStore((state) => state.openDrawer);
+  const toggleDrawer = useAppStore((state) => state.toggleDrawer);
+
   return (
     <Stack
       direction="row"
@@ -43,17 +37,9 @@ export default function Header({
       </Stack>
       <Stack direction="row" sx={{ gap: 1 }}>
         <Box sx={{ display: "flex", gap: 2, width: "fit-content" }}>
-          <ToggleWidthMode mode={widthMode} toggleWidthMode={toggleWidthMode} />
-          <ColorSchemeSelector 
-            currentScheme={colorScheme}
-            onSchemeChange={onColorSchemeChange}
-            colorSchemes={colorSchemes}
-          />
-          <ToggleColorMode
-            data-screenshot="toggle-mode"
-            mode={mode}
-            toggleColorMode={toggleColorMode}
-          />
+          <ToggleWidthMode />
+          <ColorSchemeSelector />
+          <ToggleColorMode />
         </Box>
       </Stack>
     </Stack>

@@ -14,6 +14,7 @@ import { List, ListItem, ListItemText } from "@mui/material";
 import ConnectionStatus from "./sidebar/ConnectionStatus";
 import AboutDialog from "./sidebar/About";
 import ServerStatus from "../Header/server-status";
+import { useAppStore } from "@/hooks/useAppState";
 
 const drawerWidth = 240;
 
@@ -51,11 +52,12 @@ export const MenuDrawer = ({ open, children }) => {
   );
 };
 
-export default function SideMenu({ open }) {
+export default function SideMenu() {
   const { permissions } = useAuth();
+  const openDrawer = useAppStore((state) => state.openDrawer);
 
   return (
-    <MenuDrawer open={open}>
+    <MenuDrawer open={openDrawer}>
       <ServerStatus />
       <Divider />
       <MenuContent navigationTree={navMenus} />

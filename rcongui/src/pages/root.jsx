@@ -1,16 +1,15 @@
 import * as React from "react";
-import { Container, Box, Stack, CssBaseline, alpha } from "@mui/material";
+import { Container, Box, Stack, alpha } from "@mui/material";
 import AppNavbar from "@/components/layout/AppNavbar";
 import Header from "@/components/layout/Header";
 import SideMenu from "@/components/layout/SideMenu";
 import { ToastContainer } from "react-toastify";
 import { Outlet, redirect } from "react-router-dom";
-import { useStorageState } from "@/hooks/useStorageState";
 import { cmd } from "@/utils/fetchUtils";
 import "react-toastify/dist/ReactToastify.css";
 import { ActionDialogProvider } from "@/hooks/useActionDialog";
 import { PlayerSidebarProvider } from "@/hooks/usePlayerSidebar";
-import AppTheme from "@/themes/AppTheme";
+import { useAppStore } from "@/hooks/useAppState";
 
 export const loader = async () => {
   return null;
@@ -28,42 +27,13 @@ export const action = async ({ request }) => {
   }
 };
 
-const schemes = [
-  { name: 'Default', value: 'default' },
-  { name: 'GitHub', value: 'github' },
-  { name: 'Lime', value: 'lime' },
-  { name: 'High Contrast', value: 'highContrast' },
-];
-
 export default function Root() {
-  const [mode, setMode] = useStorageState("mode", "dark");
-  const [widthMode, setWidthMode] = useStorageState("width", "xl");
-  const [colorScheme, setColorScheme] = useStorageState("colorScheme", "default");
-  const [openDrawer, setOpenDrawer] = React.useState(true);
-
-  const toggleDrawer = () => {
-    setOpenDrawer((prev) => !prev);
-  };
-
-  const toggleColorMode = () => {
-    const newMode = mode === "dark" ? "light" : "dark";
-    setMode(newMode);
-  };
-
-  const toggleWidthMode = () => {
-    const newMode = widthMode === "xl" ? "false" : "xl";
-    setWidthMode(newMode);
-  };
-
-  const onColorSchemeChange = (scheme) => {
-    setColorScheme(scheme);
-  };
+  const widthMode = useAppStore((state) => state.widthMode);
 
   return (
-    <AppTheme selectedScheme={colorScheme}>
-      <CssBaseline enableColorScheme />
+    <>
       <Box sx={{ display: "flex" }}>
-        <SideMenu open={openDrawer} />
+        <SideMenu />
         <AppNavbar />
         {/* Main content */}
         <Box
@@ -85,17 +55,7 @@ export default function Root() {
               mt: { xs: 8, lg: 0 },
             }}
           >
-            <Header
-              widthMode={widthMode}
-              toggleWidthMode={toggleWidthMode}
-              mode={mode}
-              toggleColorMode={toggleColorMode}
-              toggleDrawer={toggleDrawer}
-              openDrawer={openDrawer}
-              colorScheme={colorScheme}
-              onColorSchemeChange={onColorSchemeChange}
-              colorSchemes={schemes}
-            />
+            <Header />
             <Container maxWidth={widthMode}>
               <ActionDialogProvider>
                 <PlayerSidebarProvider>
@@ -107,6 +67,6 @@ export default function Root() {
         </Box>
       </Box>
       <ToastContainer />
-    </AppTheme>
+    </>
   );
 }
