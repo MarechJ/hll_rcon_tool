@@ -4,7 +4,8 @@ import React from 'react';
 
 init({ data, set: "twitter" })
 
-export default function Emoji({ emoji: anEmoji, size = 18 }) {
+const Emoji = React.forwardRef(function EmojiComponent(props, ref) {
+  const { emoji: anEmoji, size = 18, ...rest } = props;
   const [emojiData, setEmojiData] = React.useState(null);
   
   React.useEffect(() => {
@@ -31,5 +32,7 @@ export default function Emoji({ emoji: anEmoji, size = 18 }) {
 
   if (!emojiData) return null;
   
-  return <em-emoji id={emojiData.id} set="twitter" size={size}></em-emoji>;
-}
+  return <em-emoji id={emojiData.id} set="twitter" size={size} {...rest} ref={ref}></em-emoji>;
+})
+
+export default Emoji;

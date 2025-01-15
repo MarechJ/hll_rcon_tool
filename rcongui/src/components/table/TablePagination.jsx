@@ -1,4 +1,4 @@
-import { IconButton, Stack } from "@mui/material";
+import { Box, IconButton, Stack } from "@mui/material";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import KeyboardDoubleArrowLeftIcon from "@mui/icons-material/KeyboardDoubleArrowLeft";
@@ -7,16 +7,15 @@ import KeyboardDoubleArrowRightIcon from "@mui/icons-material/KeyboardDoubleArro
 export const TablePagination = ({ table }) => (
   <Stack
     direction={"row"}
-    justifyContent={"end"}
-    alignItems={"center"}
     gap={0.25}
     flexGrow={1}
+    alignItems={"center"}
   >
     <IconButton
       onClick={() => table.firstPage()}
       disabled={!table.getCanPreviousPage()}
       size="small"
-      sx={{ width: 20, height: 20, borderRadius: 0, p: 2 }}
+      sx={{ borderRadius: 0, p: 0.5 }}
     >
       <KeyboardDoubleArrowLeftIcon />
     </IconButton>
@@ -24,21 +23,19 @@ export const TablePagination = ({ table }) => (
       onClick={() => table.previousPage()}
       disabled={!table.getCanPreviousPage()}
       size="small"
-      sx={{ width: 20, height: 20, borderRadius: 0, p: 2 }}
+      sx={{ borderRadius: 0, p: 0.5 }}
     >
       <KeyboardArrowLeftIcon />
     </IconButton>
-    <span>
-      <strong>
-        {table.getState().pagination.pageIndex + 1} of{" "}
-        {table.getPageCount().toLocaleString()}
-      </strong>
-    </span>
+    <Box sx={{ textWrap: "nowrap", alignSelf: "center", mx: 0.5 }}>
+      {table.getState().pagination.pageIndex + 1} of{" "}
+      {table.getPageCount().toLocaleString()}
+    </Box>
     <IconButton
       onClick={() => table.nextPage()}
       disabled={!table.getCanNextPage()}
       size="small"
-      sx={{ width: 20, height: 20, borderRadius: 0, p: 2 }}
+      sx={{ borderRadius: 0, p: 0.5 }}
     >
       <KeyboardArrowRightIcon />
     </IconButton>
@@ -46,7 +43,7 @@ export const TablePagination = ({ table }) => (
       onClick={() => table.lastPage()}
       disabled={!table.getCanNextPage()}
       size="small"
-      sx={{ width: 20, height: 20, borderRadius: 0, p: 2 }}
+      sx={{ borderRadius: 0, p: 0.5 }}
     >
       <KeyboardDoubleArrowRightIcon />
     </IconButton>

@@ -79,7 +79,8 @@ export const ActionDialog = () => {
             {action.name[0].toUpperCase() + action.name.substring(1)}
           </Typography>
           <Button
-            color="warning"
+            variant="outlined"
+            color="primary"
             disabled={loading || !action || !recipients}
             onClick={handleConfirm}
             autoFocus
@@ -102,9 +103,10 @@ export const ActionDialog = () => {
         <ActionForm actionHandlers={actionHandlers} state={state} />
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleClose}>Cancel</Button>
+        <Button variant="outlined" color="secondary" onClick={handleClose}>Cancel</Button>
         <Button
-          color="warning"
+          variant="outlined"
+          color="primary"
           disabled={loading || !action || !recipients}
           onClick={handleConfirm}
           autoFocus

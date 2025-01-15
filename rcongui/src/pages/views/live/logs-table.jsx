@@ -4,14 +4,14 @@ import {
   List,
   ListItem,
   ListItemText,
+  Stack,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
 } from "@mui/material";
-import storageKeys from "@/config/storageKeys";
 import TableConfigDrawer from "@/components/table/TableConfigDrawer";
-import {Fragment, useEffect, useState} from "react";
+import { Fragment, memo, useEffect, useState } from "react";
 import { useStorageState } from "@/hooks/useStorageState";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -25,6 +25,8 @@ import { TableToolbar } from "@/components/table/TableToolbar";
 import TableAddons from "@/components/table/TableAddons";
 import { LogActionHighlightMenu } from "@/components/table/selection/LogActionHighlightMenu";
 import LiveLogsTable from "@/components/live-logs/LiveLogsTable";
+import localStorageConfig from "@/config/localStorage";
+import TableColumnSelection from "@/components/table/TableColumnSelection";
 
 const logActions = Object.entries(_logActions).reduce((acc, [name]) => {
   acc[name] = false;
@@ -40,28 +42,39 @@ const updateActionSelection = (action) => (prev) => {
     ...prev,
     actions,
   };
-}
+};
 
-export default function LogsTable({
+const updateFilterActionSelection = (action) => (prev) => {
+  const isToggled = prev.filters.actions.selected.includes(action);
+  const actions = isToggled
+    ? prev.filters.actions.selected.filter((aAction) => aAction !== action)
+    : prev.filters.actions.selected.concat(action);
+  return {
+    ...prev,
+    filters: {
+      ...prev.filters,
+      actions: {
+        ...prev.filters.actions,
+        selected: actions,
+      },
+    },
+  };
+};
+
+function LogsTable({
   table,
   logsViewData,
   searchParams,
   setSearchParams,
+  onColumnVisibilityChange,
 }) {
   const [tableConfigDrawerOpen, setTableConfigDrawerOpen] = useState(false);
 
   const [tableConfig, setTableConfig] = useStorageState(
-    storageKeys.LIVE_LOGS_TABLE_CONFIG,
-    {
-      density: "normal",
-      fontSize: "normal",
-      rowsPerPage: "100",
-      highlighted: false,
-      actions: [],
-    }
+    localStorageConfig.LIVE_LOGS_TABLE_CONFIG.key,
+    localStorageConfig.LIVE_LOGS_TABLE_CONFIG.defaultValue
   );
 
-  const [logActionOptions, setLogActionOptions] = useState(logActions);
   const [playerOptions, setPlayerOptions] = useState({});
 
   const handleTableConfigClick = () => {
@@ -70,10 +83,7 @@ export default function LogsTable({
   };
 
   const handleClientActionFilterChange = (actionName) => {
-    setLogActionOptions((prev) => ({
-      ...prev,
-      [actionName]: !prev[actionName],
-    }));
+    setTableConfig(updateFilterActionSelection(actionName));
   };
 
   const handleClientPlayerFilterChange = (playerName) => {
@@ -125,11 +135,17 @@ export default function LogsTable({
   }, [logsViewData.players]);
 
   useEffect(() => {
-    const selectedActions = Object.entries(logActionOptions)
-      .filter(([_, selected]) => selected)
-      .map(([name]) => name);
-    table.getColumn("action")?.setFilterValue(selectedActions);
-  }, [logActionOptions]);
+    if (tableConfig.filters.actions.enabled) {
+      table
+        .getColumn("action")
+        ?.setFilterValue(tableConfig.filters.actions.selected);
+    } else {
+      table.getColumn("action")?.setFilterValue(null);
+    }
+  }, [
+    tableConfig.filters.actions.selected,
+    tableConfig.filters.actions.enabled,
+  ]);
 
   useEffect(() => {
     const selectedPlayers = Object.entries(playerOptions)
@@ -139,17 +155,41 @@ export default function LogsTable({
     table.getColumn("player_name_2")?.setFilterValue(selectedPlayers);
   }, [playerOptions]);
 
-  const highlightedActionOptions = Object.entries(logActions).reduce((acc, [name]) => {
-    acc[name] = tableConfig.actions.includes(name);
-    return acc;
-  }, {})
+  const highlightedActionOptions = Object.entries(logActions).reduce(
+    (acc, [name]) => {
+      acc[name] = tableConfig.actions.includes(name);
+      return acc;
+    },
+    {}
+  );
+
+  const filterActionOptions = Object.entries(logActions).reduce(
+    (acc, [name]) => {
+      acc[name] = tableConfig.filters.actions.selected.includes(name);
+      return acc;
+    },
+    {}
+  );
 
   return (
     <>
       <TableAddons>
         <LogActionSelectionMenu
-          actionOptions={logActionOptions}
+          actionOptions={filterActionOptions}
           onActionSelect={handleClientActionFilterChange}
+          toggleValue={tableConfig.filters.actions.enabled}
+          onToggle={() => {
+            setTableConfig((prev) => ({
+              ...prev,
+              filters: {
+                ...prev.filters,
+                actions: {
+                  ...prev.filters.actions,
+                  enabled: !prev.filters.actions.enabled,
+                },
+              },
+            }));
+          }}
         />
         <LogPlayerSelectionMenu
           actionOptions={playerOptions}
@@ -160,35 +200,45 @@ export default function LogsTable({
           onActionSelect={handleHighlightActionSelect}
           toggleValue={tableConfig.highlighted}
           onToggle={(value) => {
-            setTableConfig(prev => ({
+            setTableConfig((prev) => ({
               ...prev,
               highlighted: value === "on",
-            }))
+            }));
           }}
         />
       </TableAddons>
-      <TableToolbar>
-        <DebouncedSearchInput
-          placeholder={"Search logs"}
-          onChange={(value) => {
-            table.getColumn("message")?.setFilterValue(value);
+      <Stack direction="column" spacing={0}>
+        <TableToolbar>
+          <DebouncedSearchInput
+            placeholder={"Search logs"}
+            onChange={(value) => {
+              table.getColumn("message")?.setFilterValue(value);
+            }}
+          />
+          <TablePagination table={table} />
+          <Divider flexItem orientation="vertical" sx={{ marginLeft: 0, marginRight: 0 }} />
+          <TableColumnSelection table={table} onColumnVisibilityChange={onColumnVisibilityChange} />
+          <IconButton
+            size="small"
+            aria-label="Table settings"
+            aria-description="Configure the table"
+            sx={{ p: 0.5, borderRadius: 0 }}
+            onClick={handleTableConfigClick}
+          >
+            <SettingsIcon sx={{ fontSize: "1rem" }} />
+          </IconButton>
+        </TableToolbar>
+        <LiveLogsTable table={table} config={tableConfig} />
+        <TableToolbar
+          sx={{
+            borderBottomWidth: "1px",
+            borderBottomStyle: "solid",
+            borderTop: "none",
           }}
-          sx={{ maxWidth: 230 }}
-        />
-        <TablePagination table={table} />
-        <Divider flexItem orientation="vertical" />
-        <IconButton
-          size="small"
-          sx={{ width: 20, height: 20, borderRadius: 0, p: 2 }}
-          onClick={handleTableConfigClick}
         >
-          <SettingsIcon sx={{ fontSize: 16 }} />
-        </IconButton>
-      </TableToolbar>
-      <LiveLogsTable table={table} config={tableConfig} />
-      <TableToolbar sx={{ borderBottomWidth: "1px", borderBottomStyle: "solid", borderTop: "none" }}>
-        <TablePagination table={table} />
-      </TableToolbar>
+          <TablePagination table={table} />
+        </TableToolbar>
+      </Stack>
       <TableConfigDrawer
         table={table}
         name={"Logs"}
@@ -297,3 +347,5 @@ export default function LogsTable({
     </>
   );
 }
+
+export default memo(LogsTable);
