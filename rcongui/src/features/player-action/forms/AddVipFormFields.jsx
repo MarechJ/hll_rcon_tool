@@ -1,7 +1,7 @@
 import { TimePickerButtons } from "@/components/shared/TimePickerButtons";
 import { ExpirationField } from "../fields/ExpirationField";
 import { ForwardField } from "../fields/ForwardField";
-import { Box, Button, Stack, TextField } from "@mui/material";
+import { Alert, Box, Button, Stack, TextField } from "@mui/material";
 import dayjs from "dayjs";
 import { ControlledTextInput } from "@/components/form/core/ControlledTextInput";
 
@@ -13,6 +13,7 @@ const presetTimes = [
 ];
 
 export const AddVipFormFields = ({ control, errors, setValue, getValues }) => {
+  const expiration = getValues()?.expiration;
   return (
     <Stack gap={3}>
       <TextField
@@ -54,7 +55,16 @@ export const AddVipFormFields = ({ control, errors, setValue, getValues }) => {
           sx={{ flex: 1 }}
         />
       </Stack>
-      <ExpirationField control={control} errors={errors} />
+      {expiration !== null ? (
+        <ExpirationField name="expiration" control={control} errors={errors} />
+      ) : (
+        <>
+          <Alert severity="info">
+            Selected players will be VIP indefinitely.
+          </Alert>
+          <input type="hidden" name="expiration" value={null} />
+        </>
+      )}
       <Box>
         <Button
           variant="outlined"
@@ -87,7 +97,10 @@ export const AddVipFormFields = ({ control, errors, setValue, getValues }) => {
           color="secondary"
           style={{ display: "block", width: "100%" }}
           onClick={() =>
-            setValue("expiration", dayjs("3000-01-01T00:00:00+00:00"))
+            setValue("expiration", null, {
+              shouldTouch: true,
+              shouldValidate: true,
+            })
           }
         >
           Never expires
