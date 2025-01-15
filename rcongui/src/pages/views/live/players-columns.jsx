@@ -185,11 +185,16 @@ export const columns = [
     },
   },
   {
-    id: "kills_per_minute",
+    id: "kpm",
     header: SortableHeader("KPM"),
-    accessorKey: "kills_per_minute",
-    cell: ({ row }) => {
-      return <>{Number(row.original.kills / row.original.profile.current_playtime_seconds * 60).toFixed(2)}</>;
+    accessorFn: (row) => {
+      const kills = row.kills;
+      const playtime = row.profile.current_playtime_seconds;
+      if (kills === 0 || playtime === 0) return 0;
+      return Number((kills / playtime * 60));
+    },
+    cell: (props) => {
+      return <>{props.getValue()?.toFixed(2)}</>;
     },
   },
   {
@@ -236,24 +241,7 @@ export const columns = [
         >
           <FontAwesomeIcon icon={faSteam} />
         </IconButton>
-      ) : (
-        <Box
-          sx={{
-            fontSize: "0.75rem",
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: '50%',
-            padding: '5px',
-            transition: 'background-color 150ms cubic-bezier(0.4, 0, 0.2, 1)',
-            '&:hover': {
-              backgroundColor: 'action.hover'
-            }
-          }}
-          component={FontAwesomeIcon}
-          icon={faGamepad}
-        />
-      );
+      ) : null;
     },
   },
   {
