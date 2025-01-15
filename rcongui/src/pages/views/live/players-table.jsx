@@ -15,8 +15,6 @@ import TableColumnSelection from "@/components/table/TableColumnSelection";
 import { TableToolbar } from "@/components/table/TableToolbar";
 
 const PlayersTable = ({ table, teamData, selectedPlayers, onColumnVisibilityChange }) => {
-  console.log("RENDERING PLAYERS TABLE");
-
   const [tableConfigDrawerOpen, setTableConfigDrawerOpen] = useState(false);
 
   const [tableConfig, setTableConfig] = useStorageState(
