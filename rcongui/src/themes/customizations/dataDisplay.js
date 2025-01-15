@@ -34,7 +34,7 @@ export const dataDisplayCustomizations = {
           gap: 8,
           padding: '2px 8px',
           borderRadius: theme.shape.borderRadius,
-          opacity: 0.7,
+          opacity: 1,
           '&.Mui-selected': {
             opacity: 1,
             backgroundColor: alpha(theme.palette.action.selected, 0.3),
