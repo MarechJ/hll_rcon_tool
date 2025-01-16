@@ -795,7 +795,7 @@ async def main():
                 bucket_data, lock = get_bucket_lock(red=red, bucket_id=bucket_id)
                 if lock and lock.locked():
                     logger.debug(f"{lock} locked")
-                    await asyncio.sleep(0.1)
+                    await asyncio.sleep(0.5)
                     continue
                 ts = int(datetime.now(tz=timezone.utc).timestamp())
                 logger.debug(
