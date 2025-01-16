@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cmd } from "@/utils/fetchUtils";
 import { columns as playersColumns } from "./players-columns";
 import { Header } from "@/components/game/Header";
@@ -73,7 +73,7 @@ const Live = () => {
         end: logsSearchParams.limit,
         filter_action: logsSearchParams.actions,
         filter_player: logsSearchParams.players,
-        inclusive_filter: logsSearchParams.inclusive,
+        inclusive_filter: logsSearchParams.inclusive_filter,
       },
     ],
     queryFn: () =>
@@ -82,7 +82,7 @@ const Live = () => {
           end: logsSearchParams.limit,
           filter_action: logsSearchParams.actions,
           filter_player: logsSearchParams.players,
-          inclusive_filter: logsSearchParams.inclusive,
+          inclusive_filter: logsSearchParams.inclusive_filter,
         },
       }),
     select: (response) => response.result,
@@ -168,6 +168,11 @@ const Live = () => {
 
   const logsColumnVisibility = logsTableConfig.columnVisibility;
 
+  const [logsPagination, setLogsPagination] = useState({
+    pageIndex: 0,
+    pageSize: 100,
+  });
+
   const handleLogsColumnVisibilityChange = (columnId, isVisible) => {
     setLogsTableConfig((prev) => {
       const columnVisibility = { ...prev.columnVisibility };
@@ -185,15 +190,12 @@ const Live = () => {
     getPaginationRowModel: getPaginationRowModel(),
     onColumnFiltersChange: setLogsFiltering,
     onColumnVisibilityChange: handleLogsColumnVisibilityChange,
-    initialState: {
-      pagination: {
-        pageIndex: 0,
-        pageSize: 100,
-      },
-    },
+    onPaginationChange: setLogsPagination,
+    autoResetPageIndex: false,
     state: {
       columnFilters: logsFiltering,
       columnVisibility: logsColumnVisibility,
+      pagination: logsPagination,
     },
   });
 

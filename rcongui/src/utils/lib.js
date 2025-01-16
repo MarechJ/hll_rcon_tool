@@ -269,5 +269,5 @@ export function getLogTeam(log) {
 }
 
 export function getTeamColor(team) {
-  return team === "Axis" ? red[400] : team === "Allies" ? blue[400] : "inherit";
+  return (theme) => theme.palette.text[team === "Axis" ? "red" : team === "Allies" ? "blue" : "inherit"];
 }
