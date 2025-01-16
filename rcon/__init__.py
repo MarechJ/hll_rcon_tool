@@ -2,7 +2,7 @@ import os
 
 # Allows importing the models in the maintenance container to run database migrations
 if not os.getenv("HLL_MAINTENANCE_CONTAINER") and not os.getenv(
-    "HLL_DISCORD_CONTAINER"
+    "HLL_WH_SERVICE_CONTAINER"
 ):
     # Just make sure hooks are imported so the code registering the hooks will run
     from rcon import hooks

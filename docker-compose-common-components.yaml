@@ -72,7 +72,7 @@ services:
   webhook_service:
     image: ${BACKEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
     environment:
-      HLL_DISCORD_CONTAINER: true
+      HLL_WH_SERVICE_CONTAINER: true
       LOGGING_LEVEL: "INFO"
       LOGGING_PATH: /logs/
       CONFIG_DIR: /config/

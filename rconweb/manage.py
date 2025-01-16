@@ -18,7 +18,7 @@ def main():
 
     # Make all the endpoints be exposed at startup to catch any crashing issues
     if not os.getenv("HLL_MAINTENANCE_CONTAINER") and not os.getenv(
-        "HLL_DISCORD_CONTAINER"
+        "HLL_WH_SERVICE_CONTAINER"
     ):
         import api.views
 

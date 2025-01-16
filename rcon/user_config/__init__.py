@@ -2,7 +2,7 @@ import os
 
 # Allows importing the models in the maintenance container to run database migrations
 if not os.getenv("HLL_MAINTENANCE_CONTAINER") and not os.getenv(
-    "HLL_DISCORD_CONTAINER"
+    "HLL_WH_SERVICE_CONTAINER"
 ):
 
     # Import all the sub modules that represent a user setting

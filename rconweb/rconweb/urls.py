@@ -20,7 +20,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 if not os.getenv("HLL_MAINTENANCE_CONTAINER") and not os.getenv(
-    "HLL_DISCORD_CONTAINER"
+    "HLL_WH_SERVICE_CONTAINER"
 ):
     urlpatterns = [
         path("admin/", admin.site.urls),
