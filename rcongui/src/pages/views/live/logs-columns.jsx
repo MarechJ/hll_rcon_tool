@@ -2,26 +2,35 @@ import { ActionMenuButton } from "@/features/player-action/ActionMenu";
 import dayjs from "dayjs";
 import { Action, SortableHeader, TextButton } from "@/components/table/styles";
 import { generatePlayerActions } from "@/features/player-action/actions";
+import { LogMessage } from "@/components/shared/LogMessage";
+import { getLogTeam, getTeamColor } from "@/utils/lib";
+import { Box } from "@mui/material";
 
 const TIME_FORMAT = "HH:mm:ss, MMM DD";
-
-const removePlayerIds = (message) => {
-  // Combine both regex patterns into one
-  return message.replace(
-    /\((?:(?:Axis|Allies)\/)?(?:[0-9]{17}|[A-Z0-9]{16})\)/g,
-    ""
-  );
-};
 
 const playerNameFilter = (row, columnId, filterValue = []) => {
   // If no filter value, show all rows
   if (!filterValue.length) return true;
-  
+
   const player1 = row.original.player_name_1;
   const player2 = row.original.player_name_2;
-  
+
   // Check if either player name matches the filter value
   return filterValue.includes(player1) || filterValue.includes(player2);
+};
+
+const actionFilter = (row, columnId, filterValue = []) => {
+  if (!filterValue) return true;
+  const anyStartsWith = filterValue.some((action) =>
+    row.original.action.startsWith(action)
+  );
+  return anyStartsWith;
+};
+
+const teamFilter = (row, columnId, filterValue = []) => {
+  if (!filterValue.length) return true;
+  const team = row.getValue(columnId);
+  return filterValue.includes(team);
 };
 
 // Column definitions for the log table
@@ -33,7 +42,32 @@ export const logsColumns = [
       return dayjs(row.original.timestamp_ms).format(TIME_FORMAT);
     },
     meta: {
-      variant: "time"
+      variant: "time",
+    },
+  },
+  {
+    header: SortableHeader("Team"),
+    id: "team",
+    accessorFn: (log) => getLogTeam(log),
+    filterFn: teamFilter,
+    cell: ({ getValue, row }) => {
+      const team = getValue();
+      if (!team) return null;
+      return (
+        <Box
+          sx={{
+            backgroundColor: getTeamColor(team),
+            textTransform: "uppercase",
+            fontWeight: "bold",
+            fontSize: "0.75em",
+            color: "black",
+            padding: "0.15em 0.25em",
+            textAlign: "center",
+          }}
+        >
+          {team}
+        </Box>
+      );
     },
   },
   {
@@ -47,16 +81,21 @@ export const logsColumns = [
             onlineAction: true,
           })}
           withProfile
-          recipients={{ player_id: row.original.player_id_1, name: row.original.player_name_1 }}
+          recipients={{
+            player_id: row.original.player_id_1,
+            name: row.original.player_name_1,
+          }}
           renderButton={(props) => (
             <TextButton {...props}>{row.original.player_name_1}</TextButton>
           )}
         />
-      ) : row.original.player_name_1 ? <span>{row.original.player_name_1}</span> : null;
+      ) : row.original.player_name_1 ? (
+        <span>{row.original.player_name_1}</span>
+      ) : null;
     },
     filterFn: playerNameFilter,
     meta: {
-      variant: "name"
+      variant: "name",
     },
   },
   {
@@ -66,9 +105,9 @@ export const logsColumns = [
     cell: ({ row }) => {
       return <Action type={row.original.action}>{row.original.action}</Action>;
     },
-    filterFn: "arrIncludesSome",
+    filterFn: actionFilter,
     meta: {
-      variant: "action"
+      variant: "action",
     },
   },
   {
@@ -83,26 +122,37 @@ export const logsColumns = [
             onlineAction: true,
           })}
           withProfile
-          recipients={{ player_id: row.original.player_id_2, name: row.original.player_name_2 }}
+          recipients={{
+            player_id: row.original.player_id_2,
+            name: row.original.player_name_2,
+          }}
           renderButton={(props) => (
             <TextButton {...props}>{row.original.player_name_2}</TextButton>
           )}
         />
-      ) : row.original.player_name_2 ? <span>{row.original.player_name_2}</span> : null;
+      ) : row.original.player_name_2 ? (
+        <span>{row.original.player_name_2}</span>
+      ) : null;
     },
     meta: {
-      variant: "name"
+      variant: "name",
     },
   },
   {
     header: "Message",
+    id: "message",
+    accessorKey: "message",
+    cell: ({ row }) => {
+      return <LogMessage log={row.original} />;
+    },
+  },
+  {
+    header: "Full Message",
+    id: "full_message",
     accessorKey: "message",
     meta: {
       size: "full",
       variant: "content",
-    },
-    cell: ({ row }) => {
-      return removePlayerIds(row.original.message);
     },
   },
 ];

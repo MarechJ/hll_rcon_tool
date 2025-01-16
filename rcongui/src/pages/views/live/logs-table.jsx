@@ -27,6 +27,7 @@ import { LogActionHighlightMenu } from "@/components/table/selection/LogActionHi
 import LiveLogsTable from "@/components/live-logs/LiveLogsTable";
 import localStorageConfig from "@/config/localStorage";
 import TableColumnSelection from "@/components/table/TableColumnSelection";
+import { LogTeamSelectionMenu } from "@/components/table/selection/LogTeamSelectionMenu";
 
 const logActions = Object.entries(_logActions).reduce((acc, [name]) => {
   acc[name] = false;
@@ -76,6 +77,8 @@ function LogsTable({
   );
 
   const [playerOptions, setPlayerOptions] = useState({});
+
+  const [selectedTeams, setSelectedTeams] = useState([]);
 
   const handleTableConfigClick = () => {
     // toggle config drawer
@@ -171,6 +174,20 @@ function LogsTable({
     {}
   );
 
+  const handleTeamSelect = (team) => {
+    setSelectedTeams((prev) => {
+      const isSelected = prev.includes(team);
+      if (isSelected) {
+        return prev.filter((t) => t !== team);
+      }
+      return [...prev, team];
+    });
+  };
+
+  useEffect(() => {
+    table.getColumn("team")?.setFilterValue(selectedTeams);
+  }, [selectedTeams]);
+
   return (
     <>
       <TableAddons>
@@ -190,6 +207,10 @@ function LogsTable({
               },
             }));
           }}
+        />
+        <LogTeamSelectionMenu
+          selectedTeams={selectedTeams}
+          onTeamSelect={handleTeamSelect}
         />
         <LogPlayerSelectionMenu
           actionOptions={playerOptions}
@@ -216,8 +237,15 @@ function LogsTable({
             }}
           />
           <TablePagination table={table} />
-          <Divider flexItem orientation="vertical" sx={{ marginLeft: 0, marginRight: 0 }} />
-          <TableColumnSelection table={table} onColumnVisibilityChange={onColumnVisibilityChange} />
+          <Divider
+            flexItem
+            orientation="vertical"
+            sx={{ marginLeft: 0, marginRight: 0 }}
+          />
+          <TableColumnSelection
+            table={table}
+            onColumnVisibilityChange={onColumnVisibilityChange}
+          />
           <IconButton
             size="small"
             aria-label="Table settings"
