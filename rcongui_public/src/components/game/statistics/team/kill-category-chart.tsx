@@ -68,17 +68,32 @@ const KillTreemapChart = ({axisPlayers, alliesPlayers, type, handlePlayerClick }
   );
 };
 
-const CustomizedContent = ({ root, x, y, width, height, fill, mirrored }: any) => {
+const CustomizedContent = ({ root, x, y, width, height, fill, index, value, mirrored }: any) => {
+  const adjustedX = mirrored ? (root.width - (x + width)) : x
+
   return (
     <g>
       <rect
-        x={mirrored ? (root.width - (x + width)) : x}
+        x={adjustedX}
         y={y}
         width={width}
         height={height}
         fill={fill}
         className="cursor-pointer hover:opacity-80 transition-opacity"
       />
+      {index < 10 && width > 50 && height > 30 && (
+        <text
+          x={adjustedX + width / 2}
+          y={y + height / 2}
+          textAnchor="middle"
+          dominant-baseline="middle"
+          fill="#fff"
+          fontSize={16}
+          className="select-none pointer-events-none"
+        >
+          {index + 1}
+        </text>
+      )}
     </g>
   );
 };
