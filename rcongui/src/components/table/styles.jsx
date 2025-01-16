@@ -1,3 +1,4 @@
+import { logActions } from "@/utils/lib";
 import { Button, styled } from "@mui/material";
 
 export function getVariantWidth(variant) {
@@ -130,47 +131,11 @@ export const StyledTr = styled("tr")(({ theme }) => ({
   borderBottom: `1px solid ${theme.palette.divider}`,
 }));
 
-const actionToEmoji = {
-  ADMIN: "🚨",
-  "ADMIN MISC": "🚨",
-  "ADMIN IDLE": "💤",
-  "ADMIN ANTI-CHEAT": "🚷",
-  "ADMIN BANNED": "⌛",
-  "ADMIN PERMA BANNED": "⛔",
-  "ADMIN KICKED": "🚷",
-  CHAT: "💬",
-  CAMERA: "👀",
-  "CHAT[Allies]": "🟦",
-  "CHAT[Allies][Team]": "🟦",
-  "CHAT[Allies][Unit]": "🟦",
-  "CHAT[Axis]": "🟥",
-  "CHAT[Axis][Team]": "🟥",
-  "CHAT[Axis][Unit]": "🟥",
-  CONNECTED: "🛬",
-  DISCONNECTED: "🛫",
-  KILL: "💀",
-  MATCH: "🏁",
-  "MATCH ENDED": "🏁",
-  "MATCH START": "🏁",
-  MESSAGE: "📢",
-  "TEAM KILL": "⚠️",
-  TEAMSWITCH: "♻️",
-  "TK AUTO": "🚷",
-  "TK AUTO BANNED": "⌛",
-  "TK AUTO KICKED": "🚷",
-  VOTE: "🙋",
-  "VOTE COMPLETED": "🙋",
-  "VOTE EXPIRED": "🙋",
-  "VOTE PASSED": "🙋",
-  "VOTE STARTED": "🙋",
-  UNKNOWN: "❓",
-};
-
 export const Action = styled("div", {
   shouldForwardProp: (props) => props !== "type",
 })(({ theme, type }) => ({
   "&::before": {
-    content: `"${actionToEmoji[type] ?? actionToEmoji["UNKNOWN"]}"`,
+    content: `"${logActions[type] ?? logActions["UNKNOWN"]}"`,
     paddingRight: theme.spacing(1),
   },
   textAlign: "left",
