@@ -7,7 +7,7 @@ export function getGameDuration(start: string, end: string) {
   const seconds = totalSeconds % 60
 
   // Format the result as hh:mm:ss
-  const formattedTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(
+  const formattedTime = `${String(hours).padStart(1, '0')}:${String(minutes).padStart(
     2,
     '0',
   )}:${String(seconds).padStart(2, '0')}`

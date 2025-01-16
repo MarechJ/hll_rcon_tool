@@ -27,6 +27,7 @@
     }
   },
   "time": {
-    "minuteShort": "min"
+    "minuteShort": "min",
+    "weekday": "Weekday"
   }
 }
