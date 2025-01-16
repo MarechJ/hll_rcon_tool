@@ -1,7 +1,9 @@
 import os
 
 # Allows importing the models in the maintenance container to run database migrations
-if not os.getenv("HLL_MAINTENANCE_CONTAINER"):
+if not os.getenv("HLL_MAINTENANCE_CONTAINER") and not os.getenv(
+    "HLL_DISCORD_CONTAINER"
+):
 
     # Import all the sub modules that represent a user setting
     # so that .utils.all_subclasses() can properly report subclasses

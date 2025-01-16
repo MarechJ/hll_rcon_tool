@@ -19,10 +19,12 @@ import os
 from django.contrib import admin
 from django.urls import include, path
 
-if not os.getenv("HLL_MAINTENANCE_CONTAINER"):
+if not os.getenv("HLL_MAINTENANCE_CONTAINER") and not os.getenv(
+    "HLL_DISCORD_CONTAINER"
+):
     urlpatterns = [
         path("admin/", admin.site.urls),
-        path('accounts/', include('django.contrib.auth.urls')),
+        path("accounts/", include("django.contrib.auth.urls")),
         path("api/", include("api.urls")),
         path("api/logs/", include("directory.urls")),
     ]
