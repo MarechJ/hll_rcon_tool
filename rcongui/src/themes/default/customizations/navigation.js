@@ -6,11 +6,10 @@ import { menuItemClasses } from '@mui/material/MenuItem';
 import { selectClasses } from '@mui/material/Select';
 import { tabClasses } from '@mui/material/Tab';
 import UnfoldMoreRoundedIcon from '@mui/icons-material/UnfoldMoreRounded';
-import { gray, brand } from '../themePrimitives';
 import {forwardRef} from "react";
 
 /* eslint-disable import/prefer-default-export */
-export const navigationCustomizations = {
+export const navigationCustomizations = ({ gray, brand }) => ({
   MuiMenuItem: {
     styleOverrides: {
       root: ({ theme }) => ({
@@ -275,4 +274,4 @@ export const navigationCustomizations = {
       }),
     },
   },
-};
+});
