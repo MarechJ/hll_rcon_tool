@@ -5,6 +5,7 @@ import { generatePlayerActions } from "@/features/player-action/actions";
 import { LogMessage } from "@/components/shared/LogMessage";
 import { getLogTeam, getTeamColor } from "@/utils/lib";
 import { Box } from "@mui/material";
+import { blue, red } from "@mui/material/colors";
 
 const TIME_FORMAT = "HH:mm:ss, MMM DD";
 
@@ -56,7 +57,7 @@ export const logsColumns = [
       return (
         <Box
           sx={{
-            backgroundColor: getTeamColor(team),
+            backgroundColor: team === "Axis" ? red[400] : blue[400],
             textTransform: "uppercase",
             fontWeight: "bold",
             fontSize: "0.75em",

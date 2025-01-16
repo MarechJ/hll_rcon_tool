@@ -22,7 +22,6 @@ export default {
     defaultValue: {
       density: "normal",
       fontSize: "normal",
-      rowsPerPage: "100",
       highlighted: false,
       actions: [],
       filters: {
@@ -39,7 +38,7 @@ export default {
     defaultValue: {
       players: [],
       actions: [],
-      inclusive: true,
+      inclusive_filter: true,
       limit: 500,
     },
   },
@@ -48,7 +47,6 @@ export default {
     defaultValue: {
       density: "normal",
       fontSize: "normal",
-      rowsPerPage: "50",
     },
   },
 };

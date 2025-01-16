@@ -1,16 +1,18 @@
-import { Box, IconButton, Stack } from "@mui/material";
+import {
+  Box,
+  Divider,
+  IconButton,
+  Stack,
+  Select,
+  MenuItem,
+} from "@mui/material";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import KeyboardDoubleArrowLeftIcon from "@mui/icons-material/KeyboardDoubleArrowLeft";
 import KeyboardDoubleArrowRightIcon from "@mui/icons-material/KeyboardDoubleArrowRight";
 
 export const TablePagination = ({ table }) => (
-  <Stack
-    direction={"row"}
-    gap={0.25}
-    flexGrow={1}
-    alignItems={"center"}
-  >
+  <Stack direction={"row"} gap={0.25} flexGrow={1} alignItems={"center"}>
     <IconButton
       onClick={() => table.firstPage()}
       disabled={!table.getCanPreviousPage()}
@@ -47,5 +49,21 @@ export const TablePagination = ({ table }) => (
     >
       <KeyboardDoubleArrowRightIcon />
     </IconButton>
+    <Divider orientation="vertical" flexItem />
+    <Box sx={{ mx: 0.25 }}>
+      <Select
+        value={table.getState().pagination.pageSize}
+        onChange={(e) => table.setPageSize(e.target.value)}
+        size="small"
+        sx={{ borderRadius: 0 }}
+        aria-label="Page size"
+      >
+        {[50, 100, 150, 250, 500].map((pageSize) => (
+          <MenuItem key={pageSize} value={pageSize}>
+            Show {pageSize}
+          </MenuItem>
+        ))}
+      </Select>
+    </Box>
   </Stack>
 );
