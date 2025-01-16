@@ -68,7 +68,10 @@
         "deathsByWeapon": "Deaths by Weapon",
         "encounters": "Encounters",
         "weapon": "Weapon",
-        "count": "Count"
+        "count": "Count",
+        "killDiffByTeamRank": "Kill diff by team rank",
+        "teamRank": "Team rank",
+        "killDiff": "Kill diff"
     },
     "score": {
         "killstreak": "Killstreak",
