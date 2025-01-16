@@ -50,7 +50,12 @@
       "sniper": "Sniper",
       "infantry": "Infantry",
       "explosive": "Explosive",
-      "machineGun": "Machine Gun",
+      "bazooka": "Bazooka",
+      "grenade": "Grenade",
+      "mine": "Mine",
+      "pak": "PAK",
+      "satchel": "Satchel",
+      "machine_gun": "Machine Gun",
       "armor": "Armor",
       "commander": "Commander",
       "artillery": "Artillery"
@@ -71,7 +76,8 @@
         "count": "Count",
         "killDiffByTeamRank": "Kill diff by team rank",
         "teamRank": "Team rank",
-        "killDiff": "Kill diff"
+        "killDiff": "Kill diff",
+        "killsByType": "Kills by type"
     },
     "score": {
         "killstreak": "Killstreak",
