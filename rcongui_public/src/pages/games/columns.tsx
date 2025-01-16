@@ -45,8 +45,22 @@ export const columns: ColumnDef<ScoreboardMap>[] = [
         <div className="flex flex-row items-center gap-2 w-max">
           <img src={'/maps/icons/' + gameMap.image_name} width={size} height={size * ratio} alt=""/>
           <span>{gameMap.map.pretty_name}</span>
-          <WeatherIcon environment={gameMap.environment} className="text-muted-foreground"/>
         </div>
+      )
+    },
+  },
+  {
+    header: function WeatherHeader() {
+      const { t } = useTranslation('game')
+      return t('matchTable.weather')
+    },
+    id: 'map',
+    accessorKey: 'map',
+    cell: function MapCell({ cell }) {
+      const gameMap = cell.getValue() as MapLayer
+
+      return (
+        <WeatherIcon environment={gameMap.environment} className="text-muted-foreground"/>
       )
     },
   },

@@ -58,6 +58,7 @@
     "matchTable": {
         "match": "Match",
         "map": "Map",
+        "weather": "Weather",
         "mode": "Mode",
         "duration": "Duration",
         "result": "Result",
