@@ -5,7 +5,7 @@ export const feedbackCustomizations = ({ orange, gray }) => ({
   MuiAlert: {
     styleOverrides: {
       root: ({ theme }) => ({
-        borderRadius: 10,
+        borderRadius: theme.shape.borderRadius,
         backgroundColor: orange[100],
         color: theme.palette.text.primary,
         border: `1px solid ${alpha(orange[300], 0.5)}`,
@@ -34,7 +34,7 @@ export const feedbackCustomizations = ({ orange, gray }) => ({
     styleOverrides: {
       root: ({ theme }) => ({
         height: 8,
-        borderRadius: 8,
+        borderRadius: theme.shape.borderRadius,
         backgroundColor: gray[200],
         ...theme.applyStyles('dark', {
           backgroundColor: gray[800],
