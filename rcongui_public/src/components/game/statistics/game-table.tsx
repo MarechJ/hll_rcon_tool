@@ -34,6 +34,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { useGameStatsContext } from "@/components/game/statistics/game-stats-container";
 import { useStorageState } from '@/hooks/use-storage-state'
 import { DownloadButton } from "@/components/game/statistics/download-button";
+import { ColumnMenu } from "@/components/game/statistics/column-menu";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -171,28 +172,7 @@ export function DataTable<TData extends Player, TValue>({ columns, data, tableId
         </div>
         <div className={'inline-flex gap-3'}>
           <DownloadButton data={data} tableId={tableId}/>
-          {!!table.getAllColumns().find((col) => col.getCanHide()) && (
-            <Select>
-              <PlainSelectTrigger className={'rounded-md border border-input bg-background px-3 py-2 hover:bg-accent'}>
-                <List size={20} />
-              </PlainSelectTrigger>
-              <SelectContent className={'py-2'}>
-                {table
-                  .getAllColumns()
-                  .filter((col) => col.getCanHide())
-                  .map((column) => (
-                    <div
-                      key={column.id}
-                      onClick={column.getToggleVisibilityHandler()}
-                      className="px-2 flex items-center cursor-pointer select-none hover:bg-accent"
-                    >
-                      <Checkbox checked={column.getIsVisible()} disabled={!column.getCanHide()} />
-                      <span className="pl-3">{column.columnDef.meta?.label}</span>
-                    </div>
-                  ))}
-              </SelectContent>
-            </Select>
-          )}
+          <ColumnMenu table={table}/>
         </div>
       </div>
       <Table id={tableId} style={{ height: '100%' }}>
