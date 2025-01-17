@@ -4,18 +4,26 @@ import { generateEmptySquad } from '../factories/squad';
 import { updateTeamState } from '../factories/team';
 import { SQUAD_TYPES } from '../data/roles';
 
+const PLAYTIME_INCREMENT = 15;
+
 export const handleTeamView = (gameState) => {
   // Update playtime for all players (15 seconds since last fetch)
   ["axis", "allies"].forEach(team => {
     Object.values(gameState[team].squads).forEach(squad => {
       squad.players.forEach(player => {
-        player.profile.current_playtime_seconds += 15;
-        player.profile.total_playtime_seconds += 15;
+        player.profile.current_playtime_seconds += PLAYTIME_INCREMENT;
+        player.profile.total_playtime_seconds += PLAYTIME_INCREMENT;
+        player.kills += faker.number.int({ min: 0, max: 3 });
+        player.deaths += faker.number.int({ min: 0, max: 1 });
+        player.combat += faker.number.int({ min: 0, max: 30 });
+        player.offense += faker.number.int({ min: 0, max: 10 });
+        player.defense += faker.number.int({ min: 0, max: 10 });
+        player.support += faker.number.int({ min: 0, max: 50 });
       });
     });
     if (gameState[team].commander) {
-      gameState[team].commander.profile.current_playtime_seconds += 15;
-      gameState[team].commander.profile.total_playtime_seconds += 15;
+      gameState[team].commander.profile.current_playtime_seconds += PLAYTIME_INCREMENT;
+      gameState[team].commander.profile.total_playtime_seconds += PLAYTIME_INCREMENT;
     }
   });
 
