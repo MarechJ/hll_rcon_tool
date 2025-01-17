@@ -19,8 +19,6 @@ root.render(<App />);
 // Learn more about service workers: https://bit.ly/CRA-PWA
 serviceWorker.unregister();
 
-console.log(process.env.NODE_ENV);
-
-if (process.env.NODE_ENV === "development") {
+if (import.meta.env.MODE === "fake" && import.meta.env.DEV) {
   makeServer({ environment: "development" });
 }

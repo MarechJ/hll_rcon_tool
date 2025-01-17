@@ -57,18 +57,19 @@ const generatePenaltyCount = () => {
 };
 
 const generateWatchlist = (playerId) => {
+  const isWatched = faker.datatype.boolean(0.8);
   if (faker.datatype.boolean(0.2)) {
     return {
       id: faker.number.int({ min: 1, max: 100 }),
-      modified: faker.helpers.arrayElement([null, faker.date.recent().toISOString()]),
+      modified: isWatched ? faker.date.recent().toISOString() : null,
       player_id: playerId,
-      is_watched: true,
-      reason: faker.helpers.arrayElement([
+      is_watched: isWatched,
+      reason: isWatched ? faker.helpers.arrayElement([
         "I am watching you!",
         "Suspicious behavior",
         "Team killing history",
         "Under observation"
-      ]),
+      ]) : null,
       by: faker.internet.username(),
       count: faker.number.int({ min: 0, max: 10 })
     };
@@ -178,7 +179,25 @@ const generateSteamInfo = (playerId, type = "public") => {
   }
 };
 
-export const generateProfile = (playerId, playerName) => ({
+const generateVip = (serverNumber, isActiveVip) => {
+  return {
+    server_number: serverNumber,
+    expiration: isActiveVip ? faker.date.future().toISOString() : faker.date.between({ from: new Date() - 1000 * 60 * 60 * 24 * 30, to: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30) }).toISOString()
+  };
+};
+
+const generateVips = (isVip, serverNumber) => {
+  const vips = [];
+  if (isVip) {
+    vips.push(generateVip(serverNumber, true));
+  }
+  Array(faker.number.int({ min: 0, max: 2 })).fill(null).forEach((_, index) => {
+    vips.push(generateVip(serverNumber + index + 1));
+  });
+  return vips;
+};
+
+export const generateProfile = (playerId, playerName, isVip = false, serverNumber = 1) => ({
   id: faker.number.int({ min: 1, max: 30000 }),
   player_id: playerId,
   created: faker.date.recent().toISOString(),
@@ -193,8 +212,8 @@ export const generateProfile = (playerId, playerName) => ({
     }
   ],
   sessions_count: faker.number.int({ min: 1, max: 1000 }),
-  total_playtime_seconds: faker.number.int({ min: 1000, max: 1000000 }),
-  current_playtime_seconds: faker.number.int({ min: 100, max: 5000 }),
+  total_playtime_seconds: faker.number.int({ min: 0, max: 1000000 }),
+  current_playtime_seconds: faker.number.int({ min: 0, max: 150 }),
   received_actions: generateReceivedActions(),
   penalty_count: generatePenaltyCount(),
   blacklist: null,
@@ -204,5 +223,5 @@ export const generateProfile = (playerId, playerName) => ({
     playerId, 
     faker.helpers.arrayElement(['public', 'private', 'none'])
   ),
-  vips: []
+  vips: generateVips(isVip, serverNumber),
 }); 

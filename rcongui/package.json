@@ -5,6 +5,7 @@
   "scripts": {
     "start": "vite",
     "dev": "vite dev",
+    "dev:fake": "vite dev --mode fake",
     "dev:public": "REACT_APP_PUBLIC_BUILD=true vite dev",
     "build": "vite build",
     "build:public": "REACT_APP_PUBLIC_BUILD=true vite build",
