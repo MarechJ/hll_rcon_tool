@@ -381,8 +381,8 @@ class DBLogLineType(TypedDict):
 
 
 class PlayerTeamConfidence(enum.Enum):
-    STRONG = 'strong'
-    MIXED = 'mixed'
+    STRONG = "strong"
+    MIXED = "mixed"
 
 
 class PlayerTeamAssociation(TypedDict):
@@ -442,7 +442,7 @@ class PlayerStat(TypedDict):
 
 class CachedLiveGameStats(TypedDict):
     snapshot_timestamp: datetime.datetime
-    stats: PlayerStatsType
+    stats: list[PlayerStatsType]
     refresh_interval_sec: int
 
 

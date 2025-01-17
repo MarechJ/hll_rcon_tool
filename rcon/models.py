@@ -52,7 +52,9 @@ from rcon.types import (
     SteamPlayerSummaryType,
     StructuredLogLineWithMetaData,
     WatchListType,
-    MessageTemplateCategory, PlayerTeamAssociation, PlayerTeamConfidence,
+    MessageTemplateCategory,
+    PlayerTeamAssociation,
+    PlayerTeamConfidence,
 )
 from rcon.utils import (
     SafeStringFormat,
@@ -533,6 +535,7 @@ class Maps(Base):
             ),
         }
 
+
 class PlayerStats(Base):
     __tablename__ = "player_stats"
     __table_args__ = (
@@ -592,27 +595,43 @@ class PlayerStats(Base):
                     axis_count += weapon[1]
 
         if len(self.death_by_weapons) > 0:
-            for weapon in sorted(self.death_by_weapons.items(), key=get_value, reverse=True):
+            for weapon in sorted(
+                self.death_by_weapons.items(), key=get_value, reverse=True
+            ):
                 if WEAPON_SIDE_MAP.get(weapon[0]) is None:
                     continue
-                op = Team.AXIS if WEAPON_SIDE_MAP.get(weapon[0]) == Team.ALLIES else Team.ALLIES
+                op = (
+                    Team.AXIS
+                    if WEAPON_SIDE_MAP.get(weapon[0]) == Team.ALLIES
+                    else Team.ALLIES
+                )
                 if op == Team.ALLIES:
                     allies_count += weapon[1]
                 elif op == Team.AXIS:
                     axis_count += weapon[1]
 
         if axis_count == 0 and allies_count == 0:
-            return PlayerTeamAssociation(side=Team.UNKNOWN, confidence=PlayerTeamConfidence.STRONG, ratio=0)
+            return PlayerTeamAssociation(
+                side=Team.UNKNOWN, confidence=PlayerTeamConfidence.STRONG, ratio=0
+            )
         elif axis_count > allies_count:
             return PlayerTeamAssociation(
                 side=Team.AXIS,
-                confidence=PlayerTeamConfidence.STRONG if allies_count == 0 else PlayerTeamConfidence.MIXED,
+                confidence=(
+                    PlayerTeamConfidence.STRONG
+                    if allies_count == 0
+                    else PlayerTeamConfidence.MIXED
+                ),
                 ratio=round(axis_count / (axis_count + allies_count) * 100, 2),
             )
         elif allies_count > axis_count:
             return PlayerTeamAssociation(
                 side=Team.ALLIES,
-                confidence=PlayerTeamConfidence.STRONG if axis_count == 0 else PlayerTeamConfidence.MIXED,
+                confidence=(
+                    PlayerTeamConfidence.STRONG
+                    if axis_count == 0
+                    else PlayerTeamConfidence.MIXED
+                ),
                 ratio=round(allies_count / (axis_count + allies_count) * 100, 2),
             )
         else:
@@ -981,6 +1000,9 @@ def enter_session() -> Generator[Session, None, None]:
         # Only commit if there were no exceptions, otherwise rollback
         sess.commit()
     except (ProgrammingError, InvalidRequestError) as e:
+        logger.exception(e)
+        sess.rollback()
+    except Exception as e:
         logger.exception(e)
         sess.rollback()
     finally:
