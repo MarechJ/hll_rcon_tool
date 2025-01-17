@@ -19,7 +19,7 @@ export const KillCategoryChart = ({stats, handlePlayerClick}: {
 
   return (
     <>
-      {displayedTypes.map(type => <KillTreemapChart axisPlayers={axisPlayers} alliesPlayers={alliesPlayers} type={type}
+      {displayedTypes.map(type => <KillTreemapChart key={type} axisPlayers={axisPlayers} alliesPlayers={alliesPlayers} type={type}
                           handlePlayerClick={handlePlayerClick}/>)}
     </>
   );
@@ -86,7 +86,7 @@ const CustomizedContent = ({ root, x, y, width, height, fill, index, value, mirr
           x={adjustedX + width / 2}
           y={y + height / 2}
           textAnchor="middle"
-          dominant-baseline="middle"
+          dominantBaseline="middle"
           fill="#fff"
           fontSize={16}
           className="select-none pointer-events-none"

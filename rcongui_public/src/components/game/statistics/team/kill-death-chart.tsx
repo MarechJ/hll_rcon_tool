@@ -31,7 +31,7 @@ export function KillDeathChart({stats, handlePlayerClick}: {
           <XAxis type="number" dataKey="deaths" name={t("playersTable.deaths")} label={t("playersTable.deaths")} domain={[0, maxDeaths]} ticks={generateTicks(maxDeaths, 50)}/>
           <YAxis type="number" dataKey="kills" name={t("playersTable.kills")} label={t("playersTable.kills")} domain={[0, maxKills]} ticks={generateTicks(maxKills, 50)}/>
           {referenceLinesKd.map(kd =>
-            <ReferenceLine stroke={colors.purple[600]} strokeDasharray={kd === 1 ? undefined : "3 3"} segment={[{ x: 0, y: 0 }, { x: Math.min(maxKills, maxDeaths), y: Math.min(maxKills,maxDeaths) * kd }]} ifOverflow="visible">
+            <ReferenceLine key={kd} stroke={colors.purple[600]} strokeDasharray={kd === 1 ? undefined : "3 3"} segment={[{ x: 0, y: 0 }, { x: Math.min(maxKills, maxDeaths), y: Math.min(maxKills,maxDeaths) * kd }]} ifOverflow="visible">
               <Label>
                 {kd + " K/D"}
               </Label>

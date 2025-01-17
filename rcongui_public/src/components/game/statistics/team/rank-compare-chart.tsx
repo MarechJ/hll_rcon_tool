@@ -37,7 +37,7 @@ export function RankCompareChart({stats}: {
         >
           <Tooltip content={<CustomTooltip/>}/>
           {referenceLines.map(reference =>
-            <ReferenceLine stroke={colors.purple[600]} strokeDasharray={"3 3"} segment={[{ x: 0, y: reference }, { x: data.length, y: reference }]} ifOverflow="hidden">
+            <ReferenceLine key={reference} stroke={colors.purple[600]} strokeDasharray={"3 3"} y={reference} ifOverflow="hidden">
             </ReferenceLine>
           )}
           <XAxis dataKey="rank" label={t("playerStats.teamRank")} ticks={generateTicks(data.length, 10)}/>
