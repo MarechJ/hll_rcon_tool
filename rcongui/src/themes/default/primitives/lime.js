@@ -1,3 +1,4 @@
+import { blue } from '@mui/material/colors';
 import { createTheme, alpha } from '@mui/material/styles';
 
 const defaultTheme = createTheme();
@@ -250,6 +251,10 @@ export const colorSchemes = {
       text: {
         primary: 'hsl(240, 10%, 3.9%)',        // --foreground
         secondary: 'hsl(240, 3.8%, 46.1%)',    // --muted-foreground
+        red: red[600],
+        orange: orange[600],
+        green: green[600],
+        blue: blue[600],
       },
       divider: 'hsl(240, 5.9%, 90%)',          // --border
       action: {
@@ -292,6 +297,10 @@ export const colorSchemes = {
       text: {
         primary: 'hsl(0, 0%, 95%)',            // --foreground
         secondary: 'hsl(240, 5%, 64.9%)',      // --muted-foreground
+        red: red[400],
+        orange: orange[400],
+        green: green[400],
+        blue: blue[400],
       },
       divider: 'hsl(240, 3.7%, 15.9%)',        // --border
       action: {
