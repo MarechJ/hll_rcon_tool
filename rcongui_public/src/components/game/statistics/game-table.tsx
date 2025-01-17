@@ -69,6 +69,12 @@ export function DataTable<TData extends Player, TValue>({ columns, data, tableId
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 
   const [columnVisibility, setColumnVisibility] = useStorageState<VisibilityState>('column-visibility', {
+    ['kills_per_minute']: false,
+    ['deaths_per_minute']: false,
+    ['kills_streak']: false,
+    ['deaths_without_kill_streak']: false,
+    ['teamkills']: false,
+    ['deaths_by_tk']: false,
     ['combat']: false,
     ['defense']: false,
     ['offense']: false,
