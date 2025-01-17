@@ -149,7 +149,7 @@ export function DataTable<TData extends Player, TValue>({ columns, data, tableId
                 {teamOptions.map((option, index) => (
                   <SelectItem key={option} value={option}>
                     <div className="flex">
-                      <TeamIndicator team={option as TeamEnum} className="block m-auto" />
+                      <TeamIndicator team={option as TeamEnum} className="m-auto" />
                       <div className="pl-3">
                         {t(option)} ({teamCounts[index]})
                       </div>

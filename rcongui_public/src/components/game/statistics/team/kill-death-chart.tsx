@@ -1,7 +1,7 @@
 import {Player, PlayerWithStatus} from '@/types/player'
 import React from 'react'
 import {Cell, ComposedChart, Label, ReferenceLine, ResponsiveContainer, Scatter, XAxis, YAxis} from 'recharts'
-import {getColorForTeam, getTeamFromAssociation} from '@/components/game/statistics/utils'
+import {generateTicks, getColorForTeam, getTeamFromAssociation} from '@/components/game/statistics/utils'
 import {useTranslation} from 'react-i18next'
 import colors from 'tailwindcss/colors'
 
@@ -17,16 +17,6 @@ export function KillDeathChart({stats, handlePlayerClick}: {
 
   const referenceLinesKd = [0.5, 1, 2];
 
-  const generateTicks = (n: number) => {
-    const interval = 50;
-    const ticks = [];
-    for (let i = 1; i < n / interval; i++) {
-      ticks.push(i * interval);
-    }
-    ticks.push(n);
-    return ticks;
-  }
-
   return (
     <div className={"h-[80vh] w-full"}>
       <ResponsiveContainer height={"100%"} width={"100%"}>
@@ -36,13 +26,12 @@ export function KillDeathChart({stats, handlePlayerClick}: {
             top: 20,
             right: 20,
             bottom: 20,
-            left: 20,
           }}
         >
-          <XAxis type="number" dataKey="deaths" name={t("playersTable.deaths")} label={t("playersTable.deaths")} domain={[0, maxDeaths]} ticks={generateTicks(maxDeaths)}/>
-          <YAxis type="number" dataKey="kills" name={t("playersTable.kills")} label={t("playersTable.kills")} domain={[0, maxKills]} ticks={generateTicks(maxKills)}/>
+          <XAxis type="number" dataKey="deaths" name={t("playersTable.deaths")} label={t("playersTable.deaths")} domain={[0, maxDeaths]} ticks={generateTicks(maxDeaths, 50)}/>
+          <YAxis type="number" dataKey="kills" name={t("playersTable.kills")} label={t("playersTable.kills")} domain={[0, maxKills]} ticks={generateTicks(maxKills, 50)}/>
           {referenceLinesKd.map(kd =>
-            <ReferenceLine stroke={colors.purple[600]} strokeDasharray={kd === 1 ? undefined : "3 3"} segment={[{ x: 0, y: 0 }, { x: Math.min(maxKills, maxDeaths), y: Math.min(maxKills,maxDeaths) * kd }]} ifOverflow="visible">
+            <ReferenceLine key={kd} stroke={colors.purple[600]} strokeDasharray={kd === 1 ? undefined : "3 3"} segment={[{ x: 0, y: 0 }, { x: Math.min(maxKills, maxDeaths), y: Math.min(maxKills,maxDeaths) * kd }]} ifOverflow="visible">
               <Label>
                 {kd + " K/D"}
               </Label>

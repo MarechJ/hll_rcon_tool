@@ -108,6 +108,7 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
         {cards.map((card, index) => {
           return typeof card !== 'string' ?
             <div
+              key={card.id}
               ref={(element: any) => {
                 if (element) {
                   gameRefs.current.set(card.id, element);

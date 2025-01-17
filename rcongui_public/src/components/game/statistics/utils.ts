@@ -37,3 +37,20 @@ export function getTeamFromAssociation(team: PlayerTeamAssociation | undefined):
   }
   return team.confidence === 'strong' ? team.side : TeamEnum.MIXED;
 }
+
+export const generateTicks = (max: number, interval: number, negative?: boolean) => {
+  let ticks = [];
+
+  for (let i = 1; i < max / interval; i++) {
+    ticks.push(i * interval);
+    if (negative) {
+      ticks.unshift(-i * interval);
+    }
+  }
+  ticks.push(max);
+  if (negative) {
+    ticks.unshift(-max);
+  }
+
+  return ticks;
+}
