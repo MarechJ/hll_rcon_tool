@@ -147,8 +147,6 @@ class CameraWebhooksUserConfig(BaseMentionWebhookUserConfig):
 
 
 class AdminPingWebhooksUserConfig(BaseMentionWebhookUserConfig):
-    pass
-
     trigger_words: list[str] = pydantic.Field(default_factory=list)
 
     @pydantic.field_validator("trigger_words")
@@ -240,9 +238,9 @@ def parse_raw_mention_hooks(
 ) -> list["DiscordMentionWebhook"]:
     validated_hooks: list[DiscordMentionWebhook] = []
     for raw_hook in raw_hooks:
-        user_mentions = raw_hook.get("user_mentions")
+        user_mentions = raw_hook.get("user_mentions", [])
         user_ids = set(user_mentions)
-        role_mentions = raw_hook.get("role_mentions")
+        role_mentions = raw_hook.get("role_mentions", [])
         role_ids = set(role_mentions)
 
         h = DiscordMentionWebhook(
