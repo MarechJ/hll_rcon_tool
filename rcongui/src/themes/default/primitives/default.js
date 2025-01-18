@@ -1,3 +1,4 @@
+import { blue } from '@mui/material/colors';
 import { createTheme, alpha } from '@mui/material/styles';
 
 const defaultTheme = createTheme();
@@ -257,6 +258,10 @@ export const colorSchemes = {
         primary: gray[800],
         secondary: gray[600],
         warning: orange[400],
+        red: red[600],
+        orange: orange[600],
+        green: green[600],
+        blue: blue[600],
       },
       action: {
         hover: alpha(gray[200], 0.2),
@@ -306,6 +311,10 @@ export const colorSchemes = {
       text: {
         primary: 'hsl(0, 0%, 100%)',
         secondary: gray[400],
+        red: red[300],
+        orange: orange[300],
+        green: green[300],
+        blue: blue[300],
       },
       action: {
         hover: alpha(gray[600], 0.2),

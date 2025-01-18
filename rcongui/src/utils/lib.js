@@ -76,7 +76,6 @@ export const normalizePlayerProfile = (profile) => {
     received_actions: profile.received_actions ?? [],
     vips: profile.vips ?? [],
     blacklists: profile.blacklists ?? [],
-    watchlist: profile.watchlist ?? [],
     flags: profile.flags ?? [],
     penalty_count: profile.penalty_count ?? {
       KICK: 0,
@@ -195,14 +194,14 @@ export const logActions = {
   "ADMIN BANNED": "⌛",
   "ADMIN PERMA BANNED": "⛔",
   "ADMIN KICKED": "🚷",
-  CHAT: "💬",
   CAMERA: "👀",
-  "CHAT[Allies]": "🟦",
-  "CHAT[Allies][Team]": "🟦",
-  "CHAT[Allies][Unit]": "🟦",
-  "CHAT[Axis]": "🟥",
-  "CHAT[Axis][Team]": "🟥",
-  "CHAT[Axis][Unit]": "🟥",
+  CHAT: "💬",
+  "CHAT[Allies]": "💬",
+  "CHAT[Allies][Team]": "💬",
+  "CHAT[Allies][Unit]": "💬",
+  "CHAT[Axis]": "💬",
+  "CHAT[Axis][Team]": "💬",
+  "CHAT[Axis][Unit]": "💬",
   CONNECTED: "🛬",
   DISCONNECTED: "🛫",
   KILL: "💀",
@@ -251,4 +250,23 @@ export function getSteamProfileUrl(id) {
 
 export function getXboxProfileUrl(playerName) {
   return `https://xboxgamertag.com/search/${playerName}`
+}
+
+export function removeLogPlayerIds(message) {
+  const regex = /\((?:(?:Axis|Allies)\/)?(?:[0-9]{17}|[a-z0-9]{32})\)/g;
+  return message.replace(regex, "");
+};
+
+export function getLogTeam(log) {
+  let searched = log.message;
+  if (log.action.startsWith("CHAT")) {
+    searched = log.action;
+  }
+  const regex = /(?<team>Allies|Axis)/;
+  const match = searched.match(regex);
+  return match?.groups?.team;
+}
+
+export function getTeamColor(team) {
+  return (theme) => theme.palette.text[team === "Axis" ? "red" : team === "Allies" ? "blue" : "inherit"];
 }

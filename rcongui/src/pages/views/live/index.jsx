@@ -1,25 +1,26 @@
-import {useMemo, useState} from "react";
-import {cmd} from "@/utils/fetchUtils";
-import {columns as playersColumns} from "./players-columns";
-import {Header} from "@/components/game/Header";
-import {extractPlayers, extractTeamState} from "@/utils/extractPlayers";
-import {useLoaderData} from "react-router-dom";
-import {useQuery} from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { cmd } from "@/utils/fetchUtils";
+import { columns as playersColumns } from "./players-columns";
+import { Header } from "@/components/game/Header";
+import { extractPlayers, extractTeamState } from "@/utils/extractPlayers";
+import { useLoaderData } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import PlayersTable from "./players-table";
 import LogsTable from "./logs-table";
-import {logsColumns} from "./logs-columns";
-import {useStorageState} from "@/hooks/useStorageState";
-import {teamsLiveQueryOptions} from "@/queries/teams-live-query";
-import {normalizePlayerProfile} from "@/utils/lib";
+import { logsColumns } from "./logs-columns";
+import { useStorageState } from "@/hooks/useStorageState";
+import { teamsLiveQueryOptions } from "@/queries/teams-live-query";
+import { normalizePlayerProfile } from "@/utils/lib";
 import {
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  useReactTable
+  useReactTable,
 } from "@tanstack/react-table";
 import Grid from "@mui/material/Grid2";
-import storageKeys from "@/config/storageKeys";
+import localStorageConfig from "@/config/localStorage";
+import InfoPanel from "./info-panel";
 
 const interval = 15 * 1000; // 15 seconds
 
@@ -33,15 +34,15 @@ export const loader = async () => {
     },
   });
 
-  return {initialLogsView: response};
+  return { initialLogsView: response };
 };
 
 const Live = () => {
   // ---------------- VIEW STATE -----------------
-  const {initialLogsView} = useLoaderData();
+  const { initialLogsView } = useLoaderData();
 
   // ---------------- PLAYERS DATA -----------------
-  const {data: teamData} = useQuery({
+  const { data: teamData } = useQuery({
     ...teamsLiveQueryOptions,
     staleTime: 5 * 1000,
     refetchInterval: 10 * 1000,
@@ -61,16 +62,11 @@ const Live = () => {
   // Using custom hook that synchronizes the components state
   // and the browser's local storage
   const [logsSearchParams, setLogsSearchParams] = useStorageState(
-    storageKeys.LIVE_LOGS_SEARCH_PARAMS,
-    {
-      players: [],
-      actions: [],
-      inclusive: true,
-      limit: 500,
-    }
+    localStorageConfig.LIVE_LOGS_SEARCH_PARAMS.key,
+    localStorageConfig.LIVE_LOGS_SEARCH_PARAMS.defaultValue
   );
 
-  const {data: logsView} = useQuery({
+  const { data: logsView } = useQuery({
     queryKey: [
       "logs",
       "live",
@@ -78,7 +74,7 @@ const Live = () => {
         end: logsSearchParams.limit,
         filter_action: logsSearchParams.actions,
         filter_player: logsSearchParams.players,
-        inclusive_filter: logsSearchParams.inclusive,
+        inclusive_filter: logsSearchParams.inclusive_filter,
       },
     ],
     queryFn: () =>
@@ -87,7 +83,7 @@ const Live = () => {
           end: logsSearchParams.limit,
           filter_action: logsSearchParams.actions,
           filter_player: logsSearchParams.players,
-          inclusive_filter: logsSearchParams.inclusive,
+          inclusive_filter: logsSearchParams.inclusive_filter,
         },
       }),
     select: (response) => response.result,
@@ -96,7 +92,7 @@ const Live = () => {
   });
 
   // ---------------- GAME HEADER DATA -----------------
-  const {data: gameState} = useQuery({
+  const { data: gameState } = useQuery({
     queryKey: ["game", "state"],
     queryFn: cmd.GET_GAME_STATE,
     staleTime: 5 * 1000,
@@ -115,15 +111,39 @@ const Live = () => {
           ...extractTeamState(teamData?.axis ?? {}),
           ...(teamData?.axis ?? {}),
         },
+        none: {
+          ...extractTeamState(teamData?.none ?? {}),
+          ...(teamData?.none ?? {}),
+        },
       };
     }
     return null;
   }, [gameState, teamData]);
 
   // ---------------- PLAYERS TABLE STATE -----------------
-  const [playersSorting, setPlayersSorting] = useState([]);
+  const [playersSorting, setPlayersSorting] = useState([
+    {
+      id: "time",
+      desc: true,
+    },
+  ]);
+
   const [playersRowSelection, setPlayersRowSelection] = useState({});
   const [playersColumnFilters, setPlayersColumnFilters] = useState([]);
+  const [playersTableConfig, setPlayersTableConfig] = useStorageState(
+    localStorageConfig.LIVE_PLAYERS_TABLE_CONFIG.key,
+    localStorageConfig.LIVE_PLAYERS_TABLE_CONFIG.defaultValue
+  );
+
+  const playersColumnVisibility = playersTableConfig.columnVisibility;
+
+  const handlePlayersColumnVisibilityChange = (columnId, isVisible) => {
+    setPlayersTableConfig((prev) => {
+      const columnVisibility = { ...prev.columnVisibility };
+      columnVisibility[columnId] === false ? delete columnVisibility[columnId] : columnVisibility[columnId] = isVisible;
+      return { ...prev, columnVisibility }
+    });
+  };
 
   const playersTable = useReactTable({
     data: playersData,
@@ -134,16 +154,37 @@ const Live = () => {
     getCoreRowModel: getCoreRowModel(),
     onRowSelectionChange: setPlayersRowSelection,
     onColumnFiltersChange: setPlayersColumnFilters,
+    onColumnVisibilityChange: handlePlayersColumnVisibilityChange,
     getRowId: (row) => row.player_id,
     state: {
       sorting: playersSorting,
       rowSelection: playersRowSelection,
       columnFilters: playersColumnFilters,
+      columnVisibility: playersColumnVisibility,
     },
   });
 
   // ---------------- LOGS TABLE STATE -----------------
   const [logsFiltering, setLogsFiltering] = useState([]);
+  const [logsTableConfig, setLogsTableConfig] = useStorageState(
+    localStorageConfig.LIVE_LOGS_TABLE_CONFIG.key,
+    localStorageConfig.LIVE_LOGS_TABLE_CONFIG.defaultValue
+  );
+
+  const logsColumnVisibility = logsTableConfig.columnVisibility;
+
+  const [logsPagination, setLogsPagination] = useState({
+    pageIndex: 0,
+    pageSize: 100,
+  });
+
+  const handleLogsColumnVisibilityChange = (columnId, isVisible) => {
+    setLogsTableConfig((prev) => {
+      const columnVisibility = { ...prev.columnVisibility };
+      columnVisibility[columnId] === false ? delete columnVisibility[columnId] : columnVisibility[columnId] = isVisible;
+      return { ...prev, columnVisibility }
+    });
+  };
 
   const logsTable = useReactTable({
     data: logsView.logs,
@@ -153,14 +194,13 @@ const Live = () => {
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onColumnFiltersChange: setLogsFiltering,
-    initialState: {
-      pagination: {
-        pageIndex: 0,
-        pageSize: 100,
-      },
-    },
+    onColumnVisibilityChange: handleLogsColumnVisibilityChange,
+    onPaginationChange: setLogsPagination,
+    autoResetPageIndex: false,
     state: {
       columnFilters: logsFiltering,
+      columnVisibility: logsColumnVisibility,
+      pagination: logsPagination,
     },
   });
 
@@ -178,7 +218,10 @@ const Live = () => {
   return (
     <Grid container spacing={1}>
       <Grid size={12}>
-        <Header data={gameData}/>
+        <InfoPanel gameData={gameData} playersData={playersData} />
+      </Grid>
+      <Grid size={12}>
+        <Header data={gameData} />
       </Grid>
       <Grid
         size={{
@@ -190,6 +233,7 @@ const Live = () => {
           table={playersTable}
           teamData={teamData}
           selectedPlayers={selectedPlayers}
+          onColumnVisibilityChange={handlePlayersColumnVisibilityChange}
         />
       </Grid>
       <Grid
@@ -203,6 +247,7 @@ const Live = () => {
           logsViewData={logsView}
           searchParams={logsSearchParams}
           setSearchParams={setLogsSearchParams}
+          onColumnVisibilityChange={handleLogsColumnVisibilityChange}
         />
       </Grid>
     </Grid>

@@ -3,6 +3,7 @@ import {
   feedbackCustomizations,
   navigationCustomizations,
   surfacesCustomizations,
+  // inputsCustomizations,
 } from "./customizations";
 
 async function getColorPrimitives(schemeName) {
@@ -48,6 +49,8 @@ export default async function getDefaultTheme(themeComponents, selectedScheme = 
       ...feedbackCustomizations(colors),
       ...navigationCustomizations(colors),
       ...surfacesCustomizations(colors),
+      // This needs to be worked on
+      // ...inputsCustomizations(colors),
       ...themeComponents,
     },
   };

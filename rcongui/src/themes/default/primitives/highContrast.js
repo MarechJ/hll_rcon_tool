@@ -5,68 +5,94 @@ const defaultTheme = createTheme();
 const customShadows = [...defaultTheme.shadows];
 
 export const brand = {
-  50: 'hsl(211, 100%, 98%)',   // Even lighter blue for better contrast
-  100: 'hsl(211, 100%, 95%)',  // Very light blue
-  200: 'hsl(211, 100%, 90%)',  // Light blue
-  300: 'hsl(211, 100%, 75%)',  // Medium light blue
-  400: 'hsl(211, 100%, 55%)',  // Bright blue (#0366d6) - made brighter
-  500: 'hsl(211, 100%, 45%)',  // Medium blue
-  600: 'hsl(211, 100%, 35%)',  // Medium dark blue
-  700: 'hsl(211, 100%, 25%)',  // Dark blue
-  800: 'hsl(211, 100%, 18%)',  // Very dark blue
-  900: 'hsl(211, 100%, 12%)',  // Darkest blue
+  50: 'hsl(0, 0%, 100%)',    // Pure white
+  100: 'hsl(0, 0%, 96%)',
+  200: 'hsl(0, 0%, 92%)',
+  300: 'hsl(0, 0%, 87%)',
+  400: 'hsl(0, 0%, 82%)',
+  500: 'hsl(0, 0%, 77%)',    // Main variant
+  600: 'hsl(0, 0%, 72%)',
+  700: 'hsl(0, 0%, 67%)',
+  800: 'hsl(0, 0%, 62%)',
+  900: 'hsl(0, 0%, 57%)',
 };
 
 export const gray = {
-  50: 'hsl(210, 25%, 99%)',    // Almost white (#fafbfc)
-  100: 'hsl(210, 24%, 95%)',   // Very light (#f0f3f6)
-  200: 'hsl(210, 16%, 90%)',   // Light border (#dde1e5)
-  300: 'hsl(210, 13%, 80%)',   // Muted (#a9b2bb)
-  400: 'hsl(210, 12%, 65%)',   // Secondary text - lighter
-  500: 'hsl(210, 11%, 40%)',   // Primary text - darker
-  600: 'hsl(210, 18%, 25%)',   // Dark text (#1b1f23)
-  700: 'hsl(210, 22%, 20%)',   // Dark background
-  800: 'hsl(210, 25%, 12%)',   // Darker background
-  900: 'hsl(210, 25%, 5%)',    // Darkest background
+  50: 'hsl(0, 0%, 100%)',    // Pure white
+  100: 'hsl(0, 0%, 95%)',    // Very light gray
+  200: 'hsl(0, 0%, 90%)',    // Light gray
+  300: 'hsl(0, 0%, 80%)',    // Medium light gray
+  400: 'hsl(0, 0%, 70%)',    // Medium gray
+  500: 'hsl(0, 0%, 60%)',    // Medium dark gray
+  600: 'hsl(0, 0%, 40%)',    // Dark gray
+  700: 'hsl(0, 0%, 20%)',    // Very dark gray
+  800: 'hsl(0, 0%, 10%)',    // Almost black
+  900: 'hsl(0, 0%, 0%)',     // Pure black
 };
 
 export const green = {
-  50: 'hsl(140, 100%, 98%)',   // Lightest
-  100: 'hsl(140, 70%, 95%)',   // Very light
-  200: 'hsl(140, 70%, 90%)',   // Light (#85e89d)
-  300: 'hsl(140, 70%, 80%)',   // Medium light
-  400: 'hsl(140, 70%, 55%)',   // Bright (#34d058)
-  500: 'hsl(140, 70%, 35%)',   // Medium (#28a745)
-  600: 'hsl(140, 70%, 25%)',   // Medium dark
-  700: 'hsl(140, 70%, 20%)',   // Dark
-  800: 'hsl(140, 70%, 15%)',   // Very dark
-  900: 'hsl(140, 70%, 8%)',    // Darkest
+  50: 'hsl(0, 0%, 96%)',     // Nearly white
+  100: 'hsl(0, 0%, 92%)',
+  200: 'hsl(0, 0%, 87%)',
+  300: 'hsl(0, 0%, 82%)',
+  400: 'hsl(0, 0%, 77%)',
+  500: 'hsl(0, 0%, 72%)',    // Main variant
+  600: 'hsl(0, 0%, 67%)',
+  700: 'hsl(0, 0%, 62%)',
+  800: 'hsl(0, 0%, 57%)',
+  900: 'hsl(0, 0%, 52%)',
 };
 
 export const red = {
-  50: 'hsl(360, 100%, 98%)',   // Lightest
-  100: 'hsl(360, 100%, 95%)',  // Very light
-  200: 'hsl(360, 100%, 90%)',  // Light
-  300: 'hsl(360, 90%, 80%)',   // Medium light (#f97583)
-  400: 'hsl(360, 85%, 65%)',   // Bright (#ea4a5a)
-  500: 'hsl(360, 80%, 45%)',   // Medium (#cb2431)
-  600: 'hsl(360, 75%, 35%)',   // Medium dark
-  700: 'hsl(360, 75%, 25%)',   // Dark
-  800: 'hsl(360, 75%, 15%)',   // Very dark
-  900: 'hsl(360, 75%, 10%)',   // Darkest
+  50: 'hsl(0, 0%, 98%)',     // Nearly white
+  100: 'hsl(0, 0%, 95%)',
+  200: 'hsl(0, 0%, 90%)',
+  300: 'hsl(0, 0%, 85%)',
+  400: 'hsl(0, 0%, 80%)',
+  500: 'hsl(0, 0%, 75%)',    // Main variant
+  600: 'hsl(0, 0%, 70%)',
+  700: 'hsl(0, 0%, 65%)',
+  800: 'hsl(0, 0%, 60%)',
+  900: 'hsl(0, 0%, 55%)',
 };
 
 export const orange = {
-  50: 'hsl(40, 100%, 98%)',    // Lightest
-  100: 'hsl(40, 100%, 95%)',   // Very light
-  200: 'hsl(40, 100%, 90%)',   // Light
-  300: 'hsl(40, 100%, 80%)',   // Medium light (#ffea7f)
-  400: 'hsl(40, 100%, 70%)',   // Bright (#ffdf5d)
-  500: 'hsl(40, 100%, 40%)',   // Medium (#b08800)
-  600: 'hsl(40, 100%, 30%)',   // Medium dark
-  700: 'hsl(40, 100%, 25%)',   // Dark
-  800: 'hsl(40, 100%, 18%)',   // Very dark
-  900: 'hsl(40, 100%, 12%)',   // Darkest
+  50: 'hsl(0, 0%, 97%)',     // Nearly white
+  100: 'hsl(0, 0%, 93%)',
+  200: 'hsl(0, 0%, 88%)',
+  300: 'hsl(0, 0%, 83%)',
+  400: 'hsl(0, 0%, 78%)',
+  500: 'hsl(0, 0%, 73%)',    // Main variant
+  600: 'hsl(0, 0%, 68%)',
+  700: 'hsl(0, 0%, 63%)',
+  800: 'hsl(0, 0%, 58%)',
+  900: 'hsl(0, 0%, 53%)',
+};
+
+export const yellow = {
+  50: 'hsl(0, 0%, 99%)',     // Nearly white
+  100: 'hsl(0, 0%, 94%)',
+  200: 'hsl(0, 0%, 89%)',
+  300: 'hsl(0, 0%, 84%)',
+  400: 'hsl(0, 0%, 79%)',
+  500: 'hsl(0, 0%, 74%)',    // Main variant
+  600: 'hsl(0, 0%, 69%)',
+  700: 'hsl(0, 0%, 64%)',
+  800: 'hsl(0, 0%, 59%)',
+  900: 'hsl(0, 0%, 54%)',
+};
+
+export const blue = {
+  50: 'hsl(0, 0%, 95%)',     // Nearly white
+  100: 'hsl(0, 0%, 91%)',
+  200: 'hsl(0, 0%, 86%)',
+  300: 'hsl(0, 0%, 81%)',
+  400: 'hsl(0, 0%, 76%)',
+  500: 'hsl(0, 0%, 71%)',    // Main variant
+  600: 'hsl(0, 0%, 66%)',
+  700: 'hsl(0, 0%, 61%)',
+  800: 'hsl(0, 0%, 56%)',
+  900: 'hsl(0, 0%, 51%)',
 };
 
 export const getDesignTokens = (mode) => {
@@ -216,65 +242,68 @@ export const getDesignTokens = (mode) => {
 };
 
 export const colorSchemes = {
-  default: {
+  light: {
     palette: {
-      mode: 'light',
       common: {
         black: '#000',
         white: '#fff',
       },
       primary: {
-        light: brand[300],
-        main: brand[500],  // Darker main color for better contrast
-        dark: brand[700],
+        light: brand[400],     // Darker light shade
+        main: brand[600],      // Darker main color
+        dark: brand[800],      // Darker shade
         contrastText: '#fff',
       },
       secondary: {
-        light: gray[200],
-        main: gray[600],  // Darker for better contrast
-        dark: gray[800],
+        light: gray[500],      // Darker light gray
+        main: gray[700],       // Darker medium gray
+        dark: gray[900],       // Darkest gray
         contrastText: '#fff',
       },
       info: {
-        light: brand[200],
-        main: brand[500],  // Darker for better visibility
-        dark: brand[700],
+        light: brand[400],     // Darker light blue
+        main: brand[600],      // Darker medium blue
+        dark: brand[800],      // Darker blue
         contrastText: '#fff',
       },
       warning: {
-        light: orange[200],
-        main: orange[500],  // Darker orange for better contrast
-        dark: orange[700],
-        contrastText: '#000',  // Black text on orange for better readability
+        light: orange[400],    // Darker light orange
+        main: orange[600],     // Darker medium orange
+        dark: orange[800],     // Darker orange
+        contrastText: '#000',
       },
       error: {
-        light: red[200],
-        main: red[500],  // Darker red for better contrast
-        dark: red[700],
+        light: red[400],       // Darker light red
+        main: red[600],        // Darker medium red
+        dark: red[800],        // Darker red
         contrastText: '#fff',
       },
       success: {
-        light: green[200],
-        main: green[500],  // Darker green for better contrast
-        dark: green[700],
+        light: green[400],     // Darker light green
+        main: green[600],      // Darker medium green
+        dark: green[800],      // Darker green
         contrastText: '#fff',
       },
       grey: gray,
-      divider: alpha(gray[400], 0.5),  // More visible divider
+      divider: alpha(gray[400], 0.4),
       background: {
-        default: '#ffffff',  // Pure white background
-        paper: gray[50],     // Very light gray for subtle contrast
+        default: gray[50],     // Very light gray
+        paper: gray[100],      // Light gray
       },
       text: {
-        primary: gray[800],   // Very dark gray for maximum contrast
-        secondary: gray[600], // Darker secondary text
-        disabled: alpha(gray[800], 0.5),
+        primary: gray[900],    // Very dark gray
+        secondary: gray[700],  // Dark gray
+        warning: orange[600],  // Darker warning text
+        red: red[900],
+        orange: orange[900],
+        green: green[900],
+        blue: blue[900],
       },
       action: {
-        active: alpha(gray[900], 0.7),    // More visible active state
+        active: alpha(gray[900], 0.7),
         hover: alpha(gray[200], 0.3),
-        selected: alpha(gray[300], 0.4),   // More visible selected state
-        disabled: alpha(gray[900], 0.4),   // More visible disabled state
+        selected: alpha(gray[300], 0.4),
+        disabled: alpha(gray[900], 0.4),
         disabledBackground: alpha(gray[200], 0.5),
         focus: alpha(gray[300], 0.4),
       },
@@ -282,60 +311,63 @@ export const colorSchemes = {
   },
   dark: {
     palette: {
-      mode: 'dark',
       common: {
         black: '#000',
         white: '#fff',
       },
       primary: {
         light: brand[300],
-        main: brand[400],     // Brighter in dark mode
+        main: brand[400],
         dark: brand[600],
         contrastText: '#fff',
       },
       secondary: {
         light: gray[300],
-        main: gray[400],      // Lighter in dark mode
+        main: gray[400],
         dark: gray[600],
         contrastText: '#000',
       },
       info: {
         light: brand[300],
-        main: brand[400],     // Brighter for dark mode
+        main: brand[400],
         dark: brand[600],
         contrastText: '#fff',
       },
       warning: {
         light: orange[300],
-        main: orange[400],    // Brighter orange for dark mode
+        main: orange[400],
         dark: orange[600],
         contrastText: '#000',
       },
       error: {
         light: red[300],
-        main: red[400],       // Brighter red for dark mode
+        main: red[400],
         dark: red[600],
         contrastText: '#fff',
       },
       success: {
         light: green[300],
-        main: green[400],     // Brighter green for dark mode
+        main: green[400],
         dark: green[600],
         contrastText: '#000',
       },
       grey: gray,
       divider: alpha(gray[400], 0.3),
       background: {
-        default: gray[900],   // Very dark background
-        paper: gray[800],     // Slightly lighter than default
+        default: gray[900],
+        paper: gray[800],
       },
       text: {
-        primary: '#fff',      // Pure white text
-        secondary: gray[200], // Very light gray for secondary
+        primary: '#fff',
+        secondary: gray[200],
         disabled: alpha('#fff', 0.5),
+        red: red[400],
+        orange: orange[400],
+        green: green[400],
+        blue: blue[400],
       },
       action: {
-        active: alpha('#fff', 0.8),     // Very visible active state
+        active: alpha('#fff', 0.8),
         hover: alpha(gray[600], 0.3),
         selected: alpha(gray[600], 0.4),
         disabled: alpha('#fff', 0.3),
@@ -347,7 +379,7 @@ export const colorSchemes = {
 };
 
 export const typography = {
-  fontFamily: 'Roboto, Inter, Arial, sans-serif',
+  fontFamily: 'Inter, sans-serif',
   h1: {
     fontSize: defaultTheme.typography.pxToRem(48),
     fontWeight: 600,
@@ -384,11 +416,12 @@ export const typography = {
     fontWeight: 500,
   },
   body1: {
-    fontSize: defaultTheme.typography.pxToRem(14),
+    fontSize: defaultTheme.typography.pxToRem(16),
+    lineHeight: 1.6,
   },
   body2: {
-    fontSize: defaultTheme.typography.pxToRem(14),
-    fontWeight: 400,
+    fontSize: defaultTheme.typography.pxToRem(16),
+    lineHeight: 1.6,
   },
   caption: {
     fontSize: defaultTheme.typography.pxToRem(12),
