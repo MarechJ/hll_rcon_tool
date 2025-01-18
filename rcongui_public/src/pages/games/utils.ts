@@ -10,7 +10,8 @@ export function getGameDuration(start: string, end: string) {
 }
 
 function isMostlyInfantry( player: PlayerBase ) {
-  return ((player.kills_by_type.armor ?? 0) + (player.kills_by_type.commander ?? 0) + (player.kills_by_type.artillery ?? 0)) / player.kills < 0.3;
+  const nonInfantryKills = (player.kills_by_type.armor ?? 0) + (player.kills_by_type.commander ?? 0) + (player.kills_by_type.artillery ?? 0);
+  return nonInfantryKills / player.kills < 0.25 && nonInfantryKills <= 5;
 }
 
 export const enrichPlayersWithAwards = (game: ScoreboardMapStats) => {
