@@ -13,6 +13,8 @@ from cachetools.func import ttl_cache as cachetools_ttl_cache
 logger = logging.getLogger(__name__)
 
 _REDIS_POOL = None
+# We use the redis database with db number 0 as a shared database amongst all the containers
+_GLOBAL_REDIS_POOL = None
 
 
 class RedisCached:
@@ -134,9 +136,41 @@ class RedisCached:
         #   logger.debug("Cache CLEARED for %s", keys)
 
 
-def get_redis_pool(decode_responses=True):
+def construct_redis_url(db_number: int = 0) -> str:
+    """Allow overriding the database number when creating a redis instance"""
+    host = os.getenv("HLL_REDIS_HOST")
+    port = os.getenv("HLL_REDIS_PORT")
+
+    if not host or not port:
+        raise ValueError(f"HLL_REDIS_HOST and HLL_REDIS_PORT must be set")
+
+    return f"redis://{host}:{port}/{db_number}"
+
+
+def get_global_redis_pool(redis_url: str | None = None, decode_responses=True):
+    global _GLOBAL_REDIS_POOL
+    if redis_url is None:
+        redis_url = construct_redis_url(db_number=0)
+    if not redis_url:
+        return None
+
+    if _GLOBAL_REDIS_POOL is None:
+        logger.info("Global Redis pool initializing")
+        _GLOBAL_REDIS_POOL = redis.ConnectionPool.from_url(
+            redis_url,
+            max_connections=1000,
+            socket_connect_timeout=5,
+            socket_timeout=5,
+            decode_responses=decode_responses,
+        )
+
+    return _GLOBAL_REDIS_POOL
+
+
+def get_redis_pool(redis_url: str | None = None, decode_responses=True):
     global _REDIS_POOL
-    redis_url = os.getenv("HLL_REDIS_URL")
+    if redis_url is None:
+        redis_url = os.getenv("HLL_REDIS_URL")
     if not redis_url:
         return None
 
@@ -153,8 +187,15 @@ def get_redis_pool(decode_responses=True):
     return _REDIS_POOL
 
 
-def get_redis_client(decode_responses=True):
-    pool = get_redis_pool(decode_responses)
+def get_redis_client(
+    redis_url: str | None = None, decode_responses=True, global_pool: bool = False
+):
+    if global_pool:
+        pool = get_global_redis_pool(
+            redis_url=redis_url, decode_responses=decode_responses
+        )
+    else:
+        pool = get_redis_pool(redis_url=redis_url, decode_responses=decode_responses)
     return redis.Redis(connection_pool=pool)
 
 

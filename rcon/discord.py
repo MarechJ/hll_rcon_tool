@@ -8,7 +8,6 @@ from discord_webhook import DiscordWebhook
 from pydantic import HttpUrl
 
 from discord.utils import escape_markdown
-from rcon.discord_asyncio import DiscordAsyncio
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.utils import (
     DISCORD_AUDIT_FORMAT,
@@ -20,7 +19,13 @@ from rcon.user_config.webhooks import (
     CameraWebhooksUserConfig,
     WatchlistWebhooksUserConfig,
 )
-from rcon.utils import dict_differences
+from rcon.utils import dict_differences, get_server_number
+from rcon.webhook_service import (
+    enqueue_message,
+    WebhookMessage,
+    WebhookType,
+    WebhookMessageType,
+)
 
 
 @lru_cache
@@ -32,8 +37,8 @@ def parse_webhook_url(url):
     if not url:
         return None, None
     resp = requests.get(url, timeout=10).json()
-    _id = int(resp["id"])
-    token = resp["token"]
+    _id = resp.get("id")
+    token = resp.get("token")
     return _id, token
 
 
@@ -45,7 +50,7 @@ def make_hook(webhook_url) -> DiscordWebhook | None:
     if not all([webhook_id, webhook_token]):
         return None
 
-    return DiscordWebhook(url=webhook_url)
+    return DiscordWebhook(url=str(webhook_url))
 
 
 def make_allowed_mentions(user_ids, role_ids):
@@ -149,10 +154,15 @@ def send_to_discord_audit(
             if url
         ]
 
-        # use DiscordAsyncio to send webhooks asynchronously
-        # we get a future, not a response, but i don't see code using the responses
         for hook in dh_webhooks:
-            DiscordAsyncio().send_webhook(hook)
+            enqueue_message(
+                message=WebhookMessage(
+                    payload=hook.json,
+                    webhook_type=WebhookType.DISCORD,
+                    message_type=WebhookMessageType.AUDIT,
+                    server_number=int(get_server_number()),
+                )
+            )
     except:
         logger.exception("Can't send audit log")
         if not silent:

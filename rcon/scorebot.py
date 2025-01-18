@@ -236,6 +236,7 @@ def get_stats(stats_url: str) -> list[PlayerStatsType]:
     return stats
 
 
+# TODO: update this once the webhook service supports editing existing messages
 def send_or_edit_message(
     session: Session,
     webhook: discord.SyncWebhook,
