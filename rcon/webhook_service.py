@@ -71,7 +71,7 @@ def get_shared_lock() -> asyncio.Lock:
     global _SHARED_LOCK
     if _SHARED_LOCK is None:
         _SHARED_LOCK = asyncio.Lock()
-        logger.debug(f"Creating shared lock {_SHARED_LOCK}")
+        logger.debug("Creating shared lock %s", _SHARED_LOCK)
 
     return _SHARED_LOCK
 
@@ -246,7 +246,7 @@ def get_global_rate_limit_reset_after(red: redis.StrictRedis) -> datetime | None
         raw: bytes = red.get(GLOBAL_RATE_LIMIT_RESET_AFTER)  # type: ignore
         limit = datetime.fromtimestamp(float(raw.decode()))
     except (AttributeError, TypeError) as e:
-        logger.debug(f"Unable to parse the global rate limit reset after time: {e}")
+        logger.debug("Unable to parse the global rate limit reset after time: %s", e)
 
     return limit
 
@@ -279,7 +279,7 @@ def set_webhook_rate_limit_bucket(
     hash_name: str = WH_ID_TO_RATE_LIMIT_BUCKET,
 ) -> None:
     """Associate a queue ID with its rate limit bucket"""
-    logger.debug(f"Setting {queue_id} to {bucket_id}")
+    logger.debug("Setting %s to %s", queue_id, bucket_id)
     red.hset(hash_name, queue_id, bucket_id)
 
 
@@ -318,14 +318,14 @@ def set_bucket_data(
     red: redis.StrictRedis, bucket: DiscordRateLimitData, lock: asyncio.Lock
 ) -> None:
     """Set the bucket data and lock using the bucket ID"""
-    logger.debug(f"Updating bucket data: {bucket}")
+    logger.debug("Updating bucket data: %s", bucket)
     global _RATE_LIMIT_BUCKETS
 
     if bucket.id:
         _RATE_LIMIT_BUCKETS[bucket.id] = lock
         set_rate_limit_bucket_data(red=red, bucket=bucket)
     else:
-        logger.error(f"Received a None bucket ID: {bucket}")
+        logger.error("Received a None bucket ID: %s", bucket)
 
 
 def set_webhook_error(
@@ -384,7 +384,7 @@ def enqueue_message(
 
     Queues are independently tracked by the webhook ID (Discord snowflake)
     """
-    logger.debug(f"Enqueuing {message}")
+    logger.debug("Enqueuing %s", message)
 
     # Allows easier usage for enqueing from different services/sections of CRCON
     if red is None:
@@ -422,7 +422,7 @@ async def dequeue_message(
         bucket_data: DiscordRateLimitData,
         lock: asyncio.Lock,
     ):
-        logger.debug(f"Dequeueing from {queue_id}")
+        logger.debug("Dequeueing from %s", queue_id)
         raw_message: bytes = red.lpop(queue_id)  # type: ignore
         message = WebhookMessage.model_validate_json(orjson.loads(raw_message))
 
@@ -444,14 +444,6 @@ async def dequeue_message(
         bucket_id = bucket_data.id[-4:] if bucket_data and bucket_data.id else "N/A"
         rem_reqs = bucket_data.remaining_requests if bucket_data else None
 
-        logger.debug(
-            f"{wh.content} shared_lock={lock==get_shared_lock()} bucket_id={bucket_id} "
-            f"rem_reqs={rem_reqs} reset_after={bucket_data.reset_after_secs} "
-            f"reset_ts={bucket_data.reset_timestamp} reset_ts_header={res.headers[X_RATELIMIT_RESET]} "
-            f"reset_ts_header={datetime.fromtimestamp(float(res.headers[X_RATELIMIT_RESET])).time()}"
-            f"now={datetime.now().time()}"
-        )
-
         if lock == get_shared_lock():
             # Once we get a response for a webhook we know what rate limit bucket it's in and we can
             # associate it with a lock so that all shared limits use the same lock and don't process
@@ -459,8 +451,7 @@ async def dequeue_message(
             # TODO: what if we add another webhook after that then shares a rate limit bucket with one
             # that's already been created, will it find it?
             lock = asyncio.Lock()
-            logger.debug(f"Created {lock} for {queue_id}")
-            logger.debug(f"{res.headers=}")
+            logger.debug("Created %s for %s", lock, queue_id)
 
         if res.status_code == 429:
             update_bucket_rate_limit(
@@ -476,11 +467,15 @@ async def dequeue_message(
                 except TypeError:
                     retry_after_secs = DEFAULT_GLOBAL_RETRY_AFTER_SECS
                     logger.error(
-                        f"Unable to parse {body.get('retry_after')}, falling back to {retry_after_secs} seconds"
+                        "Unable to parse retry_after: %s, falling back to %s seconds",
+                        body.get("retry_after"),
+                        retry_after_secs,
                     )
                 discord_message = body.get("message")
                 logger.warning(
-                    f"Your IP is currently globally rate limited by discord: Retrying after {datetime.now() + timedelta(seconds=retry_after_secs)}, {discord_message}"
+                    "Your IP is currently globally rate limited by discord: Retrying after %s, %s",
+                    datetime.now() + timedelta(seconds=retry_after_secs),
+                    discord_message,
                 )
                 set_global_rate_limit_reset_after(
                     red=red,
@@ -490,11 +485,15 @@ async def dequeue_message(
                 )
 
             logger.warning(
-                f"Rate limited HTTP {res.status_code} for {wh.id} {message.webhook_type} resets after {datetime.fromtimestamp(bucket_data.reset_timestamp)} "
+                "Rate limited HTTP %s for %s %s resets after %s",
+                res.status_code,
+                wh.id,
+                message.webhook_type,
+                datetime.fromtimestamp(bucket_data.reset_timestamp),
             )
 
             if not message.discardable:
-                logger.info(f"Re-enqueing {message.payload['id']} due to rate limit")
+                logger.info("Re-enqueing %s due to rate limit", message.payload["id"])
                 message.retry_attempts += 1
                 red.lpush(queue_id, orjson.dumps(message.model_dump_json()))  # type: ignore
                 red.ltrim(queue_id, 0, WH_MAX_QUEUE_LENGTH - 1)
@@ -543,26 +542,26 @@ async def dequeue_message(
             bucket_data=bucket_data,
             lock=lock,
         )
-        logger.debug(f"finished with {lock}")
+        logger.debug("finished with %s", lock)
 
 
 def get_all_queue_keys(
     red: redis.StrictRedis | None = None, prefix: str = PREFIX
 ) -> list[str]:
     """Retrieve every queue key in redis that matches the service prefix"""
-    logger.debug(f"Getting all queue IDs from {PREFIX}")
+    logger.debug("Getting all queue IDs from %s", PREFIX)
     if red is None:
         red = get_redis_client(decode_responses=False, global_pool=True)
 
     queue_ids: list[str] = []
     cursor, keys = red.scan(match=f"{prefix}*", _type="list")  # type: ignore
     idx = 0
-    logger.debug(f"{cursor=} len(keys)={len(keys)}")
+    logger.debug("cursor=%s len(keys)=%s", cursor, len(keys))
     queue_ids.extend(keys)
     while cursor is not None and cursor > 0:
         idx += 1
         cursor, keys = red.scan(match=f"{prefix}*", _type="list")  # type: ignore
-        logger.debug(f"{idx} {cursor=} len(keys)={len(keys)}")
+        logger.debug("%s cursor=%s len(keys)=%s", idx, cursor, len(keys))
         queue_ids.extend(keys)
 
     return [queue_id.decode() for queue_id in queue_ids]  # type: ignore
@@ -579,7 +578,7 @@ def get_all_queue_keys_not_empty(
     red: redis.StrictRedis, prefix: str = PREFIX
 ) -> list[str]:
     """Scan for all the queues (identified by prefix)"""
-    logger.debug(f"Getting all queue IDs with items from {PREFIX}")
+    logger.debug("Getting all queue IDs with items from %s", PREFIX)
 
     return [queue_id for queue_id in get_all_queue_keys(red=red, prefix=prefix) if red.llen(queue_id) > 0]  # type: ignore
 
@@ -619,7 +618,7 @@ def get_queue_overview(
 
 def get_next_queue_id(queue_ids: list[str]) -> str | None:
     """Get the next queue to process (if any) and re-add queue to the end"""
-    logger.debug(f"Getting a random queue ID from {queue_ids}")
+    logger.debug("Getting a random queue ID from %s", queue_ids)
     # People can add/remove webhooks in CRCON at any point, after we've scanned Redis
     # for queues, pick one at random instead of trying to track the previous one we did
     # this should be random enough that over time no queue gets priority and if any
@@ -772,7 +771,7 @@ async def main():
 
     # Grab the top message off each queue and send them off
 
-    logger.debug(f"Starting webhook service")
+    logger.debug("Starting webhook service")
     url = construct_redis_url()
     red = get_redis_client(redis_url=url, decode_responses=False, global_pool=True)
 
@@ -782,9 +781,9 @@ async def main():
     while True:
         # Check each loop to pick up new queues that have been added since last iteration
         queue_ids = get_all_queue_keys_not_empty(red=red)
-        logger.debug(f"{queue_ids=}")
+        logger.debug("queue_ids=%s", queue_ids)
         queue_id: str | None = get_next_queue_id(queue_ids=queue_ids)
-        logger.debug(f"{queue_id=}")
+        logger.debug("queue_id=%s", queue_id)
         bucket_data: DiscordRateLimitData | None = None
 
         if queue_id:
@@ -794,13 +793,10 @@ async def main():
             if bucket_id:
                 bucket_data, lock = get_bucket_lock(red=red, bucket_id=bucket_id)
                 if lock and lock.locked():
-                    logger.debug(f"{lock} locked")
+                    logger.debug("%s locked", lock)
                     await asyncio.sleep(0.5)
                     continue
                 ts = int(datetime.now(tz=timezone.utc).timestamp())
-                logger.debug(
-                    f"{bucket_data.id} {bucket_data.remaining_requests} {bucket_data.reset_timestamp} {bucket_data.remaining_requests is not None} {bucket_data.remaining_requests == 0} {bucket_data.reset_timestamp is not None} {ts < bucket_data.reset_timestamp if bucket_data.reset_timestamp else 'N/A'} "
-                )
 
                 # Even with Discords headers, and using a local rate limit, I still have issues with
                 # hooks getting rate limited during testing, if we rate limit a bucket, pad it an extra
@@ -820,15 +816,18 @@ async def main():
                 ):
                     if not continue_logged:
                         logger.debug(
-                            f"Skipping {queue_id} due to rate limit now={ts} reset_after={bucket_data.reset_timestamp}"
+                            "Skipping %s due to rate limit now=%s reset_after=%s",
+                            queue_id,
+                            ts,
+                            bucket_data.reset_timestamp,
                         )
                         continue_logged = True
                     continue
 
             continue_logged = False
-            logger.debug(f"Starting asyncio task for {queue_id}")
+            logger.debug("Starting asyncio task for %s", queue_id)
             if lock is None or lock == get_shared_lock():
-                logger.debug(f"using shared lock")
+                logger.debug("using shared lock")
                 lock = get_shared_lock()
                 task = asyncio.create_task(
                     dequeue_message(
@@ -839,10 +838,10 @@ async def main():
                         lock=lock,
                     )
                 )
-                logger.debug(f"Waiting for {task}")
+                logger.debug("Waiting for %s", task)
                 await task
             else:
-                logger.debug(f"using bucket lock")
+                logger.debug("using bucket lock")
                 task = asyncio.create_task(
                     dequeue_message(
                         red=red,
@@ -851,10 +850,6 @@ async def main():
                         bucket_data=bucket_data,
                         lock=lock,
                     )
-                )
-
-                logger.debug(
-                    f"started queue_id={queue_id[-4:]} bucket_id={bucket_data.id[-4:] if bucket_data and bucket_data.id else 'N/A'} rem_reqs={bucket_data.remaining_requests  if bucket_data else None} {task.get_name()} lock={str(hash(lock))[-4:]}"
                 )
 
         await asyncio.sleep(1.0)
