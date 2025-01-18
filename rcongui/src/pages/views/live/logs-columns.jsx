@@ -22,9 +22,17 @@ const playerNameFilter = (row, columnId, filterValue = []) => {
 
 const actionFilter = (row, columnId, filterValue = []) => {
   if (!filterValue) return true;
-  const anyStartsWith = filterValue.some((action) =>
-    row.original.action.startsWith(action)
-  );
+  const anyStartsWith = filterValue.some((action) => {
+    switch (action) {
+      case "CHAT":
+      case "ADMIN":
+      case "VOTE":
+      case "MATCH":
+        return row.original.action.startsWith(action);
+      default:
+        return row.original.action === action;
+    }
+  });
   return anyStartsWith;
 };
 
@@ -70,6 +78,9 @@ export const logsColumns = [
         </Box>
       );
     },
+    meta: {
+      variant: "short",
+    },
   },
   {
     header: "This Player",
@@ -96,7 +107,7 @@ export const logsColumns = [
     },
     filterFn: playerNameFilter,
     meta: {
-      variant: "name",
+      variant: "action",
     },
   },
   {
@@ -141,10 +152,18 @@ export const logsColumns = [
   },
   {
     header: "Message",
+    id: "message_colored",
+    accessorKey: "message",
+    cell: ({ row }) => {
+      return <LogMessage log={row.original} colored={true} />;
+    },
+  },
+  {
+    header: "Message",
     id: "message",
     accessorKey: "message",
     cell: ({ row }) => {
-      return <LogMessage log={row.original} />;
+      return <LogMessage log={row.original} colored={false} />;
     },
   },
   {
@@ -154,6 +173,14 @@ export const logsColumns = [
     meta: {
       size: "full",
       variant: "content",
+    },
+  },
+  {
+    header: "Short Message",
+    id: "short_message",
+    accessorKey: "message",
+    cell: ({ row }) => {
+      return <LogMessage log={row.original} colored={false} short={true} />;
     },
   },
 ];

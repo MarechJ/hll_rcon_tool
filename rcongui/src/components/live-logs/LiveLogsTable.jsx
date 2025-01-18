@@ -4,6 +4,25 @@ import { StyledTd, StyledTh, StyledTr } from "../table/styles";
 import { Box } from "@mui/material";
 import { StyledLogsTable, StyledLogsTr } from "./styles";
 
+const getTRClass = (row, config) => {
+  if (!config.highlighted) return null;
+  const rowAction = row.original.action;
+  let className = null;
+  config.actions.forEach((action) => {
+    switch (action) {
+      case "CHAT":
+      case "ADMIN":
+      case "VOTE":
+      case "MATCH":
+        className = rowAction.startsWith(action) ? "highlighted" : null;
+        break;
+      default:
+        className = rowAction === action ? "highlighted" : null;
+    }
+  });
+  return className;
+};
+
 const LiveLogsTable = ({ table, config = {} }) => {
   return (
     <Box
@@ -41,7 +60,7 @@ const LiveLogsTable = ({ table, config = {} }) => {
         <tbody>
           {table.getRowModel().rows.map((row) => {
             return (
-                <StyledLogsTr key={row.id} className={config.actions.includes(row.original.action) ? "highlighted" : null}>
+                <StyledLogsTr key={row.id} className={getTRClass(row, config)}>
                   {row.getVisibleCells().map((cell) => (
                     <StyledTd
                       key={cell.id}
