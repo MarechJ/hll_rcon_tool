@@ -14,7 +14,9 @@ def test_no_mentions():
     config = ChatWebhooksUserConfig(
         hooks=[
             DiscordMentionWebhook(
-                url=HttpUrl("http://example.com"), user_mentions=["<@1212>"]
+                url=HttpUrl("http://example.com"),
+                user_mentions=["<@1212>"],
+                role_mentions=[],
             )
         ],
         allow_mentions=True,
@@ -36,7 +38,9 @@ def test_chat_mentions_are_escaped():
     config = ChatWebhooksUserConfig(
         hooks=[
             DiscordMentionWebhook(
-                url=HttpUrl("http://example.com"), user_mentions=["<@1212>"]
+                url=HttpUrl("http://example.com"),
+                user_mentions=["<@1212>"],
+                role_mentions=[],
             )
         ],
         allow_mentions=False,
@@ -74,7 +78,9 @@ def test_mentions_are_not_escaped():
     config = ChatWebhooksUserConfig(
         hooks=[
             DiscordMentionWebhook(
-                url=HttpUrl("http://example.com"), user_mentions=["<@1212>"]
+                url=HttpUrl("http://example.com"),
+                user_mentions=["<@1212>"],
+                role_mentions=[],
             )
         ],
         allow_mentions=True,
@@ -98,7 +104,9 @@ def test_admin_pings_mention_start():
         trigger_words=["!admin"],
         hooks=[
             DiscordMentionWebhook(
-                url=HttpUrl("http://example.com"), user_mentions=["<@1212>"]
+                url=HttpUrl("http://example.com"),
+                user_mentions=["<@1212>"],
+                role_mentions=[],
             )
         ],
     )
@@ -123,7 +131,9 @@ def test_admin_pings_mention_middle():
         trigger_words=["!admin"],
         hooks=[
             DiscordMentionWebhook(
-                url=HttpUrl("http://example.com"), user_mentions=["<@1212>"]
+                url=HttpUrl("http://example.com"),
+                user_mentions=["<@1212>"],
+                role_mentions=[],
             )
         ],
     )
@@ -148,7 +158,9 @@ def test_admin_pings_contains_numbers():
         trigger_words=["testword123"],
         hooks=[
             DiscordMentionWebhook(
-                url=HttpUrl("http://example.com"), user_mentions=["<@1212>"]
+                url=HttpUrl("http://example.com"),
+                user_mentions=["<@1212>"],
+                role_mentions=[],
             )
         ],
     )
