@@ -26,7 +26,7 @@ from rcon.automods.models import (
 )
 from rcon.automods.num_or_inf import num_or_inf
 from rcon.cache_utils import get_redis_client
-from rcon.game_logs import on_match_start
+from rcon.logs.loop import on_match_start
 from rcon.maps import GameMode, parse_layer
 from rcon.rcon import StructuredLogLineType
 from rcon.types import GameStateType, GetDetailedPlayer, Roles

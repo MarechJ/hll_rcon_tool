@@ -6,11 +6,12 @@ from datetime import timedelta
 from typing import Set
 
 from rq import Queue
-from rq.job import Job
+from rq.job import Job, Retry
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
 from rcon.cache_utils import get_redis_client
+from rcon.game_logs import get_historical_logs_records
 from rcon.models import Maps, PlayerStats, enter_session
 from rcon.player_history import get_player
 from rcon.scoreboard import TimeWindowStats
@@ -99,7 +100,11 @@ def get_or_create_map(sess, start, end, server_number, map_name):
 
 def record_stats_worker(map_info: MapInfo):
     queue = get_queue()
-    queue.enqueue_in(timedelta(seconds=60 * 6), record_stats, map_info)
+    # tries to record stats instantly and retries up to 5 times, e.g. when the game logs are
+    # not yet saved in the database.
+    # One possible expected exception occurs when the game logs are not yet dumped into the db. This retries should
+    # therefore be higher than the default dump interval of logs in LogRecorder
+    queue.enqueue(record_stats, map_info, retry=Retry(max=15, interval=30))
 
 
 def record_stats(map_info: MapInfo):
@@ -107,8 +112,9 @@ def record_stats(map_info: MapInfo):
     try:
         _record_stats(map_info)
         logger.info("Done recording stats for %s", map_info)
-    except Exception:
+    except Exception as e:
         logger.exception("Unexpected error while recording stats for %s", map_info)
+        raise e
 
 
 def _record_stats(map_info: MapInfo):
@@ -137,6 +143,34 @@ def record_stats_from_map(
     sess: Session, map_: Maps, ps: dict[str, PlayerStat] = (), force: bool = False
 ):
     stats = TimeWindowStats()
+    # A game can either be ended by a MATCH ENDED log event (when the game ended normally after a 5-0 win or the
+    # match time is up) or when a new MATCH STARTED log event occurred (e.g. on a map change or objective change).
+    # If both did not happen in the historical logs, assume that the LogRecorder did not yet dumped the logs into the
+    # database. An exception will automatically re-enqueue the record stats task.
+    match_ended = get_historical_logs_records(
+        sess,
+        from_=map_.start,
+        till=map_.end,
+        time_sort="asc",
+        action='MATCH ENDED',
+        exact_action=True,
+        server_filter=str(map_.server_number),
+        limit=1,
+    )
+    match_started = get_historical_logs_records(
+        sess,
+        from_=map_.start,
+        # to catch the possibly second MATCH START event, add a random 30 seconds to the end date of the match
+        till=map_.end + datetime.timedelta(seconds=30),
+        time_sort="asc",
+        action='MATCH STARTED',
+        exact_action=True,
+        server_filter=str(map_.server_number),
+        limit=2,
+    )
+    if len(match_ended) == 0 and len(match_started) < 2:
+        raise Exception('match logs are not yet available, skipping recording stats')
+
     player_stats = stats.get_players_stats_at_time(
         from_=map_.start, until=map_.end, server_number=str(map_.server_number)
     )
