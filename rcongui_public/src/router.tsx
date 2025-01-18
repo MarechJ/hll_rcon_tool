@@ -1,6 +1,6 @@
 import { createBrowserRouter, RouteObject } from 'react-router'
 import ErrorPage from './components/error-page'
-import HomePage from './pages/home'
+import GameLiveLayout from './pages/home/layout'
 import Layout from './components/layout'
 import GamesLayout from './pages/games/layout'
 import GamesList from './pages/games'
@@ -12,6 +12,9 @@ import { clientLoader as layoutClientLoader } from './components/layout/clientLo
 import { clientLoader as homeClientLoader } from './pages/home/clientLoader'
 import { clientLoader as gameClientLoader } from './pages/games/clientLoader'
 import { clientLoader as gameDetailClientLoader } from './pages/games/[id]/clientLoader'
+import GameDetailLive from "@/pages/home";
+import React from "react";
+import Streaming from "@/pages/home/streaming";
 
 export const routerObjects: RouteObject[] = [
   {
@@ -21,10 +24,20 @@ export const routerObjects: RouteObject[] = [
     loader: layoutClientLoader(queryClient),
     children: [
       {
-        index: true,
+        path: '/',
         errorElement: <ErrorPage />,
-        element: <HomePage />,
+        element: <GameLiveLayout />,
         loader: homeClientLoader(queryClient),
+        children: [
+          {
+            index: true,
+            element: <GameDetailLive />,
+          },
+          {
+            path: '/streaming',
+            element: <Streaming />,
+          },
+        ]
       },
       {
         path: '/games',
