@@ -71,7 +71,7 @@ def get_player_profile_by_ids(sess, ids):
         .options(
             selectinload(PlayerID.names),
             selectinload(PlayerID.received_actions),
-            selectinload(PlayerID.b),
+            selectinload(PlayerID.blacklists),
             selectinload(PlayerID.flags),
             selectinload(PlayerID.watchlist),
             selectinload(PlayerID.steaminfo),
