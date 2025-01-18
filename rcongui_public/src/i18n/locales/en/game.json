@@ -44,7 +44,10 @@
         "diff": "Difference",
         "status": "Status",
         "killsPerMinute": "KPM",
-        "deathsPerMinute": "DPM"
+        "deathsPerMinute": "DPM",
+        "general":  "General",
+        "advanced": "Advanced",
+        "ingame": "Ingame"
     },
     "weaponType": {
       "sniper": "Sniper",
@@ -73,7 +76,8 @@
     "score": {
         "killstreak": "Killstreak",
         "deathstreak": "Deathstreak",
-        "teamkills": "Team Kills",
+        "teamkills": "Teamkills",
+        "deathsByTeam": "Deaths by teamkill",
         "k/d": "K/D"
     }
 }

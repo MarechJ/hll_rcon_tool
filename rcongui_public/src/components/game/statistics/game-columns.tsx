@@ -1,7 +1,7 @@
 'use client'
 
-import {Column, ColumnDef } from '@tanstack/react-table'
-import { Player, PlayerTeamAssociation, PlayerWithStatus, TeamEnum } from '@/types/player'
+import {Column, ColumnDef} from '@tanstack/react-table'
+import {Player, PlayerTeamAssociation, PlayerWithStatus} from '@/types/player'
 import {IconHeader as Header} from './column-header'
 import {Status} from './player-status'
 import {isPlayerWithStatus} from './player/utils'
@@ -10,7 +10,8 @@ import {useTranslation} from 'react-i18next'
 import {TeamIndicator} from '@/components/game/statistics/team-indicator'
 import {WeaponTypeBar} from "@/components/game/statistics/weapon-type-bar";
 import {getTeamFromAssociation} from "@/components/game/statistics/utils";
-import {ScaleIcon} from "lucide-react";
+import {HeartCrackIcon, HeartOffIcon, ScaleIcon, SkullIcon, ZapIcon} from "lucide-react";
+import {ColumnCategory} from "@/lib/tables";
 
 const threeDigitsWidth = 40
 const fourDigitsWidth = 50
@@ -38,7 +39,7 @@ function pointColumns(completed: boolean): ColumnDef<Player | PlayerWithStatus>[
     ...completed ? [killCategoryColumn()] : [],
     {
       id: 'kills',
-      meta: { label: t('playersTable.kills')},
+      meta: { label: t('playersTable.kills'), category: ColumnCategory.GENERAL },
       accessorKey: 'kills',
       size: threeDigitsWidth,
       header: function KillsHeader({ column }) {
@@ -57,10 +58,10 @@ function pointColumns(completed: boolean): ColumnDef<Player | PlayerWithStatus>[
     },
     {
       id: 'kill_death_ratio',
-      meta: { label: t('score.k/d')},
+      meta: { label: t('score.k/d'), category: ColumnCategory.GENERAL },
       accessorKey: 'kill_death_ratio',
       size: fourDigitsWidth,
-      header: function DeathsHeader({ column }) {
+      header: function KDHeader({ column }) {
         const { t } = useTranslation('game')
         return (
           <Header
@@ -82,7 +83,7 @@ function pointColumns(completed: boolean): ColumnDef<Player | PlayerWithStatus>[
     },
     {
       id: 'deaths',
-      meta: { label: t('playersTable.deaths')},
+      meta: { label: t('playersTable.deaths'), category: ColumnCategory.GENERAL },
       accessorKey: 'deaths',
       size: fourDigitsWidth,
       header: function DeathsHeader({ column }) {
@@ -102,7 +103,7 @@ function pointColumns(completed: boolean): ColumnDef<Player | PlayerWithStatus>[
     ...completed ? [deathCategoryColumn()] : [],
     {
       id: 'kills_per_minute',
-      meta: { label: t('playersTable.killsPerMinute')},
+      meta: { label: t('playersTable.killsPerMinute'), category: ColumnCategory.ADVANCED},
       accessorKey: 'kills_per_minute',
       header: function KpmHeader({ column }) {
         const { t } = useTranslation('game')
@@ -112,7 +113,7 @@ function pointColumns(completed: boolean): ColumnDef<Player | PlayerWithStatus>[
     },
     {
       id: 'deaths_per_minute',
-      meta: { label: t('playersTable.deathsPerMinute')},
+      meta: { label: t('playersTable.deathsPerMinute'), category: ColumnCategory.ADVANCED },
       accessorKey: 'deaths_per_minute',
       header: function KpmHeader({ column }) {
         const { t } = useTranslation('game')
@@ -121,8 +122,84 @@ function pointColumns(completed: boolean): ColumnDef<Player | PlayerWithStatus>[
       size: 20,
     },
     {
+      id: 'kills_streak',
+      meta: { label: t('score.killstreak'), category: ColumnCategory.ADVANCED },
+      accessorKey: 'kills_streak',
+      header: function KillStreakHeader({ column }) {
+        const { t } = useTranslation('game')
+        return (
+          <Header
+            icon={<ZapIcon/>}
+            desc={t('score.killstreak')}
+            className={"text-right"}
+            onClick={() => {
+              column.toggleSorting(column.getIsSorted() !== 'desc')
+            }}
+          />
+        )
+      },
+      size: 20,
+    },
+    {
+      id: 'deaths_without_kill_streak',
+      meta: { label: t('score.deathstreak'), category: ColumnCategory.ADVANCED },
+      accessorKey: 'deaths_without_kill_streak',
+      header: function KillStreakHeader({ column }) {
+        const { t } = useTranslation('game')
+        return (
+          <Header
+            icon={<SkullIcon/>}
+            desc={t('score.deathstreak')}
+            className={"text-right"}
+            onClick={() => {
+              column.toggleSorting(column.getIsSorted() !== 'desc')
+            }}
+          />
+        )
+      },
+      size: 20,
+    },
+    {
+      id: 'teamkills',
+      meta: { label: t('score.teamkills'), category: ColumnCategory.ADVANCED },
+      accessorKey: 'teamkills',
+      header: function KillStreakHeader({ column }) {
+        const { t } = useTranslation('game')
+        return (
+          <Header
+            icon={<HeartOffIcon/>}
+            desc={t('score.teamkills')}
+            className={"text-right"}
+            onClick={() => {
+              column.toggleSorting(column.getIsSorted() !== 'desc')
+            }}
+          />
+        )
+      },
+      size: 20,
+    },
+    {
+      id: 'deaths_by_tk',
+      meta: { label: t('score.deathsByTeam'), category: ColumnCategory.ADVANCED },
+      accessorKey: 'deaths_by_tk',
+      header: function KillStreakHeader({ column }) {
+        const { t } = useTranslation('game')
+        return (
+          <Header
+            icon={<HeartCrackIcon/>}
+            desc={t('score.deathsByTeam')}
+            className={"text-right"}
+            onClick={() => {
+              column.toggleSorting(column.getIsSorted() !== 'desc')
+            }}
+          />
+        )
+      },
+      size: 20,
+    },
+    {
       id: 'combat',
-      meta: { label: t('playersTable.combat')},
+      meta: { label: t('playersTable.combat'), category: ColumnCategory.INGAME},
       accessorKey: 'combat',
       size: fourDigitsWidth,
       header: function CombatHeader({ column }) {
@@ -141,7 +218,7 @@ function pointColumns(completed: boolean): ColumnDef<Player | PlayerWithStatus>[
     },
     {
       id: 'offense',
-      meta: { label: t('playersTable.offense')},
+      meta: { label: t('playersTable.offense'), category: ColumnCategory.INGAME },
       accessorKey: 'offense',
       size: fourDigitsWidth,
       header: function OffenseHeader({ column }) {
@@ -160,7 +237,7 @@ function pointColumns(completed: boolean): ColumnDef<Player | PlayerWithStatus>[
     },
     {
       id: 'defense',
-      meta: { label: t('playersTable.defense')},
+      meta: { label: t('playersTable.defense'), category: ColumnCategory.INGAME },
       accessorKey: 'defense',
       size: fourDigitsWidth,
       header: function DefenseHeader({ column }) {
@@ -179,7 +256,7 @@ function pointColumns(completed: boolean): ColumnDef<Player | PlayerWithStatus>[
     },
     {
       id: 'support',
-      meta: { label: t('playersTable.support')},
+      meta: { label: t('playersTable.support'), category: ColumnCategory.INGAME },
       accessorKey: 'support',
       size: fourDigitsWidth,
       header: function SupportHeader({ column }) {
@@ -239,7 +316,7 @@ const teamColumn = (): ColumnDef<Player | PlayerWithStatus> => {
 
   return {
     id: 'team',
-    meta: { label: t('playersTable.team')},
+    meta: { label: t('playersTable.team'), category: ColumnCategory.GENERAL },
     accessorKey: 'team',
     header: function TeamHeader() {
       const {t} = useTranslation('game')
@@ -267,7 +344,7 @@ const killCategoryColumn = (): ColumnDef<Player | PlayerWithStatus> => {
 
   return {
     id: 'kills_by_category',
-    meta: { label: t('playersTable.killsByCategory')},
+    meta: { label: t('playersTable.killsByCategory'), category: ColumnCategory.GENERAL },
     accessorKey: 'kills_by_category',
     header: function KillCategoryHeader() {
       const {t} = useTranslation('game')
@@ -286,7 +363,7 @@ const deathCategoryColumn = (): ColumnDef<Player | PlayerWithStatus> => {
 
   return {
     id: 'deaths_by_category',
-    meta: { label: t('playersTable.deathsByCategory')},
+    meta: { label: t('playersTable.deathsByCategory'), category: ColumnCategory.GENERAL },
     accessorKey: 'deaths_by_category',
     header: function DeathCategoryHeader() {
       const {t} = useTranslation('game')
