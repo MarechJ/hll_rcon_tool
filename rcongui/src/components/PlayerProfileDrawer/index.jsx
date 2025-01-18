@@ -3,7 +3,6 @@ import {
   IconButton,
   Typography,
   Drawer,
-  Toolbar,
   Divider,
   Avatar,
   Tabs,
@@ -25,7 +24,7 @@ import {
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
 import { TabContext, TabPanel } from "@mui/lab";
-import { styled, useMediaQuery } from "@mui/system";
+import { styled } from "@mui/material/styles";
 import { ActionMenu } from "@/features/player-action/ActionMenu";
 import dayjs from "dayjs";
 import StarIcon from "@mui/icons-material/Star";
@@ -56,6 +55,7 @@ import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
 import PersonIcon from "@mui/icons-material/Person";
 import PublicIcon from '@mui/icons-material/Public';
 import FlagIcon from '@mui/icons-material/Flag';
+import Emoji from "../shared/Emoji";
 
 const OnlineStatusBadge = styled(Badge, {
   shouldForwardProp: (props) => props !== "isOnline",
@@ -165,7 +165,7 @@ const BasicProfileDetails = ({
         </Typography>
         {flags.map(({ flag, comment, modified }) => (
           <Stack key={flag}>
-            <Typography>{flag} - {comment}</Typography>
+            <Typography><Emoji emoji={flag} /> - {comment}</Typography>
             <Typography>Modified: {dayjs(modified).format("LLL")}</Typography>
           </Stack>
         ))}
@@ -713,7 +713,6 @@ export const PlayerDetailDrawer = () => {
       anchor="right"
       onClose={close}
     >
-      <Toolbar />
       {isLoading && !player ? (
         <LoadingSkeleton onClose={close} />
       ) : profileError ? (

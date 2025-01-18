@@ -8,6 +8,9 @@ import SideMenuMobile from "./SideMenuMobile";
 import MenuButton from "./MenuButton";
 import NavbarBreadcrumbs from "./NavbarBreadcrumbs";
 import {useState} from "react";
+import { useMediaQuery, useTheme } from "@mui/system";
+import ServerStatus from "../Header/server-status";
+import { Box } from "@mui/material";
 
 const Toolbar = styled(MuiToolbar)({
   width: "100%",
@@ -25,7 +28,10 @@ const Toolbar = styled(MuiToolbar)({
   },
 });
 
-const AppNavbarBase = ({ toggleDrawer }) => {
+const AppNavbarBase = ({ toggleDrawer, open }) => {
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("lg"));
+
   return (
     <AppBar
       position="fixed"
@@ -36,14 +42,12 @@ const AppNavbarBase = ({ toggleDrawer }) => {
         backgroundImage: "none",
         borderBottom: "1px solid",
         borderColor: "divider",
-        top: "56px",
       }}
     >
       <Toolbar variant="regular">
         <Stack
           direction="row"
           sx={{
-            justifyContent: "space-between",
             alignItems: "center",
             flexGrow: 1,
             width: "100%",
@@ -52,7 +56,10 @@ const AppNavbarBase = ({ toggleDrawer }) => {
           <MenuButton aria-label="menu" onClick={toggleDrawer(true)}>
             <MenuRoundedIcon />
           </MenuButton>
-          <Stack direction="row" spacing={1} sx={{ justifyContent: "center" }}>
+          <Box sx={{ overflow: "hidden" }}>
+            {isSmallScreen && <ServerStatus compact={isSmallScreen || !open} />}
+          </Box>
+          <Stack direction="row" spacing={1} sx={{ justifyContent: "end", flexShrink: 0, flexGrow: 1, pl: 1 }}>
             <NavbarBreadcrumbs />
           </Stack>
         </Stack>
@@ -70,7 +77,7 @@ export default function AppNavbar() {
 
   return (
     <>
-      <AppNavbarBase toggleDrawer={toggleDrawer} />
+      <AppNavbarBase toggleDrawer={toggleDrawer} open={open} />
       <SideMenuMobile open={open} toggleDrawer={toggleDrawer} />
     </>
   );

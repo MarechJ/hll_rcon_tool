@@ -4,10 +4,9 @@ import { typographyClasses } from '@mui/material/Typography';
 import { buttonBaseClasses } from '@mui/material/ButtonBase';
 import { chipClasses } from '@mui/material/Chip';
 import { iconButtonClasses } from '@mui/material/IconButton';
-import { gray, red, green } from '../themePrimitives';
 
 /* eslint-disable import/prefer-default-export */
-export const dataDisplayCustomizations = {
+export const dataDisplayCustomizations = ({ gray, green, red }) => ({
   MuiList: {
     styleOverrides: {
       root: {
@@ -34,7 +33,7 @@ export const dataDisplayCustomizations = {
           gap: 8,
           padding: '2px 8px',
           borderRadius: theme.shape.borderRadius,
-          opacity: 0.7,
+          opacity: 1,
           '&.Mui-selected': {
             opacity: 1,
             backgroundColor: alpha(theme.palette.action.selected, 0.3),
@@ -230,4 +229,4 @@ export const dataDisplayCustomizations = {
       },
     },
   },
-};
+});

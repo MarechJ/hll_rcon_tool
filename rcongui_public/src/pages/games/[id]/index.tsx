@@ -1,10 +1,12 @@
 import dayjs from 'dayjs'
 import localizedFormat from 'dayjs/plugin/localizedFormat'
-import { getCompletedGameColumns } from '@/components/game/statistics/game-columns'
+import { getCompletedGameColumns } from "@/components/game/statistics/game-columns";
 import { ScoreboardMapStats } from '@/types/api'
 import { useOutletContext } from 'react-router'
 import GameStatsContainer from '@/components/game/statistics/game-stats-container'
-import { DataTable } from '@/components/game/statistics/game-table'
+import { DataTable } from "@/components/game/statistics/game-table";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 dayjs.extend(localizedFormat)
 

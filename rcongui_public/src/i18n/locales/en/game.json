@@ -29,6 +29,7 @@
         "team": "Team",
         "kills": "Kills",
         "killsByCategory": "Kills by category",
+        "deathsByCategory": "Deaths by category",
         "deaths": "Deaths",
         "combat": "Combat",
         "score": "Score",
@@ -41,9 +42,12 @@
         "support": "Support",
         "utility": "Utility",
         "diff": "Difference",
-        "status": "Status"
+        "status": "Status",
+        "killsPerMinute": "KPM",
+        "deathsPerMinute": "DPM"
     },
     "weaponType": {
+      "sniper": "Sniper",
       "infantry": "Infantry",
       "explosive": "Explosive",
       "machineGun": "Machine Gun",
