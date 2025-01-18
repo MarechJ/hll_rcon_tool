@@ -9,7 +9,7 @@ from discord_webhook import DiscordEmbed, DiscordWebhook
 import discord.utils
 from rcon.cache_utils import ttl_cache
 from rcon.discord import make_hook
-from rcon.game_logs import on_chat, on_kill, on_tk
+from rcon.logs.loop import on_chat, on_kill, on_tk
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.webhooks import (
     AdminPingWebhooksUserConfig,

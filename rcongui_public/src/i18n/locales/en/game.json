@@ -27,6 +27,7 @@
     "playersTable": {
         "player": "Player",
         "team": "Team",
+        "awards": "Awards",
         "kills": "Kills",
         "killsByCategory": "Kills by category",
         "deathsByCategory": "Deaths by category",
@@ -76,5 +77,77 @@
         "deathstreak": "Deathstreak",
         "teamkills": "Team Kills",
         "k/d": "K/D"
+    },
+    "awards": {
+        "kills": {
+            "title": "",
+            "text": "{{amount}} $t(playersTable.kills)"
+        },
+        "kills_streak": {
+            "title": "Call an Ambulance... But Not for Me!",
+            "text": "{{amount}} kills in a row"
+        },
+        "deaths": {
+            "title": "Push no matter what",
+            "text": "{{amount}} $t(playersTable.deaths)"
+        },
+        "deaths_without_kill_streak": {
+            "title": "He needs some milk",
+            "text": "death streak of {{amount}}"
+        },
+        "teamkills": {
+            "title": "They trusted you",
+            "text": "{{amount}} $t(score.teamkills)"
+        },
+        "deaths_by_tk": {
+            "title": "Trust issues",
+            "text": "got teamkilled {{amount}} times"
+        },
+        "kill_death_ratio": {
+            "title": "Winner Winner Chicken Dinner",
+            "text": "K/D ratio of {{amount}}"
+        },
+        "support": {
+            "title": "Helping hand",
+            "text": "{{amount}} supply points"
+        },
+        "zero_deaths": {
+            "title": "Lucky",
+            "text": "didn't die once"
+        },
+        "zero_kills": {
+            "title": "Beginner",
+            "text": "didn't kill anyone"
+        },
+        "kd_of_one": {
+            "title": "Perfectly balanced, as all things should be",
+            "text": "K/D ratio of 1"
+        },
+        "kills_by_type": {
+            "commander": {
+                "title": "Bombs away!",
+                "text": "{{amount}} kills with commander abilities"
+            },
+            "bazooka": {
+                "title": "Rocket Man",
+                "text": "{{amount}} kills with bazooka"
+            },
+            "grenade": {
+                "title": "Frag out!",
+                "text": "{{amount}} kills with grenades"
+            },
+            "mine": {
+                "title": "Watch your step",
+                "text": "{{amount}} kills with mines"
+            },
+            "pak": {
+                "title": "Big canon makes tank go boom",
+                "text": "{{amount}} kills with PAK"
+            },
+            "satchel": {
+                "title": "Only 30 seconds",
+                "text": "{{amount}} kills with satchels"
+            }
+        }
     }
 }
