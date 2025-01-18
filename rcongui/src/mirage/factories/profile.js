@@ -64,14 +64,14 @@ const generateWatchlist = (playerId) => {
       modified: isWatched ? faker.date.recent().toISOString() : null,
       player_id: playerId,
       is_watched: isWatched,
-      reason: isWatched ? faker.helpers.arrayElement([
+      reason: faker.helpers.arrayElement([
         "I am watching you!",
         "Suspicious behavior",
         "Team killing history",
         "Under observation"
-      ]) : null,
+      ]),
       by: faker.internet.username(),
-      count: faker.number.int({ min: 0, max: 10 })
+      count: faker.number.int({ min: 0, max: 100 })
     };
   }
   return null;
