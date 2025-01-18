@@ -27,7 +27,8 @@
     }
   },
   "time": {
-    "minuteShort": "min"
+    "minuteShort": "min",
+    "weekday": "Weekday"
   },
   "streaming": {
     "playerCount": "Player count",
