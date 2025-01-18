@@ -35,12 +35,26 @@ export const extractPlayers = (game) => {
     out['recon'] = 0;
     out['avg_level'] = 0;
     out['med_level'] = 0;
+    out['no_sl_squads'] = [];
+    out['players_in_lobby'] = [];
   
   
     const squads = team['squads'];
   
     for (const squadKey in squads) {
-      const squadPlayers = squads[squadKey].players;
+      const squad = squads[squadKey];
+      const squadPlayers = squad.players;
+
+      // 'null' squad is a placeholder for players in the lobby
+      if (squadKey === 'null') {
+        out['players_in_lobby'].push(...squadPlayers);
+      }
+
+      // If the squad has no leader, it's a no SL squad
+      if (squadKey !== 'null' && squad.has_leader === false) {
+        out['no_sl_squads'].push(squadKey);
+      }
+
       for (const player of squadPlayers) {
         switch (player.role) {
           case 'sniper':

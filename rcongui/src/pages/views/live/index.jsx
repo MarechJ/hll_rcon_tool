@@ -20,6 +20,7 @@ import {
 } from "@tanstack/react-table";
 import Grid from "@mui/material/Grid2";
 import localStorageConfig from "@/config/localStorage";
+import InfoPanel from "./info-panel";
 
 const interval = 15 * 1000; // 15 seconds
 
@@ -109,6 +110,10 @@ const Live = () => {
         axis: {
           ...extractTeamState(teamData?.axis ?? {}),
           ...(teamData?.axis ?? {}),
+        },
+        none: {
+          ...extractTeamState(teamData?.none ?? {}),
+          ...(teamData?.none ?? {}),
         },
       };
     }
@@ -212,6 +217,9 @@ const Live = () => {
 
   return (
     <Grid container spacing={1}>
+      <Grid size={12}>
+        <InfoPanel gameData={gameData} playersData={playersData} />
+      </Grid>
       <Grid size={12}>
         <Header data={gameData} />
       </Grid>
