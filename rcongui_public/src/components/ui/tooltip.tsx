@@ -5,11 +5,61 @@ import * as TooltipPrimitive from '@radix-ui/react-tooltip'
 
 import { cn } from '@/lib/utils'
 
+import { createContext } from 'react';
+import {useIsMobile} from "@/hooks/use-mobile";
+
+type TooltipTriggerContextType = {
+  open: boolean;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+};
+
+const TooltipTriggerContext = createContext<TooltipTriggerContextType>({
+  open: false,
+  setOpen: () => {},
+});
+
 const TooltipProvider = TooltipPrimitive.Provider
 
-const Tooltip = TooltipPrimitive.Root
+const Tooltip: React.FC<TooltipPrimitive.TooltipProps> = ({ children, ...props }) => {
+  const [open, setOpen] = React.useState<boolean>(props.defaultOpen ?? false);
 
-const TooltipTrigger = TooltipPrimitive.Trigger
+  const isMobile = useIsMobile();
+
+  return (
+    <TooltipPrimitive.Root
+      delayDuration={isMobile ? 200 : props.delayDuration}
+      onOpenChange={(e) => {
+        setOpen(e);
+      }}
+      open={open}
+    >
+      <TooltipTriggerContext.Provider value={{ open, setOpen }}>
+        {children}
+      </TooltipTriggerContext.Provider>
+    </TooltipPrimitive.Root>
+  );
+};
+
+const TooltipTrigger = React.forwardRef<
+  React.ElementRef<typeof TooltipPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Trigger>
+>(({ children, ...props }, ref) => {
+  const isMobile = useIsMobile();
+  const { setOpen } = React.useContext(TooltipTriggerContext);
+
+  return (
+    <TooltipPrimitive.Trigger
+      ref={ref}
+      {...props}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        setOpen(true);
+      }}
+    >
+      {children}
+    </TooltipPrimitive.Trigger>
+  );
+});
 
 const TooltipContent = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Content>,

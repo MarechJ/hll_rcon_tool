@@ -1,32 +1,44 @@
 import {ScoreboardMap, ScoreboardMaps} from "@/types/api";
 import {Link, useLocation} from "react-router";
-import React, {useEffect, useRef, useState} from "react";
+import React, {useEffect, useMemo, useRef, useState} from "react";
 import {ScrollArea, ScrollBar} from "@/components/ui/scroll-area";
 import {validGame} from "@/pages/games/list";
 import MapFigure from "@/components/game/map-figure";
-import dayjs from "dayjs";
+import dayjs, {Dayjs} from "dayjs";
 import {cn, dayjsLocal} from "@/lib/utils";
 import {useTranslation} from "react-i18next";
 import {useLocale} from "@/i18n/locale-provider";
 
 export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   const { pathname } = useLocation()
-  const [hiddenDates, setHiddenDates] = useState<Record<string, boolean>>({});
+  const [gamesVisibility, setGamesVisibility] = useState<Record<number, boolean>>({});
+  const gamesVisibilityRef = useRef(gamesVisibility);
+  gamesVisibilityRef.current = gamesVisibility;
   const [hoverGameDate, setHoverGameDate] = useState<string | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  // is used for sticky dates (position upper left corner of MapCard)
-  const gameRefs = useRef<Map<string, HTMLDivElement>>(new Map());
-  const gameBoundingRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const gameRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
-  const validGames = games.maps.filter(validGame);
+  const validGames = useMemo(() => games.maps.filter(validGame), [games.maps]);
+  const cards = useMemo(() =>
+      validGames.flatMap((game, index) =>
+        dayjsLocal(game.start).isSame(dayjsLocal(validGames[index + 1]?.start), 'day')
+          ? [game]
+          : [game, game.start]
+      ),
+    [validGames]
+  );
 
   /**
+   *  highlights the corresponding date when hovering over a game while scrolling
    *  onMouseLeave/onMouseEnter is not triggered during scrolling
    *  so we have to check manually while scrolling if mouse is within GameCard
    */
   useEffect(() => {
     const handleMouseMove = (e: any) => {
-      gameBoundingRefs.current.forEach((item, key) => {
+      gameRefs.current.forEach((item, gameId) => {
+        if (!gamesVisibilityRef.current[gameId]) {
+          return;
+        }
         const rect = item.getBoundingClientRect();
         if (
           e.clientX >= rect.left &&
@@ -34,8 +46,9 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
           e.clientY >= rect.top &&
           e.clientY <= rect.bottom
         ) {
-          if (hoverGameDate !== validGames[key].start) {
-            setHoverGameDate(validGames[key].start);
+          const game = validGames.find(game => game.id === gameId);
+          if (game && hoverGameDate !== game.start) {
+            setHoverGameDate(game.start);
           }
         }
       });
@@ -46,12 +59,12 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
     return () => {
       window.removeEventListener('wheel', handleMouseMove);
     };
-  }, []);
+  }, [hoverGameDate, validGames]);
 
   useEffect(() => {
     if (scrollAreaRef.current && gameRefs.current.size > 0) {
-      const targetElement = Array.from(gameRefs.current.entries()).find(([href, _]) =>
-        pathname.startsWith(href)
+      const targetElement = Array.from(gameRefs.current.entries()).find(([gameId, _]) =>
+        pathname.split('/')[2] === String(gameId)
       )?.[1];
       if (targetElement) {
         targetElement.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
@@ -59,20 +72,23 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
     }
   }, [pathname]);
 
+  /**
+   *  check which games are visible/hidden to determine sticky date
+   */
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach(entry => {
-          const dateId = entry.target.getAttribute('data-date');
-          if (dateId) {
-            setHiddenDates(prev => ({
+          const gameId = entry.target.getAttribute('data-id');
+          if (gameId) {
+            setGamesVisibility(prev => ({
               ...prev,
-              [dateId]: !entry.isIntersecting
+              [Number(gameId)]: entry.isIntersecting
             }));
           }
         });
       },
-      { threshold: 1, root: scrollAreaRef.current }
+      { threshold: 0, root: scrollAreaRef.current }
     );
 
     gameRefs.current.values().forEach((ref) => {
@@ -82,85 +98,75 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
     return () => observer.disconnect();
   }, []);
 
-  const visibleDates = Object.entries(hiddenDates).filter(([key, value], index) => !value && (index + 1 === Object.entries(hiddenDates).length || Object.values(hiddenDates)[index + 1]));
-  const stickyDate = visibleDates.length ? dayjsLocal(visibleDates[0][0]) : null;
+
+  const visibleGames = Object.entries(gamesVisibility).filter(([_, visible]) => visible);
+  const stickyDateString = !!visibleGames.length && validGames.find(game => game.id === Number(visibleGames[0][0]))?.start;
 
   return (
-    <ScrollArea ref={scrollAreaRef} className="w-full whitespace-nowrap sm:-mx-4 xl:mx-0 pb-2 relative overflow-hidden z-auto">
+    <ScrollArea ref={scrollAreaRef} className="w-full whitespace-nowrap sm:-mx-4 xl:mx-0 pb-2 relative overflow-hidden z-0">
       <div className="flex flex-row w-max">
-        {validGames.map((game, index) => (
-          <React.Fragment key={game.id}>
-            <div key={game.id} ref={(element: any) => {
-              if (element) {
-                gameBoundingRefs.current.set(index, element);
-              } else {
-                gameBoundingRefs.current.delete(index);
-              }
-            }}>
+        {cards.map((card, index) => {
+          return typeof card !== 'string' ?
+            <div
+              ref={(element: any) => {
+                if (element) {
+                  gameRefs.current.set(card.id, element);
+                } else {
+                  gameRefs.current.delete(card.id);
+                }
+              }}
+              data-id={card.id}
+            >
               <GameCard
-                game={game}
+                game={card}
                 pathname={pathname}
-                onMouseEnter={() => setHoverGameDate(game.start)}
-                onMouseLeave={() => setHoverGameDate(null)}
-                ref={(element) => {
-                  if (element) {
-                    gameRefs.current.set(`/games/${game.id}`, element);
-                  } else {
-                    gameRefs.current.delete(`/games/${game.id}`);
-                  }
-                }}
+                onMouseEnter={React.useCallback(() => setHoverGameDate(card.start), [card])}
+                onMouseLeave={React.useCallback(() => setHoverGameDate(null), [])}
               />
             </div>
-            {!dayjsLocal(game.start).isSame(dayjsLocal(validGames[index + 1]?.start), 'day') &&
-              <>
-                <DateCard
-                  key={game.start}
-                  zIndex={validGames.length - index}
-                  dateString={game.start}
-                  highlight={!!hoverGameDate && dayjsLocal(hoverGameDate).isSame(dayjsLocal(game.start), 'day')}
-                  sticky={false}
-                />
-                {!!stickyDate && stickyDate.isSame(dayjsLocal(game.start), 'day') &&
-                  <DateCard
-                    key={`sticky-${game.start}`}
-                    zIndex={validGames.length - index}
-                    dateString={game.start}
-                    sticky={true}
-                    highlight={!!hoverGameDate && dayjsLocal(hoverGameDate).isSame(dayjsLocal(game.start), 'day')}
-                  />
-                }
-              </>
-            }
-          </React.Fragment>
-        ))}
+            :
+            <DateCard
+              key={card}
+              zIndex={cards.length - index}
+              date={dayjsLocal(card)}
+              highlight={!!hoverGameDate && dayjsLocal(hoverGameDate).isSame(dayjsLocal(card), 'day')}
+              sticky={false}
+            />
+        })}
+        {stickyDateString &&
+          <DateCard
+            key={`sticky-${stickyDateString}`}
+            zIndex={cards.length - cards.findIndex(card => typeof card === 'string' && dayjsLocal(card).isSame(dayjsLocal(stickyDateString), 'day'))}
+            date={dayjsLocal(stickyDateString)}
+            sticky={true}
+            highlight={!!hoverGameDate && dayjsLocal(hoverGameDate).isSame(dayjsLocal(stickyDateString), 'day')}
+          />
+        }
       </div>
       <ScrollBar orientation="horizontal"/>
     </ScrollArea>
   );
 }
 
-const GameCard = React.forwardRef(
+const GameCard = React.memo(
   (
-    { game, pathname, onMouseEnter, onMouseLeave }: { game: ScoreboardMap; pathname: string; onMouseEnter: () => void, onMouseLeave: () => void },
-    ref: React.Ref<HTMLDivElement>
+    { game, pathname, onMouseEnter, onMouseLeave }: { game: ScoreboardMap; pathname: string; onMouseEnter: () => void, onMouseLeave: () => void }
   ) => {
     const { t } = useTranslation('translation');
     return (
       <Link
         to={`/games/${game.id}`}
-        data-date={game.start}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       >
         <div className="px-0.5">
-          <div ref={ref} key={game.id} data-date={game.start}/>
           <MapFigure
             text={`${dayjsLocal(game.start).format("LT")} (${dayjs(game.end).diff(dayjs(game.start), 'minutes')} ${t('time.minuteShort')})`}
             src={`/maps/${game.map.image_name}`}
             name={`${game.map.map.pretty_name} (${game.result?.allied ?? '?'}:${game.result?.axis ?? '?'})`}
             className={cn(
               "group h-20 w-64",
-              pathname.startsWith(`/games/${game.id}`) && "border-2 border-primary"
+              pathname.split('/')[2] === String(game.id) && "border-2 border-primary"
             )}
           />
         </div>
@@ -168,8 +174,7 @@ const GameCard = React.forwardRef(
     );
 });
 
-const DateCard = ({ dateString, zIndex, highlight, sticky }: { dateString: string, zIndex: number, highlight: boolean, sticky: boolean }) => {
-  const date = dayjsLocal(dateString);
+const DateCard = ({ date, zIndex, highlight, sticky }: { date: Dayjs, zIndex: number, highlight: boolean, sticky: boolean }) => {
   const globalLocaleData = useLocale().globalLocaleData;
 
   return (

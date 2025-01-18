@@ -15,6 +15,7 @@ import { mergeKillsDeaths } from '../utils'
 import { useTranslation } from 'react-i18next'
 import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from "@/components/ui/accordion";
 import {AccordionHeader} from "@radix-ui/react-accordion";
+import {useGameStatsContext} from "@/components/game/statistics/game-stats-container";
 
 export default function PlayerGameDetail({
   player,
@@ -40,6 +41,8 @@ export default function PlayerGameDetail({
     : []
   deathsBy.sort((a, b) => b.count - a.count)
 
+  const { focusPlayerByName } = useGameStatsContext();
+
   return (
     <div className="divide-y pb-2 lg:sticky lg:top-14 border">
       {!isMobile && (
@@ -50,7 +53,13 @@ export default function PlayerGameDetail({
             ) : isPlayerWithStatus(player) ? (
               <Status player={player} />
             ) : null}
-            <h3 className="text-xl text-center">{player.player}</h3>
+            <Button
+              variant="text"
+              className="pl-0 h-0 text-xl"
+              onClick={() => focusPlayerByName(player.player)}
+            >
+              {player.player}
+            </Button>
           </div>
           <div className="flex flex-row justify-center items-center">
             <Button size={'icon'} variant={'outline'} asChild>

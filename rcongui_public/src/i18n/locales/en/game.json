@@ -47,6 +47,7 @@
         "deathsPerMinute": "DPM"
     },
     "weaponType": {
+      "sniper": "Sniper",
       "infantry": "Infantry",
       "explosive": "Explosive",
       "machineGun": "Machine Gun",
