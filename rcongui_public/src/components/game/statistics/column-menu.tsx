@@ -7,6 +7,7 @@ import {Table} from "@tanstack/react-table";
 import {Player} from "@/types/player";
 import {Checkbox} from "@/components/ui/checkbox";
 import {ColumnCategory} from "@/lib/tables";
+import {useIsMobile} from "@/hooks/use-mobile";
 
 interface ColumnMenuProps<TData> {
   table: Table<TData>
@@ -17,6 +18,8 @@ export function ColumnMenu<TData extends Player>({ table }: ColumnMenuProps<TDat
 
   const [isOpen, setIsOpen] = React.useState(false);
 
+  const isMobile = useIsMobile();
+
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger className={'rounded-md border border-input bg-background px-3 py-2 hover:bg-accent'}>
@@ -25,6 +28,7 @@ export function ColumnMenu<TData extends Player>({ table }: ColumnMenuProps<TDat
       <PopoverContent
         align="start"
         className="w-full"
+        side={isMobile ? "bottom" : "right"}
       >
         <div className="p2 flex flex-wrap flex-row gap-2 max-w-[100vw]">
           {Object.values(ColumnCategory).map(category =>
