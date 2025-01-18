@@ -161,12 +161,21 @@ export const PlayerSidebarProvider = ({ children }) => {
       aPlayer.is_banned = true;
     }
 
-    const vip = aPlayer.profile.vips.find(
+    aPlayer.vip = aPlayer.profile.vips.find(
       (v) => v.server_number === serverStatus?.server_number
     );
-    if (vip && dayjs().isBefore(vip.expiration)) {
+    if (aPlayer.vip && (aPlayer.vip.expiration === null || dayjs().isBefore(aPlayer.vip.expiration))) {
       aPlayer.is_vip = true;
-      aPlayer.vip = vip;
+    }
+
+    // If the player is VIP but doesn't have a VIP object, add one
+    // This is either a bug or a player that has been given VIP from another rcon tool
+    if (aPlayer.is_vip && aPlayer.vip === undefined) {
+      aPlayer.vip = {
+        server_number: serverStatus?.server_number,
+        expiration: null,
+        not_created_by_crcon: true,
+      };
     }
 
     aPlayer.player_id = aPlayer.player_id ?? aPlayer.profile.player_id;

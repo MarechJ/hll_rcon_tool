@@ -76,7 +76,6 @@ export const normalizePlayerProfile = (profile) => {
     received_actions: profile.received_actions ?? [],
     vips: profile.vips ?? [],
     blacklists: profile.blacklists ?? [],
-    watchlist: profile.watchlist ?? [],
     flags: profile.flags ?? [],
     penalty_count: profile.penalty_count ?? {
       KICK: 0,
