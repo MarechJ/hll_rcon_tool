@@ -291,7 +291,7 @@ const killCategoryColumn = (): ColumnDef<Player | PlayerWithStatus> => {
       const {t} = useTranslation('game')
       return <div>{t('playersTable.killsByCategory')}</div>
     },
-    size: 100,
+    size: 125,
     cell: ({row}) => {
       const player = row.original;
       return <WeaponTypeBar totalKills={player.kills} killsByType={player.kills_by_type}/>;
@@ -310,7 +310,7 @@ const deathCategoryColumn = (): ColumnDef<Player | PlayerWithStatus> => {
       const {t} = useTranslation('game')
       return <div>{t('playersTable.deathsByCategory')}</div>
     },
-    size: 100,
+    size: 125,
     cell: ({row}) => {
       const player = row.original;
       return <WeaponTypeBar totalKills={player.deaths} killsByType={player.deaths_by_type}/>;
