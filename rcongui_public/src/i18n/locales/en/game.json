@@ -148,6 +148,32 @@
                 "title": "Only 30 seconds",
                 "text": "{{amount}} kills with satchels"
             }
+        },
+        "deaths_by_type": {
+            "machine_gun": {
+                "title": "Bullet magnet",
+                "text": "{{amount}} deaths by machine gun"
+            },
+            "sniper": {
+                "title": "Someone painted a target on your back",
+                "text": "{{amount}} deaths by sniper"
+            },
+            "artillery": {
+                "title": "Forecast: heavy rain",
+                "text": "{{amount}} deaths by artillery"
+            },
+            "commander": {
+                "title": "It's a bird. It's a plane.",
+                "text": "{{amount}} deaths by commander abilities"
+            },
+            "mine": {
+                "title": "Professional mine searcher",
+                "text": "{{amount}} deaths by mines"
+            },
+            "armor": {
+                "title": "Not much left",
+                "text": "{{amount}} deaths by tanks"
+            }
         }
     }
 }
