@@ -42,7 +42,7 @@
       "url": "URL",
       "width": "Width",
       "height": "Height",
-      "customCSS": "Custom CSS",
+      "customCSS": "Custom CSS (optional)",
       "andSave": "and save",
       "crop": "Crop by pressing ALT key and dragging sides of source",
       "changeSettings": "Right click on source -> 'interact' to change settings"
