@@ -6,9 +6,20 @@ import { SimpleIcon } from "@/components/simple-icon";
 const StreamTutorial = () => {
   const { t } = useTranslation('translation', { keyPrefix: 'streaming.tutorial' });
 
-  const cssValue = `body, main, .stream-banner {
-  background: transparent !important;
-  background-color: transparent;
+  const cssValue = `.stream-banner {
+  background-color: black !important;
+}
+
+.steam-banner-text {
+  color: #ffa500 !important;
+}
+
+.steam-banner-player {
+  color: #6a5acd !important;
+}
+
+.steam-banner-kills {
+  color: red !important;
 }`;
 
   const steps = [
