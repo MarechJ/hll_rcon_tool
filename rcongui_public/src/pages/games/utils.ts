@@ -116,7 +116,7 @@ const calcMaxStatsValues = (stats: PlayerBase[]) => {
         Object.entries(value as Record<string, number>).forEach(([nestedKey, nestedValue]) => {
           if (typeof nestedValue === 'number') {
             const compositeKey = `${key}.${nestedKey}` as keyof PlayerBase;
-            if (!allowedStats.includes(compositeKey)) {
+            if (!allowedStats.includes(compositeKey) || nestedValue < 3) {
               return;
             }
             calcMaxValue(result, compositeKey, nestedValue, player.player_id);
