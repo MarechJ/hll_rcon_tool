@@ -6,7 +6,7 @@ import { SimpleIcon } from "@/components/simple-icon";
 const StreamTutorial = () => {
   const { t } = useTranslation('translation', { keyPrefix: 'streaming.tutorial' });
 
-  const cssExample = `body, main, .stream-banner {
+  const cssValue = `body, main, .stream-banner {
   background: transparent !important;
   background-color: transparent;
 }`;
@@ -41,7 +41,7 @@ const StreamTutorial = () => {
           <p className="font-semibold">{t("customCSS")}:</p>
           <pre
             className="w-full p-4 bg-accent rounded-md font-mono text-sm text-gray-100 whitespace-pre overflow-x-auto">
-            {cssExample}
+            {cssValue}
           </pre>
           <p className="italic">{t("andSave")}</p>
         </div>
