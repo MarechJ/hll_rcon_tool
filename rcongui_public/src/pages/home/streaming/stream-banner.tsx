@@ -26,7 +26,7 @@ export default function StreamBanner({ playerAmount, settings }: StreamBannerPro
     .sort((a, b) => b.kills - a.kills)
     .slice(0, playerAmount);
 
-  return <div className="w-full h-12 inline-flex flex-nowrap bg-white overflow-hidden">
+  return <div className="stream-banner w-full h-12 inline-flex flex-nowrap bg-white overflow-hidden">
     <Stream players={displayedPlayers} settings={settings}/>
     <Stream players={displayedPlayers} settings={settings}/>
   </div>

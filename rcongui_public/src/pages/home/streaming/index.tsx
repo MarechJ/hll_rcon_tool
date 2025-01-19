@@ -7,6 +7,15 @@ import {useTranslation} from "react-i18next";
 import {useOutletContext} from "react-router";
 import {GameLiveOutletContext} from "@/pages/home/layout";
 import SelectBox from "@/components/ui/select-box";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger
+} from "@/components/ui/accordion";
+import {AccordionHeader} from "@radix-ui/react-accordion";
+import {GraduationCap} from "lucide-react";
+import StreamTutorial from "@/pages/home/streaming/stream-tutorial";
 
 export default function Streaming() {
   const { t } = useTranslation('translation', {keyPrefix: 'streaming'});
@@ -31,7 +40,21 @@ export default function Streaming() {
     );
 
   return <div className="w-full lg:w-2/3">
-    <div className="w-full border gap-3 p-2 flex flex-wrap">
+    <h1 className="text-2xl text-center pb-6">{t("streamerView")}</h1>
+    <Accordion type="single" collapsible className="border-x border-t bg-background">
+      <AccordionItem value="tutorial">
+        <AccordionHeader>
+          <AccordionTrigger>
+            <span className="w-full flex flex-row items-center justify-center"><GraduationCap className="inline-block size-7 mr-1"/> {t('tutorial.title')}</span>
+          </AccordionTrigger>
+        </AccordionHeader>
+        <AccordionContent>
+          <StreamTutorial/>
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
+    {/*bg background necessary so the background stays within obs*/}
+    <div className="bg-background w-full border-x border-b gap-3 p-2 flex flex-wrap">
       <div className="w-52 h-12 flex flex-col justify-between pb-2">
         <span className="text-nowrap">
           {t('playerCount')} ({playerAmount})
