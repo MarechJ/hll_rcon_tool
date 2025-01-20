@@ -43,6 +43,7 @@
       "width": "Width",
       "height": "Height",
       "customCSS": "Custom CSS (optional)",
+      "adjustColors": "Adjust the css colors as you like either with hex values or color names.",
       "andSave": "and save",
       "crop": "Crop by pressing ALT key and dragging sides of source",
       "changeSettings": "Right click on source -> 'interact' to change settings"

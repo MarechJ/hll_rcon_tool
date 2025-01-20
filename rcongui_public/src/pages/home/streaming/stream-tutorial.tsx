@@ -10,16 +10,20 @@ const StreamTutorial = () => {
   background-color: black !important;
 }
 
-.steam-banner-text {
+.stream-banner-text {
   color: #ffa500 !important;
 }
 
-.steam-banner-player {
+.stream-banner-kills {
+  color: red !important;
+}
+
+.stream-banner-player {
   color: #6a5acd !important;
 }
 
-.steam-banner-kills {
-  color: red !important;
+.stream-banner-weapon {
+  color: #6a5acd !important;
 }`;
 
   const steps = [
@@ -54,6 +58,9 @@ const StreamTutorial = () => {
             className="w-full p-4 bg-accent rounded-md font-mono text-sm text-gray-100 whitespace-pre overflow-x-auto">
             {cssValue}
           </pre>
+          <p>
+            {t("adjustColors")}
+          </p>
           <p className="italic">{t("andSave")}</p>
         </div>
       )
