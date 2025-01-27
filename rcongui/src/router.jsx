@@ -82,8 +82,7 @@ import { loader as consoleAdminSettingsLoader } from "./pages/settings/console-a
 import { action as consoleAdminSettingsAction } from "./pages/settings/console-admins"
 
 import VipSettings from "./pages/settings/vip"
-import { loader as vipSettingsLoader } from "./pages/settings/vip"
-import { action as vipSettingsAction } from "./pages/settings/vip"
+import { loader as vipLoader } from "./pages/settings/vip"
 
 import { AuthProvider } from "@/hooks/useAuth";
 import { GlobalState } from "@/hooks/useGlobalState";
@@ -199,9 +198,8 @@ const router = createBrowserRouter([
                     {
                         path: 'vip',
                         handle: { crumb: () => <Link to={'/settings/vip'}>Vip</Link> },
+                        loader: vipLoader,
                         element: <VipSettings />,
-                        loader: vipSettingsLoader,
-                        action: vipSettingsAction,
                         errorElement: <RouteError />,
                     },
                     {

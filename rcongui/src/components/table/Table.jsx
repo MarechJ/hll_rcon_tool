@@ -2,9 +2,10 @@ import { Fragment } from "react";
 import { flexRender } from "@tanstack/react-table";
 import { NoRowsOverlay } from "@/components/NoRowsOverlay";
 import { StyledTable, StyledTd, StyledTh, StyledTr } from "./styles";
-import { Box } from "@mui/material";
+import { Box, LinearProgress } from "@mui/material";
+import LoadingOverlay from "./LoadingOverlay";
 
-const Table = ({ table, config = {}, renderSubComponent }) => {
+const Table = ({ table, config = {}, renderSubComponent, isLoading, isFetching }) => {
   return (
     <Box
       sx={{
@@ -12,8 +13,11 @@ const Table = ({ table, config = {}, renderSubComponent }) => {
         overflowY: "hidden",
         width: "100%",
         scrollbarWidth: "thin",
+        position: "relative",
+        marginTop: "2px",
       }}
     >
+      {isFetching && <LinearProgress sx={{ position: "absolute", top: 0, left: 0, width: "100%", height: "2px" }} />}
       <StyledTable density={config.density} fontSize={config.fontSize}>
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -63,7 +67,8 @@ const Table = ({ table, config = {}, renderSubComponent }) => {
           ))}
         </tbody>
       </StyledTable>
-      {table.getRowModel().rows.length === 0 && <NoRowsOverlay />}
+      {isLoading && <LoadingOverlay />}
+      {!isLoading && table.getRowModel().rows.length === 0 && <NoRowsOverlay />}
     </Box>
   );
 };
