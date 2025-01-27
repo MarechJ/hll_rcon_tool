@@ -7,12 +7,26 @@ import { SQUAD_TYPES } from '../data/roles';
 const PLAYTIME_INCREMENT = 15;
 
 export const handleTeamView = (gameState) => {
+  // First collect all players across both teams
+  const allPlayers = [];
+  ["axis", "allies"].forEach(team => {
+    Object.values(gameState[team].squads).forEach(squad => {
+      allPlayers.push(...squad.players);
+    });
+    if (gameState[team].commander) {
+      allPlayers.push(gameState[team].commander);
+    }
+  });
+
   // Update playtime for all players (15 seconds since last fetch)
   ["axis", "allies"].forEach(team => {
     Object.values(gameState[team].squads).forEach(squad => {
       squad.players.forEach(player => {
-        player.profile.current_playtime_seconds += PLAYTIME_INCREMENT;
-        player.profile.total_playtime_seconds += PLAYTIME_INCREMENT;
+        // Set profile values first
+        if (player.profile) {
+          player.profile.current_playtime_seconds += PLAYTIME_INCREMENT;
+          player.profile.total_playtime_seconds += PLAYTIME_INCREMENT;
+        }
         player.kills += faker.number.int({ min: 0, max: 3 });
         player.deaths += faker.number.int({ min: 0, max: 1 });
         player.combat += faker.number.int({ min: 0, max: 30 });
@@ -21,11 +35,18 @@ export const handleTeamView = (gameState) => {
         player.support += faker.number.int({ min: 0, max: 50 });
       });
     });
+    
     if (gameState[team].commander) {
-      gameState[team].commander.profile.current_playtime_seconds += PLAYTIME_INCREMENT;
-      gameState[team].commander.profile.total_playtime_seconds += PLAYTIME_INCREMENT;
+      if (gameState[team].commander.profile) {
+        gameState[team].commander.profile.current_playtime_seconds += PLAYTIME_INCREMENT;
+        gameState[team].commander.profile.total_playtime_seconds += PLAYTIME_INCREMENT;
+      }
     }
   });
+
+  // Select one random player and set their profile to null after all updates
+  const randomPlayer = faker.helpers.arrayElement(allPlayers);
+  randomPlayer.profile = null;
 
   // Randomly modify the state (30% chance)
   if (faker.number.int({ min: 1, max: 10 }) > 7) {

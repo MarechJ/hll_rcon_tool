@@ -54,7 +54,7 @@ const Live = () => {
     if (!teamData) return [];
     return extractPlayers(teamData).map((player) => ({
       ...player,
-      profile: normalizePlayerProfile(player?.profile ?? {}),
+      profile: normalizePlayerProfile(player.profile),
     }));
   }, [teamData]);
 
