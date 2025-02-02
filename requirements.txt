@@ -14,7 +14,7 @@ discord-webhook[async]
 requests==2.32.3
 steam==1.4.4
 # Alembic does not use semantic versioning, so be careful with the version numbers https://alembic.sqlalchemy.org/en/latest/front.html#versioning-scheme
-alembic==1.14.0
+alembic==1.14.1
 rq==2.1.0
 rq-scheduler==0.14.0
 paramiko==3.5.0
