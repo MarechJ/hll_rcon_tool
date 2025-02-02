@@ -146,7 +146,7 @@ function pointColumns(completed: boolean): ColumnDef<Player | PlayerWithStatus>[
       id: 'deaths_without_kill_streak',
       meta: { label: t('score.deathstreak'), category: ColumnCategory.ADVANCED },
       accessorKey: 'deaths_without_kill_streak',
-      header: function KillStreakHeader({ column }) {
+      header: function DeathStreakHeader({ column }) {
         const { t } = useTranslation('game')
         return (
           <Header
@@ -165,7 +165,7 @@ function pointColumns(completed: boolean): ColumnDef<Player | PlayerWithStatus>[
       id: 'teamkills',
       meta: { label: t('score.teamkills'), category: ColumnCategory.ADVANCED },
       accessorKey: 'teamkills',
-      header: function KillStreakHeader({ column }) {
+      header: function TeamkillsHeader({ column }) {
         const { t } = useTranslation('game')
         return (
           <Header
@@ -184,7 +184,7 @@ function pointColumns(completed: boolean): ColumnDef<Player | PlayerWithStatus>[
       id: 'deaths_by_tk',
       meta: { label: t('score.deathsByTeam'), category: ColumnCategory.ADVANCED },
       accessorKey: 'deaths_by_tk',
-      header: function KillStreakHeader({ column }) {
+      header: function DeathsByTkHeader({ column }) {
         const { t } = useTranslation('game')
         return (
           <Header
@@ -317,7 +317,7 @@ const awardColumn = (): ColumnDef<Player | PlayerBaseWithAwards | PlayerWithStat
   const { t } = useTranslation('game');
   return {
     id: 'award',
-    meta: {label: t('playersTable.awards')},
+    meta: {label: t('playersTable.awards'), category: ColumnCategory.GENERAL},
     header: function NameHeader() {
       const {t} = useTranslation('game')
       return <div className="text-right">{t('playersTable.awards')}</div>
