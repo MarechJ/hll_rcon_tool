@@ -911,14 +911,14 @@ class BlacklistRecord(Base):
         variables = {
             "player_id": self.player.player_id,
             "player_name": self.player.names[0].name if self.player.names else "",
-            "banned_at": self.created_at.strftime("%d %b %H:%M"),
+            "banned_at": self.created_at.strftime("%b %d %Y %H:%M"),
             "banned_until": (
-                self.expires_at.strftime("%d %b %H:%M")
+                self.expires_at.strftime("%b %d %Y %H:%M")
                 if self.expires_at
                 else "forever"
             ),
             "expires_at": (
-                self.expires_at.strftime("%d %b %H:%M") if self.expires_at else "never"
+                self.expires_at.strftime("%b %d %Y %H:%M") if self.expires_at else "never"
             ),
             "duration": (
                 humanize_timedelta(self.expires_at - self.created_at)
