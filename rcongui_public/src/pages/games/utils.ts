@@ -10,7 +10,8 @@ export function getGameDuration(start: string, end: string) {
 }
 
 function isMostlyInfantry( player: PlayerBase ) {
-  return ((player.kills_by_type.armor ?? 0) + (player.kills_by_type.commander ?? 0) + (player.kills_by_type.artillery ?? 0)) / player.kills < 0.3;
+  const nonInfantryKills = (player.kills_by_type.armor ?? 0) + (player.kills_by_type.commander ?? 0) + (player.kills_by_type.artillery ?? 0);
+  return nonInfantryKills / player.kills < 0.25 && nonInfantryKills <= 5;
 }
 
 export const enrichPlayersWithAwards = (game: ScoreboardMapStats) => {
@@ -60,17 +61,24 @@ const allowedStats = [
   "teamkills",
   "deaths_by_tk",
   "kill_death_ratio",
-  "kills_by_type",
   "support",
   "zero_deaths",
   "zero_kills",
   "kd_of_one",
+  "kills_by_type",
   "kills_by_type.commander",
   "kills_by_type.bazooka",
   "kills_by_type.grenade",
   "kills_by_type.mine",
   "kills_by_type.pak",
   "kills_by_type.satchel",
+  "deaths_by_type",
+  "deaths_by_type.armor",
+  "deaths_by_type.machine_gun",
+  "deaths_by_type.sniper",
+  "deaths_by_type.commander",
+  "deaths_by_type.mine",
+  "deaths_by_type.artillery",
 
   // 'kills_by_type.infantry' already easily identifiable by the weapon type bar, would make awards to cluttered
   // 'kills_by_type.sniper' already easily identifiable by the weapon type bar, would make awards to cluttered
@@ -115,7 +123,7 @@ const calcMaxStatsValues = (stats: PlayerBase[]) => {
         Object.entries(value as Record<string, number>).forEach(([nestedKey, nestedValue]) => {
           if (typeof nestedValue === 'number') {
             const compositeKey = `${key}.${nestedKey}` as keyof PlayerBase;
-            if (!allowedStats.includes(compositeKey)) {
+            if (!allowedStats.includes(compositeKey) || nestedValue < 3) {
               return;
             }
             calcMaxValue(result, compositeKey, nestedValue, player.player_id);
