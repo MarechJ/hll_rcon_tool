@@ -12,7 +12,7 @@ export const teamsLiveQueryOptions = {
     // in case the API returns something different than what we expect
     const onlinePlayers = extractPlayers(data).map((player) => ({
       ...player,
-      profile: normalizePlayerProfile(player.profile),
+      profile: normalizePlayerProfile(player?.profile ?? {}),
     }));
     useGlobalStore.setState(() => ({ onlinePlayers }));
     return data;

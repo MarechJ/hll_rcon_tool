@@ -1,17 +1,24 @@
 import dayjs from 'dayjs'
-import localizedFormat from 'dayjs/plugin/localizedFormat'
 import { getCompletedGameColumns } from "@/components/game/statistics/game-columns";
 import { ScoreboardMapStats } from '@/types/api'
 import { useOutletContext } from 'react-router'
 import GameStatsContainer from '@/components/game/statistics/game-stats-container'
 import { DataTable } from "@/components/game/statistics/game-table";
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
+import React, {useMemo} from "react";
+import {Player} from "@/types/player";
+import {enrichPlayersWithAwards} from "@/pages/games/utils";
 
-dayjs.extend(localizedFormat)
+interface Award {
+  type: string,
+  amount: number,
+}
+
+export type PlayerBaseWithAwards = Player & { awards: Award[] }
 
 export default function GameDetail() {
   const { game } = useOutletContext<{ game: ScoreboardMapStats }>()
+
+  const playersWithAwards = useMemo(() => enrichPlayersWithAwards(game), [game]);
 
   return (
     <GameStatsContainer game={{
@@ -21,7 +28,7 @@ export default function GameDetail() {
       {(props) => (
         <DataTable
           columns={getCompletedGameColumns(props.handlePlayerClick)}
-          data={game.player_stats}
+          data={playersWithAwards}
           tableId={`${game.id}_${dayjs(game.start).format('YYYYMMDD-HHmm')}`}
         />
       )}

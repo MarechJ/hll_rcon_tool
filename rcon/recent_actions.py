@@ -2,7 +2,7 @@ from collections import defaultdict
 from logging import getLogger
 
 from rcon.cache_utils import invalidates, ttl_cache
-from rcon.game_logs import on_kill, on_match_start, on_tk
+from rcon.logs.loop import on_kill, on_match_start, on_tk
 from rcon.rcon import Rcon
 from rcon.types import MostRecentEvents, StructuredLogLineWithMetaData
 

@@ -10,6 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Label } from '../ui/label'
 
 const getLocaleDisplayName = (locale: string, displayLocale?: string) => {
+  if (locale === 'en24h') {
+    return 'English (24h)';
+  } else if (locale === 'en') {
+    return 'English (AM/PM)';
+  }
   const displayName = new Intl.DisplayNames([displayLocale || locale], {
     type: 'language',
   }).of(locale)!

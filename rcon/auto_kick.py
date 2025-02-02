@@ -5,7 +5,7 @@ from pydantic import HttpUrl
 
 from rcon.api_commands import RconAPI
 from rcon.discord import send_to_discord_audit
-from rcon.game_logs import on_connected
+from rcon.logs.loop import on_connected
 from rcon.hooks import inject_player_ids
 from rcon.player_history import get_player_profile, player_has_flag
 from rcon.user_config.name_kicks import NameKickUserConfig

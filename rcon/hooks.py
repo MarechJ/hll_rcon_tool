@@ -21,7 +21,7 @@ from rcon.blacklist import (
 from rcon.cache_utils import invalidates
 from rcon.commands import CommandFailedError, HLLServerError
 from rcon.discord import get_prepared_discord_hooks, send_to_discord_audit
-from rcon.game_logs import (
+from rcon.logs.loop import (
     on_camera,
     on_chat,
     on_connected,

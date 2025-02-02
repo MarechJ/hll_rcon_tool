@@ -51,14 +51,22 @@ class DiscordWebhook(pydantic.BaseModel):
 class DiscordMentionWebhook(DiscordWebhook):
     """A webhook URL and list of user/role IDs to mention in <@> and <@&> format"""
 
-    user_mentions: list[str] = pydantic.Field(default_factory=list)
-    role_mentions: list[str] = pydantic.Field(default_factory=list)
+    # The frontend uses the JSON schema and default values cause pydantic to not
+    # mark these as required, we handle this in the field validators by returning
+    # an empty list if we don't receive any items
+    user_mentions: list[str] = pydantic.Field()
+    role_mentions: list[str] = pydantic.Field()
 
     @pydantic.field_validator("user_mentions")
     @classmethod
-    def validate_user_formats(cls, vs: str) -> list[str]:
+    def validate_user_formats(cls, vs: list[str]) -> list[str]:
+        if not vs:
+            return []
+
         user_ids = set()
         for v in vs:
+            if not v:
+                continue
             if re.match(DISCORD_USER_ID_PATTERN, v):
                 user_ids.add(v)
             else:
@@ -67,9 +75,13 @@ class DiscordMentionWebhook(DiscordWebhook):
 
     @pydantic.field_validator("role_mentions")
     @classmethod
-    def validate_role_formats(cls, vs: str) -> list[str]:
+    def validate_role_formats(cls, vs: list[str]) -> list[str]:
+        if not vs:
+            return []
         role_ids = set()
         for v in vs:
+            if not v:
+                continue
             if re.match(DISCORD_ROLE_ID_PATTERN, v):
                 role_ids.add(v)
             else:
@@ -135,8 +147,6 @@ class CameraWebhooksUserConfig(BaseMentionWebhookUserConfig):
 
 
 class AdminPingWebhooksUserConfig(BaseMentionWebhookUserConfig):
-    pass
-
     trigger_words: list[str] = pydantic.Field(default_factory=list)
 
     @pydantic.field_validator("trigger_words")
@@ -228,9 +238,9 @@ def parse_raw_mention_hooks(
 ) -> list["DiscordMentionWebhook"]:
     validated_hooks: list[DiscordMentionWebhook] = []
     for raw_hook in raw_hooks:
-        user_mentions = raw_hook.get("user_mentions")
+        user_mentions = raw_hook.get("user_mentions", [])
         user_ids = set(user_mentions)
-        role_mentions = raw_hook.get("role_mentions")
+        role_mentions = raw_hook.get("role_mentions", [])
         role_ids = set(role_mentions)
 
         h = DiscordMentionWebhook(

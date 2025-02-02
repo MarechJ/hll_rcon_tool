@@ -8,10 +8,9 @@ import { checkboxClasses } from '@mui/material/Checkbox';
 import { listClasses } from '@mui/material/List';
 import { gridClasses } from '@mui/x-data-grid';
 import { tablePaginationClasses } from '@mui/material/TablePagination';
-import { gray } from '../themePrimitives';
 
 /* eslint-disable import/prefer-default-export */
-export const dataGridCustomizations = {
+export const dataGridCustomizations = ({ gray }) => ({
   MuiDataGrid: {
     styleOverrides: {
       root: ({ theme }) => ({
@@ -127,4 +126,4 @@ export const dataGridCustomizations = {
       columnHeaderDraggableContainer: { paddingRight: 2 },
     },
   },
-};
+});

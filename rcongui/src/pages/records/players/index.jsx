@@ -34,7 +34,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import dayjs from "dayjs";
 import NavPagination from "@/pages/stats/games/nav-pagination";
-import { Box } from "@mui/system";
+import { Box } from "@mui/material";
 
 const EmojiPicker = lazy(() => import("@emoji-mart/react"));
 
@@ -86,7 +86,7 @@ export const loader = async ({ request }) => {
 
   const blacklisted = url.searchParams.get("blacklisted") ?? false;
   const exact_name_match = url.searchParams.get("exact_name_match") ?? false;
-  const ignore_accent = url.searchParams.get("ignore_accent") ?? true;
+  const ignore_accent = url.searchParams.get("ignore_accent") ?? false;
   const is_watched = url.searchParams.get("is_watched") ?? false;
 
   const fields = {
@@ -144,6 +144,7 @@ export default function PlayersRecords() {
     last_seen_from: fields.last_seen_from ? dayjs(fields.last_seen_from) : null,
     last_seen_till: fields.last_seen_till ? dayjs(fields.last_seen_till) : null,
   });
+  console.log(formFields);
   const [selectedCountry, setSelectedCountry] = useState(fields.country);
   const [selectedEmoji, setSelectedEmoji] = useState(fields.flags);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -173,7 +174,7 @@ export default function PlayersRecords() {
       player_id: "",
       blacklisted: false,
       exact_name_match: false,
-      ignore_accent: true,
+      ignore_accent: false,
       is_watched: false,
       last_seen_from: null,
       last_seen_till: null,

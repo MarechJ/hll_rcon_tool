@@ -71,6 +71,8 @@ export const mapIdsToLayers = (layers, ids) => {
 };
 
 export const normalizePlayerProfile = (profile) => {
+  profile = profile ?? {};
+
   return {
     ...profile,
     received_actions: profile.received_actions ?? [],
