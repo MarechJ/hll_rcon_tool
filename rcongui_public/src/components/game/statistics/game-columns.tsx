@@ -274,7 +274,7 @@ const teamColumn = (): ColumnDef<Player | PlayerWithStatus> => {
     cell: ({row}) => {
       const player = row.original;
       return <div className={"text-center"}>
-        <TeamIndicator team={getTeamFromAssociation(player.team)} className="inline-block"/>
+        <TeamIndicator team={getTeamFromAssociation(player.team)}/>
       </div>;
     },
   };
