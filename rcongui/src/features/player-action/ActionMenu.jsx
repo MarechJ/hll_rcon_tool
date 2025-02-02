@@ -79,7 +79,7 @@ export function ActionMenu({
             <ListItemIcon>{action.icon}</ListItemIcon>
             <Typography
               variant="inherit"
-              sx={{ textDecoration: action.depraceted ? "line-through" : "" }}
+              sx={{ textDecoration: action.deprecated ? "line-through" : "" }}
             >
               {action.name[0].toUpperCase() + action.name.slice(1)}
             </Typography>
@@ -190,7 +190,7 @@ export function ActionMenuButton({
             <ListItemIcon>{action.icon}</ListItemIcon>
             <Typography
               variant="inherit"
-              sx={{ textDecoration: action.depraceted ? "line-through" : "" }}
+              sx={{ textDecoration: action.deprecated ? "line-through" : "" }}
             >
               {action.name[0].toUpperCase() + action.name.slice(1)}
             </Typography>

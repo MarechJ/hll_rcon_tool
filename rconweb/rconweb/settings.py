@@ -159,6 +159,8 @@ CORS_ORIGIN_ALLOW_ALL = False
 SESSION_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_DOMAIN = os.getenv("SESSION_COOKIE_DOMAIN") or None
+CSRF_COOKIE_DOMAIN = os.getenv("CSRF_COOKIE_DOMAIN") or None
 
 # Required as of Django 4.0 otherwise it causes CSRF issues
 # if we don't include the origin

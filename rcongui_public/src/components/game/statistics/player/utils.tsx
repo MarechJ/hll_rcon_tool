@@ -1,5 +1,5 @@
 import { Player, PlayerWithStatus } from '@/types/player'
-import { ScaleIcon, ZapIcon, SkullIcon, HeartCrackIcon } from 'lucide-react'
+import {ScaleIcon, ZapIcon, SkullIcon, HeartOffIcon} from 'lucide-react'
 
 export const points = [
   { key: 'kills', label: 'K', icon: '/roles/infantry.png', transKey: 'playersTable.kills' },
@@ -14,7 +14,7 @@ export const scores = [
   { key: 'kill_death_ratio', label: 'K/D', icon: ScaleIcon, transKey: 'score.k/d' },
   { key: 'kills_streak', label: 'Killstreak', icon: ZapIcon, transKey: 'score.killstreak' },
   { key: 'deaths_without_kill_streak', label: 'Deathstreak', icon: SkullIcon, transKey: 'score.deathstreak' },
-  { key: 'teamkills', label: 'Teamkills', icon: HeartCrackIcon, transKey: 'score.teamkills' },
+  { key: 'teamkills', label: 'Teamkills', icon: HeartOffIcon, transKey: 'score.teamkills' },
 ] as const
 
 export function isSteamPlayer(player: Player) {

@@ -8,7 +8,7 @@ from rcon.utils import (
 )
 
 
-class TestException(Exception):
+class FakeException(Exception):
     pass
 
 
@@ -21,30 +21,30 @@ class DeepChainedException(Exception):
 
 
 def test_direct_exception():
-    assert exception_in_chain(TestException(), TestException)
+    assert exception_in_chain(FakeException(), FakeException)
 
 
 def test_no_match():
-    assert exception_in_chain(ValueError(), TestException) is False
+    assert exception_in_chain(ValueError(), FakeException) is False
 
 
 def test_explicit_chained():
     e = ValueError()
-    e.__cause__ = TestException()
+    e.__cause__ = FakeException()
 
-    assert exception_in_chain(e, TestException)
+    assert exception_in_chain(e, FakeException)
 
 
 def test_implicit_chained():
     e = ValueError()
-    e.__context__ = TestException()
+    e.__context__ = FakeException()
 
-    assert exception_in_chain(e, TestException)
+    assert exception_in_chain(e, FakeException)
 
 
 def test_deeply_chained_explicit():
     e = ValueError()
-    e.__cause__ = TestException()
+    e.__cause__ = FakeException()
     e.__cause__.__context__ = ChainedException()
     e.__cause__.__context__.__cause__ = DeepChainedException()
 
@@ -53,7 +53,7 @@ def test_deeply_chained_explicit():
 
 def test_deeply_chained_implicit():
     e = ValueError()
-    e.__context__ = TestException()
+    e.__context__ = FakeException()
     e.__context__.__cause__ = ChainedException()
     e.__context__.__cause__.__context__ = DeepChainedException()
 

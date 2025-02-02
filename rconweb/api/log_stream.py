@@ -5,7 +5,8 @@ from typing import Generator, TypedDict
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.urls import path
 
-from rcon.game_logs import LogStream, is_action
+from rcon.logs.stream import LogStream
+from rcon.game_logs import is_action
 from rcon.types import AllLogTypes, StructuredLogLineWithMetaData
 from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.utils import StreamID, StreamInvalidID

@@ -1,6 +1,6 @@
 type Team = 'allies' | 'axis'
 type Nation = 'us' | 'gb' | 'ger' | 'rus'
-type MapEnvironment = 'day' | 'night' | 'dusk' | 'rain' | 'dawn' | 'overcast'
+export type MapEnvironment = 'day' | 'night' | 'dusk' | 'rain' | 'dawn' | 'overcast'
 export type GameMode = 'warfare' | 'offensive' | 'skirmish' | 'control'
 
 export type MapTeam = {

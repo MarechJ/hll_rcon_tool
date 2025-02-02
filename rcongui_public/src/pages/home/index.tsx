@@ -1,114 +1,48 @@
-import { publicInfoQueryOptions } from '@/lib/queries/public-info'
 import dayjs from 'dayjs'
-import { Helmet } from 'react-helmet'
-import duration from 'dayjs/plugin/duration'
-import { useTranslation } from 'react-i18next'
-import LiveGameInfo from './live-game-info'
-import { Spinner } from '@/components/spinner'
-import { QueryErrorResetBoundary, useSuspenseQueries, useSuspenseQuery } from '@tanstack/react-query'
-import { getCompletedGameColumns, getLiveGameColumns } from "@/components/game/statistics/game-columns";
-import { PlayerWithStatus } from '@/types/player'
-import { liveSessionStatsOptions } from '@/lib/queries/live-session-stats'
-import { liveGameStatsOptions } from '@/lib/queries/live-game-stats'
-import React, { useState } from "react";
-import { ErrorBoundary } from 'react-error-boundary'
+import localizedFormat from 'dayjs/plugin/localizedFormat'
+import {getLiveGameColumns} from "@/components/game/statistics/game-columns";
+import { useOutletContext } from 'react-router'
 import GameStatsContainer from '@/components/game/statistics/game-stats-container'
 import { DataTable } from "@/components/game/statistics/game-table";
+import React from "react";
+import {QueryErrorResetBoundary} from "@tanstack/react-query";
+import {ErrorBoundary} from "react-error-boundary";
+import {GameLiveOutletContext, LiveStats} from "@/pages/home/layout";
 
-dayjs.extend(duration)
+dayjs.extend(localizedFormat)
 
-export default function Home() {
-  const { t } = useTranslation('navigation')
-  const { t: tNotFound } = useTranslation('notfound')
+export default function GameDetailLive() {
+  const { liveStats, game  } = useOutletContext<GameLiveOutletContext>()
 
-  const { data: game, isLoading, isError } = useSuspenseQuery(publicInfoQueryOptions)
-
-  const liveStats: { data: PlayerWithStatus[]; pending: boolean } = useSuspenseQueries({
-    queries: [liveGameStatsOptions, liveSessionStatsOptions],
-    combine: (results) => {
-      const allPlayers = results[0].data?.stats ?? []
-      const onlinePlayers = results[1].data?.stats?.map((player) => player.player_id) ?? []
-
-      const onlinePlayersSet = new Set(onlinePlayers)
-
-      const data = allPlayers?.map((player) => ({
-        ...player,
-        is_online: onlinePlayersSet.has(player.player_id),
-      }))
-
-      return {
-        data: data,
-        pending: results.some((result) => result.isPending),
-      }
-    },
-  })
-
-  if (isError) {
-    throw new Error(tNotFound('connectionError'))
-  }
 
   return (
-    <>
-      {isLoading || !game ? (
-        <div className="grid place-items-center w-full h-[200px]">
-          <Spinner />
-        </div>
-      ) : (
-        <>
-          <Helmet>
-            <title>{t('currentGame')}</title>
-          </Helmet>
-
-          {/* LiveGameInfo */}
-          <QueryErrorResetBoundary>
-            {({ reset }) => (
-              <ErrorBoundary
-                onReset={reset}
-                fallbackRender={({ error, resetErrorBoundary }) => (
-                  <div className="grid place-items-center w-full h-[200px]">
-                    <div className="text-red-500">{error.message}</div>
-                    <button onClick={resetErrorBoundary}>Try again</button>
-                  </div>
-                )}
-              >
-                <React.Suspense fallback={<div className="grid place-items-center w-full h-[200px]" />}>
-                  <LiveGameInfo game={game} />
-                </React.Suspense>
-              </ErrorBoundary>
-            )}
-          </QueryErrorResetBoundary>
-
-          {/* GameStats */}
-          <QueryErrorResetBoundary>
-            {({ reset }) => (
-              <ErrorBoundary
-                onReset={reset}
-                fallbackRender={({ error, resetErrorBoundary }) => (
-                  <div className="grid place-items-center w-full h-[200px]">
-                    <div className="text-red-500">{error.message}</div>
-                    <button onClick={resetErrorBoundary}>Try again</button>
-                  </div>
-                )}
-              >
-                <React.Suspense fallback={<div className="grid place-items-center w-full h-[200px]" />}>
-                  <GameStatsContainer game={{
-                    id: `live_${dayjs(game.current_map.start * 1000).format('YYYYMMDD-HHmm')}`,
-                    player_stats: liveStats.data.filter((player) => player.time_seconds > 15),
-                  }}>
-                    {(props) => (
-                      <DataTable
-                        columns={getLiveGameColumns(props.handlePlayerClick)}
-                        data={liveStats.data.filter((player) => player.time_seconds > 15)}
-                        tableId={`live_${dayjs(game.current_map.start * 1000).format('YYYYMMDD-HHmm')}`}
-                      />
-                    )}
-                  </GameStatsContainer>
-                </React.Suspense>
-              </ErrorBoundary>
-            )}
-          </QueryErrorResetBoundary>
-        </>
+    <QueryErrorResetBoundary>
+      {({ reset }) => (
+        <ErrorBoundary
+          onReset={reset}
+          fallbackRender={({ error, resetErrorBoundary }) => (
+            <div className="grid place-items-center w-full h-[200px]">
+              <div className="text-red-500">{error.message}</div>
+              <button onClick={resetErrorBoundary}>Try again</button>
+            </div>
+          )}
+        >
+          <React.Suspense fallback={<div className="grid place-items-center w-full h-[200px]" />}>
+            <GameStatsContainer game={{
+              id: `live_${dayjs(game.current_map.start * 1000).format('YYYYMMDD-HHmm')}`,
+              player_stats: liveStats.data.filter((player) => player.time_seconds > 15),
+            }}>
+              {(props) => (
+                <DataTable
+                  columns={getLiveGameColumns(props.handlePlayerClick)}
+                  data={liveStats.data.filter((player) => player.time_seconds > 15)}
+                  tableId={`live_${dayjs(game.current_map.start * 1000).format('YYYYMMDD-HHmm')}`}
+                />
+              )}
+            </GameStatsContainer>
+          </React.Suspense>
+        </ErrorBoundary>
       )}
-    </>
+    </QueryErrorResetBoundary>
   )
 }

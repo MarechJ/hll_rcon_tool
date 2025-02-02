@@ -4,10 +4,9 @@ import { typographyClasses } from '@mui/material/Typography';
 import { buttonBaseClasses } from '@mui/material/ButtonBase';
 import { chipClasses } from '@mui/material/Chip';
 import { iconButtonClasses } from '@mui/material/IconButton';
-import { gray, red, green } from '../themePrimitives';
 
 /* eslint-disable import/prefer-default-export */
-export const dataDisplayCustomizations = {
+export const dataDisplayCustomizations = ({ gray, green, red }) => ({
   MuiList: {
     styleOverrides: {
       root: {
@@ -230,4 +229,4 @@ export const dataDisplayCustomizations = {
       },
     },
   },
-};
+});

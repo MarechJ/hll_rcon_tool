@@ -98,8 +98,8 @@ const Squad = ({
             alt={squadData.get("type", "na")}
             src={
               squadName.toUpperCase() === "NULL"
-                ? `icons/sleep.png`
-                : `icons/roles/${squadData.get("type")}.png`
+                ? `/icons/sleep.png`
+                : `/icons/roles/${squadData.get("type")}.png`
             }
           >
             {squadName[0].toUpperCase()}
