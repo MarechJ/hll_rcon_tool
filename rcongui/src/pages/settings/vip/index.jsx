@@ -7,6 +7,7 @@ import {
   CircularProgress,
   ToggleButtonGroup,
   ToggleButton,
+  Divider,
 } from "@mui/material";
 import vipColumns from "./vip-columns";
 import VipTable from "./vip-table";
@@ -29,12 +30,14 @@ import {
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
 import Padlock from "@/components/shared/Padlock";
-import PlayerAutocompletion from "@/components/form/custom/PlayerAutocompletion";
+import PlayerSearchField from "@/components/form/custom/PlayerSearchField";
 import { queryClient } from "@/queryClient";
 import ErrorIcon from "@mui/icons-material/Error";
 import CheckIcon from "@mui/icons-material/Check";
 import debug from "@/utils/debug";
 import { VipBulkEditDialog } from "./VipBulkEditDialog";
+import VipDownload from "./VipDownload";
+import VipUpload from "./VipUpload";
 
 const logger = debug("VIP VIEW");
 
@@ -55,6 +58,7 @@ const VipPageContent = () => {
   const { data, isLoading, isFetching, refetch, dataUpdatedAt } = useQuery(
     vipQueryOptions.list()
   );
+
   const [operationMode, setOperationMode] = useState("single");
 
   const forward = operationMode === "multi";
@@ -294,8 +298,10 @@ const VipPageContent = () => {
                     variant="contained"
                     size="small"
                     color={"error"}
-                    onClick={() => handleRemoveVip(row.original.player_id, forward)}
-                    loading={state === PENDING}
+                    onClick={() =>
+                      handleRemoveVip(row.original.player_id, forward)
+                    }
+                    loading={state === PENDING ? "true" : "false"}
                     disabled={isFetching}
                   >
                     <DeleteIcon sx={{ fontSize: "1em" }} />
@@ -364,7 +370,10 @@ const VipPageContent = () => {
         if (!currentVip) return;
 
         // If the expiration is null, we need to set it some value
-        const vipExpiration = currentVip.vip_expiration === null ? INDEFINITE_EXPIRATION : currentVip.vip_expiration;
+        const vipExpiration =
+          currentVip.vip_expiration === null
+            ? INDEFINITE_EXPIRATION
+            : currentVip.vip_expiration;
 
         // Calculate the new expiration date
         let newExpiration = dayjs(vipExpiration).add(
@@ -429,6 +438,7 @@ const VipPageContent = () => {
       selectedPlayersIds.forEach((player_id) => {
         removeVip({ player_id, forward });
       });
+      table.setRowSelection({});
     },
     [removeVip]
   );
@@ -484,7 +494,7 @@ const VipPageContent = () => {
         </Stack>
         <Stack spacing={2} sx={{ bgcolor: "background.paper", p: 2 }}>
           <Typography variant="h6">Search Player</Typography>
-          <PlayerAutocompletion
+          <PlayerSearchField
             player={searchPlayer}
             setPlayer={setSearchPlayer}
           />
@@ -537,6 +547,14 @@ const VipPageContent = () => {
           >
             Add VIP
           </Button>
+        </Stack>
+
+        <Stack spacing={2} sx={{ bgcolor: "background.paper", p: 2 }}>
+          <Typography variant="h6">Download VIPs</Typography>
+          <VipDownload />
+          <Divider flexItem orientation="horizontal" />
+          <Typography variant="h6">Upload VIPs</Typography>
+          <VipUpload />
         </Stack>
       </Stack>
       <VipTable

@@ -18,6 +18,8 @@ async function requestFactory({
     url += "?" + new URLSearchParams(params).toString();
   }
 
+  const body = method === "POST" ? headers["Content-Type"] === "application/json" ? JSON.stringify(payload) : payload : null;
+
   try {
     const response = await fetch(usingCRCON(url), {
       method,
@@ -27,7 +29,7 @@ async function requestFactory({
       headers,
       redirect: "follow",
       referrerPolicy: "origin",
-      body: method !== "GET" ? JSON.stringify(payload) : null,
+      body,
     });
 
     return await handleFetchResponse(response, method);
@@ -45,10 +47,16 @@ async function handleFetchResponse(response, method) {
   const contentType = response.headers.get("content-type");
   if (contentType && contentType.includes("application/json")) {
     data = await parseJsonResponse(response);
+  } else if (contentType && contentType.includes("text/plain")) {
+    data = await response.text();
   }
 
   handleServerErrors(response, data);
   handleClientErrors(response, data);
+
+  if (contentType && contentType.includes("text/plain")) {
+    return data;
+  }
 
   if (method === "GET") {
     return data.result
@@ -171,6 +179,10 @@ export const cmd = {
   SET_WELCOME_MESSAGE: (params) => requestFactory({ method: "POST", cmd: "set_welcome_message", ...params }),
   TOGGLE_SERVICE: (params) => requestFactory({ method: "POST", cmd: "do_service", ...params }),
   UNFLAG_PLAYER: (params) => requestFactory({ method: "POST", cmd: "unflag_player", ...params }),
+  // Files
+  DOWNLOAD_VIP_FILE: (params) => requestFactory({ method: "GET", cmd: "download_vips", ...params }),
+  UPLOAD_VIP_FILE: (params) => requestFactory({ method: "POST", cmd: "upload_vips", ...params }),
+  GET_UPLOAD_VIP_FILE_RESPONSE: (params) => requestFactory({ method: "GET", cmd: "upload_vips_result", ...params }),
 };
 
 export function execute(command, data) {

@@ -20,7 +20,7 @@ import {
 import { TableToolbar } from "@/components/table/TableToolbar";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import { TablePagination } from "@/components/table/TablePagination";
-import SplitButton from "@/components/shared/SplitButton";
+import ConfirmButton from "@/components/shared/ConfirmButton";
 
 const VipTable = memo(
   ({
@@ -39,7 +39,9 @@ const VipTable = memo(
     const [columnVisibility, setColumnVisibility] = useState({
       player_id: false,
     });
-    const [columnFilters, setColumnFilters] = useState([]);
+    const [columnFilters, setColumnFilters] = useState([
+      { id: "status", value: "" }
+    ]);
 
     const table = useReactTable({
       data: data || [],
@@ -84,15 +86,18 @@ const VipTable = memo(
           >
             Edit Selected
           </Button>
-          <Button
+          <ConfirmButton
+            buttonText="Remove Selected"
+            title="Remove Selected VIPs?"
+            description={`Are you sure you want to remove ${selectedRows} selected VIP(s)?`}
+            onConfirm={() => handleBulkRemove(table)}
             disabled={selectedRows === 0 || isFetching}
-            variant="contained"
-            color="error"
-            size="small"
-            onClick={() => handleBulkRemove(table)}
-          >
-            Remove Selected
-          </Button>
+            buttonProps={{
+              variant: "contained",
+              color: "error",
+              size: "small",
+            }}
+          />
         </Stack>
         <TableToolbar>
           <Stack
@@ -145,7 +150,7 @@ export const StatusFilter = ({ value, onChange }) => {
       <Select
         labelId="status-filter-label"
         id="status-filter"
-        value={value}
+        value={value || ""}
         label="Status"
         onChange={(event) => onChange(event.target.value)}
       >
