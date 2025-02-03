@@ -5,11 +5,11 @@ import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {CircleHelp} from "lucide-react";
 
 interface StreamBannerProps {
-  playerAmount: number,
   settings: StreamSettings,
 }
 
-interface StreamSettings {
+export interface StreamSettings {
+  playerAmount: number,
   animationDuration: number,
   pauseWidth: number,
   text: string,
@@ -18,13 +18,13 @@ interface StreamSettings {
   playerFilter: string[],
 }
 
-export default function StreamBanner({ playerAmount, settings }: StreamBannerProps) {
+export default function StreamBanner({ settings }: StreamBannerProps) {
   const { liveStats } = useOutletContext<GameLiveOutletContext>();
 
   const displayedPlayers = liveStats.data
     .filter(player => !settings.playerFilter.includes(player.player))
     .sort((a, b) => b.kills - a.kills)
-    .slice(0, playerAmount);
+    .slice(0, settings.playerAmount);
 
   return <div className="stream-banner w-full h-12 inline-flex flex-nowrap bg-white overflow-hidden">
     <Stream players={displayedPlayers} settings={settings}/>

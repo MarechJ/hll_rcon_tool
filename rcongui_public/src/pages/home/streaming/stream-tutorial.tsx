@@ -7,23 +7,23 @@ const StreamTutorial = () => {
   const { t } = useTranslation('translation', { keyPrefix: 'streaming.tutorial' });
 
   const cssValue = `.stream-banner {
-  background-color: black !important;
+  background-color: white !important;
 }
 
 .stream-banner-text {
-  color: #ffa500 !important;
+  color: black !important;
 }
 
 .stream-banner-kills {
-  color: red !important;
+  color: #ff0000 !important;
 }
 
 .stream-banner-player {
-  color: #6a5acd !important;
+  color: black !important;
 }
 
 .stream-banner-weapon {
-  color: #6a5acd !important;
+  color: grey !important;
 }`;
 
   const steps = [
