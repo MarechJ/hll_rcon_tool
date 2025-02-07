@@ -23,17 +23,11 @@ const MobileDrawer = ({ open, toggleDrawer, children }) => {
           backgroundImage: "none",
           backgroundColor: "background.paper",
           minWidth: 240,
+          width: { xs: "100%", sm: "auto" },
         },
       }}
     >
-      <Stack
-        sx={{
-          maxWidth: "70dvw",
-          height: "100%",
-        }}
-      >
-        {children}
-      </Stack>
+      <Stack sx={{ height: "100%" }}>{children}</Stack>
     </Drawer>
   );
 };
@@ -41,33 +35,31 @@ const MobileDrawer = ({ open, toggleDrawer, children }) => {
 function AdminSideMenuMobile({ open, toggleDrawer }) {
   return (
     <MobileDrawer open={open} toggleDrawer={toggleDrawer}>
-      <Stack sx={{ flexGrow: 1 }}>
-        <MenuContent navigationTree={navMenus} isMobile={true} />
-        <List dense>
-          <ListItem>
-            <ListItemText
-              sx={{ marginLeft: -0.5 }}
-              primary={<ConnectionStatus />}
-            />
-          </ListItem>
-          <AboutDialog />
-        </List>
-        <Divider />
-        <Stack direction="row" sx={{ gap: 1, px: 1.5, py: 0.5 }}>
-          <ColorSchemeSelector />
-          <ToggleColorMode />
-        </Stack>
-        <Divider />
-        <Box
-          sx={{
-            display: "flex",
-            p: 1.5,
-          }}
-        >
-          <SelectContent />
-        </Box>
-        <Divider />
+      <MenuContent navigationTree={navMenus} isMobile={true} />
+      <List dense>
+        <ListItem>
+          <ListItemText
+            sx={{ marginLeft: -0.5 }}
+            primary={<ConnectionStatus />}
+          />
+        </ListItem>
+        <AboutDialog />
+      </List>
+      <Divider />
+      <Stack direction="row" sx={{ gap: 1, px: 1.5, py: 0.5 }}>
+        <ColorSchemeSelector />
+        <ToggleColorMode />
       </Stack>
+      <Divider />
+      <Box
+        sx={{
+          display: "flex",
+          p: 1.5,
+        }}
+      >
+        <SelectContent />
+      </Box>
+      <Divider />
       <UserActions />
     </MobileDrawer>
   );
