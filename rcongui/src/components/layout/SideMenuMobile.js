@@ -16,7 +16,7 @@ const MobileDrawer = ({ open, toggleDrawer, children }) => {
     <Drawer
       anchor="left"
       open={open}
-      onClose={toggleDrawer(false)}
+      onClose={toggleDrawer}
       sx={{
         zIndex: (theme) => theme.zIndex.drawer + 1,
         [`& .${drawerClasses.paper}`]: {
@@ -42,7 +42,7 @@ function AdminSideMenuMobile({ open, toggleDrawer }) {
   return (
     <MobileDrawer open={open} toggleDrawer={toggleDrawer}>
       <Stack sx={{ flexGrow: 1 }}>
-        <MenuContent navigationTree={navMenus} />
+        <MenuContent navigationTree={navMenus} isMobile={true} />
         <List dense>
           <ListItem>
             <ListItemText
