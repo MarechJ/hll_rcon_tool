@@ -50,7 +50,7 @@ export default function Root() {
             spacing={2}
             sx={{
               alignItems: "center",
-              mx: 3,
+              mx: { xs: 0, lg: 3 },
               pb: 5,
               mt: { xs: 8, lg: 0 },
             }}
