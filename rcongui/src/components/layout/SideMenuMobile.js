@@ -1,17 +1,12 @@
-import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
 import Drawer, { drawerClasses } from "@mui/material/Drawer";
 import Stack from "@mui/material/Stack";
-import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import MenuContent from "./MenuContent";
 import SelectContent from "./SelectContent";
 import { Box, List, ListItem, ListItemText } from "@mui/material";
-import { Form } from "react-router-dom";
 import { navMenus } from "../Header/nav-data";
 import ConnectionStatus from "./sidebar/ConnectionStatus";
 import AboutDialog from "./sidebar/About";
-
-import ToggleWidthMode from "./ToggleWidthMode";
 import ToggleColorMode from "./ColorModeIconDropdown";
 import ColorSchemeSelector from "./ColorSchemeSelector";
 import { UserActions } from "./sidebar/UserActions";
