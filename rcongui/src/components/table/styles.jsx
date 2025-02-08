@@ -1,5 +1,7 @@
 import { logActions } from "@/utils/lib";
 import { Button, styled } from "@mui/material";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 
 export function getVariantWidth(variant) {
   switch (variant) {
@@ -16,7 +18,7 @@ export function getVariantWidth(variant) {
     case "action":
       return "24ch";
     case "content":
-      return "auto"
+      return "auto";
     default:
       return "auto";
   }
@@ -37,7 +39,7 @@ export function getVariantMinWidth(variant) {
     case "action":
       return "24ch";
     case "content":
-      return "50ch"
+      return "50ch";
     default:
       return "auto";
   }
@@ -98,6 +100,9 @@ export const StyledTable = styled("table", {
     "& th": {
       ...getDensityPadding(density, theme),
       verticalAlign: "middle",
+    },
+    "& tbody tr": {
+      verticalAlign: "top",
     },
   };
 });
@@ -170,6 +175,26 @@ export const SortableHeader =
     return (
       <HeaderButton onClick={column.getToggleSortingHandler()}>
         {text}
+        {column.getIsSorted() &&
+          (column.getIsSorted() === "asc" ? (
+            <ArrowUpwardIcon
+              sx={{
+                fontSize: "1em",
+                width: "1em",
+                height: "1em",
+                ml: 0.5,
+              }}
+            />
+          ) : (
+            <ArrowDownwardIcon
+              sx={{
+                fontSize: "1em",
+                width: "1em",
+                height: "1em",
+                ml: 0.5,
+              }}
+            />
+          ))}
       </HeaderButton>
     );
   };

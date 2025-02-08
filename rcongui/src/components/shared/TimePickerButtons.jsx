@@ -9,13 +9,14 @@ export const TimePickerButtons = ({
   unit,
   expirationTimestamp,
   setExpirationTimestamp,
+  enablePast = false,
 }) => {
 
   const adjustTimestamp = (amount, unit) => {
     const after = dayjs(expirationTimestamp).add(amount, unit);
     const now = dayjs();
 
-    if (after.isBefore(now)) {
+    if (after.isBefore(now) && !enablePast) {
       setExpirationTimestamp(now)
       return;
     }

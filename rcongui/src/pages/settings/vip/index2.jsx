@@ -9,15 +9,11 @@ import {
   Button,
   Checkbox,
   Divider,
-  FormControl,
   FormControlLabel,
   IconButton,
-  InputLabel,
   List,
   ListItemIcon,
-  MenuItem,
   Paper,
-  Select,
   Stack,
   TextField,
 } from "@mui/material";
@@ -28,35 +24,55 @@ import debounce from "lodash/debounce";
 import { InputFileUpload } from "@/components/shared/InputFileUpload";
 import exportFile from "@/utils/exportFile";
 import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
+import SplitButton from "@/components/shared/SplitButton";
+import dayjs from "dayjs";
+import relativeTimePlugin from "dayjs/plugin/relativeTime";
+import localizedFormatPlugin from "dayjs/plugin/localizedFormat";
+import {
+  DesktopDateTimePicker,
+  LocalizationProvider,
+} from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import {
+  getVipExpirationStatus,
+  getVipExpirationStatusColor,
+} from "@/utils/lib";
 import PlayerAutocompletion from "@/components/form/custom/PlayerAutocompletion";
 
+dayjs.extend(relativeTimePlugin);
+dayjs.extend(localizedFormatPlugin);
+
 const INTENT = {
-  ADD_ADMIN: "add_admin",
-  DELETE_ADMIN: "delete_admin",
+  ADD_VIP: 0,
+  DELETE_VIP: 1,
+  APPLY_SINGLE: 2,
+  APPLY_ALL: 3,
 };
 
 export const loader = async () => {
-  const admins = await cmd.GET_CONSOLE_ADMINS();
-  const adminGroups = await cmd.GET_CONSOLE_ADMIN_GROUPS();
-  return { admins, adminGroups };
+  const vips = await cmd.GET_VIPS();
+  return {
+    items: vips,
+  };
 };
 
 export const action = async ({ request }) => {
-  const admins = await request.json();
+  const vips = await request.json();
   const results = await Promise.all(
-    admins.map(({ intent, admin }) => {
+    vips.map(({ intent, forward, vip }) => {
       let payload;
       switch (intent) {
-        case INTENT.ADD_ADMIN:
+        case INTENT.ADD_VIP:
           payload = {
-            description: admin.name,
-            player_id: admin.player_id,
-            role: admin.role.toLowerCase(),
+            forward,
+            description: vip.name,
+            player_id: vip.player_id,
+            expiration: vip.vip_expiration,
           };
-          return cmd.ADD_CONSOLE_ADMIN({ payload });
-        case INTENT.DELETE_ADMIN:
-          payload = { player_id: admin.player_id };
-          return cmd.DELETE_CONSOLE_ADMIN({ payload });
+          return cmd.ADD_VIP({ payload });
+        case INTENT.DELETE_VIP:
+          payload = { player_id: vip.player_id, forward };
+          return cmd.DELETE_VIP({ payload });
         default:
           // Return null or reject here to handle unexpected intent
           return Promise.resolve(null); // Avoid returning null in the Promise chain
@@ -66,28 +82,27 @@ export const action = async ({ request }) => {
   return results;
 };
 
-const ConsoleAdminsPage = () => {
-  const { admins: serverAdmins, adminGroups } = useLoaderData();
+const initialAddFormData = {
+  player_id: "",
+  name: "",
+  vip_expiration: dayjs(),
+};
 
-  const initialAdmin = {
-    player_id: "",
-    name: "",
-    role: adminGroups.includes("spectator") ? "spectator" : "",
-  };
-
-  const [admins, setAdmins] = useState(serverAdmins);
+const VipPage = () => {
+  const { items: serverItems } = useLoaderData();
+  const [clientItems, setClientItems] = useState(serverItems);
   const [checked, setChecked] = useState(new Set());
   const [searched, setSearched] = useState("");
-  const [newAdmin, setNewAdmin] = useState(initialAdmin);
+  const [addFormData, setAddFormData] = useState(initialAddFormData);
   const { openWithId } = usePlayerSidebar();
   const submit = useSubmit();
 
-  const filteredAdmins = useMemo(
+  const filteredItems = useMemo(
     () =>
-      admins.filter((admin) =>
-        admin.name.toLowerCase().includes(searched.toLowerCase())
+      clientItems.filter((item) =>
+        item.name.toLowerCase().includes(searched.toLowerCase())
       ),
-    [admins, searched]
+    [clientItems, searched]
   );
 
   const handleOpenProfile = (playerId) => {
@@ -107,14 +122,14 @@ const ConsoleAdminsPage = () => {
   };
 
   const handleAddItem = () => {
-    if (newAdmin) {
-      setAdmins((prev) => [newAdmin, ...prev]);
-      setNewAdmin(initialAdmin);
+    if (addFormData) {
+      setClientItems((prev) => [addFormData, ...prev]);
+      setAddFormData(initialAddFormData);
     }
   };
 
   const handleDeleteSingleItem = (id) => {
-    setAdmins((prev) => prev.filter((admin) => admin.player_id !== id));
+    setClientItems((prev) => prev.filter((vip) => vip.player_id !== id));
     setChecked((prev) => {
       const newChecked = new Set(prev);
       newChecked.delete(id);
@@ -123,13 +138,13 @@ const ConsoleAdminsPage = () => {
   };
 
   const handleDeleteSelectedItems = () => {
-    setAdmins((prev) => prev.filter((admin) => !checked.has(admin.player_id)));
+    setClientItems((prev) => prev.filter((vip) => !checked.has(vip.player_id)));
     setChecked(new Set());
   };
 
   const handleToggleSelectAll = (e) => {
     if (e.target.checked) {
-      setChecked(new Set(filteredAdmins.map(admin => admin.player_id)));
+      setChecked(new Set(filteredItems.map((vip) => vip.player_id)));
     } else {
       setChecked(new Set());
     }
@@ -144,49 +159,51 @@ const ConsoleAdminsPage = () => {
       const uploadData = text
         .split("\n")
         .map((row) => {
-          const [id, name, role] = row.split("\t");
-          if (!id || !name || !role || !adminGroups.includes(role)) {
+          const [id, name, vip_expiration] = row.split("\t");
+          if (!id || !name || !vip_expiration) {
             return null;
           }
           return {
             player_id: id,
             name,
-            role,
+            vip_expiration,
           };
         })
         .filter((obj) => obj !== null);
-      setAdmins(uploadData);
+      setClientItems(uploadData);
     };
 
     reader.readAsText(file);
   };
 
   const handleFileDownload = () => {
-    const rows = admins.map((admin) => [
-      `${admin.player_id}\t${admin.name}\t${admin.role}`,
+    const rows = clientItems.map((vip) => [
+      `${vip.player_id}\t${vip.name}\t${vip.vip_expiration}`,
     ]);
-    exportFile(rows, "console-admins");
+    exportFile(rows, "vip-players");
   };
 
-  const submitChanges = () => {
+  const submitChanges = (applyIntent) => () => {
     const payload = [];
-    const currentIds = new Set(serverAdmins.map((admin) => admin.player_id));
-    const newIds = new Set(admins.map((admin) => admin.player_id));
+    const currentIds = new Set(serverItems.map((vip) => vip.player_id));
+    const newIds = new Set(clientItems.map((vip) => vip.player_id));
 
-    serverAdmins.forEach((admin) => {
-      if (!newIds.has(admin.player_id)) {
+    serverItems.forEach((vip) => {
+      if (!newIds.has(vip.player_id)) {
         payload.push({
-          intent: INTENT.DELETE_ADMIN,
-          admin,
+          intent: INTENT.DELETE_VIP,
+          forward: applyIntent === INTENT.APPLY_ALL,
+          vip,
         });
       }
     });
 
-    admins.forEach((admin) => {
-      if (!currentIds.has(admin.player_id)) {
+    clientItems.forEach((vip) => {
+      if (!currentIds.has(vip.player_id)) {
         payload.push({
-          intent: INTENT.ADD_ADMIN,
-          admin,
+          intent: INTENT.ADD_VIP,
+          forward: applyIntent === INTENT.APPLY_ALL,
+          vip,
         });
       }
     });
@@ -201,40 +218,38 @@ const ConsoleAdminsPage = () => {
   const handleInputChange = (event) => {
     const name = event.target.name;
     const value = event.target.value;
-    setNewAdmin((prev) => ({
+    setAddFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
   useEffect(() => {
-    setAdmins(serverAdmins);
-  }, [serverAdmins]);
+    setClientItems(serverItems);
+  }, [serverItems]);
 
-  const isValidAdminInput = useMemo(
+  const isValidAddFormInput = useMemo(
     () =>
-      Object.entries({
-        name: newAdmin.name,
-        player_id: newAdmin.player_id,
-        role: newAdmin.role,
-      }).every(([_, value]) => !!value.trim()),
-    [newAdmin]
+      Object.entries(addFormData).every(
+        ([_, value]) => value ?? !!value.trim()
+      ),
+    [addFormData]
   );
 
   const hasChanges = useMemo(() => {
-    if (serverAdmins.length !== admins.length) {
+    if (serverItems.length !== clientItems.length) {
       return true;
     }
 
-    const idsCount = serverAdmins.length;
+    const idsCount = serverItems.length;
     const uniqueIds = new Set(
-      serverAdmins
-        .map((admin) => admin.player_id)
-        .concat(admins.map((admin) => admin.player_id))
+      serverItems
+        .map((vip) => vip.player_id)
+        .concat(clientItems.map((vip) => vip.player_id))
     );
 
     return idsCount !== uniqueIds.size;
-  }, [serverAdmins, admins]);
+  }, [serverItems, clientItems]);
 
   return (
     <Box
@@ -244,10 +259,10 @@ const ConsoleAdminsPage = () => {
     >
       <Stack
         component={Paper}
-        direction={"row"}
+        direction={["column", "row"]}
         sx={{ p: 1, mb: 1 }}
         justifyContent={"end"}
-        alignItems={"center"}
+        alignItems={["stretch", "center"]}
         gap={1}
       >
         <InputFileUpload
@@ -263,13 +278,27 @@ const ConsoleAdminsPage = () => {
         >
           Download
         </Button>
-        <Button
-          onClick={submitChanges}
+        <SplitButton
           disabled={!hasChanges}
-          variant="contained"
-        >
-          Apply
-        </Button>
+          options={[
+            {
+              name: "Apply",
+              buttonProps: {
+                onClick: submitChanges(INTENT.APPLY_SINGLE),
+                disabled: !hasChanges,
+                fullWidth: true,
+              },
+            },
+            {
+              name: "Apply all servers",
+              buttonProps: {
+                onClick: submitChanges(INTENT.APPLY_ALL),
+                disabled: !hasChanges,
+                fullWidth: true,
+              },
+            },
+          ]}
+        />
       </Stack>
       <Stack
         direction={"column"}
@@ -280,36 +309,55 @@ const ConsoleAdminsPage = () => {
           padding: 1,
         }}
       >
-        <Stack direction={"row"} gap={1} sx={{ mb: 1, p: 0.5 }}>
-          <PlayerAutocompletion player={newAdmin} setPlayer={setNewAdmin}/>
-          <TextField
-            autoComplete={"off"}
-            value={newAdmin.player_id}
-            onChange={handleInputChange}
-            name={"player_id"}
-            fullWidth
-            label={"ID"}
-          />
-          <FormControl fullWidth>
-            <InputLabel id="admin-role-input">Role</InputLabel>
-            <Select
-              labelId="admin-role-input"
-              id="admin-role"
-              value={newAdmin.role}
-              label="Role"
-              name={"role"}
+        <Stack direction={"column"} gap={1} sx={{ mb: 1, p: 0.5 }}>
+          <Stack direction={{ xs: "column", md: "row" }} gap={1}>
+            <PlayerAutocompletion
+              player={addFormData}
+              setPlayer={setAddFormData}
+            />
+            <TextField
+              autoComplete={"off"}
+              value={addFormData.player_id}
               onChange={handleInputChange}
+              name={"player_id"}
+              fullWidth
+              label={"ID"}
+            />
+          </Stack>
+          <Stack direction={{ xs: "column", md: "row" }} gap={1}>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DesktopDateTimePicker
+                name={"vip_expiration"}
+                label={"Expiration"}
+                format="LLL"
+                value={dayjs(addFormData.vip_expiration)}
+                maxDate={dayjs("3000-01-01T00:00:00+00:00")}
+                onChange={(dayjsValue) =>
+                  setAddFormData((prev) => ({
+                    ...prev,
+                    vip_expiration: dayjsValue.format(),
+                  }))
+                }
+                sx={{ minWidth: 300, flexGrow: 1 }}
+              />
+            </LocalizationProvider>
+            <Button
+              onClick={() =>
+                setAddFormData((prev) => ({
+                  ...prev,
+                  vip_expiration: dayjs("3000-01-01T00:00:00+00:00"),
+                }))
+              }
+              variant="outlined"
+              color="secondary"
+              sx={{ minWidth: "fit-content" }}
             >
-              {adminGroups.map((group) => (
-                <MenuItem key={group} value={group}>
-                  {group.toUpperCase()}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+              Never Expires
+            </Button>
+          </Stack>
           <Button
             onClick={handleAddItem}
-            disabled={!isValidAdminInput}
+            disabled={!isValidAddFormInput}
             variant="contained"
           >
             Add
@@ -329,10 +377,10 @@ const ConsoleAdminsPage = () => {
               <Checkbox
                 sx={{ mr: 1, "& .MuiSvgIcon-root": { fontSize: 16 } }}
                 checked={
-                  checked.size === filteredAdmins.length && checked.size !== 0
+                  checked.size === filteredItems.length && checked.size !== 0
                 }
                 indeterminate={
-                  checked.size > 0 && checked.size !== filteredAdmins.length
+                  checked.size > 0 && checked.size !== filteredItems.length
                 }
                 size="small"
                 onChange={handleToggleSelectAll}
@@ -340,10 +388,7 @@ const ConsoleAdminsPage = () => {
             }
           />
           <Divider orientation="vertical" flexItem />
-          <SearchInput
-            onChange={onSearchedChange}
-            placeholder="Search console admin"
-          />
+          <SearchInput onChange={onSearchedChange} placeholder="Search VIP" />
           <Divider orientation="vertical" flexItem />
           <Button
             onClick={handleDeleteSelectedItems}
@@ -365,21 +410,23 @@ const ConsoleAdminsPage = () => {
             "& ul": { padding: 0 },
           }}
         >
-          {filteredAdmins.map((admin, index) => {
+          {filteredItems.map((vip, index) => {
             const labelId = `checkbox-list-label-${index}`;
+            const status = getVipExpirationStatus(vip);
+            const color = getVipExpirationStatusColor(status);
             return (
               <ListItem
-                key={admin.player_id + index}
+                key={vip.player_id + index}
                 disablePadding
                 secondaryAction={
                   <Stack direction={"row"} gap={1}>
                     <IconButton
-                      onClick={() => handleOpenProfile(admin.player_id)}
+                      onClick={() => handleOpenProfile(vip.player_id)}
                     >
                       <AccountCircleIcon />
                     </IconButton>
                     <IconButton
-                      onClick={() => handleDeleteSingleItem(admin.player_id)}
+                      onClick={() => handleDeleteSingleItem(vip.player_id)}
                     >
                       <DeleteIcon />
                     </IconButton>
@@ -388,13 +435,13 @@ const ConsoleAdminsPage = () => {
               >
                 <ListItemButton
                   role={undefined}
-                  onClick={handleToggle(admin.player_id)}
+                  onClick={handleToggle(vip.player_id)}
                   dense
                 >
                   <ListItemIcon>
                     <Checkbox
                       edge="start"
-                      checked={checked.has(admin.player_id)}
+                      checked={checked.has(vip.player_id)}
                       tabIndex={-1}
                       disableRipple
                       inputProps={{ "aria-labelledby": labelId }}
@@ -402,8 +449,11 @@ const ConsoleAdminsPage = () => {
                   </ListItemIcon>
                   <ListItemText
                     id={labelId}
-                    primary={admin.name}
-                    secondary={admin.role}
+                    primary={vip.name}
+                    secondary={status[0].toUpperCase() + status.slice(1)}
+                    secondaryTypographyProps={{
+                      sx: { color },
+                    }}
                   />
                 </ListItemButton>
               </ListItem>
@@ -415,4 +465,4 @@ const ConsoleAdminsPage = () => {
   );
 };
 
-export default ConsoleAdminsPage;
+export default VipPage;
