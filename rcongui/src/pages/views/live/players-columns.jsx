@@ -27,7 +27,6 @@ import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
 import CopyableText from "@/components/shared/CopyableText";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSteam } from "@fortawesome/free-brands-svg-icons";
-import { faGamepad } from "@fortawesome/free-solid-svg-icons";
 import Emoji from "@/components/shared/Emoji";
 
 export const Square = styled(Box)(({ theme }) => ({

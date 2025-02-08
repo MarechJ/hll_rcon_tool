@@ -23,7 +23,6 @@ export const feedbackCustomizations = ({ orange, gray }) => ({
     styleOverrides: {
       root: ({ theme }) => ({
         '& .MuiDialog-paper': {
-          borderRadius: '10px',
           border: '1px solid',
           borderColor: theme.palette.divider,
         },

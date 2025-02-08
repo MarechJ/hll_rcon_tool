@@ -161,6 +161,7 @@ export const HeaderButton = styled((props) => (
   fontSize: "1em",
   textDecoration: "none",
   textTransform: "none",
+  minWidth: "fit-content",
 }));
 
 export const SortableHeader =
