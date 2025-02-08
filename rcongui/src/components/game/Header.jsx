@@ -4,6 +4,7 @@ import Grid from "@mui/material/Grid2"
 import { TeamDesktop, TeamMobile } from './Team';
 import { styled } from '@mui/material';
 import { Skeleton } from '@mui/material';
+import { useGlobalStore } from "@/stores/global-state";
 
 const MobileHeaderWrapper = styled(Grid)(({ theme }) => ({
   minHeight: '4rem',

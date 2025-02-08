@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import TableConfigDrawer from "@/components/table/TableConfigDrawer";
 import { Fragment, memo, useEffect, useState } from "react";
-import { useStorageState } from "@/hooks/useStorageState";
+import { useLogsTableStore, useLogsSearchStore } from "@/stores/table-config";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { logActions as _logActions } from "@/utils/lib";
@@ -25,7 +25,6 @@ import { TableToolbar } from "@/components/table/TableToolbar";
 import TableAddons from "@/components/table/TableAddons";
 import { LogActionHighlightMenu } from "@/components/table/selection/LogActionHighlightMenu";
 import LiveLogsTable from "@/components/live-logs/LiveLogsTable";
-import localStorageConfig from "@/config/localStorage";
 import TableColumnSelection from "@/components/table/TableColumnSelection";
 import { LogTeamSelectionMenu } from "@/components/table/selection/LogTeamSelectionMenu";
 
@@ -65,16 +64,12 @@ const updateFilterActionSelection = (action) => (prev) => {
 function LogsTable({
   table,
   logsViewData,
-  searchParams,
-  setSearchParams,
   onColumnVisibilityChange,
 }) {
   const [tableConfigDrawerOpen, setTableConfigDrawerOpen] = useState(false);
 
-  const [tableConfig, setTableConfig] = useStorageState(
-    localStorageConfig.LIVE_LOGS_TABLE_CONFIG.key,
-    localStorageConfig.LIVE_LOGS_TABLE_CONFIG.defaultValue
-  );
+  const tableConfig = useLogsTableStore();
+  const searchParams = useLogsSearchStore();
 
   const [playerOptions, setPlayerOptions] = useState({});
 
@@ -91,12 +86,12 @@ function LogsTable({
   };
 
   const handleClientActionFilterChange = (actionName) => {
-    setTableConfig(updateFilterActionSelection(actionName));
+    tableConfig.setConfig(updateFilterActionSelection(actionName));
   };
 
   const handleClientActionFilterToggle = () => {
     handleFilterChange(() => {
-      setTableConfig((prev) => ({
+      tableConfig.setConfig((prev) => ({
         ...prev,
         filters: {
           ...prev.filters,
@@ -120,16 +115,16 @@ function LogsTable({
 
   const handleQueryActionParamSelect = (action) => {
     handleFilterChange(() => {
-      setSearchParams(updateActionSelection(action));
+      searchParams.setSearchParams(updateActionSelection(action));
     });
   };
 
   const handleHighlightActionSelect = (action) => {
-    setTableConfig(updateActionSelection(action));
+    tableConfig.setConfig(updateActionSelection(action));
   };
 
   const handleClientHighlightActionToggle = () => {
-    setTableConfig((prev) => ({
+    tableConfig.setConfig((prev) => ({
       ...prev,
       highlighted: !prev.highlighted,
     }));
@@ -140,7 +135,7 @@ function LogsTable({
     const inputValue = Number(event.target.value);
     const limit = inputValue < min ? min : inputValue > max ? max : inputValue;
     handleFilterChange(() => {
-      setSearchParams((prev) => ({
+      searchParams.setSearchParams((prev) => ({
         ...prev,
         limit,
       }));
@@ -151,7 +146,7 @@ function LogsTable({
     if (mode === null) return; // the active value was selected
     console.log(mode);
     handleFilterChange(() => {
-      setSearchParams((prev) => ({
+      searchParams.setSearchParams((prev) => ({
         ...prev,
         inclusive_filter: mode === "exclusive" ? false : true,
       }));
@@ -297,7 +292,7 @@ function LogsTable({
         open={tableConfigDrawerOpen}
         onClose={(config) => {
           setTableConfigDrawerOpen(false);
-          setTableConfig(config);
+          tableConfig.setConfig(config);
         }}
         config={tableConfig}
       >

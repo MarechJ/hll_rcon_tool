@@ -1,9 +1,7 @@
 import Table from "@/components/table/Table";
 import TableConfigDrawer from "@/components/table/TableConfigDrawer";
-import localStorageConfig from "@/config/localStorage";
 import { Divider, IconButton, Stack } from "@mui/material";
 import { memo, useState } from "react";
-import { useStorageState } from "@/hooks/useStorageState";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import SettingsIcon from "@mui/icons-material/Settings";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
@@ -13,18 +11,17 @@ import { ActionMenuButton } from "@/features/player-action/ActionMenu";
 import { generatePlayerActions } from "@/features/player-action/actions";
 import TableColumnSelection from "@/components/table/TableColumnSelection";
 import { TableToolbar } from "@/components/table/TableToolbar";
+import { usePlayersTableStore } from "@/stores/table-config";
 
 const PlayersTable = ({ table, teamData, selectedPlayers, onColumnVisibilityChange }) => {
   const [tableConfigDrawerOpen, setTableConfigDrawerOpen] = useState(false);
-
-  const [tableConfig, setTableConfig] = useStorageState(
-    localStorageConfig.LIVE_PLAYERS_TABLE_CONFIG.key,
-    localStorageConfig.LIVE_PLAYERS_TABLE_CONFIG.defaultValue
-  );
+  
+  const tableConfig = usePlayersTableStore();
+  const setConfig = usePlayersTableStore(state => state.setConfig);
+  const setExpandedView = usePlayersTableStore(state => state.setExpandedView);
 
   const handleTableConfigClick = () => {
-    // toggle config drawer
-    setTableConfigDrawerOpen((prev) => !prev);
+    setTableConfigDrawerOpen(prev => !prev);
   };
 
   return (
@@ -67,10 +64,7 @@ const PlayersTable = ({ table, teamData, selectedPlayers, onColumnVisibilityChan
             }
             sx={{ p: 0.5, borderRadius: 0 }}
             onClick={() => {
-              setTableConfig((prev) => ({
-                ...prev,
-                expandedView: !prev.expandedView,
-              }));
+              setExpandedView(!tableConfig.expandedView);
             }}
           >
             {tableConfig.expandedView ? (
@@ -97,7 +91,7 @@ const PlayersTable = ({ table, teamData, selectedPlayers, onColumnVisibilityChan
         open={tableConfigDrawerOpen}
         onClose={(config) => {
           setTableConfigDrawerOpen(false);
-          setTableConfig(config);
+          setConfig(config);
         }}
         config={tableConfig}
       />

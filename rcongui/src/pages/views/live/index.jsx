@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { cmd } from "@/utils/fetchUtils";
 import { columns as playersColumns } from "./players-columns";
 import { Header } from "@/components/game/Header";
@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import PlayersTable from "./players-table";
 import LogsTable from "./logs-table";
 import { logsColumns } from "./logs-columns";
-import { useStorageState } from "@/hooks/useStorageState";
+import { useLogsSearchStore, usePlayersTableStore, useLogsTableStore } from "@/stores/table-config";
 import { teamsLiveQueryOptions } from "@/queries/teams-live-query";
 import { normalizePlayerProfile } from "@/utils/lib";
 import {
@@ -19,7 +19,6 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import Grid from "@mui/material/Grid2";
-import localStorageConfig from "@/config/localStorage";
 import InfoPanel from "./info-panel";
 
 const interval = 15 * 1000; // 15 seconds
@@ -59,12 +58,8 @@ const Live = () => {
   }, [teamData]);
 
   // ---------------- LOGS DATA -----------------
-  // Using custom hook that synchronizes the components state
-  // and the browser's local storage
-  const [logsSearchParams, setLogsSearchParams] = useStorageState(
-    localStorageConfig.LIVE_LOGS_SEARCH_PARAMS.key,
-    localStorageConfig.LIVE_LOGS_SEARCH_PARAMS.defaultValue
-  );
+  const logsSearchParams = useLogsSearchStore();
+  const setSearchParams = useLogsSearchStore(state => state.setSearchParams);
 
   const { data: logsView } = useQuery({
     queryKey: [
@@ -130,10 +125,8 @@ const Live = () => {
 
   const [playersRowSelection, setPlayersRowSelection] = useState({});
   const [playersColumnFilters, setPlayersColumnFilters] = useState([]);
-  const [playersTableConfig, setPlayersTableConfig] = useStorageState(
-    localStorageConfig.LIVE_PLAYERS_TABLE_CONFIG.key,
-    localStorageConfig.LIVE_PLAYERS_TABLE_CONFIG.defaultValue
-  );
+  const playersTableConfig = usePlayersTableStore();
+  const setPlayersTableConfig = usePlayersTableStore(state => state.setConfig);
 
   const playersColumnVisibility = playersTableConfig.columnVisibility;
 
@@ -166,17 +159,11 @@ const Live = () => {
 
   // ---------------- LOGS TABLE STATE -----------------
   const [logsFiltering, setLogsFiltering] = useState([]);
-  const [logsTableConfig, setLogsTableConfig] = useStorageState(
-    localStorageConfig.LIVE_LOGS_TABLE_CONFIG.key,
-    localStorageConfig.LIVE_LOGS_TABLE_CONFIG.defaultValue
-  );
+  const logsTableConfig = useLogsTableStore();
+  const setLogsTableConfig = useLogsTableStore(state => state.setConfig);
+  const setPagination = useLogsTableStore(state => state.setPagination);
 
   const logsColumnVisibility = logsTableConfig.columnVisibility;
-
-  const [logsPagination, setLogsPagination] = useState({
-    pageIndex: 0,
-    pageSize: 100,
-  });
 
   const handleLogsColumnVisibilityChange = (columnId, isVisible) => {
     setLogsTableConfig((prev) => {
@@ -184,6 +171,10 @@ const Live = () => {
       columnVisibility[columnId] === false ? delete columnVisibility[columnId] : columnVisibility[columnId] = isVisible;
       return { ...prev, columnVisibility }
     });
+  };
+
+  const handleLogsPaginationChange = (updater) => {
+    setPagination(updater(logsTableConfig.pagination));
   };
 
   const logsTable = useReactTable({
@@ -195,12 +186,12 @@ const Live = () => {
     getPaginationRowModel: getPaginationRowModel(),
     onColumnFiltersChange: setLogsFiltering,
     onColumnVisibilityChange: handleLogsColumnVisibilityChange,
-    onPaginationChange: setLogsPagination,
+    onPaginationChange: handleLogsPaginationChange,
     autoResetPageIndex: false,
     state: {
       columnFilters: logsFiltering,
       columnVisibility: logsColumnVisibility,
-      pagination: logsPagination,
+      pagination: logsTableConfig.pagination,
     },
   });
 
@@ -246,7 +237,7 @@ const Live = () => {
           table={logsTable}
           logsViewData={logsView}
           searchParams={logsSearchParams}
-          setSearchParams={setLogsSearchParams}
+          setSearchParams={setSearchParams}
           onColumnVisibilityChange={handleLogsColumnVisibilityChange}
         />
       </Grid>
