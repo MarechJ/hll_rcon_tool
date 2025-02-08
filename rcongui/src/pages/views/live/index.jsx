@@ -67,8 +67,8 @@ const Live = () => {
       "live",
       {
         end: logsSearchParams.limit,
-        filter_action: logsSearchParams.actions,
-        filter_player: logsSearchParams.players,
+        filter_action: logsSearchParams.enabled ? logsSearchParams.actions : [],
+        filter_player: logsSearchParams.enabled ? logsSearchParams.players : [],
         inclusive_filter: logsSearchParams.inclusive_filter,
       },
     ],
@@ -76,8 +76,8 @@ const Live = () => {
       cmd.GET_LIVE_LOGS({
         payload: {
           end: logsSearchParams.limit,
-          filter_action: logsSearchParams.actions,
-          filter_player: logsSearchParams.players,
+          filter_action: logsSearchParams.enabled ? logsSearchParams.actions : [],
+          filter_player: logsSearchParams.enabled ? logsSearchParams.players : [],
           inclusive_filter: logsSearchParams.inclusive_filter,
         },
       }),

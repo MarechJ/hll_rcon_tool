@@ -70,6 +70,7 @@ function LogsTable({
 
   const tableConfig = useLogsTableStore();
   const searchParams = useLogsSearchStore();
+  const setParamsFilterEnabled = useLogsSearchStore((state) => state.setEnabled);
 
   const [playerOptions, setPlayerOptions] = useState({});
 
@@ -206,6 +207,11 @@ function LogsTable({
     {}
   );
 
+  const searchQueryParamsOptions = Object.entries(logActions).reduce((acc, [name]) => {
+    acc[name] = searchParams.actions.includes(name);
+    return acc;
+  }, {});
+
   const handleTeamSelect = (team) => {
     handleFilterChange(() => {
       setSelectedTeams((prev) => {
@@ -338,8 +344,11 @@ function LogsTable({
             Filter Actions
           </Typography>
           <LogActionQuerySelectionMenu
+            actionOptions={searchQueryParamsOptions}
             selectedActions={searchParams.actions}
             onActionSelect={handleQueryActionParamSelect}
+            toggleValue={searchParams.enabled}
+            onToggle={setParamsFilterEnabled}
           />
           <List dense={true} disablePadding={true}>
             {searchParams.actions.map((action, i) => (

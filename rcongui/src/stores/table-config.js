@@ -81,7 +81,8 @@ export const useLogsSearchStore = create(
       actions: [],
       players: [],
       inclusive_filter: true,
-      
+      enabled: true,
+      setEnabled: (enabled) => set({ enabled }),
       setLimit: (limit) => set({ limit }),
       setActions: (actions) => set({ actions }),
       setPlayers: (players) => set({ players }),
