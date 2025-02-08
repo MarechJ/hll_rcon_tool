@@ -1,7 +1,6 @@
 import { Suspense, useState } from 'react';
-import { Box, Typography, Accordion, AccordionSummary, AccordionDetails, Skeleton, Link, Button } from '@mui/material';
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import dayjs from 'dayjs';
+import { Box, Typography, Link, Button } from '@mui/material';
+import Skeleton from '@mui/material/Skeleton';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 

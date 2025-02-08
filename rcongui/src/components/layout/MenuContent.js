@@ -6,14 +6,16 @@ import ListItemText from "@mui/material/ListItemText";
 import Stack from "@mui/material/Stack";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Collapse } from "@mui/material";
 import {useState} from "react";
+import { useAppStore } from "@/hooks/useAppState";
 
-const NavigationLink = ({ to, icon, text }) => {
+const NavigationLink = ({ to, icon, text, onClick }) => {
+
   return (
     <ListItem key={to} disablePadding sx={{ display: "block" }}>
-      <ListItemButton component={Link} to={to}>
+      <ListItemButton onClick={onClick}>
         {icon && <ListItemIcon>{icon}</ListItemIcon>}
         <ListItemText primary={text} />
       </ListItemButton>
@@ -48,7 +50,17 @@ const Group = ({ groupName, icon, level = 1, children }) => {
   );
 };
 
-export default function MenuContent({ navigationTree }) {
+export default function MenuContent({ navigationTree, isMobile }) {
+  const toggleDrawer = useAppStore((state) => state.toggleDrawer);
+  const navigate = useNavigate();
+
+  const handleLinkClick = (to) => () => {
+    if (isMobile) {
+      toggleDrawer();
+    }
+    navigate(to);
+  };
+
   return (
     <Stack
       sx={{
@@ -68,6 +80,7 @@ export default function MenuContent({ navigationTree }) {
                 to={link.to}
                 text={link.name}
                 icon={link.icon}
+                onClick={handleLinkClick(link.to)}
               />
             ))
           )}
@@ -82,6 +95,7 @@ export default function MenuContent({ navigationTree }) {
                   to={link.to}
                   text={link.name}
                   icon={link.icon}
+                  onClick={handleLinkClick(link.to)}
                 />
               ))}
             </Group>
