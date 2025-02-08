@@ -23,7 +23,6 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@emoji-mart/data": "^1.2.1",
     "@emoji-mart/react": "^1.1.1",
-    "@faker-js/faker": "^9.3.0",
     "@fontsource/montserrat": "^5.1.0",
     "@fontsource/roboto": "^5.0.14",
     "@fortawesome/free-brands-svg-icons": "^6.6.0",
@@ -52,7 +51,6 @@
     "immutable": "^5.0.3",
     "localforage": "^1.10.0",
     "lodash": "^4.17.21",
-    "miragejs": "^0.1.48",
     "moment": "^2.29.4",
     "react": "^18.3.1",
     "react-chartjs-2": "^4.0.0",
@@ -69,12 +67,14 @@
     "zustand": "^5.0.0"
   },
   "devDependencies": {
+    "@faker-js/faker": "^9.4.0",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
     "@types/lodash": "^4.17.13",
     "@types/react-window": "^1.8.8",
     "@vitejs/plugin-react": "^4.2.1",
+    "miragejs": "^0.1.48",
     "prettier": "^2.8.8",
     "vite": "^5.4.14"
   },
