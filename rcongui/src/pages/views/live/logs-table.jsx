@@ -1,4 +1,5 @@
 import {
+  Box,
   Divider,
   IconButton,
   List,
@@ -65,6 +66,8 @@ function LogsTable({
   table,
   logsViewData,
   onColumnVisibilityChange,
+  isFetching,
+  isLoading,
 }) {
   const [tableConfigDrawerOpen, setTableConfigDrawerOpen] = useState(false);
 
@@ -262,6 +265,7 @@ function LogsTable({
               });
             }}
           />
+          <Box sx={{ flexGrow: 1 }} />
           <TablePagination table={table} />
           <Divider
             flexItem
@@ -282,7 +286,7 @@ function LogsTable({
             <SettingsIcon sx={{ fontSize: "1rem" }} />
           </IconButton>
         </TableToolbar>
-        <LiveLogsTable table={table} config={tableConfig} />
+        <LiveLogsTable table={table} config={tableConfig} isFetching={isFetching} isLoading={isLoading} />
         <TableToolbar
           sx={{
             borderBottomWidth: "1px",

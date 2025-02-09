@@ -25,14 +25,14 @@ import LogsCard from "@/components/shared/card/LogsCard";
 import ScrollableCard from "@/components/shared/card/ScrollableCard";
 import { MapAvatar } from "@/components/MapManager/map-details";
 import Emoji from "@/components/shared/Emoji";
-import SettingsIcon from '@mui/icons-material/Settings';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import StopIcon from '@mui/icons-material/Stop';
-import ErrorIcon from '@mui/icons-material/Error';
-import BlockIcon from '@mui/icons-material/Block';
-import InfoIcon from '@mui/icons-material/Info';
+import SettingsIcon from "@mui/icons-material/Settings";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import StopIcon from "@mui/icons-material/Stop";
+import ErrorIcon from "@mui/icons-material/Error";
+import BlockIcon from "@mui/icons-material/Block";
+import InfoIcon from "@mui/icons-material/Info";
 import ServerSettingsCard from "@/components/cards/ServerSettingsCard";
 import ServicesCard from "@/components/cards/ServicesCard";
 import MapRotationCard from "@/components/cards/MapRotationCard";
@@ -133,12 +133,11 @@ const Dashboard = () => {
       });
       if (!result?.maps) return [];
 
-      return result.maps
-        .filter((game) => game.server_number === status.server_number)
-        .slice(0, 15);
+      return result.maps.filter(
+        (game) => game.server_number === status.server_number
+      );
     },
   });
-
 
   return (
     <Grid container sx={{ overflow: "hidden" }} spacing={2}>
@@ -153,7 +152,7 @@ const Dashboard = () => {
       <Grid size={MEDIUM_CARD_SIZE}>
         <ServicesCard />
       </Grid>
-      
+
       <Grid size={SMALL_CARD_SIZE}>
         <MapRotationCard />
       </Grid>
@@ -175,7 +174,7 @@ const Dashboard = () => {
       </Grid>
 
       <Grid size={MEDIUM_CARD_SIZE}>
-        <GamesCard games={games} />
+        <GamesCard games={games.slice(0, 15)} />
       </Grid>
 
       <Grid size={MEDIUM_CARD_SIZE}>

@@ -41,7 +41,7 @@ const Live = () => {
   const { initialLogsView } = useLoaderData();
 
   // ---------------- PLAYERS DATA -----------------
-  const { data: teamData } = useQuery({
+  const { data: teamData, isFetching: isTeamFetching } = useQuery({
     ...teamsLiveQueryOptions,
     staleTime: 5 * 1000,
     refetchInterval: 10 * 1000,
@@ -61,7 +61,7 @@ const Live = () => {
   const logsSearchParams = useLogsSearchStore();
   const setSearchParams = useLogsSearchStore(state => state.setSearchParams);
 
-  const { data: logsView } = useQuery({
+  const { data: logsView, isFetching: isLogsFetching } = useQuery({
     queryKey: [
       "logs",
       "live",
@@ -225,6 +225,7 @@ const Live = () => {
           teamData={teamData}
           selectedPlayers={selectedPlayers}
           onColumnVisibilityChange={handlePlayersColumnVisibilityChange}
+          isFetching={isTeamFetching}
         />
       </Grid>
       <Grid
@@ -239,6 +240,7 @@ const Live = () => {
           searchParams={logsSearchParams}
           setSearchParams={setSearchParams}
           onColumnVisibilityChange={handleLogsColumnVisibilityChange}
+          isFetching={isLogsFetching}
         />
       </Grid>
     </Grid>

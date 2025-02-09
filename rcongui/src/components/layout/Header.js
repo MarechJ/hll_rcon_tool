@@ -6,7 +6,7 @@ import ColorSchemeSelector from "./ColorSchemeSelector";
 import MenuButton from "./MenuButton";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
-import { useAppStore } from "@/hooks/useAppState";
+import { useAppStore } from "@/stores/app-state";
 
 export default function Header() {
   const openDrawer = useAppStore((state) => state.openDrawer);

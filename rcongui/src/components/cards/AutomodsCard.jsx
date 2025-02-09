@@ -4,7 +4,6 @@ import {
   Card,
   CardHeader,
   CardContent,
-  IconButton,
   Typography,
   Box,
   Grid2 as Grid,
@@ -13,7 +12,6 @@ import {
 } from "@mui/material";
 import { Link } from "react-router-dom";
 import { useMemo } from "react";
-import SettingsIcon from '@mui/icons-material/Settings';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import WebhookIcon from '@mui/icons-material/Webhook';

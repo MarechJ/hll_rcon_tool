@@ -6,7 +6,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import ColorLensIcon from '@mui/icons-material/ColorLens';
 import CheckIcon from '@mui/icons-material/Check';
-import { useAppStore } from "@/hooks/useAppState";
+import { useAppStore } from "@/stores/app-state";
 
 const schemes = [
   { name: 'Default', value: 'default' },
@@ -31,6 +31,7 @@ export default function ColorSchemeSelector() {
 
   const handleSchemeSelect = (scheme) => {
     setColorScheme(scheme);
+    console.log(scheme);
     handleClose();
   };
 

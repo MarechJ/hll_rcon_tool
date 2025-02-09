@@ -9,7 +9,7 @@ import { cmd } from "@/utils/fetchUtils";
 import "react-toastify/dist/ReactToastify.css";
 import { ActionDialogProvider } from "@/hooks/useActionDialog";
 import { PlayerSidebarProvider } from "@/hooks/usePlayerSidebar";
-import { useAppStore } from "@/hooks/useAppState";
+import { useAppStore } from "@/stores/app-state";
 
 export const loader = async () => {
   return null;

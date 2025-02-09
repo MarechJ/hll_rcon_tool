@@ -8,6 +8,7 @@ import {
   MenuItem,
   Select,
   Divider,
+  Box,
 } from "@mui/material";
 import { memo, useState } from "react";
 import {
@@ -111,8 +112,8 @@ const VipTable = memo(
               onChange={(value) => {
                 setGlobalFilter(value);
               }}
-              sx={{ minWidth: 225 }}
             />
+            <Box sx={{ flexGrow: 1 }} />
             <StatusFilter
               value={
                 table
@@ -135,6 +136,7 @@ const VipTable = memo(
             <Typography variant="body2">
               {selectedRows} / {rowsCount} selected
             </Typography>
+            <Box sx={{ flexGrow: 1 }} />
             <TablePagination table={table} />
           </Stack>
         </TableToolbar>

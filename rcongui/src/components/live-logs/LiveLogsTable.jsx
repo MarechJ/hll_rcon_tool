@@ -1,7 +1,7 @@
 import { flexRender } from "@tanstack/react-table";
 import { NoRowsOverlay } from "@/components/NoRowsOverlay";
 import { StyledTd, StyledTh, StyledTr } from "../table/styles";
-import { Box } from "@mui/material";
+import { Box, LinearProgress } from "@mui/material";
 import { StyledLogsTable, StyledLogsTr } from "./styles";
 
 const getTRClass = (row, config) => {
@@ -23,7 +23,7 @@ const getTRClass = (row, config) => {
   return className;
 };
 
-const LiveLogsTable = ({ table, config = {} }) => {
+const LiveLogsTable = ({ table, config = {}, isFetching }) => {
   return (
     <Box
       sx={{
@@ -31,8 +31,11 @@ const LiveLogsTable = ({ table, config = {} }) => {
         overflowY: "hidden",
         width: "100%",
         scrollbarWidth: "thin",
+        position: "relative",
+        marginTop: "2px",
       }}
     >
+      {isFetching && <LinearProgress sx={{ position: "absolute", top: 0, left: 0, width: "100%", height: "2px" }} />}
       <StyledLogsTable density={config.density} fontSize={config.fontSize} className={config.highlighted ? "highlighted" : null}>
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (

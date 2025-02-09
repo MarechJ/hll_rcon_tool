@@ -1,6 +1,6 @@
 import Table from "@/components/table/Table";
 import TableConfigDrawer from "@/components/table/TableConfigDrawer";
-import { Divider, IconButton, Stack } from "@mui/material";
+import { Box, Divider, IconButton, Stack } from "@mui/material";
 import { memo, useState } from "react";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -13,7 +13,7 @@ import TableColumnSelection from "@/components/table/TableColumnSelection";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import { usePlayersTableStore } from "@/stores/table-config";
 
-const PlayersTable = ({ table, teamData, selectedPlayers, onColumnVisibilityChange }) => {
+const PlayersTable = ({ table, teamData, selectedPlayers, onColumnVisibilityChange, isFetching }) => {
   const [tableConfigDrawerOpen, setTableConfigDrawerOpen] = useState(false);
   
   const tableConfig = usePlayersTableStore();
@@ -53,6 +53,7 @@ const PlayersTable = ({ table, teamData, selectedPlayers, onColumnVisibilityChan
               table.getColumn("name")?.setFilterValue(value);
             }}
           />
+          <Box sx={{ flexGrow: 1 }} />
           <Divider flexItem orientation="vertical" sx={{ marginLeft: 0, marginRight: 0 }} />
           <IconButton
             size="small"
@@ -84,7 +85,7 @@ const PlayersTable = ({ table, teamData, selectedPlayers, onColumnVisibilityChan
             <SettingsIcon sx={{ fontSize: "1rem" }} />
           </IconButton>
         </TableToolbar>
-        <Table table={table} config={tableConfig} />
+        <Table table={table} config={tableConfig} isFetching={isFetching} />
       </Stack>
       <TableConfigDrawer
         name={"Players"}

@@ -18,7 +18,7 @@ const Table = ({ table, config = {}, renderSubComponent, isLoading, isFetching }
       }}
     >
       {isFetching && <LinearProgress sx={{ position: "absolute", top: 0, left: 0, width: "100%", height: "2px" }} />}
-      <StyledTable density={config.density} fontSize={config.fontSize}>
+      <StyledTable density={config.density} fontSize={config.fontSize} data-expanded-view={String(config.expandedView)}>
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
             <StyledTr key={headerGroup.id}>

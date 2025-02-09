@@ -1,6 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
-import { cmd } from "@/utils/fetchUtils";
-import { useGlobalStore } from "@/hooks/useGlobalState";
 import {
   Card,
   CardHeader,
