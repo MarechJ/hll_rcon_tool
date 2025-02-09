@@ -301,7 +301,6 @@ const VipPageContent = () => {
                     onClick={() =>
                       handleRemoveVip(row.original.player_id, forward)
                     }
-                    loading={state === PENDING ? "true" : "false"}
                     disabled={isFetching}
                   >
                     <DeleteIcon sx={{ fontSize: "1em" }} />

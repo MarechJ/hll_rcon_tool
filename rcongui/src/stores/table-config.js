@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import siteConfig from "@/config/siteConfig";
 
-const prefix = siteConfig.appName + '.';
+const prefix = siteConfig.appName + ".";
 const withPrefix = (key) => prefix + key;
 
 // Players table store
@@ -13,15 +13,15 @@ export const usePlayersTableStore = create(
         player_id: false,
       },
       expandedView: false,
-      fontSize: "normal",
-      density: "normal",
-      
-      setColumnVisibility: (columnId, isVisible) => 
+      fontSize: "small",
+      density: "dense",
+
+      setColumnVisibility: (columnId, isVisible) =>
         set((state) => {
           const columnVisibility = { ...state.columnVisibility };
-          columnVisibility[columnId] === false 
-            ? delete columnVisibility[columnId] 
-            : columnVisibility[columnId] = isVisible;
+          columnVisibility[columnId] === false
+            ? delete columnVisibility[columnId]
+            : (columnVisibility[columnId] = isVisible);
           return { ...state, columnVisibility };
         }),
       setExpandedView: (expanded) => set({ expandedView: expanded }),
@@ -37,28 +37,35 @@ export const usePlayersTableStore = create(
 export const useLogsTableStore = create(
   persist(
     (set) => ({
-      columnVisibility: {},
+      columnVisibility: {
+        player_name_2: false,
+        player_name_1: false,
+        message: false,
+        short_message: false,
+        full_message: false,
+        team: false,
+      },
       filters: {
         actions: {
           enabled: false,
           selected: [],
-        }
+        },
       },
       actions: [],
       highlighted: false,
-      fontSize: "normal",
-      density: "normal",
+      fontSize: "small",
+      density: "dense",
       pagination: {
         pageIndex: 0,
         pageSize: 100,
       },
-      
+
       setColumnVisibility: (columnId, isVisible) =>
         set((state) => {
           const columnVisibility = { ...state.columnVisibility };
-          columnVisibility[columnId] === false 
-            ? delete columnVisibility[columnId] 
-            : columnVisibility[columnId] = isVisible;
+          columnVisibility[columnId] === false
+            ? delete columnVisibility[columnId]
+            : (columnVisibility[columnId] = isVisible);
           return { ...state, columnVisibility };
         }),
       setFilters: (filters) => set({ filters }),
@@ -73,7 +80,7 @@ export const useLogsTableStore = create(
   )
 );
 
-// Logs search params store 
+// Logs search params store
 export const useLogsSearchStore = create(
   persist(
     (set) => ({
@@ -100,15 +107,15 @@ export const useGameListTableStore = create(
   persist(
     (set) => ({
       columnVisibility: {},
-      fontSize: "normal",
-      density: "normal",
-      
-      setColumnVisibility: (columnId, isVisible) => 
+      fontSize: "small",
+      density: "dense",
+
+      setColumnVisibility: (columnId, isVisible) =>
         set((state) => {
           const columnVisibility = { ...state.columnVisibility };
-          columnVisibility[columnId] === false 
-            ? delete columnVisibility[columnId] 
-            : columnVisibility[columnId] = isVisible;
+          columnVisibility[columnId] === false
+            ? delete columnVisibility[columnId]
+            : (columnVisibility[columnId] = isVisible);
           return { ...state, columnVisibility };
         }),
       setConfig: (config) => set(config),
@@ -124,15 +131,15 @@ export const useGameDetailsTableStore = create(
   persist(
     (set) => ({
       columnVisibility: {},
-      fontSize: "normal",
-      density: "normal",
-      
-      setColumnVisibility: (columnId, isVisible) => 
+      fontSize: "small",
+      density: "dense",
+
+      setColumnVisibility: (columnId, isVisible) =>
         set((state) => {
           const columnVisibility = { ...state.columnVisibility };
-          columnVisibility[columnId] === false 
-            ? delete columnVisibility[columnId] 
-            : columnVisibility[columnId] = isVisible;
+          columnVisibility[columnId] === false
+            ? delete columnVisibility[columnId]
+            : (columnVisibility[columnId] = isVisible);
           return { ...state, columnVisibility };
         }),
       setConfig: (config) => set(config),
@@ -148,15 +155,15 @@ export const useLiveSessionsTableStore = create(
   persist(
     (set) => ({
       columnVisibility: {},
-      fontSize: "normal",
-      density: "normal",
-      
-      setColumnVisibility: (columnId, isVisible) => 
+      fontSize: "small",
+      density: "dense",
+
+      setColumnVisibility: (columnId, isVisible) =>
         set((state) => {
           const columnVisibility = { ...state.columnVisibility };
-          columnVisibility[columnId] === false 
-            ? delete columnVisibility[columnId] 
-            : columnVisibility[columnId] = isVisible;
+          columnVisibility[columnId] === false
+            ? delete columnVisibility[columnId]
+            : (columnVisibility[columnId] = isVisible);
           return { ...state, columnVisibility };
         }),
       setConfig: (config) => set(config),
