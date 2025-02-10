@@ -17,7 +17,7 @@ steam==1.4.4
 alembic==1.14.1
 rq==2.1.0
 rq-scheduler==0.14.0
-paramiko==3.5.0
+paramiko==3.5.1
 ftpretty==0.4.0
 pytz>=2023.3
 pydantic==2.10.6
