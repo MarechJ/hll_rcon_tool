@@ -16,6 +16,7 @@ import {
   Select,
   Stack,
   TextField,
+  IconButton,
 } from "@mui/material";
 import { useState } from "react";
 import { auditLogsColumns } from "./columns";
@@ -30,6 +31,8 @@ import { AuditLogCard } from "@/components/shared/card/AuditLogCard";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import NavPagination from "@/pages/stats/games/nav-pagination";
 import { TablePageSizeSelect } from "@/components/table/TablePageSizeSelect";
+import DownloadIcon from "@mui/icons-material/Download";
+import downloadLogs from "./download";
 
 /**
  * @typedef {Object} AuditLogResponse
@@ -203,6 +206,10 @@ const AuditLogsPage = () => {
     submit(getParams({ page_size: pageSize }), { method: "GET" });
   };
 
+  const handleDownload = () => {
+    downloadLogs(audit_logs);
+  };
+
   return (
     <Stack direction={{ xs: "column" }} spacing={1} sx={{ mt: 2 }}>
       <Box sx={{ height: 4 }}>
@@ -316,6 +323,19 @@ const AuditLogsPage = () => {
                 pageSize={page_size}
                 setPageSize={handlePageSizeChange}
               />
+              <IconButton
+                size="small"
+                variant="contained"
+                color="primary"
+                sx={{
+                  "&.MuiIconButton-root": {
+                    borderRadius: 0,
+                  },
+                }}
+                onClick={handleDownload}
+              >
+                <DownloadIcon />
+              </IconButton>
               <Box sx={{ flexGrow: 1 }} />
               <NavPagination
                 page={page}
