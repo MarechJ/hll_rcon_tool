@@ -18,7 +18,7 @@ import ChatIcon from '@mui/icons-material/Chat';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import PrivacyTipIcon from '@mui/icons-material/PrivacyTip';
 import RateReviewIcon from '@mui/icons-material/RateReview';
-import TimerOffIcon from '@mui/icons-material/TimerOff';
+import StarIcon from "@mui/icons-material/Star";
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
 import SportsMartialArtsIcon from '@mui/icons-material/SportsMartialArts';
 import CableIcon from '@mui/icons-material/Cable';
@@ -117,7 +117,7 @@ export const navMenus = [
       {
         name: "VIP Lists",
         to: "/records/vip-lists",
-        icon: <AccountBalanceIcon />,
+        icon: <StarIcon />,
       },
       {
         name: "Game Logs",
