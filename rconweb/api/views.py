@@ -361,6 +361,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.add_maps_to_votemap_whitelist: "api.can_add_maps_to_whitelist",
     rcon_api.add_message_template: "api.can_add_message_templates",
     rcon_api.add_vip: "api.can_add_vip",
+    rcon_api.bulk_add_vips: "api.can_add_vip",
     rcon_api.ban_profanities: "api.can_ban_profanities",
     rcon_api.clear_cache: "api.can_clear_crcon_cache",
     rcon_api.delete_message_template: "api.can_delete_message_templates",
@@ -381,6 +382,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.remove_perma_ban: "api.can_remove_perma_bans",
     rcon_api.remove_temp_ban: "api.can_remove_temp_bans",
     rcon_api.remove_vip: "api.can_remove_vip",
+    rcon_api.bulk_remove_vips: "api.can_remove_vip",
     rcon_api.reset_map_votemap_whitelist: "api.can_reset_map_whitelist",
     rcon_api.reset_votekick_thresholds: "api.can_reset_votekick_threshold",
     rcon_api.set_votemap_whitelist: "api.can_set_map_whitelist",
@@ -880,6 +882,8 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.revoke_all_vip: ["POST"],
     rcon_api.synchronize_with_game_server: ["POST"],
     rcon_api.convert_old_style_vip_records: ["POST"],
+    rcon_api.bulk_add_vips: ["POST"],
+    rcon_api.bulk_remove_vips: ["POST"],
 }
 
 # Check to make sure that ENDPOINT_HTTP_METHODS and ENDPOINT_PERMISSIONS have the same endpoints
