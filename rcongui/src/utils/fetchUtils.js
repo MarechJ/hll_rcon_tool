@@ -14,8 +14,12 @@ async function requestFactory({
 } = {}) {
   let url = cmd;
 
-  if (params && method === "GET") {
-    url += "?" + new URLSearchParams(params).toString();
+  if (params) {
+    if (params instanceof URLSearchParams) {
+      url += "?" + params.toString();
+    } else if (method === "GET") {
+      url += "?" + new URLSearchParams(params).toString();
+    }
   }
 
   try {
@@ -105,6 +109,8 @@ export const cmd = {
   DELETE_VIP: (params) => requestFactory({ method: "POST", cmd: "remove_vip", ...params }),
   EDIT_MESSAGE_TEMPLATE: (params) => requestFactory({ method: "POST", cmd: "edit_message_template", ...params }),
   FLAG_PLAYER: (params) => requestFactory({ method: "POST", cmd: "flag_player", ...params }),
+  GET_AUDIT_LOGS: (params) => requestFactory({ method: "GET", cmd: "get_audit_logs", ...params }),
+  GET_AUDIT_LOGS_AUTOCOMPLETE: (params) => requestFactory({ method: "GET", cmd: "get_audit_logs_autocomplete", ...params }),
   GET_ALL_MESSAGE_TEMPLATES: (params) => requestFactory({ method: "GET", cmd: "get_all_message_templates", ...params }),
   GET_AUTOSETTINGS: (params) => requestFactory({ method: "GET", cmd: "get_auto_settings", ...params }),
   GET_BANS: (params) => requestFactory({ method: "GET", cmd: "get_bans", ...params }),
