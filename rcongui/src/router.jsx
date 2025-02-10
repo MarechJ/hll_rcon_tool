@@ -16,6 +16,8 @@ import { loader as playerRecordsLoader } from "./pages/records/players"
 
 import Blacklists from "./pages/records/blacklists/manage"
 import BlacklistRecords from "./pages/records/blacklists"
+import VipLists from "./pages/records/vip-lists/manage"
+import VipListRecords from "./pages/records/vip-lists"
 import GameLogsRecords from "./pages/records/game-logs"
 import AuditLogsRecords from "./pages/records/audit-logs"
 
@@ -158,6 +160,18 @@ const router = createBrowserRouter([
                         path: 'blacklists/manage',
                         handle: { crumb: () => [<Link to={'/records/blacklists'}>Blacklists</Link>, <span>Manage</span>] },
                         element: <Blacklists />,
+                        errorElement: <RouteError />,
+                    },
+                    {
+                        path: 'vip-lists',
+                        handle: { crumb: () => <Link to={'/records/vip-lists'}>VIP Lists</Link> },
+                        element: <VipListRecords />,
+                        errorElement: <RouteError />,
+                    },
+                    {
+                        path: 'vip-lists/manage',
+                        handle: { crumb: () => [<Link to={'/records/vip-lists'}>VIP Lists</Link>, <span>Manage</span>] },
+                        element: <VipLists />,
                         errorElement: <RouteError />,
                     },
                     {

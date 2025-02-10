@@ -115,6 +115,11 @@ export const navMenus = [
         icon: <AccountBalanceIcon />,
       },
       {
+        name: "VIP Lists",
+        to: "/records/vip-lists",
+        icon: <AccountBalanceIcon />,
+      },
+      {
         name: "Game Logs",
         to: "/records/game-logs",
         icon: <TextSnippetIcon />,
@@ -298,11 +303,7 @@ export const navMenus = [
         to: "/settings/others/steam",
         icon: <RemoveRedEyeIcon />,
       },
-      {
-        name: "Expired VIP",
-        to: "/settings/others/expired-vip",
-        icon: <TimerOffIcon />,
-      },
+
       {
         name: "GTX Server Name Change",
         to: "/settings/others/gtx-server",

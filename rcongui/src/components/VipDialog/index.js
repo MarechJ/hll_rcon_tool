@@ -38,8 +38,8 @@ export function VipExpirationDialog({ open, vips, onDeleteVip, handleClose, hand
     // handle old usage
     if (typeof open === "object") {
       setIsVip(!!vips.get(open.get("player_id")));
-      if (open.get("vip_expiration")) {
-        setExpirationTimestamp(open.get("vip_expiration"));
+      if (open.get("expires_at")) {
+        setExpirationTimestamp(open.get("expires_at"));
       }
       return
     }
@@ -51,7 +51,7 @@ export function VipExpirationDialog({ open, vips, onDeleteVip, handleClose, hand
         setIsVip(true)
         // but the expiration date needs to be found from "api/get_vip_ids"
         let p = vips.find(vipObj => vipObj.player_id === player.get("player_id"))
-        let pExpiration = p?.vip_expiration
+        let pExpiration = p?.expires_at
         // A player can have VIP on the server but no corresponding record w/ expiration in CRCON
         setExpirationTimestamp(dayjs(pExpiration ? pExpiration : dayjs()).format("YYYY-MM-DD HH:mm:ssZ"))
         return
@@ -59,7 +59,7 @@ export function VipExpirationDialog({ open, vips, onDeleteVip, handleClose, hand
       // if player provided from "api/get_players_history" we need to look inside "api/get_vip_ids" and find him there
       if (vips.some((playerVIP) => playerVIP.player_id === player.get("player_id"))) {
         setIsVip(true)
-        setExpirationTimestamp(dayjs(player.get("vip_expiration")).format("YYYY-MM-DD HH:mm:ssZ"));
+        setExpirationTimestamp(dayjs(player.get("expires_at")).format("YYYY-MM-DD HH:mm:ssZ"));
         return
       }
     }
@@ -71,9 +71,9 @@ export function VipExpirationDialog({ open, vips, onDeleteVip, handleClose, hand
     return null;
   }
 
-  const currentVipExpiration = typeof open === "object" ? open?.get("vip_expiration")
-    : player?.has("vip_expiration") ? player?.get("vip_expiration") :
-      vips?.find(vipObj => vipObj.player_id === player?.get("player_id"))?.vip_expiration
+  const currentVipExpiration = typeof open === "object" ? open?.get("expires_at")
+    : player?.has("expires_at") ? player?.get("expires_at") :
+      vips?.find(vipObj => vipObj.player_id === player?.get("player_id"))?.expires_at
 
   return (
     <Dialog open={open} maxWidth="xs" fullWidth={true} onClose={handleClose} aria-labelledby="form-dialog-title">
@@ -84,14 +84,14 @@ export function VipExpirationDialog({ open, vips, onDeleteVip, handleClose, hand
         <Box style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <PlayerVipSummary player={player ?? open} vipExpiration={currentVipExpiration} isVip={isVip} />
           <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DesktopDateTimePicker
-            label="New VIP Expiration"
-            value={dayjs(expirationTimestamp)}
-            onChange={(value) => console.log(value)} // send value to hook form
-            format='LLL'
-            maxDate={dayjs("3000-01-01T00:00:00+00:00")}
-          />
-        </LocalizationProvider>
+            <DesktopDateTimePicker
+              label="New VIP Expiration"
+              value={dayjs(expirationTimestamp)}
+              onChange={(value) => console.log(value)} // send value to hook form
+              format='LLL'
+              maxDate={dayjs("3000-01-01T00:00:00+00:00")}
+            />
+          </LocalizationProvider>
           <Box>
             <Button variant="outlined" size="small" color="secondary" style={{ display: "block", width: "100%", marginBottom: 4 }} onClick={() => setExpirationTimestamp(dayjs().add(15, "minutes"))}>Help to join!</Button>
             {presetTimes.map(([amount, unit], index) => (

@@ -14,12 +14,12 @@ export const NEVER_EXPIRES_VIP_DATE = "3000-01-01T00:00:00+00:00";
 export const unpackBroadcastMessage = (message) =>
   message.length
     ? message.split("\n").map((line) => {
-        const regex = /(\d+)\s+(.*)/;
-        const match = line.match(regex);
-        if (!match) return { time_sec: "", message: "" };
-        const [_, time_sec, content] = match;
-        return { time_sec, message: content };
-      })
+      const regex = /(\d+)\s+(.*)/;
+      const match = line.match(regex);
+      if (!match) return { time_sec: "", message: "" };
+      const [_, time_sec, content] = match;
+      return { time_sec, message: content };
+    })
     : [];
 
 export const parseBroadcastMessages = (messages) =>
@@ -42,11 +42,10 @@ export const parseVotekickThresholds = (thresholds) => {
 export const getVipExpirationStatus = (vip) => {
   if (!vip) return "none";
   if (
-    vip.vip_expiration === NEVER_EXPIRES_VIP_DATE ||
-    vip.vip_expiration === null
+    vip.expires_at === null
   )
     return "never";
-  if (dayjs(vip.vip_expiration).isBefore(dayjs())) return "expired";
+  if (dayjs(vip.expires_at).isBefore(dayjs())) return "expired";
   return "active";
 };
 

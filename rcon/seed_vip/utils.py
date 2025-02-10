@@ -7,6 +7,7 @@ from humanize import naturaldelta, naturaltime
 
 import discord
 from rcon.api_commands import RconAPI
+from rcon.models import enter_session
 from rcon.seed_vip.models import (
     BaseCondition,
     GameState,
@@ -16,9 +17,23 @@ from rcon.seed_vip.models import (
     ServerPopulation,
     VipPlayer,
 )
-from rcon.types import GameStateType, GetPlayersType, VipIdType
+from rcon.types import (
+    GameStateType,
+    GetPlayersType,
+    VipIdWithExpirationType,
+    VipListSyncMethod,
+    VipListRecordType,
+)
 from rcon.user_config.seed_vip import SeedVIPUserConfig
-from rcon.utils import INDEFINITE_VIP_DATE
+from rcon.vip import (
+    extend_vip_duration,
+    get_vip_status_for_player_ids,
+    add_record_to_vip_list,
+    get_vip_list,
+    get_highest_priority_records,
+    create_vip_list,
+    bulk_edit_vip_records,
+)
 
 logger = getLogger(__name__)
 
@@ -45,10 +60,7 @@ def filter_online_players(
 
 def has_indefinite_vip(player: VipPlayer | None) -> bool:
     """Return true if the player has an indefinite VIP status"""
-    if player is None or player.expiration_date is None:
-        return False
-    expiration = player.expiration_date
-    return expiration >= INDEFINITE_VIP_DATE
+    return player is not None and player.expiration_date is None
 
 
 def all_met(conditions: Iterable[BaseCondition]) -> bool:
@@ -106,20 +118,20 @@ def is_seeded(config: SeedVIPUserConfig, gamestate: GameState) -> bool:
 
 
 def calc_vip_expiration_timestamp(
-    config: SeedVIPUserConfig, expiration: datetime | None, from_time: datetime
+    config: SeedVIPUserConfig, current_expiration: datetime | None, from_time: datetime
 ) -> datetime:
     """Return the players new expiration date accounting for reward/existing timestamps"""
-    if expiration is None:
+    if current_expiration is None:
         timestamp = from_time + config.reward.timeframe.as_timedelta
         return timestamp
 
     if config.reward.cumulative:
-        return expiration + config.reward.timeframe.as_timedelta
+        return current_expiration + config.reward.timeframe.as_timedelta
     else:
         # Don't step on the old expiration if it's further in the future than the new one
         timestamp = from_time + config.reward.timeframe.as_timedelta
-        if timestamp < expiration:
-            return expiration
+        if timestamp < current_expiration:
+            return current_expiration
         else:
             return timestamp
 
@@ -236,49 +248,61 @@ def message_players(
 
 
 def reward_players(
-    rcon: RconAPI,
     config: SeedVIPUserConfig,
     to_add_vip_steam_ids: set[str],
-    current_vips: dict[str, VipPlayer],
     players_lookup: dict[str, str],
     expiration_timestamps: defaultdict[str, datetime],
 ):
+    """Create or edit VIP list records for all the players who earned VIP"""
     logger.info(f"Rewarding players with VIP {config.dry_run=}")
     logger.info(f"Total={len(to_add_vip_steam_ids)} {to_add_vip_steam_ids=}")
-    logger.info(f"Total={len(current_vips)=} {current_vips=}")
-    for player_id in to_add_vip_steam_ids:
-        player = current_vips.get(player_id)
-        expiration_date = expiration_timestamps[player_id]
 
-        if has_indefinite_vip(player):
-            logger.info(
-                f"{config.dry_run=} Skipping! pre-existing indefinite VIP for {player_id=} {player=} {vip_name=} {expiration_date=}"
-            )
-            continue
+    with enter_session() as sess:
+        vip_list = get_vip_list(sess=sess, vip_list_id=config.vip_list_id, strict=False)
 
-        vip_name = (
-            player.player.name
-            if player
-            else format_vip_reward_name(
-                players_lookup.get(player_id, "No player name found"),
-                format_str=config.reward.player_name_format_not_current_vip,
-            )
-        )
-
-        if not config.dry_run:
-            logger.info(
-                f"{config.dry_run=} adding VIP to {player_id=} {player=} {vip_name=} {expiration_date=}",
-            )
-            rcon.add_vip(
-                player_id=player_id,
-                description=vip_name,
-                expiration=expiration_date.isoformat(),
+        # People can misconfigure their config; or delete a list, but seeding
+        # is pretty important; so make a new list if we don't find one
+        if not vip_list:
+            vip_list = create_vip_list(
+                name="Seed VIP", sync=VipListSyncMethod.IGNORE_UNKNOWN, servers=None
             )
 
-        else:
-            logger.info(
-                f"{config.dry_run=} adding VIP to {player_id=} {player=} {vip_name=} {expiration_date=}",
+        if not vip_list:
+            logger.error(
+                "No VIP list found and an error occurred while creating a new one"
             )
+
+        updated_records: list[VipListRecordType] = []
+        existing_records = get_highest_priority_records(vip_list_id=config.vip_list_id)
+        for player_id in to_add_vip_steam_ids:
+            if not config.dry_run:
+                player_record = existing_records.get(player_id)
+                if player_record is None:
+                    player_record = add_record_to_vip_list(
+                        player_id=player_id,
+                        vip_list_id=config.vip_list_id,
+                        description=format_vip_reward_name(
+                            players_lookup.get(player_id, "No player name found"),
+                            format_str=config.reward.player_name_format_not_current_vip,
+                        ),
+                    )
+
+                if not player_record:
+                    logger.error(
+                        "Error while creating new VIP record for %s", player_id
+                    )
+                    continue
+
+                player_record["expires_at"] = expiration_timestamps.get(player_id)
+                logger.info(
+                    f"{config.dry_run=} adding VIP to {player_id=} {player_record=}",
+                )
+                updated_records.append(player_record)
+            else:
+                logger.info(
+                    f"{config.dry_run=} adding VIP to {player_id=} {player_record=}",
+                )
+        bulk_edit_vip_records(records=updated_records)
 
 
 def get_next_player_bucket(
@@ -330,7 +354,7 @@ def get_gamestate(rcon: RconAPI) -> GameState:
 def get_vips(
     rcon: RconAPI,
 ) -> dict[str, VipPlayer]:
-    raw_vips: list[VipIdType] = rcon.get_vip_ids()
+    raw_vips: list[VipIdWithExpirationType] = rcon.get_vip_ids()
     return {
         vip["player_id"]: VipPlayer(
             player=Player(
@@ -338,7 +362,7 @@ def get_vips(
                 name=vip["name"],
                 current_playtime_seconds=0,
             ),
-            expiration_date=vip["vip_expiration"],
+            expiration_date=vip["expires_at"],
         )
         for vip in raw_vips
     }

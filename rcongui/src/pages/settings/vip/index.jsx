@@ -67,7 +67,7 @@ export const action = async ({ request }) => {
             forward,
             description: vip.name,
             player_id: vip.player_id,
-            expiration: vip.vip_expiration,
+            expiration: vip.expires_at,
           };
           return cmd.ADD_VIP({ payload });
         case INTENT.DELETE_VIP:
@@ -85,7 +85,7 @@ export const action = async ({ request }) => {
 const initialAddFormData = {
   player_id: "",
   name: "",
-  vip_expiration: dayjs(),
+  expires_at: dayjs(),
 };
 
 const VipPage = () => {
@@ -159,14 +159,14 @@ const VipPage = () => {
       const uploadData = text
         .split("\n")
         .map((row) => {
-          const [id, name, vip_expiration] = row.split("\t");
-          if (!id || !name || !vip_expiration) {
+          const [id, name, expires_at] = row.split("\t");
+          if (!id || !name || !expires_at) {
             return null;
           }
           return {
             player_id: id,
             name,
-            vip_expiration,
+            expires_at,
           };
         })
         .filter((obj) => obj !== null);
@@ -178,7 +178,7 @@ const VipPage = () => {
 
   const handleFileDownload = () => {
     const rows = clientItems.map((vip) => [
-      `${vip.player_id}\t${vip.name}\t${vip.vip_expiration}`,
+      `${vip.player_id}\t${vip.name}\t${vip.expires_at}`,
     ]);
     exportFile(rows, "vip-players");
   };
@@ -327,15 +327,15 @@ const VipPage = () => {
           <Stack direction={{ xs: "column", md: "row" }} gap={1}>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DesktopDateTimePicker
-                name={"vip_expiration"}
+                name={"expires_at"}
                 label={"Expiration"}
                 format="LLL"
-                value={dayjs(addFormData.vip_expiration)}
+                value={dayjs(addFormData.expires_at)}
                 maxDate={dayjs("3000-01-01T00:00:00+00:00")}
                 onChange={(dayjsValue) =>
                   setAddFormData((prev) => ({
                     ...prev,
-                    vip_expiration: dayjsValue.format(),
+                    expires_at: dayjsValue.format(),
                   }))
                 }
                 sx={{ minWidth: 300, flexGrow: 1 }}
@@ -345,7 +345,7 @@ const VipPage = () => {
               onClick={() =>
                 setAddFormData((prev) => ({
                   ...prev,
-                  vip_expiration: dayjs("3000-01-01T00:00:00+00:00"),
+                  expires_at: dayjs("3000-01-01T00:00:00+00:00"),
                 }))
               }
               variant="outlined"

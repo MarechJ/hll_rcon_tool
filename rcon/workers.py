@@ -15,7 +15,6 @@ from rcon.models import Maps, PlayerStats, enter_session
 from rcon.player_history import get_player
 from rcon.scoreboard import TimeWindowStats
 from rcon.types import MapInfo, PlayerStat
-from rcon.utils import INDEFINITE_VIP_DATE
 
 logger = logging.getLogger("rcon")
 
@@ -281,68 +280,3 @@ def get_job_results(job_key):
         "func_name": job.func_name,
         "check_timestamp": datetime.datetime.now().timestamp(),
     }
-
-
-def worker_bulk_vip(name_ids, job_key, mode="override"):
-    queue = get_queue()
-    return queue.enqueue(
-        bulk_vip,
-        name_ids=name_ids,
-        mode=mode,
-        result_ttl=6000,
-        job_timeout=1200,
-        job_id=job_key,
-    )
-
-
-def bulk_vip(name_ids, mode="override"):
-    from rcon.api_commands import get_rcon_api
-
-    ctl = get_rcon_api()
-    errors = []
-    logger.info(f"bulk_vip name_ids {name_ids[0]} type {type(name_ids)}")
-    vips = ctl.get_vip_ids()
-
-    removal_futures = {
-        ctl.run_in_pool("remove_vip", vip["player_id"]): vip
-        for idx, vip in enumerate(vips)
-    }
-    for future in as_completed(removal_futures):
-        try:
-            result = future.result()
-            if not result:
-                errors.append(f"Failed to add {removal_futures[future]}")
-        except Exception:
-            logger.exception(f"Failed to remove vip from {removal_futures[future]}")
-
-    processed_additions = []
-    for description, player_id, expiration_timestamp in name_ids:
-        if not expiration_timestamp:
-            expiration_timestamp = INDEFINITE_VIP_DATE.isoformat()
-        else:
-            expiration_timestamp = expiration_timestamp.isoformat()
-
-        processed_additions.append((description, player_id, expiration_timestamp))
-
-    add_futures = {
-        ctl.run_in_pool(
-            "add_vip",
-            player_id=player_id,
-            description=description,
-            expiration=expiration_timestamp,
-        ): player_id
-        for idx, (description, player_id, expiration_timestamp) in enumerate(
-            processed_additions
-        )
-    }
-    for future in as_completed(add_futures):
-        try:
-            result = future.result()
-            if not result:
-                errors.append(f"Failed to add {add_futures[future]}")
-        except Exception:
-            logger.exception(f"Failed to add vip to {add_futures[future]}")
-
-    if not errors:
-        errors.append("ALL OK")
-    return errors

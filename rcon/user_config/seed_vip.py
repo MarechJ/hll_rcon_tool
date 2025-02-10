@@ -154,6 +154,9 @@ class Reward(pydantic.BaseModel):
 
 class SeedVIPUserConfig(BaseUserConfig):
     enabled: bool = Field(default=False)
+    # ID 0 is the default list; this is common enough we'll use list 1
+    # by default which is created during the DB migration
+    vip_list_id: int = Field(default=1)
     dry_run: bool = Field(default=True)
     language: str | None = Field(default="en_US")
     hooks: list[DiscordWebhook] = Field(default_factory=list)

@@ -112,7 +112,7 @@ export const loader = async ({ request }) => {
       )
     ),
   });
-
+  const gameServerVipIds = await cmd.GET_VIPS();
   const bans = await cmd.GET_BANS();
 
   return {
@@ -120,6 +120,7 @@ export const loader = async ({ request }) => {
       ...player,
       is_banned: bans.some((ban) => ban.player_id === player.player_id),
     })),
+    gameServerVipIds: new Set(gameServerVipIds.map((p) => p.player_id)),
     total_pages:
       page_size > 0
         ? Math.ceil(Number(playersRecords.result.total) / page_size)
@@ -130,7 +131,13 @@ export const loader = async ({ request }) => {
 };
 
 export default function PlayersRecords() {
-  const { players: playersData, fields, total_pages, page } = useLoaderData();
+  const {
+    players: playersData,
+    gameServerVipIds,
+    fields,
+    total_pages,
+    page,
+  } = useLoaderData();
   const submit = useSubmit();
   const navigation = useNavigation();
   const server = useGlobalStore((state) => state.serverState);
@@ -153,9 +160,7 @@ export default function PlayersRecords() {
     if (!server) return playersData;
     return playersData.map((player) => ({
       ...player,
-      is_vip:
-        player.vips &&
-        player.vips.some((vip) => vip.server_number === server.server_number),
+      is_vip: gameServerVipIds.has(player.player_id),
     }));
   }, [playersData, server]);
 
@@ -423,9 +428,16 @@ export default function PlayersRecords() {
           </Stack>
         </Form>
 
-        <Stack component="section" id="players-section" spacing={1} sx={{ width: "100%" }}>
+        <Stack
+          component="section"
+          id="players-section"
+          spacing={1}
+          sx={{ width: "100%" }}
+        >
           <Box sx={{ height: 4 }}>
-            {navigation.state === "loading" && <LinearProgress sx={{ height: 4 }} />}
+            {navigation.state === "loading" && (
+              <LinearProgress sx={{ height: 4 }} />
+            )}
           </Box>
           <NavPagination
             page={page}

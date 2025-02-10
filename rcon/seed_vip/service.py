@@ -127,7 +127,7 @@ def run():
                 expiration_timestamps = defaultdict(
                     lambda: calc_vip_expiration_timestamp(
                         config=config,
-                        expiration=None,
+                        current_expiration=None,
                         from_time=seeded_timestamp or datetime.now(tz=timezone.utc),
                     )
                 )
@@ -135,17 +135,17 @@ def run():
                     expiration_timestamps[player.player.player_id] = (
                         calc_vip_expiration_timestamp(
                             config=config,
-                            expiration=player.expiration_date if player else None,
+                            current_expiration=(
+                                player.expiration_date if player else None
+                            ),
                             from_time=seeded_timestamp,
                         )
                     )
 
-                # Add or update VIP in CRCON
+                # Update VIP list records
                 reward_players(
-                    rcon=rcon_api,
                     config=config,
                     to_add_vip_steam_ids=to_add_vip_steam_ids,
-                    current_vips=current_vips,
                     players_lookup=player_name_lookup,
                     expiration_timestamps=expiration_timestamps,
                 )

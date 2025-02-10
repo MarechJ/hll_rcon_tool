@@ -22,6 +22,7 @@ from rcon.models import (
     PlayerSession,
     SteamInfo,
     WatchList,
+    VipListRecord,
     enter_session,
 )
 from rcon.types import (
@@ -144,6 +145,7 @@ def get_players_by_appearance(
     player_id: str | None = None,
     player_name: str | None = None,
     blacklisted: bool | None = None,
+    is_vip: bool | None = None,
     is_watched: bool | None = None,
     exact_name_match: bool = False,
     ignore_accent: bool = True,
@@ -160,6 +162,7 @@ def get_players_by_appearance(
         last_seen_till = parser.parse(last_seen_till)
 
     blacklisted = strtobool(blacklisted)
+    is_vip = strtobool(is_vip)
     is_watched = strtobool(is_watched)
     exact_name_match = strtobool(exact_name_match)
     ignore_accent = strtobool(ignore_accent)
@@ -210,6 +213,18 @@ def get_players_by_appearance(
                     or_(
                         BlacklistRecord.expires_at.is_(None),
                         BlacklistRecord.expires_at > func.now(),
+                    ),
+                )
+                .exists()
+            )
+        if is_vip is True:
+            query = query.filter(
+                sess.query(VipListRecord)
+                .where(
+                    VipListRecord.player_id_id == PlayerID.id,
+                    or_(
+                        VipListRecord.expires_at.is_(None),
+                        VipListRecord.expires_at > func.now(),
                     ),
                 )
                 .exists()
@@ -276,7 +291,6 @@ def get_players_by_appearance(
                     "last_seen_timestamp_ms": (
                         int(p[2].timestamp() * 1000) if p[2] else None
                     ),
-                    "vip_expiration": p[0].vip.expiration if p[0].vip else None,
                 }
                 for p in players
             ],

@@ -479,10 +479,54 @@ async function addPlayerToBlacklist({
   }
 }
 
+async function addPlayerToVipList({
+  vipListId,
+  playerId,
+  description,
+  active,
+  expiresAt,
+  notes,
+
+}) {
+  try {
+    const response = await postData(
+      `${process.env.REACT_APP_API_URL}add_vip_list_record`,
+      {
+        player_id: playerId,
+        vip_list_id: vipListId,
+        description: description || null,
+        active: active,
+        expires_at: expiresAt || null,
+        notes: notes,
+      }
+    );
+
+    return showResponse(
+      response,
+      `Player ID ${playerId} VIP record was created`,
+      true
+    );
+  } catch (error) {
+    handle_http_errors(error);
+  }
+}
+
 async function getBlacklists() {
   try {
     const response = await get("get_blacklists");
     const data = await showResponse(response, "get_blacklists", false);
+    if (data.result) {
+      return data.result;
+    }
+  } catch (error) {
+    handle_http_errors(error);
+  }
+}
+
+async function getVipLists() {
+  try {
+    const response = await get("get_vip_lists");
+    const data = await showResponse(response, "get_vip_lists", false);
     if (data.result) {
       return data.result;
     }
@@ -688,7 +732,9 @@ export {
   sendAction,
   addPlayerToWatchList,
   addPlayerToBlacklist,
+  addPlayerToVipList,
   getBlacklists,
+  getVipLists,
   getServerStatus,
   addPlayerVip,
   removePlayerVip,

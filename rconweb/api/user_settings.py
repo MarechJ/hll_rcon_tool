@@ -11,7 +11,6 @@ from rcon.user_config.auto_mod_solo_tank import AutoModNoSoloTankUserConfig
 from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.chat_commands import ChatCommandsUserConfig
-from rcon.user_config.expired_vips import ExpiredVipsUserConfig
 from rcon.user_config.gtx_server_name import GtxServerNameChangeUserConfig
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
 from rcon.user_config.log_stream import LogStreamUserConfig
@@ -158,19 +157,6 @@ def describe_camera_notification_config(request):
 
     return api_response(
         result=CameraNotificationUserConfig.model_json_schema(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@require_http_methods(["GET"])
-def describe_expired_vip_config(request):
-    command_name = "describe_expired_vip_config"
-
-    return api_response(
-        result=ExpiredVipsUserConfig.model_json_schema(),
         command=command_name,
         failed=False,
     )

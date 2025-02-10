@@ -28,10 +28,6 @@ export const permissions = [
     description: "Can view messages sent to players",
   },
   {
-    permission: "can_change_expired_vip_config",
-    description: "Can change Expired VIP config",
-  },
-  {
     permission: "can_change_server_name",
     description: "Can change the server name",
   },
@@ -108,10 +104,6 @@ export const permissions = [
   {
     permission: "change_contenttype",
     description: "Can change content type",
-  },
-  {
-    permission: "can_view_expired_vip_config",
-    description: "Can view Expired VIP config",
   },
   {
     permission: "can_view_auto_settings",

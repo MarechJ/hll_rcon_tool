@@ -8,15 +8,25 @@ from typing import Any, Set, Type
 import click
 import pydantic
 from sqlalchemy import func as pg_func
-from sqlalchemy import select, text, update
+from sqlalchemy import select, text
 
-import rcon.expiring_vips.service
+from time import sleep
+from random import randint
+
 import rcon.seed_vip.service
+
 import rcon.user_config
 import rcon.user_config.utils
 from rcon import auto_settings, broadcast, game_logs, routines
 from rcon.automods import automod
 from rcon.blacklist import BlacklistCommandHandler
+from rcon.vip import (
+    VipListCommandHandler,
+    VipListCommand,
+    VipListCommandType,
+    VipListInactivateExpiredCommand,
+    ALL_SERVERS_MASK,
+)
 from rcon.cache_utils import RedisCached, get_redis_pool, invalidates
 from rcon.discord_chat import get_handler
 from rcon.game_logs import LogLoop, LogStream, load_generic_hooks
@@ -26,7 +36,6 @@ from rcon.scoreboard import live_stats_loop
 from rcon.steam_utils import enrich_db_users
 from rcon.user_config.auto_settings import AutoSettingsConfig
 from rcon.user_config.log_stream import LogStreamUserConfig
-from rcon.user_config.seed_vip import SeedVIPUserConfig
 from rcon.user_config.webhooks import (
     BaseMentionWebhookUserConfig,
     BaseUserConfig,
@@ -51,6 +60,7 @@ def run_stats_loop():
     except:
         logger.exception("Stats loop stopped")
         sys.exit(1)
+
 
 @cli.command(name="enrich_db_users")
 def run_enrich_db_users():
@@ -101,11 +111,6 @@ def run_routines():
     routines.run()
 
 
-@cli.command(name="expiring_vips")
-def run_expiring_vips():
-    rcon.expiring_vips.service.run()
-
-
 @cli.command(name="seed_vip")
 def run_seed_vip():
     try:
@@ -123,6 +128,36 @@ def run_automod():
 @cli.command(name="blacklists")
 def run_blacklists():
     BlacklistCommandHandler().run()
+
+
+@cli.command(name="vip_lists")
+def run_vip_lists():
+    VipListCommandHandler().run()
+
+
+@cli.command(name="inactivate_expired_vip_records")
+def inactivate_expired_vip_records():
+    # TODO: this should get done in a global supervisor way, not per container
+    # so to reduce collision chances sleep a random number of secons up to 2 minutes
+    sleep(randint(0, 120))
+    VipListCommandHandler.send(
+        VipListCommand(
+            command=VipListCommandType.INACTIVATE_EXPIRED,
+            server_mask=ALL_SERVERS_MASK,
+            payload=VipListInactivateExpiredCommand().model_dump(),
+        )
+    )
+
+
+@cli.command(name="synchronize_vip_lists")
+def synchronize_vip_lists():
+    VipListCommandHandler.send(
+        VipListCommand(
+            command=VipListCommandType.SYNCH_GAME_SERVER,
+            server_mask=ALL_SERVERS_MASK,
+            payload=VipListInactivateExpiredCommand().model_dump(),
+        )
+    )
 
 
 @cli.command(name="log_recorder")
@@ -159,26 +194,9 @@ def unregister():
     ApiKey().delete_key()
 
 
-@cli.command(name="import_vips")
-@click.argument("file", type=click.File("r"))
-@click.option("-p", "--prefix", default="")
-def importvips(file, prefix):
-    ctl = get_rcon()
-    for line in file:
-        line = line.strip()
-        player_id, name = line.split(" ", 1)
-        ctl.add_vip(player_id=player_id, description=f"{prefix}{name}")
-
-
 @cli.command(name="clear_cache")
 def clear():
     RedisCached.clear_all_caches(get_redis_pool())
-
-
-@cli.command
-def export_vips():
-    ctl = get_rcon()
-    print("/n".join(f"{d['player_id']} {d['name']}" for d in ctl.get_vip_ids()))
 
 
 def do_print(func):
@@ -496,12 +514,6 @@ def _merge_duplicate_player_ids(existing_ids: set[str] | None = None):
             session.execute(
                 text(
                     "UPDATE player_stats SET playersteamid_id = :keep WHERE playersteamid_id = ANY(:ids)"
-                ),
-                {"keep": keep, "ids": ids},
-            )
-            session.execute(
-                text(
-                    "UPDATE player_vip SET playersteamid_id = :keep WHERE playersteamid_id = ANY(:ids)"
                 ),
                 {"keep": keep, "ids": ids},
             )

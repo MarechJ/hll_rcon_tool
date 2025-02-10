@@ -11,7 +11,12 @@ from rcon.audit import ingame_mods, online_mods
 from rcon.maps import Layer, categorize_maps, numbered_maps
 from rcon.rcon import Rcon, get_rcon
 from rcon.scoreboard import get_cached_live_game_stats, get_stat
-from rcon.types import CachedLiveGameStats, MessageVariable, StatTypes, VipIdType
+from rcon.types import (
+    CachedLiveGameStats,
+    MessageVariable,
+    StatTypes,
+    VipIdWithExpirationType,
+)
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.vote_map import VoteMapUserConfig
 from rcon.user_config.webhooks import AdminPingWebhooksUserConfig
@@ -32,6 +37,7 @@ def populate_message_variables(
         rcon = get_rcon()
 
     vote_results: list[tuple[Layer, int]] | None = None
+
     def fetch_vote_results():
         nonlocal vote_results
         if vote_results is None:
@@ -85,11 +91,19 @@ def populate_message_variables(
             format_map_vote, format_type="by_mod_split"
         ),
         MessageVariable.total_votes: lambda: (
-            sum(v for m, v in fetch_vote_results()) if fetch_vote_results() else math.nan
+            sum(v for m, v in fetch_vote_results())
+            if fetch_vote_results()
+            else math.nan
         ),
-        MessageVariable.winning_maps_short: lambda: format_winning_map(rcon, fetch_vote_results(), 2),
-        MessageVariable.winning_maps_all: lambda: format_winning_map(rcon, fetch_vote_results(), 0),
-        MessageVariable.scrolling_votemap: lambda: scrolling_votemap(rcon, fetch_vote_results()),
+        MessageVariable.winning_maps_short: lambda: format_winning_map(
+            rcon, fetch_vote_results(), 2
+        ),
+        MessageVariable.winning_maps_all: lambda: format_winning_map(
+            rcon, fetch_vote_results(), 0
+        ),
+        MessageVariable.scrolling_votemap: lambda: scrolling_votemap(
+            rcon, fetch_vote_results()
+        ),
         # Deprecated: Taken over from previous auto-broadcast
         MessageVariable.admin_names: lambda: [d["name"] for d in rcon.get_admin_ids()],
         MessageVariable.owner_names: lambda: [
@@ -284,12 +298,11 @@ def format_message_string(
 
 def _vip_status(
     player_id: str | None = None, rcon: Rcon | None = None
-) -> VipIdType | None:
+) -> VipIdWithExpirationType | None:
     if rcon is None:
         rcon = get_rcon()
 
     vip = [v for v in rcon.get_vip_ids() if v["player_id"] == player_id]
-    logger.info(f"{vip=}")
 
     if vip:
         return vip[0]
@@ -306,7 +319,7 @@ def _vip_expiration(
 ) -> datetime | None:
     vip = _vip_status(player_id=player_id, rcon=rcon)
 
-    return vip["vip_expiration"] if vip else None
+    return vip["expires_at"] if vip else None
 
 
 def _server_short_name(config: RconServerSettingsUserConfig | None = None) -> str:

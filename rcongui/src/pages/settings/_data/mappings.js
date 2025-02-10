@@ -111,11 +111,6 @@ export const others = [
         name: 'Name Kicks',
     },
     {
-        path: '/settings/others/expired-vip',
-        command: 'expired_vip_config',
-        name: 'Expired VIP',
-    },
-    {
         path: '/settings/others/gtx-server',
         command: 'server_name_change_config',
         name: 'GTX Server Name Change',

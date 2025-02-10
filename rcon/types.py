@@ -218,12 +218,6 @@ class StatusType(TypedDict):
     server_number: int
 
 
-class VipIdType(TypedDict):
-    player_id: str
-    name: str
-    vip_expiration: datetime.datetime | None
-
-
 class GameServerBanType(TypedDict):
     type: str
     name: str | None
@@ -357,6 +351,61 @@ class BlacklistRecordWithPlayerType(BlacklistRecordWithBlacklistType):
     formatted_reason: str
 
 
+class VipListSyncMethod(enum.StrEnum):
+    """Enumeration of available methods for handling unknown VIP players"""
+
+    IGNORE_UNKNOWN = "ignore_unknown"
+    """Ignore any player with VIP on the game server that is not on a VIP list.
+    Players on the list will be handled (active/inactive, expired, etc.) but 
+    people may use multiple methods such as BattleMetrics to award VIP and this
+    will prevent those players from losing VIP
+    """
+
+    REMOVE_UNKNOWN = "remove_unknown"
+    """Remove any player with VIP on the game server that is not on a VIP list.
+    This prevents extraneous VIP records from littering the game server, but also
+    prevents people from using any alternate RCON to also award VIP such as BattleMetrics
+    or other custom tools; because CRCON will remove any VIP players it is not tracking
+    """
+
+
+class VipListRecordTypeNoId(TypedDict):
+    """For creating new records which won't have a database ID yet"""
+
+    vip_list_id: int
+    player_id: str
+    admin_name: str
+    is_active: bool
+    is_expired: bool
+    expires_at: datetime.datetime | None
+    description: str | None
+    notes: str | None
+    email: str | None
+    discord_id: str | None
+
+
+class VipListRecordType(VipListRecordTypeNoId):
+    """Used once a record has been persisted to the database and has an ID"""
+
+    id: int
+    created_at: datetime.datetime
+
+
+class VipListRecordWithVipListType(VipListRecordType):
+    vip_list: "VipListType"
+
+
+class VipListType(TypedDict):
+    id: int
+    name: str
+    sync: VipListSyncMethod
+    servers: list[int] | None
+
+
+class VipListTypeWithRecordsType(VipListType):
+    records: list[VipListRecordType]
+
+
 class PlayerActionType(TypedDict):
     action_type: str
     reason: Optional[str]
@@ -381,8 +430,8 @@ class DBLogLineType(TypedDict):
 
 
 class PlayerTeamConfidence(enum.Enum):
-    STRONG = 'strong'
-    MIXED = 'mixed'
+    STRONG = "strong"
+    MIXED = "mixed"
 
 
 class PlayerTeamAssociation(TypedDict):
@@ -555,11 +604,6 @@ class UserConfigType(TypedDict):
     value: str
 
 
-class PlayerVIPType(TypedDict):
-    server_number: int
-    expiration: datetime.datetime
-
-
 class PlayerProfileType(BasicPlayerProfileType):
     sessions: list[PlayerSessionType]
     sessions_count: int
@@ -569,9 +613,12 @@ class PlayerProfileType(BasicPlayerProfileType):
     penalty_count: PenaltyCountType
     blacklists: list[BlacklistRecordWithBlacklistType]
     is_blacklisted: bool
+    vip_lists: list[VipListRecordWithVipListType]
+    is_vip: bool
     flags: list[PlayerFlagType]
     watchlist: Optional[WatchListType]
-    vips: Optional[list[PlayerVIPType]]
+    email: Optional[str]
+    discord_id: Optional[str]
 
 
 class PlayerProfileTypeEnriched(PlayerProfileType):
@@ -666,9 +713,13 @@ class VACGameBansConfigType(TypedDict):
     whitelist_flags: list[str]
 
 
-class VipId(TypedDict):
+class VipIdType(TypedDict):
     player_id: str
     name: str
+
+
+class VipIdWithExpirationType(VipIdType):
+    expires_at: datetime.datetime | None
 
 
 class VoteMapPlayerVoteType(TypedDict):
