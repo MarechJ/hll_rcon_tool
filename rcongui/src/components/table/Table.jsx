@@ -4,7 +4,7 @@ import { NoRowsOverlay } from "@/components/NoRowsOverlay";
 import { StyledTable, StyledTd, StyledTh, StyledTr } from "./styles";
 import { Box } from "@mui/material";
 
-const Table = ({ table, config = {}, renderSubComponent }) => {
+const Table = ({ table, config = {}, renderSubComponent, rowProps = () => ({}) }) => {
   return (
     <Box
       sx={{
@@ -15,7 +15,7 @@ const Table = ({ table, config = {}, renderSubComponent }) => {
       }}
     >
       <StyledTable density={config.density} fontSize={config.fontSize}>
-        <thead>
+        <Box component="thead" sx={{ bgcolor: "background.paper" }}>
           {table.getHeaderGroups().map((headerGroup) => (
             <StyledTr key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
@@ -37,11 +37,11 @@ const Table = ({ table, config = {}, renderSubComponent }) => {
               })}
             </StyledTr>
           ))}
-        </thead>
+        </Box>
         <tbody>
           {table.getRowModel().rows.map((row) => (
             <Fragment key={row.id}>
-              <StyledTr>
+              <StyledTr {...rowProps(row)}>
                 {row.getVisibleCells().map((cell) => (
                   <StyledTd
                     key={cell.id}
