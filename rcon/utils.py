@@ -537,14 +537,12 @@ MISSING = MissingType()
 
 def server_numbers_to_mask(*server_numbers):
     result = 0
-    for idx, number in enumerate(server_numbers):
+    for number in server_numbers:
         if number <= 0 or number > 32:
             raise ValueError("Server number must be between 1 and 32")
         # Shift the positive bit to create a mask and then merge that mask with the result
         # eg. [1, 2, 4] -> 0001, 0010, 1000 -> 1011
-        print(f"{idx} {result=} {bin(result)}")
         result |= 1 << (number - 1)
-    print(f"{idx} {result=} {bin(result)}")
     return result
 
 
