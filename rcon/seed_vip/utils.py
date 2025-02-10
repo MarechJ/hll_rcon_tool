@@ -266,6 +266,9 @@ def reward_players(
             vip_list = create_vip_list(
                 name="Seed VIP", sync=VipListSyncMethod.IGNORE_UNKNOWN, servers=None
             )
+            # Fix their config so that we don't keep creating new lists everytime
+            # the service awards VIP
+            config.vip_list_id = vip_list["id"]
 
         if not vip_list:
             logger.error(
