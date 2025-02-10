@@ -2088,9 +2088,7 @@ class RconAPI(Rcon):
     def synchronize_with_game_server(self):
         return vip.synchronize_with_game_server(server_number=SERVER_NUMBER)
 
-    def convert_old_style_vip_records(self, records: str | Iterable[str]):
-        if isinstance(records, str):
-            records = records.splitlines()
+    def convert_old_style_vip_records(self, records: Iterable[str]):
         return vip.convert_old_style_vip_records(records=records)
 
     # End VIP List Endpoints
