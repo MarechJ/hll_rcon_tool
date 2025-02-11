@@ -17,6 +17,7 @@ import {
   Stack,
   TextField,
   IconButton,
+  Divider,
 } from "@mui/material";
 import { useState } from "react";
 import { auditLogsColumns } from "./columns";
@@ -318,11 +319,18 @@ const AuditLogsPage = () => {
               maxWidth: (theme) => theme.breakpoints.values.md,
             }}
           >
-            <TableToolbar sx={{ height: 60, px: 1 }}>
+            <TableToolbar>
               <TablePageSizeSelect
                 pageSize={page_size}
                 setPageSize={handlePageSizeChange}
               />
+              <Box sx={{ flexGrow: 1 }} />
+              <NavPagination
+                page={page}
+                maxPages={total_pages}
+                disabled={navigation.state === "loading"}
+              />
+              <Divider flexItem orientation="vertical" />
               <IconButton
                 size="small"
                 variant="contained"
@@ -336,12 +344,6 @@ const AuditLogsPage = () => {
               >
                 <DownloadIcon />
               </IconButton>
-              <Box sx={{ flexGrow: 1 }} />
-              <NavPagination
-                page={page}
-                maxPages={total_pages}
-                disabled={navigation.state === "loading"}
-              />
             </TableToolbar>
             <Table
               table={table}

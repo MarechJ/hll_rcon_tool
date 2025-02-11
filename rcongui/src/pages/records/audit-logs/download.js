@@ -1,18 +1,31 @@
+const headers = [
+  "id",
+  "creation_time",
+  "username",
+  "command",
+  "command_arguments",
+  "command_result",
+];
+
 const getLogRow = (log) => {
-  return `${log.id},${log.creation_time},${log.username},${log.command},${log.command_arguments},${log.command_result}`;
+  return headers.map((header) => log[header]).join("\t");
 };
 
 const getLogsTable = (logs) => {
-  return logs.map(getLogRow).join("\n");
+  let table = "";
+  for (const log of logs) {
+    table += getLogRow(log) + "\n";
+  }
+  return table;
 };
 
 const downloadLogs = (logs) => {
-  const csv = getLogsTable(logs);
-  const blob = new Blob([csv], { type: "text/csv" });
+  const text = getLogsTable(logs);
+  const blob = new Blob([text], { type: "text/txt" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "audit_logs.csv";
+  a.download = "audit_logs.txt";
   a.click();
   URL.revokeObjectURL(url);
 };
