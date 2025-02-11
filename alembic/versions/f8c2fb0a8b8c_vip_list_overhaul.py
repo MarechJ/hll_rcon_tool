@@ -129,6 +129,7 @@ def upgrade():
     op.drop_table("player_vip")
     op.drop_constraint("unique_player_server_vip", "player_vip", type_="unique")
     op.drop_index(op.f("ix_player_vip_playersteamid_id"), table_name="player_vip")
+    op.drop_table("player_vip")
 
 
 def downgrade():
