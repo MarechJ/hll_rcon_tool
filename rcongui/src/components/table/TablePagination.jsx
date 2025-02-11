@@ -10,7 +10,6 @@ export const TablePagination = ({ table }) => (
     justifyContent={"end"}
     alignItems={"center"}
     gap={0.25}
-    flexGrow={1}
   >
     <IconButton
       onClick={() => table.firstPage()}

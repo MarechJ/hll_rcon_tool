@@ -1,4 +1,5 @@
 import {
+  Box,
   Divider,
   IconButton,
   List,
@@ -175,6 +176,7 @@ export default function LogsTable({
           }}
           sx={{ maxWidth: 230 }}
         />
+        <Box sx={{ flexGrow: 1 }} />
         <TablePagination table={table} />
         <Divider flexItem orientation="vertical" />
         <IconButton
