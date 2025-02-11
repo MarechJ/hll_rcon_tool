@@ -3,13 +3,14 @@ import Drawer, { drawerClasses } from "@mui/material/Drawer";
 import Stack from "@mui/material/Stack";
 import MenuContent from "./MenuContent";
 import SelectContent from "./SelectContent";
-import { Box, List, ListItem, ListItemText } from "@mui/material";
+import { Box, List, ListItem, ListItemText, IconButton } from "@mui/material";
 import { navMenus } from "../Header/nav-data";
 import ConnectionStatus from "./sidebar/ConnectionStatus";
 import AboutDialog from "./sidebar/About";
 import ToggleColorMode from "./ColorModeIconDropdown";
 import ColorSchemeSelector from "./ColorSchemeSelector";
 import { UserActions } from "./sidebar/UserActions";
+import CloseIcon from "@mui/icons-material/Close";
 
 const MobileDrawer = ({ open, toggleDrawer, children }) => {
   return (
@@ -27,7 +28,12 @@ const MobileDrawer = ({ open, toggleDrawer, children }) => {
         },
       }}
     >
-      <Stack sx={{ height: "100%" }}>{children}</Stack>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", px: 1, pt: 0.5 }}>
+        <IconButton size="small" onClick={toggleDrawer}>
+          <CloseIcon sx={{ fontSize: 24 }} />
+        </IconButton>
+      </Box>
+      <Stack sx={{ height: "100%", mt: -2 }}>{children}</Stack>
     </Drawer>
   );
 };
