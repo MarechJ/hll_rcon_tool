@@ -47,6 +47,9 @@ then
     echo "from django.contrib.auth.models import User; User.objects.create_superuser('admin', 'admin@example.com', 'admin') if not User.objects.filter(username='admin').first() else None" | python manage.py shell
   fi
   export LOGGING_FILENAME=api_$SERVER_NUMBER.log
+  # Synchronize the game server with our VIP lists in case they differ
+  # which could be after moving game servers; long downtime, etc.
+  python -m rcon.cli synchronize_vip_lists
   daphne -b 0.0.0.0 -p 8001 rconweb.asgi:application &
   # Successfully running gunicorn will create the pid file which is how Docker determines the container is healthy
   gunicorn --preload --pid gunicorn.pid -w $NB_API_WORKERS -k gthread --threads $NB_API_THREADS -t 120 -b 0.0.0.0 rconweb.wsgi
