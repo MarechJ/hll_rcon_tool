@@ -204,7 +204,7 @@ const AuditLogsPage = () => {
   };
 
   const handlePageSizeChange = (pageSize) => {
-    submit(getParams({ page_size: pageSize }), { method: "GET" });
+    submit(getParams({ page_size: pageSize }), { method: "GET", replace: true });
   };
 
   const handleDownload = () => {
