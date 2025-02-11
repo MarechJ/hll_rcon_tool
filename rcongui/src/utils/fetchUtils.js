@@ -14,8 +14,12 @@ async function requestFactory({
 } = {}) {
   let url = cmd;
 
-  if (params && method === "GET") {
-    url += "?" + new URLSearchParams(params).toString();
+  if (params) {
+    if (params instanceof URLSearchParams) {
+      url += "?" + params.toString();
+    } else if (method === "GET") {
+      url += "?" + new URLSearchParams(params).toString();
+    }
   }
 
   const body = method === "POST" ? headers["Content-Type"] === "application/json" ? JSON.stringify(payload) : payload : null;
@@ -113,6 +117,8 @@ export const cmd = {
   DELETE_VIP: (params) => requestFactory({ method: "POST", cmd: "remove_vip", ...params }),
   EDIT_MESSAGE_TEMPLATE: (params) => requestFactory({ method: "POST", cmd: "edit_message_template", ...params }),
   FLAG_PLAYER: (params) => requestFactory({ method: "POST", cmd: "flag_player", ...params }),
+  GET_AUDIT_LOGS: (params) => requestFactory({ method: "GET", cmd: "get_audit_logs", ...params }),
+  GET_AUDIT_LOGS_AUTOCOMPLETE: (params) => requestFactory({ method: "GET", cmd: "get_audit_logs_autocomplete", ...params }),
   GET_ALL_MESSAGE_TEMPLATES: (params) => requestFactory({ method: "GET", cmd: "get_all_message_templates", ...params }),
   GET_AUTOSETTINGS: (params) => requestFactory({ method: "GET", cmd: "get_auto_settings", ...params }),
   GET_BANS: (params) => requestFactory({ method: "GET", cmd: "get_bans", ...params }),
@@ -129,6 +135,8 @@ export const cmd = {
   GET_GAME_SERVER_LIST: (params) => requestFactory({ method: "GET", cmd: "get_server_list", ...params }),
   GET_GAME_SERVER_STATUS: (params) => requestFactory({ method: "GET", cmd: "get_status", ...params }),
   GET_GAME_STATE: (params) => requestFactory({ method: "GET", cmd: "get_gamestate", ...params }),
+  // Yes, it is POST request, but it is not a POST command => it's not mutating the server state
+  GET_HISTORICAL_LOGS: (params) => requestFactory({ method: "POST", cmd: "get_historical_logs", ...params }),
   GET_INGAME_MODS: (params) => requestFactory({ method: "GET", cmd: "get_ingame_mods", ...params }),
   GET_LIVE_GAME: (params) => requestFactory({ method: "GET", cmd: "get_live_game_stats", ...params }),
   // Yes, it is POST request, but it is not a POST command => it's not mutating the server state

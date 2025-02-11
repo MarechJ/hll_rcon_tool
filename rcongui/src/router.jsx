@@ -16,8 +16,12 @@ import { loader as playerRecordsLoader } from "./pages/records/players"
 
 import Blacklists from "./pages/records/blacklists/manage"
 import BlacklistRecords from "./pages/records/blacklists"
+
 import GameLogsRecords from "./pages/records/game-logs"
+import { loader as gameLogsLoader } from "./pages/records/game-logs"
+
 import AuditLogsRecords from "./pages/records/audit-logs"
+import { loader as auditLogsLoader } from "./pages/records/audit-logs"
 
 import LiveSessionStats from "./pages/stats/live-sessions";
 import GamesLayout from "./pages/stats/games/layout";
@@ -164,12 +168,14 @@ const router = createBrowserRouter([
                         handle: { crumb: () => <Link to={'/records/game-log'}>Game Logs</Link> },
                         element: <GameLogsRecords />,
                         errorElement: <RouteError />,
+                        loader: gameLogsLoader,
                     },
                     {
                         path: 'audit-logs',
                         handle: { crumb: () => <Link to={'/records/audit-log'}>Audit Logs</Link> },
                         element: <AuditLogsRecords />,
-                        errorElement: <RouteError />,
+                        errorElement: <RouteError />,   
+                        loader: auditLogsLoader,
                     },
                 ],
             },

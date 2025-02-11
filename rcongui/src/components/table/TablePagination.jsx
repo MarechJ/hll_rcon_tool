@@ -12,7 +12,12 @@ import KeyboardDoubleArrowLeftIcon from "@mui/icons-material/KeyboardDoubleArrow
 import KeyboardDoubleArrowRightIcon from "@mui/icons-material/KeyboardDoubleArrowRight";
 
 export const TablePagination = ({ table }) => (
-  <Stack direction={"row"} gap={0.25} alignItems={"center"}>
+  <Stack
+    direction={"row"}
+    justifyContent={"end"}
+    alignItems={"center"}
+    gap={0.25}
+  >
     <IconButton
       onClick={() => table.firstPage()}
       disabled={!table.getCanPreviousPage()}

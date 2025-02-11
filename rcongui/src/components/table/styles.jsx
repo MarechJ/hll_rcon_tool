@@ -100,6 +100,8 @@ export const StyledTable = styled("table", {
     "& th": {
       ...getDensityPadding(density, theme),
       verticalAlign: "middle",
+      paddingTop: theme.spacing(0.5),
+      paddingBottom: theme.spacing(0.5),
     },
     "& tbody tr": {
       verticalAlign: "top",

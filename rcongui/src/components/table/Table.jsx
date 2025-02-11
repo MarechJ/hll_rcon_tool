@@ -5,7 +5,7 @@ import { StyledTable, StyledTd, StyledTh, StyledTr } from "./styles";
 import { Box, LinearProgress } from "@mui/material";
 import LoadingOverlay from "./LoadingOverlay";
 
-const Table = ({ table, config = {}, renderSubComponent, isLoading, isFetching }) => {
+const Table = ({ table, config = {}, renderSubComponent, rowProps = () => ({}), isLoading, isFetching }) => {
   return (
     <Box
       sx={{
@@ -19,7 +19,7 @@ const Table = ({ table, config = {}, renderSubComponent, isLoading, isFetching }
     >
       {isFetching && <LinearProgress sx={{ position: "absolute", top: 0, left: 0, width: "100%", height: "2px" }} />}
       <StyledTable density={config.density} fontSize={config.fontSize} data-expanded-view={String(config.expandedView)}>
-        <thead>
+        <Box component="thead" sx={{ bgcolor: "background.paper" }}>
           {table.getHeaderGroups().map((headerGroup) => (
             <StyledTr key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
@@ -41,11 +41,11 @@ const Table = ({ table, config = {}, renderSubComponent, isLoading, isFetching }
               })}
             </StyledTr>
           ))}
-        </thead>
+        </Box>
         <tbody>
           {table.getRowModel().rows.map((row) => (
             <Fragment key={row.id}>
-              <StyledTr>
+              <StyledTr {...rowProps(row)}>
                 {row.getVisibleCells().map((cell) => (
                   <StyledTd
                     key={cell.id}
