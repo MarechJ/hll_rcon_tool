@@ -3,15 +3,28 @@ import Grid from "@mui/material/Grid2";
 import { DesktopDateTimePicker } from "@mui/x-date-pickers/DesktopDateTimePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { Button, Stack, TextField } from "@mui/material";
+import {
+  Autocomplete,
+  Box,
+  Button,
+  Divider,
+  IconButton,
+  Stack,
+  TextField,
+} from "@mui/material";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Switch from "@mui/material/Switch";
-import { useState } from "react";
-import { Form, useLoaderData, useNavigation } from "react-router-dom";
+import { useMemo, useState } from "react";
+import {
+  Form,
+  useLoaderData,
+  useNavigation,
+  useSubmit,
+} from "react-router-dom";
 import { logsColumns } from "./columns";
 import {
   getCoreRowModel,
@@ -23,6 +36,12 @@ import {
 import LiveLogsTable from "@/components/live-logs/LiveLogsTable";
 import { useGlobalStore } from "@/hooks/useGlobalState";
 import dayjs from "dayjs";
+import { TableToolbar } from "@/components/table/TableToolbar";
+import { TablePagination } from "@/components/table/TablePagination";
+import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
+import downloadLogs from "./download";
+import DownloadIcon from "@mui/icons-material/Download";
+import { logActions } from "@/utils/lib";
 
 /*
 IT'S POST REQUEST !!!
@@ -77,15 +96,26 @@ params {
 
 */
 
+const actionOptions = Object.keys(logActions).map((option) => ({
+  label: logActions[option],
+  name: option,
+}));
+
 export const loader = async ({ request }) => {
   const url = new URL(request.url);
   // Get params and set default values if not provided
   const player_name = url.searchParams.get("player_name") ?? "";
   const player_id = url.searchParams.get("player_id") ?? "";
   const action = url.searchParams.get("action") ?? "";
-  const from = url.searchParams.get("from") ? dayjs(url.searchParams.get("from")) : null;
-  const till = url.searchParams.get("till") ? dayjs(url.searchParams.get("till")) : null;
-  const limit = url.searchParams.get("limit") ? Number(url.searchParams.get("limit")) : 500;
+  const from = url.searchParams.get("from")
+    ? dayjs(url.searchParams.get("from"))
+    : null;
+  const till = url.searchParams.get("till")
+    ? dayjs(url.searchParams.get("till"))
+    : null;
+  const limit = url.searchParams.get("limit")
+    ? Number(url.searchParams.get("limit"))
+    : 500;
   const time_sort = url.searchParams.get("time_sort") ?? "desc";
   const exact_player = url.searchParams.get("exact_player") ?? false;
   const exact_action = url.searchParams.get("exact_action") ?? false;
@@ -104,8 +134,6 @@ export const loader = async ({ request }) => {
     server_filter,
   };
 
-  console.log(fields);
-
   const response = await cmd.GET_HISTORICAL_LOGS({ payload: fields });
 
   const logs = response.result;
@@ -118,6 +146,7 @@ export const loader = async ({ request }) => {
 
 const GameLogsPage = () => {
   const { logs, fields } = useLoaderData();
+  const submit = useSubmit();
 
   const table = useReactTable({
     data: logs ?? [],
@@ -134,24 +163,73 @@ const GameLogsPage = () => {
     },
   });
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    if (formData.get("server_filter") === "0") {
+      formData.set("server_filter", "");
+    }
+    const fields = Object.fromEntries(formData);
+    submit(fields, {
+      method: "GET",
+      replace: true,
+    });
+  };
+
+  const handleDownload = () => {
+    downloadLogs(logs);
+  };
+
   return (
     <Stack direction={{ xs: "column", lg: "row" }} spacing={1} sx={{ mt: 2 }}>
-      <GameLogsForm fields={fields} />
-      <LiveLogsTable
-        table={table}
-        config={{
-          actions: [],
-          fontSize: "small",
-          density: "dense",
-        }}
-      />
+      <GameLogsForm fields={fields} onSubmit={handleSubmit} />
+      <Stack sx={{ flexGrow: 1 }}>
+        <TableToolbar>
+          <DebouncedSearchInput
+            placeholder={"Search logs"}
+            onChange={(value) => {
+              table.getColumn("content")?.setFilterValue(value);
+            }}
+            sx={{ maxWidth: (theme) => theme.breakpoints.values.sm }}
+          />
+          <Box sx={{ flexGrow: 1 }} />
+          <TablePagination table={table} />
+          <Divider flexItem orientation="vertical" />
+          <IconButton
+            size="small"
+            variant="contained"
+            color="primary"
+            sx={{
+              "&.MuiIconButton-root": {
+                borderRadius: 0,
+              },
+            }}
+            onClick={handleDownload}
+          >
+            <DownloadIcon />
+          </IconButton>
+        </TableToolbar>
+        <LiveLogsTable
+          table={table}
+          config={{
+            actions: [],
+            fontSize: "small",
+            density: "dense",
+          }}
+        />
+        <TableToolbar>
+          <Box sx={{ flexGrow: 1 }} />
+          <TablePagination table={table} />
+        </TableToolbar>
+      </Stack>
     </Stack>
   );
 };
 
-const GameLogsForm = ({ fields }) => {
+const GameLogsForm = ({ fields, onSubmit }) => {
   const navigation = useNavigation();
   const server = useGlobalStore((state) => state.serverState);
+  const otherServers = useGlobalStore((state) => state.servers);
   const [formFields, setFormFields] = useState({
     player_name: fields.player_name || "",
     player_id: fields.player_id || "",
@@ -160,27 +238,59 @@ const GameLogsForm = ({ fields }) => {
     time_sort: fields.time_sort || "desc",
     exact_player: fields.exact_player || false,
     exact_action: fields.exact_action || false,
-    server_filter: fields.server_filter || server?.server_number || "",
+    server_filter: fields.server_filter || "",
     from: fields.from ? dayjs(fields.from) : null,
     till: fields.till ? dayjs(fields.till) : null,
   });
 
+  const serverOptions = useMemo(() => {
+    if (!server || !otherServers) return [];
+
+    const options = [server, ...otherServers].map((server) => ({
+      label: server.name,
+      value: server.server_number,
+    }));
+
+    return options;
+  }, [server, otherServers]);
+
   const handleInputChange = (e) => {
     const { name, value, checked } = e.target;
+
+    let newValue = value;
+
+    if (e.target.type === "checkbox") {
+      newValue = checked;
+    }
+
     setFormFields((prev) => ({
       ...prev,
-      [name]: e.target.type === "checkbox" ? checked : value,
+      [name]: newValue,
     }));
   };
 
-  const handleSubmit = (e) => {
-    console.log(formFields);
+  const handleClear = () => {
+    setFormFields({
+      player_name: "",
+      player_id: "",
+      action: "",
+      limit: 100,
+      time_sort: "desc",
+      exact_player: false,
+      exact_action: false,
+      server_filter: "",
+      from: null,
+      till: null,
+    });
   };
 
   return (
-    <Grid container sx={{ width: '300px' }}>
-      <Grid xs={12}>
-        <Form>
+    <Grid
+      container
+      sx={{ width: "100%", maxWidth: { lg: "400px" }, flexGrow: 1 }}
+    >
+      <Grid size={12}>
+        <Form onSubmit={onSubmit}>
           <Stack spacing={2} sx={{ p: 2 }}>
             <TextField
               fullWidth
@@ -189,7 +299,6 @@ const GameLogsForm = ({ fields }) => {
               value={formFields.player_id}
               onChange={handleInputChange}
             />
-            
             <Stack direction="row" alignItems="center" spacing={1}>
               <TextField
                 fullWidth
@@ -213,12 +322,30 @@ const GameLogsForm = ({ fields }) => {
             </Stack>
 
             <Stack direction="row" alignItems="center" spacing={1}>
-              <TextField
+              <Autocomplete
+                aria-labelledby="action_label"
                 fullWidth
-                label="Type"
-                name="action"
-                value={formFields.action}
-                onChange={handleInputChange}
+                freeSolo
+                options={actionOptions}
+                getOptionLabel={(option) => option.name}
+                renderOption={(props, option) => {
+                  const { key, ...optionProps } = props;
+                  return (
+                    <Box key={option.name} component="li" {...optionProps}>
+                      {logActions[option.name]} {option.name}
+                    </Box>
+                  )
+                }}
+                value={actionOptions.find((o) => o.name === formFields.action) || null}
+                onChange={(event, newValue) => {
+                  setFormFields((prev) => ({
+                    ...prev,
+                    action: newValue?.name || "",
+                  }));
+                }}
+                renderInput={(params) => (
+                  <TextField name="action" {...params} label="Action" />
+                )}
               />
               <FormControlLabel
                 control={
@@ -234,13 +361,23 @@ const GameLogsForm = ({ fields }) => {
               />
             </Stack>
 
-            <TextField
-              fullWidth
-              label="Server filter"
-              name="server_filter"
-              value={formFields.server_filter}
-              onChange={handleInputChange}
-            />
+            <FormControl fullWidth>
+              <InputLabel id="server_filter_label">Server filter</InputLabel>
+              <Select
+                labelId="server_filter_label"
+                name="server_filter"
+                value={formFields.server_filter}
+                onChange={handleInputChange}
+                label="Server filter"
+              >
+                <MenuItem value={0}>All servers</MenuItem>
+                {serverOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
             <TextField
               fullWidth
@@ -287,12 +424,20 @@ const GameLogsForm = ({ fields }) => {
             </FormControl>
 
             <Button
+              onClick={handleClear}
+              variant="outlined"
+              color="error"
+              size="large"
+            >
+              Clear
+            </Button>
+
+            <Button
               fullWidth
               variant="contained"
               color="primary"
               size="large"
               type="submit"
-              onClick={handleSubmit}
               disabled={navigation.state === "loading"}
             >
               Search
