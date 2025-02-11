@@ -86,11 +86,49 @@ def upgrade():
     # We can't access their description; that is stored on the game server
     # and this is run in the maintenance container with no connection to any server
     op.execute(
-        """INSERT INTO vip_list_record(admin_name, created_at, active, description, notes, expires_at,  player_id_id, vip_list_id)
-               SELECT 'CRCON', NOW(), true, NULL, NULL, COALESCE(expiration, NULL), playersteamid_id, 0 FROM player_vip"""
+        """INSERT INTO
+            vip_list_record (
+                admin_name,
+                created_at,
+                active,
+                description,
+                notes,
+                expires_at,
+                player_id_id,
+                vip_list_id
+            )
+            SELECT
+                'CRCON',
+                NOW (),
+                true,
+                NULL,
+                NULL,
+                COALESCE(expiration, NULL),
+                playersteamid_id,
+                0
+            FROM
+                (
+                    SELECT
+                        expiration,
+                        playersteamid_id,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY
+                                playersteamid_id
+                            ORDER BY
+                                expiration DESC
+                        ) AS rn
+                    FROM
+                        player_vip
+                ) sub
+            WHERE
+                sub.rn = 1
+            LIMIT
+                10;"""
     )
 
     op.drop_table("player_vip")
+    op.drop_constraint("unique_player_server_vip", "player_vip", type_="unique")
+    op.drop_index(op.f("ix_player_vip_playersteamid_id"), table_name="player_vip")
 
 
 def downgrade():
@@ -104,6 +142,17 @@ def downgrade():
             sa.ForeignKey("steam_id_64.id"),
             nullable=False,
         ),
+        sa.Column("server_number", sa.Integer(), nullable=True),
+    )
+
+    op.create_unique_constraint(
+        "unique_player_server_vip", "player_vip", ["playersteamid_id", "server_number"]
+    )
+    op.create_index(
+        op.f("ix_player_vip_playersteamid_id"),
+        "player_vip",
+        ["playersteamid_id"],
+        unique=False,
     )
     op.drop_column("steam_id_64", "email")
     op.drop_column("steam_id_64", "discord_id")
