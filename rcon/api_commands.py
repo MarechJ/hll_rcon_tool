@@ -1878,9 +1878,14 @@ class RconAPI(Rcon):
         )
 
     # VIP List Endpoints
-    def get_vip_lists(self) -> list[VipListType]:
+    def get_vip_lists(
+        self, with_records: bool = False
+    ) -> list[VipListType | VipListTypeWithRecordsType]:
         with enter_session() as sess:
-            return [lst.to_dict() for lst in vip.get_vip_lists(sess=sess)]
+            return [
+                lst.to_dict(with_records=with_records)
+                for lst in vip.get_vip_lists(sess=sess)
+            ]
 
     def get_vip_lists_for_server(self) -> list[VipListType]:
         with enter_session() as sess:
