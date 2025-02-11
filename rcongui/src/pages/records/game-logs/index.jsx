@@ -1,316 +1,307 @@
-import {
-  postData,
-  showResponse,
-} from "@/utils/fetchUtils";
+import { cmd } from "@/utils/fetchUtils";
 import Grid from "@mui/material/Grid2";
-import { DesktopDateTimePicker } from '@mui/x-date-pickers/DesktopDateTimePicker';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { Button, LinearProgress, TextField } from "@mui/material";
+import { DesktopDateTimePicker } from "@mui/x-date-pickers/DesktopDateTimePicker";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { Button, Stack, TextField } from "@mui/material";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Switch from "@mui/material/Switch";
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import { useState } from "react";
+import { Form, useLoaderData, useNavigation } from "react-router-dom";
+import { logsColumns } from "./columns";
+import {
+  getCoreRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import LiveLogsTable from "@/components/live-logs/LiveLogsTable";
+import { useGlobalStore } from "@/hooks/useGlobalState";
 import dayjs from "dayjs";
-import {Component, useState} from "react";
 
-const columns = [
-  { field: 'id', headerName: 'ID', width: 70, sortable: false },
-  {
-    field: 'event_time',
-    headerName: 'Time',
-    width: 160,
-    valueFormatter: (value) => dayjs(value).format('lll')
-  },
-  {
-    field: 'type',
-    headerName: 'Type',
-    width: 120,
-  },
-  {
-    field: 'content',
-    headerName: 'Content',
-    flex: 1,
-    align: 'left',
-    sortable: false,
-  },
-  { field: 'player1_name', headerName: 'Initiator', width: 120 },
-  { field: 'player2_name', headerName: 'Receiver', width: 120 },
-  { field: 'server', headerName: 'Server', width: 80 },
-];
+/*
+IT'S POST REQUEST !!!
 
-const LogsFilter = ({ onSubmit, onChange }) => {
-  const [name, setName] = useState("");
-  const [playerId, setPlayerId] = useState("");
-  const [type, setType] = useState("");
-  const [server, setServer] = useState("");
-  const [from, setFrom] = useState(null);
-  const [till, setTill] = useState(null);
-  const [limit, setLimit] = useState(1000);
-  const [exactPlayer, setExactPlayer] = useState(false);
-  const [exactAction, setExactAction] = useState(false);
-  const [order, setOrder] = useState("desc");
+There is not server side pagination !!!
+
+game log example {
+    "content": "[VLK] Dorfieee (76561198178339671)",
+    "creation_time": "2025-02-10T18:30:37.535809",
+    "event_time": "2025-02-10T18:28:15", 
+    "id": 503822,
+    "player1_id": "76561198178339671",
+    "player1_name": "[VLK] Dorfieee",
+    "player2_id": null,
+    "player2_name": null,
+    "raw": "[46 ms (1739212095)] DISCONNECTED [VLK] Dorfieee (76561198178339671)",
+    "server": "1",
+    "type": "DISCONNECTED",
+    "version": 1,
+    "weapon": null
+}
+
+live log example {
+    "action": "DISCONNECTED",
+    "event_time": "2025-02-10T21:02:26",
+    "line_without_time": "DISCONNECTED Snuffff (b9b23e7f120d1a00d482fba507a81cc8)",
+    "message": "Snuffff (b9b23e7f120d1a00d482fba507a81cc8)",
+    "player_id_1": "b9b23e7f120d1a00d482fba507a81cc8",
+    "player_id_2": null,
+    "player_name_1": "Snuffff", 
+    "player_name_2": null,
+    "raw": "[1.89 sec (1739221346)] DISCONNECTED Snuffff (b9b23e7f120d1a00d482fba507a81cc8)",
+    "relative_time_ms": -2221.716,
+    "sub_content": null,
+    "timestamp_ms": 1739221346000,
+    "version": 1,
+    "weapon": null
+}
+
+params {
+  player_name
+  action
+  player_id
+  from
+  till
+  limit
+  time_sort
+  exact_player
+  exact_action
+  server_filter
+}
+
+*/
+
+export const loader = async ({ request }) => {
+  const url = new URL(request.url);
+  // Get params and set default values if not provided
+  const player_name = url.searchParams.get("player_name") ?? "";
+  const player_id = url.searchParams.get("player_id") ?? "";
+  const action = url.searchParams.get("action") ?? "";
+  const from = url.searchParams.get("from") ? dayjs(url.searchParams.get("from")) : null;
+  const till = url.searchParams.get("till") ? dayjs(url.searchParams.get("till")) : null;
+  const limit = url.searchParams.get("limit") ? Number(url.searchParams.get("limit")) : 500;
+  const time_sort = url.searchParams.get("time_sort") ?? "desc";
+  const exact_player = url.searchParams.get("exact_player") ?? false;
+  const exact_action = url.searchParams.get("exact_action") ?? false;
+  const server_filter = url.searchParams.get("server_filter") ?? "";
+
+  const fields = {
+    player_name,
+    action,
+    player_id,
+    from,
+    till,
+    limit,
+    time_sort,
+    exact_player,
+    exact_action,
+    server_filter,
+  };
+
+  console.log(fields);
+
+  const response = await cmd.GET_HISTORICAL_LOGS({ payload: fields });
+
+  const logs = response.result;
+
+  return {
+    logs,
+    fields,
+  };
+};
+
+const GameLogsPage = () => {
+  const { logs, fields } = useLoaderData();
+
+  const table = useReactTable({
+    data: logs ?? [],
+    columns: logsColumns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    initialState: {
+      pagination: {
+        pageIndex: 0,
+        pageSize: 100,
+      },
+    },
+  });
 
   return (
-    (<Grid container spacing={1}>
-      <Grid size={12} >
-        <form >
-          <Grid container spacing={1} justifyContent="space-evenly">
-            <Grid>
-              <TextField
-                label="Player ID"
-                value={playerId}
-                onChange={(e) => setPlayerId(e.target.value)}
-              />
-            </Grid>
-            <Grid>
-              <TextField
-                label="Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={exactPlayer}
-                    onChange={(event) => setExactPlayer(event.target.checked)}
-                    color="primary"
-                  />
-                }
-                label="Exact"
-                labelPlacement="top"
-                className="MuiFormLabel-root"
-              />
-            </Grid>
-            <Grid>
-              <TextField
-                label="Type"
-                value={type}
-                onChange={(e) => setType(e.target.value)}
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={exactAction}
-                    onChange={(event) => setExactAction(event.target.checked)}
-                    color="primary"
-                  />
-                }
-                label="Exact"
-                color="Secondary"
-                labelPlacement="top"
-                className="MuiFormLabel-root"
-              />
-            </Grid>
-            <Grid>
-              <TextField
-                label="Server filter"
-                value={server}
-                onChange={(e) => setServer(e.target.value)}
-              />
-            </Grid>
-            <Grid>
-              <TextField
-                label="Limit"
-                type="number"
-                value={limit}
-                onChange={(e) => setLimit(e.target.value)}
-              />
-            </Grid>
-            <Grid>
-              <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <DesktopDateTimePicker
-                  value={from}
-                  label="From time"
-                  onChange={setFrom} // send value to hook form
-                  format='YYYY/MM/DD HH:mm'
-                />
-              </LocalizationProvider>
-            </Grid>
-            <Grid>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DesktopDateTimePicker
-                label="Till time"
-                onChange={setTill} // send value to hook form
-                format='YYYY/MM/DD HH:mm'
-                value={till}
-              />
-            </LocalizationProvider>
-            </Grid>
-            <Grid>
-              <FormControl >
-                <InputLabel id="time_sort_label">Time sort</InputLabel>
-                <Select
-                  labelId="time_sort_label"
-                  value={order}
-                  onChange={(e) => setOrder(e.target.value)}
-                >
-                  <MenuItem value={"desc"}>Descending</MenuItem>
-                  <MenuItem value={"asc"}>Ascending</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid>
-              <Button
-                variant="contained"
-                color="primary"
-                size="large"
-                type="sumbit"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  onSubmit(
-                    name,
-                    type,
-                    playerId,
-                    from,
-                    till,
-                    limit,
-                    order,
-                    exactPlayer,
-                    exactAction,
-                    server
-                  );
-                }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  onSubmit(
-                    name,
-                    type,
-                    playerId,
-                    from,
-                    till,
-                    limit,
-                    order,
-                    exactPlayer,
-                    exactAction,
-                    server
-                  );
-                }}
-              >
-                load
-              </Button>
-            </Grid>
-          </Grid>
-        </form>
-      </Grid>
-    </Grid>)
+    <Stack direction={{ xs: "column", lg: "row" }} spacing={1} sx={{ mt: 2 }}>
+      <GameLogsForm fields={fields} />
+      <LiveLogsTable
+        table={table}
+        config={{
+          actions: [],
+          fontSize: "small",
+          density: "dense",
+        }}
+      />
+    </Stack>
   );
 };
 
-class LogsHistory extends Component {
-  constructor(props) {
-    super(props);
+const GameLogsForm = ({ fields }) => {
+  const navigation = useNavigation();
+  const server = useGlobalStore((state) => state.serverState);
+  const [formFields, setFormFields] = useState({
+    player_name: fields.player_name || "",
+    player_id: fields.player_id || "",
+    action: fields.action || "",
+    limit: fields.limit || 100,
+    time_sort: fields.time_sort || "desc",
+    exact_player: fields.exact_player || false,
+    exact_action: fields.exact_action || false,
+    server_filter: fields.server_filter || server?.server_number || "",
+    from: fields.from ? dayjs(fields.from) : null,
+    till: fields.till ? dayjs(fields.till) : null,
+  });
 
-    this.state = {
-      logs: [],
-      isLoading: false,
-      name: null,
-      type: null,
-      playerId: null,
-      from: null,
-      till: null,
-      limit: 10000,
-      timeSort: "desc",
-      exactPlayer: false,
-      exactAction: false,
-      server: null,
-      myRowPerPage: window.localStorage.getItem("logs_row_per_page") || 50,
-    };
-
-    this.getHistoricalLogs = this.getHistoricalLogs.bind(this);
-  }
-
-  saveRowsPerPage = (rowPerPage) => {
-    window.localStorage.setItem("logs_row_per_page", rowPerPage);
-    this.setState({ myRowPerPage: rowPerPage });
+  const handleInputChange = (e) => {
+    const { name, value, checked } = e.target;
+    setFormFields((prev) => ({
+      ...prev,
+      [name]: e.target.type === "checkbox" ? checked : value,
+    }));
   };
 
-  getHistoricalLogs(
-    name = null,
-    type = null,
-    playerId = null,
-    from = null,
-    till = null,
-    limit = 10000,
-    timeSort = "desc",
-    exactPlayer = false,
-    exactAction = false,
-    server = null,
-  ) {
-    this.setState({
-      isLoading: true,
-      name: name,
-      type: type,
-      playerId: playerId,
-      from: from,
-      till: till,
-      limit: limit,
-      timeSort: timeSort,
-      exactPlayer: exactPlayer,
-      exactAction: exactAction,
-      server: server,
-    });
-    postData(`${process.env.REACT_APP_API_URL}get_historical_logs`, {
-      player_name: name,
-      action: type,
-      player_id: playerId,
-      from: from,
-      till: till,
-      limit: limit,
-      time_sort: timeSort,
-      exact_player: exactPlayer,
-      exact_action: exactAction,
-      server_filter: server,
-    })
-      .then((res) => showResponse(res, "get_historical_logs", false))
-      .then((res) => {
-        this.setState({ logs: res.result ? res.result : [] });
-        this.setState({ isLoading: false });
-      });
-  }
+  const handleSubmit = (e) => {
+    console.log(formFields);
+  };
 
-  componentDidMount() {
-    this.getHistoricalLogs();
-  }
+  return (
+    <Grid container sx={{ width: '300px' }}>
+      <Grid xs={12}>
+        <Form>
+          <Stack spacing={2} sx={{ p: 2 }}>
+            <TextField
+              fullWidth
+              label="Player ID"
+              name="player_id"
+              value={formFields.player_id}
+              onChange={handleInputChange}
+            />
+            
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <TextField
+                fullWidth
+                label="Name"
+                name="player_name"
+                value={formFields.player_name}
+                onChange={handleInputChange}
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={formFields.exact_player}
+                    name="exact_player"
+                    onChange={handleInputChange}
+                    color="primary"
+                  />
+                }
+                label="Exact"
+                labelPlacement="end"
+              />
+            </Stack>
 
-  render() {
-    const { isLoading } = this.state;
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <TextField
+                fullWidth
+                label="Type"
+                name="action"
+                value={formFields.action}
+                onChange={handleInputChange}
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={formFields.exact_action}
+                    name="exact_action"
+                    onChange={handleInputChange}
+                    color="primary"
+                  />
+                }
+                label="Exact"
+                labelPlacement="end"
+              />
+            </Stack>
 
-    return (
-      (<Grid container>
-        <Grid size={12}>
-          <LogsFilter onSubmit={this.getHistoricalLogs} />
-        </Grid>
-        {isLoading ? (
-          <Grid size={12} >
-            <LinearProgress color="secondary" />
-          </Grid>
-        ) : (
-          ""
-        )}
-        <Grid size={12}>
-        <DataGrid
-        rows={this.state.logs}
-        columns={columns}
-        initialState={{
-          pagination: {
-            paginationModel: {
-              pageSize: 100,
-            },
-          },
-          density: 'compact',
-        }}
-        pageSizeOptions={[10, 25, 50, 100]}
-        slots={{ toolbar: GridToolbar }}
-        disableRowSelectionOnClick
-      />
-        </Grid>
-      </Grid>)
-    );
-  }
-}
+            <TextField
+              fullWidth
+              label="Server filter"
+              name="server_filter"
+              value={formFields.server_filter}
+              onChange={handleInputChange}
+            />
 
-export default LogsHistory;
+            <TextField
+              fullWidth
+              label="Limit"
+              name="limit"
+              type="number"
+              value={formFields.limit}
+              onChange={handleInputChange}
+            />
+
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DesktopDateTimePicker
+                value={formFields.from}
+                label="From time"
+                name="from"
+                onChange={handleInputChange}
+                format="YYYY/MM/DD HH:mm"
+                slotProps={{ textField: { fullWidth: true } }}
+              />
+            </LocalizationProvider>
+
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DesktopDateTimePicker
+                label="Till time"
+                name="till"
+                onChange={handleInputChange}
+                format="YYYY/MM/DD HH:mm"
+                value={formFields.till}
+                slotProps={{ textField: { fullWidth: true } }}
+              />
+            </LocalizationProvider>
+
+            <FormControl fullWidth>
+              <InputLabel id="time_sort_label">Time sort</InputLabel>
+              <Select
+                labelId="time_sort_label"
+                name="time_sort"
+                value={formFields.time_sort}
+                onChange={handleInputChange}
+              >
+                <MenuItem value={"desc"}>From newest</MenuItem>
+                <MenuItem value={"asc"}>From oldest</MenuItem>
+              </Select>
+            </FormControl>
+
+            <Button
+              fullWidth
+              variant="contained"
+              color="primary"
+              size="large"
+              type="submit"
+              onClick={handleSubmit}
+              disabled={navigation.state === "loading"}
+            >
+              Search
+            </Button>
+          </Stack>
+        </Form>
+      </Grid>
+    </Grid>
+  );
+};
+
+export default GameLogsPage;
