@@ -8,6 +8,10 @@ on:
 jobs:
   build-admin-ui:
     runs-on: ubuntu-latest
+
+    env:
+      REACT_APP_API_URL: http://localhost:8010/api/
+
     defaults:
       run:
         working-directory: rcongui
