@@ -5,6 +5,21 @@ import { TeamDesktop, TeamMobile } from './Team';
 import { styled } from '@mui/material';
 import { Skeleton } from '@mui/material';
 
+/*
+For later use:
+<GameOverview
+  map={data.current_map}
+  time={data.raw_time_remaining}
+  allies={data.current_map.map.allies}
+  axis={data.current_map.map.axis}
+  mode={data.current_map.game_mode}
+  mapName={data.current_map.pretty_name}
+  axisCount={data.num_axis_players}
+  alliesCount={data.num_allied_players}
+  score={{ allies: data.allied_score, axis: data.axis_score }}
+/>
+*/
+
 const MobileHeaderWrapper = styled(Grid)(({ theme }) => ({
   minHeight: '4rem',
   marginBottom: theme.spacing(1),

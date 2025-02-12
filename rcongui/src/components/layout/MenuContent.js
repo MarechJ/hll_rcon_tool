@@ -9,7 +9,7 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { useNavigate } from "react-router-dom";
 import { Collapse } from "@mui/material";
 import {useState} from "react";
-import { useAppStore } from "@/hooks/useAppState";
+import { useAppStore } from "@/stores/app-state";
 
 const NavigationLink = ({ to, icon, text, onClick }) => {
 

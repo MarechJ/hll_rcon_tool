@@ -10,18 +10,29 @@ import {
 } from "@mui/material";
 import { PopoverMenu } from "@/components/shared/PopoverMenu";
 import FilterListIcon from "@mui/icons-material/FilterList";
-import { Tooltip, Button } from "@mui/material";
+import { Tooltip, Button, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { logActions } from "@/utils/lib";
 import { useSelectionMenu } from "@/hooks/useSelectionMenu";
 import { SearchInput } from "@/components/shared/SearchInput";
+
+function fromValue(v) {
+  return v === true ? "on" : "off";
+}
 
 /**
  * @param {Object} props
  * @param {Object} props.actionOptions
  * @param {Function} props.onActionSelect
+ * @param {Function} props.onToggle
+ * @param {string} props.toggleValue
  * @returns {JSX.Element}
  */
-export const LogActionSelectionMenu = ({ actionOptions, onActionSelect }) => {
+export const LogActionSelectionMenu = ({
+  actionOptions,
+  onActionSelect,
+  onToggle,
+  toggleValue,
+}) => {
   const {
     search,
     setSearch,
@@ -34,7 +45,7 @@ export const LogActionSelectionMenu = ({ actionOptions, onActionSelect }) => {
 
   const handleOpen = () => {
     onOpen();
-  }
+  };
 
   return (
     <PopoverMenu
@@ -48,7 +59,7 @@ export const LogActionSelectionMenu = ({ actionOptions, onActionSelect }) => {
             <Badge
               color="secondary"
               variant="dot"
-              invisible={!hasSelected}
+              invisible={toggleValue === false}
               anchorOrigin={{ vertical: "top", horizontal: "right" }}
             >
               <FilterListIcon />
@@ -57,10 +68,35 @@ export const LogActionSelectionMenu = ({ actionOptions, onActionSelect }) => {
         </Button>
       )}
     >
-      <SearchInput 
+      <ToggleButtonGroup
+        value={fromValue(toggleValue)}
+        size="small"
+        exclusive
+        onChange={(e, value) => {
+          onToggle(value === null ? fromValue(toggleValue) : value);
+        }}
+        aria-label="logs table filter by action"
+        fullWidth
+      >
+        <ToggleButton
+          sx={{ borderRadius: 0 }}
+          value="on"
+          aria-label="filter by action"
+        >
+          ON
+        </ToggleButton>
+        <ToggleButton
+          sx={{ borderRadius: 0 }}
+          value="off"
+          aria-label="filter by action"
+        >
+          OFF
+        </ToggleButton>
+      </ToggleButtonGroup>
+      <SearchInput
         ref={searchInputRef}
-        value={search} 
-        onChange={(e) => setSearch(e.target.value)} 
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
       />
       <List
         sx={{

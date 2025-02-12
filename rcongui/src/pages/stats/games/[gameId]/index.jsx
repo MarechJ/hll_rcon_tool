@@ -8,6 +8,7 @@ import {
   getFilteredRowModel,
   getSortedRowModel,
   getExpandedRowModel,
+  getPaginationRowModel,
 } from "@tanstack/react-table";
 import { columns } from "./game-columns";
 import { useMemo, useState } from "react";
@@ -95,6 +96,10 @@ export const CompletedGameDetails = ({ mapLayer, result, start, end, id }) => {
 
 export const GameTable = ({ playerStats, columns }) => {
   const [playersRowSelection, setPlayersRowSelection] = useState({});
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 100,
+  });
 
   const table = useReactTable({
     data: playerStats,
@@ -105,16 +110,15 @@ export const GameTable = ({ playerStats, columns }) => {
     getSortedRowModel: getSortedRowModel(),
     onRowSelectionChange: setPlayersRowSelection,
     getExpandedRowModel: getExpandedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    onPaginationChange: setPagination,
     getRowId: (row) => row.player_id,
     initialState: {
-      pagination: {
-        pageIndex: 0,
-        pageSize: 100,
-      },
       sorting: [{ id: "time", desc: true }],
     },
     state: {
       rowSelection: playersRowSelection,
+      pagination,
     },
   });
 

@@ -12,7 +12,7 @@ import { queryClient } from './queryClient';
 import {StrictMode} from "react";
 import AppTheme from "@/themes/AppTheme";
 import { CssBaseline } from '@mui/material';
-import { useAppStore } from "@/hooks/useAppState";
+import { useAppStore } from './stores/app-state';
 
 const App = () => {
   // Dayjs plugins

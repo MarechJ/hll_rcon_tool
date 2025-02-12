@@ -9,7 +9,7 @@ import { List, ListItem, ListItemText } from "@mui/material";
 import ConnectionStatus from "./sidebar/ConnectionStatus";
 import AboutDialog from "./sidebar/About";
 import ServerStatus from "../Header/server-status";
-import { useAppStore } from "@/hooks/useAppState";
+import { useAppStore } from "@/stores/app-state";
 import { UserActions } from "./sidebar/UserActions";
 
 const drawerWidth = 240;

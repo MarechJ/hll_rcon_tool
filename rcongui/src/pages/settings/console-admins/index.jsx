@@ -212,7 +212,12 @@ const ConsoleAdminsPage = () => {
   }, [serverAdmins]);
 
   const isValidAdminInput = useMemo(
-    () => Object.entries(newAdmin).every(([_, value]) => !!value.trim()),
+    () =>
+      Object.entries({
+        name: newAdmin.name,
+        player_id: newAdmin.player_id,
+        role: newAdmin.role,
+      }).every(([_, value]) => !!value.trim()),
     [newAdmin]
   );
 

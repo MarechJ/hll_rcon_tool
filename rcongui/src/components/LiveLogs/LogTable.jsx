@@ -8,8 +8,6 @@ import {
 } from "@tanstack/react-table";
 import { useState } from "react";
 
-// TODO: Add pagination by 250 rows
-
 // Implementation of Tanstack React Table v8 using basic HTML table elements
 export default function LogTable({ data, columns }) {
   const [sorting, setSorting] = useState([]);

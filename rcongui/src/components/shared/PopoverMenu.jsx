@@ -26,6 +26,7 @@ export const PopoverMenu = ({
   description,
   onOpen,
   onClose,
+  sx,
 }) => {
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -47,7 +48,7 @@ export const PopoverMenu = ({
 
   return (
     <Fragment>
-      <Box sx={{ fontSize: 12 }}>{renderButton({ onClick: handleClick })}</Box>
+      {renderButton({ onClick: handleClick })}
       <StyledPopper
         id={id}
         open={open}
@@ -62,6 +63,7 @@ export const PopoverMenu = ({
             },
           ],
         }}
+        sx={sx}
       >
         <ClickAwayListener onClickAway={handleClose}>
           <div>
