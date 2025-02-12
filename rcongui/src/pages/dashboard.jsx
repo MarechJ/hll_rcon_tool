@@ -45,13 +45,13 @@ import AutomodsCard from "@/components/cards/AutomodsCard";
 
 const SMALL_CARD_SIZE = {
   xs: 12,
-  sm: 6,
+  md: 6,
   xl: 3,
 };
 
 const MEDIUM_CARD_SIZE = {
   xs: 12,
-  md: 6,
+  xl: 6,
 };
 
 const LARGE_CARD_SIZE = {
