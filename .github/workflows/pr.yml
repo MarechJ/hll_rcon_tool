@@ -53,7 +53,7 @@ jobs:
           python-version: '3.12'
       - name: install requirements
         run: |
-          pip install -r requirements.txt -r requirements-dev.txt --no-compile daphne
+          pip install -r requirements.txt -r requirements-dev.txt --no-compile
       - name: start dependencies
         run: docker compose -f docker-compose.dev.yml up -d postgres redis
       - name: run tests

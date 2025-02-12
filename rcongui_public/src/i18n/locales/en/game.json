@@ -27,6 +27,7 @@
     "playersTable": {
         "player": "Player",
         "team": "Team",
+        "awards": "Awards",
         "kills": "Kills",
         "killsByCategory": "Kills by category",
         "deathsByCategory": "Deaths by category",
@@ -44,13 +45,21 @@
         "diff": "Difference",
         "status": "Status",
         "killsPerMinute": "KPM",
-        "deathsPerMinute": "DPM"
+        "deathsPerMinute": "DPM",
+        "general":  "General",
+        "advanced": "Advanced",
+        "ingame": "Ingame"
     },
     "weaponType": {
       "sniper": "Sniper",
       "infantry": "Infantry",
       "explosive": "Explosive",
-      "machineGun": "Machine Gun",
+      "bazooka": "Bazooka",
+      "grenade": "Grenade",
+      "mine": "Mine",
+      "pak": "PAK",
+      "satchel": "Satchel",
+      "machine_gun": "Machine Gun",
       "armor": "Armor",
       "commander": "Commander",
       "artillery": "Artillery"
@@ -58,6 +67,7 @@
     "matchTable": {
         "match": "Match",
         "map": "Map",
+        "weather": "Weather",
         "mode": "Mode",
         "duration": "Duration",
         "result": "Result",
@@ -68,12 +78,116 @@
         "deathsByWeapon": "Deaths by Weapon",
         "encounters": "Encounters",
         "weapon": "Weapon",
-        "count": "Count"
+        "count": "Count",
+        "killDiffByTeamRank": "Kill diff by team rank",
+        "teamRank": "Team rank",
+        "killDiff": "Kill diff",
+        "killsByType": "Kills by type",
+        "rank": "Rank"
     },
     "score": {
         "killstreak": "Killstreak",
         "deathstreak": "Deathstreak",
-        "teamkills": "Team Kills",
+        "teamkills": "Teamkills",
+        "deathsByTeam": "Deaths by teamkill",
         "k/d": "K/D"
+    },
+    "awards": {
+        "kills": {
+            "title": "",
+            "text": "{{amount}} $t(playersTable.kills)"
+        },
+        "kills_streak": {
+            "title": "Call an Ambulance... But Not for Me!",
+            "text": "{{amount}} kills in a row"
+        },
+        "deaths": {
+            "title": "Push no matter what",
+            "text": "{{amount}} $t(playersTable.deaths)"
+        },
+        "deaths_without_kill_streak": {
+            "title": "He needs some milk",
+            "text": "death streak of {{amount}}"
+        },
+        "teamkills": {
+            "title": "They trusted you",
+            "text": "{{amount}} $t(score.teamkills)"
+        },
+        "deaths_by_tk": {
+            "title": "Trust issues",
+            "text": "got teamkilled {{amount}} times"
+        },
+        "kill_death_ratio": {
+            "title": "Winner Winner Chicken Dinner",
+            "text": "K/D ratio of {{amount}}"
+        },
+        "support": {
+            "title": "Helping hand",
+            "text": "{{amount}} supply points"
+        },
+        "zero_deaths": {
+            "title": "Lucky",
+            "text": "didn't die once"
+        },
+        "zero_kills": {
+            "title": "Beginner",
+            "text": "didn't kill anyone"
+        },
+        "kd_of_one": {
+            "title": "Perfectly balanced, as all things should be",
+            "text": "K/D ratio of 1"
+        },
+        "kills_by_type": {
+            "commander": {
+                "title": "Bombs away!",
+                "text": "{{amount}} kills with commander abilities"
+            },
+            "bazooka": {
+                "title": "Rocket Man",
+                "text": "{{amount}} kills with bazooka"
+            },
+            "grenade": {
+                "title": "Frag out!",
+                "text": "{{amount}} kills with grenades"
+            },
+            "mine": {
+                "title": "Watch your step",
+                "text": "{{amount}} kills with mines"
+            },
+            "pak": {
+                "title": "Big canon makes tank go boom",
+                "text": "{{amount}} kills with PAK"
+            },
+            "satchel": {
+                "title": "Only 30 seconds",
+                "text": "{{amount}} kills with satchels"
+            }
+        },
+        "deaths_by_type": {
+            "machine_gun": {
+                "title": "Bullet magnet",
+                "text": "{{amount}} deaths by machine gun"
+            },
+            "sniper": {
+                "title": "Someone painted a target on your back",
+                "text": "{{amount}} deaths by sniper"
+            },
+            "artillery": {
+                "title": "Forecast: heavy rain",
+                "text": "{{amount}} deaths by artillery"
+            },
+            "commander": {
+                "title": "It's a bird. It's a plane.",
+                "text": "{{amount}} deaths by commander abilities"
+            },
+            "mine": {
+                "title": "Professional mine searcher",
+                "text": "{{amount}} deaths by mines"
+            },
+            "armor": {
+                "title": "Not much left",
+                "text": "{{amount}} deaths by tanks"
+            }
+        }
     }
 }

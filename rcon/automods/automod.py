@@ -16,6 +16,7 @@ from rcon.cache_utils import get_redis_client
 from rcon.commands import CommandFailedError, HLLServerError
 from rcon.discord import send_to_discord_audit
 from rcon.hooks import inject_player_ids
+from rcon.logs.loop import on_kill, on_connected
 from rcon.rcon import Rcon, get_rcon
 from rcon.types import GetDetailedPlayer, StructuredLogLineType
 from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
@@ -203,7 +204,7 @@ def audit(
         )
 
 
-@rcon.game_logs.on_kill
+@on_kill
 def on_kill(rcon: Rcon, log: StructuredLogLineType):
     red = get_redis_client()
     if not is_first_run_done(red):
@@ -229,7 +230,7 @@ def on_kill(rcon: Rcon, log: StructuredLogLineType):
 pendingTimers = {}
 
 
-@rcon.game_logs.on_connected()
+@on_connected()
 @inject_player_ids
 def on_connected(rcon: Rcon, _, name: str, player_id: str):
     red = get_redis_client()

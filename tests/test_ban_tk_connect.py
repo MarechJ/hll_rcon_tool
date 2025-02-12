@@ -1,7 +1,7 @@
 import datetime
 from unittest import mock
 
-from rcon.game_logs import (
+from rcon.automods.tk_autoban import (
     BanTeamKillOnConnectUserConfig,
     auto_ban_if_tks_right_after_connection,
 )
@@ -9,9 +9,9 @@ from rcon.types import StructuredLogLineWithMetaData
 from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectWhiteList, TimeFrame
 
 
-@mock.patch("rcon.game_logs.get_player_profile", autospec=True, return_value=None)
+@mock.patch("rcon.automods.tk_autoban.get_player_profile", autospec=True, return_value=None)
 @mock.patch(
-    "rcon.game_logs.BanTeamKillOnConnectUserConfig.load_from_db",
+    "rcon.automods.tk_autoban.BanTeamKillOnConnectUserConfig.load_from_db",
     return_value=BanTeamKillOnConnectUserConfig(
         enabled=True,
         message="Vous avez été banni automatiquement car votre premiere action apres connection est un TEAM KILL.\nSi c'etait un accident demandez votre déban sur: https://discord.io/HLLFR (Via un navigateur, pas directement dans discord)\n\nYou've been banned automatically for TEAM KILLING. Cheers",
@@ -59,9 +59,9 @@ def test_ban_excluded_weapon(*args):
     ]
 
     with (
-        mock.patch("rcon.game_logs.Rcon") as rcon,
+        mock.patch("rcon.automods.tk_autoban.Rcon") as rcon,
         mock.patch(
-            "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
+            "rcon.automods.tk_autoban.get_recent_logs", return_value={"logs": logs}
         ) as get,
     ):
         rcon.get_vips_ids = mock.MagicMock(return_value=[])
@@ -69,7 +69,7 @@ def test_ban_excluded_weapon(*args):
         rcon.perma_ban.assert_not_called()
 
 
-@mock.patch("rcon.game_logs.get_player_profile", autospec=True, return_value=None)
+@mock.patch("rcon.automods.tk_autoban.get_player_profile", autospec=True, return_value=None)
 def test_ban_success(*args):
     tk_log: StructuredLogLineWithMetaData = {
         "version": 1,
@@ -119,17 +119,17 @@ def test_ban_success(*args):
         blacklist_id=0,
     )
     with (
-        mock.patch("rcon.game_logs.Rcon") as rcon,
+        mock.patch("rcon.automods.tk_autoban.Rcon") as rcon,
         mock.patch(
-            "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
-        ) as get,
+            "rcon.automods.tk_autoban.get_recent_logs", return_value={"logs": logs}
+        ),
     ):
         rcon.get_vips_ids = mock.MagicMock(return_value=[])
         result = auto_ban_if_tks_right_after_connection(rcon, tk_log, config)
         assert result
 
 
-@mock.patch("rcon.game_logs.get_player_profile", autospec=True, return_value=None)
+@mock.patch("rcon.automods.tk_autoban.get_player_profile", autospec=True, return_value=None)
 def test_ban_success_temp_ban(*args):
     tk_log = {
         "version": 1,
@@ -180,17 +180,17 @@ def test_ban_success_temp_ban(*args):
     )
 
     with (
-        mock.patch("rcon.game_logs.Rcon") as rcon,
+        mock.patch("rcon.automods.tk_autoban.Rcon") as rcon,
         mock.patch(
-            "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
-        ) as get,
+            "rcon.automods.tk_autoban.get_recent_logs", return_value={"logs": logs}
+        ),
     ):
         rcon.get_vips_ids = mock.MagicMock(return_value=[])
         result = auto_ban_if_tks_right_after_connection(rcon, tk_log, config)
         assert result and result["expires_at"]
 
 
-@mock.patch("rcon.game_logs.get_player_profile", autospec=True, return_value=None)
+@mock.patch("rcon.automods.tk_autoban.get_player_profile", autospec=True, return_value=None)
 def test_ban_ignored_kill(*args):
     tk_log = {
         "version": 1,
@@ -248,17 +248,17 @@ def test_ban_ignored_kill(*args):
         ),
     )
     with (
-        mock.patch("rcon.game_logs.Rcon") as rcon,
+        mock.patch("rcon.automods.tk_autoban.Rcon") as rcon,
         mock.patch(
-            "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
-        ) as get,
+            "rcon.automods.tk_autoban.get_recent_logs", return_value={"logs": logs}
+        ),
     ):
         rcon.get_vips_ids = mock.MagicMock(return_value=[])
         auto_ban_if_tks_right_after_connection(rcon, tk_log, config)
         rcon.perma_ban.assert_not_called()
 
 
-@mock.patch("rcon.game_logs.get_player_profile", autospec=True, return_value=None)
+@mock.patch("rcon.automods.tk_autoban.get_player_profile", autospec=True, return_value=None)
 def test_ban_count_one_death(*args):
     tk_log: StructuredLogLineWithMetaData = {
         "version": 1,
@@ -321,17 +321,17 @@ def test_ban_count_one_death(*args):
     )
 
     with (
-        mock.patch("rcon.game_logs.Rcon") as rcon,
+        mock.patch("rcon.automods.tk_autoban.Rcon") as rcon,
         mock.patch(
-            "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
-        ) as get,
+            "rcon.automods.tk_autoban.get_recent_logs", return_value={"logs": logs}
+        ),
     ):
         rcon.get_vips_ids = mock.MagicMock(return_value=[])
         result = auto_ban_if_tks_right_after_connection(rcon, tk_log, config)
         assert result
 
 
-@mock.patch("rcon.game_logs.get_player_profile", autospec=True, return_value=None)
+@mock.patch("rcon.automods.tk_autoban.get_player_profile", autospec=True, return_value=None)
 def test_ban_ignored_2_death(*args):
     tk_log = {
         "version": 1,
@@ -403,10 +403,10 @@ def test_ban_ignored_2_death(*args):
     )
 
     with (
-        mock.patch("rcon.game_logs.Rcon") as rcon,
+        mock.patch("rcon.automods.tk_autoban.Rcon") as rcon,
         mock.patch(
-            "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
-        ) as get,
+            "rcon.automods.tk_autoban.get_recent_logs", return_value={"logs": logs}
+        ),
     ):
         rcon.get_vips_ids = mock.MagicMock(return_value=[])
         auto_ban_if_tks_right_after_connection(rcon, tk_log, config)
