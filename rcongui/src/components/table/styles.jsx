@@ -100,14 +100,17 @@ export const StyledTable = styled("table", {
     "& th": {
       ...getDensityPadding(density, theme),
       verticalAlign: "middle",
-      paddingTop: theme.spacing(0.5),
-      paddingBottom: theme.spacing(0.5),
+      height: "3.5rem",  
     },
     "& tbody tr": {
       verticalAlign: "top",
     },
   };
 });
+
+export const StyledThead = styled("thead")(({ theme }) => ({
+  backgroundColor: theme.palette.background.paper,
+}));
 
 export const StyledTh = styled("th", {
   shouldForwardProp: (prop) => prop !== "variant" || prop !== "minWidth",
