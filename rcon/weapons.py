@@ -122,6 +122,9 @@ BRITISH_WEAPONS = {
     'HULL BESA [Cromwell]': WeaponType.Armor,
     'QF 17-POUNDER [Firefly]': WeaponType.Armor,
     'COAXIAL M1919 [Firefly]': WeaponType.Armor,
+    'OQF 75MM [Churchill Mk.VII]': WeaponType.Armor,
+    'COAXIAL BESA 7.92mm [Churchill Mk.VII]': WeaponType.Armor,
+    'HULL BESA 7.92mm [Churchill Mk.VII]': WeaponType.Armor,
 }
 
 US_WEAPONS = {

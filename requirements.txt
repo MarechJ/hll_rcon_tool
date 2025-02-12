@@ -1,8 +1,8 @@
 Click==8.1.8
 Django==4.2.18
-django-cors-headers==4.6.0
+django-cors-headers==4.7.0
 redis==5.2.1
-sqlalchemy==2.0.37
+sqlalchemy==2.0.38
 channels==4.2.0
 channels-redis==4.2.1
 orjson==3.10.15
@@ -17,7 +17,7 @@ steam==1.4.4
 alembic==1.14.1
 rq==2.1.0
 rq-scheduler==0.14.0
-paramiko==3.5.0
+paramiko==3.5.1
 ftpretty==0.4.0
 pytz>=2023.3
 pydantic==2.10.6
