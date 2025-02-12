@@ -15,7 +15,6 @@ export default defineConfig(({ command, mode }) => {
       'process.env.CRCON_SERVER_URL': JSON.stringify(env.VITE_CRCON_SERVER_URL),
       'process.env.DEBUG': JSON.stringify(env.DEBUG),
       'process.env.REACT_APP_API_URL': JSON.stringify(env.REACT_APP_API_URL),
-      'process.env.DEBUG': JSON.stringify(env.DEBUG),
     },
     resolve: {
       extensions: ['.js', '.jsx'],
