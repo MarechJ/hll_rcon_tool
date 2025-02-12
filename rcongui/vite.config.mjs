@@ -6,11 +6,14 @@ import path from 'path';
 export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
-  console.log(JSON.stringify(env.REACT_APP_API_URL))
+  console.log("[dev] Requests to:", env.VITE_API_ENDPOINT, "will be proxied to:", env.VITE_CRCON_SERVER_URL);
+  console.log("[dev] API Documentation:", env.VITE_CRCON_SERVER_URL + env.VITE_API_ENDPOINT + "get_api_documentation");
 
   return {
     define: {
-      'process.env.REACT_APP_PUBLIC_BUILD': JSON.stringify(env.REACT_APP_PUBLIC_BUILD),
+      'process.env.API_ENDPOINT': JSON.stringify(env.VITE_API_ENDPOINT),
+      'process.env.CRCON_SERVER_URL': JSON.stringify(env.VITE_CRCON_SERVER_URL),
+      'process.env.DEBUG': JSON.stringify(env.DEBUG),
       'process.env.REACT_APP_API_URL': JSON.stringify(env.REACT_APP_API_URL),
       'process.env.DEBUG': JSON.stringify(env.DEBUG),
     },
@@ -26,8 +29,8 @@ export default defineConfig(({ command, mode }) => {
     server: {
       port: 3000,
       proxy: {
-        '/api': {
-          target: 'http://192.168.4.30:8010',
+        [env.VITE_API_ENDPOINT]: {
+          target: env.VITE_CRCON_SERVER_URL,
           changeOrigin: true,
         },
       },
@@ -35,8 +38,8 @@ export default defineConfig(({ command, mode }) => {
     preview: {
       port: 3000,
       proxy: {
-        '/api': {
-          target: 'http://192.168.4.30:8010',
+        [env.VITE_API_ENDPOINT]: {
+          target: env.VITE_CRCON_SERVER_URL,
           changeOrigin: true,
         },
       },
