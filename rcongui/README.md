@@ -42,9 +42,10 @@ cp example.env .env
 4. Set the following variables in the `.env` file:
 
 You don't necessarily need to change anything here.
+Beware of the trailing slashes.
 
 - `REACT_APP_API_URL`: The URL of your React app
-- `VITE_API_ENDPOINT`: The API endpoint of your CRCON server
+- `VITE_CRCON_API_ENDPOINT`: The API endpoint of your CRCON server
 - `VITE_CRCON_SERVER_URL`: The URL of your CRCON server
 
 5. Start the development server:
