@@ -20,6 +20,11 @@ import {
 } from "@tanstack/react-table";
 import Grid from "@mui/material/Grid2";
 import InfoPanel from "./info-panel";
+import { Box, Stack, ToggleButton, ToggleButtonGroup, Tooltip } from '@mui/material';
+import TableChartIcon from '@mui/icons-material/TableChart';
+import ScoreboardIcon from '@mui/icons-material/Scoreboard';
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 
 const interval = 15 * 1000; // 15 seconds
 
@@ -39,6 +44,7 @@ export const loader = async () => {
 const Live = () => {
   // ---------------- VIEW STATE -----------------
   const { initialLogsView } = useLoaderData();
+  const [globalFilter, setGlobalFilter] = useState([]);
 
   // ---------------- PLAYERS DATA -----------------
   const { data: teamData, isFetching: isTeamFetching } = useQuery({
@@ -148,12 +154,14 @@ const Live = () => {
     onRowSelectionChange: setPlayersRowSelection,
     onColumnFiltersChange: setPlayersColumnFilters,
     onColumnVisibilityChange: handlePlayersColumnVisibilityChange,
+    onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.player_id,
     state: {
       sorting: playersSorting,
       rowSelection: playersRowSelection,
       columnFilters: playersColumnFilters,
       columnVisibility: playersColumnVisibility,
+      globalFilter,
     },
   });
 
@@ -187,11 +195,13 @@ const Live = () => {
     onColumnFiltersChange: setLogsFiltering,
     onColumnVisibilityChange: handleLogsColumnVisibilityChange,
     onPaginationChange: handleLogsPaginationChange,
+    onGlobalFilterChange: setGlobalFilter,
     autoResetPageIndex: false,
     state: {
       columnFilters: logsFiltering,
       columnVisibility: logsColumnVisibility,
       pagination: logsTableConfig.pagination,
+      globalFilter,
     },
   });
 
@@ -206,44 +216,114 @@ const Live = () => {
       .filter(Boolean);
   }, [playersRowSelection, playersTable.getSelectedRowModel().rows]);
 
+  // Add visibility state
+  const [visibleElements, setVisibleElements] = useState(['players', 'logs', 'header']);
+
+  const handleVisibility = (event, newVisibility) => {
+    console.log(newVisibility);
+    setVisibleElements(newVisibility);
+  };
+
+  const handleSearch = (value) => {
+    setGlobalFilter([value]);
+  };
+
   return (
-    <Grid container spacing={1}>
-      <Grid size={12}>
-        <InfoPanel gameData={gameData} playersData={playersData} />
+      
+      <Grid container spacing={1}>
+
+        <Grid size={12} sx={{ bgcolor: 'background.paper' }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+            <DebouncedSearchInput
+              placeholder="Global Search"
+              onChange={handleSearch}
+            />
+            <ToggleButtonGroup
+                value={visibleElements}
+                onChange={handleVisibility}
+                aria-label="visible elements"
+                multiple
+                size="small"
+                sx={{ 
+                  '& .MuiToggleButton-root': {
+                    border: 'none',
+                    p: 0.5,
+                    color: 'text.secondary',
+                    '&.Mui-selected': {
+                      bgcolor: 'transparent',
+                      color: 'text.primary',
+                    }
+                  }
+                }}
+              >
+                <Tooltip title={visibleElements.includes('players') ? 'Hide Players' : 'Show Players'}>
+                  <span>
+                    <ToggleButton value="players">
+                      <TableChartIcon sx={{ fontSize: { xs: '1rem', lg: '1.25rem' } }} />
+                    </ToggleButton>
+                  </span>
+                </Tooltip>
+                <Tooltip title={visibleElements.includes('logs') ? 'Hide Logs' : 'Show Logs'}>
+                  <span>
+                    <ToggleButton value="logs">
+                      <AssessmentIcon sx={{ fontSize: { xs: '1rem', lg: '1.25rem' } }} />
+                    </ToggleButton>
+                  </span>
+                </Tooltip>
+                <Tooltip title={visibleElements.includes('header') ? 'Hide Header' : 'Show Header'}>
+                  <span>
+                    <ToggleButton value="header">
+                      <ScoreboardIcon sx={{ fontSize: { xs: '1rem', lg: '1.25rem' } }} />
+                    </ToggleButton>
+                  </span>
+                </Tooltip>
+          </ToggleButtonGroup>
+          </Stack>
+          <InfoPanel gameData={gameData} playersData={playersData} />
+        </Grid>
+
+        {visibleElements.includes('header') && (
+          <Grid size={12}>
+            <Header data={gameData} />
+          </Grid>
+        )}
+        
+        {visibleElements.includes('players') && (
+          <Grid
+            size={{
+              xs: 12,
+              lg: !visibleElements.includes('logs') ? "grow" : "auto",
+            }}
+          >
+            <PlayersTable
+              table={playersTable}
+              teamData={teamData}
+              selectedPlayers={selectedPlayers}
+              onColumnVisibilityChange={handlePlayersColumnVisibilityChange}
+              isFetching={isTeamFetching}
+            />
+          </Grid>
+        )}
+        
+        {visibleElements.includes('logs') && (
+          <Grid
+            size={{
+              xs: 12,
+              lg: "grow",
+            }}
+          >
+            <LogsTable
+              table={logsTable}
+              logsViewData={logsView}
+              searchParams={logsSearchParams}
+              setSearchParams={setSearchParams}
+              onColumnVisibilityChange={handleLogsColumnVisibilityChange}
+              isFetching={isLogsFetching}
+            />
+          </Grid>
+        )}
       </Grid>
-      <Grid size={12}>
-        <Header data={gameData} />
-      </Grid>
-      <Grid
-        size={{
-          xs: 12,
-          lg: "auto",
-        }}
-      >
-        <PlayersTable
-          table={playersTable}
-          teamData={teamData}
-          selectedPlayers={selectedPlayers}
-          onColumnVisibilityChange={handlePlayersColumnVisibilityChange}
-          isFetching={isTeamFetching}
-        />
-      </Grid>
-      <Grid
-        size={{
-          xs: 12,
-          lg: "grow",
-        }}
-      >
-        <LogsTable
-          table={logsTable}
-          logsViewData={logsView}
-          searchParams={logsSearchParams}
-          setSearchParams={setSearchParams}
-          onColumnVisibilityChange={handleLogsColumnVisibilityChange}
-          isFetching={isLogsFetching}
-        />
-      </Grid>
-    </Grid>
+
   );
 };
 

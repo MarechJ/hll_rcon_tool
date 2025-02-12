@@ -62,7 +62,7 @@ const InfoPanel = ({ gameData, playersData }) => {
   });
 
   return (
-    <Stack direction="row" flexWrap="wrap" alignItems="center" columnGap={1} divider={<Divider orientation="vertical" flexItem />}  sx={{ backgroundColor: "background.paper", border: "1px solid theme.palette.divider", p: 0.5 }}> 
+    <Stack direction="row" flexWrap="wrap" alignItems="center" columnGap={1} divider={<Divider orientation="vertical" flexItem />}  sx={{ border: "1px solid theme.palette.divider", p: 0.5 }}> 
       {content.sort((a) => a.type === "warning" ? -1 : 1).map((item, index) => (
         <Box key={index} sx={{ display: "flex", alignItems: "center", gap: 0.5, textWrap: "nowrap" }}>
           {item.type === "warning" && <WarningIcon sx={{ color: "warning.main", fontSize: 12 }} />}
