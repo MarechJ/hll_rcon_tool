@@ -14,7 +14,7 @@ import makePlayerProfileUrl from "@/utils/makePlayerProfileUrl";
 import Grid from "@mui/material/Grid2";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import dayjs from "dayjs";
-import {useState} from "react";
+import { useState } from "react";
 
 const fetchResource = async (url, errorMessage) => {
   try {
@@ -223,9 +223,9 @@ const PlayerInfo = () => {
     return ban.type === "perma";
   });
 
-  const hasVip = vips.some(
-    (vip) => vip.server_number === connectionInfo?.server_number
-  );
+  // const hasVip = vips.some(
+  //   (vip) => vip.server_number === connectionInfo?.server_number
+  // );
 
   const handleSubmitComment = (comment) => {
     let formData = new FormData();
@@ -256,7 +256,7 @@ const PlayerInfo = () => {
           <NamePopOver names={names} />
           <div>
             {[
-              [hasVip, "VIP"],
+              // [hasVip, "VIP"],
               [is_blacklisted, "IS BLACKLISTED"],
               [hasPermaBan, "IS PERMABANNED"],
               [hasTempBan, "IS TEMPBANNED"],

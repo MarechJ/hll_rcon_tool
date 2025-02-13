@@ -140,7 +140,7 @@ export default function VipListRecordCreateDialog({
           const data = {
             vipListId: vipList.id,
             playerId,
-            description,
+            description: description === "" ? null : description,
             active,
             expiresAt:
               expiresAt === "" ? null : moment(expiresAt).utc().toISOString(),
@@ -259,7 +259,6 @@ export default function VipListRecordCreateDialog({
             />
             {/* description */}
             <TextField
-              required
               multiline
               margin="dense"
               id="description"

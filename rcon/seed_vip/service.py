@@ -35,7 +35,6 @@ def run():
 
     to_add_vip_steam_ids: set[str] = set()
     no_reward_steam_ids: set[str] = set()
-    player_name_lookup: dict[str, str] = {}
     prev_announced_bucket: int = 0
     player_buckets = config.player_announce_thresholds
     if player_buckets:
@@ -92,11 +91,6 @@ def run():
                 continue
 
             total_players = gamestate.num_allied_players + gamestate.num_axis_players
-
-            player_name_lookup |= {
-                p.player_id: p.name for p in online_players.players.values()
-            }
-
             logger.debug(
                 f"{is_seeding=} {len(online_players.players.keys())} online players (`get_players`), {gamestate.num_allied_players} allied {gamestate.num_axis_players} axis players (gamestate)",
             )
@@ -115,39 +109,15 @@ def run():
                 # only include online players in the current_vips
                 current_vips = filter_online_players(current_vips, online_players)
 
-                # no vip reward needed for indefinite vip holders
-                indefinite_vip_steam_ids = filter_indefinite_vip_steam_ids(current_vips)
-                to_add_vip_steam_ids -= indefinite_vip_steam_ids
-
                 # Players who were online when we seeded but didn't meet the criteria for VIP
                 no_reward_steam_ids = {
                     p.player_id for p in online_players.players.values()
                 } - to_add_vip_steam_ids
 
-                expiration_timestamps = defaultdict(
-                    lambda: calc_vip_expiration_timestamp(
-                        config=config,
-                        current_expiration=None,
-                        from_time=seeded_timestamp or datetime.now(tz=timezone.utc),
-                    )
-                )
-                for player in current_vips.values():
-                    expiration_timestamps[player.player.player_id] = (
-                        calc_vip_expiration_timestamp(
-                            config=config,
-                            current_expiration=(
-                                player.expiration_date if player else None
-                            ),
-                            from_time=seeded_timestamp,
-                        )
-                    )
-
                 # Update VIP list records
                 reward_players(
                     config=config,
                     to_add_vip_steam_ids=to_add_vip_steam_ids,
-                    players_lookup=player_name_lookup,
-                    expiration_timestamps=expiration_timestamps,
                 )
 
                 # Message those who earned VIP
@@ -155,8 +125,7 @@ def run():
                     rcon=rcon_api,
                     config=config,
                     message=config.player_messages.reward_player_message,
-                    steam_ids=to_add_vip_steam_ids,
-                    expiration_timestamps=expiration_timestamps,
+                    player_ids=to_add_vip_steam_ids,
                 )
 
                 # Message those who did not earn
@@ -164,8 +133,7 @@ def run():
                     rcon=rcon_api,
                     config=config,
                     message=config.player_messages.reward_player_message_no_vip,
-                    steam_ids=no_reward_steam_ids,
-                    expiration_timestamps=None,
+                    player_ids=no_reward_steam_ids,
                 )
 
                 # Post seeding complete Discord message

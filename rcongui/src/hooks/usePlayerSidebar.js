@@ -1,6 +1,6 @@
 import { PlayerDetailDrawer } from "@/components/PlayerProfileDrawer";
 import { cmd } from "@/utils/fetchUtils";
-import {createContext, useContext, useMemo, useState} from "react";
+import { createContext, useContext, useMemo, useState } from "react";
 import { useGlobalStore } from "./useGlobalState";
 import dayjs from "dayjs";
 import { useQuery } from "@tanstack/react-query";
@@ -153,7 +153,7 @@ export const PlayerSidebarProvider = ({ children }) => {
     } else {
       return null;
     }
-    
+
     aPlayer.messages = messages ?? [];
     aPlayer.comments = comments ?? [];
     aPlayer.bans = bans ?? [];
@@ -161,13 +161,13 @@ export const PlayerSidebarProvider = ({ children }) => {
       aPlayer.is_banned = true;
     }
 
-    const vip = aPlayer.profile.vips.find(
-      (v) => v.server_number === serverStatus?.server_number
-    );
-    if (vip && dayjs().isBefore(vip.expiration)) {
-      aPlayer.is_vip = true;
-      aPlayer.vip = vip;
-    }
+    // const vip = aPlayer.profile.vips.find(
+    //   (v) => v.server_number === serverStatus?.server_number
+    // );
+    // if (vip && dayjs().isBefore(vip.expiration)) {
+    //   aPlayer.is_vip = true;
+    //   aPlayer.vip = vip;
+    // }
 
     aPlayer.player_id = aPlayer.player_id ?? aPlayer.profile.player_id;
     aPlayer.name = aPlayer.name ?? aPlayer.profile.names[0]?.name;
@@ -211,10 +211,10 @@ export const usePlayerSidebar = () => {
     );
     return {
       open: false,
-      close: () => {},
+      close: () => { },
       player: null,
-      openWithId: () => {},
-      switchPlayer: () => {},
+      openWithId: () => { },
+      switchPlayer: () => { },
       isLoading: false,
       commentsError: null,
       bansError: null,

@@ -1,13 +1,13 @@
-from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from logging import getLogger
 from typing import Iterable, Sequence
 
+from sqlalchemy.orm import Session
 from humanize import naturaldelta, naturaltime
 
 import discord
 from rcon.api_commands import RconAPI
-from rcon.models import enter_session
+from rcon.models import VipListRecord, enter_session
 from rcon.seed_vip.models import (
     BaseCondition,
     GameState,
@@ -21,18 +21,14 @@ from rcon.types import (
     GameStateType,
     GetPlayersType,
     VipIdWithExpirationType,
-    VipListSyncMethod,
-    VipListRecordType,
 )
+from rcon.models import VipList
 from rcon.user_config.seed_vip import SeedVIPUserConfig
 from rcon.vip import (
-    extend_vip_duration,
-    get_vip_status_for_player_ids,
     add_record_to_vip_list,
-    get_vip_list,
-    get_highest_priority_records,
-    create_vip_list,
-    bulk_edit_vip_records,
+    get_vip_record,
+    get_vip_status_for_player_ids,
+    get_or_create_vip_list,
 )
 
 logger = getLogger(__name__)
@@ -156,7 +152,7 @@ def collect_steam_ids(
 def format_player_message(
     message: str,
     vip_reward: timedelta,
-    vip_expiration: datetime,
+    vip_expiration: datetime | None,
     nice_time_delta: bool = True,
     nice_expiration_date: bool = True,
 ) -> str:
@@ -164,6 +160,9 @@ def format_player_message(
         delta = naturaldelta(vip_reward)
     else:
         delta = vip_reward
+
+    if vip_expiration is None:
+        return message.format(vip_reward=delta, vip_expiration="Never")
 
     if nice_expiration_date:
         date = naturaltime(vip_expiration)
@@ -200,10 +199,6 @@ def make_seed_announcement_embed(
     return embed
 
 
-def format_vip_reward_name(player_name: str, format_str):
-    return format_str.format(player_name=player_name)
-
-
 def should_announce_seeding_progress(
     player_buckets: list[int],
     total_players: int,
@@ -223,15 +218,16 @@ def message_players(
     rcon: RconAPI,
     config: SeedVIPUserConfig,
     message: str,
-    steam_ids: Iterable[str],
-    expiration_timestamps: defaultdict[str, datetime] | None,
+    player_ids: Iterable[str],
 ):
-    for steam_id in steam_ids:
-        if expiration_timestamps:
+    """Message each player and include their highest VIP expiration from all their records"""
+    vip_records = get_vip_status_for_player_ids(player_ids=set(player_ids))
+    for player_id in player_ids:
+        if vip_records.get(player_id):
             formatted_message = format_player_message(
                 message=message,
                 vip_reward=config.reward.timeframe.as_timedelta,
-                vip_expiration=expiration_timestamps[steam_id],
+                vip_expiration=vip_records[player_id]["expires_at"],
                 nice_time_delta=config.nice_time_delta,
                 nice_expiration_date=config.nice_expiration_date,
             )
@@ -239,10 +235,10 @@ def message_players(
             formatted_message = message
 
         if config.dry_run:
-            logger.info(f"{config.dry_run=} messaging {steam_id}: {formatted_message}")
+            logger.info(f"{config.dry_run=} messaging {player_id}: {formatted_message}")
         else:
             rcon.message_player(
-                player_id=steam_id,
+                player_id=player_id,
                 message=formatted_message,
             )
 
@@ -250,45 +246,51 @@ def message_players(
 def reward_players(
     config: SeedVIPUserConfig,
     to_add_vip_steam_ids: set[str],
-    players_lookup: dict[str, str],
-    expiration_timestamps: defaultdict[str, datetime],
 ):
     """Create or edit VIP list records for all the players who earned VIP"""
     logger.info(f"Rewarding players with VIP {config.dry_run=}")
     logger.info(f"Total={len(to_add_vip_steam_ids)} {to_add_vip_steam_ids=}")
 
+    timestamp = datetime.now(tz=timezone.utc)
     with enter_session() as sess:
-        vip_list = get_vip_list(sess=sess, vip_list_id=config.vip_list_id, strict=False)
-
         # People can misconfigure their config; or delete a list, but seeding
         # is pretty important; so make a new list if we don't find one
-        if not vip_list:
-            vip_list = create_vip_list(
-                name="Seed VIP", sync=VipListSyncMethod.IGNORE_UNKNOWN, servers=None
-            )
-            # Fix their config so that we don't keep creating new lists everytime
-            # the service awards VIP
-            config.vip_list_id = vip_list["id"]
+        vip_list: VipList = get_or_create_vip_list(
+            sess=sess, vip_list_id=config.vip_list_id, name="Seed VIP"
+        )
+        record_lookup: dict[str, VipListRecord] = {
+            r.player.player_id: r for r in vip_list.records
+        }
 
-        if not vip_list:
-            logger.error(
-                "No VIP list found and an error occurred while creating a new one"
+        # Fix their config so that we don't keep creating new lists everytime
+        # the service awards VIP if we made one
+        if config.vip_list_id != vip_list.id:
+            logger.info(
+                f"Updating VIP list ID to {vip_list.id} from {config.vip_list_id}"
             )
+            config.vip_list_id = vip_list.id
+            config.save_to_db(config.model_dump())
 
-        updated_records: list[VipListRecordType] = []
-        existing_records = get_highest_priority_records(vip_list_id=config.vip_list_id)
         for player_id in to_add_vip_steam_ids:
+            player_record_created = False
             if not config.dry_run:
-                player_record = existing_records.get(player_id)
+                player_record = record_lookup.get(player_id)
                 if player_record is None:
                     player_record = add_record_to_vip_list(
                         player_id=player_id,
                         vip_list_id=config.vip_list_id,
-                        description=format_vip_reward_name(
-                            players_lookup.get(player_id, "No player name found"),
-                            format_str=config.reward.player_name_format_not_current_vip,
-                        ),
+                        description=config.vip_record_description,
                     )
+                    player_record_created = True
+                    try:
+                        player_record = get_vip_record(
+                            sess=sess, record_id=player_record["id"]
+                        )
+                    except TypeError:
+                        logger.error(
+                            "Error while creating new VIP record for %s", player_id
+                        )
+                        continue
 
                 if not player_record:
                     logger.error(
@@ -296,16 +298,24 @@ def reward_players(
                     )
                     continue
 
-                player_record["expires_at"] = expiration_timestamps.get(player_id)
-                logger.info(
-                    f"{config.dry_run=} adding VIP to {player_id=} {player_record=}",
+                # The record might be inactive; but we want to make sure they get VIP
+                player_record.active = True
+                # If the player record was created because it didn't exist; it has no expiration
+                player_record.expires_at = calc_vip_expiration_timestamp(
+                    config=config,
+                    current_expiration=(
+                        timestamp if player_record_created else player_record.expires_at
+                    ),
+                    from_time=timestamp,
                 )
-                updated_records.append(player_record)
+
+                logger.info(
+                    f"{config.dry_run=} adding VIP to {player_id=} {player_record.to_dict(with_vip_list=False)}",
+                )
             else:
                 logger.info(
-                    f"{config.dry_run=} adding VIP to {player_id=} {player_record=}",
+                    f"{config.dry_run=} adding VIP to {player_id=}",
                 )
-        bulk_edit_vip_records(records=updated_records)
 
 
 def get_next_player_bucket(

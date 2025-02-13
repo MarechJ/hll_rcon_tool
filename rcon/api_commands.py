@@ -24,6 +24,7 @@ from rcon.player_history import (
     add_flag_to_player,
     get_players_by_appearance,
     remove_flag,
+    update_player_profile,
 )
 from rcon.rcon import Rcon
 from rcon import vip
@@ -1877,6 +1878,16 @@ class RconAPI(Rcon):
             id=id, title=title, content=content, category=category, author=by
         )
 
+    def update_player_profile(
+        self,
+        player_id: str,
+        email: str | MissingType = MISSING,
+        discord_id: str | MissingType = MISSING,
+    ):
+        return update_player_profile(
+            player_id=player_id, email=email, discord_id=discord_id
+        )
+
     # VIP List Endpoints
     def get_vip_lists(
         self, with_records: bool = False
@@ -1959,8 +1970,6 @@ class RconAPI(Rcon):
         active: bool | MissingType = MISSING,
         expires_at: datetime | MissingType = MISSING,
         notes: str | MissingType = MISSING,
-        email: str | MissingType = MISSING,
-        discord_id: str | MissingType = MISSING,
         admin_name: str = "CRCON",
     ) -> VipListRecordType | None:
         return vip.edit_vip_list_record(
@@ -1970,8 +1979,6 @@ class RconAPI(Rcon):
             active=active,
             expires_at=expires_at,
             notes=notes,
-            email=email,
-            discord_id=discord_id,
             admin_name=admin_name,
         )
 
@@ -2061,10 +2068,7 @@ class RconAPI(Rcon):
             )
 
             return {
-                "records": [
-                    record.to_dict(with_vip_list=True, with_player=True)
-                    for record in records
-                ],
+                "records": [record.to_dict(with_vip_list=True) for record in records],
                 "total": total_records,
             }
 

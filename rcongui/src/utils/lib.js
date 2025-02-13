@@ -75,7 +75,7 @@ export const normalizePlayerProfile = (profile) => {
   return {
     ...profile,
     received_actions: profile.received_actions ?? [],
-    vips: profile.vips ?? [],
+    // vips: profile.vips ?? [],
     blacklists: profile.blacklists ?? [],
     watchlist: profile.watchlist ?? [],
     flags: profile.flags ?? [],

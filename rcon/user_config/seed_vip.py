@@ -18,8 +18,6 @@ PLAYER_COUNT_MESSAGE = "{num_allied_players} - {num_axis_players}"
 REWARD_PLAYER_MESSAGE = "Thank you for helping us seed.\n\nYou've been granted {vip_reward} of VIP\n\nYour VIP currently expires: {vip_expiration}"
 REWARD_PLAYER_MESSAGE_NO_VIP = "Thank you for helping us seed.\n\nThe server is now live and the regular rules apply."
 
-PLAYER_NAME_FORMAT_NOT_CURRENT_VIP = "{player_name} - CRCON Seed VIP"
-
 
 class RawBufferType(TypedDict):
     seconds: int
@@ -51,8 +49,6 @@ class RawRewardTimeFrameType(TypedDict):
 
 
 class RawRewardType(TypedDict):
-    forward: bool
-    player_name_format_not_current_vip: str
     cumulative: bool
     timeframe: RawRewardTimeFrameType
 
@@ -68,6 +64,8 @@ class RawPlayerMessagesType(TypedDict):
 class SeedVIPType(TypedDict):
     enabled: bool
     dry_run: bool
+    vip_list_id: int
+    vip_record_description: str | None
     language: str
     hooks: list[WebhookType]
     player_announce_thresholds: list[int]
@@ -144,10 +142,6 @@ class RewardTimeFrame(pydantic.BaseModel):
 
 
 class Reward(pydantic.BaseModel):
-    forward: bool = Field(default=False)
-    player_name_format_not_current_vip: str = Field(
-        default=PLAYER_NAME_FORMAT_NOT_CURRENT_VIP
-    )
     cumulative: bool = Field(default=True)
     timeframe: RewardTimeFrame = Field(default_factory=RewardTimeFrame)
 
@@ -157,6 +151,7 @@ class SeedVIPUserConfig(BaseUserConfig):
     # ID 0 is the default list; this is common enough we'll use list 1
     # by default which is created during the DB migration
     vip_list_id: int = Field(default=1)
+    vip_record_description: str | None = Field(default="Seed VIP")
     dry_run: bool = Field(default=True)
     language: str | None = Field(default="en_US")
     hooks: list[DiscordWebhook] = Field(default_factory=list)
@@ -231,10 +226,6 @@ class SeedVIPUserConfig(BaseUserConfig):
         )
 
         validated_reward = Reward(
-            forward=raw_reward.get("forward"),
-            player_name_format_not_current_vip=raw_reward.get(
-                "player_name_format_not_current_vip"
-            ),
             cumulative=raw_reward.get("cumulative"),
             timeframe=validated_reward_time_frame,
         )
@@ -242,6 +233,8 @@ class SeedVIPUserConfig(BaseUserConfig):
         validated_conf = SeedVIPUserConfig(
             enabled=values.get("enabled"),
             dry_run=values.get("dry_run"),
+            vip_list_id=values.get("vip_list_id"),
+            vip_record_description=values.get("vip_record_description"),
             language=values.get("language"),
             hooks=validated_hooks,
             player_announce_thresholds=values.get("player_announce_thresholds"),

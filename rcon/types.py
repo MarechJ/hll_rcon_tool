@@ -299,6 +299,8 @@ class BasicPlayerProfileType(TypedDict):
     created: datetime.datetime
     names: list[PlayerNameType]
     steaminfo: Optional[SteamInfoType]
+    email: str | None
+    discord_id: str | None
 
 
 class BlacklistSyncMethod(str, enum.Enum):
@@ -356,7 +358,7 @@ class VipListSyncMethod(enum.StrEnum):
 
     IGNORE_UNKNOWN = "ignore_unknown"
     """Ignore any player with VIP on the game server that is not on a VIP list.
-    Players on the list will be handled (active/inactive, expired, etc.) but 
+    Players on the list will be handled (active/inactive, expired, etc.) but
     people may use multiple methods such as BattleMetrics to award VIP and this
     will prevent those players from losing VIP
     """
@@ -380,8 +382,6 @@ class VipListRecordTypeNoId(TypedDict):
     expires_at: datetime.datetime | None
     description: str | None
     notes: str | None
-    email: str | None
-    discord_id: str | None
 
 
 class VipListRecordType(VipListRecordTypeNoId):
@@ -389,6 +389,7 @@ class VipListRecordType(VipListRecordTypeNoId):
 
     id: int
     created_at: datetime.datetime
+    player: BasicPlayerProfileType
 
 
 class VipListRecordWithVipListType(VipListRecordType):

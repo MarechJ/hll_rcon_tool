@@ -452,6 +452,7 @@ class RconUser(User):
             ("can_edit_message_templates", "Can edit shared message templates"),
             ("can_view_seed_vip_config", "Can view the Seed VIP config"),
             ("can_change_seed_vip_config", "Can change the Seed VIP config"),
+            ("can_change_player_profiles", "Can make changes to a players profile"),
             ("can_view_vip_lists", "Can view VIP lists and their records"),
             ("can_create_vip_lists", "Can create VIP lists"),
             ("can_change_vip_lists", "Can change VIP lists"),

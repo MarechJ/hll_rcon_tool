@@ -57,7 +57,9 @@ from rcon.types import (
     VipListSyncMethod,
     VipListRecordType,
     VipListType,
+    BasicPlayerProfileType,
     VipListTypeWithRecordsType,
+    VipListRecordWithVipListType,
 )
 from rcon.utils import (
     SafeStringFormat,
@@ -171,8 +173,12 @@ class PlayerID(Base):
         return 0
 
     def to_dict(self, limit_sessions=5) -> PlayerProfileType:
-        blacklists = [record.to_dict() for record in self.blacklists]
-        vip_lists = [record.to_dict() for record in self.vip_lists]
+        blacklists: List[BlacklistRecordWithBlacklistType] = [
+            record.to_dict() for record in self.blacklists
+        ]
+        vip_lists: List[VipListRecordWithVipListType] = [
+            record.to_dict() for record in self.vip_lists
+        ]
         return {
             "id": self.id,
             PLAYER_ID: self.player_id,
@@ -899,7 +905,9 @@ class BlacklistRecord(Base):
                 else "forever"
             ),
             "expires_at": (
-                self.expires_at.strftime("%b %d %Y %H:%M") if self.expires_at else "never"
+                self.expires_at.strftime("%b %d %Y %H:%M")
+                if self.expires_at
+                else "never"
             ),
             "duration": (
                 humanize_timedelta(self.expires_at - self.created_at)
@@ -1044,11 +1052,29 @@ class VipListRecord(Base):
             return False
         return self.expires_at <= datetime.now(tz=timezone.utc)
 
-    # TODO: type overloads
+    @overload
+    def to_dict(self, with_vip_list: Literal[False]) -> VipListRecordType: ...
+    @overload
+    def to_dict(self, with_vip_list: Literal[True]) -> VipListRecordWithVipListType: ...
+    @overload
+    def to_dict(self, with_vip_list: bool = True) -> VipListRecordWithVipListType: ...
+
     def to_dict(
-        self, with_vip_list: bool = True, with_player: bool = False
-    ) -> VipListRecordType:
-        data = {
+        self, with_vip_list: bool = True
+    ) -> VipListRecordType | VipListRecordWithVipListType:
+        player_profile: BasicPlayerProfileType = {
+            "id": self.player.id,
+            "player_id": self.player.player_id,
+            "created": self.player.created,
+            "names": [name.to_dict() for name in self.player.names],
+            "steaminfo": (
+                self.player.steaminfo.to_dict() if self.player.steaminfo else None
+            ),
+            "email": self.player.email,
+            "discord_id": self.player.discord_id,
+        }
+
+        data: VipListRecordType = {
             "id": self.id,
             "vip_list_id": self.vip_list_id,
             "player_id": self.player.player_id,
@@ -1059,24 +1085,17 @@ class VipListRecord(Base):
             "expires_at": self.expires_at,
             "description": self.description,
             "notes": self.notes,
+            "player": player_profile,
         }
+
         if with_vip_list:
-            data["vip_list"] = self.vip_list.to_dict(with_records=False)
-
-        if with_player:
-            data["player"] = {
-                "id": self.player.id,
-                "player_id": self.player.player_id,
-                "created": self.player.created,
-                "names": [name.to_dict() for name in self.player.names],
-                "steaminfo": (
-                    self.player.steaminfo.to_dict() if self.player.steaminfo else None
-                ),
-                "email": self.player.email,
-                "discord_id": self.player.discord_id,
+            data_with_list: VipListRecordWithVipListType = {
+                **data,
+                "vip_list": self.vip_list.to_dict(with_records=False),
             }
-
-        return data
+            return data_with_list
+        else:
+            return data
 
 
 def install_unaccent():

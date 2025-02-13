@@ -34,6 +34,7 @@ from rcon.types import (
 )
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.utils import strtobool
+from rcon.utils import MISSING, MissingType
 
 
 class unaccent(ReturnTypeFromArgs):
@@ -529,6 +530,20 @@ def post_player_comment(player_id: str, comment, user: str = "Bot"):
         player = sess.query(PlayerID).filter_by(player_id=player_id).one()
         player.comments.append(PlayerComment(content=comment, by=user))
         sess.commit()
+
+
+def update_player_profile(
+    player_id: str,
+    email: str | MissingType = MISSING,
+    discord_id: str | MissingType = MISSING,
+):
+    with enter_session() as sess:
+        player = _get_set_player(sess, player_name=None, player_id=player_id)
+
+        if isinstance(email, str):
+            player.email = email
+        if isinstance(discord_id, str):
+            player.discord_id = discord_id
 
 
 if __name__ == "__main__":

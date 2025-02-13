@@ -84,7 +84,7 @@ def convert_old_style_vip_records(
 ):
     errors = []
 
-    # Handle file upload
+    timestamp = datetime.now(tz=timezone.utc)
     vips: list[VipListRecordTypeNoId] = []
     for idx, line in enumerate(records):
         idx += 1
@@ -129,11 +129,14 @@ def convert_old_style_vip_records(
                     "player_id": player_id,
                     "admin_name": "CRCON",
                     "is_active": True,
+                    "is_expired": (
+                        expiration_timestamp <= timestamp
+                        if expiration_timestamp
+                        else True
+                    ),
                     "expires_at": expiration_timestamp,
                     "description": description,
                     "notes": None,
-                    "email": None,
-                    "discord_id": None,
                 }
             )
         except Exception as e:
@@ -176,6 +179,31 @@ def get_vip_list(
     return vip_list
 
 
+def get_or_create_vip_list(
+    sess: Session,
+    vip_list_id: int,
+    name: str,
+    sync: VipListSyncMethod = VipListSyncMethod.IGNORE_UNKNOWN,
+    servers: Sequence[int] | None = None,
+) -> VipList:
+    """Return a VIP list if it exists or create it with the parameters"""
+    logger.info(f"{vip_list_id=}")
+    vip_list = get_vip_list(sess=sess, vip_list_id=vip_list_id, strict=False)
+
+    logger.info(f"{vip_list.to_dict() if vip_list else None}")
+    if vip_list is None:
+        new_list = create_vip_list(name=name, sync=sync, servers=servers)
+        logger.info(f"{new_list=}")
+        vip_list = get_vip_list(sess=sess, vip_list_id=new_list["id"], strict=False)
+        logger.info(f"{vip_list.to_dict() if vip_list else None}")
+        if vip_list is None:
+            raise RuntimeError(
+                "No VIP list found and an error occurred while creating a new one"
+            )
+
+    return vip_list
+
+
 def create_vip_list(
     name: str, sync: VipListSyncMethod, servers: Sequence[int] | None
 ) -> VipListType:
@@ -184,10 +212,10 @@ def create_vip_list(
         vip_list = VipList(name=name, sync=sync)
         vip_list.set_server_numbers(servers)
         sess.add(vip_list)
+        sess.commit()
 
-    # VipLists are created empty; so no commands need to be sent to the handler
-
-    return vip_list.to_dict()
+        # VipLists are created empty; so no commands need to be sent to the handler
+        return vip_list.to_dict()
 
 
 def edit_vip_list(
@@ -243,7 +271,7 @@ def edit_vip_list(
         return new_vip_list
 
 
-def delete_vip_list(vip_list_id: int):
+def delete_vip_list(vip_list_id: int) -> bool:
     """Delete an existing VipList, preventing the default list ID of 0 from being deleted
 
     When the list is deleted; all records on it are also deleted
@@ -314,8 +342,6 @@ def bulk_add_vip_records(records: Iterable[VipListRecordTypeNoId]) -> None:
                 active=record["is_active"],
                 expires_at=record["expires_at"],
                 notes=record["notes"],
-                email=record["email"],
-                discord_id=record["discord_id"],
             )
 
     # Synchronize now since we deferred it earlier while editing
@@ -339,8 +365,6 @@ def bulk_edit_vip_records(records: Iterable[VipListRecordType]) -> None:
                 active=record["is_active"],
                 expires_at=record["expires_at"] if record["expires_at"] else MISSING,
                 notes=record["notes"] if record["notes"] else MISSING,
-                email=record["email"] if record["email"] else MISSING,
-                discord_id=record["discord_id"] if record["discord_id"] else MISSING,
                 synchronize=False,
             )
 
@@ -362,8 +386,6 @@ def create_vip_record(
     active: bool = True,
     expires_at: datetime | None = None,
     notes: str | None = None,
-    email: str | None = None,
-    discord_id: str | None = None,
     admin_name: str = "CRCON",
 ) -> VipListRecord:
     record = VipListRecord(
@@ -376,8 +398,6 @@ def create_vip_record(
         vip_list=vip_list,
     )
     sess.add(record)
-    record.player.email = email
-    record.player.discord_id = discord_id
     logger.info(
         "Creating VIP list record for %s on list: name: %s ID: %s",
         player.player_id,
@@ -450,8 +470,6 @@ def edit_vip_list_record(
     active: bool | MissingType = MISSING,
     expires_at: datetime | MissingType = MISSING,
     notes: str | MissingType = MISSING,
-    email: str | MissingType = MISSING,
-    discord_id: str | MissingType = MISSING,
     admin_name: str = "CRCON",
     synchronize: bool = True,
     sess: Session | None = None,
@@ -465,8 +483,6 @@ def edit_vip_list_record(
         active: bool | MissingType = MISSING,
         expires_at: datetime | MissingType = MISSING,
         notes: str | MissingType = MISSING,
-        email: str | MissingType = MISSING,
-        discord_id: str | MissingType = MISSING,
         admin_name: str = "CRCON",
         synchronize: bool = True,
     ):
@@ -491,10 +507,6 @@ def edit_vip_list_record(
             record.expires_at = expires_at  # type: ignore
         if notes != MISSING:
             record.notes = notes  # type: ignore
-        if email != MISSING:
-            record.player.email = email  # type: ignore
-        if discord_id != MISSING:
-            record.player.discord_id = discord_id  # type: ignore
 
         # Update to the latest person who touched the record
         # or the default 'CRCON' if used internally
@@ -542,8 +554,6 @@ def edit_vip_list_record(
                 active=active,
                 expires_at=expires_at,
                 notes=notes,
-                email=email,
-                discord_id=discord_id,
                 admin_name=admin_name,
                 synchronize=synchronize,
             )
@@ -556,8 +566,6 @@ def edit_vip_list_record(
             active=active,
             expires_at=expires_at,
             notes=notes,
-            email=email,
-            discord_id=discord_id,
             admin_name=admin_name,
             synchronize=synchronize,
         )
@@ -1149,6 +1157,14 @@ class VipListCommand(BaseModel):
     server_mask: int
     payload: dict
 
+    # TODO: this is used multiple places, consolidate
+    @staticmethod
+    def _convert_types(o):
+        if isinstance(o, set):
+            return [val for val in sorted(o)]
+        else:
+            raise ValueError(f"Cannot serialize {o}, {type(o)} to JSON")
+
     @field_validator("server_mask", mode="before")
     @classmethod
     def convert_none_to_mask(cls, v: int | None) -> int:
@@ -1160,7 +1176,8 @@ class VipListCommand(BaseModel):
     def encode(self) -> bytes:
         """Dump our command type and payload to bytes for Redis"""
         return struct.pack("II", self.command, self.server_mask) + orjson.dumps(
-            self.payload
+            self.payload,
+            default=VipListCommand._convert_types,
         )
 
     @classmethod
@@ -1270,7 +1287,7 @@ class VipListCommandHandler:
                         cmd.payload,
                     )
             except:
-                logger.exception("Failed to parse data %s", data)
+                logger.exception("Failed to parse data %s", message["data"])
             logger.info("Ready for next message!")
 
     def handle_synchronize(self, payload: VipListSynchCommand):

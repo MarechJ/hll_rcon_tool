@@ -260,14 +260,29 @@ const VipListRecordGrid = ({
       active: data.active,
       expires_at: data.expiresAt,
       notes: data.notes,
-      email: data.email,
-      discord_id: data.discordId
     })
       .then((response) =>
         showResponse(response, `Record ${recordId} was edited`, true)
       )
       .then(result => result && !result.failed && onRefresh())
       .catch(handle_http_errors)
+
+    /* TODO: this should probably be done separately */
+    let payload = {}
+    if (data.email) {
+      payload.email = data.email
+    }
+    if (data.discordId) {
+      payload.discord_id = data.discordId
+    }
+
+    if (Object.keys(payload).length > 0) {
+      postData(`${process.env.REACT_APP_API_URL}update_player_profile`, payload).then((response) =>
+        showResponse(response, `Player profile updated`, true)
+      )
+        .then(result => result && !result.failed && onRefresh())
+        .catch(handle_http_errors)
+    }
   }
 
   function onActivateRecord(record) {
