@@ -1,11 +1,6 @@
 import { useState, useMemo } from "react";
 import { extractPlayers, extractTeamState } from "@/utils/extractPlayers";
-import {
-  Box,
-  Button,
-  Stack,
-  LinearProgress,
-} from "@mui/material";
+import { Box, Button, Stack, LinearProgress } from "@mui/material";
 import { ActionMenuButton } from "@/features/player-action/ActionMenu";
 import { generatePlayerActions } from "@/features/player-action/actions";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -14,6 +9,8 @@ import { teamsLiveQueryOptions } from "@/queries/teams-live-query";
 import { TeamSection, UNASSIGNED } from "./team-section";
 import { TeamContainer } from "./styled";
 import { cmd } from "@/utils/fetchUtils";
+import GameOverview from "@/components/game/overview";
+import { OverviewSkeleton } from "./skeletons";
 
 const TeamViewPage = () => {
   const { data: teams, isFetching } = useQuery({
@@ -22,13 +19,40 @@ const TeamViewPage = () => {
     refetchInterval: 10 * 1000,
   });
 
+  const { data: gameState } = useQuery({
+    queryKey: ["game", "state"],
+    queryFn: cmd.GET_GAME_STATE,
+    staleTime: 5 * 1000,
+    refetchInterval: 10 * 1000,
+  });
+
+  const gameData = useMemo(() => {
+    if (gameState && teams) {
+      return {
+        ...gameState,
+        allies: {
+          ...extractTeamState(teams?.allies ?? {}),
+          ...(teams?.allies ?? {}),
+        },
+        axis: {
+          ...extractTeamState(teams?.axis ?? {}),
+          ...(teams?.axis ?? {}),
+        },
+        none: {
+          ...extractTeamState(teams?.none ?? {}),
+          ...(teams?.none ?? {}),
+        },
+      };
+    }
+    return null;
+  }, [gameState, teams]);
+
   const [selectedPlayers, setSelectedPlayers] = useState(new Map());
   const [expandedSquads, setExpandedSquads] = useState({
     allies: { [UNASSIGNED]: true },
     axis: { [UNASSIGNED]: true },
     lobby: { [UNASSIGNED]: true },
   });
-
 
   const { axisTeam, alliesTeam, lobbyTeam } = useMemo(() => {
     return {
@@ -47,40 +71,40 @@ const TeamViewPage = () => {
     };
 
     if (!alliesTeam || !axisTeam || !lobbyTeam) return squads;
-    
-    alliesTeam.squads.forEach(squad => {
+
+    alliesTeam.squads.forEach((squad) => {
       if (squad.name !== "command") {
         squads.allies.add(squad.name);
       }
     });
-    
-    axisTeam.squads.forEach(squad => {
+
+    axisTeam.squads.forEach((squad) => {
       if (squad.name !== "command") {
         squads.axis.add(squad.name);
       }
     });
 
-    lobbyTeam.squads.forEach(squad => {
+    lobbyTeam.squads.forEach((squad) => {
       squads.lobby.add(squad.name);
     });
-    
+
     return squads;
   }, [alliesTeam, axisTeam, lobbyTeam]);
 
   const handleToggleSquad = (team, squadName) => {
-    setExpandedSquads(prev => ({
+    setExpandedSquads((prev) => ({
       ...prev,
       [team]: {
         ...prev[team],
-        [squadName]: !prev[team]?.[squadName]
-      }
+        [squadName]: !prev[team]?.[squadName],
+      },
     }));
   };
 
   const handleExpandAll = () => {
     const newState = { allies: {}, axis: {}, lobby: {} };
     Object.entries(allSquads).forEach(([team, squads]) => {
-      squads.forEach(squadName => {
+      squads.forEach((squadName) => {
         newState[team][squadName] = true;
       });
       newState[team][UNASSIGNED] = true;
@@ -91,7 +115,7 @@ const TeamViewPage = () => {
   const handleCollapseAll = () => {
     const newState = { allies: {}, axis: {}, lobby: {} };
     Object.entries(allSquads).forEach(([team, squads]) => {
-      squads.forEach(squadName => {
+      squads.forEach((squadName) => {
         newState[team][squadName] = false;
       });
       newState[team][UNASSIGNED] = false;
@@ -101,23 +125,21 @@ const TeamViewPage = () => {
 
   const handleTeamExpandAll = (team) => {
     const teamSquads = allSquads[team];
-    setExpandedSquads(prev => ({
+    setExpandedSquads((prev) => ({
       ...prev,
-      [team]: Object.fromEntries([
-        ...Array.from(teamSquads),
-        UNASSIGNED
-      ].map(name => [name, true]))
+      [team]: Object.fromEntries(
+        [...Array.from(teamSquads), UNASSIGNED].map((name) => [name, true])
+      ),
     }));
   };
 
   const handleTeamCollapseAll = (team) => {
     const teamSquads = allSquads[team];
-    setExpandedSquads(prev => ({
+    setExpandedSquads((prev) => ({
       ...prev,
-      [team]: Object.fromEntries([
-        ...Array.from(teamSquads),
-        UNASSIGNED
-      ].map(name => [name, false]))
+      [team]: Object.fromEntries(
+        [...Array.from(teamSquads), UNASSIGNED].map((name) => [name, false])
+      ),
     }));
   };
 
@@ -172,7 +194,7 @@ const TeamViewPage = () => {
   };
 
   const handleSelectAll = () => {
-    const allPlayers = extractPlayers(teams)
+    const allPlayers = extractPlayers(teams);
     const allPlayersMap = new Map(
       allPlayers.map((p) => [
         p.player_id,
@@ -190,22 +212,37 @@ const TeamViewPage = () => {
     const name = team?.name ?? "unknown";
     return (
       <TeamSection
-      team={team}
-      title={name.toUpperCase()}
-      selectedPlayers={selectedPlayers}
-      onTogglePlayer={handleTogglePlayer}
-      onToggleSquad={handleToggleSquadSelection}
-      onToggleAll={handleToggleTeam}
-      expandedSquads={expandedSquads[name]}
-      onToggleExpand={(squadName) => handleToggleSquad(name, squadName)}
-      onTeamExpand={() => handleTeamExpandAll(name)}
-      onTeamCollapse={() => handleTeamCollapseAll(name)}
-    />
-    )
-  }
+        team={team}
+        title={name.toUpperCase()}
+        selectedPlayers={selectedPlayers}
+        onTogglePlayer={handleTogglePlayer}
+        onToggleSquad={handleToggleSquadSelection}
+        onToggleAll={handleToggleTeam}
+        expandedSquads={expandedSquads[name]}
+        onToggleExpand={(squadName) => handleToggleSquad(name, squadName)}
+        onTeamExpand={() => handleTeamExpandAll(name)}
+        onTeamCollapse={() => handleTeamCollapseAll(name)}
+      />
+    );
+  };
 
   return (
     <Stack>
+      {gameData ? (
+        <GameOverview
+          map={gameData.current_map}
+          time={gameData.raw_time_remaining}
+          allies={gameData.current_map.map.allies}
+          axis={gameData.current_map.map.axis}
+          mode={gameData.current_map.game_mode}
+          mapName={gameData.current_map.pretty_name}
+          axisCount={gameData.num_axis_players}
+          alliesCount={gameData.num_allied_players}
+          score={{ allies: gameData.allied_score, axis: gameData.axis_score }}
+        />
+      ) : (
+        <OverviewSkeleton />
+      )}
       <Stack
         direction="row"
         sx={{
@@ -229,7 +266,7 @@ const TeamViewPage = () => {
               disabled={!selectedPlayers.size}
               {...props}
             >
-              Apply Actions 
+              Apply Actions
             </Button>
           )}
         />
@@ -241,13 +278,11 @@ const TeamViewPage = () => {
       <Box sx={{ height: 2 }}>
         {isFetching && <LinearProgress sx={{ height: 2 }} />}
       </Box>
-      <TeamContainer> 
-        {getTeamSection(axisTeam)}
-        {getTeamSection(alliesTeam)}
-      </TeamContainer>
       <TeamContainer>
-        {getTeamSection(lobbyTeam)}
+        {getTeamSection(alliesTeam)}
+        {getTeamSection(axisTeam)}
       </TeamContainer>
+      <TeamContainer>{getTeamSection(lobbyTeam)}</TeamContainer>
     </Stack>
   );
 };
