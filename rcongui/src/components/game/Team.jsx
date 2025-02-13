@@ -64,6 +64,8 @@ export const TeamDesktop = ({ data }) => {
 
   const roleCounts = extractTeamState(team);
 
+  roleCounts.armycommander = !!team.commander ? 1 : 0;
+
   const counts = teamRoles.map((role) => ({
     role,
     count: roleCounts[role],
