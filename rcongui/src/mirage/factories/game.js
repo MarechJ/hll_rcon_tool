@@ -5,11 +5,11 @@ export const createInitialState = () => {
   const state = {
     axis: generateTeam(),
     allies: generateTeam(),
-    null: generateNullTeam()
+    none: generateNullTeam()
   };
 
   // Ensure at least one squad has no leader
-  const randomTeam = faker.helpers.arrayElement(Object.keys(state).filter(team => team !== 'null'));
+  const randomTeam = faker.helpers.arrayElement(Object.keys(state).filter(team => team !== 'none'));
   const randomSquad = faker.helpers.arrayElement(Object.keys(state[randomTeam].squads));
   state[randomTeam].squads[randomSquad].has_leader = false;
   state[randomTeam].squads[randomSquad].players = state[randomTeam].squads[randomSquad].players

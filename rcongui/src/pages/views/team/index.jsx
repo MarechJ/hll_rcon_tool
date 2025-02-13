@@ -13,6 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { teamsLiveQueryOptions } from "@/queries/teams-live-query";
 import { TeamSection, UNASSIGNED } from "./team-section";
 import { TeamContainer } from "./styled";
+import { cmd } from "@/utils/fetchUtils";
 
 const TeamViewPage = () => {
   const { data: teams, isFetching } = useQuery({
@@ -33,7 +34,7 @@ const TeamViewPage = () => {
     return {
       axisTeam: extractTeamState(teams?.axis, "axis"),
       alliesTeam: extractTeamState(teams?.allies, "allies"),
-      lobbyTeam: extractTeamState(teams?.null, "lobby"),
+      lobbyTeam: extractTeamState(teams?.none, "lobby"),
     };
   }, [teams]);
 
