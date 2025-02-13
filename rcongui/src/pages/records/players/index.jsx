@@ -425,9 +425,6 @@ export default function PlayersRecords() {
         </Form>
 
         <Stack component="section" id="players-section" spacing={1} sx={{ width: "100%" }}>
-          <Box sx={{ height: 4 }}>
-            {navigation.state === "loading" && <LinearProgress sx={{ height: 4 }} />}
-          </Box>
           <NavPagination
             page={page}
             maxPages={total_pages}
