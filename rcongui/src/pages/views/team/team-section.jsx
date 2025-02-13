@@ -55,7 +55,13 @@ const PlayerInfo = ({ player, onProfileClick }) => (
   </Box>
 );
 
-const PlayerRowWrapper = ({ player, selected, isCommander, onToggle, onProfileClick }) => (
+const PlayerRowWrapper = ({
+  player,
+  selected,
+  isCommander,
+  onToggle,
+  onProfileClick,
+}) => (
   <PlayerRow
     selected={selected}
     onClick={(e) => onToggle(player, e)}
@@ -68,12 +74,12 @@ const PlayerRowWrapper = ({ player, selected, isCommander, onToggle, onProfileCl
   </PlayerRow>
 );
 
-const SquadPlayers = ({ 
-  squad, 
-  expanded, 
-  selectedPlayers, 
-  onTogglePlayer, 
-  onProfileClick 
+const SquadPlayers = ({
+  squad,
+  expanded,
+  selectedPlayers,
+  onTogglePlayer,
+  onProfileClick,
 }) => (
   <Collapse in={expanded}>
     {squad.players.map((player) => (
@@ -101,24 +107,12 @@ const SquadStats = ({ squad }) => (
 
 const UnassignedStats = ({ players }) => (
   <Box className="squad-stats">
-    <Box className="stat">
-      {players.reduce((sum, p) => sum + p.kills, 0)}
-    </Box>
-    <Box className="stat">
-      {players.reduce((sum, p) => sum + p.deaths, 0)}
-    </Box>
-    <Box className="stat">
-      {players.reduce((sum, p) => sum + p.combat, 0)}
-    </Box>
-    <Box className="stat">
-      {players.reduce((sum, p) => sum + p.offense, 0)}
-    </Box>
-    <Box className="stat">
-      {players.reduce((sum, p) => sum + p.defense, 0)}
-    </Box>
-    <Box className="stat">
-      {players.reduce((sum, p) => sum + p.support, 0)}
-    </Box>
+    <Box className="stat">{players.reduce((sum, p) => sum + p.kills, 0)}</Box>
+    <Box className="stat">{players.reduce((sum, p) => sum + p.deaths, 0)}</Box>
+    <Box className="stat">{players.reduce((sum, p) => sum + p.combat, 0)}</Box>
+    <Box className="stat">{players.reduce((sum, p) => sum + p.offense, 0)}</Box>
+    <Box className="stat">{players.reduce((sum, p) => sum + p.defense, 0)}</Box>
+    <Box className="stat">{players.reduce((sum, p) => sum + p.support, 0)}</Box>
   </Box>
 );
 
@@ -184,11 +178,7 @@ const SquadHeaderContent = ({ squad, expandedSquads, onToggleExpand }) => (
         onToggleExpand(squad.name);
       }}
     >
-      {expandedSquads[squad.name] ? (
-        <ExpandMoreIcon />
-      ) : (
-        <ChevronRightIcon />
-      )}
+      {expandedSquads[squad.name] ? <ExpandMoreIcon /> : <ChevronRightIcon />}
     </IconButton>
     <SquadNameInfo squad={squad} />
     <Typography variant="caption" sx={{ ml: "auto" }}>
@@ -275,11 +265,69 @@ export const TeamSection = ({
       };
     }, [team]);
 
+  const getUnassignedSquad = (players) => {
+    if (players.length === 0) {
+      return null;
+    }
+    return (
+      <Box>
+        <SquadHeader
+          selected={players.every((p) => selectedPlayers.has(p.player_id))}
+          onClick={(e) =>
+            onToggleSquad(
+              players,
+              players.every((p) => selectedPlayers.has(p.player_id))
+            )
+          }
+        >
+          <Box className="squad-info">
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleExpand(UNASSIGNED);
+              }}
+            >
+              {expandedSquads[UNASSIGNED] ? (
+                <ExpandMoreIcon />
+              ) : (
+                <ChevronRightIcon />
+              )}
+            </IconButton>
+            <Box className="squad-name-container">
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  textTransform: "uppercase",
+                  fontWeight: "bold",
+                  minWidth: 0,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {team.name === "lobby" ? "Lobby" : "No Platoon"} (
+                {players.length})
+              </Typography>
+            </Box>
+          </Box>
+          <UnassignedStats players={players} />
+        </SquadHeader>
+        <SquadPlayers
+          squad={{ players }}
+          expanded={expandedSquads[UNASSIGNED]}
+          selectedPlayers={selectedPlayers}
+          onTogglePlayer={onTogglePlayer}
+          onProfileClick={handleProfileClick}
+        />
+      </Box>
+    );
+  };
+
   return (
     <TeamBox>
       <Box
         sx={{
-          backgroundColor: (theme) => theme.palette.background.default,
+          backgroundColor: (theme) => theme.palette.background.paper,
           display: "flex",
           alignItems: "center",
           gap: 1,
@@ -344,136 +392,88 @@ export const TeamSection = ({
       </Box>
       <ScrollContainer>
         <ContentWrapper>
-          <HeaderRow>
-            <Box>LVL</Box>
-            <Box>Name</Box>
-            <Box>Kills</Box>
-            <Box>Deaths</Box>
-            <Box>Combat</Box>
-            <Box>Offense</Box>
-            <Box>Defense</Box>
-            <Box>Support</Box>
-          </HeaderRow>
-          <TeamHeaderRow>
-            <Box>∅ {team.avg_level.toFixed(0)}</Box>
-            <Box style={{ textAlign: "center" }}>
-              Total ({team.count} players)
-            </Box>
-            <PlayerStats player={team} />
-          </TeamHeaderRow>
-
-          {commander ? (
-            <PlayerRowWrapper
-              player={commander}
-              selected={selectedPlayers.has(commander.player_id)}
-              onToggle={onTogglePlayer}
-              onProfileClick={handleProfileClick}
-              isCommander={true}
-            />
-          ) : (
-            <CommanderRow>
-              <Box className="level">-</Box>
-              <Box className="player-info">
-                <Box className="no-commander">
-                  <PersonOffIcon sx={{ fontSize: 16 }} />
-                  <Typography>No Commander</Typography>
+          {team.name !== "lobby" ? (
+            <>
+              <HeaderRow>
+                <Box>LVL</Box>
+                <Box>Name</Box>
+                <Box>Kills</Box>
+                <Box>Deaths</Box>
+                <Box>Combat</Box>
+                <Box>Offense</Box>
+                <Box>Defense</Box>
+                <Box>Support</Box>
+              </HeaderRow>
+              <TeamHeaderRow>
+                <Box>∅ {team.avg_level.toFixed(0)}</Box>
+                <Box style={{ textAlign: "center" }}>
+                  Total ({team.count} players)
                 </Box>
-              </Box>
-              <PlayerStats player={{}} />
-            </CommanderRow>
-          )}
+                <PlayerStats player={team} />
+              </TeamHeaderRow>
 
-          {squadGroups.map(({ type, squads }) => (
-            <Box key={type}>
-              <SquadGroupHeader type={type} />
-              {squads.map((squad) => (
-                <Box key={squad.name}>
-                  <SquadHeader
-                    selected={squad.players.every((p) =>
-                      selectedPlayers.has(p.player_id)
-                    )}
-                    onClick={(e) =>
-                      onToggleSquad(
-                        squad.players,
-                        squad.players.every((p) =>
+              {commander ? (
+                <PlayerRowWrapper
+                  player={commander}
+                  selected={selectedPlayers.has(commander.player_id)}
+                  onToggle={onTogglePlayer}
+                  onProfileClick={handleProfileClick}
+                  isCommander={true}
+                />
+              ) : team.name !== "lobby" ? (
+                <CommanderRow>
+                  <Box className="level">-</Box>
+                  <Box className="player-info">
+                    <Box className="no-commander">
+                      <PersonOffIcon sx={{ fontSize: 16 }} />
+                      <Typography>No Commander</Typography>
+                    </Box>
+                  </Box>
+                  <PlayerStats player={{}} />
+                </CommanderRow>
+              ) : null}
+
+              {getUnassignedSquad(unassignedPlayers)}
+
+              {squadGroups.map(({ type, squads }) => (
+                <Box key={type}>
+                  <SquadGroupHeader type={type} />
+                  {squads.map((squad) => (
+                    <Box key={squad.name}>
+                      <SquadHeader
+                        selected={squad.players.every((p) =>
                           selectedPlayers.has(p.player_id)
-                        )
-                      )
-                    }
-                  >
-                    <SquadHeaderContent
-                      squad={squad}
-                      expandedSquads={expandedSquads}
-                      onToggleExpand={onToggleExpand}
-                    />
-                    <SquadStats squad={squad} />
-                  </SquadHeader>
-                  <SquadPlayers
-                    squad={squad}
-                    expanded={expandedSquads[squad.name]}
-                    selectedPlayers={selectedPlayers}
-                    onTogglePlayer={onTogglePlayer}
-                    onProfileClick={handleProfileClick}
-                  />
+                        )}
+                        onClick={(e) =>
+                          onToggleSquad(
+                            squad.players,
+                            squad.players.every((p) =>
+                              selectedPlayers.has(p.player_id)
+                            )
+                          )
+                        }
+                      >
+                        <SquadHeaderContent
+                          squad={squad}
+                          expandedSquads={expandedSquads}
+                          onToggleExpand={onToggleExpand}
+                        />
+                        <SquadStats squad={squad} />
+                      </SquadHeader>
+                      <SquadPlayers
+                        squad={squad}
+                        expanded={expandedSquads[squad.name]}
+                        selectedPlayers={selectedPlayers}
+                        onTogglePlayer={onTogglePlayer}
+                        onProfileClick={handleProfileClick}
+                      />
+                    </Box>
+                  ))}
                 </Box>
               ))}
-            </Box>
-          ))}
-
-          {unassignedPlayers.length > 0 && (
-            <Box>
-              <SquadHeader
-                selected={unassignedPlayers.every((p) =>
-                  selectedPlayers.has(p.player_id)
-                )}
-                onClick={(e) =>
-                  onToggleSquad(
-                    unassignedPlayers,
-                    unassignedPlayers.every((p) =>
-                      selectedPlayers.has(p.player_id)
-                    )
-                  )
-                }
-              >
-                <Box className="squad-info">
-                  <IconButton
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onToggleExpand(UNASSIGNED);
-                    }}
-                  >
-                    {expandedSquads[UNASSIGNED] ? (
-                      <ExpandMoreIcon />
-                    ) : (
-                      <ChevronRightIcon />
-                    )}
-                  </IconButton>
-                  <Box className="squad-name-container">
-                    <Typography
-                      variant="subtitle2"
-                      sx={{
-                        textTransform: "uppercase",
-                        fontWeight: "bold",
-                        minWidth: 0,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
-                    >
-                      No Platoon ({unassignedPlayers.length})
-                    </Typography>
-                  </Box>
-                </Box>
-                <UnassignedStats players={unassignedPlayers} />
-              </SquadHeader>
-              <SquadPlayers
-                squad={{ players: unassignedPlayers }}
-                expanded={expandedSquads[UNASSIGNED]}
-                selectedPlayers={selectedPlayers}
-                onTogglePlayer={onTogglePlayer}
-                onProfileClick={handleProfileClick}
-              />
-            </Box>
+            </>
+          ) : (
+            getUnassignedSquad(unassignedPlayers)
           )}
         </ContentWrapper>
       </ScrollContainer>

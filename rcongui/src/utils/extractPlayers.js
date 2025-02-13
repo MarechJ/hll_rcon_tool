@@ -58,7 +58,7 @@ const extendPlayer = (player) => {
 // TODO
 // The current_playtime_seconds can be the time of the player's session,
 // so it's not a good metric to use for KPM.
-export const extractTeamState = (aTeam) => {
+export const extractTeamState = (aTeam, name) => {
   const team = aTeam ?? {};
 
   const totals = [
@@ -73,6 +73,7 @@ export const extractTeamState = (aTeam) => {
   const teamLevels = [];
   // const teamKpm = [];
   const out = {};
+  out["name"] = name ?? "unknown";
   out["commander"] = "commander" in team && team.commander ? extendPlayer(team.commander) : null;
   out["armor"] = 0;
   out["infantry"] = 0;

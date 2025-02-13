@@ -24,14 +24,16 @@ const TeamViewPage = () => {
   const [selectedPlayers, setSelectedPlayers] = useState(new Map());
   const [expandedSquads, setExpandedSquads] = useState({
     allies: { [UNASSIGNED]: true },
-    axis: { [UNASSIGNED]: true }
+    axis: { [UNASSIGNED]: true },
+    lobby: { [UNASSIGNED]: true },
   });
-  
 
-  const { axisTeam, alliesTeam } = useMemo(() => {
+
+  const { axisTeam, alliesTeam, lobbyTeam } = useMemo(() => {
     return {
-      axisTeam: extractTeamState(teams?.axis),
-      alliesTeam: extractTeamState(teams?.allies),
+      axisTeam: extractTeamState(teams?.axis, "axis"),
+      alliesTeam: extractTeamState(teams?.allies, "allies"),
+      lobbyTeam: extractTeamState(teams?.null, "lobby"),
     };
   }, [teams]);
 
@@ -39,10 +41,11 @@ const TeamViewPage = () => {
   const allSquads = useMemo(() => {
     const squads = {
       allies: new Set(),
-      axis: new Set()
+      axis: new Set(),
+      lobby: new Set(),
     };
 
-    if (!alliesTeam || !axisTeam) return squads;
+    if (!alliesTeam || !axisTeam || !lobbyTeam) return squads;
     
     alliesTeam.squads.forEach(squad => {
       if (squad.name !== "command") {
@@ -55,9 +58,13 @@ const TeamViewPage = () => {
         squads.axis.add(squad.name);
       }
     });
+
+    lobbyTeam.squads.forEach(squad => {
+      squads.lobby.add(squad.name);
+    });
     
     return squads;
-  }, [alliesTeam, axisTeam]);
+  }, [alliesTeam, axisTeam, lobbyTeam]);
 
   const handleToggleSquad = (team, squadName) => {
     setExpandedSquads(prev => ({
@@ -70,7 +77,7 @@ const TeamViewPage = () => {
   };
 
   const handleExpandAll = () => {
-    const newState = { allies: {}, axis: {} };
+    const newState = { allies: {}, axis: {}, lobby: {} };
     Object.entries(allSquads).forEach(([team, squads]) => {
       squads.forEach(squadName => {
         newState[team][squadName] = true;
@@ -81,7 +88,7 @@ const TeamViewPage = () => {
   };
 
   const handleCollapseAll = () => {
-    const newState = { allies: {}, axis: {} };
+    const newState = { allies: {}, axis: {}, lobby: {} };
     Object.entries(allSquads).forEach(([team, squads]) => {
       squads.forEach(squadName => {
         newState[team][squadName] = false;
@@ -178,6 +185,24 @@ const TeamViewPage = () => {
     setSelectedPlayers(new Map());
   };
 
+  const getTeamSection = (team) => {
+    const name = team?.name ?? "unknown";
+    return (
+      <TeamSection
+      team={team}
+      title={name.toUpperCase()}
+      selectedPlayers={selectedPlayers}
+      onTogglePlayer={handleTogglePlayer}
+      onToggleSquad={handleToggleSquadSelection}
+      onToggleAll={handleToggleTeam}
+      expandedSquads={expandedSquads[name]}
+      onToggleExpand={(squadName) => handleToggleSquad(name, squadName)}
+      onTeamExpand={() => handleTeamExpandAll(name)}
+      onTeamCollapse={() => handleTeamCollapseAll(name)}
+    />
+    )
+  }
+
   return (
     <Stack>
       <Stack
@@ -216,30 +241,11 @@ const TeamViewPage = () => {
         {isFetching && <LinearProgress sx={{ height: 2 }} />}
       </Box>
       <TeamContainer> 
-        <TeamSection
-          team={alliesTeam}
-          title="ALLIES"
-          selectedPlayers={selectedPlayers}
-          onTogglePlayer={handleTogglePlayer}
-          onToggleSquad={handleToggleSquadSelection}
-          onToggleAll={handleToggleTeam}
-          expandedSquads={expandedSquads.allies}
-          onToggleExpand={(squadName) => handleToggleSquad('allies', squadName)}
-          onTeamExpand={() => handleTeamExpandAll('allies')}
-          onTeamCollapse={() => handleTeamCollapseAll('allies')}
-        />
-        <TeamSection
-          team={axisTeam}
-          title="AXIS"
-          selectedPlayers={selectedPlayers}
-          onTogglePlayer={handleTogglePlayer}
-          onToggleSquad={handleToggleSquadSelection}
-          onToggleAll={handleToggleTeam}
-          expandedSquads={expandedSquads.axis}
-          onToggleExpand={(squadName) => handleToggleSquad('axis', squadName)}
-          onTeamExpand={() => handleTeamExpandAll('axis')}
-          onTeamCollapse={() => handleTeamCollapseAll('axis')}
-        />
+        {getTeamSection(axisTeam)}
+        {getTeamSection(alliesTeam)}
+      </TeamContainer>
+      <TeamContainer>
+        {getTeamSection(lobbyTeam)}
       </TeamContainer>
     </Stack>
   );
