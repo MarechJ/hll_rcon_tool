@@ -58,7 +58,9 @@ const extendPlayer = (player) => {
 // TODO
 // The current_playtime_seconds can be the time of the player's session,
 // so it's not a good metric to use for KPM.
-export const extractTeamState = (team) => {
+export const extractTeamState = (aTeam) => {
+  const team = aTeam ?? {};
+
   const totals = [
     "combat",
     "offense",

@@ -2,12 +2,28 @@ import { useState, useMemo } from "react";
 import { extractPlayers, extractTeamState } from "@/utils/extractPlayers";
 import { getPlayerTier, tierColors } from "@/utils/lib";
 import teamViewResult from "./team-view.json";
-import { Box, Typography, IconButton, Collapse } from "@mui/material";
-import { styled } from "@mui/material/styles";
+import {
+  Box,
+  Typography,
+  IconButton,
+  Collapse,
+  Checkbox,
+  Button,
+  Stack,
+  CircularProgress,
+  LinearProgress,
+} from "@mui/material";
+import { styled } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import PersonOffIcon from "@mui/icons-material/PersonOff";
 import StarIcon from "@mui/icons-material/Star";
+import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
+import { ActionMenuButton } from "@/features/player-action/ActionMenu";
+import { generatePlayerActions } from "@/features/player-action/actions";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import { useQuery } from "@tanstack/react-query";
+import { teamsLiveQueryOptions } from "@/queries/teams-live-query";
 
 const UNASSIGNED = "null";
 
@@ -50,13 +66,19 @@ const gridTemplateColumns = {
   sm: "35px minmax(150px, 200px) 60px repeat(6, 60px)",
 };
 
-const SquadHeader = styled(Box)(({ theme }) => ({
+const SquadHeader = styled(Box)(({ theme, selected }) => ({
   padding: theme.spacing(0.5, 1),
-  backgroundColor: theme.palette.background.default,
+  backgroundColor: theme.palette.background.paper,
   borderBottom: `1px solid ${theme.palette.divider}`,
   display: "grid",
   gridTemplateColumns: gridTemplateColumns.default,
   alignItems: "center",
+  cursor: "pointer",
+  "&:hover": {
+    backgroundColor: selected
+      ? theme.palette.action.selected
+      : theme.palette.action.hover,
+  },
   "& .squad-info": {
     gridColumn: "1 / 3",
     display: "flex",
@@ -69,6 +91,9 @@ const SquadHeader = styled(Box)(({ theme }) => ({
       gap: theme.spacing(1),
       minWidth: 0,
       flex: 1,
+      "& .MuiTypography-root": {
+        color: selected ? theme.palette.primary.main : "inherit",
+      },
     },
   },
   "& .squad-stats": {
@@ -78,7 +103,9 @@ const SquadHeader = styled(Box)(({ theme }) => ({
       fontFamily: "Roboto Mono, monospace",
       whiteSpace: "nowrap",
       fontSize: "0.75rem",
-      color: theme.palette.text.secondary,
+      color: selected
+        ? theme.palette.primary.main
+        : theme.palette.text.secondary,
     },
   },
   [theme.breakpoints.down("sm")]: {
@@ -86,20 +113,24 @@ const SquadHeader = styled(Box)(({ theme }) => ({
   },
 }));
 
-const PlayerRow = styled(Box)(({ theme }) => ({
+const PlayerRow = styled(Box)(({ theme, selected, level }) => ({
   display: "grid",
   gridTemplateColumns: gridTemplateColumns.default,
   padding: theme.spacing(0.5, 1),
   alignItems: "center",
   borderBottom: `1px solid ${theme.palette.divider}`,
   backgroundColor: theme.palette.background.paper,
+  cursor: "pointer",
   "&:hover": {
-    backgroundColor: theme.palette.action.hover,
+    backgroundColor: selected
+      ? theme.palette.action.selected
+      : theme.palette.action.hover,
   },
   "& .stat": {
     textAlign: "right",
     fontFamily: "Roboto Mono, monospace",
     whiteSpace: "nowrap",
+    color: selected ? theme.palette.primary.main : "inherit",
   },
   "& .player-info": {
     display: "flex",
@@ -110,11 +141,21 @@ const PlayerRow = styled(Box)(({ theme }) => ({
       overflow: "hidden",
       textOverflow: "ellipsis",
       whiteSpace: "nowrap",
+      color: selected ? theme.palette.primary.main : "inherit",
+      cursor: "pointer",
+      "&:hover": {
+        textDecoration: "underline",
+      },
     },
   },
   "& .level": {
     fontWeight: "bold",
     textAlign: "center",
+    color: selected
+      ? theme.palette.primary.main
+      : level
+      ? tierColors[getPlayerTier(level)]
+      : "inherit",
   },
   [theme.breakpoints.down("sm")]: {
     gridTemplateColumns: gridTemplateColumns.sm,
@@ -176,17 +217,24 @@ const TeamHeaderRow = styled(Box)(({ theme }) => ({
   },
 }));
 
-const CommanderRow = styled(Box)(({ theme }) => ({
+const CommanderRow = styled(Box)(({ theme, selected, level }) => ({
   display: "grid",
   gridTemplateColumns: gridTemplateColumns.default,
   padding: theme.spacing(2, 1),
   alignItems: "center",
   borderBottom: `1px solid ${theme.palette.divider}`,
   backgroundColor: theme.palette.background.paper,
+  cursor: "pointer",
+  "&:hover": {
+    backgroundColor: selected
+      ? theme.palette.action.selected
+      : theme.palette.action.hover,
+  },
   "& .stat": {
     textAlign: "right",
     fontFamily: "Roboto Mono, monospace",
     whiteSpace: "nowrap",
+    color: selected ? theme.palette.primary.main : "inherit",
   },
   "& .player-info": {
     display: "flex",
@@ -197,18 +245,30 @@ const CommanderRow = styled(Box)(({ theme }) => ({
       overflow: "hidden",
       textOverflow: "ellipsis",
       whiteSpace: "nowrap",
+      color: selected ? theme.palette.primary.main : "inherit",
+      cursor: "pointer",
+      "&:hover": {
+        textDecoration: "underline",
+      },
     },
     "& .no-commander": {
       display: "flex",
       alignItems: "center",
       gap: theme.spacing(1),
-      color: theme.palette.text.secondary,
+      color: selected
+        ? theme.palette.primary.contrastText
+        : theme.palette.text.secondary,
       fontStyle: "italic",
     },
   },
   "& .level": {
     fontWeight: "bold",
     textAlign: "center",
+    color: selected
+      ? theme.palette.primary.main
+      : level
+      ? tierColors[getPlayerTier(level)]
+      : "inherit",
   },
   [theme.breakpoints.down("sm")]: {
     gridTemplateColumns: gridTemplateColumns.sm,
@@ -216,103 +276,148 @@ const CommanderRow = styled(Box)(({ theme }) => ({
   },
 }));
 
-const TeamSection = ({ team, title }) => {
-  const [expandedSquads, setExpandedSquads] = useState({ [UNASSIGNED]: true });
+const TeamSection = ({
+  team,
+  title,
+  selectedPlayers,
+  onTogglePlayer,
+  onToggleSquad,
+  onToggleAll,
+  expandedSquads,
+  onToggleExpand,
+  onTeamExpand,
+  onTeamCollapse,
+}) => {
+  const { openWithId } = usePlayerSidebar();
 
-  const { commander, squadGroups, unassignedPlayers } = useMemo(() => {
-    // Filter out command squad and sort remaining squads
-    const squads = team.squads
-      .filter((s) => s.name !== "command" && s.name !== UNASSIGNED)
-      .sort((a, b) => a.name.localeCompare(b.name));
+  const { commander, squadGroups, unassignedPlayers, allPlayers } =
+    useMemo(() => {
+      // Filter out command squad and sort remaining squads
+      const squads = team.squads
+        .filter((s) => s.name !== "command" && s.name !== UNASSIGNED)
+        .sort((a, b) => a.name.localeCompare(b.name));
 
-    // Group squads by type
-    const grouped = squads.reduce((acc, squad) => {
-      const type = squad.type || 'infantry';
-      if (!acc[type]) {
-        acc[type] = [];
+      // Group squads by type
+      const grouped = squads.reduce((acc, squad) => {
+        const type = squad.type || "infantry";
+        if (!acc[type]) {
+          acc[type] = [];
+        }
+        acc[type].push(squad);
+        return acc;
+      }, {});
+
+      // Define the order of squad types
+      const typeOrder = ["infantry", "armor", "recon"];
+      const squadGroups = typeOrder.reduce((acc, type) => {
+        if (grouped[type]?.length > 0) {
+          acc.push({
+            type,
+            squads: grouped[type],
+          });
+        }
+        return acc;
+      }, []);
+
+      const unassignedSquad = team.squads.find((s) => s.name === UNASSIGNED);
+
+      // Create a list of all players for selection
+      const allPlayers = [];
+      if (team.commander) {
+        allPlayers.push(team.commander);
       }
-      acc[type].push(squad);
-      return acc;
-    }, {});
-
-    // Define the order of squad types
-    const typeOrder = ['infantry', 'armor', 'recon'];
-    const squadGroups = typeOrder.reduce((acc, type) => {
-      if (grouped[type]?.length > 0) {
-        acc.push({
-          type,
-          squads: grouped[type]
+      squadGroups.forEach(({ squads }) => {
+        squads.forEach((squad) => {
+          allPlayers.push(...squad.players);
         });
-      }
-      return acc;
-    }, []);
-
-    const unassignedSquad = team.squads.find((s) => s.name === UNASSIGNED);
-
-    return {
-      commander: team.commander,
-      squadGroups,
-      unassignedPlayers: unassignedSquad?.players || [],
-    };
-  }, [team]);
-
-  const toggleSquad = (squadName) => {
-    setExpandedSquads((prev) => ({
-      ...prev,
-      [squadName]: !prev[squadName],
-    }));
-  };
-
-  const toggleAll = (expanded) => {
-    const allSquads = {};
-    squadGroups.forEach(({ squads }) => {
-      squads.forEach((squad) => {
-        allSquads[squad.name] = expanded;
       });
-    });
-    if (unassignedPlayers.length > 0) {
-      allSquads[UNASSIGNED] = expanded;
-    }
-    setExpandedSquads(allSquads);
+      allPlayers.push(...(unassignedSquad?.players || []));
+
+      return {
+        commander: team.commander,
+        squadGroups,
+        unassignedPlayers: unassignedSquad?.players || [],
+        allPlayers,
+      };
+    }, [team]);
+
+  const handleProfileClick = (player, event) => {
+    event.stopPropagation();
+    openWithId(player.player_id);
   };
 
   return (
     <TeamBox>
       <Box
         sx={{
-          p: 1,
           backgroundColor: (theme) => theme.palette.background.default,
           display: "flex",
           alignItems: "center",
           gap: 1,
+          p: 1
         }}
       >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Checkbox
+            size="small"
+            checked={
+              allPlayers.length > 0 &&
+              allPlayers.every((p) => selectedPlayers.has(p.player_id))
+            }
+            indeterminate={
+              allPlayers.some((p) => selectedPlayers.has(p.player_id)) &&
+              !allPlayers.every((p) => selectedPlayers.has(p.player_id))
+            }
+            onChange={(e) => onToggleAll(allPlayers, e.target.checked)}
+            sx={{
+              color: (theme) => theme.palette.text.secondary,
+              "&.Mui-checked, &.MuiCheckbox-indeterminate": {
+                color: (theme) => theme.palette.primary.main,
+              },
+            }}
+          />
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              minWidth: 100,
+            }}
+          >
+            {!allPlayers.some((p) => selectedPlayers.has(p.player_id))
+              ? "Select all"
+              : allPlayers.every((p) => selectedPlayers.has(p.player_id))
+              ? "All selected"
+              : `${
+                  allPlayers.filter((p) => selectedPlayers.has(p.player_id))
+                    .length
+                } selected`}
+          </Typography>
+        </Box>
         <Typography
           variant="h6"
           sx={{
             textTransform: "uppercase",
             fontWeight: "bold",
             flex: 1,
+            textAlign: "center",
           }}
         >
           {title}
         </Typography>
-        <IconButton
-          aria-label="Expand all"
-          size="small"
-          onClick={() => toggleAll(true)}
-          sx={{ color: (theme) => theme.palette.text.secondary }}
-        >
-          <ExpandMoreIcon />
-        </IconButton>
-        <IconButton
-          aria-label="Collapse all"
-          size="small"
-          onClick={() => toggleAll(false)}
-          sx={{ color: (theme) => theme.palette.text.secondary }}
-        >
-          <ChevronRightIcon />
-        </IconButton>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <IconButton
+            size="small"
+            onClick={onTeamExpand}
+          >
+            <ExpandMoreIcon />
+          </IconButton>
+          <IconButton
+            size="small"
+            onClick={onTeamCollapse}
+          >
+            <ChevronRightIcon />
+          </IconButton>
+        </Box>
       </Box>
       <ScrollContainer>
         <ContentWrapper>
@@ -338,17 +443,12 @@ const TeamSection = ({ team, title }) => {
             <Box>{team.defense}</Box>
             <Box>{team.support}</Box>
           </TeamHeaderRow>
-          <CommanderRow>
-            <Box
-              className="level"
-              sx={{
-                color: commander
-                  ? tierColors[getPlayerTier(commander.level)]
-                  : "inherit",
-              }}
-            >
-              {commander?.level || "-"}
-            </Box>
+          <CommanderRow
+            selected={commander && selectedPlayers.has(commander.player_id)}
+            onClick={(e) => commander && onTogglePlayer(commander, e)}
+            level={commander?.level}
+          >
+            <Box className="level">{commander?.level || "-"}</Box>
             <Box className="player-info">
               {commander ? (
                 <>
@@ -358,7 +458,10 @@ const TeamSection = ({ team, title }) => {
                     width={16}
                     height={16}
                   />
-                  <Typography className="player-name">
+                  <Typography
+                    className="player-name"
+                    onClick={(e) => handleProfileClick(commander, e)}
+                  >
                     {commander.name}
                   </Typography>
                   {commander.is_vip && <StarIcon sx={{ fontSize: 16 }} />}
@@ -387,9 +490,9 @@ const TeamSection = ({ team, title }) => {
                   backgroundColor: (theme) => theme.palette.background.default,
                   color: (theme) => theme.palette.text.secondary,
                   borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
-                  textTransform: 'uppercase',
-                  display: 'flex',
-                  alignItems: 'center',
+                  textTransform: "uppercase",
+                  display: "flex",
+                  alignItems: "center",
                   gap: 1,
                 }}
               >
@@ -398,11 +501,19 @@ const TeamSection = ({ team, title }) => {
               {squads.map((squad) => {
                 return (
                   <Box key={squad.name}>
-                    <SquadHeader>
+                    <SquadHeader
+                      selected={squad.players.every((p) =>
+                        selectedPlayers.has(p.player_id)
+                      )}
+                      onClick={(e) => onToggleSquad(squad.players, squad.players.every(p => selectedPlayers.has(p.player_id)))}
+                    >
                       <Box className="squad-info">
                         <IconButton
                           size="small"
-                          onClick={() => toggleSquad(squad.name)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleExpand(squad.name);
+                          }}
                         >
                           {expandedSquads[squad.name] ? (
                             <ExpandMoreIcon />
@@ -445,7 +556,9 @@ const TeamSection = ({ team, title }) => {
                           ∅{" "}
                           <Box
                             component="span"
-                            sx={{ color: tierColors[getPlayerTier(squad.level)] }}
+                            sx={{
+                              color: tierColors[getPlayerTier(squad.level)],
+                            }}
                           >
                             {squad.level.toFixed(0)}
                           </Box>
@@ -462,13 +575,13 @@ const TeamSection = ({ team, title }) => {
                     </SquadHeader>
                     <Collapse in={expandedSquads[squad.name]}>
                       {squad.players.map((player) => (
-                        <PlayerRow key={player.player_id}>
-                          <Box
-                            className="level"
-                            sx={{ color: tierColors[getPlayerTier(player.level)] }}
-                          >
-                            {player.level}
-                          </Box>
+                        <PlayerRow
+                          key={player.player_id}
+                          selected={selectedPlayers.has(player.player_id)}
+                          onClick={(e) => onTogglePlayer(player, e)}
+                          level={player.level}
+                        >
+                          <Box className="level">{player.level}</Box>
                           <Box className="player-info">
                             {player.role && (
                               <img
@@ -478,10 +591,15 @@ const TeamSection = ({ team, title }) => {
                                 height={16}
                               />
                             )}
-                            <Typography className="player-name">
+                            <Typography
+                              className="player-name"
+                              onClick={(e) => handleProfileClick(player, e)}
+                            >
                               {player.name}
                             </Typography>
-                            {player.is_vip && <StarIcon sx={{ fontSize: 16 }} />}
+                            {player.is_vip && (
+                              <StarIcon sx={{ fontSize: 16 }} />
+                            )}
                           </Box>
                           <Box className="stat">{player.kills}</Box>
                           <Box className="stat">{player.deaths}</Box>
@@ -499,11 +617,21 @@ const TeamSection = ({ team, title }) => {
           ))}
           {unassignedPlayers.length > 0 && (
             <Box>
-              <SquadHeader>
+              <SquadHeader
+                selected={unassignedPlayers.every((p) =>
+                  selectedPlayers.has(p.player_id)
+                )}
+                onClick={(e) =>
+                  onToggleSquad(unassignedPlayers, unassignedPlayers.every(p => selectedPlayers.has(p.player_id)))
+                }
+              >
                 <Box className="squad-info">
                   <IconButton
                     size="small"
-                    onClick={() => toggleSquad(UNASSIGNED)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleExpand(UNASSIGNED);
+                    }}
                   >
                     {expandedSquads[UNASSIGNED] ? (
                       <ExpandMoreIcon />
@@ -549,20 +677,23 @@ const TeamSection = ({ team, title }) => {
               </SquadHeader>
               <Collapse in={expandedSquads[UNASSIGNED]}>
                 {unassignedPlayers.map((player) => (
-                  <PlayerRow key={player.player_id}>
-                    <Box
-                      className="level"
-                      sx={{ color: tierColors[getPlayerTier(player.level)] }}
-                    >
-                      {player.level}
-                    </Box>
+                  <PlayerRow
+                    key={player.player_id}
+                    selected={selectedPlayers.has(player.player_id)}
+                    onClick={(e) => onTogglePlayer(player, e)}
+                    level={player.level}
+                  >
+                    <Box className="level">{player.level}</Box>
                     <Box className="player-info">
                       <Typography
                         sx={{ width: 16, height: 16, textAlign: "center" }}
                       >
                         {"-"}
                       </Typography>
-                      <Typography className="player-name">
+                      <Typography
+                        className="player-name"
+                        onClick={(e) => handleProfileClick(player, e)}
+                      >
                         {player.name}
                       </Typography>
                       {player.is_vip && <StarIcon sx={{ fontSize: 16 }} />}
@@ -585,24 +716,233 @@ const TeamSection = ({ team, title }) => {
 };
 
 const TeamViewPage = () => {
-  const { axisTeam, alliesTeam, noneTeam } = useMemo(() => {
-    return {
-      axisTeam: extractTeamState(teamViewResult?.axis),
-      alliesTeam: extractTeamState(teamViewResult?.allies),
-      noneTeam: extractTeamState(teamViewResult?.none),
-    };
-  }, []);
+  const { data: teams, isFetching } = useQuery({
+    ...teamsLiveQueryOptions,
+    staleTime: 5 * 1000,
+    refetchInterval: 10 * 1000,
+  });
 
-  console.log(axisTeam, alliesTeam, noneTeam);
+  const [selectedPlayers, setSelectedPlayers] = useState(new Map());
+  const [expandedSquads, setExpandedSquads] = useState({
+    allies: { [UNASSIGNED]: true },
+    axis: { [UNASSIGNED]: true }
+  });
+  
+
+  const { axisTeam, alliesTeam } = useMemo(() => {
+    return {
+      axisTeam: extractTeamState(teams?.axis),
+      alliesTeam: extractTeamState(teams?.allies),
+    };
+  }, [teams]);
+
+  // Get all squads from both teams
+  const allSquads = useMemo(() => {
+    const squads = {
+      allies: new Set(),
+      axis: new Set()
+    };
+
+    if (!alliesTeam || !axisTeam) return squads;
+    
+    alliesTeam.squads.forEach(squad => {
+      if (squad.name !== "command") {
+        squads.allies.add(squad.name);
+      }
+    });
+    
+    axisTeam.squads.forEach(squad => {
+      if (squad.name !== "command") {
+        squads.axis.add(squad.name);
+      }
+    });
+    
+    return squads;
+  }, [alliesTeam, axisTeam]);
+
+  const handleToggleSquad = (team, squadName) => {
+    setExpandedSquads(prev => ({
+      ...prev,
+      [team]: {
+        ...prev[team],
+        [squadName]: !prev[team]?.[squadName]
+      }
+    }));
+  };
+
+  const handleExpandAll = () => {
+    const newState = { allies: {}, axis: {} };
+    Object.entries(allSquads).forEach(([team, squads]) => {
+      squads.forEach(squadName => {
+        newState[team][squadName] = true;
+      });
+      newState[team][UNASSIGNED] = true;
+    });
+    setExpandedSquads(newState);
+  };
+
+  const handleCollapseAll = () => {
+    const newState = { allies: {}, axis: {} };
+    Object.entries(allSquads).forEach(([team, squads]) => {
+      squads.forEach(squadName => {
+        newState[team][squadName] = false;
+      });
+      newState[team][UNASSIGNED] = false;
+    });
+    setExpandedSquads(newState);
+  };
+
+  const handleTeamExpandAll = (team) => {
+    const teamSquads = allSquads[team];
+    setExpandedSquads(prev => ({
+      ...prev,
+      [team]: Object.fromEntries([
+        ...Array.from(teamSquads),
+        UNASSIGNED
+      ].map(name => [name, true]))
+    }));
+  };
+
+  const handleTeamCollapseAll = (team) => {
+    const teamSquads = allSquads[team];
+    setExpandedSquads(prev => ({
+      ...prev,
+      [team]: Object.fromEntries([
+        ...Array.from(teamSquads),
+        UNASSIGNED
+      ].map(name => [name, false]))
+    }));
+  };
+
+  const handleTogglePlayer = (player, event) => {
+    event.stopPropagation();
+    setSelectedPlayers((prev) => {
+      const next = new Map(prev);
+      if (next.has(player.player_id)) {
+        next.delete(player.player_id);
+      } else {
+        next.set(player.player_id, {
+          player_id: player.player_id,
+          name: player.name,
+        });
+      }
+      return next;
+    });
+  };
+
+  const handleToggleSquadSelection = (players, isSelected) => {
+    setSelectedPlayers((prev) => {
+      const next = new Map(prev);
+      if (!isSelected) {
+        players.forEach((p) =>
+          next.set(p.player_id, {
+            player_id: p.player_id,
+            name: p.name,
+          })
+        );
+      } else {
+        players.forEach((p) => next.delete(p.player_id));
+      }
+      return next;
+    });
+  };
+
+  const handleToggleTeam = (players, selected) => {
+    setSelectedPlayers((prev) => {
+      const next = new Map(prev);
+      if (selected) {
+        players.forEach((p) =>
+          next.set(p.player_id, {
+            player_id: p.player_id,
+            name: p.name,
+          })
+        );
+      } else {
+        players.forEach((p) => next.delete(p.player_id));
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAll = () => {
+    const allPlayers = extractPlayers(teams)
+    const allPlayersMap = new Map(
+      allPlayers.map((p) => [
+        p.player_id,
+        { player_id: p.player_id, name: p.name },
+      ])
+    );
+    setSelectedPlayers(allPlayersMap);
+  };
+
+  const handleUnselectAll = () => {
+    setSelectedPlayers(new Map());
+  };
 
   return (
-    <TeamContainer>
-      <TeamSection team={alliesTeam} title="ALLIES" />
-      <TeamSection team={axisTeam} title="AXIS" />
-      {/* {noneTeam?.squads?.length > 0 && (
-        <TeamSection team={noneTeam} title="UNDECIDED" />
-      )} */}
-    </TeamContainer>
+    <Stack>
+      <Stack
+        direction="row"
+        sx={{
+          backgroundColor: "background.paper",
+          borderBottom: "1px solid divider",
+          height: 40,
+          "& > *": { height: "100%" },
+        }}
+      >
+        <ActionMenuButton
+          actions={generatePlayerActions({
+            multiAction: true,
+            onlineAction: true,
+          })}
+          recipients={Array.from(selectedPlayers.values())}
+          disabled={!selectedPlayers.size}
+          renderButton={(props) => (
+            <Button
+              sx={{ width: 170 }}
+              startIcon={<MoreVertIcon />}
+              disabled={!selectedPlayers.size}
+              {...props}
+            >
+              Apply Actions 
+            </Button>
+          )}
+        />
+        <Button onClick={handleSelectAll}>Select All</Button>
+        <Button onClick={handleUnselectAll}>Unselect All</Button>
+        <Button onClick={handleExpandAll}>Expand All</Button>
+        <Button onClick={handleCollapseAll}>Collapse All</Button>
+      </Stack>
+      <Box sx={{ height: 2 }}>
+        {isFetching && <LinearProgress sx={{ height: 2 }} />}
+      </Box>
+      <TeamContainer>
+        <TeamSection
+          team={alliesTeam}
+          title="ALLIES"
+          selectedPlayers={selectedPlayers}
+          onTogglePlayer={handleTogglePlayer}
+          onToggleSquad={handleToggleSquadSelection}
+          onToggleAll={handleToggleTeam}
+          expandedSquads={expandedSquads.allies}
+          onToggleExpand={(squadName) => handleToggleSquad('allies', squadName)}
+          onTeamExpand={() => handleTeamExpandAll('allies')}
+          onTeamCollapse={() => handleTeamCollapseAll('allies')}
+        />
+        <TeamSection
+          team={axisTeam}
+          title="AXIS"
+          selectedPlayers={selectedPlayers}
+          onTogglePlayer={handleTogglePlayer}
+          onToggleSquad={handleToggleSquadSelection}
+          onToggleAll={handleToggleTeam}
+          expandedSquads={expandedSquads.axis}
+          onToggleExpand={(squadName) => handleToggleSquad('axis', squadName)}
+          onTeamExpand={() => handleTeamExpandAll('axis')}
+          onTeamCollapse={() => handleTeamCollapseAll('axis')}
+        />
+      </TeamContainer>
+    </Stack>
   );
 };
 
