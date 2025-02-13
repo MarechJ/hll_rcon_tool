@@ -1,5 +1,5 @@
 import { Box, styled } from "@mui/material";
-import { getPlayerTier } from "@/utils/player-utils";
+import { tierColors, getPlayerTier } from "@/utils/lib";
 
 export const TeamContainer = styled(Box)(({ theme }) => ({
   display: "flex",
@@ -87,10 +87,10 @@ export const SquadHeader = styled(Box)(({ theme, selected }) => ({
   },
 }));
 
-export const PlayerRow = styled(Box)(({ theme, selected, level }) => ({
+export const PlayerRow = styled(Box)(({ theme, selected, level, isCommander }) => ({
   display: "grid",
   gridTemplateColumns: gridTemplateColumns.default,
-  padding: theme.spacing(0.5, 1),
+  padding: isCommander ? theme.spacing(2, 1) : theme.spacing(0.5, 1),
   alignItems: "center",
   borderBottom: `1px solid ${theme.palette.divider}`,
   backgroundColor: theme.palette.background.paper,

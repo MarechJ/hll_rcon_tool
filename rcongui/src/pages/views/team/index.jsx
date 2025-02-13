@@ -1,30 +1,18 @@
 import { useState, useMemo } from "react";
 import { extractPlayers, extractTeamState } from "@/utils/extractPlayers";
-import { getPlayerTier, tierColors } from "@/utils/lib";
-import teamViewResult from "./team-view.json";
 import {
   Box,
-  Typography,
-  IconButton,
-  Collapse,
-  Checkbox,
   Button,
   Stack,
-  CircularProgress,
   LinearProgress,
 } from "@mui/material";
-import { styled } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import PersonOffIcon from "@mui/icons-material/PersonOff";
-import StarIcon from "@mui/icons-material/Star";
-import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
 import { ActionMenuButton } from "@/features/player-action/ActionMenu";
 import { generatePlayerActions } from "@/features/player-action/actions";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useQuery } from "@tanstack/react-query";
 import { teamsLiveQueryOptions } from "@/queries/teams-live-query";
 import { TeamSection, UNASSIGNED } from "./team-section";
+import { TeamContainer } from "./styled";
 
 const TeamViewPage = () => {
   const { data: teams, isFetching } = useQuery({
@@ -227,7 +215,7 @@ const TeamViewPage = () => {
       <Box sx={{ height: 2 }}>
         {isFetching && <LinearProgress sx={{ height: 2 }} />}
       </Box>
-      <TeamContainer>
+      <TeamContainer> 
         <TeamSection
           team={alliesTeam}
           title="ALLIES"
