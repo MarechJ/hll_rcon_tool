@@ -1,735 +1,609 @@
-import {Fragment, useEffect, useMemo, useRef, useState} from "react";
-import {
-  Link,
-  Typography,
-  TextField,
-  Avatar,
-  ListItemSecondaryAction,
-  Checkbox,
-  LinearProgress,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from "@mui/material";
-import Grid from "@mui/material/Grid2";
-import Autocomplete from '@mui/material/Autocomplete';
-import WarningIcon from "@mui/icons-material/Warning";
-import { fromJS, Map, List as IList, OrderedSet } from "immutable";
-import ListSubheader from "@mui/material/ListSubheader";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
-import Collapse from "@mui/material/Collapse";
-import { PlayerItem, KDChips, ScoreChips } from "@/components/PlayerView/playerList";
-import {
-  addPlayerToBlacklist,
-  get,
-  getBlacklists,
-  handle_http_errors,
-  postData,
-  showResponse,
-} from "@/utils/fetchUtils";
-import {
-  PlayerActions,
-  ReasonDialog,
-} from "@/components/PlayerView/playerActions";
-import { toast } from "react-toastify";
-import { FlagDialog } from "@/components/FlagDialog";
-import Padlock from "@/components/shared/Padlock";
-import BlacklistRecordCreateDialog from "@/components/Blacklist/BlacklistRecordCreateDialog";
+import { useState, useMemo } from "react";
+import { extractPlayers, extractTeamState } from "@/utils/extractPlayers";
+import { getPlayerTier, tierColors } from "@/utils/lib";
+import teamViewResult from "./team-view.json";
+import { Box, Typography, IconButton, Collapse } from "@mui/material";
+import { styled } from "@mui/material/styles";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import PersonOffIcon from "@mui/icons-material/PersonOff";
+import StarIcon from "@mui/icons-material/Star";
 
-const Squad = ({
-  squadName,
-  squadData,
-  doOpen,
-  onSelectPlayer,
-  selectedPlayers,
-  selectMultiplePlayers,
-  showOnlySelected,
-}) => {
-  const [open, setOpen] = useState(false);
-  const handleClick = () => {
-    setOpen(!open);
-  };
-  const sizes = {
-    armor: 3,
-    infantry: 6,
-    recon: 2,
-  };
+const UNASSIGNED = "null";
 
-  const squadPlayerNames = useMemo(
-    () =>
-      squadData.get("players", new IList()).map((player) => player.get("name")),
-    [squadData]
-  );
+const TeamContainer = styled(Box)(({ theme }) => ({
+  display: "flex",
+  gap: theme.spacing(2),
+  flexDirection: "row",
+  [theme.breakpoints.down("lg")]: {
+    flexDirection: "column",
+  },
+  fontFamily: "Roboto Mono, monospace",
+  backgroundColor: theme.palette.background.default,
+  padding: theme.spacing(2),
+  width: "100%",
+  overflow: "hidden",
+}));
 
-  const hasSelectedPlayers = useMemo(() => {
-    const intersection = new OrderedSet(squadPlayerNames).intersect(
-      selectedPlayers
-    );
-    return intersection.size !== 0;
-  }, [selectedPlayers, squadPlayerNames]);
+const TeamBox = styled(Box)(({ theme }) => ({
+  flex: 1,
+  borderRadius: theme.shape.borderRadius,
+  minWidth: 0,
+  display: "flex",
+  flexDirection: "column",
+  overflow: "hidden",
+}));
 
-  const shouldHide = useMemo(
-    () => showOnlySelected && !hasSelectedPlayers,
-    [showOnlySelected, hasSelectedPlayers]
-  );
+const ScrollContainer = styled(Box)({
+  overflowX: "auto",
+  flex: 1,
+  display: "flex",
+  flexDirection: "column",
+});
 
-  const deleteFlag = (flag_id) => {
-    return postData(`${process.env.REACT_APP_API_URL}unflag_player`, {
-      flag_id: flag_id,
-    })
-      .then((response) =>
-        showResponse(response, "Flag will be removed momentarily", true)
-      )
-      .catch((error) => toast.error("Unable to connect to API " + error));
-  };
+const ContentWrapper = styled(Box)({
+  minWidth: "min-content",
+});
 
-  if (squadName === "commander") return "";
-
-  return squadData && !shouldHide ? (
-    <Fragment>
-      <ListItem button onClick={handleClick}>
-        <ListItemIcon>
-          <Avatar
-            variant="rounded"
-            alt={squadData.get("type", "na")}
-            src={
-              squadName.toUpperCase() === "NULL"
-                ? `/icons/sleep.png`
-                : `/icons/roles/${squadData.get("type")}.png`
-            }
-          >
-            {squadName[0].toUpperCase()}
-          </Avatar>
-        </ListItemIcon>
-        <ListItemText
-          primary={
-            <Typography variant="h6">
-              {`${squadName.toUpperCase() === "NULL"
-                ? "Unassigned"
-                : squadName.toUpperCase()
-                } - ${squadData.get("players", new IList()).size}/${sizes[squadData.get("type", "infantry")]
-                }`}{" "}
-              {squadData.get("has_leader", false) ? (
-                ""
-              ) : (
-                <WarningIcon
-                  style={{ verticalAlign: "middle" }}
-                  fontSize="small"
-                  color="error"
-                />
-              )}
-            </Typography>
-          }
-          secondary={
-            <Grid container spacing={1}>
-              <ScoreChips
-                player={squadData}
-              />
-              <KDChips  player={squadData} />
-            </Grid>
-          }
-        />
-
-        <ListItemSecondaryAction>
-          <Checkbox
-            checked={selectedPlayers.isSuperset(squadPlayerNames)}
-            onChange={() => {
-              if (selectedPlayers.isSuperset(squadPlayerNames)) {
-                selectMultiplePlayers(squadPlayerNames, "delete");
-              } else {
-                selectMultiplePlayers(squadPlayerNames, "add");
-              }
-            }}
-          />
-        </ListItemSecondaryAction>
-      </ListItem>
-      <Collapse
-        in={open || doOpen || hasSelectedPlayers}
-        timeout="auto"
-        unmountOnExit
-      >
-        <List component="div" disablePadding >
-          {squadData.get("players", new IList()).map((player) => {
-            if (
-              showOnlySelected &&
-              !selectedPlayers.includes(player.get("name"))
-            )
-              return "";
-
-            return (
-              <PlayerItem
-                key={player.get("name")}
-                player={player}
-                playerHasExtraInfo={true}
-                onDeleteFlag={(flagId) => deleteFlag(flagId)}
-                onSelect={() => onSelectPlayer(player.get("name"))}
-                isSelected={selectedPlayers?.contains(player.get("name"))}
-              />
-            );
-          })}
-        </List>
-      </Collapse>
-    </Fragment>
-  ) : (
-    ""
-  );
+const gridTemplateColumns = {
+  default: "35px minmax(200px, 300px) 60px repeat(6, 60px)",
+  sm: "35px minmax(150px, 200px) 60px repeat(6, 60px)",
 };
 
-const Team = ({
-  teamName,
-  teamData,
-  selectedPlayers,
-  selectPlayer,
-  selectMultiplePlayers,
-  selectAll,
-  deselectAll,
-  sortFunc,
-  showOnlySelected,
-}) => {
-  const [openAll, setOpenAll] = useState(false);
+const SquadHeader = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(0.5, 1),
+  backgroundColor: theme.palette.background.default,
+  borderBottom: `1px solid ${theme.palette.divider}`,
+  display: "grid",
+  gridTemplateColumns: gridTemplateColumns.default,
+  alignItems: "center",
+  "& .squad-info": {
+    gridColumn: "1 / 3",
+    display: "flex",
+    alignItems: "center",
+    gap: theme.spacing(1),
+    minWidth: 0,
+    "& .squad-name-container": {
+      display: "flex",
+      alignItems: "center",
+      gap: theme.spacing(1),
+      minWidth: 0,
+      flex: 1,
+    },
+  },
+  "& .squad-stats": {
+    display: "contents",
+    "& .stat": {
+      textAlign: "right",
+      fontFamily: "Roboto Mono, monospace",
+      whiteSpace: "nowrap",
+      fontSize: "0.75rem",
+      color: theme.palette.text.secondary,
+    },
+  },
+  [theme.breakpoints.down("sm")]: {
+    gridTemplateColumns: gridTemplateColumns.sm,
+  },
+}));
 
-  const onOpenAll = () => (openAll ? setOpenAll(false) : setOpenAll(true));
+const PlayerRow = styled(Box)(({ theme }) => ({
+  display: "grid",
+  gridTemplateColumns: gridTemplateColumns.default,
+  padding: theme.spacing(0.5, 1),
+  alignItems: "center",
+  borderBottom: `1px solid ${theme.palette.divider}`,
+  backgroundColor: theme.palette.background.paper,
+  "&:hover": {
+    backgroundColor: theme.palette.action.hover,
+  },
+  "& .stat": {
+    textAlign: "right",
+    fontFamily: "Roboto Mono, monospace",
+    whiteSpace: "nowrap",
+  },
+  "& .player-info": {
+    display: "flex",
+    alignItems: "center",
+    gap: theme.spacing(1),
+    minWidth: 0,
+    "& .player-name": {
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap",
+    },
+  },
+  "& .level": {
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  [theme.breakpoints.down("sm")]: {
+    gridTemplateColumns: gridTemplateColumns.sm,
+    fontSize: "0.875rem",
+  },
+}));
 
-  return teamData ? (
-    <List
-      dense
-      component="nav"
-      subheader={
-        <ListSubheader component="div" id="nested-list-subheader">
-          <Grid
-            container
-            alignContent="space-between"
-            alignItems="flex-end"
-            justifyContent="space-between"
-            spacing={2}
-          >
-            <Grid size={9}>
-              <Typography variant="h4" align="left">
-                {teamName} {teamData.get("count", 0)}/50{" "}
-                <Link onClick={onOpenAll} component="button">
-                  {openAll ? "Collapse" : "Expand"} all
-                </Link>{" "}
-                <Link onClick={selectAll} component="button">
-                  Select all
-                </Link>{" "}
-                <Link onClick={deselectAll} component="button">
-                  Deselect all
-                </Link>
-              </Typography>
-            </Grid>
-          </Grid>
-        </ListSubheader>
+const HeaderRow = styled(Box)(({ theme }) => ({
+  display: "grid",
+  gridTemplateColumns: gridTemplateColumns.default,
+  padding: theme.spacing(0.5, 1),
+  borderBottom: `1px solid ${theme.palette.divider}`,
+  backgroundColor: theme.palette.background.default,
+  position: "sticky",
+  top: 0,
+  zIndex: 1,
+  "& > *": {
+    textAlign: "right",
+    color: theme.palette.text.secondary,
+    fontSize: "0.75rem",
+    fontWeight: "bold",
+    whiteSpace: "nowrap",
+  },
+  "& > :nth-of-type(1)": {
+    textAlign: "center",
+  },
+  "& > :nth-of-type(2)": {
+    textAlign: "left",
+  },
+  [theme.breakpoints.down("sm")]: {
+    gridTemplateColumns: gridTemplateColumns.sm,
+    fontSize: "0.75rem",
+  },
+}));
+
+const TeamHeaderRow = styled(Box)(({ theme }) => ({
+  display: "grid",
+  marginBottom: theme.spacing(1),
+  gridTemplateColumns: gridTemplateColumns.default,
+  padding: theme.spacing(0.5, 1),
+  alignItems: "center",
+  "& > *": {
+    textAlign: "right",
+    fontFamily: "Roboto Mono, monospace",
+    whiteSpace: "nowrap",
+    fontSize: "0.75rem",
+    color: theme.palette.text.secondary,
+    fontWeight: "bold",
+  },
+  "& > :nth-of-type(1)": {
+    textAlign: "center",
+    color: theme.palette.primary.main,
+  },
+  "& > :nth-of-type(2)": {
+    textAlign: "left",
+  },
+  [theme.breakpoints.down("sm")]: {
+    gridTemplateColumns: gridTemplateColumns.sm,
+  },
+}));
+
+const CommanderRow = styled(Box)(({ theme }) => ({
+  display: "grid",
+  gridTemplateColumns: gridTemplateColumns.default,
+  padding: theme.spacing(2, 1),
+  alignItems: "center",
+  borderBottom: `1px solid ${theme.palette.divider}`,
+  backgroundColor: theme.palette.background.paper,
+  "& .stat": {
+    textAlign: "right",
+    fontFamily: "Roboto Mono, monospace",
+    whiteSpace: "nowrap",
+  },
+  "& .player-info": {
+    display: "flex",
+    alignItems: "center",
+    gap: theme.spacing(1),
+    minWidth: 0,
+    "& .player-name": {
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap",
+    },
+    "& .no-commander": {
+      display: "flex",
+      alignItems: "center",
+      gap: theme.spacing(1),
+      color: theme.palette.text.secondary,
+      fontStyle: "italic",
+    },
+  },
+  "& .level": {
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  [theme.breakpoints.down("sm")]: {
+    gridTemplateColumns: gridTemplateColumns.sm,
+    fontSize: "0.875rem",
+  },
+}));
+
+const TeamSection = ({ team, title }) => {
+  const [expandedSquads, setExpandedSquads] = useState({ [UNASSIGNED]: true });
+
+  const { commander, squadGroups, unassignedPlayers } = useMemo(() => {
+    // Filter out command squad and sort remaining squads
+    const squads = team.squads
+      .filter((s) => s.name !== "command" && s.name !== UNASSIGNED)
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    // Group squads by type
+    const grouped = squads.reduce((acc, squad) => {
+      const type = squad.type || 'infantry';
+      if (!acc[type]) {
+        acc[type] = [];
       }
-    >
-      {teamData.get("commander") &&
-        (!showOnlySelected ||
-          (showOnlySelected &&
-            selectedPlayers.contains(teamData.get("commander")?.get("name")))) ? (
-        <PlayerItem
-          player={teamData.get("commander")}
-          playerHasExtraInfo={true}
-          onDeleteFlag={() => null}
-          onSelect={() => selectPlayer(teamData.get("commander")?.get("name"))}
-          isSelected={selectedPlayers?.contains(
-            teamData.get("commander")?.get("name")
-          )}
-        />
-      ) : (
-        ""
-      )}
-      {teamData
-        .get("squads", new Map())
-        .toOrderedMap()
-        .sortBy(sortFunc)
-        .entrySeq()
-        .map(([key, value]) => (
-          <Squad
-            key={key}
-            squadName={key}
-            squadData={value}
-            doOpen={openAll}
-            onSelectSquad={() => true}
-            onSelectPlayer={selectPlayer}
-            selectedPlayers={selectedPlayers}
-            selectMultiplePlayers={selectMultiplePlayers}
-            showOnlySelected={showOnlySelected}
-          />
-        ))}
-    </List>
-  ) : (
-    ""
-  );
-};
+      acc[type].push(squad);
+      return acc;
+    }, {});
 
-const SimplePlayerRenderer = ({ player, flag }) => (
-  <Typography variant="h4">
-    Add {!flag ? "<select a flag>" : flag} to all selected players
-  </Typography>
-);
-
-const GameView = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [teamView, setTeamView] = useState(null);
-  const [selectedPlayers, setSelectedPlayers] = useState(
-    new OrderedSet()
-  );
-  const [refreshFreqSecs, setResfreshFreqSecs] = useState(5);
-  const intervalHandleRef = useRef(null);
-  const [flag, setFlag] = useState(false);
-  const [blacklistDialogOpen, setBlacklistDialogOpen] = useState(false);
-  const [blacklists, setBlacklists] = useState([]);
-  const [sortType, setSortType] = useState(
-    localStorage.getItem("game_view_sorting")
-      ? localStorage.getItem("game_view_sorting")
-      : "name_asc"
-  );
-  /* confirm action needs to be set to a dict to call the popup:
-        {
-          player: null,
-          actionType: actionType,
-          player_id: null,
-        }
-  */
-  const [confirmAction, setConfirmAction] = useState(false);
-  const [showOnlySelected, setShowOnlySelected] = useState(false);
-
-  const sortTypeToFunc = useMemo(
-    () => ({
-      combat_desc: (squadData, squadName) => -squadData.get("combat", 0),
-      offense_desc: (squadData, squadName) => -squadData.get("offense", 0),
-      defense_desc: (squadData, squadName) => -squadData.get("defense", 0),
-      support_desc: (squadData, squadName) => -squadData.get("support", 0),
-      kills_desc: (squadData, squadName) => -squadData.get("kills", 0),
-      deaths_desc: (squadData, squadName) => -squadData.get("kills", 0),
-      name_asc: (squadData, squadName) => squadName,
-      combat_asc: (squadData, squadName) => squadData.get("combat", 0),
-      offense_asc: (squadData, squadName) => squadData.get("offense", 0),
-      defense_asc: (squadData, squadName) => squadData.get("defense", 0),
-      support_asc: (squadData, squadName) => squadData.get("support", 0),
-      kills_asc: (squadData, squadName) => squadData.get("kills", 0),
-      deaths_asc: (squadData, squadName) => squadData.get("kills", 0),
-    }),
-    []
-  );
-
-  const playerNamesToPlayerId = useMemo(() => {
-    if (!teamView) {
-      return new Map();
-    }
-
-    const namesToId = {};
-    ["axis", "allies", "none"].forEach((key) => {
-      teamView
-        .get(key, new Map())
-        .get("squads", new Map())
-        .entrySeq()
-        .forEach(([key, value]) =>
-          value.get("players", new IList()).forEach((player) => {
-            namesToId[player.get("name")] = player.get("player_id");
-          })
-        );
-
-      const commander = teamView
-        .get(key, new Map())
-        .get("commander", new Map());
-      if (commander) {
-        namesToId[commander.get("name")] = commander.get("player_id");
+    // Define the order of squad types
+    const typeOrder = ['infantry', 'armor', 'recon'];
+    const squadGroups = typeOrder.reduce((acc, type) => {
+      if (grouped[type]?.length > 0) {
+        acc.push({
+          type,
+          squads: grouped[type]
+        });
       }
-    });
-    return fromJS(namesToId);
-  }, [teamView]);
+      return acc;
+    }, []);
 
-  const getPlayersNamesByTeam = (teamView, teamName) => {
-    const commander = teamView
-      .get(teamName, new Map())
-      .get("commander", new Map())
-      ?.get("name");
+    const unassignedSquad = team.squads.find((s) => s.name === UNASSIGNED);
 
-    const names = teamView
-      .get(teamName, new Map())
-      .get("squads", new Map())
-      .entrySeq()
-      .map(([key, value]) =>
-        value.get("players", new IList()).map((player) => player.get("name"))
-      )
-      .flatten()
-      .toList();
-
-    if (commander) return names.push(commander);
-
-    return names;
-  };
-
-  const autoCompleteSelectedPlayers = useMemo(
-    () => selectedPlayers.toJS(),
-    [selectedPlayers]
-  );
-
-  const allPlayerNames = useMemo(() => {
-    if (!teamView) {
-      return [];
-    }
-
-    const res = new IList(["axis", "allies", "none"])
-      .map((key) => {
-        return getPlayersNamesByTeam(teamView, key);
-      })
-      .flatten()
-      .toJS();
-
-    return res;
-  }, [teamView]);
-
-  const selectAllTeam = (teamName) => {
-    selectMultiplePlayers(getPlayersNamesByTeam(teamView, teamName), "add");
-  };
-
-  const deselectAllTeam = (teamName) => {
-    selectMultiplePlayers(getPlayersNamesByTeam(teamView, teamName), "delete");
-  };
-
-  const selectPlayer = (playerName, force) => {
-    if (
-      force !== "add" &&
-      (selectedPlayers.includes(playerName) || force === "delete")
-    ) {
-      setSelectedPlayers(selectedPlayers.delete(playerName));
-    } else if (
-      force !== "delete" &&
-      (!selectedPlayers.includes(playerName) || force === "add")
-    ) {
-      setSelectedPlayers(selectedPlayers.add(playerName));
-    }
-  };
-
-  const selectMultiplePlayers = (playerNames, force) => {
-    let newSelectedPlayer = selectedPlayers;
-
-    playerNames.forEach((playerName) => {
-      if (
-        force !== "add" &&
-        (selectedPlayers.includes(playerName) || force === "delete")
-      ) {
-        newSelectedPlayer = newSelectedPlayer.delete(playerName);
-      } else if (
-        force !== "delete" &&
-        (!selectedPlayers.includes(playerName) || force === "add")
-      ) {
-        newSelectedPlayer = newSelectedPlayer.add(playerName);
-      }
-    });
-
-    setSelectedPlayers(newSelectedPlayer);
-  };
-
-  const loadData = () => {
-    setIsLoading(true);
-    return get("get_team_view")
-      .then((response) => showResponse(response, "get_team_view"))
-      .then((data) => {
-        setIsLoading(false);
-        if (data.result) {
-          setTeamView(fromJS(data.result));
-        }
-      })
-      .catch(handle_http_errors);
-  };
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  useEffect(() => {
-    // Set up the interval
-    intervalHandleRef.current = setInterval(() => {
-      loadData().catch(e => console.warn("Error in periodic refresh", e));
-    }, refreshFreqSecs * 1000);
-
-    // Clear the interval on component unmount or when refreshFreqSecs changes
-    return () => {
-      if (intervalHandleRef.current) {
-        clearInterval(intervalHandleRef.current);
-      }
+    return {
+      commander: team.commander,
+      squadGroups,
+      unassignedPlayers: unassignedSquad?.players || [],
     };
-  }, [refreshFreqSecs]);
+  }, [team]);
 
-  const isMessageLessAction = (actionType) =>
-    actionType.startsWith("switch_") || actionType.startsWith("unwatch_");
-
-  const handleAction = (
-    actionType,
-    playerNames,
-    message,
-    duration_hours = 2,
-    comment = null
-  ) => {
-    if (!message && !isMessageLessAction(actionType)) {
-      setConfirmAction({
-        player_name: null,
-        actionType: actionType,
-        player_id: null,
-      });
-    } else {
-      playerNames.forEach((playerName) => {
-        if (allPlayerNames.indexOf(playerName) === -1) {
-          toast.error(`Player ${playerName} is not on the server anymore`);
-          selectPlayer(playerName, "delete");
-          return;
-        }
-        const player_id = playerNamesToPlayerId.get(playerName, null);
-        const data = {
-          player_name: playerName,
-          player_id: player_id,
-          reason: message,
-          comment: comment,
-          duration_hours: duration_hours,
-          message: message,
-        };
-
-        postData(`${process.env.REACT_APP_API_URL}${actionType}`, data)
-          .then((response) =>
-            showResponse(response, `${actionType} ${playerName}`, true)
-          )
-          .catch(handle_http_errors);
-
-        if (comment) {
-          postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
-            player_id: player_id,
-            comment: comment,
-          })
-            .then((response) =>
-              showResponse(response, `post_player_comment ${playerName}`, true)
-            )
-            .catch(handle_http_errors);
-        }
-      });
-    }
+  const toggleSquad = (squadName) => {
+    setExpandedSquads((prev) => ({
+      ...prev,
+      [squadName]: !prev[squadName],
+    }));
   };
 
-  const addFlagToPlayers = (_, flag, comment) => {
-    selectedPlayers.forEach((name) =>
-      postData(`${process.env.REACT_APP_API_URL}flag_player`, {
-        player_id: playerNamesToPlayerId.get(name),
-        flag: flag,
-        comment: comment,
-      })
-        .then((response) => showResponse(response, "flag_player", true))
-        .then(() => setFlag(false))
-        .catch(handle_http_errors)
-    );
-  };
-
-  function blacklistManyPlayers(payload) {
-    const playersToBlacklist = selectedPlayers
-    .toJS()
-    .map(playerName => playerNamesToPlayerId.get(playerName))
-    .filter(p => p !== undefined)
-
-    Promise.allSettled(playersToBlacklist.map((playerId) => (
-      addPlayerToBlacklist({
-        ...payload,
-        playerId,
-      })
-    )))
-
-  }
-
-  async function handleBlacklistOpen(player) {
-    const blacklists = await getBlacklists();
-    if (blacklists) {
-      setBlacklists(blacklists);
-      setBlacklistDialogOpen(true)
+  const toggleAll = (expanded) => {
+    const allSquads = {};
+    squadGroups.forEach(({ squads }) => {
+      squads.forEach((squad) => {
+        allSquads[squad.name] = expanded;
+      });
+    });
+    if (unassignedPlayers.length > 0) {
+      allSquads[UNASSIGNED] = expanded;
     }
-  }
-
-  function selectedPlayersToRows() {
-    return selectedPlayers
-    .toJS()
-    .filter(p => playerNamesToPlayerId.get(p) !== undefined)
-    .map(player => {
-      const id = playerNamesToPlayerId.get(player)
-      return `${player} -> ${id}`
-    }).join(",\n")
-  }
+    setExpandedSquads(allSquads);
+  };
 
   return (
-    (<Grid container spacing={2}>
-      {teamView ? (
-        <Fragment>
-          <Grid size={12}>
-            <LinearProgress
-              style={{ visibility: isLoading ? "visible" : "hidden" }}
-            />
-          </Grid>
-          <FlagDialog
-            open={flag}
-            handleClose={() => setFlag(false)}
-            handleConfirm={addFlagToPlayers}
-            SummaryRenderer={SimplePlayerRenderer}
-          />
-          <BlacklistRecordCreateDialog
-            open={blacklistDialogOpen}
-            blacklists={blacklists}
-            initialValues={selectedPlayers && { playerId: selectedPlayersToRows() }}
-            onSubmit={blacklistManyPlayers}
-            setOpen={() => setBlacklistDialogOpen(false)}
-            disablePlayerId={true}
-            hasManyIDs={true}
-          />
-          <ReasonDialog
-            open={confirmAction}
-            handleClose={() => setConfirmAction(false)}
-            handleConfirm={(
-              action,
-              player,
-              reason,
-              comment,
-              duration_hours = 2,
-              player_id = null
-            ) => {
-              handleAction(
-                action,
-                selectedPlayers,
-                reason,
-                duration_hours,
-                comment
-              );
-              setConfirmAction(false);
-            }}
-          />
-          <Grid size={12}>
-            <Grid
-              container
-              alignItems="center"
-              justifyContent="space-between"
-              spacing={2}
+    <TeamBox>
+      <Box
+        sx={{
+          p: 1,
+          backgroundColor: (theme) => theme.palette.background.default,
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+        }}
+      >
+        <Typography
+          variant="h6"
+          sx={{
+            textTransform: "uppercase",
+            fontWeight: "bold",
+            flex: 1,
+          }}
+        >
+          {title}
+        </Typography>
+        <IconButton
+          aria-label="Expand all"
+          size="small"
+          onClick={() => toggleAll(true)}
+          sx={{ color: (theme) => theme.palette.text.secondary }}
+        >
+          <ExpandMoreIcon />
+        </IconButton>
+        <IconButton
+          aria-label="Collapse all"
+          size="small"
+          onClick={() => toggleAll(false)}
+          sx={{ color: (theme) => theme.palette.text.secondary }}
+        >
+          <ChevronRightIcon />
+        </IconButton>
+      </Box>
+      <ScrollContainer>
+        <ContentWrapper>
+          <HeaderRow>
+            <Box>LVL</Box>
+            <Box>Name</Box>
+            <Box>Kills</Box>
+            <Box>Deaths</Box>
+            <Box>Combat</Box>
+            <Box>Offense</Box>
+            <Box>Defense</Box>
+            <Box>Support</Box>
+          </HeaderRow>
+          <TeamHeaderRow>
+            <Box>∅ {team.avg_level.toFixed(0)}</Box>
+            <Box style={{ textAlign: "center" }}>
+              Total ({team.count} players)
+            </Box>
+            <Box>{team.kills}</Box>
+            <Box>{team.deaths}</Box>
+            <Box>{team.combat}</Box>
+            <Box>{team.offense}</Box>
+            <Box>{team.defense}</Box>
+            <Box>{team.support}</Box>
+          </TeamHeaderRow>
+          <CommanderRow>
+            <Box
+              className="level"
+              sx={{
+                color: commander
+                  ? tierColors[getPlayerTier(commander.level)]
+                  : "inherit",
+              }}
             >
-              <Grid size={12}>
-                <Autocomplete
-                  multiple
-                  clearOnEscape
-                  id="tags-outlined"
-                  options={allPlayerNames.sort((a, b) => a.localeCompare(b))}
-                  value={autoCompleteSelectedPlayers}
-                  filterSelectedOptions
-                  onChange={(e, val) => {
-                    setSelectedPlayers(new OrderedSet(val));
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      variant="outlined"
-                      label="Selected players to search or apply action to"
-                      fullWidth
-                    />
-                  )}
-                />
-              </Grid>
-              <Grid>
-                <PlayerActions
-                  size="default"
-                  displayCount={12}
-                  disableAll={selectedPlayers.size === 0}
-                  handleAction={(actionType) => {
-                    if (isMessageLessAction(actionType)) {
-                      handleAction(
-                        actionType,
-                        selectedPlayers,
-                        null,
-                        null,
-                        null
-                      );
-                    } else {
-                      setConfirmAction({
-                        player: "All selected players",
-                        actionType: actionType,
-                        player_id: null,
-                      });
-                    }
-                  }}
-                  onFlag={() => setFlag(true)}
-                  onBlacklist={handleBlacklistOpen}
-                />
-              </Grid>
-              <Grid>
-                <Padlock
-                  handleChange={setShowOnlySelected}
-                  checked={showOnlySelected}
-                  label="Only show selected players"
-                />
-              </Grid>
-              <Grid>
-                <FormControl size="small" style={{ minWidth: "120px" }}>
-                  <InputLabel htmlFor="age-native-simple">Sort by</InputLabel>
-                  <Select
-                    labelId="demo-simple-select-label"
-                    id="demo-simple-select"
-                    value={sortType}
-                    helperText="sort the squads and players"
-                    onChange={(e) => {
-                      setSortType(e.target.value);
-                      localStorage.setItem("game_view_sorting", e.target.value);
-                    }}
+              {commander?.level || "-"}
+            </Box>
+            <Box className="player-info">
+              {commander ? (
+                <>
+                  <img
+                    src="/icons/roles/armycommander.png"
+                    alt="commander"
+                    width={16}
+                    height={16}
+                  />
+                  <Typography className="player-name">
+                    {commander.name}
+                  </Typography>
+                  {commander.is_vip && <StarIcon sx={{ fontSize: 16 }} />}
+                </>
+              ) : (
+                <Box className="no-commander">
+                  <PersonOffIcon sx={{ fontSize: 16 }} />
+                  <Typography>No Commander</Typography>
+                </Box>
+              )}
+            </Box>
+            <Box className="stat">{commander?.kills || 0}</Box>
+            <Box className="stat">{commander?.deaths || 0}</Box>
+            <Box className="stat">{commander?.combat || 0}</Box>
+            <Box className="stat">{commander?.offense || 0}</Box>
+            <Box className="stat">{commander?.defense || 0}</Box>
+            <Box className="stat">{commander?.support || 0}</Box>
+          </CommanderRow>
+          {squadGroups.map(({ type, squads }) => (
+            <Box key={type}>
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  px: 1,
+                  py: 0.5,
+                  backgroundColor: (theme) => theme.palette.background.default,
+                  color: (theme) => theme.palette.text.secondary,
+                  borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+                  textTransform: 'uppercase',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                }}
+              >
+                {type}
+              </Typography>
+              {squads.map((squad) => {
+                return (
+                  <Box key={squad.name}>
+                    <SquadHeader>
+                      <Box className="squad-info">
+                        <IconButton
+                          size="small"
+                          onClick={() => toggleSquad(squad.name)}
+                        >
+                          {expandedSquads[squad.name] ? (
+                            <ExpandMoreIcon />
+                          ) : (
+                            <ChevronRightIcon />
+                          )}
+                        </IconButton>
+                        <Box className="squad-name-container">
+                          {squad.type && (
+                            <img
+                              src={`/icons/roles/${squad.type}.png`}
+                              alt={squad.type}
+                              width={16}
+                              height={16}
+                            />
+                          )}
+                          <Typography
+                            variant="subtitle2"
+                            sx={{
+                              textTransform: "uppercase",
+                              fontWeight: "bold",
+                              minWidth: 0,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {squad.name} ({squad.players.length})
+                          </Typography>
+                          {!squad.has_leader && (
+                            <img
+                              src="/icons/ping.webp"
+                              alt="No Leader"
+                              width={16}
+                              height={16}
+                              style={{ opacity: 0.7 }}
+                            />
+                          )}
+                        </Box>
+                        <Typography variant="caption" sx={{ ml: "auto" }}>
+                          ∅{" "}
+                          <Box
+                            component="span"
+                            sx={{ color: tierColors[getPlayerTier(squad.level)] }}
+                          >
+                            {squad.level.toFixed(0)}
+                          </Box>
+                        </Typography>
+                      </Box>
+                      <Box className="squad-stats">
+                        <Box className="stat">{squad.kills}</Box>
+                        <Box className="stat">{squad.deaths}</Box>
+                        <Box className="stat">{squad.combat}</Box>
+                        <Box className="stat">{squad.offense}</Box>
+                        <Box className="stat">{squad.defense}</Box>
+                        <Box className="stat">{squad.support}</Box>
+                      </Box>
+                    </SquadHeader>
+                    <Collapse in={expandedSquads[squad.name]}>
+                      {squad.players.map((player) => (
+                        <PlayerRow key={player.player_id}>
+                          <Box
+                            className="level"
+                            sx={{ color: tierColors[getPlayerTier(player.level)] }}
+                          >
+                            {player.level}
+                          </Box>
+                          <Box className="player-info">
+                            {player.role && (
+                              <img
+                                src={`/icons/roles/${player.role}.png`}
+                                alt={player.role}
+                                width={16}
+                                height={16}
+                              />
+                            )}
+                            <Typography className="player-name">
+                              {player.name}
+                            </Typography>
+                            {player.is_vip && <StarIcon sx={{ fontSize: 16 }} />}
+                          </Box>
+                          <Box className="stat">{player.kills}</Box>
+                          <Box className="stat">{player.deaths}</Box>
+                          <Box className="stat">{player.combat}</Box>
+                          <Box className="stat">{player.offense}</Box>
+                          <Box className="stat">{player.defense}</Box>
+                          <Box className="stat">{player.support}</Box>
+                        </PlayerRow>
+                      ))}
+                    </Collapse>
+                  </Box>
+                );
+              })}
+            </Box>
+          ))}
+          {unassignedPlayers.length > 0 && (
+            <Box>
+              <SquadHeader>
+                <Box className="squad-info">
+                  <IconButton
+                    size="small"
+                    onClick={() => toggleSquad(UNASSIGNED)}
                   >
-                    {Object.keys(sortTypeToFunc).map((k) => (
-                      <MenuItem key={k} value={k}>
-                        {k}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid>
-                <TextField
-                  style={{ minWidth: "125px" }}
-                  type="number"
-                  inputProps={{ min: 2, max: 6000 }}
-                  label="Refresh seconds"
-                  helperText=""
-                  value={refreshFreqSecs}
-                  onChange={(e) => setResfreshFreqSecs(e.target.value)}
-                />
-              </Grid>
-            </Grid>
-          </Grid>
-          {
-            [
-              { label: "Allies", name: "allies" },
-              { label: "Axis", name: "axis" },
-              { label: "Unassigned", name: "none" }
-            ].map((team) => (
-              <Grid
-                size={{
-                  xs: 12,
-                  md: 12,
-                  lg: team.name === "none" ? 12 : 6
-                }}>
-                <Team
-                  key={team.name}
-                  teamName={team.label}
-                  teamData={teamView.get(team.name)}
-                  selectedPlayers={selectedPlayers}
-                  selectPlayer={selectPlayer}
-                  selectMultiplePlayers={selectMultiplePlayers}
-                  selectAll={() => selectAllTeam(team.name)}
-                  deselectAll={() => deselectAllTeam(team.name)}
-                  sortFunc={sortTypeToFunc[sortType]}
-                  showOnlySelected={showOnlySelected && selectedPlayers.size !== 0}
-                />
-              </Grid>
-            ))}
-        </Fragment>
-      ) : (
-        <Grid size={12}>
-          <LinearProgress />
-        </Grid>
-      )}
-    </Grid>)
+                    {expandedSquads[UNASSIGNED] ? (
+                      <ExpandMoreIcon />
+                    ) : (
+                      <ChevronRightIcon />
+                    )}
+                  </IconButton>
+                  <Box className="squad-name-container">
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        textTransform: "uppercase",
+                        fontWeight: "bold",
+                        minWidth: 0,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      No Platoon ({unassignedPlayers.length})
+                    </Typography>
+                  </Box>
+                </Box>
+                <Box className="squad-stats">
+                  <Box className="stat">
+                    {unassignedPlayers.reduce((sum, p) => sum + p.kills, 0)}
+                  </Box>
+                  <Box className="stat">
+                    {unassignedPlayers.reduce((sum, p) => sum + p.deaths, 0)}
+                  </Box>
+                  <Box className="stat">
+                    {unassignedPlayers.reduce((sum, p) => sum + p.combat, 0)}
+                  </Box>
+                  <Box className="stat">
+                    {unassignedPlayers.reduce((sum, p) => sum + p.offense, 0)}
+                  </Box>
+                  <Box className="stat">
+                    {unassignedPlayers.reduce((sum, p) => sum + p.defense, 0)}
+                  </Box>
+                  <Box className="stat">
+                    {unassignedPlayers.reduce((sum, p) => sum + p.support, 0)}
+                  </Box>
+                </Box>
+              </SquadHeader>
+              <Collapse in={expandedSquads[UNASSIGNED]}>
+                {unassignedPlayers.map((player) => (
+                  <PlayerRow key={player.player_id}>
+                    <Box
+                      className="level"
+                      sx={{ color: tierColors[getPlayerTier(player.level)] }}
+                    >
+                      {player.level}
+                    </Box>
+                    <Box className="player-info">
+                      <Typography
+                        sx={{ width: 16, height: 16, textAlign: "center" }}
+                      >
+                        {"-"}
+                      </Typography>
+                      <Typography className="player-name">
+                        {player.name}
+                      </Typography>
+                      {player.is_vip && <StarIcon sx={{ fontSize: 16 }} />}
+                    </Box>
+                    <Box className="stat">{player.kills}</Box>
+                    <Box className="stat">{player.deaths}</Box>
+                    <Box className="stat">{player.combat}</Box>
+                    <Box className="stat">{player.offense}</Box>
+                    <Box className="stat">{player.defense}</Box>
+                    <Box className="stat">{player.support}</Box>
+                  </PlayerRow>
+                ))}
+              </Collapse>
+            </Box>
+          )}
+        </ContentWrapper>
+      </ScrollContainer>
+    </TeamBox>
   );
 };
 
-export default GameView;
+const TeamViewPage = () => {
+  const { axisTeam, alliesTeam, noneTeam } = useMemo(() => {
+    return {
+      axisTeam: extractTeamState(teamViewResult?.axis),
+      alliesTeam: extractTeamState(teamViewResult?.allies),
+      noneTeam: extractTeamState(teamViewResult?.none),
+    };
+  }, []);
+
+  console.log(axisTeam, alliesTeam, noneTeam);
+
+  return (
+    <TeamContainer>
+      <TeamSection team={alliesTeam} title="ALLIES" />
+      <TeamSection team={axisTeam} title="AXIS" />
+      {/* {noneTeam?.squads?.length > 0 && (
+        <TeamSection team={noneTeam} title="UNDECIDED" />
+      )} */}
+    </TeamContainer>
+  );
+};
+
+export default TeamViewPage;

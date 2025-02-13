@@ -1,0 +1,2993 @@
+{
+    "armycommander": 1,
+    "armor": 2,
+    "infantry": 27,
+    "recon": 4,
+    "avg_level": 46,
+    "med_level": 40,
+    "no_sl_squads": [],
+    "players_in_lobby": [],
+    "squads": [
+        {
+            "players": [
+                {
+                    "name": "Banana_CZE",
+                    "player_id": "695fc7f5da57e304a0bc6d4a9c908fd6",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 48533,
+                        "player_id": "695fc7f5da57e304a0bc6d4a9c908fd6",
+                        "created": "2025-01-11T14:37:27.801662",
+                        "names": [
+                            {
+                                "id": 51365,
+                                "name": "Banana_CZE",
+                                "player_id": "695fc7f5da57e304a0bc6d4a9c908fd6",
+                                "created": "2025-01-11T18:45:13.062867",
+                                "last_seen": "2025-02-12T20:55:16"
+                            },
+                            {
+                                "id": 50979,
+                                "name": "KOMUNITA Banana_CZE",
+                                "player_id": "695fc7f5da57e304a0bc6d4a9c908fd6",
+                                "created": "2025-01-11T14:37:27.845286",
+                                "last_seen": "2025-01-11T14:37:27.839851"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170619,
+                                "player_id": "695fc7f5da57e304a0bc6d4a9c908fd6",
+                                "start": "2025-02-12T20:55:16",
+                                "end": null,
+                                "created": "2025-02-12T20:55:18.955943"
+                            }
+                        ],
+                        "sessions_count": 46,
+                        "total_playtime_seconds": 182669,
+                        "current_playtime_seconds": 2930,
+                        "received_actions": [],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 0,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": {
+                            "id": 40039,
+                            "created": "2025-01-11T18:45:13.079524",
+                            "updated": null,
+                            "profile": null,
+                            "country": null,
+                            "bans": null,
+                            "has_bans": false
+                        },
+                        "vips": [
+                            {
+                                "server_number": 1,
+                                "expiration": "2025-02-14T22:59:25.848986+00:00"
+                            }
+                        ],
+                        "bans": []
+                    },
+                    "is_vip": true,
+                    "unit_id": 6,
+                    "unit_name": "george",
+                    "loadout": "point man",
+                    "team": "allies",
+                    "role": "officer",
+                    "kills": 2,
+                    "deaths": 4,
+                    "combat": 9,
+                    "offense": 120,
+                    "defense": 100,
+                    "support": 140,
+                    "level": 112
+                },
+                {
+                    "name": "Chege23",
+                    "player_id": "03b5dfdec061e2d4e70da2f8bf056f1d",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 51665,
+                        "player_id": "03b5dfdec061e2d4e70da2f8bf056f1d",
+                        "created": "2025-01-13T21:27:47.376364",
+                        "names": [
+                            {
+                                "id": 54213,
+                                "name": "Chege23",
+                                "player_id": "03b5dfdec061e2d4e70da2f8bf056f1d",
+                                "created": "2025-01-13T21:27:47.386720",
+                                "last_seen": "2025-02-12T18:47:58"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170487,
+                                "player_id": "03b5dfdec061e2d4e70da2f8bf056f1d",
+                                "start": "2025-02-12T18:47:58",
+                                "end": null,
+                                "created": "2025-02-12T18:48:00.774745"
+                            }
+                        ],
+                        "sessions_count": 72,
+                        "total_playtime_seconds": 380365,
+                        "current_playtime_seconds": 10568,
+                        "received_actions": [
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-27T00:10:19.559673"
+                            }
+                        ],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 1,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": {
+                            "id": 42318,
+                            "created": "2025-01-13T21:27:47.396158",
+                            "updated": null,
+                            "profile": null,
+                            "country": null,
+                            "bans": null,
+                            "has_bans": false
+                        },
+                        "vips": [
+                            {
+                                "server_number": 3,
+                                "expiration": "2025-02-17T17:29:46.737000+00:00"
+                            },
+                            {
+                                "server_number": 1,
+                                "expiration": "2025-02-17T17:29:46.737000+00:00"
+                            },
+                            {
+                                "server_number": 2,
+                                "expiration": "2025-02-17T17:29:46.737000+00:00"
+                            }
+                        ],
+                        "bans": []
+                    },
+                    "is_vip": true,
+                    "unit_id": 6,
+                    "unit_name": "george",
+                    "loadout": "standard issue",
+                    "team": "allies",
+                    "role": "assault",
+                    "kills": 1,
+                    "deaths": 6,
+                    "combat": 6,
+                    "offense": 40,
+                    "defense": 80,
+                    "support": 165,
+                    "level": 81
+                },
+                {
+                    "name": "HollyRoller.",
+                    "player_id": "d8588d9a88af3ef94d3edef9c2c6cd92",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 40372,
+                        "player_id": "d8588d9a88af3ef94d3edef9c2c6cd92",
+                        "created": "2025-01-06T01:03:24.478342",
+                        "names": [
+                            {
+                                "id": 50089,
+                                "name": "HollyRoller.",
+                                "player_id": "d8588d9a88af3ef94d3edef9c2c6cd92",
+                                "created": "2025-01-11T01:28:41.136607",
+                                "last_seen": "2025-02-12T21:28:22"
+                            },
+                            {
+                                "id": 42664,
+                                "name": "DemonKKiller",
+                                "player_id": "d8588d9a88af3ef94d3edef9c2c6cd92",
+                                "created": "2025-01-06T01:03:24.490411",
+                                "last_seen": "2025-01-06T01:03:21"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170630,
+                                "player_id": "d8588d9a88af3ef94d3edef9c2c6cd92",
+                                "start": "2025-02-12T21:28:22",
+                                "end": null,
+                                "created": "2025-02-12T21:28:24.295872"
+                            }
+                        ],
+                        "sessions_count": 68,
+                        "total_playtime_seconds": 255427,
+                        "current_playtime_seconds": 944,
+                        "received_actions": [
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-10T23:41:30.005519"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-30T00:10:31.441096"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Artillery není během hry pod 50 hráčů povolena.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-22T14:31:20.970936"
+                            }
+                        ],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 3,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": {
+                            "id": 32364,
+                            "created": "2025-01-06T01:03:24.499932",
+                            "updated": null,
+                            "profile": null,
+                            "country": null,
+                            "bans": null,
+                            "has_bans": false
+                        },
+                        "vips": [],
+                        "bans": []
+                    },
+                    "is_vip": false,
+                    "unit_id": 6,
+                    "unit_name": "george",
+                    "loadout": "standard issue",
+                    "team": "allies",
+                    "role": "automaticrifleman",
+                    "kills": 1,
+                    "deaths": 4,
+                    "combat": 9,
+                    "offense": 120,
+                    "defense": 60,
+                    "support": 0,
+                    "level": 65
+                },
+                {
+                    "name": "gajdi",
+                    "player_id": "76561199099774629",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 53850,
+                        "player_id": "76561199099774629",
+                        "created": "2025-01-15T22:03:29.948570",
+                        "names": [
+                            {
+                                "id": 56445,
+                                "name": "gajdi",
+                                "player_id": "76561199099774629",
+                                "created": "2025-01-15T22:03:29.959443",
+                                "last_seen": "2025-02-12T20:00:52"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170555,
+                                "player_id": "76561199099774629",
+                                "start": "2025-02-12T20:00:52",
+                                "end": null,
+                                "created": "2025-02-12T20:00:56.568096"
+                            }
+                        ],
+                        "sessions_count": 29,
+                        "total_playtime_seconds": 137733,
+                        "current_playtime_seconds": 6194,
+                        "received_actions": [
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-11T21:29:08.095517"
+                            }
+                        ],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 1,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": null,
+                        "vips": [],
+                        "bans": []
+                    },
+                    "is_vip": false,
+                    "unit_id": 6,
+                    "unit_name": "george",
+                    "loadout": "standard issue",
+                    "team": "allies",
+                    "role": "support",
+                    "kills": 5,
+                    "deaths": 5,
+                    "combat": 33,
+                    "offense": 120,
+                    "defense": 100,
+                    "support": 211,
+                    "level": 68
+                },
+                {
+                    "name": "[VLK] Tomi. ♥nothing",
+                    "player_id": "76561198067829462",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 36605,
+                        "player_id": "76561198067829462",
+                        "created": "2025-01-04T11:24:35.644763",
+                        "names": [
+                            {
+                                "id": 66841,
+                                "name": "[VLK] Tomi. ♥nothing",
+                                "player_id": "76561198067829462",
+                                "created": "2025-01-26T17:44:58.854741",
+                                "last_seen": "2025-02-12T16:27:54"
+                            },
+                            {
+                                "id": 38854,
+                                "name": "Tomi. ♥nothing",
+                                "player_id": "76561198067829462",
+                                "created": "2025-01-04T11:24:35.652597",
+                                "last_seen": "2025-01-26T16:36:34"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170289,
+                                "player_id": "76561198067829462",
+                                "start": "2025-02-12T16:27:54",
+                                "end": null,
+                                "created": "2025-02-12T16:27:56.679229"
+                            }
+                        ],
+                        "sessions_count": 13,
+                        "total_playtime_seconds": 80637,
+                        "current_playtime_seconds": 18972,
+                        "received_actions": [],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 0,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": null,
+                        "vips": [],
+                        "bans": []
+                    },
+                    "is_vip": false,
+                    "unit_id": 6,
+                    "unit_name": "george",
+                    "loadout": "standard issue",
+                    "team": "allies",
+                    "role": "antitank",
+                    "kills": 2,
+                    "deaths": 11,
+                    "combat": 18,
+                    "offense": 60,
+                    "defense": 100,
+                    "support": 425,
+                    "level": 58
+                },
+                {
+                    "name": "Holessando",
+                    "player_id": "5fcd9ba760ccd750648ea840ad30b49f",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 51004,
+                        "player_id": "5fcd9ba760ccd750648ea840ad30b49f",
+                        "created": "2025-01-13T12:37:57.566793",
+                        "names": [
+                            {
+                                "id": 53531,
+                                "name": "Holessando",
+                                "player_id": "5fcd9ba760ccd750648ea840ad30b49f",
+                                "created": "2025-01-13T12:37:57.575130",
+                                "last_seen": "2025-02-12T21:28:22"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170631,
+                                "player_id": "5fcd9ba760ccd750648ea840ad30b49f",
+                                "start": "2025-02-12T21:28:22",
+                                "end": null,
+                                "created": "2025-02-12T21:28:24.588982"
+                            }
+                        ],
+                        "sessions_count": 45,
+                        "total_playtime_seconds": 213337,
+                        "current_playtime_seconds": 944,
+                        "received_actions": [],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 0,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": {
+                            "id": 41752,
+                            "created": "2025-01-13T12:37:57.585409",
+                            "updated": null,
+                            "profile": null,
+                            "country": null,
+                            "bans": null,
+                            "has_bans": false
+                        },
+                        "vips": [],
+                        "bans": []
+                    },
+                    "is_vip": false,
+                    "unit_id": 6,
+                    "unit_name": "george",
+                    "loadout": "standard issue",
+                    "team": "allies",
+                    "role": "engineer",
+                    "kills": 1,
+                    "deaths": 4,
+                    "combat": 36,
+                    "offense": 0,
+                    "defense": 220,
+                    "support": 454,
+                    "level": 57
+                }
+            ],
+            "type": "infantry",
+            "has_leader": true,
+            "combat": 111,
+            "offense": 460,
+            "defense": 660,
+            "support": 1395,
+            "kills": 12,
+            "deaths": 34
+        },
+        {
+            "players": [
+                {
+                    "name": "admam95",
+                    "player_id": "c59ef86c19a8f8048925fd7862bfb515",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 47025,
+                        "player_id": "c59ef86c19a8f8048925fd7862bfb515",
+                        "created": "2025-01-10T19:15:56.485186",
+                        "names": [
+                            {
+                                "id": 49443,
+                                "name": "admam95",
+                                "player_id": "c59ef86c19a8f8048925fd7862bfb515",
+                                "created": "2025-01-10T19:15:56.501568",
+                                "last_seen": "2025-02-12T20:00:55"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170558,
+                                "player_id": "c59ef86c19a8f8048925fd7862bfb515",
+                                "start": "2025-02-12T20:00:55",
+                                "end": null,
+                                "created": "2025-02-12T20:01:00.304009"
+                            }
+                        ],
+                        "sessions_count": 33,
+                        "total_playtime_seconds": 235727,
+                        "current_playtime_seconds": 6191,
+                        "received_actions": [
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-22T22:00:43.822730"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-20T22:31:34.977247"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-10T23:25:23.083643"
+                            }
+                        ],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 3,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": {
+                            "id": 38413,
+                            "created": "2025-01-10T19:15:56.514194",
+                            "updated": null,
+                            "profile": null,
+                            "country": null,
+                            "bans": null,
+                            "has_bans": false
+                        },
+                        "vips": [],
+                        "bans": []
+                    },
+                    "is_vip": false,
+                    "unit_id": 3,
+                    "unit_name": "dog",
+                    "loadout": "point man",
+                    "team": "allies",
+                    "role": "officer",
+                    "kills": 0,
+                    "deaths": 2,
+                    "combat": 0,
+                    "offense": 20,
+                    "defense": 140,
+                    "support": 198,
+                    "level": 53
+                },
+                {
+                    "name": "Brankө",
+                    "player_id": "07dd38a74cc4a18aef30096fea3b3539",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 70302,
+                        "player_id": "07dd38a74cc4a18aef30096fea3b3539",
+                        "created": "2025-02-04T22:40:14.190429",
+                        "names": [
+                            {
+                                "id": 73372,
+                                "name": "Brankө",
+                                "player_id": "07dd38a74cc4a18aef30096fea3b3539",
+                                "created": "2025-02-04T22:40:14.205826",
+                                "last_seen": "2025-02-12T21:33:46"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170643,
+                                "player_id": "07dd38a74cc4a18aef30096fea3b3539",
+                                "start": "2025-02-12T21:33:46",
+                                "end": null,
+                                "created": "2025-02-12T21:33:48.073198"
+                            }
+                        ],
+                        "sessions_count": 2,
+                        "total_playtime_seconds": 650,
+                        "current_playtime_seconds": 620,
+                        "received_actions": [],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 0,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": {
+                            "id": 56741,
+                            "created": "2025-02-04T22:40:14.215206",
+                            "updated": null,
+                            "profile": null,
+                            "country": null,
+                            "bans": null,
+                            "has_bans": false
+                        },
+                        "vips": [],
+                        "bans": []
+                    },
+                    "is_vip": false,
+                    "unit_id": 3,
+                    "unit_name": "dog",
+                    "loadout": "standard issue",
+                    "team": "allies",
+                    "role": "rifleman",
+                    "kills": 0,
+                    "deaths": 0,
+                    "combat": 0,
+                    "offense": 60,
+                    "defense": 100,
+                    "support": 0,
+                    "level": 23
+                },
+                {
+                    "name": "SpurkyS",
+                    "player_id": "498af42c47ae00474dcf76cbd5b48dd1",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 54568,
+                        "player_id": "498af42c47ae00474dcf76cbd5b48dd1",
+                        "created": "2025-01-16T20:55:11.376389",
+                        "names": [
+                            {
+                                "id": 57177,
+                                "name": "SpurkyS",
+                                "player_id": "498af42c47ae00474dcf76cbd5b48dd1",
+                                "created": "2025-01-16T20:55:11.384915",
+                                "last_seen": "2025-02-12T21:09:15"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170625,
+                                "player_id": "498af42c47ae00474dcf76cbd5b48dd1",
+                                "start": "2025-02-12T21:09:15",
+                                "end": null,
+                                "created": "2025-02-12T21:09:17.562254"
+                            }
+                        ],
+                        "sessions_count": 40,
+                        "total_playtime_seconds": 85021,
+                        "current_playtime_seconds": 2091,
+                        "received_actions": [],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 0,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": {
+                            "id": 44771,
+                            "created": "2025-01-16T20:55:11.394193",
+                            "updated": null,
+                            "profile": null,
+                            "country": null,
+                            "bans": null,
+                            "has_bans": false
+                        },
+                        "vips": [
+                            {
+                                "server_number": 3,
+                                "expiration": "2025-02-28T18:01:45.214000+00:00"
+                            },
+                            {
+                                "server_number": 2,
+                                "expiration": "2025-02-22T18:01:45.214000+00:00"
+                            },
+                            {
+                                "server_number": 1,
+                                "expiration": "2025-02-25T18:01:45.214000+00:00"
+                            }
+                        ],
+                        "bans": []
+                    },
+                    "is_vip": true,
+                    "unit_id": 3,
+                    "unit_name": "dog",
+                    "loadout": "standard issue",
+                    "team": "allies",
+                    "role": "assault",
+                    "kills": 1,
+                    "deaths": 6,
+                    "combat": 3,
+                    "offense": 40,
+                    "defense": 120,
+                    "support": 0,
+                    "level": 33
+                },
+                {
+                    "name": "Rumrunnerr",
+                    "player_id": "d25d8862897b67b9480d5341d0695990",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 74889,
+                        "player_id": "d25d8862897b67b9480d5341d0695990",
+                        "created": "2025-02-12T20:35:17.890020",
+                        "names": [
+                            {
+                                "id": 78101,
+                                "name": "Rumrunnerr",
+                                "player_id": "d25d8862897b67b9480d5341d0695990",
+                                "created": "2025-02-12T20:35:17.905639",
+                                "last_seen": "2025-02-12T20:35:03"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170607,
+                                "player_id": "d25d8862897b67b9480d5341d0695990",
+                                "start": "2025-02-12T20:35:03",
+                                "end": null,
+                                "created": "2025-02-12T20:35:18.058118"
+                            }
+                        ],
+                        "sessions_count": 1,
+                        "total_playtime_seconds": 4143,
+                        "current_playtime_seconds": 4143,
+                        "received_actions": [],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 0,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": {
+                            "id": 60072,
+                            "created": "2025-02-12T20:35:17.920250",
+                            "updated": null,
+                            "profile": null,
+                            "country": null,
+                            "bans": null,
+                            "has_bans": false
+                        },
+                        "vips": [],
+                        "bans": []
+                    },
+                    "is_vip": false,
+                    "unit_id": 3,
+                    "unit_name": "dog",
+                    "loadout": "standard issue",
+                    "team": "allies",
+                    "role": "automaticrifleman",
+                    "kills": 0,
+                    "deaths": 2,
+                    "combat": 0,
+                    "offense": 160,
+                    "defense": 60,
+                    "support": 0,
+                    "level": 29
+                },
+                {
+                    "name": "DomDom73601",
+                    "player_id": "926640edd6b3fd2eb482700a2d8eb96e",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 54507,
+                        "player_id": "926640edd6b3fd2eb482700a2d8eb96e",
+                        "created": "2025-01-16T20:00:53.449008",
+                        "names": [
+                            {
+                                "id": 57115,
+                                "name": "DomDom73601",
+                                "player_id": "926640edd6b3fd2eb482700a2d8eb96e",
+                                "created": "2025-01-16T20:00:53.457782",
+                                "last_seen": "2025-02-12T21:01:12"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170623,
+                                "player_id": "926640edd6b3fd2eb482700a2d8eb96e",
+                                "start": "2025-02-12T21:01:12",
+                                "end": null,
+                                "created": "2025-02-12T21:01:18.876908"
+                            }
+                        ],
+                        "sessions_count": 42,
+                        "total_playtime_seconds": 176131,
+                        "current_playtime_seconds": 2574,
+                        "received_actions": [
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-07T22:48:15.098092"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-22T22:03:02.093674"
+                            }
+                        ],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 2,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": {
+                            "id": 44720,
+                            "created": "2025-01-16T20:00:53.465883",
+                            "updated": null,
+                            "profile": null,
+                            "country": null,
+                            "bans": null,
+                            "has_bans": false
+                        },
+                        "vips": [
+                            {
+                                "server_number": 3,
+                                "expiration": "2025-02-17T19:26:51.068000+00:00"
+                            },
+                            {
+                                "server_number": 2,
+                                "expiration": "2025-02-23T19:26:51.068000+00:00"
+                            },
+                            {
+                                "server_number": 1,
+                                "expiration": "2025-02-17T19:26:51.068000+00:00"
+                            }
+                        ],
+                        "bans": []
+                    },
+                    "is_vip": true,
+                    "unit_id": 3,
+                    "unit_name": "dog",
+                    "loadout": "standard issue",
+                    "team": "allies",
+                    "role": "antitank",
+                    "kills": 6,
+                    "deaths": 6,
+                    "combat": 92,
+                    "offense": 100,
+                    "defense": 80,
+                    "support": 270,
+                    "level": 42
+                }
+            ],
+            "type": "infantry",
+            "has_leader": true,
+            "combat": 95,
+            "offense": 380,
+            "defense": 500,
+            "support": 468,
+            "kills": 7,
+            "deaths": 16
+        },
+        {
+            "players": [
+                {
+                    "name": "Pietro2323",
+                    "player_id": "653b727c7942065e278e174754622996",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 67338,
+                        "player_id": "653b727c7942065e278e174754622996",
+                        "created": "2025-01-30T22:24:35.815452",
+                        "names": [
+                            {
+                                "id": 70303,
+                                "name": "Pietro2323",
+                                "player_id": "653b727c7942065e278e174754622996",
+                                "created": "2025-01-30T22:24:35.824197",
+                                "last_seen": "2025-02-12T21:07:15"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170624,
+                                "player_id": "653b727c7942065e278e174754622996",
+                                "start": "2025-02-12T21:07:15",
+                                "end": null,
+                                "created": "2025-02-12T21:07:17.064901"
+                            }
+                        ],
+                        "sessions_count": 14,
+                        "total_playtime_seconds": 56045,
+                        "current_playtime_seconds": 2211,
+                        "received_actions": [],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 0,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": {
+                            "id": 54662,
+                            "created": "2025-01-30T22:24:35.831404",
+                            "updated": null,
+                            "profile": null,
+                            "country": null,
+                            "bans": null,
+                            "has_bans": false
+                        },
+                        "vips": [],
+                        "bans": []
+                    },
+                    "is_vip": false,
+                    "unit_id": 1,
+                    "unit_name": "baker",
+                    "loadout": "standard issue",
+                    "team": "allies",
+                    "role": "officer",
+                    "kills": 0,
+                    "deaths": 3,
+                    "combat": 0,
+                    "offense": 0,
+                    "defense": 220,
+                    "support": 0,
+                    "level": 30
+                },
+                {
+                    "name": "mida7750",
+                    "player_id": "76561198213488907",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 53122,
+                        "player_id": "76561198213488907",
+                        "created": "2025-01-15T11:33:43.321371",
+                        "names": [
+                            {
+                                "id": 55698,
+                                "name": "mida7750",
+                                "player_id": "76561198213488907",
+                                "created": "2025-01-15T11:33:43.326077",
+                                "last_seen": "2025-02-12T21:12:24"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170627,
+                                "player_id": "76561198213488907",
+                                "start": "2025-02-12T21:12:24",
+                                "end": null,
+                                "created": "2025-02-12T21:12:27.185107"
+                            }
+                        ],
+                        "sessions_count": 19,
+                        "total_playtime_seconds": 99706,
+                        "current_playtime_seconds": 1902,
+                        "received_actions": [
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-16T14:59:34.066288"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-15T14:24:46.987315"
+                            }
+                        ],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 2,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": null,
+                        "vips": [
+                            {
+                                "server_number": 1,
+                                "expiration": "2025-02-27T21:49:46.573000+00:00"
+                            },
+                            {
+                                "server_number": 3,
+                                "expiration": "2025-02-27T21:49:46.573000+00:00"
+                            },
+                            {
+                                "server_number": 2,
+                                "expiration": "2025-02-27T21:49:46.573000+00:00"
+                            }
+                        ],
+                        "bans": []
+                    },
+                    "is_vip": true,
+                    "unit_id": 1,
+                    "unit_name": "baker",
+                    "loadout": "standard issue",
+                    "team": "allies",
+                    "role": "automaticrifleman",
+                    "kills": 0,
+                    "deaths": 6,
+                    "combat": 0,
+                    "offense": 20,
+                    "defense": 200,
+                    "support": 0,
+                    "level": 31
+                },
+                {
+                    "name": "R0NC3K",
+                    "player_id": "9915f39950b62991ad6f634c815f15ac",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 37924,
+                        "player_id": "9915f39950b62991ad6f634c815f15ac",
+                        "created": "2025-01-04T21:37:50.297810",
+                        "names": [
+                            {
+                                "id": 40188,
+                                "name": "R0NC3K",
+                                "player_id": "9915f39950b62991ad6f634c815f15ac",
+                                "created": "2025-01-04T21:37:50.305386",
+                                "last_seen": "2025-02-12T20:01:03"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170563,
+                                "player_id": "9915f39950b62991ad6f634c815f15ac",
+                                "start": "2025-02-12T20:01:03",
+                                "end": null,
+                                "created": "2025-02-12T20:01:04.586635"
+                            }
+                        ],
+                        "sessions_count": 20,
+                        "total_playtime_seconds": 108458,
+                        "current_playtime_seconds": 6183,
+                        "received_actions": [],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 0,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": {
+                            "id": 30159,
+                            "created": "2025-01-04T21:37:50.312194",
+                            "updated": null,
+                            "profile": null,
+                            "country": null,
+                            "bans": null,
+                            "has_bans": false
+                        },
+                        "vips": [],
+                        "bans": []
+                    },
+                    "is_vip": false,
+                    "unit_id": 1,
+                    "unit_name": "baker",
+                    "loadout": "standard issue",
+                    "team": "allies",
+                    "role": "antitank",
+                    "kills": 2,
+                    "deaths": 5,
+                    "combat": 18,
+                    "offense": 40,
+                    "defense": 160,
+                    "support": 30,
+                    "level": 34
+                },
+                {
+                    "name": "Bambul4cz",
+                    "player_id": "5455252e72b0b640649ecd16cfb50c90",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 37067,
+                        "player_id": "5455252e72b0b640649ecd16cfb50c90",
+                        "created": "2025-01-04T13:47:06.765780",
+                        "names": [
+                            {
+                                "id": 39319,
+                                "name": "Bambul4cz",
+                                "player_id": "5455252e72b0b640649ecd16cfb50c90",
+                                "created": "2025-01-04T13:47:06.774333",
+                                "last_seen": "2025-02-12T21:28:19"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170629,
+                                "player_id": "5455252e72b0b640649ecd16cfb50c90",
+                                "start": "2025-02-12T21:28:19",
+                                "end": null,
+                                "created": "2025-02-12T21:28:20.554976"
+                            }
+                        ],
+                        "sessions_count": 13,
+                        "total_playtime_seconds": 104822,
+                        "current_playtime_seconds": 947,
+                        "received_actions": [
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-01T01:13:52.338361"
+                            }
+                        ],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 1,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": {
+                            "id": 29376,
+                            "created": "2025-01-04T13:47:06.781788",
+                            "updated": null,
+                            "profile": null,
+                            "country": null,
+                            "bans": null,
+                            "has_bans": false
+                        },
+                        "vips": [],
+                        "bans": []
+                    },
+                    "is_vip": false,
+                    "unit_id": 1,
+                    "unit_name": "baker",
+                    "loadout": "sapper",
+                    "team": "allies",
+                    "role": "engineer",
+                    "kills": 0,
+                    "deaths": 4,
+                    "combat": 5,
+                    "offense": 60,
+                    "defense": 100,
+                    "support": 0,
+                    "level": 40
+                }
+            ],
+            "type": "infantry",
+            "has_leader": true,
+            "combat": 23,
+            "offense": 120,
+            "defense": 680,
+            "support": 30,
+            "kills": 2,
+            "deaths": 18
+        },
+        {
+            "players": [
+                {
+                    "name": "BludyCZ",
+                    "player_id": "571e08f3265c65b2bfbfd491166a8b9b",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 37050,
+                        "player_id": "571e08f3265c65b2bfbfd491166a8b9b",
+                        "created": "2025-01-04T13:34:50.055125",
+                        "names": [
+                            {
+                                "id": 39302,
+                                "name": "BludyCZ",
+                                "player_id": "571e08f3265c65b2bfbfd491166a8b9b",
+                                "created": "2025-01-04T13:34:50.063102",
+                                "last_seen": "2025-02-12T21:28:23"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170633,
+                                "player_id": "571e08f3265c65b2bfbfd491166a8b9b",
+                                "start": "2025-02-12T21:28:23",
+                                "end": null,
+                                "created": "2025-02-12T21:28:25.206693"
+                            }
+                        ],
+                        "sessions_count": 33,
+                        "total_playtime_seconds": 121321,
+                        "current_playtime_seconds": 943,
+                        "received_actions": [],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 0,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": {
+                            "id": 29359,
+                            "created": "2025-01-04T13:34:50.069458",
+                            "updated": null,
+                            "profile": null,
+                            "country": null,
+                            "bans": null,
+                            "has_bans": false
+                        },
+                        "vips": [],
+                        "bans": []
+                    },
+                    "is_vip": false,
+                    "unit_id": 2,
+                    "unit_name": "charlie",
+                    "loadout": "standard issue",
+                    "team": "allies",
+                    "role": "officer",
+                    "kills": 0,
+                    "deaths": 2,
+                    "combat": 0,
+                    "offense": 0,
+                    "defense": 260,
+                    "support": 35,
+                    "level": 40
+                },
+                {
+                    "name": "Encian4Ever",
+                    "player_id": "73abb5538166f54c21d9df23cb7cd039",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 65147,
+                        "player_id": "73abb5538166f54c21d9df23cb7cd039",
+                        "created": "2025-01-27T19:27:56.349197",
+                        "names": [
+                            {
+                                "id": 68052,
+                                "name": "Encian4Ever",
+                                "player_id": "73abb5538166f54c21d9df23cb7cd039",
+                                "created": "2025-01-27T19:27:56.358700",
+                                "last_seen": "2025-02-12T21:28:22"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170632,
+                                "player_id": "73abb5538166f54c21d9df23cb7cd039",
+                                "start": "2025-02-12T21:28:22",
+                                "end": null,
+                                "created": "2025-02-12T21:28:24.869077"
+                            }
+                        ],
+                        "sessions_count": 9,
+                        "total_playtime_seconds": 28865,
+                        "current_playtime_seconds": 944,
+                        "received_actions": [],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 0,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": {
+                            "id": 53013,
+                            "created": "2025-01-27T19:27:56.368113",
+                            "updated": null,
+                            "profile": null,
+                            "country": null,
+                            "bans": null,
+                            "has_bans": false
+                        },
+                        "vips": [],
+                        "bans": []
+                    },
+                    "is_vip": false,
+                    "unit_id": 2,
+                    "unit_name": "charlie",
+                    "loadout": "point man",
+                    "team": "allies",
+                    "role": "rifleman",
+                    "kills": 1,
+                    "deaths": 5,
+                    "combat": 9,
+                    "offense": 100,
+                    "defense": 100,
+                    "support": 0,
+                    "level": 28
+                },
+                {
+                    "name": "x-LilGucciGang-x",
+                    "player_id": "49529988cc3c216b410c65f066b7b5e0",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 74639,
+                        "player_id": "49529988cc3c216b410c65f066b7b5e0",
+                        "created": "2025-02-12T11:21:59.333471",
+                        "names": [
+                            {
+                                "id": 77845,
+                                "name": "x-LilGucciGang-x",
+                                "player_id": "49529988cc3c216b410c65f066b7b5e0",
+                                "created": "2025-02-12T11:21:59.342233",
+                                "last_seen": "2025-02-12T21:40:54"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170652,
+                                "player_id": "49529988cc3c216b410c65f066b7b5e0",
+                                "start": "2025-02-12T21:40:54",
+                                "end": null,
+                                "created": "2025-02-12T21:40:55.165537"
+                            }
+                        ],
+                        "sessions_count": 4,
+                        "total_playtime_seconds": 2853,
+                        "current_playtime_seconds": 192,
+                        "received_actions": [
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-12T11:35:06.899634"
+                            }
+                        ],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 1,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": {
+                            "id": 59889,
+                            "created": "2025-02-12T11:21:59.349136",
+                            "updated": null,
+                            "profile": null,
+                            "country": null,
+                            "bans": null,
+                            "has_bans": false
+                        },
+                        "vips": [
+                            {
+                                "server_number": 1,
+                                "expiration": "2025-02-15T11:37:07.743227+00:00"
+                            }
+                        ],
+                        "bans": []
+                    },
+                    "is_vip": true,
+                    "unit_id": 2,
+                    "unit_name": "charlie",
+                    "loadout": "standard issue",
+                    "team": "allies",
+                    "role": "automaticrifleman",
+                    "kills": 0,
+                    "deaths": 1,
+                    "combat": 0,
+                    "offense": 0,
+                    "defense": 40,
+                    "support": 0,
+                    "level": 30
+                },
+                {
+                    "name": "Helmek_",
+                    "player_id": "dff8d461495604434d5ad01367de8040",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 41530,
+                        "player_id": "dff8d461495604434d5ad01367de8040",
+                        "created": "2025-01-06T21:00:26.967614",
+                        "names": [
+                            {
+                                "id": 43844,
+                                "name": "Helmek_",
+                                "player_id": "dff8d461495604434d5ad01367de8040",
+                                "created": "2025-01-06T21:00:26.983367",
+                                "last_seen": "2025-02-12T18:13:45"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170452,
+                                "player_id": "dff8d461495604434d5ad01367de8040",
+                                "start": "2025-02-12T18:13:45",
+                                "end": null,
+                                "created": "2025-02-12T18:13:47.992948"
+                            }
+                        ],
+                        "sessions_count": 60,
+                        "total_playtime_seconds": 436805,
+                        "current_playtime_seconds": 12621,
+                        "received_actions": [
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-11T21:21:17.139146"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-10T12:25:25.675019"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-09T19:17:14.819988"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-09T19:01:47.798539"
+                            }
+                        ],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 4,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": {
+                            "id": 33420,
+                            "created": "2025-01-06T21:00:26.993332",
+                            "updated": null,
+                            "profile": null,
+                            "country": null,
+                            "bans": null,
+                            "has_bans": false
+                        },
+                        "vips": [
+                            {
+                                "server_number": 1,
+                                "expiration": "2025-03-10T13:49:36.790000+00:00"
+                            },
+                            {
+                                "server_number": 2,
+                                "expiration": "2025-03-10T13:49:36.790000+00:00"
+                            },
+                            {
+                                "server_number": 3,
+                                "expiration": "2025-03-10T13:49:36.790000+00:00"
+                            }
+                        ],
+                        "bans": []
+                    },
+                    "is_vip": true,
+                    "unit_id": 2,
+                    "unit_name": "charlie",
+                    "loadout": "standard issue",
+                    "team": "allies",
+                    "role": "support",
+                    "kills": 13,
+                    "deaths": 1,
+                    "combat": 126,
+                    "offense": 0,
+                    "defense": 280,
+                    "support": 662,
+                    "level": 83
+                },
+                {
+                    "name": "warliscami",
+                    "player_id": "e2ecb8b1f41ebc3a44beaa532e0c0195",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 42485,
+                        "player_id": "e2ecb8b1f41ebc3a44beaa532e0c0195",
+                        "created": "2025-01-07T15:33:24.042534",
+                        "names": [
+                            {
+                                "id": 44809,
+                                "name": "warliscami",
+                                "player_id": "e2ecb8b1f41ebc3a44beaa532e0c0195",
+                                "created": "2025-01-07T15:33:24.050482",
+                                "last_seen": "2025-02-12T18:49:12"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170488,
+                                "player_id": "e2ecb8b1f41ebc3a44beaa532e0c0195",
+                                "start": "2025-02-12T18:49:12",
+                                "end": null,
+                                "created": "2025-02-12T18:49:15.068317"
+                            }
+                        ],
+                        "sessions_count": 51,
+                        "total_playtime_seconds": 208803,
+                        "current_playtime_seconds": 10494,
+                        "received_actions": [],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 0,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": {
+                            "id": 34296,
+                            "created": "2025-01-07T15:33:24.061358",
+                            "updated": null,
+                            "profile": null,
+                            "country": null,
+                            "bans": null,
+                            "has_bans": false
+                        },
+                        "vips": [
+                            {
+                                "server_number": 1,
+                                "expiration": "2025-02-21T12:15:45.135077+00:00"
+                            }
+                        ],
+                        "bans": []
+                    },
+                    "is_vip": true,
+                    "unit_id": 2,
+                    "unit_name": "charlie",
+                    "loadout": "standard issue",
+                    "team": "allies",
+                    "role": "antitank",
+                    "kills": 1,
+                    "deaths": 2,
+                    "combat": 11,
+                    "offense": 20,
+                    "defense": 20,
+                    "support": 0,
+                    "level": 59
+                },
+                {
+                    "name": "Spochmo",
+                    "player_id": "76561198147244964",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 73430,
+                        "player_id": "76561198147244964",
+                        "created": "2025-02-09T15:24:33.864779",
+                        "names": [
+                            {
+                                "id": 76583,
+                                "name": "Spochmo",
+                                "player_id": "76561198147244964",
+                                "created": "2025-02-09T15:24:33.873248",
+                                "last_seen": "2025-02-12T21:16:56"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170628,
+                                "player_id": "76561198147244964",
+                                "start": "2025-02-12T21:16:56",
+                                "end": null,
+                                "created": "2025-02-12T21:16:59.675627"
+                            }
+                        ],
+                        "sessions_count": 9,
+                        "total_playtime_seconds": 51649,
+                        "current_playtime_seconds": 1630,
+                        "received_actions": [],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 0,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": null,
+                        "vips": [
+                            {
+                                "server_number": 1,
+                                "expiration": "2025-02-15T21:48:48.963970+00:00"
+                            }
+                        ],
+                        "bans": []
+                    },
+                    "is_vip": true,
+                    "unit_id": 2,
+                    "unit_name": "charlie",
+                    "loadout": "standard issue",
+                    "team": "allies",
+                    "role": "engineer",
+                    "kills": 6,
+                    "deaths": 3,
+                    "combat": 45,
+                    "offense": 0,
+                    "defense": 220,
+                    "support": 80,
+                    "level": 27
+                }
+            ],
+            "type": "infantry",
+            "has_leader": true,
+            "combat": 191,
+            "offense": 120,
+            "defense": 920,
+            "support": 777,
+            "kills": 21,
+            "deaths": 14
+        },
+        {
+            "players": [
+                {
+                    "name": "BlackStar",
+                    "player_id": "76561198185067065",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 62945,
+                        "player_id": "76561198185067065",
+                        "created": "2025-01-25T15:21:18.811557",
+                        "names": [
+                            {
+                                "id": 65792,
+                                "name": "BlackStar",
+                                "player_id": "76561198185067065",
+                                "created": "2025-01-25T15:21:18.819595",
+                                "last_seen": "2025-02-12T19:55:28"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170548,
+                                "player_id": "76561198185067065",
+                                "start": "2025-02-12T19:55:28",
+                                "end": null,
+                                "created": "2025-02-12T19:55:31.291360"
+                            }
+                        ],
+                        "sessions_count": 22,
+                        "total_playtime_seconds": 182188,
+                        "current_playtime_seconds": 6518,
+                        "received_actions": [
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-08T23:55:04.780270"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-08T23:53:12.718124"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-08T23:51:43.096379"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-08T23:50:16.034207"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-08T23:48:44.031747"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-08T23:47:30.782357"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-08T23:46:11.076738"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-08T23:44:51.660180"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-08T23:36:55.293030"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-08T23:31:46.015468"
+                            }
+                        ],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 10,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": null,
+                        "vips": [
+                            {
+                                "server_number": 1,
+                                "expiration": "2025-02-24T12:09:06.420380+00:00"
+                            },
+                            {
+                                "server_number": 2,
+                                "expiration": "2025-02-13T00:01:50.340799+00:00"
+                            }
+                        ],
+                        "bans": []
+                    },
+                    "is_vip": true,
+                    "unit_id": 5,
+                    "unit_name": "fox",
+                    "loadout": "standard issue",
+                    "team": "allies",
+                    "role": "spotter",
+                    "kills": 1,
+                    "deaths": 1,
+                    "combat": 19,
+                    "offense": 160,
+                    "defense": 80,
+                    "support": 25,
+                    "level": 50
+                },
+                {
+                    "name": "SK-Simon92",
+                    "player_id": "3b1e9fab967a64f21e68b90e6b964056",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 40729,
+                        "player_id": "3b1e9fab967a64f21e68b90e6b964056",
+                        "created": "2025-01-06T11:20:14.231934",
+                        "names": [
+                            {
+                                "id": 66873,
+                                "name": "SK-Simon92",
+                                "player_id": "3b1e9fab967a64f21e68b90e6b964056",
+                                "created": "2025-01-26T19:04:16.262966",
+                                "last_seen": "2025-02-12T20:47:07"
+                            },
+                            {
+                                "id": 43026,
+                                "name": "Simeon-92",
+                                "player_id": "3b1e9fab967a64f21e68b90e6b964056",
+                                "created": "2025-01-06T11:20:14.344834",
+                                "last_seen": "2025-01-25T21:50:01"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170613,
+                                "player_id": "3b1e9fab967a64f21e68b90e6b964056",
+                                "start": "2025-02-12T20:47:07",
+                                "end": null,
+                                "created": "2025-02-12T20:47:08.138918"
+                            }
+                        ],
+                        "sessions_count": 49,
+                        "total_playtime_seconds": 186718,
+                        "current_playtime_seconds": 3419,
+                        "received_actions": [
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-22T22:03:26.053501"
+                            }
+                        ],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 1,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": {
+                            "id": 32702,
+                            "created": "2025-01-06T11:20:14.490606",
+                            "updated": null,
+                            "profile": null,
+                            "country": null,
+                            "bans": null,
+                            "has_bans": false
+                        },
+                        "vips": [
+                            {
+                                "server_number": 2,
+                                "expiration": "2025-02-28T18:51:58.966000+00:00"
+                            },
+                            {
+                                "server_number": 3,
+                                "expiration": "2025-02-28T18:51:58.966000+00:00"
+                            },
+                            {
+                                "server_number": 1,
+                                "expiration": "2025-02-28T18:51:58.966000+00:00"
+                            }
+                        ],
+                        "bans": []
+                    },
+                    "is_vip": true,
+                    "unit_id": 5,
+                    "unit_name": "fox",
+                    "loadout": "standard issue",
+                    "team": "allies",
+                    "role": "sniper",
+                    "kills": 1,
+                    "deaths": 2,
+                    "combat": 14,
+                    "offense": 140,
+                    "defense": 80,
+                    "support": 31,
+                    "level": 52
+                }
+            ],
+            "type": "recon",
+            "has_leader": true,
+            "combat": 33,
+            "offense": 300,
+            "defense": 160,
+            "support": 56,
+            "kills": 2,
+            "deaths": 3
+        },
+        {
+            "players": [
+                {
+                    "name": "LOKI_[SVK]",
+                    "player_id": "76561199572773566",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 24844,
+                        "player_id": "76561199572773566",
+                        "created": "2024-01-23T20:50:14.253231",
+                        "names": [
+                            {
+                                "id": 26070,
+                                "name": "LOKI_[SVK]",
+                                "player_id": "76561199572773566",
+                                "created": "2024-01-23T20:50:14.259210",
+                                "last_seen": "2025-02-12T20:32:29"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170601,
+                                "player_id": "76561199572773566",
+                                "start": "2025-02-12T20:32:29",
+                                "end": null,
+                                "created": "2025-02-12T20:32:34.401632"
+                            }
+                        ],
+                        "sessions_count": 30,
+                        "total_playtime_seconds": 163453,
+                        "current_playtime_seconds": 4297,
+                        "received_actions": [
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-11T23:58:48.626471"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-10T23:36:37.247192"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-10T23:26:02.299144"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-06T00:43:00.770817"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-04T00:48:21.253388"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-04T00:46:49.291106"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-27T00:29:57.285596"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-27T00:28:32.731085"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-19T02:56:12.951239"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "You violated seeding rules on this server: Attacking 4th cap while seeding is not allowed.\nYou're being punished by a bot (2/-1).\nNext check in 30 seconds",
+                                "by": "SeedingRulesAutomod",
+                                "time": "2024-01-28T00:04:13.785061"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "You violated seeding rules on this server: Attacking 4th cap while seeding is not allowed.\nYou're being punished by a bot (1/-1).\nNext check in 30 seconds",
+                                "by": "SeedingRulesAutomod",
+                                "time": "2024-01-27T23:48:00.964574"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "You violated seeding rules on this server: Attacking 4th cap while seeding is not allowed.\nYou're being punished by a bot (2/-1).\nNext check in 30 seconds",
+                                "by": "SeedingRulesAutomod",
+                                "time": "2024-01-27T23:33:26.727006"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "You violated seeding rules on this server: Attacking 4th cap while seeding is not allowed.\nYou're being punished by a bot (1/-1).\nNext check in 30 seconds",
+                                "by": "SeedingRulesAutomod",
+                                "time": "2024-01-27T23:25:16.808814"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Your squad (easy) must have an officer.\nYou're being punished by a bot (1/2).\nNext check in 40 seconds",
+                                "by": "NoLeaderWatch",
+                                "time": "2024-01-27T17:55:32.885528"
+                            }
+                        ],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 14,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": {
+                            "id": 24340,
+                            "created": "2024-01-23T20:50:15.917444",
+                            "updated": null,
+                            "profile": {
+                                "avatar": "https://avatars.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb.jpg",
+                                "steamid": "76561199572773566",
+                                "avatarfull": "https://avatars.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg",
+                                "avatarhash": "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb",
+                                "profileurl": "https://steamcommunity.com/profiles/76561199572773566/",
+                                "personaname": "LOKI_[SVK]",
+                                "timecreated": 1700526883,
+                                "avatarmedium": "https://avatars.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_medium.jpg",
+                                "personastate": 1,
+                                "profilestate": 1,
+                                "primaryclanid": "103582791429521408",
+                                "personastateflags": 0,
+                                "communityvisibilitystate": 3
+                            },
+                            "country": null,
+                            "bans": null,
+                            "has_bans": false
+                        },
+                        "vips": [
+                            {
+                                "server_number": 1,
+                                "expiration": "2025-02-15T21:48:48.963970+00:00"
+                            }
+                        ],
+                        "bans": []
+                    },
+                    "is_vip": true,
+                    "unit_id": 0,
+                    "unit_name": "able",
+                    "loadout": "scout",
+                    "team": "allies",
+                    "role": "spotter",
+                    "kills": 0,
+                    "deaths": 1,
+                    "combat": 0,
+                    "offense": 180,
+                    "defense": 80,
+                    "support": 256,
+                    "level": 169
+                },
+                {
+                    "name": "Atomowy Grzybek",
+                    "player_id": "fb6926d2ce7260238a9c7cf6932a0b81",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 74890,
+                        "player_id": "fb6926d2ce7260238a9c7cf6932a0b81",
+                        "created": "2025-02-12T20:52:41.101599",
+                        "names": [
+                            {
+                                "id": 78102,
+                                "name": "Atomowy Grzybek",
+                                "player_id": "fb6926d2ce7260238a9c7cf6932a0b81",
+                                "created": "2025-02-12T20:52:41.114448",
+                                "last_seen": "2025-02-12T20:52:39"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170617,
+                                "player_id": "fb6926d2ce7260238a9c7cf6932a0b81",
+                                "start": "2025-02-12T20:52:39",
+                                "end": null,
+                                "created": "2025-02-12T20:52:41.174617"
+                            }
+                        ],
+                        "sessions_count": 1,
+                        "total_playtime_seconds": 3087,
+                        "current_playtime_seconds": 3087,
+                        "received_actions": [],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 0,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": {
+                            "id": 60073,
+                            "created": "2025-02-12T20:52:41.125367",
+                            "updated": null,
+                            "profile": null,
+                            "country": null,
+                            "bans": null,
+                            "has_bans": false
+                        },
+                        "vips": [],
+                        "bans": []
+                    },
+                    "is_vip": false,
+                    "unit_id": 0,
+                    "unit_name": "able",
+                    "loadout": "standard issue",
+                    "team": "allies",
+                    "role": "sniper",
+                    "kills": 0,
+                    "deaths": 3,
+                    "combat": 0,
+                    "offense": 180,
+                    "defense": 80,
+                    "support": 0,
+                    "level": 25
+                }
+            ],
+            "type": "recon",
+            "has_leader": true,
+            "combat": 0,
+            "offense": 360,
+            "defense": 160,
+            "support": 256,
+            "kills": 0,
+            "deaths": 4
+        },
+        {
+            "players": [
+                {
+                    "name": "bunker_gate7",
+                    "player_id": "0cfc8d7b19adbc668aa28c54669c252a",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 50705,
+                        "player_id": "0cfc8d7b19adbc668aa28c54669c252a",
+                        "created": "2025-01-12T23:04:15.009073",
+                        "names": [
+                            {
+                                "id": 73761,
+                                "name": "bunker_gate7",
+                                "player_id": "0cfc8d7b19adbc668aa28c54669c252a",
+                                "created": "2025-02-05T19:27:59.789312",
+                                "last_seen": "2025-02-12T20:56:48"
+                            },
+                            {
+                                "id": 53227,
+                                "name": "bunkerkurwa",
+                                "player_id": "0cfc8d7b19adbc668aa28c54669c252a",
+                                "created": "2025-01-12T23:04:15.018301",
+                                "last_seen": "2025-02-04T23:34:35.813904"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170620,
+                                "player_id": "0cfc8d7b19adbc668aa28c54669c252a",
+                                "start": "2025-02-12T20:56:48",
+                                "end": null,
+                                "created": "2025-02-12T20:56:51.450835"
+                            }
+                        ],
+                        "sessions_count": 35,
+                        "total_playtime_seconds": 262598,
+                        "current_playtime_seconds": 2838,
+                        "received_actions": [
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-10T23:26:27.461890"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-10T21:51:04.998215"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-07T23:50:26.110035"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-06T23:28:21.657438"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-04T23:34:35.827425"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-03T00:25:12.952703"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Artillery není během hry pod 50 hráčů povolena.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-25T00:50:51.092582"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-20T23:27:51.228416"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-20T23:24:57.974468"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Artillery není během hry pod 50 hráčů povolena.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-19T22:13:38.614946"
+                            }
+                        ],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 10,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": {
+                            "id": 41488,
+                            "created": "2025-01-12T23:04:15.027509",
+                            "updated": null,
+                            "profile": null,
+                            "country": null,
+                            "bans": null,
+                            "has_bans": false
+                        },
+                        "vips": [
+                            {
+                                "server_number": 1,
+                                "expiration": "2025-02-14T22:59:25.848986+00:00"
+                            }
+                        ],
+                        "bans": []
+                    },
+                    "is_vip": true,
+                    "unit_id": 4,
+                    "unit_name": "easy",
+                    "loadout": "standard issue",
+                    "team": "allies",
+                    "role": "tankcommander",
+                    "kills": 10,
+                    "deaths": 1,
+                    "combat": 188,
+                    "offense": 60,
+                    "defense": 160,
+                    "support": 0,
+                    "level": 42
+                },
+                {
+                    "name": "HOUMRCZECH",
+                    "player_id": "3b6f9ad1330ab35deca4ef70942a9f45",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 36408,
+                        "player_id": "3b6f9ad1330ab35deca4ef70942a9f45",
+                        "created": "2025-01-04T10:11:19.819726",
+                        "names": [
+                            {
+                                "id": 38654,
+                                "name": "HOUMRCZECH",
+                                "player_id": "3b6f9ad1330ab35deca4ef70942a9f45",
+                                "created": "2025-01-04T10:11:19.826590",
+                                "last_seen": "2025-02-12T21:32:47"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170641,
+                                "player_id": "3b6f9ad1330ab35deca4ef70942a9f45",
+                                "start": "2025-02-12T21:32:47",
+                                "end": null,
+                                "created": "2025-02-12T21:32:50.957023"
+                            }
+                        ],
+                        "sessions_count": 123,
+                        "total_playtime_seconds": 740501,
+                        "current_playtime_seconds": 679,
+                        "received_actions": [
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-11T21:57:50.474301"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-06T22:07:48.043747"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-02T11:42:54.104955"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-29T21:31:31.315000"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-26T08:07:17.890250"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-19T22:11:38.729544"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-16T10:34:04.419666"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-13T23:00:14.928290"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-13T09:56:59.261304"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-13T02:11:46.523832"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-11T08:16:04.662476"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-10T23:29:41.980655"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-07T21:52:43.928624"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-07T21:50:45.121815"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-07T21:44:54.443999"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-07T21:42:41.459783"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-06T23:16:05.985098"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-06T23:11:55.785606"
+                            },
+                            {
+                                "action_type": "KICK",
+                                "reason": "No comunicatin, SOLO TANK",
+                                "by": "fejkr",
+                                "time": "2025-01-05T19:43:33.299415"
+                            }
+                        ],
+                        "penalty_count": {
+                            "KICK": 1,
+                            "PUNISH": 18,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": {
+                            "id": 9,
+                            "modified": null,
+                            "player_id": "3b6f9ad1330ab35deca4ef70942a9f45",
+                            "is_watched": false,
+                            "reason": "Casto BAN nebo AUTO KICK za Team Killing.",
+                            "by": "Dorfieeee",
+                            "count": 0
+                        },
+                        "steaminfo": {
+                            "id": 28753,
+                            "created": "2025-01-04T10:11:19.837239",
+                            "updated": null,
+                            "profile": null,
+                            "country": null,
+                            "bans": null,
+                            "has_bans": false
+                        },
+                        "vips": [
+                            {
+                                "server_number": 2,
+                                "expiration": "2025-02-17T12:17:37.322000+00:00"
+                            },
+                            {
+                                "server_number": 3,
+                                "expiration": "2025-03-13T08:17:37.322000+00:00"
+                            },
+                            {
+                                "server_number": 1,
+                                "expiration": "2025-03-19T08:17:37.322000+00:00"
+                            }
+                        ],
+                        "bans": []
+                    },
+                    "is_vip": true,
+                    "unit_id": 4,
+                    "unit_name": "easy",
+                    "loadout": "mechanic",
+                    "team": "allies",
+                    "role": "crewman",
+                    "kills": 8,
+                    "deaths": 1,
+                    "combat": 68,
+                    "offense": 0,
+                    "defense": 200,
+                    "support": 0,
+                    "level": 83
+                }
+            ],
+            "type": "armor",
+            "has_leader": true,
+            "combat": 256,
+            "offense": 60,
+            "defense": 360,
+            "support": 0,
+            "kills": 18,
+            "deaths": 2
+        },
+        {
+            "players": [
+                {
+                    "name": "RemyG",
+                    "player_id": "76561199257481037",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 58153,
+                        "player_id": "76561199257481037",
+                        "created": "2025-01-19T23:35:31.895155",
+                        "names": [
+                            {
+                                "id": 68147,
+                                "name": "RemyG",
+                                "player_id": "76561199257481037",
+                                "created": "2025-01-27T21:06:46.527402",
+                                "last_seen": "2025-02-12T21:34:19"
+                            },
+                            {
+                                "id": 66026,
+                                "name": "Remy",
+                                "player_id": "76561199257481037",
+                                "created": "2025-01-25T21:06:46.171242",
+                                "last_seen": "2025-01-25T22:11:32.555100"
+                            },
+                            {
+                                "id": 60880,
+                                "name": "McDezinformartion",
+                                "player_id": "76561199257481037",
+                                "created": "2025-01-19T23:35:31.906255",
+                                "last_seen": "2025-01-24T23:09:00"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170644,
+                                "player_id": "76561199257481037",
+                                "start": "2025-02-12T21:34:19",
+                                "end": null,
+                                "created": "2025-02-12T21:34:22.791736"
+                            }
+                        ],
+                        "sessions_count": 29,
+                        "total_playtime_seconds": 85120,
+                        "current_playtime_seconds": 587,
+                        "received_actions": [
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-12T00:03:18.638339"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-12T00:02:00.851137"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-25T22:11:32.562994"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-25T21:55:40.128031"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-25T21:48:35.445275"
+                            }
+                        ],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 5,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": null,
+                        "vips": [],
+                        "bans": []
+                    },
+                    "is_vip": false,
+                    "unit_id": 7,
+                    "unit_name": "how",
+                    "loadout": "standard issue",
+                    "team": "allies",
+                    "role": "officer",
+                    "kills": 0,
+                    "deaths": 3,
+                    "combat": 0,
+                    "offense": 20,
+                    "defense": 100,
+                    "support": 45,
+                    "level": 38
+                },
+                {
+                    "name": "RAMBO",
+                    "player_id": "76561198318658853",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 57200,
+                        "player_id": "76561198318658853",
+                        "created": "2025-01-19T10:34:00.844392",
+                        "names": [
+                            {
+                                "id": 59898,
+                                "name": "RAMBO",
+                                "player_id": "76561198318658853",
+                                "created": "2025-01-19T10:34:00.853338",
+                                "last_seen": "2025-02-12T21:30:12"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170638,
+                                "player_id": "76561198318658853",
+                                "start": "2025-02-12T21:30:12",
+                                "end": null,
+                                "created": "2025-02-12T21:30:13.503095"
+                            }
+                        ],
+                        "sessions_count": 27,
+                        "total_playtime_seconds": 64761,
+                        "current_playtime_seconds": 834,
+                        "received_actions": [
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-12T00:14:03.016832"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-12T00:12:11.689380"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-11T23:58:42.563463"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-11T23:57:18.412480"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-02-04T00:42:20.373019"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-25T22:09:17.863331"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-25T21:52:42.525683"
+                            },
+                            {
+                                "action_type": "PUNISH",
+                                "reason": "Porušil si pravidla hry pod 50 hráčů: Vstup do červené zóny(na 4. bod) není během hry pod 50 hráčů povolen..\nJsi automaticky potrestán smrtí.",
+                                "by": "AutoMod_SeedingRules",
+                                "time": "2025-01-25T21:48:16.664823"
+                            }
+                        ],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 8,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": null,
+                        "vips": [],
+                        "bans": []
+                    },
+                    "is_vip": false,
+                    "unit_id": 7,
+                    "unit_name": "how",
+                    "loadout": "standard issue",
+                    "team": "allies",
+                    "role": "rifleman",
+                    "kills": 4,
+                    "deaths": 1,
+                    "combat": 24,
+                    "offense": 100,
+                    "defense": 0,
+                    "support": 0,
+                    "level": 27
+                },
+                {
+                    "name": "milosz2199",
+                    "player_id": "e01c973f89afc6894c24f9315f05d7a1",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 59644,
+                        "player_id": "e01c973f89afc6894c24f9315f05d7a1",
+                        "created": "2025-01-21T17:59:16.010276",
+                        "names": [
+                            {
+                                "id": 62405,
+                                "name": "milosz2199",
+                                "player_id": "e01c973f89afc6894c24f9315f05d7a1",
+                                "created": "2025-01-21T17:59:16.015679",
+                                "last_seen": "2025-02-12T21:33:32"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170642,
+                                "player_id": "e01c973f89afc6894c24f9315f05d7a1",
+                                "start": "2025-02-12T21:33:32",
+                                "end": null,
+                                "created": "2025-02-12T21:33:36.687201"
+                            }
+                        ],
+                        "sessions_count": 2,
+                        "total_playtime_seconds": 2241,
+                        "current_playtime_seconds": 634,
+                        "received_actions": [],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 0,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": {
+                            "id": 48877,
+                            "created": "2025-01-21T17:59:16.020517",
+                            "updated": null,
+                            "profile": null,
+                            "country": null,
+                            "bans": null,
+                            "has_bans": false
+                        },
+                        "vips": [],
+                        "bans": []
+                    },
+                    "is_vip": false,
+                    "unit_id": 7,
+                    "unit_name": "how",
+                    "loadout": "standard issue",
+                    "team": "allies",
+                    "role": "antitank",
+                    "kills": 2,
+                    "deaths": 2,
+                    "combat": 9,
+                    "offense": 100,
+                    "defense": 20,
+                    "support": 0,
+                    "level": 26
+                }
+            ],
+            "type": "infantry",
+            "has_leader": true,
+            "combat": 33,
+            "offense": 220,
+            "defense": 120,
+            "support": 45,
+            "kills": 6,
+            "deaths": 6
+        },
+        {
+            "players": [
+                {
+                    "name": "Galax",
+                    "player_id": "76561198017376911",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 74814,
+                        "player_id": "76561198017376911",
+                        "created": "2025-02-12T15:32:17.733164",
+                        "names": [
+                            {
+                                "id": 78021,
+                                "name": "Galax",
+                                "player_id": "76561198017376911",
+                                "created": "2025-02-12T15:32:17.743948",
+                                "last_seen": "2025-02-12T21:37:57"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170646,
+                                "player_id": "76561198017376911",
+                                "start": "2025-02-12T21:37:57",
+                                "end": null,
+                                "created": "2025-02-12T21:37:58.185625"
+                            }
+                        ],
+                        "sessions_count": 2,
+                        "total_playtime_seconds": 3679,
+                        "current_playtime_seconds": 369,
+                        "received_actions": [],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 0,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": null,
+                        "vips": [],
+                        "bans": []
+                    },
+                    "is_vip": false,
+                    "unit_id": 8,
+                    "unit_name": "item",
+                    "loadout": "standard issue",
+                    "team": "allies",
+                    "role": "officer",
+                    "kills": 0,
+                    "deaths": 3,
+                    "combat": 0,
+                    "offense": 0,
+                    "defense": 40,
+                    "support": 30,
+                    "level": 12
+                },
+                {
+                    "name": "Valkyrie",
+                    "player_id": "76561198799959075",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 74813,
+                        "player_id": "76561198799959075",
+                        "created": "2025-02-12T15:32:13.414292",
+                        "names": [
+                            {
+                                "id": 78020,
+                                "name": "Valkyrie",
+                                "player_id": "76561198799959075",
+                                "created": "2025-02-12T15:32:13.422397",
+                                "last_seen": "2025-02-12T21:39:03"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170650,
+                                "player_id": "76561198799959075",
+                                "start": "2025-02-12T21:39:03",
+                                "end": null,
+                                "created": "2025-02-12T21:39:05.347620"
+                            }
+                        ],
+                        "sessions_count": 2,
+                        "total_playtime_seconds": 3617,
+                        "current_playtime_seconds": 303,
+                        "received_actions": [],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 0,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": null,
+                        "vips": [],
+                        "bans": []
+                    },
+                    "is_vip": false,
+                    "unit_id": 8,
+                    "unit_name": "item",
+                    "loadout": "standard issue",
+                    "team": "allies",
+                    "role": "automaticrifleman",
+                    "kills": 0,
+                    "deaths": 2,
+                    "combat": 0,
+                    "offense": 0,
+                    "defense": 20,
+                    "support": 0,
+                    "level": 5
+                },
+                {
+                    "name": "Hrdlorez_Eman",
+                    "player_id": "f3cdbaf5b9fe9ae00d8bde62d3a3a2f9",
+                    "country": null,
+                    "steam_bans": null,
+                    "profile": {
+                        "id": 74812,
+                        "player_id": "f3cdbaf5b9fe9ae00d8bde62d3a3a2f9",
+                        "created": "2025-02-12T15:32:07.156608",
+                        "names": [
+                            {
+                                "id": 78019,
+                                "name": "Hrdlorez_Eman",
+                                "player_id": "f3cdbaf5b9fe9ae00d8bde62d3a3a2f9",
+                                "created": "2025-02-12T15:32:07.166181",
+                                "last_seen": "2025-02-12T21:37:58"
+                            }
+                        ],
+                        "sessions": [
+                            {
+                                "id": 170647,
+                                "player_id": "f3cdbaf5b9fe9ae00d8bde62d3a3a2f9",
+                                "start": "2025-02-12T21:37:58",
+                                "end": null,
+                                "created": "2025-02-12T21:38:01.864983"
+                            }
+                        ],
+                        "sessions_count": 2,
+                        "total_playtime_seconds": 3684,
+                        "current_playtime_seconds": 368,
+                        "received_actions": [],
+                        "penalty_count": {
+                            "KICK": 0,
+                            "PUNISH": 0,
+                            "TEMPBAN": 0,
+                            "PERMABAN": 0
+                        },
+                        "blacklists": [],
+                        "is_blacklisted": false,
+                        "flags": [],
+                        "watchlist": null,
+                        "steaminfo": {
+                            "id": 60020,
+                            "created": "2025-02-12T15:32:07.174681",
+                            "updated": null,
+                            "profile": null,
+                            "country": null,
+                            "bans": null,
+                            "has_bans": false
+                        },
+                        "vips": [],
+                        "bans": []
+                    },
+                    "is_vip": false,
+                    "unit_id": 8,
+                    "unit_name": "item",
+                    "loadout": "standard issue",
+                    "team": "allies",
+                    "role": "heavymachinegunner",
+                    "kills": 0,
+                    "deaths": 2,
+                    "combat": 0,
+                    "offense": 0,
+                    "defense": 40,
+                    "support": 0,
+                    "level": 12
+                }
+            ],
+            "type": "infantry",
+            "has_leader": true,
+            "combat": 0,
+            "offense": 0,
+            "defense": 100,
+            "support": 30,
+            "kills": 0,
+            "deaths": 7
+        }
+    ],
+    "combat": 742,
+    "offense": 2020,
+    "defense": 3860,
+    "support": 3670,
+    "kills": 68,
+    "deaths": 105,
+    "count": 34
+}
