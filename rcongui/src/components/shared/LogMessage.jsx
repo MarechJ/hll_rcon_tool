@@ -3,7 +3,7 @@ import { getLogTeam, getTeamColor, removeLogPlayerIds } from "@/utils/lib";
 import { Box } from "@mui/material";
 import { Fragment } from "react";
 
-export const LogMessage = ({ log, colored = false, short = false }) => {
+export const LogMessage = ({ log, colored = false, short = false, include_ids = false }) => {
   const output = [];
   const teamPlayer1 = getLogTeam(log);
   const teamPlayer2 =
@@ -12,8 +12,12 @@ export const LogMessage = ({ log, colored = false, short = false }) => {
       : teamPlayer1 === "Axis"
       ? "Allies"
       : "Axis";
-  let message = removeLogPlayerIds(log.message);
-
+  if (!include_ids) {
+    let message = removeLogPlayerIds(log.message);
+  } else {
+    let message = log.message;
+  }
+  
   message = message.split(log.player_name_1);
   // In between each element of the array, add the player link
   if (!short) {
