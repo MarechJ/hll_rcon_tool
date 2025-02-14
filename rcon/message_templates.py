@@ -40,6 +40,7 @@ def get_message_template(id: int) -> MessageTemplate | None:
 def get_all_message_templates() -> AllMessageTemplateTypes:
     """Get all message templates by category"""
     messages_by_cat: AllMessageTemplateTypes = {
+        "AUTO_SETTINGS": [],
         "BROADCAST": [],
         "MESSAGE": [],
         "REASON": [],
