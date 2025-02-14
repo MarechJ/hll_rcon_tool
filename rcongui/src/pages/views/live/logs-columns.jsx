@@ -160,6 +160,14 @@ export const logsColumns = [
   },
   {
     header: "Message",
+    id: "message_colored_with_ids",
+    accessorKey: "message",
+    cell: ({ row }) => {
+      return <LogMessage log={row.original} colored={true} include_ids = {true}/>;
+    },
+  },
+  {
+    header: "Message",
     id: "message",
     accessorKey: "message",
     cell: ({ row }) => {
