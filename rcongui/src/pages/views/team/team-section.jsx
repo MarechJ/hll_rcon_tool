@@ -17,8 +17,8 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import PersonOffIcon from "@mui/icons-material/PersonOff";
 import Collapse from "@mui/material/Collapse";
-import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
-import UnfoldLessIcon from '@mui/icons-material/UnfoldLess';
+import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
+import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 
 export const UNASSIGNED = "null";
 
@@ -63,6 +63,7 @@ const PlayerRowWrapper = ({
   isCommander,
   onToggle,
   onProfileClick,
+  displayStats = true,
 }) => (
   <PlayerRow
     selected={selected}
@@ -72,7 +73,7 @@ const PlayerRowWrapper = ({
   >
     <Box className="level">{player.level}</Box>
     <PlayerInfo player={player} onProfileClick={onProfileClick} />
-    <PlayerStats player={player} />
+    {displayStats && <PlayerStats player={player} />}
   </PlayerRow>
 );
 
@@ -82,6 +83,7 @@ const SquadPlayers = ({
   selectedPlayers,
   onTogglePlayer,
   onProfileClick,
+  displayStats = true,
 }) => (
   <Collapse in={expanded}>
     {squad.players.map((player) => (
@@ -91,6 +93,7 @@ const SquadPlayers = ({
         selected={selectedPlayers.has(player.player_id)}
         onToggle={onTogglePlayer}
         onProfileClick={onProfileClick}
+        displayStats={displayStats}
       />
     ))}
   </Collapse>
@@ -209,6 +212,7 @@ export const TeamSection = ({
   onTeamExpand,
   onTeamCollapse,
 }) => {
+  const isLobby = team.name === "lobby";
   const { openWithId } = usePlayerSidebar();
 
   const handleProfileClick = (player, event) => {
@@ -307,8 +311,7 @@ export const TeamSection = ({
                   textOverflow: "ellipsis",
                 }}
               >
-                {team.name === "lobby" ? "Lobby" : "No Platoon"} (
-                {players.length})
+                {isLobby ? "Lobby" : "No Platoon"} ({players.length})
               </Typography>
             </Box>
           </Box>
@@ -322,6 +325,22 @@ export const TeamSection = ({
           onProfileClick={handleProfileClick}
         />
       </Box>
+    );
+  };
+
+  const getLobbyPlayers = (players) => {
+    if (players.length === 0) {
+      return null;
+    }
+    return (
+      <SquadPlayers
+        squad={{ players }}
+        expanded={expandedSquads[UNASSIGNED]}
+        selectedPlayers={selectedPlayers}
+        onTogglePlayer={onTogglePlayer}
+        onProfileClick={handleProfileClick}
+        displayStats={false}
+      />
     );
   };
 
@@ -381,7 +400,7 @@ export const TeamSection = ({
             textAlign: "center",
           }}
         >
-          {title}
+          {isLobby ? `Lobby (${team.count})` : title}
         </Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
           <IconButton size="small" onClick={onTeamExpand}>
@@ -394,7 +413,7 @@ export const TeamSection = ({
       </Box>
       <ScrollContainer>
         <ContentWrapper>
-          {team.name !== "lobby" ? (
+          {!isLobby ? (
             <>
               <HeaderRow>
                 <Box>LVL</Box>
@@ -475,7 +494,7 @@ export const TeamSection = ({
               ))}
             </>
           ) : (
-            getUnassignedSquad(unassignedPlayers)
+            getLobbyPlayers(unassignedPlayers)
           )}
         </ContentWrapper>
       </ScrollContainer>

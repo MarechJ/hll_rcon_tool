@@ -15,7 +15,7 @@ import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import { useQuery } from "@tanstack/react-query";
 import { teamsLiveQueryOptions } from "@/queries/teams-live-query";
 import { TeamSection, UNASSIGNED } from "./team-section";
-import { TeamContainer } from "./styled";
+import { LobbyContainer, TeamContainer } from "./styled";
 import { cmd } from "@/utils/fetchUtils";
 import GameOverview from "@/components/game/overview";
 import { OverviewSkeleton } from "./skeletons";
@@ -64,7 +64,7 @@ const TeamViewPage = () => {
   const [expandedSquads, setExpandedSquads] = useState({
     allies: { [UNASSIGNED]: true },
     axis: { [UNASSIGNED]: true },
-    lobby: { [UNASSIGNED]: true },
+    lobby: {},
   });
 
   const { axisTeam, alliesTeam, lobbyTeam } = useMemo(() => {
@@ -338,11 +338,11 @@ const TeamViewPage = () => {
           {isFetching && <LinearProgress sx={{ height: 2 }} />}
         </Box>
       </StickyContainer>
+      <LobbyContainer>{getTeamSection(lobbyTeam)}</LobbyContainer>
       <TeamContainer>
         {getTeamSection(alliesTeam)}
         {getTeamSection(axisTeam)}
       </TeamContainer>
-      <TeamContainer>{getTeamSection(lobbyTeam)}</TeamContainer>
     </Box>
   );
 };

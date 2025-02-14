@@ -20,6 +20,25 @@ export const TeamContainer = styled(Box)(({ theme }) => ({
   },
 }));
 
+export const LobbyContainer = styled(Box)(({ theme }) => ({
+  display: "flex",
+  gap: theme.spacing(2),
+  flexDirection: "row",
+  marginLeft: theme.spacing(-2),
+  marginRight: theme.spacing(-2),
+  [theme.breakpoints.down("lg")]: {
+    flexDirection: "column",
+  },
+  fontFamily: "Roboto Mono, monospace",
+  backgroundColor: theme.palette.background.default,
+  overflow: "hidden",
+  [theme.breakpoints.up("lg")]: {
+    padding: theme.spacing(0, 4),
+    marginLeft: 0,
+    marginRight: 0,
+  },
+}));
+
 export const TeamBox = styled(Box)(({ theme }) => ({
   flex: 1,
   borderRadius: theme.shape.borderRadius,
