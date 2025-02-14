@@ -623,7 +623,7 @@ def strtobool(val) -> bool:
     if val is None:
         return False
 
-    if isinstance(val, bool):
+    if isinstance(val, bool) or val == MISSING:
         return val
 
     # sourced from https://stackoverflow.com/a/18472142 with modification
