@@ -10,6 +10,8 @@ import "react-toastify/dist/ReactToastify.css";
 import { ActionDialogProvider } from "@/hooks/useActionDialog";
 import { PlayerSidebarProvider } from "@/hooks/usePlayerSidebar";
 import { useAppStore } from "@/stores/app-state";
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
 export const loader = async () => {
   return null;
@@ -31,7 +33,7 @@ export default function Root() {
   const widthMode = useAppStore((state) => state.widthMode);
 
   return (
-    <>
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box sx={{ display: "flex" }}>
         <SideMenu />
         <AppNavbar />
@@ -67,6 +69,6 @@ export default function Root() {
         </Box>
       </Box>
       <ToastContainer />
-    </>
+    </LocalizationProvider>
   );
 }
