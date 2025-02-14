@@ -1,7 +1,7 @@
 import datetime
 import enum
 from dataclasses import dataclass
-from typing import List, Literal, Optional
+from typing import List, Literal, NotRequired, Optional
 
 # # TODO: On Python 3.11.* specifically, Pydantic requires we use typing_extensions.TypedDict
 # over typing.TypedDict. Once we bump our Python image we can replace this.
@@ -394,6 +394,17 @@ class VipListRecordType(VipListRecordTypeNoId):
 
 class VipListRecordWithVipListType(VipListRecordType):
     vip_list: "VipListType"
+
+
+class VipListRecordEditType(TypedDict):
+    """The editable fields of a VipListRecord"""
+
+    id: int
+    vip_list_id: NotRequired[int]
+    is_active: NotRequired[bool]
+    expires_at: NotRequired[datetime.datetime | None]
+    description: NotRequired[str | None]
+    notes: NotRequired[str | None]
 
 
 class VipListType(TypedDict):
