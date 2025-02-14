@@ -5,21 +5,21 @@ from datetime import datetime, timedelta
 from logging import getLogger
 from typing import Any, Dict, Iterable, Literal, Optional, Sequence, Type
 
-from rcon.message_templates import (
-    get_all_message_templates,
-    get_message_template,
-    get_message_template_categories,
-    get_message_templates,
-    add_message_template,
-    edit_message_template,
-    delete_message_template,
-)
-from rcon import blacklist, game_logs, maps, player_history
+from rcon import blacklist, game_logs, maps, player_history, vip
 from rcon.audit import ingame_mods, online_mods
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.discord import audit_user_config_differences
 from rcon.gtx import GTXFtp
-from rcon.models import enter_session
+from rcon.message_templates import (
+    add_message_template,
+    delete_message_template,
+    edit_message_template,
+    get_all_message_templates,
+    get_message_template,
+    get_message_template_categories,
+    get_message_templates,
+)
+from rcon.models import MessageTemplate, enter_session
 from rcon.player_history import (
     add_flag_to_player,
     get_players_by_appearance,
@@ -27,31 +27,28 @@ from rcon.player_history import (
     update_player_profile,
 )
 from rcon.rcon import Rcon
-from rcon import vip
 from rcon.scoreboard import TimeWindowStats
 from rcon.settings import SERVER_INFO
 from rcon.types import (
     AdminUserType,
+    AllMessageTemplateTypes,
     BlacklistSyncMethod,
     BlacklistType,
     BlacklistWithRecordsType,
     GameServerBanType,
+    MessageTemplateCategory,
+    MessageTemplateType,
     ParsedLogsType,
     PlayerCommentType,
     PlayerFlagType,
     PlayerProfileTypeEnriched,
     ServerInfoType,
-    VoteMapStatusType,
+    VipListRecordEditType,
+    VipListRecordType,
     VipListSyncMethod,
     VipListType,
-    VipListRecordType,
     VipListTypeWithRecordsType,
-)
-from rcon.models import enter_session, MessageTemplate
-from rcon.types import (
-    MessageTemplateCategory,
-    MessageTemplateType,
-    AllMessageTemplateTypes,
+    VoteMapStatusType,
 )
 from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
 from rcon.user_config.auto_kick import AutoVoteKickUserConfig
@@ -1908,13 +1905,13 @@ class RconAPI(Rcon):
             ]
 
     def get_vip_list(
-        self, vip_list_id: int, strict: bool = False
+        self, vip_list_id: int, strict: bool = False, with_records: bool = False
     ) -> VipListType | None:
         with enter_session() as sess:
             new_list = vip.get_vip_list(
                 sess=sess, vip_list_id=vip_list_id, strict=strict
             )
-            return new_list.to_dict() if new_list else None
+            return new_list.to_dict(with_records=with_records) if new_list else None
 
     def create_vip_list(
         self, name: str, sync: VipListSyncMethod, servers: Sequence[int] | None
@@ -1985,7 +1982,12 @@ class RconAPI(Rcon):
     def bulk_add_vip_list_records(self, records: Iterable[VipListRecordType]) -> None:
         return vip.bulk_add_vip_records(records=records)
 
-    def bulk_edit_vip_list_records(self, records: Iterable[VipListRecordType]) -> None:
+    def bulk_delete_vip_list_records(self, record_ids: Iterable[int]):
+        return vip.bulk_delete_vip_records(record_ids=record_ids)
+
+    def bulk_edit_vip_list_records(
+        self, records: Iterable[VipListRecordEditType]
+    ) -> None:
         return vip.bulk_edit_vip_records(records=records)
 
     def delete_vip_list_record(

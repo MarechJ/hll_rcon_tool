@@ -45,31 +45,38 @@
 import os
 import struct
 from collections import defaultdict
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import IntEnum, auto
 from logging import getLogger
-from typing import Iterable, Self, Sequence, Optional
+from typing import Iterable, Self, Sequence
 
 import orjson
 import redis
+from dateutil import parser
 from pydantic import BaseModel, field_validator
-from sqlalchemy import func, or_, select, and_
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from rcon.cache_utils import get_redis_client
 from rcon.commands import CommandFailedError
-from rcon.models import PlayerID, VipList, VipListRecord, enter_session, PlayerName
+from rcon.models import PlayerID, PlayerName, VipList, VipListRecord, enter_session
 from rcon.player_history import _get_set_player, remove_accent, unaccent
+from rcon.steam_utils import is_steam_id_64
 from rcon.types import (
+    VipListRecordEditType,
     VipListRecordType,
+    VipListRecordTypeNoId,
     VipListSyncMethod,
     VipListType,
-    VipListRecordTypeNoId,
 )
-from rcon.utils import MISSING, MissingType, SERVER_NUMBER, get_server_number_mask
-from rcon.steam_utils import is_steam_id_64
+from rcon.utils import (
+    MISSING,
+    SERVER_NUMBER,
+    MissingType,
+    get_server_number_mask,
+    strtobool,
+)
 from rcon.win_store_utils import is_windows_store_id
-from dateutil import parser
 
 logger = getLogger(__name__)
 red = get_redis_client()
@@ -344,27 +351,42 @@ def bulk_add_vip_records(records: Iterable[VipListRecordTypeNoId]) -> None:
                 notes=record["notes"],
             )
 
-    # Synchronize now since we deferred it earlier while editing
-    VipListCommandHandler.send(
-        VipListCommand(
-            command=VipListCommandType.SYNCH_GAME_SERVER,
-            server_mask=ALL_SERVERS_MASK,
-            payload=VipListSynchCommand().model_dump(),
+            # Synchronize now since we deferred it earlier while editing
+            VipListCommandHandler.send(
+                VipListCommand(
+                    command=VipListCommandType.SYNCH_GAME_SERVER,
+                    server_mask=ALL_SERVERS_MASK,
+                    payload=VipListSynchCommand().model_dump(),
+                )
+            )
+
+
+def bulk_delete_vip_records(record_ids: Iterable[int]):
+    with enter_session() as sess:
+        for record_id in record_ids:
+            delete_vip_list_record(record_id=record_id, synchronize=False)
+
+        VipListCommandHandler.send(
+            VipListCommand(
+                command=VipListCommandType.SYNCH_GAME_SERVER,
+                server_mask=ALL_SERVERS_MASK,
+                payload=VipListSynchCommand().model_dump(),
+            )
         )
-    )
 
 
-def bulk_edit_vip_records(records: Iterable[VipListRecordType]) -> None:
+def bulk_edit_vip_records(records: Iterable[VipListRecordEditType]) -> None:
     """Update all the provided records, deferring gameserver updates until the end"""
     with enter_session() as sess:
         for record in records:
             edit_vip_list_record(
                 sess=sess,
                 record_id=record["id"],
-                description=record["description"] if record["description"] else MISSING,
-                active=record["is_active"],
-                expires_at=record["expires_at"] if record["expires_at"] else MISSING,
-                notes=record["notes"] if record["notes"] else MISSING,
+                vip_list_id=record.get("vip_list_id", MISSING),
+                description=record.get("description", MISSING),
+                active=record.get("is_active", MISSING),
+                expires_at=record.get("expires_at", MISSING),
+                notes=record.get("notes", MISSING),
                 synchronize=False,
             )
 
@@ -474,7 +496,6 @@ def edit_vip_list_record(
     synchronize: bool = True,
     sess: Session | None = None,
 ) -> VipListRecordType | None:
-
     def _edit_vip_list_record(
         sess: Session,
         record_id: int,
@@ -486,6 +507,7 @@ def edit_vip_list_record(
         admin_name: str = "CRCON",
         synchronize: bool = True,
     ):
+        active = strtobool(active)
         record = get_vip_record(sess=sess, record_id=record_id, strict=True)
 
         # Make type checking happy even though it's impossible to get here
@@ -516,7 +538,6 @@ def edit_vip_list_record(
         if not sess.is_modified(record):
             return old_record
 
-        sess.commit()
         new_record = record.to_dict()
 
         # If either the new or old mask applied to all servers;
@@ -571,9 +592,7 @@ def edit_vip_list_record(
         )
 
 
-def delete_vip_list_record(
-    record_id: int,
-) -> bool:
+def delete_vip_list_record(record_id: int, synchronize: bool = True) -> bool:
     """Delete the specified VIP list record if it exists"""
     with enter_session() as sess:
         record = get_vip_record(sess=sess, record_id=record_id)
@@ -587,18 +606,21 @@ def delete_vip_list_record(
         sess.delete(record)
         sess.commit()
 
-        # If we remove a record; that player may or may not still have VIP
-        # from other lists, the handler will resynch with the game server
-        # and handle it appropriately
-        VipListCommandHandler.send(
-            VipListCommand(
-                command=VipListCommandType.DELETE_RECORD,
-                server_mask=server_mask,
-                # No actual payload is needed; this command causes a resynch
-                # with the game server
-                payload=VipListDeleteRecordCommand(player_id=player_id).model_dump(),
+        if synchronize:
+            # If we remove a record; that player may or may not still have VIP
+            # from other lists, the handler will resynch with the game server
+            # and handle it appropriately
+            VipListCommandHandler.send(
+                VipListCommand(
+                    command=VipListCommandType.DELETE_RECORD,
+                    server_mask=server_mask,
+                    # No actual payload is needed; this command causes a resynch
+                    # with the game server
+                    payload=VipListDeleteRecordCommand(
+                        player_id=player_id
+                    ).model_dump(),
+                )
             )
-        )
 
     return True
 
