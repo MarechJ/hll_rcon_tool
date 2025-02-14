@@ -810,11 +810,11 @@ class GameLayoutRandomConstraints(enum.IntFlag):
 
 
 class MessageTemplateCategory(enum.StrEnum):
-    MESSAGE = "MESSAGE"
-    BROADCAST = "BROADCAST"
-    WELCOME = "WELCOME"
-    REASON = "REASON"
     AUTO_SETTINGS = "AUTO_SETTINGS"
+    BROADCAST = "BROADCAST"
+    MESSAGE = "MESSAGE"
+    REASON = "REASON"
+    WELCOME = "WELCOME"
 
 
 class MessageTemplateType(TypedDict):
