@@ -1,9 +1,17 @@
 import { useState, useMemo } from "react";
 import { extractPlayers, extractTeamState } from "@/utils/extractPlayers";
-import { Box, Button, Stack, LinearProgress } from "@mui/material";
+import {
+  Box,
+  Button,
+  Stack,
+  LinearProgress,
+  Typography,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
 import { ActionMenuButton } from "@/features/player-action/ActionMenu";
 import { generatePlayerActions } from "@/features/player-action/actions";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
+import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import { useQuery } from "@tanstack/react-query";
 import { teamsLiveQueryOptions } from "@/queries/teams-live-query";
 import { TeamSection, UNASSIGNED } from "./team-section";
@@ -11,6 +19,11 @@ import { TeamContainer } from "./styled";
 import { cmd } from "@/utils/fetchUtils";
 import GameOverview from "@/components/game/overview";
 import { OverviewSkeleton } from "./skeletons";
+import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheck";
+import PlaylistRemoveIcon from "@mui/icons-material/PlaylistRemove";
+import UnfoldLessDoubleIcon from "@mui/icons-material/UnfoldLessDouble";
+import UnfoldMoreDoubleIcon from "@mui/icons-material/UnfoldMoreDouble";
+import StickyContainer from "@/components/shared/StickyContainer";
 
 const TeamViewPage = () => {
   const { data: teams, isFetching } = useQuery({
@@ -227,7 +240,15 @@ const TeamViewPage = () => {
   };
 
   return (
-    <Stack>
+    <Box
+      sx={{
+        position: "relative",
+        minHeight: "100%",
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+      }}
+    >
       {gameData ? (
         <GameOverview
           map={gameData.current_map}
@@ -243,47 +264,86 @@ const TeamViewPage = () => {
       ) : (
         <OverviewSkeleton />
       )}
-      <Stack
-        direction="row"
+      <StickyContainer
         sx={{
+          mb: 1,
           backgroundColor: "background.paper",
-          borderBottom: "1px solid divider",
-          height: 40,
-          "& > *": { height: "100%" },
+          borderBottom: "1px solid",
+          borderColor: "divider",
         }}
       >
-        <ActionMenuButton
-          actions={generatePlayerActions({
-            multiAction: true,
-            onlineAction: true,
-          })}
-          recipients={Array.from(selectedPlayers.values())}
-          disabled={!selectedPlayers.size}
-          renderButton={(props) => (
-            <Button
-              sx={{ width: 170 }}
-              startIcon={<MoreVertIcon />}
-              disabled={!selectedPlayers.size}
-              {...props}
-            >
-              Apply Actions
-            </Button>
-          )}
-        />
-        <Button onClick={handleSelectAll}>Select All</Button>
-        <Button onClick={handleUnselectAll}>Unselect All</Button>
-        <Button onClick={handleExpandAll}>Expand All</Button>
-        <Button onClick={handleCollapseAll}>Collapse All</Button>
-      </Stack>
-      <Box sx={{ height: 2 }}>
-        {isFetching && <LinearProgress sx={{ height: 2 }} />}
-      </Box>
+        <Stack
+          direction="row"
+          sx={{
+            height: 40,
+            "& > *": { height: "100%" },
+            width: "100%",
+            px: 2,
+          }}
+        >
+          <ActionMenuButton
+            actions={generatePlayerActions({
+              multiAction: true,
+              onlineAction: true,
+            })}
+            recipients={Array.from(selectedPlayers.values())}
+            disabled={!selectedPlayers.size}
+            renderButton={(props) => (
+              <IconButton
+                disabled={!selectedPlayers.size}
+                aria-label="Apply Actions"
+                {...props}
+              >
+                <MoreHorizIcon />
+                <Box
+                  component={"span"}
+                  sx={{ display: { xs: "none", lg: "span" } }}
+                >
+                  Apply Actions
+                </Box>
+              </IconButton>
+            )}
+          />
+          <Tooltip title="Select All">
+            <span>
+              <IconButton aria-label="Select All" onClick={handleSelectAll}>
+                <PlaylistAddCheckIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Tooltip title="Unselect All">
+            <span>
+              <IconButton aria-label="Unselect All" onClick={handleUnselectAll}>
+                <PlaylistRemoveIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Box sx={{ flexGrow: 1 }} />
+          <Tooltip title="Expand All">
+            <span>
+              <IconButton aria-label="Expand All" onClick={handleExpandAll}>
+                <UnfoldMoreDoubleIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Tooltip title="Collapse All">
+            <span>
+              <IconButton aria-label="Collapse All" onClick={handleCollapseAll}>
+                <UnfoldLessDoubleIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
+        </Stack>
+        <Box sx={{ height: 2 }}>
+          {isFetching && <LinearProgress sx={{ height: 2 }} />}
+        </Box>
+      </StickyContainer>
       <TeamContainer>
         {getTeamSection(alliesTeam)}
         {getTeamSection(axisTeam)}
       </TeamContainer>
       <TeamContainer>{getTeamSection(lobbyTeam)}</TeamContainer>
-    </Stack>
+    </Box>
   );
 };
 

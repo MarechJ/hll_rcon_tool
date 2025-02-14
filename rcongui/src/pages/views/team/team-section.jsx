@@ -17,6 +17,8 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import PersonOffIcon from "@mui/icons-material/PersonOff";
 import Collapse from "@mui/material/Collapse";
+import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
+import UnfoldLessIcon from '@mui/icons-material/UnfoldLess';
 
 export const UNASSIGNED = "null";
 
@@ -383,10 +385,10 @@ export const TeamSection = ({
         </Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
           <IconButton size="small" onClick={onTeamExpand}>
-            <ExpandMoreIcon />
+            <UnfoldMoreIcon />
           </IconButton>
           <IconButton size="small" onClick={onTeamCollapse}>
-            <ChevronRightIcon />
+            <UnfoldLessIcon />
           </IconButton>
         </Box>
       </Box>
