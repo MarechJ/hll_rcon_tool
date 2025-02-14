@@ -828,7 +828,8 @@ class MessageTemplateType(TypedDict):
 
 
 class AllMessageTemplateTypes(TypedDict):
-    MESSAGE: list[MessageTemplateType]
+    AUTO_SETTINGS: list[MessageTemplateType]
     BROADCAST: list[MessageTemplateType]
-    WELCOME: list[MessageTemplateType]
+    MESSAGE: list[MessageTemplateType]
     REASON: list[MessageTemplateType]
+    WELCOME: list[MessageTemplateType]
