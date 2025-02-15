@@ -64,22 +64,6 @@ def get_player_profile(player_id: str, nb_sessions: int):
         return player.to_dict(limit_sessions=nb_sessions)
 
 
-def get_player_profile_by_ids(sess, ids):
-    return (
-        sess.query(PlayerID)
-        .filter(PlayerID.id.in_(ids))
-        .options(
-            selectinload(PlayerID.names),
-            selectinload(PlayerID.received_actions),
-            selectinload(PlayerID.b),
-            selectinload(PlayerID.flags),
-            selectinload(PlayerID.watchlist),
-            selectinload(PlayerID.steaminfo),
-        )
-        .all()
-    )
-
-
 def get_player_profile_by_player_ids(sess, player_ids):
     return (
         sess.query(PlayerID)
@@ -209,7 +193,7 @@ def get_players_by_appearance(
                     BlacklistRecord.player_id_id == PlayerID.id,
                     or_(
                         BlacklistRecord.expires_at.is_(None),
-                        BlacklistRecord.expires_at < func.now(),
+                        BlacklistRecord.expires_at > func.now(),
                     ),
                 )
                 .exists()

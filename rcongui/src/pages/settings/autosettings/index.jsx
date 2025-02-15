@@ -2,8 +2,7 @@ import Padlock from "@/components/shared/Padlock";
 import SplitButton from "@/components/shared/SplitButton";
 import {cmd} from "@/utils/fetchUtils";
 import {TEMPLATE_CATEGORY} from "@/utils/lib";
-import {Alert, Autocomplete, Box, Button, Paper, Skeleton, TextField, useTheme} from "@mui/material";
-import {Stack} from "@mui/system";
+import {Alert, Autocomplete, Box, Button, Paper, Skeleton, TextField, Stack, useTheme} from "@mui/material";
 import {lazy, Suspense, useEffect, useState} from "react";
 import {Await, defer, json, useActionData, useLoaderData, useSubmit,} from "react-router-dom";
 import {AsyncClientError} from "@/components/shared/AsyncClientError";
@@ -76,11 +75,11 @@ const Autosettings = () => {
   const submit = useSubmit();
   const theme = useTheme();
 
-  const handleApplyClick = (intent) => (e) => {
+  const handleApplyClick = (intent) => () => {
     setSubmitting(true);
     const formData = new FormData();
     formData.append("intent", intent);
-    formData.append("forward", intent === INTENT.APPLY_ALL);
+    formData.append("forward", intent === INTENT.APPLY_ALL ? "true" : "false");
     formData.append("settings", editorContent);
     submit(formData, {method: "post"});
   };
@@ -132,7 +131,7 @@ const Autosettings = () => {
           <Button
             variant="contained"
             color="secondary"
-            href="https://github.com/MarechJ/hll_rcon_tool/wiki/User-Guide-:-Autosettings"
+            href="https://github.com/MarechJ/hll_rcon_tool/wiki/User-Guide-%E2%80%90-Main-interface-%E2%80%90-Settings-%E2%80%90-Autosettings"
             component={"a"}
           >
             Read docs

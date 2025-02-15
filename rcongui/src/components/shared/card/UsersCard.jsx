@@ -87,6 +87,7 @@ const EmptyState = () => (
 /**
  * @typedef {Object} UserGroup
  * @property {string} group - Name of the user group
+ * @property {ReactNode} label - Label of the user group
  * @property {User[]} users - Array of users in this group
  * @property {string} [manageLink] - Optional URL to manage the group
  */
@@ -124,7 +125,7 @@ const OnlineUsersCard = ({ onlineUsers, title }) => {
             {onlineUsers.map((group, index) => (
               <Tab
                 key={group.group}
-                label={`${group.group} (${group.users.length})`}
+                label={group.label}
               />
             ))}
           </Tabs>

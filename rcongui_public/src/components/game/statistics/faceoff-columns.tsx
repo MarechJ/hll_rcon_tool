@@ -3,6 +3,8 @@ import { Header } from './column-header'
 import { Faceoff } from '@/types/player'
 import { ColumnDef } from '@tanstack/react-table'
 import { useTranslation } from 'react-i18next'
+import { useGameStatsContext } from "@/components/game/statistics/game-stats-container";
+import { Button } from "@/components/ui/button";
 
 const nColSize = 40
 
@@ -13,6 +15,18 @@ export const columns: ColumnDef<Faceoff>[] = [
       const { t } = useTranslation('game')
       return t('playersTable.player')
     },
+    cell: (info) => {
+      const { focusPlayerByName } = useGameStatsContext();
+      return <Button
+        variant="text"
+        className="pl-0 h-0"
+        onClick={() => {
+          focusPlayerByName(info.row.original.name)
+        }}
+      >
+        {String(info.getValue())}
+      </Button>
+    },
   },
   {
     accessorKey: 'kills',
@@ -22,7 +36,7 @@ export const columns: ColumnDef<Faceoff>[] = [
         <Header
           header="K"
           desc={t('playersTable.kills')}
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          onClick={() => column.toggleSorting(column.getIsSorted() !== 'desc')}
         />
       )
     },
@@ -37,7 +51,7 @@ export const columns: ColumnDef<Faceoff>[] = [
         <Header
           header="D"
           desc={t('playersTable.deaths')}
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          onClick={() => column.toggleSorting(column.getIsSorted() !== 'desc')}
         />
       )
     },
@@ -52,7 +66,7 @@ export const columns: ColumnDef<Faceoff>[] = [
         <Header
           header="+/-"
           desc={t('playersTable.diff')}
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          onClick={() => column.toggleSorting(column.getIsSorted() !== 'desc')}
         />
       )
     },

@@ -1,5 +1,5 @@
-import { Paper, Tooltip, Chip } from '@mui/material';
-import { styled } from '@mui/system';
+import { Paper, Tooltip, Chip } from "@mui/material";
+import { styled } from "@mui/material/styles";
 
 const ListItem = styled('li')(({ theme }) => ({
   margin: theme.spacing(0.5),

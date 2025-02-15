@@ -1,9 +1,7 @@
 import Table from "@/components/table/Table";
 import TableConfigDrawer from "@/components/table/TableConfigDrawer";
-import storageKeys from "@/config/storageKeys";
 import { Divider, IconButton } from "@mui/material";
 import { useState } from "react";
-import { useStorageState } from "@/hooks/useStorageState";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import SettingsIcon from "@mui/icons-material/Settings";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -13,6 +11,7 @@ import { TablePagination } from "@/components/table/TablePagination";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import { Box, Typography } from "@mui/material";
 import {downloadGame} from "@/features/download-game";
+import { useGameDetailsTableStore } from "@/stores/table-config";
 
 const renderSubComponent = ({ row }) => {
   // Create a custom component that renders the player's stats
@@ -164,18 +163,11 @@ const renderSubComponent = ({ row }) => {
 
 const PlayersTable = ({ table, selectedPlayers }) => {
   const [tableConfigDrawerOpen, setTableConfigDrawerOpen] = useState(false);
-
-  const [tableConfig, setTableConfig] = useStorageState(
-    storageKeys.PLAYERS_TABLE_CONFIG,
-    {
-      density: "normal",
-      fontSize: "normal",
-    }
-  );
+  const tableConfig = useGameDetailsTableStore();
+  const setConfig = useGameDetailsTableStore(state => state.setConfig);
 
   const handleTableConfigClick = () => {
-    // toggle config drawer
-    setTableConfigDrawerOpen((prev) => !prev);
+    setTableConfigDrawerOpen(prev => !prev);
   };
 
   return (
@@ -228,11 +220,11 @@ const PlayersTable = ({ table, selectedPlayers }) => {
         renderSubComponent={renderSubComponent}
       />
       <TableConfigDrawer
-        name={"Players"}
+        name="Game Details"
         open={tableConfigDrawerOpen}
         onClose={(config) => {
           setTableConfigDrawerOpen(false);
-          setTableConfig(config);
+          setConfig(config);
         }}
         config={tableConfig}
       />

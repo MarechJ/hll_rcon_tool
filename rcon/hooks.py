@@ -20,7 +20,7 @@ from rcon.blacklist import (
 from rcon.cache_utils import invalidates
 from rcon.commands import CommandFailedError, HLLServerError
 from rcon.discord import get_prepared_discord_hooks, send_to_discord_audit
-from rcon.game_logs import (
+from rcon.logs.loop import (
     on_camera,
     on_chat,
     on_connected,
@@ -66,10 +66,7 @@ from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.webhooks import CameraWebhooksUserConfig
-from rcon.utils import (
-    DefaultStringFormat,
-    MapsHistory,
-)
+from rcon.utils import DefaultStringFormat, MapsHistory
 from rcon.vote_map import VoteMap
 from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
 

@@ -79,7 +79,7 @@ export function ActionMenu({
             <ListItemIcon>{action.icon}</ListItemIcon>
             <Typography
               variant="inherit"
-              sx={{ textDecoration: action.depraceted ? "line-through" : "" }}
+              sx={{ textDecoration: action.deprecated ? "line-through" : "" }}
             >
               {action.name[0].toUpperCase() + action.name.slice(1)}
             </Typography>
@@ -172,7 +172,7 @@ export function ActionMenuButton({
         onClose={handleClose}
         sx={{ maxHeight: (theme) => theme.typography.pxToRem(500) }}
       >
-        {!Array.isArray(recipients) && (
+        {withProfile && !Array.isArray(recipients) && (
           <MenuItem onClick={handleProfileClick} dense>
             <ListItemIcon>
               <PersonIcon />
@@ -180,7 +180,7 @@ export function ActionMenuButton({
             View Profile
           </MenuItem>
         )}
-        {!Array.isArray(recipients) && <Divider />}
+        {withProfile && !Array.isArray(recipients) && <Divider />}
         {filteredActionList.map((action) => (
           <MenuItem
             key={action.name}
@@ -190,7 +190,7 @@ export function ActionMenuButton({
             <ListItemIcon>{action.icon}</ListItemIcon>
             <Typography
               variant="inherit"
-              sx={{ textDecoration: action.depraceted ? "line-through" : "" }}
+              sx={{ textDecoration: action.deprecated ? "line-through" : "" }}
             >
               {action.name[0].toUpperCase() + action.name.slice(1)}
             </Typography>

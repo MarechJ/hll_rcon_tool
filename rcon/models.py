@@ -22,6 +22,7 @@ from sqlalchemy.orm import (
 )
 from sqlalchemy.schema import UniqueConstraint
 
+from rcon.maps import Team
 from rcon.types import (
     AuditLogType,
     MessageTemplateType,
@@ -51,7 +52,7 @@ from rcon.types import (
     SteamPlayerSummaryType,
     StructuredLogLineWithMetaData,
     WatchListType,
-    MessageTemplateCategory,
+    MessageTemplateCategory, PlayerTeamAssociation, PlayerTeamConfidence,
 )
 from rcon.utils import (
     SafeStringFormat,
@@ -59,6 +60,7 @@ from rcon.utils import (
     mask_to_server_numbers,
     server_numbers_to_mask,
 )
+from rcon.weapons import WEAPON_SIDE_MAP, ALL_WEAPONS, WeaponType
 
 logger = logging.getLogger(__name__)
 
@@ -172,6 +174,8 @@ class PlayerID(Base):
 
     def get_current_playtime_seconds(self) -> int:
         if self.sessions:
+            if self.sessions[0].end:
+                return 0
             start = self.sessions[0].start or self.sessions[0].created
             return int((datetime.now() - start).total_seconds())
         return 0
@@ -532,6 +536,16 @@ class Maps(Base):
         }
 
 
+def calc_weapon_type_usage(weapons: dict[str, int]) -> dict[WeaponType, int]:
+    kills_by_type = defaultdict(int)
+
+    for weapon_name, count in weapons.items():
+        if weapon_name in ALL_WEAPONS:
+            weapon_type = ALL_WEAPONS[weapon_name]
+            kills_by_type[weapon_type.value] += count
+
+    return dict(kills_by_type)
+
 class PlayerStats(Base):
     __tablename__ = "player_stats"
     __table_args__ = (
@@ -577,6 +591,53 @@ class PlayerStats(Base):
     )
     map: Mapped[Maps] = relationship(back_populates="player_stats")
 
+    def detect_team(self) -> PlayerTeamAssociation:
+        def get_value(item):
+            return item[1]
+
+        axis_count = 0
+        allies_count = 0
+        if len(self.weapons) > 0:
+            for weapon in sorted(self.weapons.items(), key=get_value, reverse=True):
+                if WEAPON_SIDE_MAP.get(weapon[0]) == Team.ALLIES:
+                    allies_count += weapon[1]
+                elif WEAPON_SIDE_MAP.get(weapon[0]) == Team.AXIS:
+                    axis_count += weapon[1]
+
+        if len(self.death_by_weapons) > 0:
+            for weapon in sorted(self.death_by_weapons.items(), key=get_value, reverse=True):
+                if WEAPON_SIDE_MAP.get(weapon[0]) is None:
+                    continue
+                op = Team.AXIS if WEAPON_SIDE_MAP.get(weapon[0]) == Team.ALLIES else Team.ALLIES
+                if op == Team.ALLIES:
+                    allies_count += weapon[1]
+                elif op == Team.AXIS:
+                    axis_count += weapon[1]
+
+        assoc: PlayerTeamAssociation
+        if axis_count == 0 and allies_count == 0:
+            return PlayerTeamAssociation(side=Team.UNKNOWN, confidence=PlayerTeamConfidence.STRONG, ratio=0)
+        elif axis_count > allies_count:
+            assoc = PlayerTeamAssociation(
+                side=Team.AXIS,
+                confidence=PlayerTeamConfidence.MIXED,
+                ratio=round(axis_count / (axis_count + allies_count) * 100, 2),
+            )
+        elif allies_count > axis_count:
+            assoc = PlayerTeamAssociation(
+                side=Team.ALLIES,
+                confidence=PlayerTeamConfidence.MIXED,
+                ratio=round(allies_count / (axis_count + allies_count) * 100, 2),
+            )
+        else:
+            assoc = PlayerTeamAssociation(
+                side=Team.UNKNOWN,
+                confidence=PlayerTeamConfidence.MIXED,
+                ratio=50,
+            )
+        assoc['confidence'] = PlayerTeamConfidence.STRONG if assoc['ratio'] > 85 else PlayerTeamConfidence.MIXED
+        return assoc
+
     def to_dict(self) -> PlayerStatsType:
         # TODO: Fix typing
         return {
@@ -590,8 +651,10 @@ class PlayerStats(Base):
             ),
             "map_id": self.map_id,
             "kills": self.kills,
+            "kills_by_type": calc_weapon_type_usage(self.weapons),
             "kills_streak": self.kills_streak,
             "deaths": self.deaths,
+            "deaths_by_type": calc_weapon_type_usage(self.death_by_weapons),
             "deaths_without_kill_streak": self.deaths_without_kill_streak,
             "teamkills": self.teamkills,
             "teamkills_streak": self.teamkills_streak,
@@ -614,6 +677,7 @@ class PlayerStats(Base):
             "death_by": self.death_by,
             "weapons": self.weapons,
             "death_by_weapons": self.death_by_weapons,
+            "team": self.detect_team(),
         }
 
 
@@ -847,14 +911,14 @@ class BlacklistRecord(Base):
         variables = {
             "player_id": self.player.player_id,
             "player_name": self.player.names[0].name if self.player.names else "",
-            "banned_at": self.created_at.strftime("%d %b %H:%M"),
+            "banned_at": self.created_at.strftime("%b %d %Y %H:%M"),
             "banned_until": (
-                self.expires_at.strftime("%d %b %H:%M")
+                self.expires_at.strftime("%b %d %Y %H:%M")
                 if self.expires_at
                 else "forever"
             ),
             "expires_at": (
-                self.expires_at.strftime("%d %b %H:%M") if self.expires_at else "never"
+                self.expires_at.strftime("%b %d %Y %H:%M") if self.expires_at else "never"
             ),
             "duration": (
                 humanize_timedelta(self.expires_at - self.created_at)

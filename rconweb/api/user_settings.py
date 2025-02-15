@@ -1,6 +1,5 @@
 from logging import getLogger
 
-from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
@@ -29,10 +28,10 @@ from rcon.user_config.standard_messages import (
     StandardWelcomeMessagesUserConfig,
     get_all_message_types,
 )
-from rcon.user_config.watch_killrate import WatchKillRateUserConfig
 from rcon.user_config.steam import SteamUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.vote_map import VoteMapUserConfig
+from rcon.user_config.watch_killrate import WatchKillRateUserConfig
 from rcon.user_config.webhooks import (
     AdminPingWebhooksUserConfig,
     AuditWebhooksUserConfig,
@@ -44,7 +43,7 @@ from rcon.user_config.webhooks import (
 )
 
 from .auth import api_response, login_required
-from .decorators import require_http_methods
+from .decorators import permission_required, require_http_methods
 
 logger = getLogger(__name__)
 

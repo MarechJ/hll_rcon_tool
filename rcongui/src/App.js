@@ -1,5 +1,6 @@
 import { RouterProvider } from 'react-router-dom';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 import relativeTimePlugin from 'dayjs/plugin/relativeTime';
 import durationPlugin from 'dayjs/plugin/duration';
 import adminRouter from "./router"
@@ -9,11 +10,15 @@ import siteConfig from './config/siteConfig';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { queryClient } from './queryClient';
 import {StrictMode} from "react";
+import AppTheme from "@/themes/AppTheme";
+import { CssBaseline } from '@mui/material';
+import { useAppStore } from './stores/app-state';
 
 const App = () => {
   // Dayjs plugins
   dayjs.extend(relativeTimePlugin);
   dayjs.extend(durationPlugin);
+  dayjs.extend(utc);
 
   // Configure LocalForage
   localforage.config({
@@ -24,11 +29,16 @@ const App = () => {
     driver: [localforage.INDEXEDDB, localforage.LOCALSTORAGE], // Preferred storage drivers in order
   });
 
+  const colorScheme = useAppStore((state) => state.colorScheme);
+
   return (
     <StrictMode>
       <QueryClientProvider client={queryClient}>
-        <RouterProvider router={adminRouter} />
-        <ReactQueryDevtools initialIsOpen={false} />
+        <AppTheme selectedScheme={colorScheme}>
+          <CssBaseline enableColorScheme />
+          <RouterProvider router={adminRouter} />
+          <ReactQueryDevtools initialIsOpen={false} />
+        </AppTheme>
       </QueryClientProvider>
     </StrictMode>
   );

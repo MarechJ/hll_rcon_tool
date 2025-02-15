@@ -2,6 +2,7 @@ import time
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from unittest import mock
+from unittest.mock import Mock
 
 from pytest import fixture
 
@@ -20,9 +21,15 @@ from rcon.automods.no_leader import NoLeaderAutomod
 from rcon.types import GameStateType, Roles
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 
+state = {}
+redis_store = {}
+
 
 @fixture
 def team_view():
+    global state, redis_store
+    state = {}
+    redis_store = {}
     return {
         "allies": {
             "combat": 1353,
@@ -583,7 +590,7 @@ def construct_aplayer(
 
 def test_should_not_note(team_view):
     config = AutoModNoLeaderUserConfig(number_of_notes=0)
-    mod = NoLeaderAutomod(config, None)
+    mod = mod_with_config(config)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
     aplayer = construct_aplayer(player)
@@ -599,7 +606,7 @@ def test_should_not_note(team_view):
 
 def test_should_note_twice(team_view):
     config = AutoModNoLeaderUserConfig(number_of_notes=2, notes_interval_seconds=1)
-    mod = NoLeaderAutomod(config, None)
+    mod = mod_with_config(config)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
     aplayer = construct_aplayer(player)
@@ -621,7 +628,7 @@ def test_should_note_twice(team_view):
 
 def test_should_not_warn(team_view):
     config = AutoModNoLeaderUserConfig(number_of_warnings=0)
-    mod = NoLeaderAutomod(config, None)
+    mod = mod_with_config(config)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
     aplayer = construct_aplayer(player)
@@ -637,7 +644,7 @@ def test_should_not_warn(team_view):
 
 def test_should_warn_twice(team_view):
     config = AutoModNoLeaderUserConfig(number_of_warnings=2, warning_interval_seconds=1)
-    mod = NoLeaderAutomod(config, None)
+    mod = mod_with_config(config)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
     aplayer = construct_aplayer(player)
@@ -661,7 +668,7 @@ def test_should_warn_infinite(team_view):
     config = AutoModNoLeaderUserConfig(
         number_of_warnings=-1, warning_interval_seconds=0
     )
-    mod = NoLeaderAutomod(config, None)
+    mod = mod_with_config(config)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
     aplayer = construct_aplayer(player)
@@ -679,7 +686,7 @@ def test_should_punish(team_view):
         min_server_players_for_punish=10,
         immune_roles=[Roles("support")],
     )
-    mod = NoLeaderAutomod(config, None)
+    mod = mod_with_config(config)
 
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
@@ -703,7 +710,7 @@ def test_punish_wait(team_view):
         immune_player_level=10,
         immune_roles=[],
     )
-    mod = NoLeaderAutomod(config, None)
+    mod = mod_with_config(config)
 
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
@@ -734,7 +741,7 @@ def test_punish_twice(team_view):
         immune_player_level=10,
         immune_roles=[],
     )
-    mod = NoLeaderAutomod(config, None)
+    mod = mod_with_config(config)
 
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
@@ -781,7 +788,7 @@ def test_punish_too_little_players(team_view):
         immune_player_level=10,
         immune_roles=[],
     )
-    mod = NoLeaderAutomod(config, None)
+    mod = mod_with_config(config)
 
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
@@ -807,9 +814,7 @@ def test_dont_punish_below_min_number_of_players(team_view):
         immune_roles=[],
     )
 
-    player = team_view["allies"]["squads"]["able"]["players"][0]
-
-    mod = NoLeaderAutomod(config, None)
+    mod = mod_with_config(config)
     to_apply = mod.punitions_to_apply(
         team_view,
         "able",
@@ -826,22 +831,22 @@ def test_punish_small_squad(team_view):
     config = AutoModNoLeaderUserConfig(
         number_of_punishments=2,
         punish_interval_seconds=60,
-        min_squad_players_for_punish=7,
+        min_squad_players_for_punish=6,
         min_server_players_for_punish=0,
         immune_player_level=10,
         immune_roles=[],
     )
-    mod = NoLeaderAutomod(config, None)
+    mod = mod_with_config(config)
 
     watch_status = WatchStatus()
-    player = team_view["allies"]["squads"]["able"]["players"][0]
+    player = team_view["axis"]["squads"]["baker"]["players"][0]
     aplayer = construct_aplayer(player)
 
     assert PunishStepState.WAIT == mod.should_punish_player(
         watch_status,
         team_view,
-        "able",
-        team_view["allies"]["squads"]["able"],
+        "baker",
+        team_view["axis"]["squads"]["baker"],
         aplayer,
     )
 
@@ -855,7 +860,7 @@ def test_punish_disabled(team_view):
         immune_player_level=10,
         immune_roles=[],
     )
-    mod = NoLeaderAutomod(config, None)
+    mod = mod_with_config(config)
 
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
@@ -879,7 +884,7 @@ def test_punish_immuned_role(team_view):
         immune_player_level=10,
         immune_roles=[Roles.anti_tank],
     )
-    mod = NoLeaderAutomod(config, None)
+    mod = mod_with_config(config)
 
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
@@ -901,7 +906,7 @@ def test_punish_immuned_role(team_view):
         immune_player_level=10,
         immune_roles=[Roles.anti_tank, Roles.support],
     )
-    mod = NoLeaderAutomod(config, None)
+    mod = mod_with_config(config)
 
     watch_status = WatchStatus()
     assert PunishStepState.IMMUNED == mod.should_punish_player(
@@ -922,7 +927,7 @@ def test_punish_immuned_lvl(team_view):
         immune_player_level=50,
         immune_roles=[],
     )
-    mod = NoLeaderAutomod(config, None)
+    mod = mod_with_config(config)
 
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
@@ -946,7 +951,7 @@ def test_shouldnt_kick_without_punish(team_view):
         immune_player_level=10,
         immune_roles=[Roles.support],
     )
-    mod = NoLeaderAutomod(config, None)
+    mod = mod_with_config(config)
 
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
@@ -978,7 +983,7 @@ def test_shouldnt_kick_immuned(team_view):
         immune_player_level=10,
         immune_roles=[Roles.anti_tank],
     )
-    mod = NoLeaderAutomod(config, None)
+    mod = mod_with_config(config)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
     aplayer = construct_aplayer(player)
@@ -1002,7 +1007,7 @@ def test_shouldnt_kick_immuned_lvl(team_view):
         immune_player_level=50,
         immune_roles=[],
     )
-    mod = NoLeaderAutomod(config, None)
+    mod = mod_with_config(config)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
     aplayer = construct_aplayer(player)
@@ -1021,22 +1026,22 @@ def test_shouldnt_kick_small_squad(team_view):
     config = AutoModNoLeaderUserConfig(
         kick_after_max_punish=True,
         kick_grace_period_seconds=0,
-        min_squad_players_for_kick=7,
+        min_squad_players_for_kick=6,
         min_server_players_for_kick=0,
         immune_player_level=10,
         immune_roles=[],
     )
-    mod = NoLeaderAutomod(config, None)
+    mod = mod_with_config(config)
     watch_status = WatchStatus()
-    player = team_view["allies"]["squads"]["able"]["players"][0]
+    player = team_view["axis"]["squads"]["baker"]["players"][0]
     aplayer = construct_aplayer(player)
     watch_status.punished.setdefault(player["name"], []).append(datetime.now())
 
     assert PunishStepState.WAIT == mod.should_kick_player(
         watch_status,
         team_view,
-        "able",
-        team_view["allies"]["squads"]["able"],
+        "baker",
+        team_view["axis"]["squads"]["baker"],
         aplayer,
     )
 
@@ -1050,7 +1055,7 @@ def test_shouldnt_kick_small_game(team_view):
         immune_player_level=10,
         immune_roles=[],
     )
-    mod = NoLeaderAutomod(config, None)
+    mod = mod_with_config(config)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
     aplayer = construct_aplayer(player)
@@ -1074,7 +1079,7 @@ def test_shouldnt_kick_disabled(team_view):
         immune_player_level=10,
         immune_roles=[],
     )
-    mod = NoLeaderAutomod(config, None)
+    mod = mod_with_config(config)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
     aplayer = construct_aplayer(player)
@@ -1098,7 +1103,7 @@ def test_should_wait_kick(team_view):
         immune_player_level=10,
         immune_roles=[],
     )
-    mod = NoLeaderAutomod(config, None)
+    mod = mod_with_config(config)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
     aplayer = construct_aplayer(player)
@@ -1147,7 +1152,7 @@ def test_ignores_commander(team_view):
         punish_message="",
         kick_message="",
     )
-    mod = NoLeaderAutomod(config, None)
+    mod = mod_with_config(config)
     to_apply = mod.punitions_to_apply(
         team_view,
         "Commander",
@@ -1162,11 +1167,12 @@ def test_ignores_commander(team_view):
 def test_watcher(team_view):
     config = AutoModNoLeaderUserConfig(
         dont_do_anything_below_this_number_of_players=0,
+        dry_run=True,
         number_of_notes=0,
         number_of_warnings=1,
-        warning_interval_seconds=3,
+        warning_interval_seconds=1,
         number_of_punishments=2,
-        punish_interval_seconds=4,
+        punish_interval_seconds=1,
         min_squad_players_for_punish=0,
         min_server_players_for_punish=0,
         kick_after_max_punish=True,
@@ -1180,15 +1186,6 @@ def test_watcher(team_view):
         kick_message="",
     )
 
-    state = {}
-
-    @contextmanager
-    def fake_state(team, squad_name):
-        try:
-            yield state.setdefault(f"{team}{squad_name}", WatchStatus())
-        except (SquadCycleOver, SquadHasLeader):
-            del state[f"{team}{squad_name}"]
-
     rcon = mock.MagicMock()
     rcon.get_team_view.return_value = team_view
     expected_warned_players = [
@@ -1200,7 +1197,7 @@ def test_watcher(team_view):
             role="heavymachinegunner",
             lvl=88,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1214,7 +1211,7 @@ def test_watcher(team_view):
             role="rifleman",
             lvl=82,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1228,7 +1225,7 @@ def test_watcher(team_view):
             role="assault",
             lvl=69,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1242,7 +1239,7 @@ def test_watcher(team_view):
             role="engineer",
             lvl=59,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1256,7 +1253,7 @@ def test_watcher(team_view):
             role="antitank",
             lvl=71,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1270,7 +1267,7 @@ def test_watcher(team_view):
             role="rifleman",
             lvl=102,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1284,7 +1281,7 @@ def test_watcher(team_view):
             role="assault",
             lvl=110,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1298,7 +1295,7 @@ def test_watcher(team_view):
             role="officer",
             lvl=43,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1312,7 +1309,7 @@ def test_watcher(team_view):
             role="engineer",
             lvl=170,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1326,7 +1323,7 @@ def test_watcher(team_view):
             role="antitank",
             lvl=129,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1340,7 +1337,7 @@ def test_watcher(team_view):
             role="heavymachinegunner",
             lvl=67,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1354,7 +1351,7 @@ def test_watcher(team_view):
             role="spotter",
             lvl=123,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1368,7 +1365,7 @@ def test_watcher(team_view):
             role="sniper",
             lvl=184,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1380,8 +1377,7 @@ def test_watcher(team_view):
     )
 
     # 1st warning
-    mod = NoLeaderAutomod(config, None)
-    mod.watch_state = fake_state
+    mod = mod_with_config(config)
     to_apply = get_punitions_to_apply(rcon, [mod])
     assert expected_warned_players == to_apply.warning
 
@@ -1518,7 +1514,7 @@ def test_watcher(team_view):
         ),
     ]
 
-    mod = NoLeaderAutomod(config, None)
+    mod = mod_with_config(config)
     mod.watch_state = fake_state
     assert PunitionsToApply(
         warning=[], punish=[], kick=[], squads_state=expected_squad_state
@@ -1548,9 +1544,10 @@ def test_watcher_no_kick(team_view):
         dont_do_anything_below_this_number_of_players=0,
         number_of_notes=0,
         number_of_warnings=1,
-        warning_interval_seconds=3,
+        warning_interval_seconds=1,
         number_of_punishments=2,
-        punish_interval_seconds=4,
+        dry_run=True,
+        punish_interval_seconds=1,
         min_squad_players_for_punish=3,
         min_server_players_for_punish=0,
         kick_after_max_punish=False,
@@ -1563,14 +1560,6 @@ def test_watcher_no_kick(team_view):
         punish_message="",
         kick_message="",
     )
-    state = {}
-
-    @contextmanager
-    def fake_state(team, squad_name):
-        try:
-            yield state.setdefault(f"{team}{squad_name}", WatchStatus())
-        except (SquadCycleOver, SquadHasLeader):
-            del state[f"{team}{squad_name}"]
 
     rcon = mock.MagicMock()
     rcon.get_team_view.return_value = team_view
@@ -1583,7 +1572,7 @@ def test_watcher_no_kick(team_view):
             role="heavymachinegunner",
             lvl=88,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1597,7 +1586,7 @@ def test_watcher_no_kick(team_view):
             role="rifleman",
             lvl=82,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1611,7 +1600,7 @@ def test_watcher_no_kick(team_view):
             role="assault",
             lvl=69,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1625,7 +1614,7 @@ def test_watcher_no_kick(team_view):
             role="engineer",
             lvl=59,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1639,7 +1628,7 @@ def test_watcher_no_kick(team_view):
             role="antitank",
             lvl=71,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1653,7 +1642,7 @@ def test_watcher_no_kick(team_view):
             role="rifleman",
             lvl=102,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1667,7 +1656,7 @@ def test_watcher_no_kick(team_view):
             role="assault",
             lvl=110,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1681,7 +1670,7 @@ def test_watcher_no_kick(team_view):
             role="officer",
             lvl=43,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1695,7 +1684,7 @@ def test_watcher_no_kick(team_view):
             role="engineer",
             lvl=170,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1709,7 +1698,7 @@ def test_watcher_no_kick(team_view):
             role="antitank",
             lvl=129,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1723,7 +1712,7 @@ def test_watcher_no_kick(team_view):
             role="heavymachinegunner",
             lvl=67,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1737,7 +1726,7 @@ def test_watcher_no_kick(team_view):
             role="automaticrifleman",
             lvl=10,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1751,7 +1740,7 @@ def test_watcher_no_kick(team_view):
             role="spotter",
             lvl=123,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1765,7 +1754,7 @@ def test_watcher_no_kick(team_view):
             role="sniper",
             lvl=184,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1779,8 +1768,7 @@ def test_watcher_no_kick(team_view):
         )
     )
 
-    mod = NoLeaderAutomod(config, None)
-    mod.watch_state = fake_state
+    mod = mod_with_config(config)
     # 1st warning
     assert expected_warned_players == get_punitions_to_apply(rcon, [mod]).warning
     assert [] == get_punitions_to_apply(rcon, [mod]).punish
@@ -1811,9 +1799,10 @@ def test_watcher_resets(team_view):
         dont_do_anything_below_this_number_of_players=0,
         number_of_notes=0,
         number_of_warnings=0,
-        warning_interval_seconds=3,
+        warning_interval_seconds=1,
         number_of_punishments=1,
-        punish_interval_seconds=4,
+        punish_interval_seconds=1,
+        dry_run=True,
         min_squad_players_for_punish=3,
         min_server_players_for_punish=0,
         kick_after_max_punish=False,
@@ -1826,14 +1815,6 @@ def test_watcher_resets(team_view):
         punish_message="",
         kick_message="",
     )
-    state = {}
-
-    @contextmanager
-    def fake_state(team, squad_name):
-        try:
-            yield state.setdefault(f"{team}{squad_name}", WatchStatus())
-        except (SquadCycleOver, SquadHasLeader):
-            del state[f"{team}{squad_name}"]
 
     rcon = mock.MagicMock()
     rcon.get_team_view.return_value = team_view
@@ -1846,7 +1827,7 @@ def test_watcher_resets(team_view):
             role="heavymachinegunner",
             lvl=88,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1860,7 +1841,7 @@ def test_watcher_resets(team_view):
             role="rifleman",
             lvl=82,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1874,7 +1855,7 @@ def test_watcher_resets(team_view):
             role="assault",
             lvl=69,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1888,7 +1869,7 @@ def test_watcher_resets(team_view):
             role="engineer",
             lvl=59,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1902,7 +1883,7 @@ def test_watcher_resets(team_view):
             role="antitank",
             lvl=71,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1916,7 +1897,7 @@ def test_watcher_resets(team_view):
             role="rifleman",
             lvl=102,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1930,7 +1911,7 @@ def test_watcher_resets(team_view):
             role="assault",
             lvl=110,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1944,7 +1925,7 @@ def test_watcher_resets(team_view):
             role="officer",
             lvl=43,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1958,7 +1939,7 @@ def test_watcher_resets(team_view):
             role="engineer",
             lvl=170,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1972,7 +1953,7 @@ def test_watcher_resets(team_view):
             role="antitank",
             lvl=129,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -1986,7 +1967,7 @@ def test_watcher_resets(team_view):
             role="heavymachinegunner",
             lvl=67,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -2000,7 +1981,7 @@ def test_watcher_resets(team_view):
             role="automaticrifleman",
             lvl=10,
             details=PunishDetails(
-                author="NoLeaderWatch-DryRun",
+                author="AutoMod_NoLeaderWatch-DryRun",
                 message="",
                 discord_audit_url=None,
                 dry_run=True,
@@ -2010,7 +1991,7 @@ def test_watcher_resets(team_view):
         # APlayer(name="DarkVisionary",
     ]
 
-    mod = NoLeaderAutomod(config, None)
+    mod = mod_with_config(config)
     mod.watch_state = fake_state
     # 1st punish
     assert expected_players == get_punitions_to_apply(rcon, [mod]).punish
@@ -2039,6 +2020,37 @@ def test_watcher_resets(team_view):
     assert expected_players == get_punitions_to_apply(rcon, [mod]).punish
 
 
+@contextmanager
+def fake_state(team, squad_name):
+    try:
+        yield state.setdefault(f"{team}{squad_name}", WatchStatus())
+    except (SquadCycleOver, SquadHasLeader):
+        del state[f"{team}{squad_name}"]
+
+
 def test_default_config():
     config = AutoModNoLeaderUserConfig.load_from_db()
     assert config.enabled == False
+
+def fake_setex(k, _, v):
+    redis_store[k] = v
+
+
+def fake_get(k):
+    return redis_store.get(k)
+
+
+def fake_exists(k):
+    return redis_store.get(k, None) is not None
+
+def fake_delete(ks: str):
+    redis_store.pop(ks, None)
+
+def mod_with_config(c: AutoModNoLeaderUserConfig) -> NoLeaderAutomod:
+    mod = NoLeaderAutomod(c, Mock())
+    mod.red.setex = fake_setex
+    mod.red.delete = fake_delete
+    mod.red.get = fake_get
+    mod.red.exists = fake_exists
+    mod.watch_state = fake_state
+    return mod

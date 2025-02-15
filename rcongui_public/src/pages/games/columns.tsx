@@ -1,14 +1,16 @@
 'use client'
 
-import { ColumnDef } from '@tanstack/react-table'
+import {ColumnDef} from '@tanstack/react-table'
 import dayjs from 'dayjs'
 import LocalizedFormat from 'dayjs/plugin/localizedFormat'
-import { Button } from '@/components/ui/button'
-import { Link } from 'react-router'
-import { getGameDuration } from './utils'
-import { ScoreboardMap } from '@/types/api'
-import { MapLayer } from '@/types/mapLayer'
-import { useTranslation } from 'react-i18next'
+import {Button} from '@/components/ui/button'
+import {Link} from 'react-router'
+import {getGameDuration} from './utils'
+import {ScoreboardMap} from '@/types/api'
+import {MapLayer} from '@/types/mapLayer'
+import {useTranslation} from 'react-i18next'
+import {dayjsLocal} from "@/lib/utils";
+import WeatherIcon from "@/components/game/weather-icon";
 
 dayjs.extend(LocalizedFormat)
 
@@ -34,25 +36,50 @@ export const columns: ColumnDef<ScoreboardMap>[] = [
     },
     id: 'map',
     accessorKey: 'map',
-    minSize: 200,
-    size: 200,
     cell: function MapCell({ cell }) {
       const gameMap = cell.getValue() as MapLayer
       const size = 60
       const ratio = 9 / 16
 
-      const { t } = useTranslation('game')
-
       return (
         <div className="flex flex-row items-center gap-2 w-max">
-          <img src={'/maps/icons/' + gameMap.image_name} width={size} height={size * ratio} alt="" />
-          <div className="flex flex-col divide-y-2 p-1">
-            <div className="pl-1">{gameMap.map.pretty_name}</div>
-            <div className="divide-x-2 text-sm text-muted-foreground">
-              <span className="px-1">{gameMap.game_mode[0].toUpperCase() + gameMap.game_mode.slice(1)}</span>
-              <span className="pl-1">{t(`weather.${gameMap.environment}`)}</span>
-            </div>
-          </div>
+          <img src={'/maps/icons/' + gameMap.image_name} width={size} height={size * ratio} alt=""/>
+          <span>{gameMap.map.pretty_name}</span>
+        </div>
+      )
+    },
+  },
+  {
+    header: function WeatherHeader() {
+      const { t } = useTranslation('game')
+      return t('matchTable.weather')
+    },
+    id: 'map',
+    accessorKey: 'map',
+    cell: function MapCell({ cell }) {
+      const gameMap = cell.getValue() as MapLayer
+
+      return (
+        <WeatherIcon environment={gameMap.environment} className="text-muted-foreground"/>
+      )
+    },
+  },
+  {
+    header: function Mode() {
+      const {t} = useTranslation('game')
+      return t('matchTable.mode')
+    },
+    id: 'map',
+    accessorKey: 'map',
+    cell: function MapCell({cell}) {
+      const gameMap = cell.getValue() as MapLayer
+
+      return (
+        <div>
+          <span>{gameMap.game_mode[0].toUpperCase() + gameMap.game_mode.slice(1)}</span>
+          {gameMap.attackers &&
+            <span> ({gameMap.map[gameMap.attackers].name.toUpperCase()})</span>
+          }
         </div>
       )
     },
@@ -66,12 +93,23 @@ export const columns: ColumnDef<ScoreboardMap>[] = [
     accessorFn: (row) => `${row.result?.allied ?? '?'} - ${row.result?.axis ?? '?'}`,
   },
   {
+    header: function WeekdayHeader() {
+      const { t } = useTranslation('translation')
+      return t('time.weekday')
+    },
+    accessorKey: 'start',
+    cell: ({ cell }) => {
+      const globalLocaleData = dayjs.localeData();
+      return globalLocaleData.weekdaysShort()[dayjsLocal(cell.getValue() as string).day()];
+    },
+  },
+  {
     header: function StartHeader() {
       const { t } = useTranslation('game')
       return t('matchTable.start')
     },
     accessorKey: 'start',
-    cell: ({ cell }) => dayjs(cell.getValue() as string).format('L LT'),
+    cell: ({ cell }) => dayjsLocal(cell.getValue() as string).format('L LT'),
   },
   {
     header: function DurationHeader() {

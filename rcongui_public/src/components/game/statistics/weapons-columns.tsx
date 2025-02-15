@@ -28,7 +28,7 @@ export const killByColumns: ColumnDef<WeaponKillCount>[] = [
           header={'K'}
           desc={t('playersTable.kills')}
           onClick={() => {
-            column.toggleSorting(column.getIsSorted() === 'asc')
+            column.toggleSorting(column.getIsSorted() !== 'desc')
           }}
         />
       )
@@ -55,7 +55,7 @@ export const deathByColumns: ColumnDef<WeaponKillCount>[] = [
           header={'D'}
           desc={t('playersTable.deaths')}
           onClick={() => {
-            column.toggleSorting(column.getIsSorted() === 'asc')
+            column.toggleSorting(column.getIsSorted() !== 'desc')
           }}
         />
       )

@@ -3,7 +3,6 @@ import {
   IconButton,
   Typography,
   Drawer,
-  Toolbar,
   Divider,
   Avatar,
   Tabs,
@@ -25,7 +24,7 @@ import {
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
 import { TabContext, TabPanel } from "@mui/lab";
-import { styled, useMediaQuery } from "@mui/system";
+import { styled } from "@mui/material/styles";
 import { ActionMenu } from "@/features/player-action/ActionMenu";
 import dayjs from "dayjs";
 import StarIcon from "@mui/icons-material/Star";
@@ -42,20 +41,20 @@ import { ClientError } from "../shared/ClientError";
 import { useState } from "react";
 import {
   getSteamProfileUrl,
-  getXboxProfileUrl,
   isSteamPlayer,
 } from "@/utils/lib";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSteam, faXbox } from "@fortawesome/free-brands-svg-icons";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import DoneAllIcon from "@mui/icons-material/DoneAll";
+import { faSteam } from "@fortawesome/free-brands-svg-icons";
 import { Link } from "react-router-dom";
 import { Chip } from "@mui/material";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
 import PersonIcon from "@mui/icons-material/Person";
-import PublicIcon from '@mui/icons-material/Public';
-import FlagIcon from '@mui/icons-material/Flag';
+import FlagIcon from "@mui/icons-material/Flag";
+import WarningIcon from "@mui/icons-material/Warning";
+import Emoji from "../shared/Emoji";
+import CopyableText from "../shared/CopyableText";
+import SportsEsportsIcon from '@mui/icons-material/SportsEsports';
 
 const OnlineStatusBadge = styled(Badge, {
   shouldForwardProp: (props) => props !== "isOnline",
@@ -132,15 +131,109 @@ const Message = styled(Box)(({ theme }) => ({
   borderBottomRightRadius: 0,
 }));
 
+const VipEntry = ({ vip }) => {
+  // vip.expiration is null if the VIP expiration is set indefinitely
+  const expiration = dayjs(vip.expiration);
+  const isActive = expiration === null ? true : expiration.isAfter(dayjs());
+  // When the VIP is not created by CRCON, there is player.vip = true but no vip record entry exists
+  const isNotCreatedByCrcon = vip.not_created_by_crcon;
+
+  return (
+    <Stack direction="row" alignItems="center" spacing={1}>
+      <Typography variant="body2" component="span">
+        Server #{vip.server_number}
+      </Typography>
+      <div>
+        <Chip
+          label={isActive ? "VIP" : "Expired"}
+          color={isActive ? "primary" : "error"}
+          variant={isActive ? "filled" : "outlined"}
+          icon={isNotCreatedByCrcon ? <WarningIcon /> : null}
+        />
+      </div>
+      <Typography variant="body2" component="span">
+        {isActive ? "until" : "from"} {dayjs(vip.expiration).format("LLL")}
+      </Typography>
+    </Stack>
+  );
+};
+
+const VipStatus = ({ vip, otherVips }) => {
+  if (!vip && otherVips.length === 0) {
+    return <Typography>No VIP records found</Typography>;
+  }
+
+  return (
+    <Stack spacing={1}>
+      {vip && <VipEntry vip={vip} />}
+      {otherVips.length > 0 && (
+        <>
+          {vip && <Divider variant="middle" sx={{ my: 4 }} />}
+          {otherVips.map((vip) => (
+            <VipEntry key={vip.server_number} vip={vip} />
+          ))}
+        </>
+      )}
+    </Stack>
+  );
+};
+
+const WatchlistStatus = ({ watchlist }) => {
+  if (!watchlist) {
+    return <Typography>No watchlist records found</Typography>;
+  }
+
+  const isActive = watchlist.is_watched;
+
+  return (
+    <Stack spacing={1}>
+      <Typography>{watchlist.reason || "[no reason]"}</Typography>
+      <Chip
+        label={isActive ? "Active" : "Inactive"}
+        color={isActive ? "primary" : "error"}
+        variant={isActive ? "filled" : "outlined"}
+        sx={{ width: "fit-content" }}
+      />
+      <Typography>Visits since: {watchlist.count}</Typography>
+      <Typography>By: {watchlist.by}</Typography>
+      {isActive && (
+        <Typography>
+          Modified: {dayjs(watchlist.modified).format("LLL")}
+        </Typography>
+      )}
+    </Stack>
+  );
+};
+
+const FlagStatus = ({ flags }) => {
+  if (!flags.length) {
+    return <Typography>No flags found</Typography>;
+  }
+
+  return (
+    <Stack>
+      {flags.map(({ flag, comment, modified }) => (
+        <Stack direction="row" alignItems="center" spacing={1} key={flag}>
+          <Typography>
+            <Emoji emoji={flag} />
+          </Typography>
+          <Typography variant="body2">{comment || "[no comment]"}</Typography>
+        </Stack>
+      ))}
+    </Stack>
+  );
+};
+
 const BasicProfileDetails = ({
   firstSeen,
   lastSeen,
-  country,
   vip,
+  otherVips,
   sessionCount,
   flags,
   totalPlaytime,
   names,
+  watchlist,
 }) => {
   return (
     <Stack spacing={3}>
@@ -149,26 +242,9 @@ const BasicProfileDetails = ({
           variant="h6"
           sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1 }}
         >
-          <PublicIcon /> Location
-        </Typography>
-        <Typography>{country ?? "Unknown"}</Typography>
-      </Box>
-
-      <Divider />
-
-      <Box component="section">
-        <Typography
-          variant="h6"
-          sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1 }}
-        >
           <FlagIcon /> Flags
         </Typography>
-        {flags.map(({ flag, comment, modified }) => (
-          <Stack key={flag}>
-            <Typography>{flag} - {comment}</Typography>
-            <Typography>Modified: {dayjs(modified).format("LLL")}</Typography>
-          </Stack>
-        ))}
+        <FlagStatus flags={flags} />
       </Box>
 
       <Divider />
@@ -184,7 +260,9 @@ const BasicProfileDetails = ({
           <Typography>First Seen: {dayjs(firstSeen).format("LLL")}</Typography>
           <Typography>Last Seen: {dayjs(lastSeen).format("LLL")}</Typography>
           <Typography>Visits: {sessionCount}</Typography>
-          <Typography>Playtime: {Math.floor(totalPlaytime / 3600)} hours</Typography>
+          <Typography>
+            Playtime: {Math.floor(totalPlaytime / 3600)} hours
+          </Typography>
         </Stack>
       </Box>
 
@@ -197,20 +275,7 @@ const BasicProfileDetails = ({
         >
           <WorkspacePremiumIcon /> VIP Status
         </Typography>
-        <Stack spacing={0.5}>
-          <div>
-            <Chip
-              label={vip ? "VIP" : "Non-VIP"}
-              color={vip ? "primary" : "default"}
-              variant={vip ? "filled" : "outlined"}
-            />
-          </div>
-          {vip && (
-            <Typography variant="body2">
-              Expires: {dayjs(vip.expiration).format("LLL")}
-            </Typography>
-          )}
-        </Stack>
+        <VipStatus vip={vip} otherVips={otherVips} />
       </Box>
 
       <Divider />
@@ -220,11 +285,28 @@ const BasicProfileDetails = ({
           variant="h6"
           sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1 }}
         >
-          <PersonIcon /> Known Names
+          <VisibilityIcon /> Watchlist
+        </Typography>
+        <WatchlistStatus watchlist={watchlist} />
+      </Box>
+
+      <Divider />
+
+      <Box component="section">
+        <Typography
+          variant="h6"
+          sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1 }}
+        >
+          <PersonIcon /> Also known as
         </Typography>
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
           {names?.map((nameObj) => (
-            <Chip key={nameObj.id} label={nameObj.name} variant="outlined" size="small" />
+            <Chip
+              key={nameObj.id}
+              label={nameObj.name}
+              variant="outlined"
+              size="small"
+            />
           ))}
         </Box>
       </Box>
@@ -373,19 +455,7 @@ const ProfileError = ({ error, onClose }) => (
 
 const PlayerDetails = ({ player, onClose }) => {
   const [openedTab, setOpenedTab] = useState("profile");
-  const [copySuccess, setCopySuccess] = useState(false);
   const { openDialog } = useActionDialog();
-
-  const handleCopyId = async () => {
-    const id = player?.player_id ?? profile.player_id;
-    try {
-      await navigator.clipboard.writeText(id);
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy ID:", err);
-    }
-  };
 
   const handleActionClick = (recipients) => (action) => {
     openDialog(action, recipients);
@@ -434,25 +504,7 @@ const PlayerDetails = ({ player, onClose }) => {
             </Link>
           </Typography>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <Typography variant="subtitle2">
-              ID: {player?.player_id ?? profile.player_id}
-            </Typography>
-            <IconButton
-              size="small"
-              onClick={handleCopyId}
-              sx={{
-                padding: "2px",
-                "& .MuiSvgIcon-root": {
-                  fontSize: "0.9rem",
-                },
-              }}
-            >
-              {copySuccess ? (
-                <DoneAllIcon sx={{ color: green["500"] }} />
-              ) : (
-                <ContentCopyIcon />
-              )}
-            </IconButton>
+            <CopyableText text={player?.player_id ?? profile.player_id} />
           </Box>
           <Box>
             {isSteamPlayer(player) && (
@@ -466,17 +518,7 @@ const PlayerDetails = ({ player, onClose }) => {
                 <FontAwesomeIcon icon={faSteam} />
               </Button>
             )}
-            {!isSteamPlayer(player) && (
-              <Button
-                variant={"outline"}
-                LinkComponent={"a"}
-                href={getXboxProfileUrl(player.name)}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <FontAwesomeIcon icon={faXbox} />
-              </Button>
-            )}
+            {!isSteamPlayer(player) && <SportsEsportsIcon />}
           </Box>
         </Box>
         <IconButton
@@ -560,7 +602,12 @@ const PlayerDetails = ({ player, onClose }) => {
               profile.total_playtime_seconds ?? profile.total_playtime_seconds
             }
             vip={playerVip}
+            otherVips={profile.vips.filter(
+              // if player is not VIP on this server, the 'playerVip' will be undefined
+              (vip) => vip.server_number !== (playerVip?.server_number ?? -1)
+            )}
             names={profile.names}
+            watchlist={profile.watchlist}
           />
         </TabPanel>
         {isOnline && (
@@ -713,7 +760,6 @@ export const PlayerDetailDrawer = () => {
       anchor="right"
       onClose={close}
     >
-      <Toolbar />
       {isLoading && !player ? (
         <LoadingSkeleton onClose={close} />
       ) : profileError ? (

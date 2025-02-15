@@ -13,10 +13,10 @@ export const StyledLogsTable = styled("table", {
     // TABLE
     fontSize:
       fontSize === "small"
-        ? theme.typography.pxToRem(12)
+        ? "0.85rem"
         : fontSize === "large"
-        ? theme.typography.pxToRem(20)
-        : theme.typography.pxToRem(16),
+        ? "1.15rem"
+        : "1rem",
     borderCollapse: "collapse",
     borderSpacing: 0,
     border: `1px solid ${theme.palette.divider}`,
@@ -26,8 +26,8 @@ export const StyledLogsTable = styled("table", {
     },
     "& th": {
       ...getDensityPadding(density, theme),
-      paddingTop: "auto",
-      paddingBottom: "auto",
+      verticalAlign: "middle",
+      height: "3rem",
     },
     "& tbody tr": {
       verticalAlign: "top",

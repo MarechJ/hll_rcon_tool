@@ -14,27 +14,27 @@ import rcon.expiring_vips.service
 import rcon.seed_vip.service
 import rcon.user_config
 import rcon.user_config.utils
-from rcon import auto_settings, broadcast, game_logs, routines
+import rcon.watch_killrate
+from rcon import auto_settings, broadcast, routines
 from rcon.automods import automod
 from rcon.blacklist import BlacklistCommandHandler
 from rcon.cache_utils import RedisCached, get_redis_pool, invalidates
 from rcon.discord_chat import get_handler
-from rcon.game_logs import LogLoop, LogStream, load_generic_hooks
+from rcon.logs.loop import LogLoop, load_generic_hooks
+from rcon.logs.recorder import LogRecorder
+from rcon.logs.stream import LogStream
 from rcon.models import PlayerID, enter_session, install_unaccent
 from rcon.rcon import get_rcon
 from rcon.scoreboard import live_stats_loop
 from rcon.steam_utils import enrich_db_users
 from rcon.user_config.auto_settings import AutoSettingsConfig
 from rcon.user_config.log_stream import LogStreamUserConfig
-from rcon.user_config.seed_vip import SeedVIPUserConfig
 from rcon.user_config.webhooks import (
     BaseMentionWebhookUserConfig,
     BaseUserConfig,
     BaseWebhookUserConfig,
 )
 from rcon.utils import ApiKey
-import rcon.watch_killrate
-
 
 logger = logging.getLogger(__name__)
 
@@ -89,11 +89,6 @@ def run_log_stream():
         sys.exit(1)
 
 
-@cli.command(name="deprecated_log_loop")
-def run_logs_eventloop():
-    game_logs.event_loop()
-
-
 @cli.command(name="broadcast_loop")
 def run_broadcast_loop():
     broadcast.run()
@@ -143,10 +138,15 @@ def run_blacklists():
 
 
 @cli.command(name="log_recorder")
-@click.option("-t", "--frequency-min", default=5)
+@click.option("-t", "--frequency-min", required=False)
+@click.option("-i", "--interval", default=10)
 @click.option("-n", "--now", is_flag=True)
-def run_log_recorder(frequency_min, now):
-    game_logs.LogRecorder(frequency_min, now).run()
+def run_log_recorder(interval, frequency_min, now):
+    if frequency_min and interval:
+        raise Exception("Cannot have frequency-min and interval at the same time")
+    if frequency_min:
+        interval = frequency_min * 60
+    LogRecorder(interval).run(run_immediately=now)
 
 
 def init(force=False):

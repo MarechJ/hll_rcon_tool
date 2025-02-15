@@ -36,7 +36,7 @@ import {
   ReasonDialog,
 } from "@/components/PlayerView/playerActions";
 import { toast } from "react-toastify";
-import { FlagDialog } from "@/pages/records/players";
+import { FlagDialog } from "@/components/FlagDialog";
 import Padlock from "@/components/shared/Padlock";
 import BlacklistRecordCreateDialog from "@/components/Blacklist/BlacklistRecordCreateDialog";
 
@@ -98,8 +98,8 @@ const Squad = ({
             alt={squadData.get("type", "na")}
             src={
               squadName.toUpperCase() === "NULL"
-                ? `icons/sleep.png`
-                : `icons/roles/${squadData.get("type")}.png`
+                ? `/icons/sleep.png`
+                : `/icons/roles/${squadData.get("type")}.png`
             }
           >
             {squadName[0].toUpperCase()}

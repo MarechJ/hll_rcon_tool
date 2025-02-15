@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import { ControlledDesktopDateTimePicker } from '@/components/form/core/ControlledDesktopDateTimePicker';
 
-export const ExpirationField = ({ control, errors, ...props }) => {
+export const ExpirationField = ({ control, errors, defaultValue, name }) => {
   const error = errors['expiration'];
   const hasError = !!error;
 
@@ -11,10 +11,10 @@ export const ExpirationField = ({ control, errors, ...props }) => {
 
   return (
     <ControlledDesktopDateTimePicker
-      defaultValue={props.defaultValue ?? dayjs()}
+      defaultValue={defaultValue ?? dayjs()}
       control={control}
       errors={errors}
-      name={'expiration'}
+      name={name ?? "expiration"}
       rules={{ required: 'Expiration date is required.', moreThanNow: 'Date must be more then now.', valueAsDate: true, validate: {
         moreThanNow: (value) => dayjs().isBefore(value),
       } }}

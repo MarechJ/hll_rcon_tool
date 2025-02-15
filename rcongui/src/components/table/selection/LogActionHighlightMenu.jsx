@@ -26,6 +26,8 @@ function fromValue(v) {
  * @param {Object} props
  * @param {Object} props.actionOptions
  * @param {Function} props.onActionSelect
+ * @param {Function} props.onToggle
+ * @param {string} props.toggleValue
  * @returns {JSX.Element}
  */
 export const LogActionHighlightMenu = ({
@@ -40,6 +42,7 @@ export const LogActionHighlightMenu = ({
     onOpen,
     onClose,
     filteredOptions,
+    searchInputRef,
   } = useSelectionMenu(actionOptions);
 
   return (
@@ -88,6 +91,12 @@ export const LogActionHighlightMenu = ({
         OFF
       </ToggleButton>
     </ToggleButtonGroup>
+    <SearchInput
+      value={search}
+      onChange={(e) => setSearch(e.target.value)}
+      placeholder="Search actions"
+      ref={searchInputRef}
+    />
     <List
       sx={{
         width: "100%",
@@ -99,11 +108,6 @@ export const LogActionHighlightMenu = ({
         "& ul": { padding: 0 },
       }}
     >
-      <SearchInput
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search actions"
-      />
       {filteredOptions.map((actionName) => (
         <ListItem
           key={`${actionName}`}

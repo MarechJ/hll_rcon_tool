@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from logging import getLogger
 from typing import Any, Dict, Iterable, Literal, Optional, Sequence, Type
 
-from rcon import blacklist, game_logs, maps, player_history
+from rcon import blacklist, game_logs, maps, player_history, webhook_service
 from rcon.audit import ingame_mods, online_mods
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.discord import audit_user_config_differences
@@ -743,7 +743,7 @@ class RconAPI(Rcon):
         new_config = VoteMapUserConfig.load_from_db()
 
         # on -> off or off -> on
-        if old_config.enabled != new_config:
+        if old_config.enabled != new_config.enabled:
             self.reset_votemap_state()
 
         return True
@@ -1940,3 +1940,47 @@ class RconAPI(Rcon):
         return edit_message_template(
             id=id, title=title, content=content, category=category, author=by
         )
+
+    def get_webhook_queue_overview(
+        self, queue_id: str
+    ) -> webhook_service.QueueStatus | None:
+        return webhook_service.get_queue_overview(queue_id=queue_id)
+
+    def get_all_webhook_queues(self) -> list[str]:
+        return webhook_service.get_all_queue_keys()
+
+    def get_webhook_service_summary(self):
+        """Return the overall status of the service
+
+        All webhook queues, the number of queued messages, their rate limit bucket,
+        the number of rate limits each bucket has had and whether we are globally rate limited
+        """
+        return webhook_service.webhook_service_summary()
+
+    def reset_webhook_queues(self) -> int:
+        """Delete each queue; unprocessed messages may be lost depending on timing"""
+        return webhook_service.reset_webhook_queues()
+
+    def reset_all_webhook_queues_for_server_number(
+        self, server_number: int | str
+    ) -> int:
+        """Delete each queue associated with the specified server number"""
+        return webhook_service.reset_all_queues_for_server_number(
+            server_number=server_number
+        )
+
+    def reset_webhook_queue(self, queue_id: str) -> bool:
+        """Delete the specified queue; returning if it deleted any entries"""
+        return webhook_service.reset_queue(queue_id=queue_id)
+
+    def reset_webhook_queue_type(
+        self, webhook_type: webhook_service.WebhookType | str
+    ) -> int:
+        """Delete each queue of wh_type (discord, etc.) returning the number of deleted queues"""
+        return webhook_service.reset_queue_type(webhook_type=webhook_type)
+
+    def reset_webhook_message_type(
+        self, message_type: webhook_service.WebhookMessageType | str
+    ) -> int:
+        """Delete each queue of wh_type (discord, etc.) returning the number of deleted queues"""
+        return webhook_service.reset_message_type(message_type=message_type)

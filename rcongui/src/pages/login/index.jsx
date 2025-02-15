@@ -18,9 +18,8 @@ import { useForm, Controller } from "react-hook-form";
 import { createTheme, ThemeProvider, styled } from "@mui/material/styles";
 import { redirect } from "react-router-dom";
 import { cmd } from "@/utils/fetchUtils";
-import getDashboardTheme from "@/themes/getDashboardTheme";
-import { useStorageState } from "@/hooks/useStorageState";
 import {useEffect, useState} from "react";
+import getDefaultTheme from "@/themes/default/getDefaultTheme";
 
 export const loader = async ({ request }) => {
   let user;
@@ -119,7 +118,6 @@ const MainWrapper = styled(Stack)(({ theme }) => ({
 
 export default function Login() {
   const [loading, setLoading] = useState(false);
-  const [mode] = useStorageState("mode", "dark");
 
   const {
     handleSubmit,
@@ -146,7 +144,7 @@ export default function Login() {
   };
 
   return (
-    <ThemeProvider theme={createTheme(getDashboardTheme(mode))}>
+    <ThemeProvider theme={createTheme(getDefaultTheme())}>
       <HeroImage src="/hll15.webp" alt="" />
       <Wrapper>
         <HeroImageWrapper></HeroImageWrapper>

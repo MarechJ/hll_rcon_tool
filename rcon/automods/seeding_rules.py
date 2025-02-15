@@ -26,14 +26,14 @@ from rcon.automods.models import (
 )
 from rcon.automods.num_or_inf import num_or_inf
 from rcon.cache_utils import get_redis_client
-from rcon.game_logs import on_match_start
+from rcon.logs.loop import on_match_start
 from rcon.maps import GameMode, parse_layer
 from rcon.rcon import StructuredLogLineType
 from rcon.types import GameStateType, GetDetailedPlayer, Roles
 from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig
 
 SEEDING_RULES_RESET_SECS = 120
-AUTOMOD_USERNAME = "SeedingRulesAutomod"
+AUTOMOD_USERNAME = "AutoMod_SeedingRules"
 SEEDING_RULE_NAMES = ["disallowed_roles", "disallowed_weapons", "enforce_cap_fight"]
 
 

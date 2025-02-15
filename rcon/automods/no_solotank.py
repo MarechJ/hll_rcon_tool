@@ -26,7 +26,7 @@ from rcon.types import GameStateType
 from rcon.user_config.auto_mod_solo_tank import AutoModNoSoloTankUserConfig
 
 SOLO_TANK_RESET_SECS = 120
-AUTOMOD_USERNAME = "NoSoloTank"
+AUTOMOD_USERNAME = "AutoMod_NoSoloTank"
 
 
 class NoSoloTankAutomod:

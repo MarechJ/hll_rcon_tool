@@ -15,10 +15,11 @@ import React from 'react'
 interface SimpleTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
+  initialSortedColumn: string
 }
 
-export function SimpleTable<TData, TValue>({ columns, data }: SimpleTableProps<TData, TValue>) {
-  const [sorting, setSorting] = React.useState<SortingState>([])
+export function SimpleTable<TData, TValue>({ columns, data, initialSortedColumn }: SimpleTableProps<TData, TValue>) {
+  const [sorting, setSorting] = React.useState<SortingState>([{id: initialSortedColumn, desc: true}])
 
   const table = useReactTable({
     data,

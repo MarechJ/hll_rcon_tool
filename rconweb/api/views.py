@@ -8,7 +8,6 @@ from subprocess import PIPE, run
 from typing import Any, Callable
 
 import pydantic
-from django.contrib.auth.decorators import permission_required
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -35,7 +34,7 @@ from rconweb.settings import TAG_VERSION
 
 from .audit_log import auto_record_audit, record_audit
 from .auth import AUTHORIZATION, RconJsonResponse, api_response, login_required
-from .decorators import require_content_type, require_http_methods
+from .decorators import permission_required, require_content_type, require_http_methods
 from .multi_servers import forward_command
 from .utils import _get_data
 
@@ -605,6 +604,14 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.get_seed_vip_config: "api.can_view_seed_vip_config",
     rcon_api.set_seed_vip_config: "api.can_change_seed_vip_config",
     rcon_api.validate_seed_vip_config: "api.can_change_seed_vip_config",
+    rcon_api.get_webhook_queue_overview: "api.can_view_webhook_queues",
+    rcon_api.get_all_webhook_queues: "api.can_view_webhook_queues",
+    rcon_api.get_webhook_service_summary: "api.can_view_webhook_queues",
+    rcon_api.reset_webhook_queues: "api.can_change_webhook_queues",
+    rcon_api.reset_all_webhook_queues_for_server_number: "api.can_change_webhook_queues",
+    rcon_api.reset_webhook_queue: "api.can_change_webhook_queues",
+    rcon_api.reset_webhook_queue_type: "api.can_change_webhook_queues",
+    rcon_api.reset_webhook_message_type: "api.can_change_webhook_queues",
 }
 
 PREFIXES_TO_EXPOSE = [
@@ -847,6 +854,14 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.edit_blacklist_record: ["POST"],
     rcon_api.delete_blacklist_record: ["POST"],
     rcon_api.unblacklist_player: ["POST"],
+    rcon_api.get_webhook_queue_overview: ["GET"],
+    rcon_api.get_all_webhook_queues: ["GET"],
+    rcon_api.get_webhook_service_summary: ["GET"],
+    rcon_api.reset_webhook_queues: ["POST"],
+    rcon_api.reset_all_webhook_queues_for_server_number: ["POST"],
+    rcon_api.reset_webhook_queue: ["POST"],
+    rcon_api.reset_webhook_queue_type: ["POST"],
+    rcon_api.reset_webhook_message_type: ["POST"],
 }
 
 # Check to make sure that ENDPOINT_HTTP_METHODS and ENDPOINT_PERMISSIONS have the same endpoints
@@ -876,7 +891,9 @@ commands = [
     ("run_raw_command", run_raw_command),
 ]
 
-if not os.getenv("HLL_MAINTENANCE_CONTAINER"):
+if not os.getenv("HLL_MAINTENANCE_CONTAINER") and not os.getenv(
+    "HLL_WH_SERVICE_CONTAINER"
+):
     logger.info("Initializing endpoints")
 
     # Dynamically register all the methods from ServerCtl

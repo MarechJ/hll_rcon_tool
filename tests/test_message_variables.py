@@ -138,8 +138,8 @@ def test_populate_next_map(monkeypatch, map_name, expected):
     logger.error(f"{parse_layer(map_name)=}")
     monkeypatch.setattr(
         rcon.message_variables.Rcon,
-        "next_map",
-        parse_layer(map_name),
+        "get_next_map",
+        lambda x: parse_layer(map_name),
     )
     assert populate_message_variables([var.value]).get(var) == expected
 
@@ -583,7 +583,6 @@ def test_is_description_word(words, description_words, expected):
 )
 def test_format_winning_map(winning_maps, expected) -> None:
     with (
-        mock.patch("rcon.game_logs.Rcon", autospec=True) as ctl,
-        # mock.patch("rcon.get_next_map", return_value="carentan_warfare") as _,
+        mock.patch("rcon.rcon.Rcon", autospec=True) as ctl,
     ):
         assert format_winning_map(ctl=ctl, winning_maps=winning_maps) == expected
