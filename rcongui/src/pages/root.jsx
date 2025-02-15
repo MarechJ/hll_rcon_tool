@@ -46,19 +46,29 @@ export default function Root() {
               ? `rgba(${theme.vars.palette.background.defaultChannel} / 1)`
               : alpha(theme.palette.background.default, 1),
             overflow: "auto",
+            height: "100vh",
           })}
         >
           <Stack
-            spacing={2}
             sx={{
               alignItems: "center",
               mx: { xs: 0, lg: 3 },
               pb: 5,
               mt: { xs: 8, lg: 0 },
+              minHeight: "100%",
             }}
           >
             <Header />
-            <Container maxWidth={widthMode}>
+            <Container 
+              maxWidth={widthMode}
+              sx={{ 
+                display: "flex",
+                flexDirection: "column",
+                flexGrow: 1,
+                position: "relative",
+                minHeight: "100%",
+              }}
+            >
               <ActionDialogProvider>
                 <PlayerSidebarProvider>
                   <Outlet />
