@@ -1,6 +1,7 @@
 import { Typography, Divider, Stack, Box } from "@mui/material";
 import { styled } from "@mui/material";
 import Grid from "@mui/material/Grid2";
+import { useGlobalStore } from "@/stores/global-state";
 
 const StyledStack = styled(Stack)(({ theme }) => ({
   padding: 0,

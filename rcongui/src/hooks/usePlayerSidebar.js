@@ -161,21 +161,44 @@ export const PlayerSidebarProvider = ({ children }) => {
       aPlayer.is_banned = true;
     }
 
-    // const vip = aPlayer.profile.vips.find(
-    //   (v) => v.server_number === serverStatus?.server_number
-    // );
-    // if (vip && dayjs().isBefore(vip.expiration)) {
-    //   aPlayer.is_vip = true;
-    //   aPlayer.vip = vip;
-    // }
+    aPlayer.vip = aPlayer.profile.vips.find(
+      (v) => v.server_number === serverStatus?.server_number
+    );
+    if (
+      aPlayer.vip &&
+      (aPlayer.vip.expiration === null ||
+        dayjs().isBefore(aPlayer.vip.expiration))
+    ) {
+      aPlayer.is_vip = true;
+    }
+
+    // If the player is VIP but doesn't have a VIP object, add one
+    // This is either a bug or a player that has been given VIP from another rcon tool
+    if (aPlayer.is_vip && aPlayer.vip === undefined) {
+      aPlayer.vip = {
+        server_number: serverStatus?.server_number,
+        expiration: null,
+        not_created_by_crcon: true,
+      };
+    }
 
     aPlayer.player_id = aPlayer.player_id ?? aPlayer.profile.player_id;
     aPlayer.name = aPlayer.name ?? aPlayer.profile.names[0]?.name;
 
     return aPlayer;
-  }, [open, playerId, onlinePlayers, serverStatus, comments, bans, profile, messages]);
+  }, [
+    open,
+    playerId,
+    onlinePlayers,
+    serverStatus,
+    comments,
+    bans,
+    profile,
+    messages,
+  ]);
 
-  const isLoading = isLoadingComments || isLoadingBans || isLoadingProfile || isLoadingMessages;
+  const isLoading =
+    isLoadingComments || isLoadingBans || isLoadingProfile || isLoadingMessages;
 
   const contextValue = useMemo(
     () => ({
@@ -190,7 +213,16 @@ export const PlayerSidebarProvider = ({ children }) => {
       profileError,
       messagesError,
     }),
-    [open, player, playerId, isLoading, commentsError, bansError, profileError, messagesError]
+    [
+      open,
+      player,
+      playerId,
+      isLoading,
+      commentsError,
+      bansError,
+      profileError,
+      messagesError,
+    ]
   );
 
   return (
@@ -211,10 +243,10 @@ export const usePlayerSidebar = () => {
     );
     return {
       open: false,
-      close: () => { },
+      close: () => {},
       player: null,
-      openWithId: () => { },
-      switchPlayer: () => { },
+      openWithId: () => {},
+      switchPlayer: () => {},
       isLoading: false,
       commentsError: null,
       bansError: null,

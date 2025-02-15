@@ -4,7 +4,6 @@ import {
   Card,
   CardHeader,
   CardContent,
-  IconButton,
   Typography,
   Box,
   Grid2 as Grid,
@@ -13,7 +12,6 @@ import {
 } from "@mui/material";
 import { Link } from "react-router-dom";
 import { useMemo } from "react";
-import SettingsIcon from '@mui/icons-material/Settings';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import WebhookIcon from '@mui/icons-material/Webhook';
@@ -106,8 +104,8 @@ const AutomodsCard = () => {
       label: 'Seed VIP Reward', 
       value: seedingReward?.enabled,
       webhook: seedingReward?.discord_webhook_url,
-      category: 'Automods',
-      path: '/settings/automods/seed-vip'
+      category: 'Others',
+      path: '/settings/others/seed-vip'
     },
     { 
       key: 'no_leader', 
@@ -132,22 +130,6 @@ const AutomodsCard = () => {
       webhook: level?.discord_webhook_url,
       category: 'Automods',
       path: '/settings/automods/level'
-    },
-    { 
-      key: 'name_kicks', 
-      label: 'Name Kicks', 
-      value: nameKicks?.enabled,
-      webhook: nameKicks?.discord_webhook_url,
-      category: 'Others',
-      path: '/settings/others/name-kicks'
-    },
-    { 
-      key: 'vac_bans', 
-      label: 'VAC Bans', 
-      value: vacBans?.enabled,
-      webhook: vacBans?.discord_webhook_url,
-      category: 'Others',
-      path: '/settings/others/vac-bans'
     },
     { 
       key: 'chat_commands', 

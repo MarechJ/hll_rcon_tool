@@ -1081,17 +1081,26 @@ def synchronize_with_game_server(server_number: int, rcon=None):
             top_record = get_highest_priority_record(records=player_records)
             # Check to make sure the player should have VIP; and then check if
             # they're missing from the game server; or the description differs
-            if (
-                top_record
-                and is_player_vip_by_records(
-                    records=player_records, timestamp=timestamp
-                )
-                and (
-                    player_id not in game_server_vips
-                    or top_record.description != game_server_vips.get(player_id)
-                )
+            if top_record and is_player_vip_by_records(
+                records=player_records, timestamp=timestamp
             ):
-                to_add.append(top_record.to_dict())
+                # On the game server we store them as PlayerName - Description, if there is no description
+                # We just use their PlayerName
+                try:
+                    player_name = top_record.player.names[0].name
+                except (IndexError, AttributeError):
+                    player_name = "NO NAME IN CRCON"
+
+                if top_record.description:
+                    description = f"{player_name} - {top_record.description}"
+                else:
+                    description = f"{player_name}"
+
+                if top_record.description != game_server_vips.get(player_id):
+                    updated_record = top_record.to_dict()
+                    updated_record["description"] = description
+                    to_add.append(updated_record)
+
             # VIP is inactive or expired and should be removed if they're on the game server
             if player_id in game_server_vips and not is_player_vip_by_records(
                 records=player_records, timestamp=timestamp

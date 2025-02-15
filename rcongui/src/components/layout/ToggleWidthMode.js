@@ -1,7 +1,7 @@
 import WidthNormalIcon from '@mui/icons-material/WidthNormal';
 import WidthFullIcon from '@mui/icons-material/WidthFull';
 import MenuButton from './MenuButton';
-import { useAppStore } from "@/hooks/useAppState";
+import { useAppStore } from "@/stores/app-state";
 
 function ToggleWidthMode() {
   const widthMode = useAppStore((state) => state.widthMode);

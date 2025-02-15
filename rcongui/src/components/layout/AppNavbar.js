@@ -7,11 +7,10 @@ import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import SideMenuMobile from "./SideMenuMobile";
 import MenuButton from "./MenuButton";
 import NavbarBreadcrumbs from "./NavbarBreadcrumbs";
-import { useState } from "react";
 import { useMediaQuery, useTheme } from "@mui/system";
 import ServerStatus from "../Header/server-status";
 import { Box } from "@mui/material";
-import { useAppStore } from "@/hooks/useAppState";
+import { useAppStore } from "@/stores/app-state";
 
 const Toolbar = styled(MuiToolbar)({
   width: "100%",

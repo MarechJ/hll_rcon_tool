@@ -14,7 +14,7 @@ import {Fragment, useRef, useState} from "react";
  * @param {{ name, buttonProps: {} }[]} options
  * @returns 
  */
-export default function SplitButton({ options, disabled }) {
+export default function SplitButton({ options, disabled, color, variant }) {
   const [open, setOpen] = useState(false);
   const anchorRef = useRef(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -41,11 +41,14 @@ export default function SplitButton({ options, disabled }) {
   return (
     <Fragment>
       <ButtonGroup
-        variant="contained"
+        variant={variant ?? "contained"}
+        color={color ?? "primary"}
         ref={anchorRef}
         aria-label="Button group with a nested menu"
       >
-        <Button {...selectedOption.buttonProps}>{selectedOption.name}</Button>
+        <Button {...(selectedOption.buttonProps ?? {})}>
+          {selectedOption.name}
+        </Button>
         <Button
           size="small"
           aria-controls={open ? 'split-button-menu' : undefined}
@@ -59,7 +62,7 @@ export default function SplitButton({ options, disabled }) {
         </Button>
       </ButtonGroup>
       <Popper
-        sx={{ zIndex: 1 }}
+        sx={{ zIndex: 1, width: anchorRef.current?.clientWidth }}
         open={open}
         anchorEl={anchorRef.current}
         role={undefined}

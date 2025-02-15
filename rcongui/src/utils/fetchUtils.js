@@ -14,9 +14,20 @@ async function requestFactory({
 } = {}) {
   let url = cmd;
 
-  if (params && method === "GET") {
-    url += "?" + new URLSearchParams(params).toString();
+  if (params) {
+    if (params instanceof URLSearchParams) {
+      url += "?" + params.toString();
+    } else if (method === "GET") {
+      url += "?" + new URLSearchParams(params).toString();
+    }
   }
+
+  const body =
+    method === "POST"
+      ? headers["Content-Type"] === "application/json"
+        ? JSON.stringify(payload)
+        : payload
+      : null;
 
   try {
     const response = await fetch(usingCRCON(url), {
@@ -27,13 +38,16 @@ async function requestFactory({
       headers,
       redirect: "follow",
       referrerPolicy: "origin",
-      body: method !== "GET" ? JSON.stringify(payload) : null,
+      body,
     });
 
     return await handleFetchResponse(response, method);
   } catch (error) {
     if (throwRouteError) {
-      throw json(error, { status: error.status, statusText: error.message || error.text });
+      throw json(error, {
+        status: error.status,
+        statusText: error.message || error.text,
+      });
     }
     throw error;
   }
@@ -45,13 +59,19 @@ async function handleFetchResponse(response, method) {
   const contentType = response.headers.get("content-type");
   if (contentType && contentType.includes("application/json")) {
     data = await parseJsonResponse(response);
+  } else if (contentType && contentType.includes("text/plain")) {
+    data = await response.text();
   }
 
   handleServerErrors(response, data);
   handleClientErrors(response, data);
 
+  if (contentType && contentType.includes("text/plain")) {
+    return data;
+  }
+
   if (method === "GET") {
-    return data.result
+    return data.result;
   } else if (method === "POST") {
     return data;
   }
@@ -62,7 +82,9 @@ function handleServerErrors(response, data) {
   if (!response.ok && response.status >= 500) {
     switch (response.status) {
       case 504:
-        throw new CRCONServerDownError("There was a problem connecting to your CRCON server.");
+        throw new CRCONServerDownError(
+          "There was a problem connecting to your CRCON server."
+        );
       default:
         if (data) throw new UnknownError(data.error, data.command);
         throw new UnknownError(response.statusText, response.status);
@@ -95,91 +117,280 @@ async function parseJsonResponse(response) {
 }
 
 export const cmd = {
-  ADD_CONSOLE_ADMIN: (params) => requestFactory({ method: "POST", cmd: "add_admin", ...params }),
-  ADD_MESSAGE_TEMPLATE: (params) => requestFactory({ method: "POST", cmd: "add_message_template", ...params }),
-  ADD_VIP: (params) => requestFactory({ method: "POST", cmd: "add_vip", ...params }),
-  AUTHENTICATE: (params) => requestFactory({ method: "POST", cmd: "login", ...params }),
-  CLEAR_APPLICATION_CACHE: (params) => requestFactory({ method: "POST", cmd: "clear_cache", ...params }),
-  DELETE_CONSOLE_ADMIN: (params) => requestFactory({ method: "POST", cmd: "remove_admin", ...params }),
-  DELETE_MESSAGE_TEMPLATE: (params) => requestFactory({ method: "POST", cmd: "delete_message_template", ...params }),
-  DELETE_VIP: (params) => requestFactory({ method: "POST", cmd: "remove_vip", ...params }),
-  EDIT_MESSAGE_TEMPLATE: (params) => requestFactory({ method: "POST", cmd: "edit_message_template", ...params }),
-  FLAG_PLAYER: (params) => requestFactory({ method: "POST", cmd: "flag_player", ...params }),
-  GET_ALL_MESSAGE_TEMPLATES: (params) => requestFactory({ method: "GET", cmd: "get_all_message_templates", ...params }),
-  GET_AUTOSETTINGS: (params) => requestFactory({ method: "GET", cmd: "get_auto_settings", ...params }),
-  GET_BANS: (params) => requestFactory({ method: "GET", cmd: "get_bans", ...params }),
-  GET_BLACKLISTS: (params) => requestFactory({ method: "GET", cmd: "get_blacklists", ...params }),
-  GET_BROADCAST_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_auto_broadcasts_config", ...params }),
-  GET_BROADCAST_MESSAGE: (params) => requestFactory({ method: "GET", cmd: "get_broadcast_message", ...params }),
-  GET_CAMERA_NOTIFICATION_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_camera_notification_config", ...params }),
-  GET_COMPLETED_GAME_DETAIL: (params) => requestFactory({ method: "GET", cmd: "get_map_scoreboard", ...params }),
-  GET_COMPLETED_GAMES: (params) => requestFactory({ method: "GET", cmd: "get_scoreboard_maps", ...params }),
-  GET_CONSOLE_ADMIN_GROUPS: (params) => requestFactory({ method: "GET", cmd: "get_admin_groups", ...params }),
-  GET_CONSOLE_ADMINS: (params) => requestFactory({ method: "GET", cmd: "get_admin_ids", ...params }),
-  GET_CRCON_MODS: (params) => requestFactory({ method: "GET", cmd: "get_online_mods", ...params }),
-  GET_CRCON_SERVER_CONNECTION: (params) => requestFactory({ method: "GET", cmd: "get_connection_info", ...params }),
-  GET_GAME_SERVER_LIST: (params) => requestFactory({ method: "GET", cmd: "get_server_list", ...params }),
-  GET_GAME_SERVER_STATUS: (params) => requestFactory({ method: "GET", cmd: "get_status", ...params }),
-  GET_GAME_STATE: (params) => requestFactory({ method: "GET", cmd: "get_gamestate", ...params }),
-  GET_INGAME_MODS: (params) => requestFactory({ method: "GET", cmd: "get_ingame_mods", ...params }),
-  GET_LIVE_GAME: (params) => requestFactory({ method: "GET", cmd: "get_live_game_stats", ...params }),
+  ADD_CONSOLE_ADMIN: (params) =>
+    requestFactory({ method: "POST", cmd: "add_admin", ...params }),
+  ADD_MESSAGE_TEMPLATE: (params) =>
+    requestFactory({ method: "POST", cmd: "add_message_template", ...params }),
+  ADD_VIP: (params) =>
+    requestFactory({ method: "POST", cmd: "add_vip", ...params }),
+  AUTHENTICATE: (params) =>
+    requestFactory({ method: "POST", cmd: "login", ...params }),
+  CLEAR_APPLICATION_CACHE: (params) =>
+    requestFactory({ method: "POST", cmd: "clear_cache", ...params }),
+  DELETE_CONSOLE_ADMIN: (params) =>
+    requestFactory({ method: "POST", cmd: "remove_admin", ...params }),
+  DELETE_MESSAGE_TEMPLATE: (params) =>
+    requestFactory({
+      method: "POST",
+      cmd: "delete_message_template",
+      ...params,
+    }),
+  DELETE_VIP: (params) =>
+    requestFactory({ method: "POST", cmd: "remove_vip", ...params }),
+  EDIT_MESSAGE_TEMPLATE: (params) =>
+    requestFactory({ method: "POST", cmd: "edit_message_template", ...params }),
+  FLAG_PLAYER: (params) =>
+    requestFactory({ method: "POST", cmd: "flag_player", ...params }),
+  GET_AUDIT_LOGS: (params) =>
+    requestFactory({ method: "GET", cmd: "get_audit_logs", ...params }),
+  GET_AUDIT_LOGS_AUTOCOMPLETE: (params) =>
+    requestFactory({
+      method: "GET",
+      cmd: "get_audit_logs_autocomplete",
+      ...params,
+    }),
+  GET_ALL_MESSAGE_TEMPLATES: (params) =>
+    requestFactory({
+      method: "GET",
+      cmd: "get_all_message_templates",
+      ...params,
+    }),
+  GET_AUTOSETTINGS: (params) =>
+    requestFactory({ method: "GET", cmd: "get_auto_settings", ...params }),
+  GET_BANS: (params) =>
+    requestFactory({ method: "GET", cmd: "get_bans", ...params }),
+  GET_BLACKLISTS: (params) =>
+    requestFactory({ method: "GET", cmd: "get_blacklists", ...params }),
+  GET_BROADCAST_CONFIG: (params) =>
+    requestFactory({
+      method: "GET",
+      cmd: "get_auto_broadcasts_config",
+      ...params,
+    }),
+  GET_BROADCAST_MESSAGE: (params) =>
+    requestFactory({ method: "GET", cmd: "get_broadcast_message", ...params }),
+  GET_CAMERA_NOTIFICATION_CONFIG: (params) =>
+    requestFactory({
+      method: "GET",
+      cmd: "get_camera_notification_config",
+      ...params,
+    }),
+  GET_COMPLETED_GAME_DETAIL: (params) =>
+    requestFactory({ method: "GET", cmd: "get_map_scoreboard", ...params }),
+  GET_COMPLETED_GAMES: (params) =>
+    requestFactory({ method: "GET", cmd: "get_scoreboard_maps", ...params }),
+  GET_CONSOLE_ADMIN_GROUPS: (params) =>
+    requestFactory({ method: "GET", cmd: "get_admin_groups", ...params }),
+  GET_CONSOLE_ADMINS: (params) =>
+    requestFactory({ method: "GET", cmd: "get_admin_ids", ...params }),
+  GET_CRCON_MODS: (params) =>
+    requestFactory({ method: "GET", cmd: "get_online_mods", ...params }),
+  GET_CRCON_SERVER_CONNECTION: (params) =>
+    requestFactory({ method: "GET", cmd: "get_connection_info", ...params }),
+  GET_GAME_SERVER_LIST: (params) =>
+    requestFactory({ method: "GET", cmd: "get_server_list", ...params }),
+  GET_GAME_SERVER_STATUS: (params) =>
+    requestFactory({ method: "GET", cmd: "get_status", ...params }),
+  GET_GAME_STATE: (params) =>
+    requestFactory({ method: "GET", cmd: "get_gamestate", ...params }),
   // Yes, it is POST request, but it is not a POST command => it's not mutating the server state
-  GET_LIVE_LOGS: (params) => requestFactory({ method: "POST", cmd: "get_recent_logs", ...params }),
-  GET_LIVE_SESSIONS: (params) => requestFactory({ method: "GET", cmd: "get_live_scoreboard", ...params }),
-  GET_LIVE_TEAMS: (params) => requestFactory({ method: "GET", cmd: "get_team_view", ...params }),
-  GET_MAP_ROTATION: (params) => requestFactory({ method: "GET", cmd: "get_map_rotation", ...params }),
-  GET_MESSAGE_TEMPLATE: (params) => requestFactory({ method: "GET", cmd: "get_message_template", ...params }),
-  GET_MESSAGE_TEMPLATES: (params) => requestFactory({ method: "GET", cmd: "get_message_templates", ...params }),
-  GET_SEEDING_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_auto_mod_seeding_config", ...params }),
-  GET_NO_LEADER_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_auto_mod_no_leader_config", ...params }),
-  GET_NO_SOLO_TANK_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_auto_mod_solo_tank_config", ...params }),
-  GET_LEVEL_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_auto_mod_level_config", ...params }),
-  GET_NAME_KICKS_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_name_kick_config", ...params }),
-  GET_VAC_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_vac_game_bans_config", ...params }),
-  GET_SEEDING_REWARD_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_seed_vip_config", ...params }),
-  GET_CHAT_COMMANDS_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_chat_commands_config", ...params }),
-  GET_RCON_CHAT_COMMANDS_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_rcon_chat_commands_config", ...params }),
-  GET_ONLINE_PLAYERS: (params) => requestFactory({ method: "GET", cmd: "get_players", ...params }),
-  GET_PERMISSIONS: (params) => requestFactory({ method: "GET", cmd: "get_own_user_permissions", ...params }),
-  GET_PLAYER: (params) => requestFactory({ method: "GET", cmd: "get_player_profile", ...params }),
-  GET_PLAYER_BANS: (params) => requestFactory({ method: "GET", cmd: "get_ban", ...params }),
-  GET_PLAYER_COMMENTS: (params) => requestFactory({ method: "GET", cmd: "get_player_comments", ...params }),
-  GET_PLAYER_MESSAGES: (params) => requestFactory({ method: "GET", cmd: "get_player_messages", ...params }),
+  GET_HISTORICAL_LOGS: (params) =>
+    requestFactory({ method: "POST", cmd: "get_historical_logs", ...params }),
+  GET_INGAME_MODS: (params) =>
+    requestFactory({ method: "GET", cmd: "get_ingame_mods", ...params }),
+  GET_LIVE_GAME: (params) =>
+    requestFactory({ method: "GET", cmd: "get_live_game_stats", ...params }),
   // Yes, it is POST request, but it is not a POST command => it's not mutating the server state
-  GET_PLAYERS_RECORDS: (params) => requestFactory({ method: "POST", cmd: "get_players_history", ...params }),
-  GET_PROFANITIES: (params) => requestFactory({ method: "GET", cmd: "get_profanities", ...params }),
-  GET_PUBLIC_GAME_STATE: (params) => requestFactory({ method: "GET", cmd: "get_public_info", ...params }),
-  GET_REAL_VIP_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_real_vip_config", ...params }),
-  GET_SERVER_NAME: (params) => requestFactory({ method: "GET", cmd: "get_name", ...params }),
-  GET_SERVER_SETTINGS: (params) => requestFactory({ method: "GET", cmd: "get_server_settings", ...params }),
-  GET_SERVICES: (params) => requestFactory({ method: "GET", cmd: "get_services", ...params }),
-  GET_VERSION: (params) => requestFactory({ method: "GET", cmd: "get_version", ...params }),
-  GET_VIPS: (params) => requestFactory({ method: "GET", cmd: "get_vip_ids", ...params }),
-  GET_VOTEKICK_AUTOTOGGLE_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_votekick_autotoggle_config", ...params }),
-  GET_WELCOME_MESSAGE: (params) => requestFactory({ method: "GET", cmd: "get_welcome_message", ...params }),
-  IS_AUTHENTICATED: (params) => requestFactory({ method: "GET", cmd: "is_logged_in", ...params }),
-  LOGOUT: (params) => requestFactory({ method: "GET", cmd: "logout", ...params }),
-  RECONNECT_GAME_SERVER: (params) => requestFactory({ method: "POST", cmd: "reconnect_gameserver", ...params }),
-  RESET_VOTEKICK_THRESHOLDS: (params) => requestFactory({ method: "POST", cmd: "reset_votekick_thresholds", ...params }),
-  SET_AUTOBALANCE_ENABLED: (params) => requestFactory({ method: "POST", cmd: "set_autobalance_enabled", ...params }),
-  SET_AUTOBALANCE_THRESHOLD: (params) => requestFactory({ method: "POST", cmd: "set_autobalance_threshold", ...params }),
-  SET_AUTOSETTINGS: (params) => requestFactory({ method: "POST", cmd: "set_auto_settings", ...params }),
-  SET_BROADCAST_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_auto_broadcasts_config", ...params }),
-  SET_CAMERA_NOTIFICATION_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_camera_notification_config", ...params }),
-  SET_IDLE_AUTOKICK_TIME: (params) => requestFactory({ method: "POST", cmd: "set_idle_autokick_time", ...params }),
-  SET_MAX_PING_AUTOKICK: (params) => requestFactory({ method: "POST", cmd: "set_max_ping_autokick", ...params }),
-  SET_PROFANITIES: (params) => requestFactory({ method: "POST", cmd: "set_profanities", ...params }),
-  SET_QUEUE_LENGTH: (params) => requestFactory({ method: "POST", cmd: "set_queue_length", ...params }),
-  SET_REAL_VIP_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_real_vip_config", ...params }),
-  SET_SERVER_NAME: (params) => requestFactory({ method: "POST", cmd: "set_server_name", ...params }),
-  SET_TEAM_SWITCH_COOLDOWN: (params) => requestFactory({ method: "POST", cmd: "set_team_switch_cooldown", ...params }),
-  SET_VIP_SLOTS_NUM: (params) => requestFactory({ method: "POST", cmd: "set_vip_slots_num", ...params }),
-  SET_VOTEKICK_AUTOTOGGLE_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_votekick_autotoggle_config", ...params }),
-  SET_VOTEKICK_ENABLED: (params) => requestFactory({ method: "POST", cmd: "set_votekick_enabled", ...params }),
-  SET_VOTEKICK_THRESHOLDS: (params) => requestFactory({ method: "POST", cmd: "set_votekick_thresholds", ...params }),
-  SET_WELCOME_MESSAGE: (params) => requestFactory({ method: "POST", cmd: "set_welcome_message", ...params }),
-  TOGGLE_SERVICE: (params) => requestFactory({ method: "POST", cmd: "do_service", ...params }),
-  UNFLAG_PLAYER: (params) => requestFactory({ method: "POST", cmd: "unflag_player", ...params }),
+  GET_LIVE_LOGS: (params) =>
+    requestFactory({ method: "POST", cmd: "get_recent_logs", ...params }),
+  GET_LIVE_SESSIONS: (params) =>
+    requestFactory({ method: "GET", cmd: "get_live_scoreboard", ...params }),
+  GET_LIVE_TEAMS: (params) =>
+    requestFactory({ method: "GET", cmd: "get_team_view", ...params }),
+  GET_MAP_ROTATION: (params) =>
+    requestFactory({ method: "GET", cmd: "get_map_rotation", ...params }),
+  GET_MESSAGE_TEMPLATE: (params) =>
+    requestFactory({ method: "GET", cmd: "get_message_template", ...params }),
+  GET_MESSAGE_TEMPLATES: (params) =>
+    requestFactory({ method: "GET", cmd: "get_message_templates", ...params }),
+  GET_SEEDING_CONFIG: (params) =>
+    requestFactory({
+      method: "GET",
+      cmd: "get_auto_mod_seeding_config",
+      ...params,
+    }),
+  GET_NO_LEADER_CONFIG: (params) =>
+    requestFactory({
+      method: "GET",
+      cmd: "get_auto_mod_no_leader_config",
+      ...params,
+    }),
+  GET_NO_SOLO_TANK_CONFIG: (params) =>
+    requestFactory({
+      method: "GET",
+      cmd: "get_auto_mod_solo_tank_config",
+      ...params,
+    }),
+  GET_LEVEL_CONFIG: (params) =>
+    requestFactory({
+      method: "GET",
+      cmd: "get_auto_mod_level_config",
+      ...params,
+    }),
+  GET_NAME_KICKS_CONFIG: (params) =>
+    requestFactory({ method: "GET", cmd: "get_name_kick_config", ...params }),
+  GET_VAC_CONFIG: (params) =>
+    requestFactory({
+      method: "GET",
+      cmd: "get_vac_game_bans_config",
+      ...params,
+    }),
+  GET_SEEDING_REWARD_CONFIG: (params) =>
+    requestFactory({ method: "GET", cmd: "get_seed_vip_config", ...params }),
+  GET_CHAT_COMMANDS_CONFIG: (params) =>
+    requestFactory({
+      method: "GET",
+      cmd: "get_chat_commands_config",
+      ...params,
+    }),
+  GET_RCON_CHAT_COMMANDS_CONFIG: (params) =>
+    requestFactory({
+      method: "GET",
+      cmd: "get_rcon_chat_commands_config",
+      ...params,
+    }),
+  GET_ONLINE_PLAYERS: (params) =>
+    requestFactory({ method: "GET", cmd: "get_players", ...params }),
+  GET_PERMISSIONS: (params) =>
+    requestFactory({
+      method: "GET",
+      cmd: "get_own_user_permissions",
+      ...params,
+    }),
+  GET_PLAYER: (params) =>
+    requestFactory({ method: "GET", cmd: "get_player_profile", ...params }),
+  GET_PLAYER_BANS: (params) =>
+    requestFactory({ method: "GET", cmd: "get_ban", ...params }),
+  GET_PLAYER_COMMENTS: (params) =>
+    requestFactory({ method: "GET", cmd: "get_player_comments", ...params }),
+  GET_PLAYER_MESSAGES: (params) =>
+    requestFactory({ method: "GET", cmd: "get_player_messages", ...params }),
+  // Yes, it is POST request, but it is not a POST command => it's not mutating the server state
+  GET_PLAYERS_RECORDS: (params) =>
+    requestFactory({ method: "POST", cmd: "get_players_history", ...params }),
+  GET_PROFANITIES: (params) =>
+    requestFactory({ method: "GET", cmd: "get_profanities", ...params }),
+  GET_PUBLIC_GAME_STATE: (params) =>
+    requestFactory({ method: "GET", cmd: "get_public_info", ...params }),
+  GET_REAL_VIP_CONFIG: (params) =>
+    requestFactory({ method: "GET", cmd: "get_real_vip_config", ...params }),
+  GET_SERVER_NAME: (params) =>
+    requestFactory({ method: "GET", cmd: "get_name", ...params }),
+  GET_SERVER_SETTINGS: (params) =>
+    requestFactory({ method: "GET", cmd: "get_server_settings", ...params }),
+  GET_SERVICES: (params) =>
+    requestFactory({ method: "GET", cmd: "get_services", ...params }),
+  GET_VERSION: (params) =>
+    requestFactory({ method: "GET", cmd: "get_version", ...params }),
+  GET_VIPS: (params) =>
+    requestFactory({ method: "GET", cmd: "get_vip_ids", ...params }),
+  GET_VOTEKICK_AUTOTOGGLE_CONFIG: (params) =>
+    requestFactory({
+      method: "GET",
+      cmd: "get_votekick_autotoggle_config",
+      ...params,
+    }),
+  GET_WELCOME_MESSAGE: (params) =>
+    requestFactory({ method: "GET", cmd: "get_welcome_message", ...params }),
+  IS_AUTHENTICATED: (params) =>
+    requestFactory({ method: "GET", cmd: "is_logged_in", ...params }),
+  LOGOUT: (params) =>
+    requestFactory({ method: "GET", cmd: "logout", ...params }),
+  RECONNECT_GAME_SERVER: (params) =>
+    requestFactory({ method: "POST", cmd: "reconnect_gameserver", ...params }),
+  RESET_VOTEKICK_THRESHOLDS: (params) =>
+    requestFactory({
+      method: "POST",
+      cmd: "reset_votekick_thresholds",
+      ...params,
+    }),
+  SET_AUTOBALANCE_ENABLED: (params) =>
+    requestFactory({
+      method: "POST",
+      cmd: "set_autobalance_enabled",
+      ...params,
+    }),
+  SET_AUTOBALANCE_THRESHOLD: (params) =>
+    requestFactory({
+      method: "POST",
+      cmd: "set_autobalance_threshold",
+      ...params,
+    }),
+  SET_AUTOSETTINGS: (params) =>
+    requestFactory({ method: "POST", cmd: "set_auto_settings", ...params }),
+  SET_BROADCAST_CONFIG: (params) =>
+    requestFactory({
+      method: "POST",
+      cmd: "set_auto_broadcasts_config",
+      ...params,
+    }),
+  SET_CAMERA_NOTIFICATION_CONFIG: (params) =>
+    requestFactory({
+      method: "POST",
+      cmd: "set_camera_notification_config",
+      ...params,
+    }),
+  SET_IDLE_AUTOKICK_TIME: (params) =>
+    requestFactory({
+      method: "POST",
+      cmd: "set_idle_autokick_time",
+      ...params,
+    }),
+  SET_MAX_PING_AUTOKICK: (params) =>
+    requestFactory({ method: "POST", cmd: "set_max_ping_autokick", ...params }),
+  SET_PROFANITIES: (params) =>
+    requestFactory({ method: "POST", cmd: "set_profanities", ...params }),
+  SET_QUEUE_LENGTH: (params) =>
+    requestFactory({ method: "POST", cmd: "set_queue_length", ...params }),
+  SET_REAL_VIP_CONFIG: (params) =>
+    requestFactory({ method: "POST", cmd: "set_real_vip_config", ...params }),
+  SET_SERVER_NAME: (params) =>
+    requestFactory({ method: "POST", cmd: "set_server_name", ...params }),
+  SET_TEAM_SWITCH_COOLDOWN: (params) =>
+    requestFactory({
+      method: "POST",
+      cmd: "set_team_switch_cooldown",
+      ...params,
+    }),
+  SET_VIP_SLOTS_NUM: (params) =>
+    requestFactory({ method: "POST", cmd: "set_vip_slots_num", ...params }),
+  SET_VOTEKICK_AUTOTOGGLE_CONFIG: (params) =>
+    requestFactory({
+      method: "POST",
+      cmd: "set_votekick_autotoggle_config",
+      ...params,
+    }),
+  SET_VOTEKICK_ENABLED: (params) =>
+    requestFactory({ method: "POST", cmd: "set_votekick_enabled", ...params }),
+  SET_VOTEKICK_THRESHOLDS: (params) =>
+    requestFactory({
+      method: "POST",
+      cmd: "set_votekick_thresholds",
+      ...params,
+    }),
+  SET_WELCOME_MESSAGE: (params) =>
+    requestFactory({ method: "POST", cmd: "set_welcome_message", ...params }),
+  TOGGLE_SERVICE: (params) =>
+    requestFactory({ method: "POST", cmd: "do_service", ...params }),
+  UNFLAG_PLAYER: (params) =>
+    requestFactory({ method: "POST", cmd: "unflag_player", ...params }),
+  // Files
+  DOWNLOAD_VIP_FILE: (params) =>
+    requestFactory({ method: "GET", cmd: "download_vips", ...params }),
+  UPLOAD_VIP_FILE: (params) =>
+    requestFactory({ method: "POST", cmd: "upload_vips", ...params }),
+  GET_UPLOAD_VIP_FILE_RESPONSE: (params) =>
+    requestFactory({ method: "GET", cmd: "upload_vips_result", ...params }),
 };
 
 export function execute(command, data) {
@@ -495,7 +706,6 @@ async function addPlayerToVipList({
   active,
   expiresAt,
   notes,
-
 }) {
   try {
     const response = await postData(

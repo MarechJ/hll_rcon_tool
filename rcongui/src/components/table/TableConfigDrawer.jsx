@@ -1,11 +1,7 @@
 import {
   Divider,
   Drawer,
-  FormControl,
   IconButton,
-  InputLabel,
-  MenuItem,
-  Select,
   Stack,
   styled,
   ToggleButton,
@@ -41,7 +37,6 @@ const Wrapper = styled(Stack)(({ theme }) => ({
 }));
 
 const TableConfigDrawer = ({
-  table,
   name,
   open,
   onClose,
@@ -51,10 +46,12 @@ const TableConfigDrawer = ({
   const [pendingConfig, setPendingConfig] = useState(null);
 
   const handleTableFontSizeChange = (e, fontSize) => {
+    if (fontSize === null) return;
     setPendingConfig((prev) => ({ ...prev, fontSize }));
   };
 
   const handleTableDensityChange = (e, density) => {
+    if (density === null) return;
     setPendingConfig((prev) => ({ ...prev, density }));
   };
 
@@ -144,40 +141,6 @@ const TableConfigDrawer = ({
               </ToggleButton>
             </ToggleButtonGroup>
           </div>
-          {table?.getState()?.pagination && (
-            <div>
-              <Typography
-                sx={{
-                  mb: 1,
-                  fontSize: "0.85rem",
-                  textTransform: "uppercase",
-                  letterSpacing: 1.5,
-                }}
-              >
-                Rows per page
-              </Typography>
-              <FormControl fullWidth sx={{ my: 1 }}>
-                <InputLabel id="logs-table-page-size-select-label">
-                  Size
-                </InputLabel>
-                <Select
-                  labelId="logs-table-page-size-select-label"
-                  id="logs-table-page-size-select"
-                  value={table.getState().pagination.pageSize}
-                  label="Age"
-                  onChange={(e) => {
-                    table.setPageSize(Number(e.target.value));
-                  }}
-                >
-                  {[50, 100, 150, 250, 500].map((pageSize) => (
-                    <MenuItem key={pageSize} value={pageSize}>
-                      Show {pageSize}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </div>
-          )}
           {children}
         </Wrapper>
       )}

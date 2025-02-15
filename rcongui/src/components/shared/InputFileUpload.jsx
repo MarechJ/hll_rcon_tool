@@ -23,11 +23,11 @@ export function InputFileUpload({ text, icon, color, variant, ...props }) {
       color={color ?? "primary"}
       tabIndex={-1}
       startIcon={icon ?? <CloudUploadIcon />}
+      {...props}
     >
       {text ?? "Upload file"}
       <VisuallyHiddenInput
         type="file"
-        {...props}
       />
     </Button>
   );

@@ -14,12 +14,12 @@ export const NEVER_EXPIRES_VIP_DATE = "3000-01-01T00:00:00+00:00";
 export const unpackBroadcastMessage = (message) =>
   message.length
     ? message.split("\n").map((line) => {
-      const regex = /(\d+)\s+(.*)/;
-      const match = line.match(regex);
-      if (!match) return { time_sec: "", message: "" };
-      const [_, time_sec, content] = match;
-      return { time_sec, message: content };
-    })
+        const regex = /(\d+)\s+(.*)/;
+        const match = line.match(regex);
+        if (!match) return { time_sec: "", message: "" };
+        const [_, time_sec, content] = match;
+        return { time_sec, message: content };
+      })
     : [];
 
 export const parseBroadcastMessages = (messages) =>
@@ -41,10 +41,7 @@ export const parseVotekickThresholds = (thresholds) => {
 
 export const getVipExpirationStatus = (vip) => {
   if (!vip) return "none";
-  if (
-    vip.expires_at === null
-  )
-    return "never";
+  if (vip.expires_at === null) return "never";
   if (dayjs(vip.expires_at).isBefore(dayjs())) return "expired";
   return "active";
 };
@@ -77,7 +74,6 @@ export const normalizePlayerProfile = (profile) => {
     received_actions: profile.received_actions ?? [],
     // vips: profile.vips ?? [],
     blacklists: profile.blacklists ?? [],
-    watchlist: profile.watchlist ?? [],
     flags: profile.flags ?? [],
     penalty_count: profile.penalty_count ?? {
       KICK: 0,
@@ -196,14 +192,14 @@ export const logActions = {
   "ADMIN BANNED": "⌛",
   "ADMIN PERMA BANNED": "⛔",
   "ADMIN KICKED": "🚷",
-  CHAT: "💬",
   CAMERA: "👀",
-  "CHAT[Allies]": "🟦",
-  "CHAT[Allies][Team]": "🟦",
-  "CHAT[Allies][Unit]": "🟦",
-  "CHAT[Axis]": "🟥",
-  "CHAT[Axis][Team]": "🟥",
-  "CHAT[Axis][Unit]": "🟥",
+  CHAT: "💬",
+  "CHAT[Allies]": "💬",
+  "CHAT[Allies][Team]": "💬",
+  "CHAT[Allies][Unit]": "💬",
+  "CHAT[Axis]": "💬",
+  "CHAT[Axis][Team]": "💬",
+  "CHAT[Axis][Unit]": "💬",
   CONNECTED: "🛬",
   DISCONNECTED: "🛫",
   KILL: "💀",
@@ -224,32 +220,56 @@ export const logActions = {
 };
 
 export function getGameDuration(start, end) {
-  const totalSeconds = dayjs(end).diff(dayjs(start), 'seconds');
+  const totalSeconds = dayjs(end).diff(dayjs(start), "seconds");
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
 
   // Format the result as hh:mm:ss
-  const formattedTime = `${String(hours).padStart(2, '0')}:${String(
+  const formattedTime = `${String(hours).padStart(2, "0")}:${String(
     minutes
-  ).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  ).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 
   return formattedTime;
 }
 
 export function isLeader(role) {
-  return ["officer", "tankcommander", "spotter", "armycommander"].includes(role);
+  return ["officer", "tankcommander", "spotter", "armycommander"].includes(
+    role
+  );
 }
 
 export function isSteamPlayer(player) {
-  const { player_id: id } = player
-  return id.length === 17 && !Number.isNaN(Number(id))
+  const { player_id: id } = player;
+  return id.length === 17 && !Number.isNaN(Number(id));
 }
 
 export function getSteamProfileUrl(id) {
-  return `https://steamcommunity.com/profiles/${id}`
+  return `https://steamcommunity.com/profiles/${id}`;
 }
 
 export function getXboxProfileUrl(playerName) {
-  return `https://xboxgamertag.com/search/${playerName}`
+  return `https://xboxgamertag.com/search/${playerName}`;
+}
+
+export function removeLogPlayerIds(message) {
+  const regex = /\((?:(?:Axis|Allies)\/)?(?:[0-9]{17}|[a-z0-9]{32})\)/g;
+  return message.replace(regex, "");
+}
+
+export function getLogTeam(log) {
+  let searched = log.message;
+  if (log.action.startsWith("CHAT")) {
+    searched = log.action;
+  }
+  const regex = /(?<team>Allies|Axis)/;
+  const match = searched.match(regex);
+  return match?.groups?.team;
+}
+
+export function getTeamColor(team) {
+  return (theme) =>
+    theme.palette.text[
+      team === "Axis" ? "red" : team === "Allies" ? "blue" : "inherit"
+    ];
 }

@@ -1,6 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
-import { cmd } from "@/utils/fetchUtils";
-import { useGlobalStore } from "@/hooks/useGlobalState";
 import {
   Card,
   CardHeader,
@@ -191,13 +188,21 @@ const MapStatsCard = ({ games }) => {
           {mapStats.stats.map((stat) => (
             <ListItem
               key={stat.mapName}
+              divider={true}
               sx={{
                 display: 'flex',
-                gap: 2,
+                flexDirection: { xs: 'column', sm: 'row' },
+                gap: { xs: 1, sm: 2 },
                 py: 1,
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '40%' }}>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 1, 
+                width: { xs: '100%', sm: '40%' },
+                order: { xs: 2, sm: 1 }
+              }}>
                 <img
                   src={"/maps/icons/" + stat.imageName}
                   width={40}
@@ -226,49 +231,58 @@ const MapStatsCard = ({ games }) => {
                 </Box>
               </Box>
               
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <Typography variant="caption" color="text.secondary">
-                  Played:
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  {stat.totalGames}
-                </Typography>
-              </Box>
-
               <Box sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: 2,
-                ml: 'auto',
-                '& .team': {
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 0.5,
-                }
+                display: 'flex',
+                width: { xs: '100%', sm: 'auto' },
+                justifyContent: { xs: 'space-between', sm: 'flex-start' },
+                alignItems: 'center',
+                gap: { xs: 1, sm: 2 },
+                order: { xs: 1, sm: 2 }
               }}>
-                <Box className="team">
-                  <Typography variant="caption">Allies:</Typography>
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      fontWeight: 500,
-                      color: (theme) => getWinRateColor(stat.alliedWinRate, 'success')
-                    }}
-                  >
-                    {stat.alliedWinRate}%
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Played:
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    {stat.totalGames}
                   </Typography>
                 </Box>
-                <Box className="team">
-                  <Typography variant="caption">Axis:</Typography>
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      fontWeight: 500,
-                      color: (theme) => getWinRateColor(stat.axisWinRate, 'error')
-                    }}
-                  >
-                    {stat.axisWinRate}%
-                  </Typography>
+
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 2,
+                  ml: { xs: 0, sm: 'auto' },
+                  '& .team': {
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                  }
+                }}>
+                  <Box className="team">
+                    <Typography variant="caption">Allies:</Typography>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        fontWeight: 500,
+                        color: (theme) => getWinRateColor(stat.alliedWinRate, 'success')
+                      }}
+                    >
+                      {stat.alliedWinRate}%
+                    </Typography>
+                  </Box>
+                  <Box className="team">
+                    <Typography variant="caption">Axis:</Typography>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        fontWeight: 500,
+                        color: (theme) => getWinRateColor(stat.axisWinRate, 'error')
+                      }}
+                    >
+                      {stat.axisWinRate}%
+                    </Typography>
+                  </Box>
                 </Box>
               </Box>
             </ListItem>

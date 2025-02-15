@@ -1,25 +1,17 @@
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import Table from "@/components/table/Table";
 import { TableToolbar } from "@/components/table/TableToolbar";
-import storageKeys from "@/config/storageKeys";
-import { useStorageState } from "@/hooks/useStorageState";
 import { Box, Divider, IconButton } from "@mui/material";
 import { useState } from "react";
 import SettingsIcon from "@mui/icons-material/Settings";
 import TableConfigDrawer from "@/components/table/TableConfigDrawer";
 import NavPagination from "./nav-pagination";
+import { useGameListTableStore } from "@/stores/table-config";
 
 export function GameListTable({ table, maxPages, page }) {
   const [tableConfigDrawerOpen, setTableConfigDrawerOpen] = useState(false);
-
-  const [tableConfig, setTableConfig] = useStorageState(
-    storageKeys.GAMES_TABLE_CONFIG,
-    {
-      density: "normal",
-      fontSize: "normal",
-      rowsPerPage: "50",
-    }
-  );
+  const tableConfig = useGameListTableStore();
+  const setConfig = useGameListTableStore(state => state.setConfig);
 
   const handleTableConfigClick = () => {
     // toggle config drawer
@@ -49,12 +41,11 @@ export function GameListTable({ table, maxPages, page }) {
       </TableToolbar>
       <Table table={table} config={tableConfig} />
       <TableConfigDrawer
-        name="Game"
-        table={table}
+        name="Games List"
         open={tableConfigDrawerOpen}
         onClose={(config) => {
           setTableConfigDrawerOpen(false);
-          setTableConfig(config);
+          setConfig(config);
         }}
         config={tableConfig}
       />
