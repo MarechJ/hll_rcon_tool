@@ -10,6 +10,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { ActionDialogProvider } from "@/hooks/useActionDialog";
 import { PlayerSidebarProvider } from "@/hooks/usePlayerSidebar";
 import { useAppStore } from "@/stores/app-state";
+import NavigationProgress from "@/components/layout/NavigationProgress";
 
 export const loader = async () => {
   return null;
@@ -32,6 +33,7 @@ export default function Root() {
 
   return (
     <>
+      <NavigationProgress />
       <Box sx={{ display: "flex" }}>
         <SideMenu />
         <AppNavbar />
