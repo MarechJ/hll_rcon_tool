@@ -243,6 +243,8 @@ const GameLogsForm = ({ fields, onSubmit }) => {
     till: fields.till ? dayjs(fields.till) : null,
   });
 
+  const [actionInputValue, setActionInputValue] = useState("");
+
   const serverOptions = useMemo(() => {
     if (!server || !otherServers) return [];
 
@@ -269,7 +271,22 @@ const GameLogsForm = ({ fields, onSubmit }) => {
     }));
   };
 
+  const handleDateChange = (name) => (value) => {
+    setFormFields((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleActionChange = (event, newValue) => {
+    setFormFields((prev) => ({
+      ...prev,
+      action: newValue?.name || "",
+    }));
+  };
+
   const handleClear = () => {
+    setActionInputValue("");
     setFormFields({
       player_name: "",
       player_id: "",
@@ -337,11 +354,10 @@ const GameLogsForm = ({ fields, onSubmit }) => {
                   )
                 }}
                 value={actionOptions.find((o) => o.name === formFields.action) || null}
-                onChange={(event, newValue) => {
-                  setFormFields((prev) => ({
-                    ...prev,
-                    action: newValue?.name || "",
-                  }));
+                onChange={handleActionChange}
+                inputValue={actionInputValue}
+                onInputChange={(event, newValue) => {
+                  setActionInputValue(newValue);
                 }}
                 renderInput={(params) => (
                   <TextField name="action" {...params} label="Action" />
@@ -393,7 +409,7 @@ const GameLogsForm = ({ fields, onSubmit }) => {
                 value={formFields.from}
                 label="From time"
                 name="from"
-                onChange={handleInputChange}
+                onChange={handleDateChange("from")}
                 format="YYYY/MM/DD HH:mm"
                 slotProps={{ textField: { fullWidth: true } }}
               />
@@ -403,7 +419,7 @@ const GameLogsForm = ({ fields, onSubmit }) => {
               <DesktopDateTimePicker
                 label="Till time"
                 name="till"
-                onChange={handleInputChange}
+                onChange={handleDateChange("till")}
                 format="YYYY/MM/DD HH:mm"
                 value={formFields.till}
                 slotProps={{ textField: { fullWidth: true } }}
