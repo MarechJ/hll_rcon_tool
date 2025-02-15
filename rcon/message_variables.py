@@ -50,6 +50,7 @@ def populate_message_variables(
         MessageVariable.num_online_mods: lambda: str(len(online_mods())),
         MessageVariable.num_ingame_mods: lambda: str(len(ingame_mods())),
         MessageVariable.next_map: _next_map,
+        MessageVariable.next_map_id: _next_map_id,
         MessageVariable.map_rotation: _map_rotation,
         MessageVariable.top_kills_player_name: lambda: _generic_score_ties(
             stat_key=StatTypes.top_killers, tie_key="kills", result_key="player"
@@ -335,6 +336,12 @@ def _next_map(rcon: Rcon | None = None) -> str:
     if rcon is None:
         rcon = get_rcon()
     return rcon.get_next_map().pretty_name
+
+
+def _next_map_id(rcon: Rcon | None = None) -> str:
+    if rcon is None:
+        rcon = get_rcon()
+    return rcon.get_next_map().id
 
 
 def _map_rotation(rcon: Rcon | None = None):

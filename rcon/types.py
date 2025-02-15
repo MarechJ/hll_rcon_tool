@@ -47,6 +47,7 @@ class MessageVariable(enum.Enum):
     num_online_mods = "num_online_mods"
     num_ingame_mods = "num_ingame_mods"
     next_map = "next_map"
+    next_map_id = "next_map_id"
     map_rotation = "map_rotation"
 
     # Deprecated: Taken over from previous auto-broadcast implementation
