@@ -13,9 +13,9 @@ export const LogMessage = ({ log, colored = false, short = false, include_ids = 
       ? "Allies"
       : "Axis";
   if (!include_ids) {
-    let message = removeLogPlayerIds(log.message);
+    var message = removeLogPlayerIds(log.message);
   } else {
-    let message = log.message;
+    var message = log.message;
   }
   
   message = message.split(log.player_name_1);
