@@ -16,6 +16,9 @@ export const LogMessage = ({ log, colored = false, short = false, include_ids = 
     var message = removeLogPlayerIds(log.message);
   } else {
     var message = log.message;
+    if (log.action === "MESSAGE") {
+      var message = removeLogPlayerIds(log.message);
+    }
   }
   
   message = message.split(log.player_name_1);
