@@ -47,6 +47,7 @@ class MessageVariable(enum.Enum):
     num_online_mods = "num_online_mods"
     num_ingame_mods = "num_ingame_mods"
     next_map = "next_map"
+    next_map_id = "next_map_id"
     map_rotation = "map_rotation"
 
     # Deprecated: Taken over from previous auto-broadcast implementation
@@ -810,11 +811,11 @@ class GameLayoutRandomConstraints(enum.IntFlag):
 
 
 class MessageTemplateCategory(enum.StrEnum):
-    MESSAGE = "MESSAGE"
-    BROADCAST = "BROADCAST"
-    WELCOME = "WELCOME"
-    REASON = "REASON"
     AUTO_SETTINGS = "AUTO_SETTINGS"
+    BROADCAST = "BROADCAST"
+    MESSAGE = "MESSAGE"
+    REASON = "REASON"
+    WELCOME = "WELCOME"
 
 
 class MessageTemplateType(TypedDict):
@@ -828,7 +829,8 @@ class MessageTemplateType(TypedDict):
 
 
 class AllMessageTemplateTypes(TypedDict):
-    MESSAGE: list[MessageTemplateType]
+    AUTO_SETTINGS: list[MessageTemplateType]
     BROADCAST: list[MessageTemplateType]
-    WELCOME: list[MessageTemplateType]
+    MESSAGE: list[MessageTemplateType]
     REASON: list[MessageTemplateType]
+    WELCOME: list[MessageTemplateType]

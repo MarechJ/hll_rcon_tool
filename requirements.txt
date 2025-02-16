@@ -10,7 +10,8 @@ simplejson==3.19.3
 psycopg2-binary
 sentry-sdk[django]==2.20.0
 python-dateutil==2.9.0.post0
-discord-webhook[async]
+# discord-webhook[async]
+git+https://github.com/cemathey/python-discord-webhook@132fc7b7a58ba25e7fffd71cb363e4748c82941c
 requests==2.32.3
 steam==1.4.4
 # Alembic does not use semantic versioning, so be careful with the version numbers https://alembic.sqlalchemy.org/en/latest/front.html#versioning-scheme
@@ -27,3 +28,4 @@ discord.py==2.4.0
 git+https://github.com/cemathey/django-directory@f51ee1e8dc50edf453fee4a0d9631c0e46fe9433
 pre-commit
 humanize==4.11.0
+httpx==0.23.3

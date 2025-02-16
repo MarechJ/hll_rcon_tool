@@ -7,22 +7,34 @@ const TeamImageWrapper = styled(Box)(({ theme }) => ({
   justifyContent: 'start',
   width: 40,
   height: 40,
-//   [theme.breakpoints.up('sm')]: {
-//     width: 32,
-//     height: 32,
-//   },
+  [theme.breakpoints.up('sm')]: {
+    width: 50,
+    height: 50,
+  },
+  [theme.breakpoints.up('md')]: {
+    width: 60,
+    height: 60,
+  },
+  [theme.breakpoints.up('lg')]: {
+    width: 70,
+    height: 70,
+  },
 }))
 const TeamImage = styled('img')(({ theme }) => ({
   width: 40,
   height: 40,
-//   [theme.breakpoints.up('sm')]: {
-//     width: 32,
-//     height: 32,
-//   },
-//   [theme.breakpoints.up('md')]: {
-//     width: 40,
-//     height: 40,
-//   },
+  [theme.breakpoints.up('sm')]: {
+    width: 50,
+    height: 50,
+  },
+  [theme.breakpoints.up('md')]: {
+    width: 60,
+    height: 60,
+  },
+  [theme.breakpoints.up('lg')]: {
+    width: 70,
+    height: 70,
+  },
   maxWidth: 'none',
 }))
 
@@ -72,7 +84,7 @@ export default function GameOverview({
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', pt: 1 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', height: 180 }}>
       {displayArrows()}
       <Typography variant="body2" textAlign="center">
         {time}
@@ -87,7 +99,7 @@ export default function GameOverview({
             <Typography variant="h6" sx={{ fontSize: { lg: '1rem' }, fontWeight: 'bold', textTransform: 'uppercase' }}>
               {allies.team}
             </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'row', fontSize: '0.875rem' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'row', fontSize: { xs: '1rem', md: '1.25rem', lg: '1.75rem' } }}>
               <TeamDivider team="allies" />
               {alliesCount !== undefined && (
                 <Box sx={{ flexGrow: { xs: 1, sm: 0 } }}>
@@ -102,9 +114,9 @@ export default function GameOverview({
           variant="h3"
           sx={{
             flexBasis: '50%',
-            minWidth: { xs: '6rem', lg: '10rem' },
+            minWidth: { xs: '6rem', md: '8rem', lg: '10rem' },
             textAlign: 'center',
-            fontSize: { xs: '1.25rem', lg: '2.75rem' },
+            fontSize: { xs: '2rem', md: '3rem', lg: '4rem' },
           }}
         >
           {score.allies ?? '?'} : {score.axis ?? '?'}
@@ -115,7 +127,7 @@ export default function GameOverview({
             <Typography variant="h6" sx={{ fontSize: { lg: '1rem' }, fontWeight: 'bold', textTransform: 'uppercase' }}>
               {axis.team}
             </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'row', fontSize: '0.875rem' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'row', fontSize: { xs: '1rem', md: '1.25rem', lg: '1.75rem' } }}>
               {axisCount !== undefined && (
                 <Box>
                   {axisCount}

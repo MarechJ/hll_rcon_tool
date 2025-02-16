@@ -213,12 +213,6 @@ const AuditLogsPage = () => {
 
   return (
     <Stack direction={{ xs: "column" }} spacing={1} sx={{ mt: 2 }}>
-      <Box sx={{ height: 4 }}>
-        {navigation.state === "loading" && (
-          <LinearProgress sx={{ height: 4 }} />
-        )}
-      </Box>
-
       <Form method="GET" onSubmit={handleSubmit}>
         <Stack spacing={2} direction={{ xs: "column", lg: "row" }}>
           <Autocomplete

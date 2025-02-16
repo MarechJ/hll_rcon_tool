@@ -1,5 +1,7 @@
 import os
-from unittest import TestCase
+from unittest import TestCase, mock
+
+from rcon.maps import parse_layer
 
 os.environ["HLL_MAINTENANCE_CONTAINER"] = "1"
 from rcon.arguments import max_arg_index, replace_params
@@ -67,3 +69,7 @@ class ReplaceParamsTest(TestCase):
 
     def test_dict_with_nested_argument(self):
         assert replace_params(self.ctx, self.args, {"$4 ignored": "$2", "key": {"key2": "$3", "key3": "{player_name}"}}) == {"$4 ignored": "parameter2", "key": {"key2": "$3", "key3": "SOME_PLAYER_NAME"}}
+
+    @mock.patch("rcon.rcon.Rcon.get_next_map", autospec=True, return_value=parse_layer("stmariedumont_warfare"))
+    def test_with_message_variables(self, _):
+        assert replace_params(self.ctx, self.args, "{next_map_id}") == "stmariedumont_warfare"
