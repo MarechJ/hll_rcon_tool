@@ -14,6 +14,7 @@ import rcon.expiring_vips.service
 import rcon.seed_vip.service
 import rcon.user_config
 import rcon.user_config.utils
+import rcon.watch_killrate
 from rcon import auto_settings, broadcast, routines
 from rcon.automods import automod
 from rcon.blacklist import BlacklistCommandHandler
@@ -121,6 +122,15 @@ def run_seed_vip():
         rcon.seed_vip.service.run()
     except:
         logger.exception("seed VIP stopped")
+        sys.exit(1)
+
+
+@cli.command(name="watch_killrate")
+def watch_killrate():
+    try:
+        rcon.watch_killrate.run()
+    except:
+        logger.exception("Watch_KillRate stopped")
         sys.exit(1)
 
 

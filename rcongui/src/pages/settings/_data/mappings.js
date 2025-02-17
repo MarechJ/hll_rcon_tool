@@ -125,4 +125,9 @@ export const others = [
     command: "log_stream_config",
     name: "Log Stream",
   },
+  {
+    path: "/settings/others/watch-kill-rate",
+    command: "watch_killrate_config",
+    name: "Watch Kill Rate",
+  },
 ];

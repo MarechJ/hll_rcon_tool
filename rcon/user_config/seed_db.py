@@ -30,6 +30,7 @@ from rcon.user_config.standard_messages import (
 from rcon.user_config.steam import SteamUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.vote_map import VoteMapUserConfig
+from rcon.user_config.watch_killrate import WatchKillRateUserConfig
 from rcon.user_config.webhooks import (
     AdminPingWebhooksUserConfig,
     AuditWebhooksUserConfig,
@@ -78,6 +79,7 @@ def seed_default_config():
             SteamUserConfig.seed_db(sess)
             VacGameBansUserConfig.seed_db(sess)
             VoteMapUserConfig.seed_db(sess)
+            WatchKillRateUserConfig.seed_db(sess)
             WatchlistWebhooksUserConfig.seed_db(sess)
 
     except Exception as e:

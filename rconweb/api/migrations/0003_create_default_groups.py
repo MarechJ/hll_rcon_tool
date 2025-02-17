@@ -200,6 +200,8 @@ GROUPS = [
             "can_edit_message_templates",
             "can_view_webhook_queues",
             "can_change_webhook_queues",
+            "can_view_watch_killrate_config",
+            "can_change_watch_killrate_config",
         ),
     ),
     (
@@ -390,6 +392,8 @@ GROUPS = [
             "can_edit_message_templates",
             "can_view_webhook_queues",
             "can_change_webhook_queues",
+            "can_view_watch_killrate_config",
+            "can_change_watch_killrate_config",
         ),
     ),
     (

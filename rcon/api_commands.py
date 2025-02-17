@@ -74,6 +74,7 @@ from rcon.user_config.steam import SteamUserConfig
 from rcon.user_config.utils import BaseUserConfig, validate_user_config
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.vote_map import VoteMapUserConfig
+from rcon.user_config.watch_killrate import WatchKillRateUserConfig
 from rcon.user_config.webhooks import (
     AdminPingWebhooksUserConfig,
     AuditWebhooksUserConfig,
@@ -1836,6 +1837,41 @@ class RconAPI(Rcon):
             command_name=inspect.currentframe().f_code.co_name,  # type: ignore
             by=by,
             model=LogStreamUserConfig,
+            data=config or kwargs,
+            dry_run=True,
+            reset_to_default=reset_to_default,
+        )
+
+    def get_watch_killrate_config(self):
+        return WatchKillRateUserConfig.load_from_db()
+
+    def set_watch_killrate_config(
+        self,
+        by: str,
+        config: dict[str, Any] | BaseUserConfig | None = None,
+        reset_to_default: bool = False,
+        **kwargs,
+    ) -> bool:
+        return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
+            model=WatchKillRateUserConfig,
+            data=config or kwargs,
+            dry_run=False,
+            reset_to_default=reset_to_default,
+        )
+
+    def validate_watch_killrate_config(
+        self,
+        by: str,
+        config: dict[str, Any] | BaseUserConfig | None = None,
+        reset_to_default: bool = False,
+        **kwargs,
+    ) -> bool:
+        return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
+            model=WatchKillRateUserConfig,
             data=config or kwargs,
             dry_run=True,
             reset_to_default=reset_to_default,

@@ -47,6 +47,7 @@ import SpellcheckIcon from "@mui/icons-material/Spellcheck";
 import DvrIcon from "@mui/icons-material/Dvr";
 import OndemandVideoIcon from "@mui/icons-material/OndemandVideo";
 import MilitaryTechIcon from "@mui/icons-material/MilitaryTech";
+import SearchIcon from "@mui/icons-material/Search";
 
 export const navMenus = [
   {
@@ -312,6 +313,11 @@ export const navMenus = [
         name: "Log Stream",
         to: "/settings/others/log-stream",
         icon: <StreamIcon />,
+      },
+      {
+        name: "Watch Kill Rate",
+        to: "/settings/others/watch-kill-rate",
+        icon: <SearchIcon />,
       },
     ],
   },
