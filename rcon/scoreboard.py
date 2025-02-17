@@ -1,680 +1,577 @@
-import datetime
-import logging
-import os
-import pickle
-import re
+import pathlib
+import sys
 import time
-from dataclasses import dataclass
-from typing import Callable
+from collections import defaultdict
+from contextlib import contextmanager
+from datetime import datetime, timezone
+from typing import TYPE_CHECKING, Generator, TypedDict
+from urllib.parse import urljoin
 
-from rcon.cache_utils import get_redis_client
-from rcon.game_logs import get_historical_logs_records, get_recent_logs
-from rcon.models import enter_session
-from rcon.player_history import _get_profiles, get_player_profile_by_player_ids
-from rcon.rcon import get_rcon
+from discord_webhook import DiscordEmbed, DiscordWebhook
+from sqlalchemy import create_engine, select
+from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
+
+from rcon.maps import UNKNOWN_MAP_NAME, FactionName, Layer, LayerType
+from rcon.player_stats import get_cached_live_game_stats
 from rcon.types import (
-    CachedLiveGameStats,
+    STAT_DISPLAY_LOOKUP,
+    GameStateType,
+    PlayerStatsEnum,
     PlayerStatsType,
-    StatTypes,
-    StructuredLogLineWithMetaData,
 )
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
-from rcon.utils import MapsHistory
+from rcon.user_config.scoreboard import (
+    EMPTY_EMBED,
+    HeaderGameStateEmbedEnum,
+    ScoreboardUserConfig,
+)
+from rcon.utils import get_server_number
+from rcon.webhook_service import (
+    WebhookMessage,
+    WebhookMessageType,
+    WebhookType,
+    enqueue_message,
+)
 
-logger = logging.getLogger(__name__)
+if TYPE_CHECKING:
+    from rcon.api_commands import RconAPI
 
-PLAYER_ID = "player_id"
+from logging import getLogger
 
-STAT_DISPLAY_LOOKUP = {
-    StatTypes.top_killers: "kills",
-    StatTypes.top_ratio: "kill_death_ratio",
-    StatTypes.top_performance: "kills_per_minute",
-    StatTypes.try_harders: "deaths_per_minute",
-    StatTypes.top_stamina: "deaths",
-    StatTypes.top_kill_streak: "kills_streak",
-    StatTypes.i_never_give_up: "deaths_without_kill_streak",
-    StatTypes.most_patient: "deaths_by_tk",
-    StatTypes.im_clumsy: "teamkills",
-    StatTypes.i_need_glasses: "teamkills_streak",
-    StatTypes.i_love_voting: "nb_vote_started",
-    StatTypes.what_is_a_break: "time_seconds",
-    StatTypes.survivors: "longest_life_secs",
-    StatTypes.u_r_still_a_man: "shortest_life_secs",
-}
+from sqlalchemy import Engine, create_engine, select
 
-
-@dataclass
-class Streaks:
-    kill: int = 0
-    death: int = 0
-    teamkills: int = 0
-    deaths_by_tk: int = 0
+logger = getLogger(__name__)
 
 
-class BaseStats:
-    def __init__(self):
-        self.rcon = get_rcon()
-        self.voted_yes_regex = re.compile(".*PV_Favour.*")
-        self.voted_no_regex = re.compile(".*PV_Against.*")
-        self.red = get_redis_client()
+HEADER_GAMESTATE = "HEADER_GAMESTATE"
+MAP_ROTATION = "MAP_ROTATION"
+PLAYER_STATS = "PLAYER_STATS"
+MESSAGE_KEYS = (
+    HEADER_GAMESTATE,
+    MAP_ROTATION,
+    PLAYER_STATS,
+)
+SERVER_NUMBER = int(get_server_number())
 
-    def _is_player_death(self, player, log):
-        return player["name"] == log["player_name_2"]
+DB_PATH = pathlib.Path("./scoreboard.db")
+ENGINE: Engine = create_engine(
+    f"sqlite:///file:{DB_PATH}?mode=rwc&uri=true", echo=False
+)
 
-    def _is_player_kill(self, player, log):
-        return player["name"] == log["player_name_1"]
 
-    def _add_kd(self, attacker_key, victim_key, stats, player, log):
-        if self._is_player_kill(player, log):
-            stats[attacker_key] += 1
-        elif self._is_player_death(player, log):
-            stats[victim_key] += 1
+class Base(DeclarativeBase):
+    pass
+
+
+@contextmanager
+def enter_session() -> Generator[Session, None, None]:
+    with Session(bind=ENGINE) as session:
+        session.begin()
+        try:
+            yield session
+        except:
+            session.rollback()
+            raise
         else:
-            logger.warning(
-                "Log line does not belong to player '%s' line: '%s'",
-                player["name"],
-                log["raw"],
-            )
-
-    def _add_kill(self, stats, player, log: StructuredLogLineWithMetaData):
-        self._add_kd("kills", "deaths", stats, player, log)
-        if self._is_player_kill(player, log):
-            stats["weapons"][log["weapon"]] = stats["weapons"].get(log["weapon"], 0) + 1
-            stats["most_killed"][log["player_name_2"]] = (
-                stats["most_killed"].get(log["player_name_2"], 0) + 1
-            )
-        if self._is_player_death(player, log):
-            stats["death_by_weapons"][log["weapon"]] = (
-                stats["death_by_weapons"].get(log["weapon"], 0) + 1
-            )
-            stats["death_by"][log["player_name_1"]] = (
-                stats["death_by"].get(log["player_name_1"], 0) + 1
-            )
-
-    def _add_tk(self, stats, player, log):
-        self._add_kd("teamkills", "deaths_by_tk", stats, player, log)
-
-    def _add_vote(self, stats, player, log):
-        if self.voted_no_regex.match(log["raw"]):
-            stats["nb_voted_no"] += 1
-        elif self.voted_yes_regex.match(log["raw"]):
-            stats["nb_voted_yes"] += 1
-        else:
-            logger.warning(
-                "VOTE log line does not match either vote yes or no regex: %s",
-                log["raw"],
-            )
-
-    def _add_vote_started(self, stats, player, log):
-        stats["nb_vote_started"] += 1
-
-    def _process_death_time(self, log_time, stats, save_spawn=True):
-        if not isinstance(stats["last_spawn"], datetime.datetime):
-            logger.warning("Unknown last spawn")
-            stats["last_spawn"] = log_time
-            return
-
-        time_since_last_spawn = (log_time - stats["last_spawn"]).total_seconds()
-        stats["longest_life_secs"] = max(
-            time_since_last_spawn,
-            stats["longest_life_secs"],
-        )
-        stats["shortest_life_secs"] = min(
-            time_since_last_spawn,
-            stats["shortest_life_secs"],
-        )
-        if save_spawn:
-            stats["last_spawn"] = log_time
-
-    def _streaks_accumulator(self, player, log, stats, streaks):
-        action = log["action"]
-
-        log_time = datetime.datetime.fromtimestamp(log["timestamp_ms"] / 1000)
-        if action == "KILL":
-            if self._is_player_kill(player, log):
-                streaks.kill += 1
-                streaks.death = 0
-                streaks.teamkills = 0
-            elif self._is_player_death(player, log):
-                streaks.kill = 0
-                streaks.deaths_by_tk = 0
-                streaks.death += 1
-                self._process_death_time(log_time, stats)
-        if action == "TEAM KILL":
-            if self._is_player_kill(player, log):
-                streaks.teamkills += 1
-            if self._is_player_death(player, log):
-                streaks.deaths_by_tk += 1
-                self._process_death_time(log_time, stats)
-        if action == "CONNECTED":
-            stats["last_spawn"] = log_time
-        if action == "DISCONNECTED":
-            self._process_death_time(log_time, stats, save_spawn=False)
-
-        stats["kills_streak"] = max(streaks.kill, stats["kills_streak"])
-        stats["deaths_without_kill_streak"] = max(
-            streaks.death, stats["deaths_without_kill_streak"]
-        )
-        stats["teamkills_streak"] = max(streaks.teamkills, stats["teamkills_streak"])
-        stats["deaths_by_tk_streak"] = max(
-            streaks.deaths_by_tk, stats["deaths_by_tk_streak"]
-        )
-
-    def _get_player_session_time(self, player):
-        raise NotImplementedError("_get_player_session_time")
-
-    def _get_player_first_appearance(self, player):
-        raise NotImplementedError("_get_player_first_appearance")
-
-    def get_stats_by_player(
-        self,
-        indexed_logs: dict[str, list[StructuredLogLineWithMetaData]],
-        players,
-        profiles_by_id,
-    ):
-        """
-        players is expected to be a list of dict, such as:
-        [{"player_id": ..., "name": ...}, ...]
-        """
-        stats_by_player = {}
-
-        actions_processors = {
-            "KILL": self._add_kill,
-            "TEAM KILL": self._add_tk,
-            "VOTE STARTED": self._add_vote_started,
-            "VOTE": self._add_vote,
-        }
-        for p in players:
-            logger.debug("Crunching stats for %s", p)
-            player_logs: list[StructuredLogLineWithMetaData] = indexed_logs.get(
-                p["name"], []
-            )
-            profile = profiles_by_id.get(p.get(PLAYER_ID))
-            stats = {
-                "player": p["name"],
-                PLAYER_ID: p.get(PLAYER_ID),
-                "steaminfo": (
-                    profile.steaminfo.to_dict()
-                    if profile and profile.steaminfo
-                    else None
-                ),
-                "kills": 0,
-                "kills_streak": 0,
-                "deaths": 0,
-                "death_by_weapons": {},
-                "deaths_without_kill_streak": 0,
-                "teamkills": 0,
-                "teamkills_streak": 0,
-                "deaths_by_tk": 0,
-                "deaths_by_tk_streak": 0,
-                "nb_vote_started": 0,
-                "nb_voted_yes": 0,
-                "nb_voted_no": 0,
-                "longest_life_secs": 0,
-                "shortest_life_secs": 9999,
-                "last_spawn": self._get_player_first_appearance(p),
-                "time_seconds": self._get_player_session_time(p),
-                "weapons": {},
-                "death_by": {},
-                "most_killed": {},
-                "combat": 0,
-                "offense": 0,
-                "defense": 0,
-                "support": 0,
-            }
-
-            streaks = Streaks()
-            # player_p = p
-            # import ipdb; ipdb.set_trace()
-            for l in player_logs:
-                action = l["action"]
-                processor = actions_processors.get(action, lambda **kargs: None)
-                processor(stats=stats, player=p, log=l)
-                self._streaks_accumulator(p, l, stats, streaks)
-
-            stats_by_player[p["name"]] = self._compute_stats(stats)
-
-        return stats_by_player
-
-    def _compute_stats(self, stats):
-        new_stats = dict(**stats)
-        new_stats["kills_per_minute"] = round(
-            stats["kills"] / max(stats["time_seconds"] / 60, 1), 2
-        )
-        new_stats["deaths_per_minute"] = round(
-            stats["deaths"] / max(stats["time_seconds"] / 60, 1), 2
-        )
-        new_stats["kill_death_ratio"] = round(
-            stats["kills"] / max(stats["deaths"], 1), 2
-        )
-        return new_stats
+            session.commit()
 
 
-class LiveStats(BaseStats):
-    def _get_player_session_time(self, player):
-        if not player or not player.get("profile"):
-            logger.warning("Can't use player profile")
-            return -1
+class Webhook(Base):
+    __tablename__ = "webhooks"
 
-        player_time_sec = player.get("profile", {}).get("current_playtime_seconds", 0)
+    url: Mapped[str] = mapped_column(primary_key=True)
+    header_gamestate: Mapped[str | None] = mapped_column(default=0)
+    map_rotation: Mapped[str | None] = mapped_column(default=0)
+    player_stats: Mapped[str | None] = mapped_column(default=0)
+    server_number: Mapped[str] = mapped_column(default=SERVER_NUMBER, primary_key=True)
 
-        return player_time_sec
-
-    def _get_player_first_appearance(self, player):
-        if not player or not player.get("profile"):
-            logger.warning("Can't use player profile")
-            return -1
-
-        player_sessions = player.get("profile", {}).get("sessions")
-        if not player_sessions:
-            logger.warning("No sessions in player profile")
-            return -1
-
-        return player_sessions[0].get("start")
-
-    def _is_log_from_current_session(self, now, player, log):
-        if player["name"] == "Dr.WeeD":
-            logger.debug(
-                "%s %s %s %s",
-                log["timestamp_ms"],
-                (now.timestamp() - self._get_player_session_time(player)) * 1000,
-                log["timestamp_ms"]
-                >= (now.timestamp() - self._get_player_session_time(player)) * 1000,
-                log["raw"],
-            )
+    def __repr__(self) -> str:
         return (
-            log["timestamp_ms"]
-            >= (now.timestamp() - self._get_player_session_time(player)) * 1000
+            f"Webhook(url={self.url} header_gamestate={self.header_gamestate}"
+            f" map_rotation={self.map_rotation} player_stats={self.player_stats}"
+            f" server_number={self.server_number})"
         )
 
-    def _get_indexed_logs_by_player_for_session(
-        self, now, indexed_players, logs: list[StructuredLogLineWithMetaData]
-    ) -> dict[str, list[StructuredLogLineWithMetaData]]:
-        logs_indexed = {}
-        for l in logs:
-            player = indexed_players.get(l["player_name_1"])
-            player2 = indexed_players.get(l["player_name_2"])
-
-            try:
-                # Only consider stats for a player from his last connection (so a disconnect reconnect should reset stats) otherwise multiple sessions could be blended into one, even if they are far apart
-                if player and self._is_log_from_current_session(now, player, l):
-                    logs_indexed.setdefault(l["player_name_1"], []).append(l)
-                if player2 and self._is_log_from_current_session(now, player2, l):
-                    logs_indexed.setdefault(l["player_name_2"], []).append(l)
-            except KeyError:
-                logger.exception("Invalid log line %s", l)
-
-        return logs_indexed
-
-    def get_current_players_stats(self):
-        players = self.rcon.get_players()
-        if not players:
-            logger.debug("No players")
-            return {}
-
-        players = [p for p in players if p.get(PLAYER_ID)]
-
-        with enter_session() as sess:
-            profiles_by_id = {
-                profile.player_id: profile
-                for profile in _get_profiles(
-                    sess, [p[PLAYER_ID] for p in players], nb_sessions=1
-                )
-            }
-            logger.info(
-                "%s players, %s profiles loaded", len(players), len(profiles_by_id)
-            )
-            oldest_session_seconds = self._get_player_session_time(
-                max(players, key=self._get_player_session_time)
-            )
-            logger.debug("Oldest session: %s", oldest_session_seconds)
-            now = datetime.datetime.now()
-            min_timestamp = (
-                now - datetime.timedelta(seconds=oldest_session_seconds)
-            ).timestamp()
-            logger.debug("Min timestamp: %s", min_timestamp)
-            logs = get_recent_logs(min_timestamp=min_timestamp)
-
-            logger.info("%s log lines to process", len(logs["logs"]))
-
-            indexed_players = {p["name"]: p for p in players}
-            indexed_logs = self._get_indexed_logs_by_player_for_session(
-                now, indexed_players, list(reversed(logs["logs"]))
-            )
-
-            return self.get_stats_by_player(indexed_logs, players, profiles_by_id)
-
-    def set_live_stats(self):
-        snapshot_ts = datetime.datetime.now().timestamp()
-        stats = self.get_current_players_stats()
-        self.red.set(
-            "LIVE_STATS",
-            pickle.dumps(
-                dict(snapshot_timestamp=snapshot_ts, stats=list(stats.values()))
-            ),
-        )
-
-    def get_cached_stats(self):
-        stats = self.red.get("LIVE_STATS")
-        if stats:
-            stats = pickle.loads(stats)
-        return stats
+    def __str__(self):
+        return self.__repr__()
 
 
-class TimeWindowStats(BaseStats):
-    def __init__(self):
-        super().__init__()
-        self.match_end_result_regex = re.compile(
-            r"MATCH ENDED `.+` ALLIED \((\d) - (\d)\) AXIS"
-        )
+def get_set_wh_row(
+    session: Session, webhook_url: str, server_number: int = SERVER_NUMBER
+) -> Webhook:
+    stmt = (
+        select(Webhook)
+        .filter(Webhook.url == webhook_url)
+        .filter(Webhook.server_number == server_number)
+    )
+    res = session.scalars(stmt).one_or_none()
 
-    def _set_start_end_times(
-        self, player, players_times, log, from_, offset_warmup_time_seconds=180
-    ):
-        if not player:
-            return
-        # A CONNECT means the begining of a session for the player
-        if log["action"] == "CONNECTED":
-            try:
-                event_time = datetime.datetime.fromisoformat(log.get("event_time"))
-            except (TypeError, ValueError):
-                event_time = datetime.datetime.utcfromtimestamp(
-                    log["timestamp_ms"] // 1000
-                )
-            players_times.setdefault(player, {"start": [], "end": []})["start"].append(
-                event_time
-            )
-        # if the player is not already in the times record we add the start of the stats window as his session start time
-        # we didn't see a CONNECTED before, so it means that the player was here before the current window.
-        # For those we add the game warmup time to have a more accurate kill / min
-        elif player not in players_times and log["action"] != "DISCONNECTED":
-            players_times.setdefault(player, {"start": [], "end": []})["start"].append(
-                from_ + datetime.timedelta(seconds=offset_warmup_time_seconds)
-            )
-        # if the player was already in the time record and we see a disconnect we log it as the end of his session
-        if player in players_times and log["action"] == "DISCONNECTED":
-            try:
-                event_time = datetime.datetime.fromisoformat(log.get("event_time"))
-            except (TypeError, ValueError):
-                event_time = datetime.datetime.utcfromtimestamp(
-                    log["timestamp_ms"] // 1000
-                )
-            players_times.setdefault(player, {"start": [], "end": []})["end"].append(
-                event_time
-            )
-        # if we had a player that disconnected but was not in the time record it means he did have any kill / death or other actions like chat, vote
-        # This player won't have a session time (most likely and AFK one)
+    if res is None:
+        logger.warning(f"{server_number=} {webhook_url} not in database, adding it")
+        res = Webhook(url=webhook_url)
+        session.add(res)
+        session.commit()
+    return res
 
-    def _get_player_session_time(self, player):
-        # TODO: Make safe
+
+def save_message_id(session: Session, webhook_url: str, key: str, value: str):
+    wh = get_set_wh_row(session=session, webhook_url=webhook_url)
+    if key == HEADER_GAMESTATE:
+        wh.header_gamestate = value
+    if key == MAP_ROTATION:
+        wh.map_rotation = value
+    if key == PLAYER_STATS:
+        wh.player_stats = value
+    session.commit()
+
+
+def guess_current_map_rotation_positions(
+    rotation: list[Layer], current_map: LayerType, next_map: LayerType
+) -> list[int]:
+    """Estimate the index(es) of the current map in the rotation based off current/next map"""
+    # As of U13 a map can be in a rotation more than once, but the index isn't
+    # provided by RCON so we have to try to guess where we are in the rotation
+
+    # TODO: what about single map rotations
+    # TODO: use previous map to better estimate
+
+    # Between rounds
+    if current_map["id"] == UNKNOWN_MAP_NAME:
+        return []
+
+    raw_names = [map.id for map in rotation]
+
+    # the current map is only in once then we know exactly where we are
+    if raw_names.count(current_map["id"]) == 1:
+        return [raw_names.index(current_map["id"])]
+
+    # the current map is in more than once, we must estimate
+    # if the next map is in only once then we know exactly where we are
+    current_map_idxs = []
+    for idx in [idx for idx, name in enumerate(raw_names) if name == next_map["id"]]:
+        # if raw_names.count(next_map.raw_name) == 1:
+        # next_map_idx = raw_names.index(next_map.raw_name)
+        # current_map_idx = None
+
+        # have to account for wrapping from the end to the start
+        # current map is the end of the rotation
+        if idx == 0:
+            current_map_idx = len(raw_names) - 1
+        # Somewhere besides the end of the rotation
+        else:
+            current_map_idx = idx - 1
+
+        current_map_idxs.append(current_map_idx)
+        # return [current_map_idx]
+
+    return current_map_idxs
+
+    # the current map is in more than once
+    # and the next map is in multiple times so we can't determine where we are
+    # return [idx for idx, name in enumerate(raw_names) if name == current_map.raw_name]
+
+
+def guess_next_map_rotation_positions(
+    current_map_positions: list[int], rotation: list[Layer]
+) -> list[int]:
+    """Estimate the index(es) of the next map in the rotation based off current/next map"""
+    rotation_length = len(rotation)
+
+    positions: list[int] = []
+    for position in current_map_positions:
+        # handle wrapping back to the start of the rotation
+        if position == rotation_length - 1:
+            positions.append(0)
+        # otherwise the next map is immediately after the current map
+        else:
+            positions.append(position + 1)
+
+    return positions
+
+
+class TeamVIPCount(TypedDict):
+    allies: int
+    axis: int
+    none: int
+
+
+# TODO: move this to rcon
+def get_vip_count_by_team(rcon_api: "RconAPI") -> TeamVIPCount:
+    teams: TeamVIPCount = {"allies": 0, "axis": 0, "none": 0}
+
+    team_view = rcon_api.get_team_view()
+    for team in teams:
         try:
-            return self.times[player["name"]]["total"]
+            for squad_key in team_view["squads"].keys():
+                for player in team_view[team]["squads"][squad_key]["players"]:
+                    if player["is_vip"]:
+                        teams[team] += 1
         except KeyError:
-            logger.warning("Unable to get session time for %s", player.get("name"))
-            return 0
-
-    def _get_player_first_appearance(self, player):
-        try:
-            return self.times[player["name"]]["start"][0]
-        except KeyError:
-            logger.warning(
-                "Unable to get first appearance time for %s", player.get("name")
-            )
-            return 0
-
-    def _get_players_stats_for_logs(
-        self,
-        logs,
-        from_,
-        until,
-        offset_warmup_time_seconds=120,
-        offset_cooldown_time_seconds=100,
-    ):
-        indexed_logs = {}
-        players = set()
-        players_times = {}
-
-        for log in logs:
-            # player is the player name
-            if player := log.get("player_name_1"):
-                # Check if this log line in a disconnect / connect and stores it it is
-                self._set_start_end_times(player, players_times, log, from_)
-                # index logs by player names, so that you can fetch all logs for a given player easily
-                indexed_logs.setdefault(player, []).append(log)
-
-                # Create a list of dict for players, for backward compatibility with the parent class that holds the computation logic
-                if player_id := log.get("player_id_1"):
-                    players.add((player, player_id))
-
-            if player2 := log.get("player_name_2"):
-                self._set_start_end_times(player2, players_times, log, from_)
-                indexed_logs.setdefault(player2, []).append(log)
-
-                if player_id_2 := log.get("player_id_2"):
-                    players.add((player2, player_id_2))
-
-        # Convert the unique set of players into a list of dict for compatibility with parent class
-        players = [
-            dict(name=player_name, player_id=player_id)
-            for player_name, player_id in players
-        ]
-        # Here we massage the session times for a player. 1 session should be a pair of times a start and an end
-        for player, times in players_times.items():
-            starts = times["start"]
-            ends = times["end"]
-            times["total"] = 0
-            # This is an error check, it should never happend to not have a start time
-            # If the player connected prior to the time window we're computing the start for, then the start time should be the start of that window
-            if len(starts) == 0:
-                logger.error("No start time for  %s - %s", player, times)
-            # If there's 1 start more that there are ends, it means that the player did not leave the game, and therefore we add the end of the session as the end of the window we're computing the stats for
-            # We discount the cooldown time at the end of the game to get a more accurate kill / min
-            elif len(starts) == len(ends) + 1:
-                logger.debug("Adding end time to end of range for %s", player)
-                ends.append(
-                    until - datetime.timedelta(seconds=offset_cooldown_time_seconds)
-                )
-            # If starts and ends don't match something's probably wrong the the code
-            if len(starts) != len(ends):
-                logger.error("Sessions time don't match for %s - %s", player, times)
-                continue
-
-            # We loop over the pairs of start and ends (chronologically in the order we encountered them)
-            # and we compute the total play time of the player for the window we're looking at
-            for pair in zip(starts, ends):
-                start, end = pair
-                time = end - start
-                times["total"] += time.total_seconds()
-
-        self.times = players_times
-
-        logger.debug("Indexing profiles by id")
-        # we create and hashmap where the key is the player ID (steam/windows) of a player and the value his DB profile.
-        # The DB rows are eagerly loaded (at least the ones we need later on) if you need more rows make sure to eager load them as well otherwise it will add significan slowness
-        # The profiles are attached to the current DB session
-        with enter_session() as sess:
-            profiles_by_id = {
-                profile.player_id: profile
-                for profile in get_player_profile_by_player_ids(
-                    sess, [p[PLAYER_ID] for p in players]
-                )
-            }
-
-            logger.debug("Computing stats")
-            # we delegate the stats computation to the parent class
-            return self.get_stats_by_player(
-                indexed_logs=indexed_logs,
-                players=players,
-                profiles_by_id=profiles_by_id,
-            )
-
-    def get_players_stats_at_time(self, from_, until, server_number=None):
-        server_number = server_number or os.getenv("SERVER_NUMBER")
-        with enter_session() as sess:
-            # Get the logs from the database for the given time range
-            rows = get_historical_logs_records(
-                sess,
-                from_=from_,
-                till=until,
-                time_sort="asc",
-                server_filter=server_number,
-                limit=99999999,
-            )
-
-            return self._get_players_stats_for_logs(
-                [row.compatible_dict() for row in rows], from_, until
-            )
-
-    def map_result(self, from_, until, server_number=None) -> dict[str, int]:
-        server_number = server_number or os.getenv("SERVER_NUMBER")
-        with enter_session() as sess:
-            rows = get_historical_logs_records(
-                sess,
-                action="MATCH ENDED",
-                from_=from_,
-                till=until,
-                time_sort="asc",
-                server_filter=server_number,
-                limit=1,
-            )
-            if len(rows) == 0:
-                return {"Allied": 2, "Axis": 2}
-            (allied, axis) = self.match_end_result_regex.match(
-                rows[0].compatible_dict().get("message")
-            ).groups()
-            return {"Allied": int(allied), "Axis": int(axis)}
-
-    def get_players_stats_from_time(self, from_timestamp):
-        logs = get_recent_logs(min_timestamp=from_timestamp)
-        return self._get_players_stats_for_logs(
-            reversed(logs.get("logs", [])),
-            datetime.datetime.utcfromtimestamp(from_timestamp),
-            datetime.datetime.utcnow(),
-            offset_cooldown_time_seconds=0,
-        )
-
-
-def live_stats_loop():
-    live = LiveStats()
-    config = RconServerSettingsUserConfig.load_from_db()
-    last_loop_session = datetime.datetime(year=2020, month=1, day=1)
-    last_loop_game = datetime.datetime(year=2020, month=1, day=1)
-    live_session_sleep_seconds = config.live_stats_refresh_seconds
-    live_game_sleep_seconds = config.live_stats_refresh_seconds
-    logger.debug("live_session_sleep_seconds: {}".format(live_session_sleep_seconds))
-    logger.debug("live_game_sleep_seconds: {}".format(live_game_sleep_seconds))
-    red = get_redis_client()
-
-    while True:
-        # Keep track of session and game timers seperately
-        last_loop_session_seconds = (
-            datetime.datetime.now() - last_loop_session
-        ).total_seconds()
-        last_loop_game_seconds = (
-            datetime.datetime.now() - last_loop_game
-        ).total_seconds()
-
-        if last_loop_session_seconds >= live_session_sleep_seconds:
-            last_loop_session = datetime.datetime.now()
-            try:
-                live.set_live_stats()
-                logger.debug("Refreshed set_live_stats")
-            except Exception:
-                logger.exception("Error while producing stats")
-
-        if last_loop_game_seconds >= live_game_sleep_seconds:
-            last_loop_game = datetime.datetime.now()
-            try:
-                snapshot_ts = datetime.datetime.now().timestamp()
-                stats = current_game_stats()
-                logger.debug("Refreshed current_game_stats")
-                red.set(
-                    "LIVE_GAME_STATS",
-                    pickle.dumps(
-                        dict(
-                            snapshot_timestamp=snapshot_ts,
-                            stats=list(stats.values()),
-                            refresh_interval_sec=live_game_sleep_seconds,
-                        )
-                    ),
-                )
-            except Exception:
-                logger.exception("Failed to compute live game stats")
-
-        time.sleep(0.1)
-
-
-def current_game_stats():
-    try:
-        current_map = MapsHistory()[0]
-    except IndexError:
-        logger.error("No maps information available")
-        return {}
-
-    stats = TimeWindowStats().get_players_stats_from_time(current_map["start"])
-    for name in stats:
-        stat = stats.setdefault(name)
-        player_stats = current_map.get("player_stats", dict())
-        map_stat = player_stats.get(stat[PLAYER_ID], None)
-        if map_stat is None:
-            logger.info("No stats for: " + stat[PLAYER_ID])
             continue
-        stat["combat"] = map_stat["combat"] + map_stat["p_combat"]
-        stat["offense"] = map_stat["offense"] + map_stat["p_offense"]
-        stat["defense"] = map_stat["defense"] + map_stat["p_defense"]
-        stat["support"] = map_stat["support"] + map_stat["p_support"]
-    return stats
+
+        commander = team_view[team]["commander"] or {}
+        if commander.get("is_vip"):
+            teams[team] += 1
+
+    return teams
 
 
-def get_cached_live_game_stats() -> CachedLiveGameStats:
-    red = get_redis_client()
-    stats = red.get("LIVE_GAME_STATS")
-    if stats:
-        stats = pickle.loads(stats)
-    return stats
+def get_map_image_url(config: ScoreboardUserConfig, gamestate: GameStateType):
+    try:
+        image_name = gamestate["current_map"]["image_name"]
+        url = urljoin(str(config.public_scoreboard_url), f"maps/{image_name}")
+    except (IndexError, KeyError, TypeError) as e:
+        url = urljoin(
+            str(config.public_scoreboard_url), f"maps/{UNKNOWN_MAP_NAME}.webp"
+        )
+
+    return url
 
 
-def get_stat_post_processor(key: StatTypes):
-    if key in (
-        StatTypes.what_is_a_break,
-        StatTypes.survivors,
-    ):
-        return lambda v: round(v / 60, 2)
+def build_header_gamestate_embed(
+    config: ScoreboardUserConfig, rcon_api: "RconAPI", short_name: str
+) -> DiscordEmbed:
+    """Build an embed for the header/gamestate message"""
+    embed = DiscordEmbed()
+
+    gamestate: GameStateType = rcon_api.get_gamestate()
+    vip_count_by_team = get_vip_count_by_team(rcon_api=rcon_api)
+
+    if config.server_name:
+        server_name = rcon_api.get_name()
+        embed.title = server_name
+
+    for option in config.header_gamestate_embeds:
+        name: str | None = None
+        match option.value:
+
+            case HeaderGameStateEmbedEnum.QUICK_CONNECT_URL:
+                value = config.quick_connect_url
+            case HeaderGameStateEmbedEnum.BATTLEMETRICS_URL:
+                value = config.battlemetrics_url
+            case HeaderGameStateEmbedEnum.RESERVED_VIP_SLOTS:
+                value = rcon_api.get_vip_slots_num()
+            case HeaderGameStateEmbedEnum.CURRENT_VIPS:
+                value = rcon_api.get_vips_count()
+            case HeaderGameStateEmbedEnum.NUM_ALLIED_PLAYERS:
+                value = gamestate["num_allied_players"]
+            case HeaderGameStateEmbedEnum.NUM_AXIS_PLAYERS:
+                value = gamestate["num_axis_players"]
+            case HeaderGameStateEmbedEnum.NUM_ALLIED_VIPS:
+                value = vip_count_by_team["allies"]
+            case HeaderGameStateEmbedEnum.NUM_AXIS_VIPS:
+                value = vip_count_by_team["axis"]
+            case HeaderGameStateEmbedEnum.SLOTS:
+                slots = rcon_api.get_slots()
+                value = f"{slots['current_players']}/{slots['max_players']}"
+            case HeaderGameStateEmbedEnum.TIME_REMAINING:
+                value = str(gamestate["time_remaining"])
+            case HeaderGameStateEmbedEnum.CURRENT_MAP:
+                value = str(gamestate["current_map"]["pretty_name"])
+            case HeaderGameStateEmbedEnum.NEXT_MAP:
+                value = str(gamestate["next_map"]["pretty_name"])
+            case HeaderGameStateEmbedEnum.SCORE:
+                if (
+                    config.objective_score_format_ger_v_us
+                    and gamestate["current_map"]["map"]["allies"]["name"]
+                    == FactionName.US.value
+                ):
+                    format_str = config.objective_score_format_ger_v_us
+                elif (
+                    config.objective_score_format_ger_v_uk
+                    and gamestate["current_map"]["map"]["allies"]["name"]
+                    == FactionName.GB.value
+                ):
+                    format_str = config.objective_score_format_ger_v_uk
+                elif (
+                    config.objective_score_format_ger_v_sov
+                    and gamestate["current_map"]["map"]["allies"]["name"]
+                    == FactionName.RUS.value
+                ):
+                    format_str = config.objective_score_format_ger_v_sov
+                else:
+                    format_str = config.objective_score_format_generic
+                value = format_str.format(
+                    gamestate["allied_score"], gamestate["axis_score"]
+                )
+            # Not ideal but the match statement won't let us use the constant here
+            case "\u200B":
+                name = ""
+                value = EMPTY_EMBED
+            case _:
+                raise ValueError(f"Unrecognized field: {option.value}")
+        if name is None:
+            name = option.name
+
+        embed.add_embed_field(name=name, value=str(value), inline=option.inline)
+
+    if config.show_map_image:
+        url = get_map_image_url(config=config, gamestate=gamestate)
+        embed.set_image(url=url)
+
+    embed.set_footer(text=f"{short_name} - {config.footer_last_refreshed_text}")
+    embed.set_timestamp(datetime.now(tz=timezone.utc))
+
+    return embed
+
+
+def build_map_rotation_embed(
+    config: ScoreboardUserConfig, rcon_api: "RconAPI", short_name: str
+) -> DiscordEmbed:
+    """Build an embed for the map rotation message"""
+    embed = DiscordEmbed()
+    rotation: list[Layer] = rcon_api.get_map_rotation()
+    gamestate: GameStateType = rcon_api.get_gamestate()
+
+    title = ""
+    if config.server_name:
+        server_name = rcon_api.get_name()
+        title = server_name
+
+    if title:
+        embed.title = f"{title} - {config.map_rotation_title_text}"
     else:
-        return lambda v: v
+        embed.title = config.map_rotation_title_text
+
+    # shuffle_enabled
+    current_map_positions: list[int] = guess_current_map_rotation_positions(
+        rotation, gamestate["current_map"], gamestate["next_map"]
+    )
+    next_map_positions: list[int] = guess_next_map_rotation_positions(
+        current_map_positions, rotation
+    )
+
+    description = []
+    for idx, map_ in enumerate(rotation):
+        if idx in current_map_positions:
+            description.append(
+                config.current_map_format.format(map_.pretty_name, idx + 1)
+            )
+        elif idx in next_map_positions:
+            description.append(config.next_map_format.format(map_.pretty_name, idx + 1))
+        else:
+            description.append(
+                config.other_map_format.format(map_.pretty_name, idx + 1)
+            )
+
+    if config.show_map_legend:
+        description.append(config.map_legend)
+
+    if description:
+        embed.add_embed_field(name="", value="\n".join(description))
+
+    embed.set_footer(text=f"{short_name} - {config.footer_last_refreshed_text}")
+    embed.set_timestamp(datetime.now(tz=timezone.utc))
+    return embed
 
 
-def get_stat(
-    stats: list[PlayerStatsType],
-    key: StatTypes,
-    limit: int,
-    post_process: Callable | None = None,
-    reverse: bool | None = None,
-) -> list[PlayerStatsType]:
-    if key in (StatTypes.u_r_still_a_man,):
-        reverse = False
+def build_player_stats_embed(
+    config: ScoreboardUserConfig, rcon_api: "RconAPI", short_name: str
+):
+    player_stats: list[PlayerStatsType] = get_cached_live_game_stats()["stats"]
+
+    embed = DiscordEmbed()
+
+    title = ""
+    if config.server_name:
+        server_name = rcon_api.get_name()
+        title = server_name
+
+    if title:
+        embed.title = f"{title} - {config.player_stats_title_text}"
     else:
-        reverse = True
+        embed.title = config.player_stats_title_text
 
-    if post_process is None:
-        post_process = get_stat_post_processor(key=key)
+    reverse_sort = defaultdict(lambda: True)
+    reverse_sort[PlayerStatsEnum.SHORTEST_LIFE_SECS] = False
 
-    assert post_process is not None
+    for option in config.player_stat_embeds:
+        if option.value == EMPTY_EMBED:
+            embed.add_embed_field(name="", value=option.value, inline=option.inline)
+        else:
+            stat = STAT_DISPLAY_LOOKUP[PlayerStatsEnum[option.value.upper()]]
+            stats: list[PlayerStatsType] = sorted(
+                player_stats,
+                key=lambda player_stat: player_stat[stat],
+                reverse=reverse_sort[PlayerStatsEnum(stat)],
+            )[: config.player_stats_num_to_display]
+            stats_strings = [
+                f"[#{idx+1}][{player_stat['player']}]: {player_stat[stat]}"
+                for idx, player_stat in enumerate(stats)
+            ]
+            embed.add_embed_field(
+                name=option.name,
+                value="```md\n{content}\n```".format(content="\n".join(stats_strings)),
+                inline=option.inline,
+            )
 
-    stats = sorted(
-        stats, key=lambda stat: stat[STAT_DISPLAY_LOOKUP[key]], reverse=reverse
-    )[:limit]
-    return stats
+    embed.set_footer(text=f"{short_name} - {config.footer_last_refreshed_text}")
+    embed.set_timestamp(datetime.now(tz=timezone.utc))
+    return embed
+
+
+def create_initial_message(url: str, embed: DiscordEmbed) -> str:
+    wh = DiscordWebhook(url=url)
+    wh.add_embed(embed)
+    wh.execute()
+    return wh.message_id
+
+
+def send_message(
+    session: Session,
+    wh: DiscordWebhook,
+    embed: DiscordEmbed,
+    message_id: str | None,
+    key: str,
+):
+    wh.message_id = message_id
+    wh.add_embed(embed)
+    # When a message doesn't exist; or we have no message IDs we have to
+    # create/send one; persist the ID and then enqueue future updates
+    # through the webhook service
+    if not message_id or not wh.message_exists():
+        message_id = create_initial_message(url=wh.url, embed=embed)
+        save_message_id(
+            session=session,
+            webhook_url=wh.url,
+            key=key,
+            value=message_id,
+        )
+    else:
+        logger.info(f"enqueing {wh.message_id=} {key=}")
+        enqueue_message(
+            message=WebhookMessage(
+                discardable=True,
+                edit=True,
+                webhook_type=WebhookType.DISCORD,
+                message_type=WebhookMessageType.SCOREBOARD,
+                server_number=SERVER_NUMBER,
+                payload=wh.json,
+            )
+        )
+
+
+def run():
+    # Avoid circular imports
+    from rcon.api_commands import get_rcon_api
+
+    config = ScoreboardUserConfig.load_from_db()
+    rcon_api = get_rcon_api()
+
+    try:
+        if config.public_scoreboard_url is None:
+            logger.error(
+                "Your Public Scoreboard URL is not configured, set it and restart the Scoreboard service."
+            )
+            sys.exit(-1)
+
+        if not config.hooks:
+            logger.error(
+                "You do not have any Discord webhooks configured, set some and restart the Scoreboard service."
+            )
+            sys.exit(-1)
+
+        last_updated_header_gamestate: datetime | None = None
+        last_updated_map_rotation: datetime | None = None
+        last_updated_player_stats: datetime | None = None
+        while True:
+            timestamp = datetime.now()
+            config = ScoreboardUserConfig.load_from_db()
+            server_config = RconServerSettingsUserConfig.load_from_db()
+
+            for webhook in config.hooks:
+                url = str(webhook.url)
+
+                with enter_session() as session:
+                    message_ids = get_set_wh_row(session=session, webhook_url=url)
+                    for key in MESSAGE_KEYS:
+                        if key == HEADER_GAMESTATE:
+                            if (
+                                last_updated_header_gamestate
+                                and (
+                                    timestamp - last_updated_header_gamestate
+                                ).total_seconds()
+                                < config.header_gamestate_time_between_refreshes
+                            ):
+                                continue
+                            last_updated_header_gamestate = timestamp
+                            wh = DiscordWebhook(url=url)
+                            embed = build_header_gamestate_embed(
+                                config=config,
+                                rcon_api=rcon_api,
+                                short_name=server_config.short_name,
+                            )
+                            send_message(
+                                session=session,
+                                wh=wh,
+                                embed=embed,
+                                message_id=message_ids.header_gamestate,
+                                key=key,
+                            )
+
+                        if key == MAP_ROTATION:
+                            if (
+                                last_updated_map_rotation
+                                and (
+                                    timestamp - last_updated_map_rotation
+                                ).total_seconds()
+                                < config.map_rotation_time_between_refreshes
+                            ):
+                                continue
+                            last_updated_map_rotation = timestamp
+                            wh = DiscordWebhook(url=url)
+                            embed = build_map_rotation_embed(
+                                config=config,
+                                rcon_api=rcon_api,
+                                short_name=server_config.short_name,
+                            )
+                            send_message(
+                                session=session,
+                                wh=wh,
+                                embed=embed,
+                                message_id=message_ids.map_rotation,
+                                key=key,
+                            )
+
+                        if key == PLAYER_STATS:
+                            if (
+                                last_updated_player_stats
+                                and (
+                                    timestamp - last_updated_player_stats
+                                ).total_seconds()
+                                < config.player_stats_time_between_refreshes
+                            ):
+                                continue
+                            last_updated_player_stats = timestamp
+                            wh = DiscordWebhook(url=url)
+                            embed = build_player_stats_embed(
+                                config=config,
+                                rcon_api=rcon_api,
+                                short_name=server_config.short_name,
+                            )
+                            send_message(
+                                session=session,
+                                wh=wh,
+                                embed=embed,
+                                message_id=message_ids.player_stats,
+                                key=key,
+                            )
+                sleep_time = min(
+                    config.header_gamestate_time_between_refreshes,
+                    config.map_rotation_time_between_refreshes,
+                    config.player_stats_time_between_refreshes,
+                )
+                time.sleep(sleep_time)
+    except Exception as e:
+        logger.exception("The bot stopped", e)
+        raise
 
 
 if __name__ == "__main__":
-    from pprint import pprint
-
-    # pprint(LiveStats().get_current_players_stats())
-    pprint(
-        TimeWindowStats().get_players_stats_from_time(
-            datetime.datetime(2021, 7, 16, 23, 30, 44, 793000).timestamp()
-        )
-    )
-
-    # LiveStats().get_current_players_stats()
+    try:
+        logger.info("Attempting to start scorebot")
+        Base.metadata.create_all(ENGINE)
+        run()
+    except Exception as e:
+        logger.exception(e)
+        raise

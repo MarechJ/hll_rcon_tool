@@ -26,7 +26,7 @@ if not os.getenv("HLL_MAINTENANCE_CONTAINER") and not os.getenv(
         rcon_connection_settings,
         rcon_server_settings,
         real_vip,
-        scorebot,
+        scoreboard,
         standard_messages,
         steam,
         vac_game_bans,

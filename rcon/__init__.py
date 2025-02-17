@@ -1,5 +1,7 @@
 import os
 
+import rcon.settings
+
 # Allows importing the models in the maintenance container to run database migrations
 if not os.getenv("HLL_MAINTENANCE_CONTAINER") and not os.getenv(
     "HLL_WH_SERVICE_CONTAINER"

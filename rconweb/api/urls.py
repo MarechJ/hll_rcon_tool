@@ -152,7 +152,7 @@ endpoints: list[tuple[str, Callable]] = [
         "describe_rcon_server_settings_config",
         user_settings.describe_rcon_server_settings_config,
     ),
-    ("describe_scorebot_config", user_settings.describe_scorebot_config),
+    ("describe_scoreboard_config", user_settings.describe_scoreboard_config),
     (
         "describe_standard_broadcast_messages",
         user_settings.describe_standard_broadcast_messages,

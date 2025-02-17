@@ -23,11 +23,13 @@ from rcon.logs.loop import LogLoop, load_generic_hooks
 from rcon.logs.recorder import LogRecorder
 from rcon.logs.stream import LogStream
 from rcon.models import PlayerID, enter_session, install_unaccent
+from rcon.player_stats import live_stats_loop
 from rcon.rcon import get_rcon
-from rcon.scoreboard import live_stats_loop
 from rcon.steam_utils import enrich_db_users
 from rcon.user_config.auto_settings import AutoSettingsConfig
+from rcon.user_config.legacy_scorebot import ScorebotUserConfig
 from rcon.user_config.log_stream import LogStreamUserConfig
+from rcon.user_config.scoreboard import ScoreboardUserConfig, _port_legacy_scorebot_urls
 from rcon.user_config.webhooks import (
     BaseMentionWebhookUserConfig,
     BaseUserConfig,
@@ -43,6 +45,11 @@ def cli():
     pass
 
 
+@cli.command(name="port_legacy_scorebot_urls")
+def port_legacy_scorebot_urls():
+    _port_legacy_scorebot_urls()
+
+
 @cli.command(name="live_stats_loop")
 def run_stats_loop():
     try:
@@ -52,6 +59,7 @@ def run_stats_loop():
     except:
         logger.exception("Stats loop stopped")
         sys.exit(1)
+
 
 @cli.command(name="enrich_db_users")
 def run_enrich_db_users():
@@ -134,7 +142,7 @@ def run_log_recorder(interval, frequency_min, now):
     if frequency_min and interval:
         raise Exception("Cannot have frequency-min and interval at the same time")
     if frequency_min:
-        interval = frequency_min*60
+        interval = frequency_min * 60
     LogRecorder(interval).run(run_immediately=now)
 
 

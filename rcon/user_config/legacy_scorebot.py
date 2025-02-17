@@ -3,7 +3,7 @@ from typing import Optional, TypedDict
 
 from pydantic import BaseModel, Field, HttpUrl, field_serializer, field_validator
 
-from rcon.types import StatTypes
+from rcon.types import PlayerStatsEnum
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 from rcon.utils import get_server_number
 
@@ -61,48 +61,8 @@ SURVIVORS = ":clock1: SURVIVORS\n*longest life (min.)*"
 U_R_STILL_A_MAN = "U'R STILL A MAN\n*shortest life (min.)*"
 
 
-def seed_default_displays():
-    return [
-        StatDisplay(type=type_, display_format=format_)
-        for type_, format_ in zip(
-            (
-                StatTypes.top_killers,
-                StatTypes.top_ratio,
-                StatTypes.top_performance,
-                StatTypes.try_harders,
-                StatTypes.top_stamina,
-                StatTypes.top_kill_streak,
-                StatTypes.most_patient,
-                StatTypes.i_never_give_up,
-                StatTypes.im_clumsy,
-                StatTypes.i_need_glasses,
-                StatTypes.i_love_voting,
-                StatTypes.what_is_a_break,
-                StatTypes.survivors,
-                StatTypes.u_r_still_a_man,
-            ),
-            (
-                TOP_KILLERS,
-                TOP_RATIO,
-                TOP_PERFORMANCE,
-                TRY_HARDERS,
-                TOP_STAMINA,
-                TOP_KILL_STREAK,
-                MOST_PATIENT,
-                I_NEVER_GIVE_UP,
-                I_M_CLUMSY,
-                I_NEED_GLASSES,
-                I_LOVE_VOTING,
-                WHAT_IS_A_BREAK,
-                SURVIVORS,
-                U_R_STILL_A_MAN,
-            ),
-        )
-    ]
-
-
 class StatDisplay(BaseModel):
-    type: StatTypes
+    type: PlayerStatsEnum
     display_format: str
 
 
@@ -152,7 +112,7 @@ class ScorebotUserConfig(BaseUserConfig):
     time_remaining_text: str = Field(default=TIME_REMAINING)
     refresh_time_secs: int = Field(ge=1, default=5)
 
-    stats_to_display: list[StatDisplay] = Field(default_factory=seed_default_displays)
+    stats_to_display: list[StatDisplay] = Field(default_factory=list)
 
     base_api_url: Optional[HttpUrl] = Field(
         default=HttpUrl(f"http://frontend_{get_server_number()}/")

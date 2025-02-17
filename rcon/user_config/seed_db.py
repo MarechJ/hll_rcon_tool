@@ -20,7 +20,7 @@ from rcon.user_config.rcon_chat_commands import RConChatCommandsUserConfig
 from rcon.user_config.rcon_connection_settings import RconConnectionSettingsUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
-from rcon.user_config.scorebot import ScorebotUserConfig
+from rcon.user_config.scoreboard import ScoreboardUserConfig
 from rcon.user_config.seed_vip import SeedVIPUserConfig
 from rcon.user_config.standard_messages import (
     StandardBroadcastMessagesUserConfig,
@@ -70,7 +70,7 @@ def seed_default_config():
             RconConnectionSettingsUserConfig.seed_db(sess)
             RconServerSettingsUserConfig.seed_db(sess)
             RealVipUserConfig.seed_db(sess)
-            ScorebotUserConfig.seed_db(sess)
+            ScoreboardUserConfig.seed_db(sess)
             SeedVIPUserConfig.seed_db(sess)
             StandardBroadcastMessagesUserConfig.seed_db(sess)
             StandardPunishmentMessagesUserConfig.seed_db(sess)

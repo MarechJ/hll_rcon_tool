@@ -20,7 +20,7 @@ from rcon.user_config.rcon_chat_commands import RConChatCommandsUserConfig
 from rcon.user_config.rcon_connection_settings import RconConnectionSettingsUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
-from rcon.user_config.scorebot import ScorebotUserConfig
+from rcon.user_config.scoreboard import ScoreboardUserConfig
 from rcon.user_config.seed_vip import SeedVIPUserConfig
 from rcon.user_config.standard_messages import (
     StandardBroadcastMessagesUserConfig,
@@ -244,17 +244,17 @@ def describe_rcon_server_settings_config(request):
 @csrf_exempt
 @login_required()
 @require_http_methods(["GET"])
-def describe_scorebot_config(request):
-    command_name = "describe_scorebot_config"
+def describe_scoreboard_config(request):
+    command_name = "describe_scoreboard_config"
 
     try:
-        config = ScorebotUserConfig.load_from_db()
+        config = ScoreboardUserConfig.load_from_db()
     except Exception as e:
         logger.exception(e)
         return api_response(command=command_name, error=str(e), failed=True)
 
     return api_response(
-        result=ScorebotUserConfig.model_json_schema(),
+        result=ScoreboardUserConfig.model_json_schema(),
         command=command_name,
         failed=False,
     )
