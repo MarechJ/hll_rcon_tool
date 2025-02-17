@@ -1,52 +1,53 @@
-import HomeIcon from '@mui/icons-material/Home';
-import SportsEsportsIcon from '@mui/icons-material/SportsEsports';
-import BoltIcon from '@mui/icons-material/Bolt';
-import GroupsIcon from '@mui/icons-material/Groups';
-import PeopleIcon from '@mui/icons-material/PeopleAlt';
-import TextSnippetIcon from '@mui/icons-material/TextSnippet';
-import SimCardAlertIcon from '@mui/icons-material/SimCardAlert';
-import SmartToyIcon from '@mui/icons-material/SmartToy';
-import WebhookIcon from '@mui/icons-material/Webhook';
-import SettingsIcon from '@mui/icons-material/Settings';
-import DnsIcon from '@mui/icons-material/Dns';
-import PersonOffIcon from '@mui/icons-material/PersonOff';
-import NoTransferIcon from '@mui/icons-material/NoTransfer';
-import SpaIcon from '@mui/icons-material/Spa';
-import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
-import RestaurantIcon from '@mui/icons-material/Restaurant';
-import ChatIcon from '@mui/icons-material/Chat';
-import VideocamIcon from '@mui/icons-material/Videocam';
-import PrivacyTipIcon from '@mui/icons-material/PrivacyTip';
-import RateReviewIcon from '@mui/icons-material/RateReview';
-import TimerOffIcon from '@mui/icons-material/TimerOff';
-import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
-import SportsMartialArtsIcon from '@mui/icons-material/SportsMartialArts';
-import CableIcon from '@mui/icons-material/Cable';
-import ScoreboardIcon from '@mui/icons-material/Scoreboard';
-import GavelIcon from '@mui/icons-material/Gavel';
-import BrowseGalleryIcon from '@mui/icons-material/BrowseGallery';
-import HourglassBottomIcon from '@mui/icons-material/HourglassBottom';
-import MiscellaneousServicesIcon from '@mui/icons-material/MiscellaneousServices';
-import NoStrollerIcon from '@mui/icons-material/NoStroller';
-import MapIcon from '@mui/icons-material/Map';
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import FolderIcon from '@mui/icons-material/Folder';
-import ViewCarouselIcon from '@mui/icons-material/ViewCarousel';
-import AnalyticsIcon from '@mui/icons-material/Analytics';
-import StreamIcon from '@mui/icons-material/Stream';
-import ThreeSixtyIcon from '@mui/icons-material/ThreeSixty';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import HowToVoteIcon from '@mui/icons-material/HowToVote';
-import AdsClickIcon from '@mui/icons-material/AdsClick';
-import ElectricalServicesIcon from '@mui/icons-material/ElectricalServices';
-import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
-import GradeIcon from '@mui/icons-material/Grade';
-import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
-import DraftsIcon from '@mui/icons-material/Drafts';
-import SpellcheckIcon from '@mui/icons-material/Spellcheck';
-import DvrIcon from '@mui/icons-material/Dvr';
-import OndemandVideoIcon from '@mui/icons-material/OndemandVideo';
-import MilitaryTechIcon from '@mui/icons-material/MilitaryTech';
+import HomeIcon from "@mui/icons-material/Home";
+import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
+import BoltIcon from "@mui/icons-material/Bolt";
+import GroupsIcon from "@mui/icons-material/Groups";
+import PeopleIcon from "@mui/icons-material/PeopleAlt";
+import TextSnippetIcon from "@mui/icons-material/TextSnippet";
+import SimCardAlertIcon from "@mui/icons-material/SimCardAlert";
+import SmartToyIcon from "@mui/icons-material/SmartToy";
+import WebhookIcon from "@mui/icons-material/Webhook";
+import SettingsIcon from "@mui/icons-material/Settings";
+import DnsIcon from "@mui/icons-material/Dns";
+import PersonOffIcon from "@mui/icons-material/PersonOff";
+import NoTransferIcon from "@mui/icons-material/NoTransfer";
+import SpaIcon from "@mui/icons-material/Spa";
+import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";
+import RestaurantIcon from "@mui/icons-material/Restaurant";
+import ChatIcon from "@mui/icons-material/Chat";
+import VideocamIcon from "@mui/icons-material/Videocam";
+import PrivacyTipIcon from "@mui/icons-material/PrivacyTip";
+import RateReviewIcon from "@mui/icons-material/RateReview";
+import TimerOffIcon from "@mui/icons-material/TimerOff";
+import DriveFileRenameOutlineIcon from "@mui/icons-material/DriveFileRenameOutline";
+import SportsMartialArtsIcon from "@mui/icons-material/SportsMartialArts";
+import CableIcon from "@mui/icons-material/Cable";
+import ScoreboardIcon from "@mui/icons-material/Scoreboard";
+import GavelIcon from "@mui/icons-material/Gavel";
+import BrowseGalleryIcon from "@mui/icons-material/BrowseGallery";
+import HourglassBottomIcon from "@mui/icons-material/HourglassBottom";
+import MiscellaneousServicesIcon from "@mui/icons-material/MiscellaneousServices";
+import NoStrollerIcon from "@mui/icons-material/NoStroller";
+import MapIcon from "@mui/icons-material/Map";
+import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
+import FolderIcon from "@mui/icons-material/Folder";
+import ViewCarouselIcon from "@mui/icons-material/ViewCarousel";
+import AnalyticsIcon from "@mui/icons-material/Analytics";
+import StreamIcon from "@mui/icons-material/Stream";
+import ThreeSixtyIcon from "@mui/icons-material/ThreeSixty";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import HowToVoteIcon from "@mui/icons-material/HowToVote";
+import AdsClickIcon from "@mui/icons-material/AdsClick";
+import ElectricalServicesIcon from "@mui/icons-material/ElectricalServices";
+import SettingsSuggestIcon from "@mui/icons-material/SettingsSuggest";
+import GradeIcon from "@mui/icons-material/Grade";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import DraftsIcon from "@mui/icons-material/Drafts";
+import SpellcheckIcon from "@mui/icons-material/Spellcheck";
+import DvrIcon from "@mui/icons-material/Dvr";
+import OndemandVideoIcon from "@mui/icons-material/OndemandVideo";
+import MilitaryTechIcon from "@mui/icons-material/MilitaryTech";
+import SearchIcon from "@mui/icons-material/Search";
 
 export const navMenus = [
   {
@@ -56,7 +57,7 @@ export const navMenus = [
         to: "/",
         icon: <HomeIcon />,
       },
-    ]
+    ],
   },
   {
     name: "Views",
@@ -79,26 +80,26 @@ export const navMenus = [
     icon: <MapIcon />,
     links: [
       {
-        name: 'Change',
-        to: '/settings/maps/change',
+        name: "Change",
+        to: "/settings/maps/change",
         icon: <RestartAltIcon />,
       },
       {
-        name: 'Rotation',
-        to: '/settings/maps/rotation',
+        name: "Rotation",
+        to: "/settings/maps/rotation",
         icon: <ThreeSixtyIcon />,
       },
       {
-        name: 'Objectives',
-        to: '/settings/maps/objectives',
+        name: "Objectives",
+        to: "/settings/maps/objectives",
         icon: <AdsClickIcon />,
       },
       {
-        name: 'Votemap',
-        to: '/settings/maps/votemap',
+        name: "Votemap",
+        to: "/settings/maps/votemap",
         icon: <HowToVoteIcon />,
       },
-    ]
+    ],
   },
   {
     name: "Records",
@@ -178,7 +179,7 @@ export const navMenus = [
     ],
   },
   {
-    name: 'Webhooks',
+    name: "Webhooks",
     icon: <WebhookIcon />,
     links: [
       {
@@ -216,7 +217,7 @@ export const navMenus = [
         to: "/settings/webhooks/log-line",
         icon: <TextSnippetIcon />,
       },
-    ]
+    ],
   },
   {
     name: "Automods",
@@ -257,10 +258,10 @@ export const navMenus = [
         to: "/settings/others/name-kicks",
         icon: <SportsMartialArtsIcon />,
       },
-    ]
+    ],
   },
   {
-    name: 'Others',
+    name: "Others",
     icon: <MiscellaneousServicesIcon />,
     links: [
       {
@@ -312,6 +313,11 @@ export const navMenus = [
         name: "Log Stream",
         to: "/settings/others/log-stream",
         icon: <StreamIcon />,
+      },
+      {
+        name: "Watch Kill Rate",
+        to: "/settings/others/watch-kill-rate",
+        icon: <SearchIcon />,
       },
     ],
   },
