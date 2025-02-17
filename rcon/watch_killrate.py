@@ -8,14 +8,21 @@ from datetime import datetime, timedelta
 from logging import getLogger
 from time import sleep
 
-import discord
+from discord_webhook import DiscordEmbed, DiscordWebhook
+
 from rcon.api_commands import RconAPI, get_rcon_api
 from rcon.cache_utils import invalidates, ttl_cache
 from rcon.rcon import SERVER_INFO
 from rcon.scoreboard import current_game_stats
-from rcon.types import GetDetailedPlayer
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.watch_killrate import WatchKillRateUserConfig
+from rcon.utils import get_server_number
+from rcon.webhook_service import (
+    WebhookMessage,
+    WebhookMessageType,
+    WebhookType,
+    enqueue_message,
+)
 
 logger = getLogger(__name__)
 
@@ -170,26 +177,26 @@ def make_embed(
     server_name: str,
     author_name: str,
 ):
-    embed = discord.Embed()
+    embed = DiscordEmbed()
     embed.set_author(name=author_name)
-    embed.timestamp = timestamp
-    embed.add_field(name="Player", value=player_name)
-    embed.add_field(name="Player ID", value=player_id)
-    embed.add_field(
-        name="Playtime", value=timedelta(seconds=playtime_secs), inline=False
+    embed.timestamp = str(timestamp)
+    embed.add_embed_field(name="Player", value=player_name)
+    embed.add_embed_field(name="Player ID", value=player_id)
+    embed.add_embed_field(
+        name="Playtime", value=str(timedelta(seconds=playtime_secs)), inline=False
     )
-    embed.add_field(name="Kills", value=kills, inline=False)
-    embed.add_field(name="Overall KPM", value=f"{kpm:.1f}", inline=True)
+    embed.add_embed_field(name="Kills", value=str(kills), inline=False)
+    embed.add_embed_field(name="Overall KPM", value=f"{kpm:.1f}", inline=True)
     if armor_kpm > 0.0:
-        embed.add_field(name="Armor KPM", value=f"{armor_kpm:.1f}", inline=False)
+        embed.add_embed_field(name="Armor KPM", value=f"{armor_kpm:.1f}", inline=False)
     if artillery_kpm > 0.0:
-        embed.add_field(
+        embed.add_embed_field(
             name="Artillery KPM", value=f"{artillery_kpm:.1f}", inline=False
         )
     if mg_kpm > 0.0:
-        embed.add_field(name="MG KPM", value=f"{mg_kpm:.1f}", inline=False)
+        embed.add_embed_field(name="MG KPM", value=f"{mg_kpm:.1f}", inline=False)
 
-    embed.add_field(
+    embed.add_embed_field(
         name="Weapons",
         value="\n".join(
             f"{weapon}: {kill_count}" for weapon, kill_count in used_weapons.items()
@@ -333,7 +340,7 @@ def watch_killrate(api: RconAPI, config: WatchKillRateUserConfig, server_name: s
                     artillery_kpm,
                     mg_kpm,
                 )
-                embed: discord.Embed = make_embed(
+                embed: DiscordEmbed = make_embed(
                     timestamp=timestamp,
                     player_name=player_name,
                     player_id=player_id,
@@ -348,14 +355,20 @@ def watch_killrate(api: RconAPI, config: WatchKillRateUserConfig, server_name: s
                     author_name=config.author,
                 )
                 for hook in config.webhooks:
-                    webhook: discord.SyncWebhook = discord.SyncWebhook.from_url(
-                        url=str(hook.url)
-                    )
+                    wh = DiscordWebhook(url=str(hook.url))
+                    wh.add_embed(embed)
                     role_mentions = " ".join(hook.role_mentions)
                     user_mentions = " ".join(hook.user_mentions)
-                    webhook.send(
-                        embed=embed, content=f"{user_mentions} {role_mentions}"
+                    wh.content = f"{user_mentions} {role_mentions}"
+                    enqueue_message(
+                        message=WebhookMessage(
+                            payload=wh.json,
+                            webhook_type=WebhookType.DISCORD,
+                            message_type=WebhookMessageType.ADMIN_PING,
+                            server_number=int(get_server_number()),
+                        )
                     )
+
             else:
                 logger.info(
                     "Already reported %s/%s at %s",
