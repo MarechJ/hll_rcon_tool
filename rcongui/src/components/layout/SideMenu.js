@@ -1,20 +1,16 @@
 import { styled } from "@mui/material/styles";
-import Avatar from "@mui/material/Avatar";
 import MuiDrawer, { drawerClasses } from "@mui/material/Drawer";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
 import SelectContent from "./SelectContent";
 import MenuContent from "./MenuContent";
-import OptionsMenu from "./OptionsMenu";
-import { useAuth } from "@/hooks/useAuth";
 import { navMenus } from "../Header/nav-data";
 import { List, ListItem, ListItemText } from "@mui/material";
 import ConnectionStatus from "./sidebar/ConnectionStatus";
 import AboutDialog from "./sidebar/About";
 import ServerStatus from "../Header/server-status";
-import { useAppStore } from "@/hooks/useAppState";
+import { useAppStore } from "@/stores/app-state";
+import { UserActions } from "./sidebar/UserActions";
 
 const drawerWidth = 240;
 
@@ -53,7 +49,6 @@ export const MenuDrawer = ({ open, children }) => {
 };
 
 export default function SideMenu() {
-  const { permissions } = useAuth();
   const openDrawer = useAppStore((state) => state.openDrawer);
 
   return (
@@ -79,31 +74,7 @@ export default function SideMenu() {
       >
         <SelectContent />
       </Box>
-      <Stack
-        direction="row"
-        sx={{
-          p: 2,
-          gap: 1,
-          alignItems: "center",
-          borderTop: "1px solid",
-          borderColor: "divider",
-        }}
-      >
-        <Avatar
-          sizes="small"
-          alt={permissions?.user_name?.toUpperCase() ?? "?"}
-          sx={{ width: 36, height: 36 }}
-        />
-        <Box sx={{ mr: "auto" }}>
-          <Typography
-            variant="body2"
-            sx={{ fontWeight: 500, lineHeight: "16px" }}
-          >
-            {permissions?.user_name ?? "?????"}
-          </Typography>
-        </Box>
-        <OptionsMenu />
-      </Stack>
+      <UserActions />
     </MenuDrawer>
   );
 }

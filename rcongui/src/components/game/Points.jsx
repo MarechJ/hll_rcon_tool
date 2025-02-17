@@ -29,7 +29,7 @@ const Points = ({ value, type, direction = "left" }) => {
             alt={type}
           />
         </SquareIcon>
-        <NumberText>{value ?? 0}</NumberText>
+        <NumberText>{value ? value.toFixed(0) : 0}</NumberText>
       </>
     );
   }
@@ -37,7 +37,7 @@ const Points = ({ value, type, direction = "left" }) => {
   if (direction === "right") {
     return (
       <>
-        <NumberText>{value ?? 0}</NumberText>
+        <NumberText>{value ? value.toFixed(0) : 0}</NumberText>
         <SquareIcon variant="square">
           <Box
             component={"img"}

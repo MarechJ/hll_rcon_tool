@@ -1,5 +1,5 @@
-import { Box } from "@mui/material";
-import { useMemo } from "react";
+import { Box, IconButton } from "@mui/material";
+import { useMemo, useState } from "react";
 import { teamsLiveQuery } from "@/queries/teams-live-query";
 import {
   getExpandedRowModel,
@@ -12,23 +12,20 @@ import { columns } from "./columns";
 import Table from "@/components/table/Table";
 import { isLeader, normalizePlayerProfile } from "@/utils/lib";
 import { extractPlayers } from "@/utils/extractPlayers";
-import { useStorageState } from "@/hooks/useStorageState";
-import storageKeys from "@/config/storageKeys";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import { ActionMenuButton } from "@/features/player-action/ActionMenu";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import { generatePlayerActions } from "@/features/player-action/actions";
+import { useLiveSessionsTableStore } from "@/stores/table-config";
+import TableConfigDrawer from "@/components/table/TableConfigDrawer";
+import SettingsIcon from "@mui/icons-material/Settings";
 
 const LiveSessionsPage = () => {
   const { data } = teamsLiveQuery({ refetchInterval: 15 * 1000 });
 
-  const [tableConfig] = useStorageState(
-    storageKeys.LIVE_PLAYERS_TABLE_CONFIG,
-    {
-      density: "normal",
-      fontSize: "normal",
-    }
-  );
+  const tableConfig = useLiveSessionsTableStore();
+  const [tableConfigDrawerOpen, setTableConfigDrawerOpen] = useState(false);
+  const setConfig = useLiveSessionsTableStore(state => state.setConfig);
 
   const playersData = useMemo(() => {
     if (!data) return [];
@@ -130,8 +127,24 @@ const LiveSessionsPage = () => {
             maxWidth: "300px",
           }}
         />
+        <IconButton
+          size="small"
+          sx={{ p: 0.5, borderRadius: 0 }}
+          onClick={() => setTableConfigDrawerOpen(true)}
+        >
+          <SettingsIcon sx={{ fontSize: "1rem" }} />
+        </IconButton>
       </TableToolbar>
       <Table table={table} config={tableConfig} />
+      <TableConfigDrawer
+        name="Live Sessions"
+        open={tableConfigDrawerOpen}
+        onClose={(config) => {
+          setTableConfigDrawerOpen(false);
+          setConfig(config);
+        }}
+        config={tableConfig}
+      />
     </Box>
   );
 };

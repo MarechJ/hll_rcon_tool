@@ -1,3 +1,4 @@
+import { blue } from '@mui/material/colors';
 import { createTheme, alpha } from '@mui/material/styles';
 
 const defaultTheme = createTheme();
@@ -220,12 +221,12 @@ export const colorSchemes = {
     palette: {
       mode: 'light',
       primary: {
-        main: 'hsl(142.1, 76.2%, 36.3%)',      // --primary
+        main: 'hsl(142.1, 76.2%, 25%)',      // --primary
         contrastText: 'hsl(355.7, 100%, 97.3%)', // --primary-foreground
       },
       secondary: {
-        main: 'hsl(240, 4.8%, 95.9%)',         // --secondary
-        contrastText: 'hsl(240, 5.9%, 10%)',    // --secondary-foreground
+        main: 'hsl(329, 54%, 57%)',         // --secondary
+        contrastText: 'hsl(329, 55%, 10%)',    // --secondary-foreground
       },
       error: {
         main: 'hsl(0, 84.2%, 60.2%)',          // --destructive
@@ -250,6 +251,10 @@ export const colorSchemes = {
       text: {
         primary: 'hsl(240, 10%, 3.9%)',        // --foreground
         secondary: 'hsl(240, 3.8%, 46.1%)',    // --muted-foreground
+        red: red[600],
+        orange: orange[600],
+        green: green[600],
+        blue: blue[600],
       },
       divider: 'hsl(240, 5.9%, 90%)',          // --border
       action: {
@@ -266,8 +271,8 @@ export const colorSchemes = {
         contrastText: 'hsl(144.9, 80.4%, 10%)', // --primary-foreground
       },
       secondary: {
-        main: 'hsl(240, 3.7%, 15.9%)',         // --secondary
-        contrastText: 'hsl(0, 0%, 98%)',        // --secondary-foreground
+        main: 'hsl(329, 54%, 67%)',          // Brighter secondary color
+        contrastText: 'hsl(329, 55%, 10%)',      // Keep same contrast text
       },
       error: {
         main: 'hsl(0, 62.8%, 30.6%)',          // --destructive
@@ -292,6 +297,10 @@ export const colorSchemes = {
       text: {
         primary: 'hsl(0, 0%, 95%)',            // --foreground
         secondary: 'hsl(240, 5%, 64.9%)',      // --muted-foreground
+        red: red[400],
+        orange: orange[400],
+        green: green[400],
+        blue: blue[400],
       },
       divider: 'hsl(240, 3.7%, 15.9%)',        // --border
       action: {
@@ -353,7 +362,7 @@ export const typography = {
 };
 
 export const shape = {
-  borderRadius: 8,
+  borderRadius: 0,
 };
 
 const defaultShadows = [

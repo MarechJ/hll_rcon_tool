@@ -1,46 +1,34 @@
 import Table from "@/components/table/Table";
 import TableConfigDrawer from "@/components/table/TableConfigDrawer";
-import storageKeys from "@/config/storageKeys";
-import { IconButton, Stack } from "@mui/material";
-import { useState } from "react";
-import { useStorageState } from "@/hooks/useStorageState";
+import { Box, Divider, IconButton, Stack } from "@mui/material";
+import { memo, useState } from "react";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
-import SettingsIcon from "@mui/icons-material/Settings"
+import SettingsIcon from "@mui/icons-material/Settings";
+import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
+import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import { TeamSelectionToolbar } from "./TeamSelectionToolbar";
 import { ActionMenuButton } from "@/features/player-action/ActionMenu";
 import { generatePlayerActions } from "@/features/player-action/actions";
+import TableColumnSelection from "@/components/table/TableColumnSelection";
+import { TableToolbar } from "@/components/table/TableToolbar";
+import { usePlayersTableStore } from "@/stores/table-config";
 
-const PlayersTable = ({ table, teamData, selectedPlayers }) => {
-
-  const [tableConfigDrawerOpen, setTableConfigDrawerOpen] =
-  useState(false);
-
-  const [tableConfig, setTableConfig] = useStorageState(
-    storageKeys.LIVE_PLAYERS_TABLE_CONFIG,
-    {
-      density: "normal",
-      fontSize: "normal",
-    }
-  );
+const PlayersTable = ({ table, teamData, selectedPlayers, onColumnVisibilityChange, isFetching }) => {
+  const [tableConfigDrawerOpen, setTableConfigDrawerOpen] = useState(false);
+  
+  const tableConfig = usePlayersTableStore();
+  const setConfig = usePlayersTableStore(state => state.setConfig);
+  const setExpandedView = usePlayersTableStore(state => state.setExpandedView);
 
   const handleTableConfigClick = () => {
-    // toggle config drawer
-    setTableConfigDrawerOpen((prev) => !prev);
+    setTableConfigDrawerOpen(prev => !prev);
   };
 
   return (
     <>
       <TeamSelectionToolbar table={table} teamData={teamData} />
       <Stack direction="column" spacing={0}>
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{
-            borderRadius: 0,
-            border: (theme) => `1px solid ${theme.palette.divider}`,
-            borderBottom: "none",
-          }}
-        >
+        <TableToolbar>
           <ActionMenuButton
             actions={generatePlayerActions({
               multiAction: true,
@@ -60,34 +48,56 @@ const PlayersTable = ({ table, teamData, selectedPlayers }) => {
           />
           <DebouncedSearchInput
             placeholder={"Search player"}
-            initialValue={
-              table.getColumn("name")?.getFilterValue() ?? ""
-            }
+            initialValue={table.getColumn("name")?.getFilterValue() ?? ""}
             onChange={(value) => {
               table.getColumn("name")?.setFilterValue(value);
             }}
           />
+          <Box sx={{ flexGrow: 1 }} />
+          <Divider flexItem orientation="vertical" sx={{ marginLeft: 0, marginRight: 0 }} />
           <IconButton
             size="small"
+            aria-label={tableConfig.expandedView ? "Collapse" : "Expand"}
+            aria-description={
+              tableConfig.expandedView
+                ? "Hide extra details"
+                : "Show extra details"
+            }
+            sx={{ p: 0.5, borderRadius: 0 }}
+            onClick={() => {
+              setExpandedView(!tableConfig.expandedView);
+            }}
+          >
+            {tableConfig.expandedView ? (
+              <UnfoldLessIcon sx={{ fontSize: "1rem" }} />
+            ) : (
+              <UnfoldMoreIcon sx={{ fontSize: "1rem" }} />
+            )}
+          </IconButton>
+          <TableColumnSelection table={table} onColumnVisibilityChange={onColumnVisibilityChange} />
+          <IconButton
+            size="small"
+            aria-label="Table settings"
+            aria-description="Configure the table"
             sx={{ p: 0.5, borderRadius: 0 }}
             onClick={handleTableConfigClick}
           >
-            <SettingsIcon sx={{ fontSize: 16 }} />
+            <SettingsIcon sx={{ fontSize: "1rem" }} />
           </IconButton>
-        </Stack>
-        <Table table={table} config={tableConfig} />
+        </TableToolbar>
+        <Table table={table} config={tableConfig} isFetching={isFetching} />
       </Stack>
       <TableConfigDrawer
         name={"Players"}
         open={tableConfigDrawerOpen}
         onClose={(config) => {
           setTableConfigDrawerOpen(false);
-          setTableConfig(config);
+          setConfig(config);
         }}
         config={tableConfig}
       />
     </>
-  )
+  );
 };
 
-export default PlayersTable;
+export default memo(PlayersTable);

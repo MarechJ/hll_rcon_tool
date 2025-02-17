@@ -1,68 +1,83 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# CRCON GUI
 
-## Available Scripts
+A React-based web interface for managing Hell Let Loose game servers.
 
-In the project directory, you can run:
+## Tech Stack
 
-### `yarn start`
+- React 18
+- Vite
+- React Router 6
+- Material UI 6
+- Tanstack Query 5
+- Tanstack Table 8
+- Zustand
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## Prerequisites
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+- Node.js (v18 or higher)
+- NPM package manager
+- A running CRCON server instance
 
-### `yarn test`
+## Setup
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+1. Clone the repository
+2. Navigate to the project directory
 
-### `yarn build`
+```bash
+cd rcongui
+```
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
+3. Install dependencies:
 
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
+```bash
+npm install
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+3. Create a `.env` file in the root directory from the `example.env` file:
 
-### `yarn eject`
+```bash
+cp example.env .env
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+4. Set the following variables in the `.env` file:
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+You don't necessarily need to change anything here.
+Beware of the trailing slashes.
 
-Instead, it will copy all the configuration files and the transitive dependencies (Webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+- `REACT_APP_API_URL`: The URL of your React app
+- `VITE_CRCON_API_ENDPOINT`: The API endpoint of your CRCON server
+- `VITE_CRCON_SERVER_URL`: The URL of your CRCON server
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+5. Start the development server:
 
-## Learn More
+```bash
+npm run dev
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## Other commands
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Build and preview the production version:
 
-### Code Splitting
+```bash
+npm run preview
+```
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
+Run the development server with fake data:
 
-### Analyzing the Bundle Size
+```bash
+npm run dev:fake
+```
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
+Run the development server with debug logs:
 
-### Making a Progressive Web App
+```bash
+npm run dev:debug
+```
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
+## Contributing
 
-### Advanced Configuration
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
-
-### Deployment
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
-
-### `yarn build` fails to minify
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+1. Fork the repository
+2. Create a new branch
+3. Make your changes and commit them
+4. Push your changes to your fork
+5. Create a pull request

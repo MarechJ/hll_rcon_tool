@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 WORKDIR /code
 RUN apt-get update -y && apt-get install -y cron logrotate git procps

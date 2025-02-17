@@ -28,6 +28,7 @@ import { BlacklistPlayerFormFields } from "@/features/player-action/forms/Blackl
 import { playerProfileQueryOptions } from "@/queries/player-profile-query";
 import { RemoveFlagFormFields } from "./forms/RemoveFlagFormFields";
 import { AddConsoleAdminFormFields } from "./forms/AddConsoleAdminFormFields";
+import { RemoveVipFormFields } from "./forms/RemoveVipFormFIelds";
 
 const executeAction = (command) => async (payload) => {
   // In the UI, it does not make sense to ask for a reason and message
@@ -97,7 +98,7 @@ export const vipAction = {
 export const removeVipAction = {
   name: "Remove Vip",
   description: "Remove VIP.",
-  component: ConfirmationOnly,
+  component: RemoveVipFormFields,
   icon: <StarBorderIcon color="warning" />,
   execute: executeAction("remove_vip"),
   permission: ["can_remove_vip"],

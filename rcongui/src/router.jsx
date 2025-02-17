@@ -16,8 +16,12 @@ import { loader as playerRecordsLoader } from "./pages/records/players"
 
 import Blacklists from "./pages/records/blacklists/manage"
 import BlacklistRecords from "./pages/records/blacklists"
+
 import GameLogsRecords from "./pages/records/game-logs"
+import { loader as gameLogsLoader } from "./pages/records/game-logs"
+
 import AuditLogsRecords from "./pages/records/audit-logs"
+import { loader as auditLogsLoader } from "./pages/records/audit-logs"
 
 import LiveSessionStats from "./pages/stats/live-sessions";
 import GamesLayout from "./pages/stats/games/layout";
@@ -82,8 +86,7 @@ import { loader as consoleAdminSettingsLoader } from "./pages/settings/console-a
 import { action as consoleAdminSettingsAction } from "./pages/settings/console-admins"
 
 import VipSettings from "./pages/settings/vip"
-import { loader as vipSettingsLoader } from "./pages/settings/vip"
-import { action as vipSettingsAction } from "./pages/settings/vip"
+import { loader as vipLoader } from "./pages/settings/vip"
 
 import { AuthProvider } from "@/hooks/useAuth";
 import { GlobalState } from "@/hooks/useGlobalState";
@@ -165,12 +168,14 @@ const router = createBrowserRouter([
                         handle: { crumb: () => <Link to={'/records/game-log'}>Game Logs</Link> },
                         element: <GameLogsRecords />,
                         errorElement: <RouteError />,
+                        loader: gameLogsLoader,
                     },
                     {
                         path: 'audit-logs',
                         handle: { crumb: () => <Link to={'/records/audit-log'}>Audit Logs</Link> },
                         element: <AuditLogsRecords />,
-                        errorElement: <RouteError />,
+                        errorElement: <RouteError />,   
+                        loader: auditLogsLoader,
                     },
                 ],
             },
@@ -199,9 +204,8 @@ const router = createBrowserRouter([
                     {
                         path: 'vip',
                         handle: { crumb: () => <Link to={'/settings/vip'}>Vip</Link> },
+                        loader: vipLoader,
                         element: <VipSettings />,
-                        loader: vipSettingsLoader,
-                        action: vipSettingsAction,
                         errorElement: <RouteError />,
                     },
                     {

@@ -14,9 +14,15 @@ async function requestFactory({
 } = {}) {
   let url = cmd;
 
-  if (params && method === "GET") {
-    url += "?" + new URLSearchParams(params).toString();
+  if (params) {
+    if (params instanceof URLSearchParams) {
+      url += "?" + params.toString();
+    } else if (method === "GET") {
+      url += "?" + new URLSearchParams(params).toString();
+    }
   }
+
+  const body = method === "POST" ? headers["Content-Type"] === "application/json" ? JSON.stringify(payload) : payload : null;
 
   try {
     const response = await fetch(usingCRCON(url), {
@@ -27,7 +33,7 @@ async function requestFactory({
       headers,
       redirect: "follow",
       referrerPolicy: "origin",
-      body: method !== "GET" ? JSON.stringify(payload) : null,
+      body,
     });
 
     return await handleFetchResponse(response, method);
@@ -45,10 +51,16 @@ async function handleFetchResponse(response, method) {
   const contentType = response.headers.get("content-type");
   if (contentType && contentType.includes("application/json")) {
     data = await parseJsonResponse(response);
+  } else if (contentType && contentType.includes("text/plain")) {
+    data = await response.text();
   }
 
   handleServerErrors(response, data);
   handleClientErrors(response, data);
+
+  if (contentType && contentType.includes("text/plain")) {
+    return data;
+  }
 
   if (method === "GET") {
     return data.result
@@ -105,6 +117,8 @@ export const cmd = {
   DELETE_VIP: (params) => requestFactory({ method: "POST", cmd: "remove_vip", ...params }),
   EDIT_MESSAGE_TEMPLATE: (params) => requestFactory({ method: "POST", cmd: "edit_message_template", ...params }),
   FLAG_PLAYER: (params) => requestFactory({ method: "POST", cmd: "flag_player", ...params }),
+  GET_AUDIT_LOGS: (params) => requestFactory({ method: "GET", cmd: "get_audit_logs", ...params }),
+  GET_AUDIT_LOGS_AUTOCOMPLETE: (params) => requestFactory({ method: "GET", cmd: "get_audit_logs_autocomplete", ...params }),
   GET_ALL_MESSAGE_TEMPLATES: (params) => requestFactory({ method: "GET", cmd: "get_all_message_templates", ...params }),
   GET_AUTOSETTINGS: (params) => requestFactory({ method: "GET", cmd: "get_auto_settings", ...params }),
   GET_BANS: (params) => requestFactory({ method: "GET", cmd: "get_bans", ...params }),
@@ -121,6 +135,8 @@ export const cmd = {
   GET_GAME_SERVER_LIST: (params) => requestFactory({ method: "GET", cmd: "get_server_list", ...params }),
   GET_GAME_SERVER_STATUS: (params) => requestFactory({ method: "GET", cmd: "get_status", ...params }),
   GET_GAME_STATE: (params) => requestFactory({ method: "GET", cmd: "get_gamestate", ...params }),
+  // Yes, it is POST request, but it is not a POST command => it's not mutating the server state
+  GET_HISTORICAL_LOGS: (params) => requestFactory({ method: "POST", cmd: "get_historical_logs", ...params }),
   GET_INGAME_MODS: (params) => requestFactory({ method: "GET", cmd: "get_ingame_mods", ...params }),
   GET_LIVE_GAME: (params) => requestFactory({ method: "GET", cmd: "get_live_game_stats", ...params }),
   // Yes, it is POST request, but it is not a POST command => it's not mutating the server state
@@ -130,6 +146,15 @@ export const cmd = {
   GET_MAP_ROTATION: (params) => requestFactory({ method: "GET", cmd: "get_map_rotation", ...params }),
   GET_MESSAGE_TEMPLATE: (params) => requestFactory({ method: "GET", cmd: "get_message_template", ...params }),
   GET_MESSAGE_TEMPLATES: (params) => requestFactory({ method: "GET", cmd: "get_message_templates", ...params }),
+  GET_SEEDING_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_auto_mod_seeding_config", ...params }),
+  GET_NO_LEADER_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_auto_mod_no_leader_config", ...params }),
+  GET_NO_SOLO_TANK_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_auto_mod_solo_tank_config", ...params }),
+  GET_LEVEL_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_auto_mod_level_config", ...params }),
+  GET_NAME_KICKS_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_name_kick_config", ...params }),
+  GET_VAC_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_vac_game_bans_config", ...params }),
+  GET_SEEDING_REWARD_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_seed_vip_config", ...params }),
+  GET_CHAT_COMMANDS_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_chat_commands_config", ...params }),
+  GET_RCON_CHAT_COMMANDS_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_rcon_chat_commands_config", ...params }),
   GET_ONLINE_PLAYERS: (params) => requestFactory({ method: "GET", cmd: "get_players", ...params }),
   GET_PERMISSIONS: (params) => requestFactory({ method: "GET", cmd: "get_own_user_permissions", ...params }),
   GET_PLAYER: (params) => requestFactory({ method: "GET", cmd: "get_player_profile", ...params }),
@@ -171,6 +196,10 @@ export const cmd = {
   SET_WELCOME_MESSAGE: (params) => requestFactory({ method: "POST", cmd: "set_welcome_message", ...params }),
   TOGGLE_SERVICE: (params) => requestFactory({ method: "POST", cmd: "do_service", ...params }),
   UNFLAG_PLAYER: (params) => requestFactory({ method: "POST", cmd: "unflag_player", ...params }),
+  // Files
+  DOWNLOAD_VIP_FILE: (params) => requestFactory({ method: "GET", cmd: "download_vips", ...params }),
+  UPLOAD_VIP_FILE: (params) => requestFactory({ method: "POST", cmd: "upload_vips", ...params }),
+  GET_UPLOAD_VIP_FILE_RESPONSE: (params) => requestFactory({ method: "GET", cmd: "upload_vips_result", ...params }),
 };
 
 export function execute(command, data) {

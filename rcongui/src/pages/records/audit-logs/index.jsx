@@ -1,238 +1,372 @@
+import { cmd } from "@/utils/fetchUtils";
 import {
-  get,
-  handle_http_errors,
-  showResponse,
-} from "@/utils/fetchUtils";
-import InputLabel from "@mui/material/InputLabel";
-import FormControl from "@mui/material/FormControl";
-import Select from "@mui/material/Select";
-import { Button } from "@mui/material";
-import Autocomplete from "@mui/material/Autocomplete";
-import TextField from "@mui/material/TextField";
-import { List as IList, fromJS } from "immutable";
-import Grid from "@mui/material/Grid2";
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
-import dayjs from "dayjs";
-import {useEffect, useState} from "react";
+  Form,
+  useLoaderData,
+  useNavigation,
+  useSubmit,
+} from "react-router-dom";
+import {
+  Autocomplete,
+  Box,
+  Button,
+  FormControl,
+  InputLabel,
+  LinearProgress,
+  MenuItem,
+  Select,
+  Stack,
+  TextField,
+  IconButton,
+  Divider,
+} from "@mui/material";
+import { useState } from "react";
+import { auditLogsColumns } from "./columns";
+import Table from "@/components/table/Table";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+} from "@tanstack/react-table";
+import { AuditLogCard } from "@/components/shared/card/AuditLogCard";
+import { TableToolbar } from "@/components/table/TableToolbar";
+import NavPagination from "@/pages/stats/games/nav-pagination";
+import { TablePageSizeSelect } from "@/components/table/TablePageSizeSelect";
+import DownloadIcon from "@mui/icons-material/Download";
+import downloadLogs from "./download";
 
-const columns = [
-  { field: "id", headerName: "ID", width: 70, sortable: false },
-  {
-    field: "creation_time",
-    headerName: "Time",
-    width: 160,
-    valueFormatter: (value) => dayjs(value).format("lll"),
-  },
-  { field: "username", headerName: "Initiator", width: 120 },
-  {
-    field: "command",
-    headerName: "Type",
-    width: 120,
-  },
-  {
-    field: "command_arguments",
-    headerName: "Parameters",
-    sortable: false,
-    minWidth: 300,
-  },
-  { field: "command_result", headerName: "Result", flex: 1, sortable: false },
-];
+/**
+ * @typedef {Object} AuditLogResponse
+ * @property {AuditLog[]} audit_logs
+ * @property {number} page
+ * @property {number} page_size
+ * @property {number} total_pages
+ * @property {number} total_entries
+ */
 
-const AuditLogsTable = ({
-  auditLogs,
-  page,
-  pages,
-  pageSize,
-  updatePageSize,
-  updatePage,
-  totalLogs,
-  loading
-}) => {
-  return (
-    <DataGrid
-      rows={auditLogs}
-      columns={columns}
-      loading={loading}
-      paginationMode={'server'}
-      paginationMeta={{
-        hasNextPage: (page - 1) < pages,
-      }}
-      paginationModel={{
-        page: page - 1,
-        pageSize: pageSize,
-      }}
-      rowCount={totalLogs}
-      onPaginationModelChange={(m) => {
-        updatePageSize(m.pageSize);
-        updatePage(m.page + 1);
-      }}
-      autoPageSize={false}
-      initialState={{
-        pagination: {
-          paginationModel: {
-            pageSize: 10,
-          },
-        },
-        density: "compact",
-      }}
-      pageSizeOptions={[10, 25, 50, 100]}
-      slots={{ toolbar: GridToolbar }}
-      disableRowSelectionOnClick
-    />
-  );
+/**
+ * @typedef {Object} AuditLogParams
+ * @property {string} usernames
+ * @property {string} commands
+ * @property {string} parameters
+ * @property {string} time_sort
+ * @property {number} page
+ * @property {number} page_size
+ */
+
+/**
+ * @typedef {Object} AuditLoaderData
+ * @property {AuditLog[]} auditLogs
+ * @property {number} total_pages
+ * @property {number} page
+ * @property {AuditLogParams} fields
+ */
+
+/**
+ * Helper function to get all values from a URL parameter
+ *
+ * If the parameter is provided without a value, it will be converted to an array with one empty string
+ *
+ * @param {string[]} value
+ * @returns {string[]}
+ */
+const getAll = (value) => {
+  if (Array.isArray(value) && value.length === 1 && value[0] === "") {
+    return [];
+  }
+  return value;
 };
 
-const AuditLog = () => {
-  const [auditLogs, setAuditLogs] = useState(new IList());
-  const [pages, setPages] = useState(0);
-  const [totalLogs, setTotalLogs] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [isLoading, setIsLoading] = useState(true);
-  const [usernames, setUsernames] = useState(new IList());
-  const [commands, setCommands] = useState(new IList());
-  const [usernameSearch, setUsernameSearch] = useState([]);
-  const [commandSearch, setCommandSearch] = useState([]);
-  const [paramSearch, setParamSearch] = useState("");
-  const [timeSort, setTimeSort] = useState("desc");
+/**
+ * Loader for the audit logs page.
+ *
+ * Note: `usernames` and `commands` parameters can be included multiple times
+ * which will be converted to an array of strings
+ *
+ * eg. `?usernames=John&usernames=Jane` will be converted to `["John", "Jane"]`
+ *
+ * @param {Request} request
+ * @returns {Promise<AuditLoaderData>}
+ */
+export const loader = async ({ request }) => {
+  const url = new URL(request.url);
 
-  const getAuditLogs = () => {
-    setIsLoading(true);
-    get(
-      "get_audit_logs?" +
-        new URLSearchParams({
-          usernames: usernameSearch,
-          commands: commandSearch,
-          parameters: paramSearch,
-          time_sort: timeSort,
-          page: currentPage,
-          page_size: pageSize,
-        })
-    )
-      .then((res) => showResponse(res, "get_audit_logs", false))
-      .then((res) => {
-        setAuditLogs(fromJS(res.result.audit_logs));
-        setPages(res.result.total_pages);
-        setTotalLogs(res.result.total_entries);
-        setIsLoading(false);
+  // Get all values from URL parameters and set defaults
+  const usernames = getAll(url.searchParams.getAll("usernames"));
+  const commands = getAll(url.searchParams.getAll("commands"));
+  const parameters = url.searchParams.get("parameters") ?? "";
+  const time_sort = url.searchParams.get("time_sort") ?? "desc";
+  const page = url.searchParams.get("page") ?? 1;
+  const page_size = url.searchParams.get("page_size") ?? 10;
+
+  const fields = {
+    usernames,
+    commands,
+    parameters,
+    time_sort,
+    page,
+    page_size,
+  };
+
+  const params = new URLSearchParams();
+
+  // Cannot use simple Object as some keys can be duplicated for multiple values
+  // eg. `usernames` can have multiple values
+  Object.entries(fields).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      value.forEach((v) => {
+        if (v) params.append(key, v);
       });
+    } else if (value !== "" && value !== null) {
+      params.append(key, value);
+    }
+  });
+
+  const auditLogsResult = await cmd.GET_AUDIT_LOGS({ params });
+  const autocompleteOptions = await cmd.GET_AUDIT_LOGS_AUTOCOMPLETE();
+
+  return {
+    data: auditLogsResult,
+    fields,
+    autocompleteOptions,
+  };
+};
+
+// TODO
+// - Add pagination
+// - Add export
+// - Refactor audit log details into a separate component
+// - Make the audit log details card collapsible to save space
+// - Add a button to copy the audit log details to the clipboard
+// - useMemo(columns) to handle column click to show the audit log details
+
+const AuditLogsPage = () => {
+  const { data, fields, autocompleteOptions } = useLoaderData();
+
+  const { audit_logs, total_pages, page, page_size } = data;
+
+  const submit = useSubmit();
+  const navigation = useNavigation();
+
+  const [formFields, setFormFields] = useState({
+    usernames: fields.usernames,
+    commands: fields.commands,
+    parameters: fields.parameters,
+    time_sort: fields.time_sort,
+  });
+
+  const [selectedAuditLog, setSelectedAuditLog] = useState(null);
+
+  const table = useReactTable({
+    data: audit_logs ?? [],
+    columns: auditLogsColumns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    enableRowSelection: true,
+    enableMultiRowSelection: false,
+    onRowSelectionChange: (updater) => {
+      // TODO:
+      // This may cause a bug when paginating???
+      const newSelection =
+        typeof updater === "function" ? updater({}) : updater;
+      const selectedId = Object.keys(newSelection)[0];
+      const selectedLog = audit_logs[selectedId];
+      setSelectedAuditLog(selectedLog);
+    },
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value, checked } = e.target;
+    setFormFields((prev) => ({
+      ...prev,
+      [name]: e.target.type === "checkbox" ? checked : value,
+    }));
   };
 
-  const getMetdata = () => {
-    get("get_audit_logs_autocomplete")
-      .then((res) => res.json())
-      .then((res) => {
-        if (res) {
-          if (res.result?.usernames) {
-            setUsernames(fromJS(res.result.usernames));
-          }
-          if (res.result?.commands) {
-            setCommands(fromJS(res.result.commands));
-          }
+  const getParams = (otherParams = {}) => {
+    const params = new URLSearchParams();
+    Object.entries({ ...formFields, ...otherParams }).forEach(
+      ([key, value]) => {
+        if (Array.isArray(value)) {
+          value.forEach((v) => params.append(key, v));
+        } else {
+          params.append(key, value);
         }
-      })
-      .catch(handle_http_errors);
+      }
+    );
+    return params;
   };
 
-  useEffect(() => {
-    getMetdata();
-    getAuditLogs();
-  }, [pageSize, currentPage]);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    submit(getParams(), { method: "GET" });
+  };
+
+  const handlePageSizeChange = (pageSize) => {
+    submit(getParams({ page_size: pageSize }), { method: "GET", replace: true });
+  };
+
+  const handleDownload = () => {
+    downloadLogs(audit_logs);
+  };
 
   return (
-    <Grid container spacing={2} justifyContent="flex-start" alignItems="center">
-      <Grid size={3}>
-        <Autocomplete
-          multiple
-          clearOnEscape
-          id="tags-outlined"
-          options={usernames.toJS()}
-          value={usernameSearch}
-          filterSelectedOptions
-          onChange={(e, val) => {
-            setUsernameSearch(val);
-          }}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              variant="outlined"
-              label="Search for usernames"
+    <Stack direction={{ xs: "column" }} spacing={1} sx={{ mt: 2 }}>
+      <Form method="GET" onSubmit={handleSubmit}>
+        <Stack spacing={2} direction={{ xs: "column", lg: "row" }}>
+          <Autocomplete
+            multiple
+            sx={{ width: { xs: "100%", lg: "25%" } }}
+            clearOnEscape
+            limitTags={2}
+            id="usernames-autocomplete"
+            options={autocompleteOptions.usernames}
+            value={formFields.usernames}
+            filterSelectedOptions
+            onChange={(e, val) => {
+              setFormFields((prev) => ({
+                ...prev,
+                usernames: val,
+              }));
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                variant="outlined"
+                label="Search by user"
+                fullWidth
+              />
+            )}
+          />
+          <Autocomplete
+            multiple
+            sx={{ width: { xs: "100%", lg: "25%" } }}
+            clearOnEscape
+            limitTags={2}
+            id="commands-autocomplete"
+            options={autocompleteOptions.commands}
+            value={formFields.commands}
+            filterSelectedOptions
+            onChange={(e, val) => {
+              setFormFields((prev) => ({
+                ...prev,
+                commands: val,
+              }));
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                variant="outlined"
+                name="commands"
+                label="Search by action"
+                fullWidth
+              />
+            )}
+          />
+          <TextField
+            name="parameters"
+            sx={{ width: { xs: "100%", lg: "25%" } }}
+            value={formFields.parameters}
+            onChange={handleInputChange}
+            label="Search by parameters"
+          />
+          <FormControl sx={{ width: { xs: "100%", lg: "15%" } }}>
+            <InputLabel id="time-sort-label">Sort by time</InputLabel>
+            <Select
+              labelId="time-sort-label"
+              name="time_sort"
+              value={formFields.time_sort}
+              onChange={handleInputChange}
+              label="Sort by time"
               fullWidth
-            />
-          )}
-        />
-      </Grid>
-      <Grid size={3}>
-        <Autocomplete
-          multiple
-          clearOnEscape
-          options={commands.toJS()}
-          value={commandSearch}
-          filterSelectedOptions
-          onChange={(e, val) => {
-            setCommandSearch(val);
-          }}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              variant="outlined"
-              label="Search for commands"
-              fullWidth
-            />
-          )}
-        />
-      </Grid>
-      <Grid>
-        <TextField
-          label="Parameters search"
-          value={paramSearch}
-          onChange={(e) => setParamSearch(e.target.value)}
-        />
-      </Grid>
-      <Grid>
-        <FormControl>
-          <InputLabel htmlFor="age-native-simple">Time sort</InputLabel>
-          <Select
-            native
-            value={timeSort}
-            onChange={(e) => setTimeSort(e.target.value)}
-            inputProps={{
-              name: "age",
-              id: "age-native-simple",
+            >
+              <MenuItem value="desc">From newest</MenuItem>
+              <MenuItem value="asc">From oldest</MenuItem>
+            </Select>
+          </FormControl>
+
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            sx={{ width: { xs: "100%", lg: "10%" } }}
+            disabled={navigation.state === "loading"}
+            onClick={handleSubmit}
+          >
+            Search
+          </Button>
+        </Stack>
+      </Form>
+
+      <Stack
+        component="section"
+        id="audit-logs-section"
+        spacing={1}
+        sx={{ width: "100%" }}
+      >
+        <Stack direction={{ xs: "column", lg: "row" }} spacing={1}>
+          <Stack
+            direction="column"
+            sx={{
+              width: "100%",
+              maxWidth: (theme) => theme.breakpoints.values.md,
             }}
           >
-            <option value={"asc"}>Asc</option>
-            <option value={"desc"}>Desc</option>
-          </Select>
-        </FormControl>
-      </Grid>
-      <Grid>
-        <Button variant="contained" onClick={() => {
-          setCurrentPage(1);
-          setPages(0);
-          setTotalLogs(0);
-        }}>
-          Search
-        </Button>
-      </Grid>
-      <Grid size={12}>
-        <AuditLogsTable
-          auditLogs={auditLogs.toJS()}
-          page={currentPage}
-          loading={isLoading}
-          pages={pages}
-          totalLogs={totalLogs}
-          pageSize={pageSize}
-          updatePage={(p) => {
-            setCurrentPage(p);
-          }}
-          updatePageSize={(ps) => {
-            setPageSize(ps);
-          }}
-        />
-      </Grid>
-    </Grid>
+            <TableToolbar>
+              <TablePageSizeSelect
+                pageSize={page_size}
+                setPageSize={handlePageSizeChange}
+              />
+              <Box sx={{ flexGrow: 1 }} />
+              <NavPagination
+                page={page}
+                maxPages={total_pages}
+                disabled={navigation.state === "loading"}
+              />
+              <Divider flexItem orientation="vertical" />
+              <IconButton
+                size="small"
+                variant="contained"
+                color="primary"
+                sx={{
+                  "&.MuiIconButton-root": {
+                    borderRadius: 0,
+                  },
+                }}
+                onClick={handleDownload}
+              >
+                <DownloadIcon />
+              </IconButton>
+            </TableToolbar>
+            <Table
+              table={table}
+              columns={auditLogsColumns}
+              rowProps={(row) => ({
+                onClick: row.getToggleSelectedHandler(),
+                sx: {
+                  cursor: "pointer",
+                  bgcolor: row.getIsSelected() ? "action.selected" : "inherit",
+                  "&:hover": {
+                    bgcolor: "action.hover",
+                  },
+                },
+              })}
+            />
+          </Stack>
+          <AuditLogCard
+            auditLog={selectedAuditLog}
+            sx={{
+              width: (theme) =>
+                theme.breakpoints.down("lg")
+                  ? "100%"
+                  : theme.breakpoints.values.sm,
+            }}
+          />
+        </Stack>
+      </Stack>
+    </Stack>
   );
 };
 
-export default AuditLog;
+export default AuditLogsPage;

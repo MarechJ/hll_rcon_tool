@@ -29,7 +29,7 @@ function AppTheme(props) {
   }
   
   return (
-    <ThemeProvider theme={theme} disableTransitionOnChange>
+    <ThemeProvider theme={theme} colorSchemeStorageKey='crcon.colorScheme' modeStorageKey='crcon.colorMode' disableTransitionOnChange>
       {children}
     </ThemeProvider>
   );

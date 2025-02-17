@@ -1,10 +1,29 @@
 import { flexRender } from "@tanstack/react-table";
 import { NoRowsOverlay } from "@/components/NoRowsOverlay";
-import { StyledTd, StyledTh, StyledTr } from "../table/styles";
-import { Box } from "@mui/material";
+import { StyledTd, StyledTh, StyledThead, StyledTr } from "../table/styles";
+import { Box, LinearProgress } from "@mui/material";
 import { StyledLogsTable, StyledLogsTr } from "./styles";
 
-const LiveLogsTable = ({ table, config = {} }) => {
+const getTRClass = (row, config) => {
+  if (!config.highlighted) return null;
+  const rowAction = row.original.action;
+  let className = null;
+  config.actions.forEach((action) => {
+    switch (action) {
+      case "CHAT":
+      case "ADMIN":
+      case "VOTE":
+      case "MATCH":
+        className = rowAction.startsWith(action) ? "highlighted" : null;
+        break;
+      default:
+        className = rowAction === action ? "highlighted" : null;
+    }
+  });
+  return className;
+};
+
+const LiveLogsTable = ({ table, config = {}, isFetching }) => {
   return (
     <Box
       sx={{
@@ -12,10 +31,13 @@ const LiveLogsTable = ({ table, config = {} }) => {
         overflowY: "hidden",
         width: "100%",
         scrollbarWidth: "thin",
+        position: "relative",
+        marginTop: "2px",
       }}
     >
+      {isFetching && <LinearProgress sx={{ position: "absolute", top: 0, left: 0, width: "100%", height: "2px" }} />}
       <StyledLogsTable density={config.density} fontSize={config.fontSize} className={config.highlighted ? "highlighted" : null}>
-        <thead>
+        <StyledThead>
           {table.getHeaderGroups().map((headerGroup) => (
             <StyledTr key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
@@ -37,11 +59,11 @@ const LiveLogsTable = ({ table, config = {} }) => {
               })}
             </StyledTr>
           ))}
-        </thead>
+        </StyledThead>
         <tbody>
           {table.getRowModel().rows.map((row) => {
             return (
-                <StyledLogsTr key={row.id} className={config.actions.includes(row.original.action) ? "highlighted" : null}>
+                <StyledLogsTr key={row.id} className={getTRClass(row, config)}>
                   {row.getVisibleCells().map((cell) => (
                     <StyledTd
                       key={cell.id}
