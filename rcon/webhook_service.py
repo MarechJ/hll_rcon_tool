@@ -1,20 +1,22 @@
 import asyncio
 import math
+import os
 import random
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
+from enum import StrEnum
+from logging import getLogger
+from typing import TypedDict
+
 import httpx
 import orjson
 import redis
-import os
 from discord_webhook import AsyncDiscordWebhook, DiscordWebhookDict
-from logging import getLogger
 from pydantic import BaseModel, Field
-from typing import TypedDict
-from enum import StrEnum
+
+from rcon.cache_utils import construct_redis_url, get_redis_client
 from rcon.utils import get_server_number
-from rcon.cache_utils import get_redis_client, construct_redis_url
 
 logger = getLogger(__name__)
 
@@ -49,17 +51,33 @@ X_RATELIMIT_RESET_AFTER = "x-ratelimit-reset-after"
 
 
 # Allow users to tune their local rate limit window if they really want to
-LOCAL_RL_RESET_AFTER = int(os.getenv("HLL_WH_SERVICE_RL_RESET_SECS", 3))
-LOCAL_RL_REQUESTS_PER = int(os.getenv("HLL_WH_SERVICE_RL_REQUESTS_PER", 5))
+try:
+    LOCAL_RL_RESET_AFTER = int(os.getenv("HLL_WH_SERVICE_RL_RESET_SECS"))
+except TypeError:
+    LOCAL_RL_RESET_AFTER = 3
+
+try:
+    LOCAL_RL_REQUESTS_PER = os.getenv("HLL_WH_SERVICE_RL_REQUESTS_PER", 5)
+except TypeError:
+    LOCAL_RL_REQUESTS_PER = 5
+
 # Tracks the number of rate limited requests in the last N seconds
-BUCKET_RL_COUNT_RESET_SECS = int(os.getenv("HLL_WH_SERVICE_RL_RESET_SECS", 60 * 10))
+try:
+    BUCKET_RL_COUNT_RESET_SECS = int(os.getenv("HLL_WH_SERVICE_RL_RESET_SECS"))
+except TypeError:
+    BUCKET_RL_COUNT_RESET_SECS = 60 * 10
+
+
 # We trim the queues (redis list) after adding messages so we don't exceed this length
 # which is unlikely to happen in normal circumstances except the kill feed if turned on
 # which will rapidly accumulate messages faster than we can send them to Discord
 # If we trim from the left; we lose messages that we're retrying but are older, if we
 # trim from the right; we lose newer messages
 # We choose to trim from the left in the interest of losing older (less relevant?) messages
-WH_MAX_QUEUE_LENGTH = int(os.getenv("HLL_WH_MAX_QUEUE_LENGTH", 150))
+try:
+    WH_MAX_QUEUE_LENGTH = os.getenv("HLL_WH_MAX_QUEUE_LENGTH")
+except TypeError:
+    WH_MAX_QUEUE_LENGTH = 150
 
 # Global datastructures to support associating hooks with locks
 _RATE_LIMIT_BUCKETS: defaultdict[str, asyncio.Lock | None] = defaultdict(lambda: None)
@@ -778,6 +796,14 @@ async def main():
     client = httpx.AsyncClient()
     lock: asyncio.Lock | None = None
     continue_logged = False
+
+    # Create a file to use for the docker health check
+    from pathlib import Path
+
+    path = Path("/code") / Path("webhook-service-healthy")
+    logger.info(f"{path=}")
+    path.touch()
+
     while True:
         # Check each loop to pick up new queues that have been added since last iteration
         queue_ids = get_all_queue_keys_not_empty(red=red)

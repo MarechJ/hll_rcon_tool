@@ -14,6 +14,7 @@ import rcon.expiring_vips.service
 import rcon.seed_vip.service
 import rcon.user_config
 import rcon.user_config.utils
+import rcon.watch_killrate
 from rcon import auto_settings, broadcast, routines
 from rcon.automods import automod
 from rcon.blacklist import BlacklistCommandHandler
@@ -52,6 +53,7 @@ def run_stats_loop():
     except:
         logger.exception("Stats loop stopped")
         sys.exit(1)
+
 
 @cli.command(name="enrich_db_users")
 def run_enrich_db_users():
@@ -116,6 +118,15 @@ def run_seed_vip():
         sys.exit(1)
 
 
+@cli.command(name="watch_killrate")
+def watch_killrate():
+    try:
+        rcon.watch_killrate.run()
+    except:
+        logger.exception("Watch_KillRate stopped")
+        sys.exit(1)
+
+
 @cli.command(name="automod")
 def run_automod():
     automod.run()
@@ -134,7 +145,7 @@ def run_log_recorder(interval, frequency_min, now):
     if frequency_min and interval:
         raise Exception("Cannot have frequency-min and interval at the same time")
     if frequency_min:
-        interval = frequency_min*60
+        interval = frequency_min * 60
     LogRecorder(interval).run(run_immediately=now)
 
 
