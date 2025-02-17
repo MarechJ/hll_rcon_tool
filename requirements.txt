@@ -8,7 +8,7 @@ channels-redis==4.2.1
 orjson==3.10.15
 simplejson==3.20.1
 psycopg2-binary
-sentry-sdk[django]==2.20.0
+sentry-sdk[django]==2.21.0
 python-dateutil==2.9.0.post0
 # discord-webhook[async]
 git+https://github.com/cemathey/python-discord-webhook@132fc7b7a58ba25e7fffd71cb363e4748c82941c
