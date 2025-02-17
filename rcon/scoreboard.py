@@ -202,7 +202,7 @@ def get_vip_count_by_team(rcon_api: "RconAPI") -> TeamVIPCount:
     team_view = rcon_api.get_team_view()
     for team in teams:
         try:
-            for squad_key in team_view["squads"].keys():
+            for squad_key in team_view[team]["squads"].keys():
                 for player in team_view[team]["squads"][squad_key]["players"]:
                     if player["is_vip"]:
                         teams[team] += 1
