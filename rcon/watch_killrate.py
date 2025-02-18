@@ -12,8 +12,8 @@ from discord_webhook import DiscordEmbed, DiscordWebhook
 
 from rcon.api_commands import RconAPI, get_rcon_api
 from rcon.cache_utils import invalidates, ttl_cache
+from rcon.player_stats import current_game_stats
 from rcon.rcon import SERVER_INFO
-from rcon.scoreboard import current_game_stats
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.watch_killrate import WatchKillRateUserConfig
 from rcon.utils import get_server_number
