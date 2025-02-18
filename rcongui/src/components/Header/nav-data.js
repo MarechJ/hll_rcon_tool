@@ -290,8 +290,8 @@ export const navMenus = [
         icon: <RateReviewIcon />,
       },
       {
-        name: "Scorebot",
-        to: "/settings/others/scorebot",
+        name: "Scoreboard",
+        to: "/settings/others/scoreboard",
         icon: <ScoreboardIcon />,
       },
       {

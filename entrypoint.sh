@@ -44,6 +44,8 @@ then
   fi
 
   python -m rcon.user_config.seed_db
+  # TODO: Temporarily handle converting users old scorebot URLs to the new format; remove in a few releases
+  SERVER_NUMBER=${SERVER_NUMBER} LOGGING_PATH=/logs/ LOGGING_FILENAME=api_${SERVER_NUMBER}.log python -m rcon.cli port_legacy_scorebot_urls
   ./manage.py register_api
   cd rconweb
   ./manage.py collectstatic --noinput

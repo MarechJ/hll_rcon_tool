@@ -11,6 +11,7 @@ from typing import TypedDict
 
 import httpx
 import orjson
+import pydantic
 import redis
 from discord_webhook import AsyncDiscordWebhook, DiscordWebhookDict
 from pydantic import BaseModel, Field
@@ -119,7 +120,7 @@ class WebhookMessageType(StrEnum):
     LOG_LINE_KILL = "log_line_kill"
     LOG_LINE_TEAMKILL = "log_line_teamkill"
     ADMIN_PING = "admin_ping"
-    SCOREBOT = "scorebot"
+    SCOREBOARD = "scoreboard"
     AUDIT = "audit"
     OTHER = "other"
 
@@ -156,6 +157,11 @@ class WebhookMessage(BaseModel):
         default=False,
         description="Use for messages that don't need to be retried (scorebot, etc)",
     )
+    edit: bool = Field(
+        default=False,
+        description="Edit an existing message; the ID field must already be set in the payload",
+    )
+
     sent_at: datetime = Field(
         default_factory=lambda: datetime.now(tz=timezone.utc),
         description="The original UTC time the message was attempted to be sent",
@@ -416,7 +422,7 @@ def enqueue_message(
     # more efficiently purge types of messages (for instance all kill log lines)
     # without having to scan/decode every element in a list which might be thousands
     # of elements long
-    queue_id = f"{prefix}:{get_server_number()}:{message.webhook_type}:{message.message_type}:{message.payload['id']}"
+    queue_id = f"{prefix}:{get_server_number()}:{message.webhook_type}:{message.message_type}:{message.payload['webhook_id']}"
     red.rpush(queue_id, orjson.dumps(message.model_dump_json()))
     red.ltrim(queue_id, 0, WH_MAX_QUEUE_LENGTH - 1)
 
@@ -450,7 +456,11 @@ async def dequeue_message(
         else:
             raise TypeError(f"{message.webhook_type} is an unsupported webhook type")
 
-        res: httpx.Response = await wh.execute(client=client)  # type: ignore
+        if message.edit:
+            res: httpx.Response = await wh.edit(client=client)
+        else:
+            res: httpx.Response = await wh.execute(client=client)  # type: ignore
+
         bucket_data.webhook_type = message.webhook_type
         bucket_data.id = res.headers[X_RATELIMIT_BUCKET]
         bucket_data.remaining_requests = int(res.headers[X_RATELIMIT_REMAINING])
@@ -505,20 +515,22 @@ async def dequeue_message(
             logger.warning(
                 "Rate limited HTTP %s for %s %s resets after %s",
                 res.status_code,
-                wh.id,
+                wh.webhook_id,
                 message.webhook_type,
                 datetime.fromtimestamp(bucket_data.reset_timestamp),
             )
 
             if not message.discardable:
-                logger.info("Re-enqueing %s due to rate limit", message.payload["id"])
+                logger.info(
+                    "Re-enqueing %s due to rate limit", message.payload["webhook_id"]
+                )
                 message.retry_attempts += 1
                 red.lpush(queue_id, orjson.dumps(message.model_dump_json()))  # type: ignore
                 red.ltrim(queue_id, 0, WH_MAX_QUEUE_LENGTH - 1)
         if res.status_code == 401:
             set_webhook_error(
                 red=red,
-                webhook_id=wh.id,
+                webhook_id=wh.webhook_id,
                 webhook_type=message.webhook_type,
                 auth_401=True,
             )
@@ -529,7 +541,7 @@ async def dequeue_message(
         elif res.status_code == 403:
             set_webhook_error(
                 red=red,
-                webhook_id=wh.id,
+                webhook_id=wh.webhook_id,
                 webhook_type=message.webhook_type,
                 auth_403=True,
             )
@@ -541,8 +553,12 @@ async def dequeue_message(
             bucket_data.rate_limited = False
             clear_webhook_errors(
                 red=red,
-                webhook_id=wh.id,
+                webhook_id=wh.webhook_id,
                 webhook_type=message.webhook_type,
+            )
+        else:
+            logger.error(
+                f"Received edit={message.edit} discardable={message.discardable} {res.status_code} for: {unpacked}"
             )
 
         set_bucket_data(red=red, bucket=bucket_data, lock=lock)
@@ -553,14 +569,17 @@ async def dequeue_message(
         )
 
     async with lock:
-        await _dequeue_message(
-            red=red,
-            client=client,
-            queue_id=queue_id,
-            bucket_data=bucket_data,
-            lock=lock,
-        )
-        logger.debug("finished with %s", lock)
+        try:
+            await _dequeue_message(
+                red=red,
+                client=client,
+                queue_id=queue_id,
+                bucket_data=bucket_data,
+                lock=lock,
+            )
+            logger.debug("finished with %s", lock)
+        except pydantic.ValidationError as e:
+            logger.exception(e)
 
 
 def get_all_queue_keys(
@@ -789,7 +808,7 @@ async def main():
 
     # Grab the top message off each queue and send them off
 
-    logger.debug("Starting webhook service")
+    logger.info("Starting webhook service")
     url = construct_redis_url()
     red = get_redis_client(redis_url=url, decode_responses=False, global_pool=True)
 

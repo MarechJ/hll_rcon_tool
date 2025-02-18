@@ -86,9 +86,9 @@ export const others = [
     name: "RCON Chat Commands Settings",
   },
   {
-    path: "/settings/others/scorebot",
-    command: "scorebot_config",
-    name: "Scorebot",
+    path: "/settings/others/scoreboard",
+    command: "scoreboard_config",
+    name: "Scoreboard",
   },
   {
     path: "/settings/others/steam",

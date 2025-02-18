@@ -25,8 +25,9 @@ from rcon.player_history import (
     get_players_by_appearance,
     remove_flag,
 )
+from rcon.player_stats import TimeWindowStats
 from rcon.rcon import Rcon
-from rcon.scoreboard import TimeWindowStats
+from rcon.scoreboard import ScoreboardUserConfig
 from rcon.settings import SERVER_INFO
 from rcon.types import (
     AdminUserType,
@@ -55,6 +56,7 @@ from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.chat_commands import ChatCommandsUserConfig
 from rcon.user_config.expired_vips import ExpiredVipsUserConfig
 from rcon.user_config.gtx_server_name import GtxServerNameChangeUserConfig
+from rcon.user_config.legacy_scorebot import ScorebotUserConfig
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
 from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.user_config.name_kicks import NameKickUserConfig
@@ -62,7 +64,6 @@ from rcon.user_config.rcon_chat_commands import RConChatCommandsUserConfig
 from rcon.user_config.rcon_connection_settings import RconConnectionSettingsUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
-from rcon.user_config.scorebot import ScorebotUserConfig
 from rcon.user_config.seed_vip import SeedVIPUserConfig
 from rcon.user_config.standard_messages import (
     StandardBroadcastMessagesUserConfig,
@@ -1312,10 +1313,14 @@ class RconAPI(Rcon):
             reset_to_default=reset_to_default,
         )
 
+    # TODO: legacy remove this in a few releases
     def get_scorebot_config(self) -> ScorebotUserConfig:
         return ScorebotUserConfig.load_from_db()
 
-    def set_scorebot_config(
+    def get_scoreboard_config(self) -> ScoreboardUserConfig:
+        return ScoreboardUserConfig.load_from_db()
+
+    def set_scoreboard_config(
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
@@ -1325,13 +1330,13 @@ class RconAPI(Rcon):
         return self._validate_user_config(
             command_name=inspect.currentframe().f_code.co_name,  # type: ignore
             by=by,
-            model=ScorebotUserConfig,
+            model=ScoreboardUserConfig,
             data=config or kwargs,
             dry_run=False,
             reset_to_default=reset_to_default,
         )
 
-    def validate_scorebot_config(
+    def validate_scoreboard_config(
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
@@ -1341,7 +1346,7 @@ class RconAPI(Rcon):
         return self._validate_user_config(
             command_name=inspect.currentframe().f_code.co_name,  # type: ignore
             by=by,
-            model=ScorebotUserConfig,
+            model=ScoreboardUserConfig,
             data=config or kwargs,
             dry_run=True,
             reset_to_default=reset_to_default,
