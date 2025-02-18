@@ -462,4 +462,9 @@ class RconUser(User):
                 "can_change_webhook_queues",
                 "Can remove messages from the webhook queue service",
             ),
+            ("can_view_watch_killrate_config", "Can view the Watch KillRate config"),
+            (
+                "can_change_watch_killrate_config",
+                "Can change the Watch KillRate config",
+            ),
         )

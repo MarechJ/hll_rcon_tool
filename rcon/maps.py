@@ -33,8 +33,8 @@ class MapType(typing_extensions.TypedDict):
     tag: str
     pretty_name: str
     shortname: str
-    allies: "Faction"
-    axis: "Faction"
+    allies: "FactionType"
+    axis: "FactionType"
     orientation: str
 
 
@@ -121,6 +121,27 @@ class FactionName(Enum):
 class Faction(pydantic.BaseModel):
     name: str
     team: Team
+
+    if TYPE_CHECKING:
+        # Ensure type checkers see the correct return type
+        def model_dump(
+            self,
+            *,
+            mode: Literal["json", "python"] | str = "python",
+            include: Any = None,
+            exclude: Any = None,
+            by_alias: bool = False,
+            exclude_unset: bool = False,
+            exclude_defaults: bool = False,
+            exclude_none: bool = False,
+            round_trip: bool = False,
+            warnings: bool = True,
+        ) -> FactionType: ...
+
+    else:
+
+        def model_dump(self, **kwargs):
+            return super().model_dump(**kwargs)
 
 
 class Map(pydantic.BaseModel):

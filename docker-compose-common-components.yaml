@@ -6,7 +6,7 @@ services:
     command: redis-server /usr/local/etc/redis/redis.conf
     restart: always
     healthcheck:
-      test: [ "CMD-SHELL", "redis-cli ping | grep PONG" ]
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
       interval: 15s
       timeout: 30s
       retries: 5
@@ -27,7 +27,8 @@ services:
       HLL_DB_USER: ${HLL_DB_USER}
     restart: always
     healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "${HLL_DB_USER}", "-d", "${HLL_DB_NAME}" ]
+      test:
+        ["CMD", "pg_isready", "-U", "${HLL_DB_USER}", "-d", "${HLL_DB_NAME}"]
       interval: 15s
       timeout: 30s
       retries: 5
@@ -54,7 +55,11 @@ services:
     command: maintenance
     restart: always
     healthcheck:
-      test: [ "CMD-SHELL", "if [ -e /code/maintenance-container-healthy ]; then echo 0; else echo 1; fi" ]
+      test:
+        [
+          "CMD-SHELL",
+          "if [ -e /code/maintenance-container-healthy ]; then echo 0; else echo 1; fi",
+        ]
       start_period: 30s
       interval: 15s
       timeout: 30s
@@ -91,6 +96,16 @@ services:
       HLL_WH_MAX_QUEUE_LENGTH: ${HLL_WH_MAX_QUEUE_LENGTH}
     command: webhook_service
     restart: no
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "if [ -e /code/webhook-service-healthy ]; then echo 0; else echo 1; fi",
+        ]
+      start_period: 30s
+      interval: 15s
+      timeout: 30s
+      retries: 5
     depends_on:
       redis:
         condition: service_healthy

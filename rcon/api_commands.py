@@ -5,48 +5,45 @@ from datetime import datetime, timedelta
 from logging import getLogger
 from typing import Any, Dict, Iterable, Literal, Optional, Sequence, Type
 
-from rcon import webhook_service
-from rcon.message_templates import (
-    get_all_message_templates,
-    get_message_template,
-    get_message_template_categories,
-    get_message_templates,
-    add_message_template,
-    edit_message_template,
-    delete_message_template,
-)
-from rcon import blacklist, game_logs, maps, player_history
+from rcon import blacklist, game_logs, maps, player_history, webhook_service
 from rcon.audit import ingame_mods, online_mods
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.discord import audit_user_config_differences
 from rcon.gtx import GTXFtp
-from rcon.models import enter_session
+from rcon.message_templates import (
+    add_message_template,
+    delete_message_template,
+    edit_message_template,
+    get_all_message_templates,
+    get_message_template,
+    get_message_template_categories,
+    get_message_templates,
+)
+from rcon.models import MessageTemplate, enter_session
 from rcon.player_history import (
     add_flag_to_player,
     get_players_by_appearance,
     remove_flag,
 )
+from rcon.player_stats import TimeWindowStats
 from rcon.rcon import Rcon
-from rcon.scoreboard import TimeWindowStats
+from rcon.scoreboard import ScoreboardUserConfig
 from rcon.settings import SERVER_INFO
 from rcon.types import (
     AdminUserType,
+    AllMessageTemplateTypes,
     BlacklistSyncMethod,
     BlacklistType,
     BlacklistWithRecordsType,
     GameServerBanType,
+    MessageTemplateCategory,
+    MessageTemplateType,
     ParsedLogsType,
     PlayerCommentType,
     PlayerFlagType,
     PlayerProfileTypeEnriched,
     ServerInfoType,
     VoteMapStatusType,
-)
-from rcon.models import enter_session, MessageTemplate
-from rcon.types import (
-    MessageTemplateCategory,
-    MessageTemplateType,
-    AllMessageTemplateTypes,
 )
 from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
 from rcon.user_config.auto_kick import AutoVoteKickUserConfig
@@ -59,6 +56,7 @@ from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.chat_commands import ChatCommandsUserConfig
 from rcon.user_config.expired_vips import ExpiredVipsUserConfig
 from rcon.user_config.gtx_server_name import GtxServerNameChangeUserConfig
+from rcon.user_config.legacy_scorebot import ScorebotUserConfig
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
 from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.user_config.name_kicks import NameKickUserConfig
@@ -66,7 +64,6 @@ from rcon.user_config.rcon_chat_commands import RConChatCommandsUserConfig
 from rcon.user_config.rcon_connection_settings import RconConnectionSettingsUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
-from rcon.user_config.scorebot import ScorebotUserConfig
 from rcon.user_config.seed_vip import SeedVIPUserConfig
 from rcon.user_config.standard_messages import (
     StandardBroadcastMessagesUserConfig,
@@ -77,6 +74,7 @@ from rcon.user_config.steam import SteamUserConfig
 from rcon.user_config.utils import BaseUserConfig, validate_user_config
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.vote_map import VoteMapUserConfig
+from rcon.user_config.watch_killrate import WatchKillRateUserConfig
 from rcon.user_config.webhooks import (
     AdminPingWebhooksUserConfig,
     AuditWebhooksUserConfig,
@@ -1315,10 +1313,14 @@ class RconAPI(Rcon):
             reset_to_default=reset_to_default,
         )
 
+    # TODO: legacy remove this in a few releases
     def get_scorebot_config(self) -> ScorebotUserConfig:
         return ScorebotUserConfig.load_from_db()
 
-    def set_scorebot_config(
+    def get_scoreboard_config(self) -> ScoreboardUserConfig:
+        return ScoreboardUserConfig.load_from_db()
+
+    def set_scoreboard_config(
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
@@ -1328,13 +1330,13 @@ class RconAPI(Rcon):
         return self._validate_user_config(
             command_name=inspect.currentframe().f_code.co_name,  # type: ignore
             by=by,
-            model=ScorebotUserConfig,
+            model=ScoreboardUserConfig,
             data=config or kwargs,
             dry_run=False,
             reset_to_default=reset_to_default,
         )
 
-    def validate_scorebot_config(
+    def validate_scoreboard_config(
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
@@ -1344,7 +1346,7 @@ class RconAPI(Rcon):
         return self._validate_user_config(
             command_name=inspect.currentframe().f_code.co_name,  # type: ignore
             by=by,
-            model=ScorebotUserConfig,
+            model=ScoreboardUserConfig,
             data=config or kwargs,
             dry_run=True,
             reset_to_default=reset_to_default,
@@ -1835,6 +1837,41 @@ class RconAPI(Rcon):
             command_name=inspect.currentframe().f_code.co_name,  # type: ignore
             by=by,
             model=LogStreamUserConfig,
+            data=config or kwargs,
+            dry_run=True,
+            reset_to_default=reset_to_default,
+        )
+
+    def get_watch_killrate_config(self):
+        return WatchKillRateUserConfig.load_from_db()
+
+    def set_watch_killrate_config(
+        self,
+        by: str,
+        config: dict[str, Any] | BaseUserConfig | None = None,
+        reset_to_default: bool = False,
+        **kwargs,
+    ) -> bool:
+        return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
+            model=WatchKillRateUserConfig,
+            data=config or kwargs,
+            dry_run=False,
+            reset_to_default=reset_to_default,
+        )
+
+    def validate_watch_killrate_config(
+        self,
+        by: str,
+        config: dict[str, Any] | BaseUserConfig | None = None,
+        reset_to_default: bool = False,
+        **kwargs,
+    ) -> bool:
+        return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
+            model=WatchKillRateUserConfig,
             data=config or kwargs,
             dry_run=True,
             reset_to_default=reset_to_default,

@@ -6,9 +6,10 @@ from django.views.decorators.csrf import csrf_exempt
 
 from rcon.maps import parse_layer
 from rcon.models import Maps, enter_session
-from rcon.scoreboard import LiveStats, get_cached_live_game_stats
+from rcon.player_stats import LiveStats, get_cached_live_game_stats
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.utils import MapsHistory
+
 from .auth import api_response, stats_login_required
 from .decorators import require_http_methods
 from .views import _get_data
@@ -107,7 +108,7 @@ def get_map_scoreboard(request):
                 failed = True
             else:
                 game = game.to_dict(with_stats=True)
-                game['map'] = parse_layer(game['map_name'])
+                game["map"] = parse_layer(game["map_name"])
     except Exception as e:
         game = None
         error = repr(e)
