@@ -111,7 +111,7 @@ const VipListLists = () => {
   function onEditDialogSubmit(data) {
     const vipListId = editDialogInitialValues.id;
     postData(`${process.env.REACT_APP_API_URL}edit_vip_list`, {
-      vip_liar_is: vipListId,
+      vip_list_id: vipListId,
       name: data.name,
       servers: data.servers,
       sync_method: data.syncMethod,
