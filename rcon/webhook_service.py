@@ -76,7 +76,7 @@ except TypeError:
 # trim from the right; we lose newer messages
 # We choose to trim from the left in the interest of losing older (less relevant?) messages
 try:
-    WH_MAX_QUEUE_LENGTH = os.getenv("HLL_WH_MAX_QUEUE_LENGTH")
+    WH_MAX_QUEUE_LENGTH = int(os.getenv("HLL_WH_MAX_QUEUE_LENGTH"))
 except TypeError:
     WH_MAX_QUEUE_LENGTH = 150
 
