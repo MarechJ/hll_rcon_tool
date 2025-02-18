@@ -233,6 +233,7 @@ def build_header_gamestate_embed(
 ) -> DiscordEmbed:
     """Build an embed for the header/gamestate message"""
     embed = DiscordEmbed()
+    embed.set_url(str(config.public_scoreboard_url))
 
     gamestate: GameStateType = rcon_api.get_gamestate()
     vip_count_by_team = get_vip_count_by_team(rcon_api=rcon_api)
@@ -320,6 +321,8 @@ def build_map_rotation_embed(
 ) -> DiscordEmbed:
     """Build an embed for the map rotation message"""
     embed = DiscordEmbed()
+    embed.set_url(str(config.public_scoreboard_url))
+
     rotation: list[Layer] = rcon_api.get_map_rotation()
     gamestate: GameStateType = rcon_api.get_gamestate()
 
@@ -371,6 +374,7 @@ def build_player_stats_embed(
     player_stats: list[PlayerStatsType] = get_cached_live_game_stats()["stats"]
 
     embed = DiscordEmbed()
+    embed.set_url(str(config.public_scoreboard_url))
 
     title = ""
     if config.server_name:
