@@ -62,6 +62,10 @@ class ScoreboardConfigType(TypedDict):
     public_scoreboard_url: HttpUrl
     hooks: list[WebhookType]
 
+    header_gamestate_enabled: bool
+    map_rotation_enabled: bool
+    player_stats_enabled: bool
+
     footer_last_refreshed_text: str
 
     header_gamestate_time_between_refreshes: int
@@ -244,6 +248,10 @@ class ScoreboardUserConfig(BaseUserConfig):
     public_scoreboard_url: HttpUrl | None = Field(default=None)
     hooks: list[DiscordWebhook] = Field(default_factory=list)
 
+    header_gamestate_enabled: bool = Field(default=True)
+    map_rotation_enabled: bool = Field(default=True)
+    player_stats_enabled: bool = Field(default=True)
+
     footer_last_refreshed_text: str = Field(default="Last Refreshed")
 
     # Header / Gamestate (own message)
@@ -323,6 +331,9 @@ class ScoreboardUserConfig(BaseUserConfig):
         validated_conf = ScoreboardUserConfig(
             public_scoreboard_url=values.get("public_scoreboard_url"),
             hooks=validated_hooks,
+            header_gamestate_enabled=values.get("header_gamestate_enabled"),
+            map_rotation_enabled=values.get("map_rotation_enabled"),
+            player_stats_enabled=values.get("player_stats_enabled"),
             footer_last_refreshed_text=values.get("footer_last_refreshed_text"),
             header_gamestate_time_between_refreshes=values.get(
                 "header_gamestate_time_between_refreshes"

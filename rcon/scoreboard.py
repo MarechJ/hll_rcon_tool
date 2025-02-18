@@ -485,7 +485,7 @@ def run():
                 with enter_session() as session:
                     message_ids = get_set_wh_row(session=session, webhook_url=url)
                     for key in MESSAGE_KEYS:
-                        if key == HEADER_GAMESTATE:
+                        if key == HEADER_GAMESTATE and config.header_gamestate_enabled:
                             if (
                                 last_updated_header_gamestate
                                 and (
@@ -509,7 +509,7 @@ def run():
                                 key=key,
                             )
 
-                        if key == MAP_ROTATION:
+                        if key == MAP_ROTATION and config.map_rotation_enabled:
                             if (
                                 last_updated_map_rotation
                                 and (
@@ -533,7 +533,7 @@ def run():
                                 key=key,
                             )
 
-                        if key == PLAYER_STATS:
+                        if key == PLAYER_STATS and config.player_stats_enabled:
                             if (
                                 last_updated_player_stats
                                 and (
