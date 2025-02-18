@@ -1096,7 +1096,10 @@ def synchronize_with_game_server(server_number: int, rcon=None):
                 else:
                     description = f"{player_name}"
 
-                if top_record.description != game_server_vips.get(player_id):
+                if (
+                    player_id not in game_server_vips
+                    or top_record.description != game_server_vips.get(player_id)
+                ):
                     updated_record = top_record.to_dict()
                     updated_record["description"] = description
                     to_add.append(updated_record)
