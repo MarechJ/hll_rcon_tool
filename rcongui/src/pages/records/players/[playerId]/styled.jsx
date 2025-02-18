@@ -2,8 +2,6 @@ import { styled } from '@mui/material/styles';
 import { Paper, Box, Avatar, Chip, Card as MuiCard, Alert, Tooltip } from '@mui/material';
 
 export const ProfileContainer = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(3),
-  maxWidth: '1400px',
   margin: '0 auto',
   backgroundColor: theme.palette.background.default,
   minHeight: '100vh',
@@ -88,7 +86,7 @@ export const MainContent = styled(Box)(({ theme }) => ({
   display: 'grid',
   gap: theme.spacing(3),
   gridTemplateColumns: '1fr',
-  [theme.breakpoints.up('md')]: {
+  [theme.breakpoints.up('lg')]: {
     gridTemplateColumns: '350px 1fr',
   },
 }));
@@ -112,10 +110,14 @@ export const DetailCard = styled(MuiCard)(({ theme }) => ({
 }));
 
 export const ScrollableContent = styled(Box)(({ theme }) => ({
-  height: '500px',
+  height: 'calc(100vh - 64px)',
   overflowY: 'auto',
   marginTop: theme.spacing(2),
   padding: theme.spacing(0, 2),
+  [theme.breakpoints.up('lg')]: {
+    height: 'calc(100vh - 300px)',
+    minHeight: '500px',
+  },
 }));
 
 export const ListItem = styled(Box)(({ theme }) => ({

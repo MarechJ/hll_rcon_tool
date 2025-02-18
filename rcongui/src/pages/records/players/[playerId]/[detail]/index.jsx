@@ -96,7 +96,7 @@ export default function PlayerDetailView() {
             (sessionStart.format('lll').toLowerCase().includes(searchLower) || 
              (sessionEnd && sessionEnd.format('lll').toLowerCase().includes(searchLower)))
           );
-        case 'actions':
+        case 'received-actions':
           return (
             item.action_type.includes(filters.actions.type) &&
             (item.reason.toLowerCase().includes(searchLower) || item.by.toLowerCase().includes(searchLower))

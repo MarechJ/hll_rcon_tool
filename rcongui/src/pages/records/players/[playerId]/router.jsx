@@ -36,16 +36,10 @@ const fetchResource = async (url, errorMessage) => {
       "Messages not found"
     );
   
-    const fetchConnectionInfo = fetchResource(
-      "get_connection_info",
-      "Connection info not found"
-    );
-  
     // Run all promises concurrently
-    const [profile, messages, connectionInfo] = await Promise.all([
+    const [profile, messages] = await Promise.all([
       fetchPlayer,
       fetchMessages,
-      fetchConnectionInfo,
     ]);
   
     // If player is not found, throw an error
@@ -57,7 +51,6 @@ const fetchResource = async (url, errorMessage) => {
     return defer({
       profile,
       messages,
-      connectionInfo,
       numSessions,
     });
   };
