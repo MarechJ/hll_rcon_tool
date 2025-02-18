@@ -54,18 +54,18 @@ X_RATELIMIT_RESET_AFTER = "x-ratelimit-reset-after"
 # Allow users to tune their local rate limit window if they really want to
 try:
     LOCAL_RL_RESET_AFTER = int(os.getenv("HLL_WH_SERVICE_RL_RESET_SECS"))
-except TypeError:
+except (ValueError, TypeError):
     LOCAL_RL_RESET_AFTER = 3
 
 try:
     LOCAL_RL_REQUESTS_PER = os.getenv("HLL_WH_SERVICE_RL_REQUESTS_PER", 5)
-except TypeError:
+except (ValueError, TypeError):
     LOCAL_RL_REQUESTS_PER = 5
 
 # Tracks the number of rate limited requests in the last N seconds
 try:
     BUCKET_RL_COUNT_RESET_SECS = int(os.getenv("HLL_WH_SERVICE_RL_RESET_SECS"))
-except TypeError:
+except (ValueError, TypeError):
     BUCKET_RL_COUNT_RESET_SECS = 60 * 10
 
 
@@ -76,8 +76,8 @@ except TypeError:
 # trim from the right; we lose newer messages
 # We choose to trim from the left in the interest of losing older (less relevant?) messages
 try:
-    WH_MAX_QUEUE_LENGTH = os.getenv("HLL_WH_MAX_QUEUE_LENGTH")
-except TypeError:
+    WH_MAX_QUEUE_LENGTH = int(os.getenv("HLL_WH_MAX_QUEUE_LENGTH"))
+except (ValueError, TypeError):
     WH_MAX_QUEUE_LENGTH = 150
 
 # Global datastructures to support associating hooks with locks
@@ -424,7 +424,6 @@ def enqueue_message(
     # of elements long
     queue_id = f"{prefix}:{get_server_number()}:{message.webhook_type}:{message.message_type}:{message.payload['webhook_id']}"
     red.rpush(queue_id, orjson.dumps(message.model_dump_json()))
-    red.ltrim(queue_id, 0, WH_MAX_QUEUE_LENGTH - 1)
 
 
 async def dequeue_message(
@@ -820,12 +819,16 @@ async def main():
     from pathlib import Path
 
     path = Path("/code") / Path("webhook-service-healthy")
-    logger.info(f"{path=}")
     path.touch()
 
     while True:
         # Check each loop to pick up new queues that have been added since last iteration
         queue_ids = get_all_queue_keys_not_empty(red=red)
+
+        # Keep each message queue under its max, dropping the oldest messages first
+        for queue_id in queue_ids:
+            red.ltrim(queue_id, 0, WH_MAX_QUEUE_LENGTH - 1)
+
         logger.debug("queue_ids=%s", queue_ids)
         queue_id: str | None = get_next_queue_id(queue_ids=queue_ids)
         logger.debug("queue_id=%s", queue_id)
