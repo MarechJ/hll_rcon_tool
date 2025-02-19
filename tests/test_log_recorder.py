@@ -48,6 +48,39 @@ class TestLogRecorder:
             assert res[0].player_1 == first_player
             assert res[0].player_2.player_id == second_player_id
 
+    def test_records_logs_when_last_has_equal_timestamp(self, log_recorder):
+        new_logs = [{
+            "version": 1,
+            "timestamp_ms": 1612695641000,
+            "event_time": datetime.datetime.fromtimestamp(1612695641),
+            "action": "TEAM KILL",
+            "player_name_1": "[ARC] DYDSO ★ツ",
+            "player_id_1": first_player_id,
+            "player_name_2": "Francky Mc Fly",
+            "player_id_2": second_player_id,
+            "weapon": "G43",
+            "message": "",
+            "raw": f"[646 ms (1612695641)] TEAM KILL: [ARC] DYDSO ★ツ(Axis/{first_player_id}) -> Francky Mc Fly(Axis/{second_player_id}) with None",
+            "line_without_time": f"TEAM KILL: [ARC] DYDSO ★ツ(Axis/{first_player_id}) -> Francky Mc Fly(Axis/{second_player_id}) with None",
+        }]
+        r = LogRecorder(log_history_fn=lambda: new_logs)
+        with enter_session() as sess:
+            r.run(run_immediately=True, one_off=True)
+            new_logs.insert(0, {
+                **new_logs[0],
+                "action": "KILL",
+                "raw": f"[6.14 sec (1612695641)] KILL: Francky Mc Fly(Axis/{second_player_id}) -> [ARC] DYDSO ★ツ(Axis/{first_player_id}) with None",
+                "line_without_time": f"KILL: Francky Mc Fly(Axis/{second_player_id}) -> [ARC] DYDSO ★ツ(Axis/{first_player_id}) with None",
+            })
+            r.run(run_immediately=True, one_off=True)
+
+            res = sess.query(LogLine).all()
+            assert len(res) == 2
+            assert res[0].type == 'TEAM KILL'
+            assert res[0].event_time == datetime.datetime.fromtimestamp(1612695641)
+            assert res[1].type == 'KILL'
+            assert res[1].event_time == datetime.datetime.fromtimestamp(1612695641)
+
     def test_no_duplicate_records(self, log_recorder):
         logs = [{
             "version": 1,
@@ -61,16 +94,18 @@ class TestLogRecorder:
             "weapon": "G43",
             "message": "",
             "raw": f"[646 ms (1612695641)] TEAM KILL: [ARC] DYDSO ★ツ(Axis/{first_player_id}) -> Francky Mc Fly(Axis/{second_player_id}) with None",
-            "content": f"[ARC] DYDSO ★ツ(Axis/{first_player_id}) -> Francky Mc Fly(Axis/{second_player_id}) with None",
+            "line_without_time": f"TEAM KILL: [ARC] DYDSO ★ツ(Axis/{first_player_id}) -> Francky Mc Fly(Axis/{second_player_id}) with None",
         }]
         r = LogRecorder(log_history_fn=lambda: logs)
         with enter_session() as sess:
             r.run(run_immediately=True, one_off=True)
-            logs.append({
+            logs.insert(0, {
                 **logs[0],
                 "timestamp_ms": logs[0].get('timestamp_ms') + 2000,
                 "event_time": logs[0]['event_time'] + datetime.timedelta(milliseconds=2000),
                 "action": "KILL",
+                "raw": f"[6.14 sec ({logs[0].get('timestamp_ms') + 2000})] KILL: [ARC] DYDSO ★ツ(Axis/{first_player_id}) -> Francky Mc Fly(Axis/{second_player_id}) with None",
+                "line_without_time": f"KILL: [ARC] DYDSO ★ツ(Axis/{first_player_id}) -> Francky Mc Fly(Axis/{second_player_id}) with None",
             })
             r.run(run_immediately=True, one_off=True)
 

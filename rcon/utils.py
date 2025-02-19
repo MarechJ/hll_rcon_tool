@@ -341,6 +341,7 @@ class ApiKey:
 def get_server_number() -> str:
     """Get the CRCON server number"""
     server_number = os.getenv("SERVER_NUMBER")
+    # TODO: enforce that this is an int
     if not server_number:
         # Shouldn't get here because SERVER_NUMBER is a mandatory ENV Var
         raise ValueError("SERVER_NUMBER is not set")

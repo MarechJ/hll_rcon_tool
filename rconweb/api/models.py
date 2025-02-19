@@ -452,6 +452,19 @@ class RconUser(User):
             ("can_edit_message_templates", "Can edit shared message templates"),
             ("can_view_seed_vip_config", "Can view the Seed VIP config"),
             ("can_change_seed_vip_config", "Can change the Seed VIP config"),
+            (
+                "can_view_webhook_queues",
+                "Can view information about the webhook service",
+            ),
+            (
+                "can_change_webhook_queues",
+                "Can remove messages from the webhook queue service",
+            ),
+            ("can_view_watch_killrate_config", "Can view the Watch KillRate config"),
+            (
+                "can_change_watch_killrate_config",
+                "Can change the Watch KillRate config",
+            ),
             ("can_change_player_profiles", "Can make changes to a players profile"),
             ("can_view_vip_lists", "Can view VIP lists and their records"),
             ("can_create_vip_lists", "Can create VIP lists"),

@@ -19,7 +19,7 @@ from rcon.user_config.rcon_chat_commands import RConChatCommandsUserConfig
 from rcon.user_config.rcon_connection_settings import RconConnectionSettingsUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
-from rcon.user_config.scorebot import ScorebotUserConfig
+from rcon.user_config.scoreboard import ScoreboardUserConfig
 from rcon.user_config.seed_vip import SeedVIPUserConfig
 from rcon.user_config.standard_messages import (
     StandardBroadcastMessagesUserConfig,
@@ -29,6 +29,7 @@ from rcon.user_config.standard_messages import (
 from rcon.user_config.steam import SteamUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.vote_map import VoteMapUserConfig
+from rcon.user_config.watch_killrate import WatchKillRateUserConfig
 from rcon.user_config.webhooks import (
     AdminPingWebhooksUserConfig,
     AuditWebhooksUserConfig,
@@ -68,7 +69,7 @@ def seed_default_config():
             RconConnectionSettingsUserConfig.seed_db(sess)
             RconServerSettingsUserConfig.seed_db(sess)
             RealVipUserConfig.seed_db(sess)
-            ScorebotUserConfig.seed_db(sess)
+            ScoreboardUserConfig.seed_db(sess)
             SeedVIPUserConfig.seed_db(sess)
             StandardBroadcastMessagesUserConfig.seed_db(sess)
             StandardPunishmentMessagesUserConfig.seed_db(sess)
@@ -76,6 +77,7 @@ def seed_default_config():
             SteamUserConfig.seed_db(sess)
             VacGameBansUserConfig.seed_db(sess)
             VoteMapUserConfig.seed_db(sess)
+            WatchKillRateUserConfig.seed_db(sess)
             WatchlistWebhooksUserConfig.seed_db(sess)
 
     except Exception as e:

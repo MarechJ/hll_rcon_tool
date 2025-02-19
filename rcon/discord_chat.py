@@ -7,6 +7,7 @@ from typing import Iterable
 from discord_webhook import DiscordEmbed, DiscordWebhook
 
 import discord.utils
+from rcon.utils import get_server_number
 from rcon.cache_utils import ttl_cache
 from rcon.discord import make_hook
 from rcon.logs.loop import on_chat, on_kill, on_tk
@@ -17,6 +18,12 @@ from rcon.user_config.webhooks import (
     DiscordMentionWebhook,
     DiscordWebhook,
     KillsWebhooksUserConfig,
+)
+from rcon.webhook_service import (
+    enqueue_message,
+    WebhookMessage,
+    WebhookType,
+    WebhookMessageType,
 )
 
 STEAM_PROFILE_URL = "http://steamcommunity.com/profiles/{id64}"
@@ -89,6 +96,7 @@ class DiscordWebhookHandler:
         except Exception as e:
             logger.exception("Error initializing ping trigger webhooks: %s", e)
 
+        # TODO: If we don't get a valid response for a webhook we should log it
         self.ping_trigger_webhooks = [wh for wh in ping_trigger_webhooks if wh]
         self.chat_webhooks = [wh for wh in chat_webhooks if wh]
         self.kills_webhooks = [wh for wh in kills_webhooks if wh]
@@ -195,16 +203,30 @@ class DiscordWebhookHandler:
             for wh in self.chat_webhooks:
                 wh.remove_embeds()
                 wh.add_embed(chat_embed)
-                wh.execute()
+                enqueue_message(
+                    message=WebhookMessage(
+                        payload=wh.json,
+                        webhook_type=WebhookType.DISCORD,
+                        message_type=WebhookMessageType.LOG_LINE_CHAT,
+                        server_number=int(get_server_number()),
+                    )
+                )
 
             if triggered:
                 for wh in self.ping_trigger_webhooks:
                     wh.remove_embeds()
                     wh.add_embed(admin_embed)
                     wh.content = content
-                    wh.execute()
+                    enqueue_message(
+                        message=WebhookMessage(
+                            payload=wh.json,
+                            webhook_type=WebhookType.DISCORD,
+                            message_type=WebhookMessageType.ADMIN_PING,
+                            server_number=int(get_server_number()),
+                        )
+                    )
         except Exception as e:
-            logger.exception("error executing chat message webhook: %s", e)
+            logger.exception("error enqueing chat message webhook: %s", e)
             raise
 
     def send_generic_kill_message(self, log):
@@ -212,15 +234,26 @@ class DiscordWebhookHandler:
             return
 
         try:
+            if log["action"] == "KILL":
+                type_ = message_type = WebhookMessageType.LOG_LINE_KILL
+            else:
+                message_type = WebhookMessageType.LOG_LINE_TEAMKILL
             embed = self.create_kill_message(log)
             # TODO: fix this, needs to be fixed upstream
             # logger.debug("sending kill message len=%s to Discord", len(embed))
             for wh in self.kills_webhooks:
                 wh.remove_embeds()
                 wh.add_embed(embed)
-                wh.execute()
+                enqueue_message(
+                    message=WebhookMessage(
+                        payload=wh.json,
+                        webhook_type=WebhookType.DISCORD,
+                        message_type=message_type,
+                        server_number=int(get_server_number()),
+                    )
+                )
         except Exception as e:
-            logger.exception("error executing kill message webhook %s", e)
+            logger.exception("error enqueing kill message webhook %s", e)
 
     def send_kill_message(self, log):
         if log["action"] == "KILL" and self.kills_wh_config.send_kills:

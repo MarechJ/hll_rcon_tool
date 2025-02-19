@@ -3,6 +3,8 @@ import json
 import logging
 import sys
 from datetime import datetime, timedelta
+from random import randint
+from time import sleep
 from typing import Any, Set, Type
 
 import click
@@ -10,40 +12,39 @@ import pydantic
 from sqlalchemy import func as pg_func
 from sqlalchemy import select, text
 
-from time import sleep
-from random import randint
-
 import rcon.seed_vip.service
-
 import rcon.user_config
 import rcon.user_config.utils
+import rcon.watch_killrate
 from rcon import auto_settings, broadcast, routines
 from rcon.automods import automod
 from rcon.blacklist import BlacklistCommandHandler
-from rcon.vip import (
-    VipListCommandHandler,
-    VipListCommand,
-    VipListCommandType,
-    VipListInactivateExpiredCommand,
-    ALL_SERVERS_MASK,
-)
 from rcon.cache_utils import RedisCached, get_redis_pool, invalidates
 from rcon.discord_chat import get_handler
 from rcon.logs.loop import LogLoop, load_generic_hooks
 from rcon.logs.recorder import LogRecorder
 from rcon.logs.stream import LogStream
 from rcon.models import PlayerID, enter_session, install_unaccent
+from rcon.player_stats import live_stats_loop
 from rcon.rcon import get_rcon
-from rcon.scoreboard import live_stats_loop
 from rcon.steam_utils import enrich_db_users
 from rcon.user_config.auto_settings import AutoSettingsConfig
+from rcon.user_config.legacy_scorebot import ScorebotUserConfig
 from rcon.user_config.log_stream import LogStreamUserConfig
+from rcon.user_config.scoreboard import ScoreboardUserConfig, _port_legacy_scorebot_urls
 from rcon.user_config.webhooks import (
     BaseMentionWebhookUserConfig,
     BaseUserConfig,
     BaseWebhookUserConfig,
 )
 from rcon.utils import ApiKey
+from rcon.vip import (
+    ALL_SERVERS_MASK,
+    VipListCommand,
+    VipListCommandHandler,
+    VipListCommandType,
+    VipListInactivateExpiredCommand,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,11 @@ logger = logging.getLogger(__name__)
 @click.group()
 def cli():
     pass
+
+
+@cli.command(name="port_legacy_scorebot_urls")
+def port_legacy_scorebot_urls():
+    _port_legacy_scorebot_urls()
 
 
 @cli.command(name="live_stats_loop")
@@ -122,6 +128,15 @@ def run_seed_vip():
         sys.exit(1)
 
 
+@cli.command(name="watch_killrate")
+def watch_killrate():
+    try:
+        rcon.watch_killrate.run()
+    except:
+        logger.exception("Watch_KillRate stopped")
+        sys.exit(1)
+
+
 @cli.command(name="automod")
 def run_automod():
     automod.run()
@@ -170,7 +185,7 @@ def run_log_recorder(interval, frequency_min, now):
     if frequency_min and interval:
         raise Exception("Cannot have frequency-min and interval at the same time")
     if frequency_min:
-        interval = frequency_min*60
+        interval = frequency_min * 60
     LogRecorder(interval).run(run_immediately=now)
 
 

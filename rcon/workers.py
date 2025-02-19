@@ -14,7 +14,7 @@ from rcon.cache_utils import get_redis_client
 from rcon.game_logs import get_historical_logs_records
 from rcon.models import Maps, PlayerStats, enter_session
 from rcon.player_history import get_player
-from rcon.scoreboard import TimeWindowStats
+from rcon.player_stats import TimeWindowStats
 from rcon.types import MapInfo, PlayerStat
 
 logger = logging.getLogger("rcon")
@@ -151,7 +151,7 @@ def record_stats_from_map(
         from_=map_.start,
         till=map_.end,
         time_sort="asc",
-        action='MATCH ENDED',
+        action="MATCH ENDED",
         exact_action=True,
         server_filter=str(map_.server_number),
         limit=1,
@@ -162,13 +162,13 @@ def record_stats_from_map(
         # to catch the possibly second MATCH START event, add a random 30 seconds to the end date of the match
         till=map_.end + datetime.timedelta(seconds=30),
         time_sort="asc",
-        action='MATCH STARTED',
+        action="MATCH STARTED",
         exact_action=True,
         server_filter=str(map_.server_number),
         limit=2,
     )
     if len(match_ended) == 0 and len(match_started) < 2:
-        raise Exception('match logs are not yet available, skipping recording stats')
+        raise Exception("match logs are not yet available, skipping recording stats")
 
     player_stats = stats.get_players_stats_at_time(
         from_=map_.start, until=map_.end, server_number=str(map_.server_number)

@@ -1,7 +1,9 @@
 import os
 
 # Allows importing the models in the maintenance container to run database migrations
-if not os.getenv("HLL_MAINTENANCE_CONTAINER"):
+if not os.getenv("HLL_MAINTENANCE_CONTAINER") and not os.getenv(
+    "HLL_WH_SERVICE_CONTAINER"
+):
 
     # Import all the sub modules that represent a user setting
     # so that .utils.all_subclasses() can properly report subclasses
@@ -23,7 +25,7 @@ if not os.getenv("HLL_MAINTENANCE_CONTAINER"):
         rcon_connection_settings,
         rcon_server_settings,
         real_vip,
-        scorebot,
+        scoreboard,
         standard_messages,
         steam,
         vac_game_bans,
