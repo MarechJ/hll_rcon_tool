@@ -31,6 +31,7 @@ logger = getLogger(__name__)
 # new ones, so we can't use it for scorebot yet
 
 PREFIX = "whs"
+QUEUE_IDS = f"{PREFIX}:queue_ids"
 BUCKET_ID = f"{PREFIX}"
 WH_ID_TO_RATE_LIMIT_BUCKET = f"{PREFIX}:wh_id_rl_bucket"
 BUCKET_RL = f"{PREFIX}:rl"
@@ -402,7 +403,10 @@ def clear_webhook_errors(
 
 
 def enqueue_message(
-    message: WebhookMessage, red: redis.StrictRedis | None = None, prefix: str = PREFIX
+    message: WebhookMessage,
+    red: redis.StrictRedis | None = None,
+    prefix: str = PREFIX,
+    queue_ids_key: str = QUEUE_IDS,
 ):
     """Accept a WebhookMessage and insert it in Redis
 
@@ -420,9 +424,14 @@ def enqueue_message(
 
     # Because we use lists; each type of message gets its own queue so that we can
     # more efficiently purge types of messages (for instance all kill log lines)
-    # without having to scan/decode every element in a list which might be thousands
+    # without having to decode every element in a list which might be thousands
     # of elements long
     queue_id = f"{prefix}:{get_server_number()}:{message.webhook_type}:{message.message_type}:{message.payload['webhook_id']}"
+    # Add this queue ID to our set of queue IDs so it can be selected later without SCANning
+    # TODO: This set never has elements removed from it, people do not often change webhooks
+    # so it is inherently going to stay relatively small but we should add a way to
+    # trim deprecated keys
+    red.sadd(queue_ids_key, queue_id)
     red.rpush(queue_id, orjson.dumps(message.model_dump_json()))
 
 
@@ -582,41 +591,31 @@ async def dequeue_message(
 
 
 def get_all_queue_keys(
-    red: redis.StrictRedis | None = None, prefix: str = PREFIX
+    red: redis.StrictRedis | None = None, queue_id_keys: str = QUEUE_IDS
 ) -> list[str]:
-    """Retrieve every queue key in redis that matches the service prefix"""
+    """Retrieve every queue key in redis from our queue ID set"""
     logger.debug("Getting all queue IDs from %s", PREFIX)
     if red is None:
         red = get_redis_client(decode_responses=False, global_pool=True)
 
-    queue_ids: list[str] = []
-    cursor, keys = red.scan(match=f"{prefix}*", _type="list")  # type: ignore
-    idx = 0
-    logger.debug("cursor=%s len(keys)=%s", cursor, len(keys))
-    queue_ids.extend(keys)
-    while cursor is not None and cursor > 0:
-        idx += 1
-        cursor, keys = red.scan(match=f"{prefix}*", _type="list")  # type: ignore
-        logger.debug("%s cursor=%s len(keys)=%s", idx, cursor, len(keys))
-        queue_ids.extend(keys)
-
-    return [queue_id.decode() for queue_id in queue_ids]  # type: ignore
+    return [q.decode() for q in red.smembers(queue_id_keys)]  # type: ignore
 
 
 def get_all_queue_keys_and_lengths(
-    red: redis.StrictRedis, prefix: str = PREFIX
+    red: redis.StrictRedis, queue_id_keys: str = QUEUE_IDS
 ) -> list[tuple[str, int]]:
     """Return each queue key and the number of elements in its queue"""
-    return [(queue_id, red.llen(queue_id)) for queue_id in get_all_queue_keys(red=red, prefix=prefix)]  # type: ignore
+    return [(queue_id, red.llen(queue_id)) for queue_id in get_all_queue_keys(red=red, queue_id_keys=queue_id_keys)]  # type: ignore
 
 
 def get_all_queue_keys_not_empty(
-    red: redis.StrictRedis, prefix: str = PREFIX
+    red: redis.StrictRedis,
+    queue_id_keys: str = QUEUE_IDS,
 ) -> list[str]:
-    """Scan for all the queues (identified by prefix)"""
+    """Return all queues with elements from the set of queue_id_keys"""
     logger.debug("Getting all queue IDs with items from %s", PREFIX)
 
-    return [queue_id for queue_id in get_all_queue_keys(red=red, prefix=prefix) if red.llen(queue_id) > 0]  # type: ignore
+    return [queue_id for queue_id in get_all_queue_keys(red=red, queue_id_keys=queue_id_keys) if red.llen(queue_id) > 0]  # type: ignore
 
 
 def get_queue_overview(
