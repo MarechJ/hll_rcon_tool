@@ -62,10 +62,14 @@ class ScoreboardConfigType(TypedDict):
     public_scoreboard_url: HttpUrl
     hooks: list[WebhookType]
 
+    header_gamestate_enabled: bool
+    map_rotation_enabled: bool
+    player_stats_enabled: bool
+
     footer_last_refreshed_text: str
 
+    header_gamestate_include_server_name: bool
     header_gamestate_time_between_refreshes: int
-    server_name: bool
     quick_connect_url: HttpUrl
     battlemetrics_url: HttpUrl
     show_map_image: bool
@@ -76,6 +80,7 @@ class ScoreboardConfigType(TypedDict):
     header_gamestate_embeds: list[EmbedType]
 
     # Map Rotation (own message)
+    map_rotation_include_server_name: bool
     map_rotation_time_between_refreshes: int
     show_map_rotation: bool
     current_map_format: str
@@ -86,6 +91,7 @@ class ScoreboardConfigType(TypedDict):
     map_legend: str
 
     # Player Stats (own message)
+    player_stats_include_server_name: bool
     player_stats_title_text: str
     player_stats_time_between_refreshes: int
     player_stats_num_to_display: int
@@ -244,11 +250,15 @@ class ScoreboardUserConfig(BaseUserConfig):
     public_scoreboard_url: HttpUrl | None = Field(default=None)
     hooks: list[DiscordWebhook] = Field(default_factory=list)
 
+    header_gamestate_enabled: bool = Field(default=True)
+    map_rotation_enabled: bool = Field(default=True)
+    player_stats_enabled: bool = Field(default=True)
+
     footer_last_refreshed_text: str = Field(default="Last Refreshed")
 
     # Header / Gamestate (own message)
+    header_gamestate_include_server_name: bool = Field(default=True)
     header_gamestate_time_between_refreshes: int = Field(default=5)
-    server_name: bool = Field(default=True)
     quick_connect_url: HttpUrl | None = Field(default=None)
     battlemetrics_url: HttpUrl | None = Field(default=None)
     show_map_image: bool = Field(default=True)
@@ -267,6 +277,7 @@ class ScoreboardUserConfig(BaseUserConfig):
     )
 
     # Map Rotation (own message)
+    map_rotation_include_server_name: bool = Field(default=True)
     map_rotation_time_between_refreshes: int = Field(default=30)
     show_map_rotation: bool = Field(default=True)
     current_map_format: str = Field(default="🟩 {1}. **{0}**")
@@ -277,6 +288,7 @@ class ScoreboardUserConfig(BaseUserConfig):
     map_legend: str = Field(default=MAP_LEGEND)
 
     # Player Stats (own message)
+    player_stats_include_server_name: bool = Field(default=True)
     player_stats_title_text: str = Field(default="Player Stats")
     player_stats_time_between_refreshes: int = Field(default=5)
     player_stats_num_to_display: int = Field(default=5)
@@ -323,11 +335,16 @@ class ScoreboardUserConfig(BaseUserConfig):
         validated_conf = ScoreboardUserConfig(
             public_scoreboard_url=values.get("public_scoreboard_url"),
             hooks=validated_hooks,
+            header_gamestate_enabled=values.get("header_gamestate_enabled"),
+            map_rotation_enabled=values.get("map_rotation_enabled"),
+            player_stats_enabled=values.get("player_stats_enabled"),
             footer_last_refreshed_text=values.get("footer_last_refreshed_text"),
+            header_gamestate_include_server_name=values.get(
+                "header_gamestate_include_server_name"
+            ),
             header_gamestate_time_between_refreshes=values.get(
                 "header_gamestate_time_between_refreshes"
             ),
-            server_name=values.get("server_name"),
             quick_connect_url=values.get("quick_connect_url"),
             battlemetrics_url=values.get("battlemetrics_url"),
             show_map_image=values.get("show_map_image"),
@@ -342,6 +359,9 @@ class ScoreboardUserConfig(BaseUserConfig):
                 "objective_score_format_ger_v_uk"
             ),
             header_gamestate_embeds=validated_header_gamestate_embeds,
+            map_rotation_include_server_name=values.get(
+                "map_rotation_include_server_name"
+            ),
             map_rotation_time_between_refreshes=values.get(
                 "map_rotation_time_between_refreshes"
             ),
@@ -352,6 +372,9 @@ class ScoreboardUserConfig(BaseUserConfig):
             show_map_legend=values.get("show_map_legend"),
             map_rotation_title_text=values.get("map_rotation_title_text"),
             map_legend=values.get("map_legend"),
+            player_stats_include_server_name=values.get(
+                "player_stats_include_server_name"
+            ),
             player_stats_title_text=values.get("player_stats_title_text"),
             player_stats_time_between_refreshes=values.get(
                 "player_stats_time_between_refreshes"

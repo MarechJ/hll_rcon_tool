@@ -233,11 +233,12 @@ def build_header_gamestate_embed(
 ) -> DiscordEmbed:
     """Build an embed for the header/gamestate message"""
     embed = DiscordEmbed()
+    embed.set_url(str(config.public_scoreboard_url))
 
     gamestate: GameStateType = rcon_api.get_gamestate()
     vip_count_by_team = get_vip_count_by_team(rcon_api=rcon_api)
 
-    if config.server_name:
+    if config.header_gamestate_include_server_name:
         server_name = rcon_api.get_name()
         embed.title = server_name
 
@@ -320,11 +321,13 @@ def build_map_rotation_embed(
 ) -> DiscordEmbed:
     """Build an embed for the map rotation message"""
     embed = DiscordEmbed()
+    embed.set_url(str(config.public_scoreboard_url))
+
     rotation: list[Layer] = rcon_api.get_map_rotation()
     gamestate: GameStateType = rcon_api.get_gamestate()
 
     title = ""
-    if config.server_name:
+    if config.map_rotation_include_server_name:
         server_name = rcon_api.get_name()
         title = server_name
 
@@ -371,9 +374,10 @@ def build_player_stats_embed(
     player_stats: list[PlayerStatsType] = get_cached_live_game_stats()["stats"]
 
     embed = DiscordEmbed()
+    embed.set_url(str(config.public_scoreboard_url))
 
     title = ""
-    if config.server_name:
+    if config.player_stats_include_server_name:
         server_name = rcon_api.get_name()
         title = server_name
 
@@ -485,7 +489,7 @@ def run():
                 with enter_session() as session:
                     message_ids = get_set_wh_row(session=session, webhook_url=url)
                     for key in MESSAGE_KEYS:
-                        if key == HEADER_GAMESTATE:
+                        if key == HEADER_GAMESTATE and config.header_gamestate_enabled:
                             if (
                                 last_updated_header_gamestate
                                 and (
@@ -509,7 +513,7 @@ def run():
                                 key=key,
                             )
 
-                        if key == MAP_ROTATION:
+                        if key == MAP_ROTATION and config.map_rotation_enabled:
                             if (
                                 last_updated_map_rotation
                                 and (
@@ -533,7 +537,7 @@ def run():
                                 key=key,
                             )
 
-                        if key == PLAYER_STATS:
+                        if key == PLAYER_STATS and config.player_stats_enabled:
                             if (
                                 last_updated_player_stats
                                 and (
