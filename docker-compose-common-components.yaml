@@ -75,6 +75,9 @@ services:
       - common
   # This is used to handle webhooks to discord (and other services in the future)
   webhook_service:
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: ${BACKEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
     environment:
       HLL_WH_SERVICE_CONTAINER: true
