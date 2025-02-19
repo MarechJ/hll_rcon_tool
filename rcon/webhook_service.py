@@ -106,6 +106,7 @@ class DiscordErrorResponse(TypedDict):
 
     http_401: bool
     http_403: bool
+    http_404: bool
 
 
 class WebhookMessageType(StrEnum):
@@ -358,6 +359,7 @@ def set_webhook_error(
     webhook_type: WebhookType,
     auth_401: bool = False,
     auth_403: bool = False,
+    _404: bool = False,
     prefix: str = WEBHOOK_ERRORS,
 ):
     """Store the last error received for a webhook; cleared after a successful request"""
@@ -366,6 +368,7 @@ def set_webhook_error(
     payload: DiscordErrorResponse = {
         "http_401": int(auth_401),  # type: ignore
         "http_403": int(auth_403),  # type: ignore
+        "http_404": int(_404),  # type: ignore
     }
     red.hset(key, mapping=payload)  # type: ignore
 
@@ -383,6 +386,7 @@ def get_webhook_error(
     values: DiscordErrorResponse = {
         "http_401": True if raw.get(b"http_401") == b"1" else False,
         "http_403": True if raw.get(b"http_403") == b"1" else False,
+        "http_404": True if raw.get(b"http_404") == b"1" else False,
     }
     return values
 
@@ -460,6 +464,25 @@ async def dequeue_message(
         else:
             res: httpx.Response = await wh.execute(client=client)  # type: ignore
 
+        # If a webhook ID is incorrect it will return 401 which we already handle
+        # but if a message ID doesn't exist it will return 404 and not have rate
+        # limit headers
+        # Technically we could make this fixable and re-enqueue the messages but
+        # the only thing we do edits for are the scoreboard and those messages
+        # are inherently transient; so we will set the error status for the webhook ID
+        # and drop the message
+        if res.status_code == 404:
+            set_webhook_error(
+                red=red,
+                webhook_id=wh.webhook_id,
+                webhook_type=message.webhook_type,
+                _404=True,
+            )
+            logger.error(
+                f"Received HTTP 404 from the webhook with webhook ID: {message.payload.get('webhook_id')} message ID: {message.payload.get('message_id')} discarding the message"
+            )
+            return
+
         bucket_data.webhook_type = message.webhook_type
         bucket_data.id = res.headers[X_RATELIMIT_BUCKET]
         bucket_data.remaining_requests = int(res.headers[X_RATELIMIT_REMAINING])
@@ -467,9 +490,6 @@ async def dequeue_message(
         bucket_data.reset_timestamp = math.ceil(
             datetime.now().timestamp() + bucket_data.reset_after_secs
         )
-
-        bucket_id = bucket_data.id[-4:] if bucket_data and bucket_data.id else "N/A"
-        rem_reqs = bucket_data.remaining_requests if bucket_data else None
 
         if lock == get_shared_lock():
             # Once we get a response for a webhook we know what rate limit bucket it's in and we can
@@ -589,18 +609,11 @@ def get_all_queue_keys(
     if red is None:
         red = get_redis_client(decode_responses=False, global_pool=True)
 
-    queue_ids: list[str] = []
-    cursor, keys = red.scan(match=f"{prefix}*", _type="list")  # type: ignore
-    idx = 0
-    logger.debug("cursor=%s len(keys)=%s", cursor, len(keys))
-    queue_ids.extend(keys)
-    while cursor is not None and cursor > 0:
-        idx += 1
-        cursor, keys = red.scan(match=f"{prefix}*", _type="list")  # type: ignore
-        logger.debug("%s cursor=%s len(keys)=%s", idx, cursor, len(keys))
-        queue_ids.extend(keys)
-
-    return [queue_id.decode() for queue_id in queue_ids]  # type: ignore
+    queue_ids: list[str] = [
+        queue_id.decode()
+        for queue_id in red.scan_iter(match=f"{prefix}*", _type="list")
+    ]
+    return queue_ids
 
 
 def get_all_queue_keys_and_lengths(
