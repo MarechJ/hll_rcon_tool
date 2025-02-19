@@ -238,7 +238,7 @@ def build_header_gamestate_embed(
     gamestate: GameStateType = rcon_api.get_gamestate()
     vip_count_by_team = get_vip_count_by_team(rcon_api=rcon_api)
 
-    if config.server_name:
+    if config.header_gamestate_include_server_name:
         server_name = rcon_api.get_name()
         embed.title = server_name
 
@@ -327,7 +327,7 @@ def build_map_rotation_embed(
     gamestate: GameStateType = rcon_api.get_gamestate()
 
     title = ""
-    if config.server_name:
+    if config.map_rotation_include_server_name:
         server_name = rcon_api.get_name()
         title = server_name
 
@@ -377,7 +377,7 @@ def build_player_stats_embed(
     embed.set_url(str(config.public_scoreboard_url))
 
     title = ""
-    if config.server_name:
+    if config.player_stats_include_server_name:
         server_name = rcon_api.get_name()
         title = server_name
 
