@@ -8,7 +8,7 @@ import DialogTitle from '@mui/material/DialogTitle'
 import ListItem from '@mui/material/ListItem'
 import ListItemText from '@mui/material/ListItemText'
 import ListItemButton from '@mui/material/ListItemButton'
-import { Divider, Stack, Typography, IconButton, Skeleton } from '@mui/material'
+import { Divider, Stack, Typography, IconButton, Skeleton, useTheme, useMediaQuery } from '@mui/material'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDiscord, faGithub } from '@fortawesome/free-brands-svg-icons'
 import { faBook } from '@fortawesome/free-solid-svg-icons'
@@ -32,6 +32,8 @@ const isNewerVersion = (a, b) => {
 export default function AboutDialog() {
   const [open, setOpen] = React.useState(false)
   const { releases, lastUpdate, unreadCount, markAsRead, forceUpdate } = useGithubReleases();
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
 
   const { data: apiVersion, isLoading } = useQuery({
     queryKey: ['apiVersion'],
@@ -58,7 +60,7 @@ export default function AboutDialog() {
     }
   }, [open])
 
-  const latestReleaseVersion = releases?.[0]?.name ?? ''
+  const latestReleaseVersion = releases?.[0]?.tag_name ?? ''
   const isUpToDate = isNewerVersion(apiVersion.trim(), latestReleaseVersion.trim())
 
   return (
@@ -84,7 +86,8 @@ export default function AboutDialog() {
         aria-labelledby='about-dialog-title'
         aria-describedby='about-dialog-description'
         fullWidth
-        maxWidth='md'
+        fullScreen={isSmallScreen}
+        maxWidth={'md'}
       >
         <DialogTitle id='about-dialog-title'>About</DialogTitle>
         <DialogContent dividers={true}>
