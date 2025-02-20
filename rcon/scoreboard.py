@@ -53,11 +53,6 @@ MESSAGE_KEYS = (
 )
 SERVER_NUMBER = int(get_server_number())
 
-DB_PATH = pathlib.Path("./scoreboard.db")
-ENGINE: Engine = create_engine(
-    f"sqlite:///file:{DB_PATH}?mode=rwc&uri=true", echo=False
-)
-
 
 class Base(DeclarativeBase):
     pass
@@ -464,13 +459,13 @@ def run():
 
     try:
         if config.public_scoreboard_url is None:
-            logger.error(
+            logger.fatal(
                 "Your Public Scoreboard URL is not configured, set it and restart the Scoreboard service."
             )
             sys.exit(-1)
 
         if not config.hooks:
-            logger.error(
+            logger.fatal(
                 "You do not have any Discord webhooks configured, set some and restart the Scoreboard service."
             )
             sys.exit(-1)
@@ -572,6 +567,19 @@ def run():
 
 
 if __name__ == "__main__":
+    VOLUME_PATH = pathlib.Path("/scoreboard_db")
+
+    if not VOLUME_PATH.exists():
+        logger.fatal(
+            "Your scoreboard volume is not configured correctly in your compose.yaml file."
+        )
+        sys.exit(-1)
+
+    DB_PATH = pathlib.Path("/scoreboard_db") / pathlib.Path("./scoreboard.db")
+    ENGINE: Engine = create_engine(
+        f"sqlite:///file:{DB_PATH}?mode=rwc&uri=true", echo=False
+    )
+
     try:
         logger.info("Attempting to start scorebot")
         Base.metadata.create_all(ENGINE)
