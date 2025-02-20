@@ -10,10 +10,11 @@ from time import sleep
 
 from discord_webhook import DiscordEmbed, DiscordWebhook
 
-from rcon.api_commands import RconAPI, get_rcon_api
+# from rcon.api_commands import RconAPI, get_rcon_api  # Not used anywhere
 from rcon.cache_utils import invalidates, ttl_cache
+from rcon.player_history import get_player_profile, player_has_flag
 from rcon.player_stats import current_game_stats
-from rcon.rcon import SERVER_INFO
+# from rcon.rcon import SERVER_INFO  # Not used anywhere
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.watch_killrate import WatchKillRateUserConfig
 from rcon.utils import get_server_number
@@ -83,7 +84,6 @@ ARMOR: dict[str, bool] = {
     "D-5T 85MM [IS-1]": True,
     "COAXIAL DT [IS-1]": True,
     "HULL DT [IS-1]": True,
-    "M2 Browning [M3 Half-track]": True,
     "QF 2-POUNDER [Daimler]": True,
     "COAXIAL BESA [Daimler]": True,
     "QF 2-POUNDER [Tetrarch]": True,
@@ -126,7 +126,6 @@ ARMOR: dict[str, bool] = {
     "T70": True,
     "T34/76": True,
     "IS-1 ": True,
-    "M3 Half-track": True,
     "ZIS-5 (Transport)": True,
     "ZIS-5 (Supply)": True,
     "GAZ-67": True,
@@ -138,7 +137,6 @@ ARMOR: dict[str, bool] = {
     "Firefly": True,
     "Churchill Mk.III": True,
     "Churchill Mk.VII": True,
-    "M3 Half-track": True,
     "Bedford OYD (Transport)": True,
     "Bedford OYD (Supply)": True,
 }
@@ -147,7 +145,8 @@ ARMOR: dict[str, bool] = {
 _LAST_REPORTED_CACHE: defaultdict[str, datetime | None] = defaultdict(lambda: None)
 
 
-def reset_cache():
+def reset_cache() -> None:
+    """ Reset cache """
     global _LAST_REPORTED_CACHE
     with invalidates(get_cache_value):
         _LAST_REPORTED_CACHE = defaultdict(lambda: None)
@@ -155,10 +154,12 @@ def reset_cache():
 
 @ttl_cache(ttl=10, cache_falsy=False)
 def get_cache_value(player_id: str) -> datetime | None:
+    """ Get cache value """
     return _LAST_REPORTED_CACHE[player_id]
 
 
-def set_cache_value(player_id: str, last_reported: datetime):
+def set_cache_value(player_id: str, last_reported: datetime) -> None:
+    """ Set cache value """
     with invalidates(get_cache_value):
         _LAST_REPORTED_CACHE[player_id] = last_reported
 
@@ -177,6 +178,7 @@ def make_embed(
     server_name: str,
     author_name: str,
 ):
+    """ Prepare Discord message embed """
     embed = DiscordEmbed()
     embed.set_author(name=author_name)
     embed.timestamp = str(timestamp)
@@ -195,7 +197,6 @@ def make_embed(
         )
     if mg_kpm > 0.0:
         embed.add_embed_field(name="MG KPM", value=f"{mg_kpm:.1f}", inline=False)
-
     embed.add_embed_field(
         name="Weapons",
         value="\n".join(
@@ -207,28 +208,38 @@ def make_embed(
     return embed
 
 
-def watch_killrate(api: RconAPI, config: WatchKillRateUserConfig, server_name: str):
-    player_stats = current_game_stats()
+# def watch_killrate(api: RconAPI, config: WatchKillRateUserConfig, server_name: str):  # api is not used anywhere
+def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
+    """ Observe all players and report them if they hit k/r thresholds """
+    player_stats:dict = current_game_stats()
 
     if len(player_stats) < 2:
         logger.info("Fewer than 2 players, skipping")
         return
 
     for player_name, stats in player_stats.items():
-        player_id = stats["player_id"]
+        player_id:str = stats["player_id"]
+
+        # Skip whitelisted players
         for flag in config.whitelist_flags:
-            if stats["profile"] and flag in stats["profile"]["flags"]:
+        #     if stats["profile"] and flag in stats["profile"]["flags"]:  # stats["profile"] isn't available in current_game_stats()
+            if player_has_flag((get_player_profile(player_id, 0)), flag):
+                logger.info(
+                    "Skipping %s/%s - Whitelist flag",
+                    player_name,
+                    player_id
+                )
                 continue
 
         # There is some wonkiness in player stat calculation and this can be negative sometimes
-        playtime_secs: int = (
+        playtime_secs:int = (
             int(stats["time_seconds"]) if stats["time_seconds"] > 0 else 0
         )
-        kills = stats["kills"]
 
+        # Skip players with less than minimum playtime
         if playtime_secs < config.watch_interval_secs:
             logger.debug(
-                "Skipping %s/%s did not meet %s minimum play time of %s",
+                "Skipping %s/%s - Did not meet minimum play time %s/%s",
                 player_name,
                 player_id,
                 playtime_secs,
@@ -236,9 +247,12 @@ def watch_killrate(api: RconAPI, config: WatchKillRateUserConfig, server_name: s
             )
             continue
 
+        kills:int = stats["kills"]
+
+        # Skip players with less than minimum kills
         if kills < config.min_kills:
             logger.debug(
-                "Skipping %s/%s %s kills < %s minimum kills",
+                "Skipping %s/%s - Did not meet minimum kills %s/%s",
                 player_name,
                 player_id,
                 kills,
@@ -247,8 +261,10 @@ def watch_killrate(api: RconAPI, config: WatchKillRateUserConfig, server_name: s
             continue
 
         kpm: float = stats["kills_per_minute"]
-        logger.info(f"{player_id} {playtime_secs} {kills} {kpm}")
+        logger.info("%s %s %s %s", player_id, playtime_secs, kills, kpm)
         used_weapons: Counter = Counter()
+
+        # Check if player has exceeded any of the thresholds
         if kpm > min(
             config.killrate_threshold,
             config.killrate_threshold_armor,
@@ -257,6 +273,8 @@ def watch_killrate(api: RconAPI, config: WatchKillRateUserConfig, server_name: s
         ):
             timestamp = datetime.now()
             used_weapons = Counter(stats["weapons"])
+
+            # Armor
             armor_kpm: float = round(
                 (
                     (
@@ -273,6 +291,8 @@ def watch_killrate(api: RconAPI, config: WatchKillRateUserConfig, server_name: s
                 ),
                 1,
             )
+
+            # Artillery
             artillery_kpm: float = round(
                 (
                     (
@@ -284,11 +304,13 @@ def watch_killrate(api: RconAPI, config: WatchKillRateUserConfig, server_name: s
                         / playtime_secs
                         * 60
                     )
-                    if not config.whitelist_armor
+                    if not config.whitelist_artillery
                     else 0.0
                 ),
                 1,
             )
+
+            # Machinegun
             mg_kpm: float = round(
                 (
                     (
@@ -300,12 +322,13 @@ def watch_killrate(api: RconAPI, config: WatchKillRateUserConfig, server_name: s
                         / playtime_secs
                         * 60
                     )
-                    if not config.whitelist_armor
+                    if not config.whitelist_mg
                     else 0.0
                 ),
                 1,
             )
 
+            # Nothing above threshold, skip
             if not (
                 kpm > config.killrate_threshold
                 or armor_kpm > config.killrate_threshold_armor
@@ -314,7 +337,9 @@ def watch_killrate(api: RconAPI, config: WatchKillRateUserConfig, server_name: s
             ):
                 continue
 
-            # KPM exceeded at this point, make discord embed/log
+            # Threshold exceeded
+
+            # Only report once per match
             last_reported = get_cache_value(player_id)
             if config.only_report_once_per_match and last_reported:
                 logger.info(
@@ -324,12 +349,15 @@ def watch_killrate(api: RconAPI, config: WatchKillRateUserConfig, server_name: s
                     last_reported,
                 )
                 continue
-            elif (
+
+            # Player has not been reported or cooldown has passed
+            if (
                 not last_reported
                 or (timestamp - last_reported).total_seconds()
                 > config.report_cooldown_mins * 60
             ):
                 set_cache_value(player_id, timestamp)
+
                 logger.debug(
                     "Creating embed %s/%s/%s kpm %s armor: %s arty: %s mg: %s",
                     player_name,
@@ -340,6 +368,7 @@ def watch_killrate(api: RconAPI, config: WatchKillRateUserConfig, server_name: s
                     artillery_kpm,
                     mg_kpm,
                 )
+
                 embed: DiscordEmbed = make_embed(
                     timestamp=timestamp,
                     player_name=player_name,
@@ -354,6 +383,7 @@ def watch_killrate(api: RconAPI, config: WatchKillRateUserConfig, server_name: s
                     server_name=server_name,
                     author_name=config.author,
                 )
+
                 for hook in config.webhooks:
                     wh = DiscordWebhook(url=str(hook.url))
                     wh.add_embed(embed)
@@ -378,9 +408,10 @@ def watch_killrate(api: RconAPI, config: WatchKillRateUserConfig, server_name: s
                 )
 
 
-def run():
-    api: RconAPI = get_rcon_api(SERVER_INFO)
-    api.get_detailed_players
+def run() -> None:
+    """ Main process (loop) """
+    # api: RconAPI = get_rcon_api(SERVER_INFO)  # api is not used anywhere
+    # api.get_detailed_players  # api is not used anywhere
 
     server_config = RconServerSettingsUserConfig.load_from_db()
 
@@ -388,10 +419,10 @@ def run():
         config = WatchKillRateUserConfig.load_from_db()
 
         if not config.enabled:
-            break
+            break  # The service will gracefully exit
 
         watch_killrate(
-            api=api,
+            # api=api,
             config=config,
             server_name=server_config.short_name,
         )
