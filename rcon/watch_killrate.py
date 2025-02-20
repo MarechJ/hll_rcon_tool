@@ -10,11 +10,9 @@ from time import sleep
 
 from discord_webhook import DiscordEmbed, DiscordWebhook
 
-# from rcon.api_commands import RconAPI, get_rcon_api  # Not used anywhere
 from rcon.cache_utils import invalidates, ttl_cache
 from rcon.player_history import get_player_profile, player_has_flag
 from rcon.player_stats import current_game_stats
-# from rcon.rcon import SERVER_INFO  # Not used anywhere
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.watch_killrate import WatchKillRateUserConfig
 from rcon.utils import get_server_number
@@ -187,14 +185,12 @@ def make_embed(
     embed.add_embed_field(
         name="Playtime", value=str(timedelta(seconds=playtime_secs)), inline=False
     )
-    embed.add_embed_field(name="Kills", value=str(kills), inline=False)
-    embed.add_embed_field(name="Overall KPM", value=f"{kpm:.1f}", inline=True)
+    embed.add_embed_field(name="Kills", value=str(kills), inline=True)
+    embed.add_embed_field(name="Overall KPM", value=f"{kpm:.1f}", inline=False)
     if armor_kpm > 0.0:
-        embed.add_embed_field(name="Armor KPM", value=f"{armor_kpm:.1f}", inline=False)
+        embed.add_embed_field(name="Armor KPM", value=f"{armor_kpm:.1f}", inline=True)
     if artillery_kpm > 0.0:
-        embed.add_embed_field(
-            name="Artillery KPM", value=f"{artillery_kpm:.1f}", inline=False
-        )
+        embed.add_embed_field(name="Artillery KPM", value=f"{artillery_kpm:.1f}", inline=True)
     if mg_kpm > 0.0:
         embed.add_embed_field(name="MG KPM", value=f"{mg_kpm:.1f}", inline=False)
     embed.add_embed_field(
@@ -208,7 +204,6 @@ def make_embed(
     return embed
 
 
-# def watch_killrate(api: RconAPI, config: WatchKillRateUserConfig, server_name: str):  # api is not used anywhere
 def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
     """ Observe all players and report them if they hit k/r thresholds """
     player_stats:dict = current_game_stats()
@@ -221,15 +216,18 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
         player_id:str = stats["player_id"]
 
         # Skip whitelisted players
+        whitelisted: bool = False
         for flag in config.whitelist_flags:
-        #     if stats["profile"] and flag in stats["profile"]["flags"]:  # stats["profile"] isn't available in current_game_stats()
             if player_has_flag((get_player_profile(player_id, 0)), flag):
                 logger.info(
                     "Skipping %s/%s - Whitelist flag",
                     player_name,
                     player_id
                 )
-                continue
+                whitelisted = True
+                break
+        if whitelisted:
+            continue
 
         # There is some wonkiness in player stat calculation and this can be negative sometimes
         playtime_secs:int = (
@@ -410,19 +408,14 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
 
 def run() -> None:
     """ Main process (loop) """
-    # api: RconAPI = get_rcon_api(SERVER_INFO)  # api is not used anywhere
-    # api.get_detailed_players  # api is not used anywhere
-
-    server_config = RconServerSettingsUserConfig.load_from_db()
-
     while True:
+        server_config = RconServerSettingsUserConfig.load_from_db()
         config = WatchKillRateUserConfig.load_from_db()
 
         if not config.enabled:
             break  # The service will gracefully exit
 
         watch_killrate(
-            # api=api,
             config=config,
             server_name=server_config.short_name,
         )
