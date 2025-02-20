@@ -264,13 +264,13 @@ class ScoreboardUserConfig(BaseUserConfig):
     show_map_image: bool = Field(default=True)
     objective_score_format_generic: str = Field(default="Allied {0}: Axis {1}")
     objective_score_format_ger_v_us: str = Field(
-        default="<:icoT_US:1060219985215094804> {0} : <:icoT_GER:1060219972871278602> {1}"
+        default="<:ico_US:1342201921045528681>  {0} : <:ico_GER:1342201866246815744> {1}"
     )
     objective_score_format_ger_v_sov: str = Field(
-        default="<:icoT_RUS:1060217170455433286> {0} : <:icoT_GER:1060219972871278602> {1}"
+        default="<:ico_RUS:1342201815160062002>  {0} : <:ico_GER:1342201866246815744> {1}"
     )
     objective_score_format_ger_v_uk: str = Field(
-        default="<:icoT_UK:1114060867068235807> {0} : <:icoT_GER:1060219972871278602> {1}"
+        default="<:ico_UK:1342201889676333078> {0} : <:ico_GER:1342201866246815744> {1}"
     )
     header_gamestate_embeds: list[HeaderGameStateEmbedConfig] = Field(
         default_factory=seed_default_header_gamestate_displays
