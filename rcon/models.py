@@ -3,9 +3,10 @@ import os
 import re
 from collections import defaultdict
 from contextlib import contextmanager
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Generator, List, Literal, Optional, Sequence, overload
 
+import dateutil.parser
 import pydantic
 from sqlalchemy import TIMESTAMP, Enum, ForeignKey, String, create_engine, text
 from sqlalchemy.dialects.postgresql import JSONB
@@ -25,7 +26,7 @@ from sqlalchemy.schema import UniqueConstraint
 from rcon.maps import Team
 from rcon.types import (
     AuditLogType,
-    MessageTemplateType,
+    BasicPlayerProfileType,
     BlacklistRecordType,
     BlacklistRecordWithBlacklistType,
     BlacklistRecordWithPlayerType,
@@ -34,6 +35,8 @@ from rcon.types import (
     BlacklistWithRecordsType,
     DBLogLineType,
     MapsType,
+    MessageTemplateCategory,
+    MessageTemplateType,
     PenaltyCountType,
     PlayerActionState,
     PlayerActionType,
@@ -45,21 +48,19 @@ from rcon.types import (
     PlayerProfileType,
     PlayerSessionType,
     PlayerStatsType,
+    PlayerTeamAssociation,
+    PlayerTeamConfidence,
     ServerCountType,
     SteamBansType,
     SteamInfoType,
     SteamPlayerSummaryType,
     StructuredLogLineWithMetaData,
-    WatchListType,
-    MessageTemplateCategory,
-    PlayerTeamAssociation,
-    PlayerTeamConfidence,
-    VipListSyncMethod,
     VipListRecordType,
-    VipListType,
-    BasicPlayerProfileType,
-    VipListTypeWithRecordsType,
     VipListRecordWithVipListType,
+    VipListSyncMethod,
+    VipListType,
+    VipListTypeWithRecordsType,
+    WatchListType,
 )
 from rcon.utils import (
     SafeStringFormat,
@@ -67,7 +68,7 @@ from rcon.utils import (
     mask_to_server_numbers,
     server_numbers_to_mask,
 )
-from rcon.weapons import WEAPON_SIDE_MAP, ALL_WEAPONS, WeaponType
+from rcon.weapons import ALL_WEAPONS, WEAPON_SIDE_MAP, WeaponType
 
 logger = logging.getLogger(__name__)
 
@@ -1050,7 +1051,19 @@ class VipListRecord(Base):
     def is_expired(self) -> bool:
         if self.expires_at is None:
             return False
-        return self.expires_at <= datetime.now(tz=timezone.utc)
+
+        # For whatever reason despite our mapped type SQLAlchemy sometimes (always?)
+        # is returning these as strings and not datetimes
+        try:
+            if isinstance(self.expires_at, str):
+                expires_at = dateutil.parser.parse(self.expires_at)
+            else:
+                expires_at = self.expires_at
+        except dateutil.parser.ParserError as e:
+            logger.exception(e)
+            expires_at = None
+
+        return expires_at is not None and expires_at <= datetime.now(tz=timezone.utc)
 
     @overload
     def to_dict(self, with_vip_list: Literal[False]) -> VipListRecordType: ...
