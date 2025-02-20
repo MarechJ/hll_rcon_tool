@@ -1,4 +1,4 @@
-import { useGlobalStore } from "@/hooks/useGlobalState";
+import { useGlobalStore } from "@/stores/global-state";
 import { useMemo } from "react";
 import OnlineUsersCard from "@/components/shared/card/UsersCard";
 

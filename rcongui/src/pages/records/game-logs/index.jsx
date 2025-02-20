@@ -34,7 +34,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import LiveLogsTable from "@/components/live-logs/LiveLogsTable";
-import { useGlobalStore } from "@/hooks/useGlobalState";
+import { useGlobalStore } from "@/stores/global-state";
 import dayjs from "dayjs";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import { TablePagination } from "@/components/table/TablePagination";

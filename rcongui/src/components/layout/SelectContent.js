@@ -6,7 +6,7 @@ import ListSubheader from "@mui/material/ListSubheader";
 import Select, { selectClasses } from "@mui/material/Select";
 import { styled } from "@mui/material/styles";
 import DevicesRoundedIcon from "@mui/icons-material/DevicesRounded";
-import { useGlobalStore } from "@/hooks/useGlobalState";
+import { useGlobalStore } from "@/stores/global-state";
 import { useNavigate } from 'react-router-dom';
 
 const Avatar = styled(MuiAvatar)(({ theme }) => ({
