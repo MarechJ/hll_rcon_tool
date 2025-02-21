@@ -13,6 +13,7 @@ import {StrictMode} from "react";
 import AppTheme from "@/themes/AppTheme";
 import { CssBaseline } from '@mui/material';
 import { useAppStore } from './stores/app-state';
+import TitleManager from './features/title-manager/TitleManager';
 
 const App = () => {
   // Dayjs plugins
@@ -39,6 +40,7 @@ const App = () => {
           <RouterProvider router={adminRouter} />
           <ReactQueryDevtools initialIsOpen={false} />
         </AppTheme>
+        <TitleManager />
       </QueryClientProvider>
     </StrictMode>
   );
