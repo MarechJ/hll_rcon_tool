@@ -3,7 +3,14 @@ from enum import StrEnum
 from logging import getLogger
 from typing import Final, Literal, Optional, Self, TypedDict
 
-from pydantic import BaseModel, Field, HttpUrl, field_serializer, field_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    HttpUrl,
+    field_serializer,
+    field_validator,
+    AnyUrl,
+)
 
 from rcon.types import PlayerStatsEnum
 from rcon.user_config.legacy_scorebot import ScorebotUserConfig
@@ -247,6 +254,7 @@ def seed_default_player_stat_displays():
 
 
 class ScoreboardUserConfig(BaseUserConfig):
+    # TODO: update descriptions
     public_scoreboard_url: HttpUrl | None = Field(default=None)
     hooks: list[DiscordWebhook] = Field(default_factory=list)
 
@@ -259,7 +267,7 @@ class ScoreboardUserConfig(BaseUserConfig):
     # Header / Gamestate (own message)
     header_gamestate_include_server_name: bool = Field(default=True)
     header_gamestate_time_between_refreshes: int = Field(default=5)
-    quick_connect_url: HttpUrl | None = Field(default=None)
+    quick_connect_url: AnyUrl | None = Field(default=None)
     battlemetrics_url: HttpUrl | None = Field(default=None)
     show_map_image: bool = Field(default=True)
     objective_score_format_generic: str = Field(default="Allied {0}: Axis {1}")
