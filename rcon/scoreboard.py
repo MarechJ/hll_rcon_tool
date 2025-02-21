@@ -442,7 +442,7 @@ def send_message(
             value=message_id,
         )
     else:
-        logger.info(f"enqueing {wh.message_id=} {key=}")
+        logger.info(f"enquueing {wh.message_id=} {key=}")
         enqueue_message(
             message=WebhookMessage(
                 discardable=True,
@@ -475,9 +475,8 @@ def run():
             )
             sys.exit(-1)
 
-        last_updated_header_gamestate: datetime | None = None
-        last_updated_map_rotation: datetime | None = None
-        last_updated_player_stats: datetime | None = None
+        last_updated = {}
+
         while True:
             timestamp = datetime.now()
             config = ScoreboardUserConfig.load_from_db()
@@ -485,20 +484,21 @@ def run():
 
             for webhook in config.hooks:
                 url = str(webhook.url)
+                last_updated[url] = {}
 
                 with enter_session() as session:
                     message_ids = get_set_wh_row(session=session, webhook_url=url)
+
                     for key in MESSAGE_KEYS:
+
                         if key == HEADER_GAMESTATE and config.header_gamestate_enabled:
+                            last_update_header = last_updated.get(url, {}).get("header_gamestate")
                             if (
-                                last_updated_header_gamestate
-                                and (
-                                    timestamp - last_updated_header_gamestate
-                                ).total_seconds()
-                                < config.header_gamestate_time_between_refreshes
+                                last_update_header
+                                and (timestamp - last_update_header).total_seconds() < config.header_gamestate_time_between_refreshes
                             ):
                                 continue
-                            last_updated_header_gamestate = timestamp
+                            last_updated[url]["header_gamestate"] = timestamp
                             wh = DiscordWebhook(url=url)
                             embed = build_header_gamestate_embed(
                                 config=config,
@@ -514,15 +514,13 @@ def run():
                             )
 
                         if key == MAP_ROTATION and config.map_rotation_enabled:
+                            last_update_maprotation = last_updated.get(url, {}).get("map_rotation")
                             if (
-                                last_updated_map_rotation
-                                and (
-                                    timestamp - last_updated_map_rotation
-                                ).total_seconds()
-                                < config.map_rotation_time_between_refreshes
+                                last_update_maprotation
+                                and (timestamp - last_update_maprotation).total_seconds() < config.map_rotation_time_between_refreshes
                             ):
                                 continue
-                            last_updated_map_rotation = timestamp
+                            last_updated[url]["map_rotation"] = timestamp
                             wh = DiscordWebhook(url=url)
                             embed = build_map_rotation_embed(
                                 config=config,
@@ -538,15 +536,13 @@ def run():
                             )
 
                         if key == PLAYER_STATS and config.player_stats_enabled:
+                            last_update_playerstats = last_updated.get(url, {}).get("player_stats")
                             if (
-                                last_updated_player_stats
-                                and (
-                                    timestamp - last_updated_player_stats
-                                ).total_seconds()
-                                < config.player_stats_time_between_refreshes
+                                last_update_playerstats
+                                and (timestamp - last_update_playerstats).total_seconds() < config.map_rotation_time_between_refreshes
                             ):
                                 continue
-                            last_updated_player_stats = timestamp
+                            last_updated[url]["player_stats"] = timestamp
                             wh = DiscordWebhook(url=url)
                             embed = build_player_stats_embed(
                                 config=config,
@@ -560,12 +556,13 @@ def run():
                                 message_id=message_ids.player_stats,
                                 key=key,
                             )
-                sleep_time = min(
-                    config.header_gamestate_time_between_refreshes,
-                    config.map_rotation_time_between_refreshes,
-                    config.player_stats_time_between_refreshes,
-                )
-                time.sleep(sleep_time)
+            sleep_time = min(
+                config.header_gamestate_time_between_refreshes,
+                config.map_rotation_time_between_refreshes,
+                config.player_stats_time_between_refreshes,
+            )
+            time.sleep(sleep_time)
+
     except Exception as e:
         logger.exception("The bot stopped", e)
         raise
