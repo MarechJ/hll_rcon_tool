@@ -475,7 +475,10 @@ def run():
             )
             sys.exit(-1)
 
-        last_updated = {}
+        # Track the last updated time for each message key by webhook URL
+        last_updated: defaultdict[str, defaultdict[str, datetime | None]] = defaultdict(
+            lambda: defaultdict(lambda: None)
+        )
 
         while True:
             timestamp = datetime.now()
@@ -484,21 +487,20 @@ def run():
 
             for webhook in config.hooks:
                 url = str(webhook.url)
-                last_updated[url] = {}
 
                 with enter_session() as session:
                     message_ids = get_set_wh_row(session=session, webhook_url=url)
-
                     for key in MESSAGE_KEYS:
-
+                        last_updated_key = last_updated[url][key]
                         if key == HEADER_GAMESTATE and config.header_gamestate_enabled:
-                            last_update_header = last_updated.get(url, {}).get("header_gamestate")
+
                             if (
-                                last_update_header
-                                and (timestamp - last_update_header).total_seconds() < config.header_gamestate_time_between_refreshes
+                                last_updated_key
+                                and (timestamp - last_updated_key).total_seconds()
+                                < config.header_gamestate_time_between_refreshes
                             ):
                                 continue
-                            last_updated[url]["header_gamestate"] = timestamp
+                            last_updated[url][key] = timestamp
                             wh = DiscordWebhook(url=url)
                             embed = build_header_gamestate_embed(
                                 config=config,
@@ -514,13 +516,14 @@ def run():
                             )
 
                         if key == MAP_ROTATION and config.map_rotation_enabled:
-                            last_update_maprotation = last_updated.get(url, {}).get("map_rotation")
+
                             if (
-                                last_update_maprotation
-                                and (timestamp - last_update_maprotation).total_seconds() < config.map_rotation_time_between_refreshes
+                                last_updated_key
+                                and (timestamp - last_updated_key).total_seconds()
+                                < config.map_rotation_time_between_refreshes
                             ):
                                 continue
-                            last_updated[url]["map_rotation"] = timestamp
+                            last_updated[url][key] = timestamp
                             wh = DiscordWebhook(url=url)
                             embed = build_map_rotation_embed(
                                 config=config,
@@ -536,13 +539,14 @@ def run():
                             )
 
                         if key == PLAYER_STATS and config.player_stats_enabled:
-                            last_update_playerstats = last_updated.get(url, {}).get("player_stats")
+
                             if (
-                                last_update_playerstats
-                                and (timestamp - last_update_playerstats).total_seconds() < config.map_rotation_time_between_refreshes
+                                last_updated_key
+                                and (timestamp - last_updated_key).total_seconds()
+                                < config.map_rotation_time_between_refreshes
                             ):
                                 continue
-                            last_updated[url]["player_stats"] = timestamp
+                            last_updated[url][key] = timestamp
                             wh = DiscordWebhook(url=url)
                             embed = build_player_stats_embed(
                                 config=config,
