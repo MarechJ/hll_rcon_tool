@@ -210,6 +210,18 @@ def make_embed(
 def watch_killrate(api: RconAPI, config: WatchKillRateUserConfig, server_name: str):
     player_stats = current_game_stats()
 
+    # Create a dict of all the weapons that are whitelisted so that we can
+    # recalculate our base kill rate for the player after filtering them out
+    # so we don't get a false positive with the KPM from the player stats
+    # which includes all weapons
+    whitelisted_weapons: dict[str, bool] = {}
+    if config.whitelist_armor:
+        whitelisted_weapons |= ARMOR
+    if config.whitelist_artillery:
+        whitelisted_weapons |= ARTILLERY
+    if config.whitelist_mg:
+        whitelisted_weapons |= MGS
+
     if len(player_stats) < 2:
         logger.info("Fewer than 2 players, skipping")
         return
@@ -247,8 +259,11 @@ def watch_killrate(api: RconAPI, config: WatchKillRateUserConfig, server_name: s
             continue
 
         kpm: float = stats["kills_per_minute"]
-        logger.info(f"{player_id} {playtime_secs} {kills} {kpm}")
+        logger.info(f"{player_id=} {playtime_secs=} {kills=} {kpm=}")
         used_weapons: Counter = Counter()
+        # If the players unfiltered KPM doesn't meet any of the thresholds
+        # skip all the calculations because this is the highest possible KPM
+        # filtering weapons can only reduce KPM
         if kpm > min(
             config.killrate_threshold,
             config.killrate_threshold_armor,
@@ -257,6 +272,25 @@ def watch_killrate(api: RconAPI, config: WatchKillRateUserConfig, server_name: s
         ):
             timestamp = datetime.now()
             used_weapons = Counter(stats["weapons"])
+
+            # Recalculate the players KPM after filtering out whitelisted weapons
+            # TODO: redo this section so we aren't looping over used_weapons 4 different times
+            whitelisted_kpm: float = round(
+                (
+                    (
+                        sum(
+                            kill_count
+                            for weapon, kill_count in used_weapons.items()
+                            if weapon not in whitelisted_weapons
+                        )
+                        / playtime_secs
+                        * 60
+                    )
+                    if not config.whitelist_armor
+                    else 0.0
+                ),
+                1,
+            )
             armor_kpm: float = round(
                 (
                     (
@@ -306,12 +340,18 @@ def watch_killrate(api: RconAPI, config: WatchKillRateUserConfig, server_name: s
                 1,
             )
 
-            if not (
-                kpm > config.killrate_threshold
-                or armor_kpm > config.killrate_threshold_armor
-                or artillery_kpm > config.killrate_threshold_artillery
-                or mg_kpm > config.killrate_threshold_mg
-            ):
+            # Don't make the embed unless at least one condition is met
+            # If a category is whitelisted its KPM is set to 0.0
+            conditions_met = any(
+                [
+                    whitelisted_kpm >= config.killrate_threshold,
+                    armor_kpm >= config.killrate_threshold_armor,
+                    artillery_kpm >= config.killrate_threshold_artillery,
+                    mg_kpm >= config.killrate_threshold_mg,
+                ]
+            )
+
+            if not conditions_met:
                 continue
 
             # KPM exceeded at this point, make discord embed/log
