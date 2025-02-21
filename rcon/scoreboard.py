@@ -30,7 +30,7 @@ from rcon.webhook_service import (
     WebhookMessage,
     WebhookMessageType,
     WebhookType,
-    eue_message,
+    enqueue_message,
 )
 
 if TYPE_CHECKING:
@@ -431,7 +431,7 @@ def send_message(
     wh.message_id = message_id
     wh.add_embed(embed)
     # When a message doesn't exist; or we have no message IDs we have to
-    # create/send one; persist the ID and then eue future updates
+    # create/send one; persist the ID and then enqueue future updates
     # through the webhook service
     if not message_id or not wh.message_exists():
         message_id = create_initial_message(url=wh.url, embed=embed)
