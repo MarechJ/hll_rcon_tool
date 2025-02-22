@@ -330,7 +330,7 @@ export default function PlayersRecords() {
                 label="Last seen from"
                 name="last_seen_from"
                 format="MMMM DD, YYYY HH:mm"
-                timezone="UTC"
+                ampm={false}
                 slotProps={{
                   textField: { fullWidth: true },
                 }}
@@ -349,7 +349,7 @@ export default function PlayersRecords() {
                 label="Last seen till"
                 name="last_seen_till"
                 format="MMMM DD, YYYY HH:mm"
-                timezone="UTC"
+                ampm={false}
                 slotProps={{
                   textField: { fullWidth: true },
                 }}

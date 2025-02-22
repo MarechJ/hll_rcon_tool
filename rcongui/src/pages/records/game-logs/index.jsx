@@ -42,6 +42,11 @@ import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import downloadLogs from "./download";
 import DownloadIcon from "@mui/icons-material/Download";
 import { logActions } from "@/utils/lib";
+import timezonePlugin from "dayjs/plugin/timezone";
+import utcPlugin from "dayjs/plugin/utc";
+
+dayjs.extend(timezonePlugin);
+dayjs.extend(utcPlugin);
 
 /*
 IT'S POST REQUEST !!!
@@ -406,11 +411,12 @@ const GameLogsForm = ({ fields, onSubmit }) => {
 
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DesktopDateTimePicker
-                value={formFields.from}
+                value={formFields?.from}
                 label="From time"
                 name="from"
                 onChange={handleDateChange("from")}
                 format="YYYY/MM/DD HH:mm"
+                ampm={false}
                 slotProps={{ textField: { fullWidth: true } }}
               />
             </LocalizationProvider>
@@ -421,7 +427,8 @@ const GameLogsForm = ({ fields, onSubmit }) => {
                 name="till"
                 onChange={handleDateChange("till")}
                 format="YYYY/MM/DD HH:mm"
-                value={formFields.till}
+                ampm={false}
+                value={formFields?.till}
                 slotProps={{ textField: { fullWidth: true } }}
               />
             </LocalizationProvider>

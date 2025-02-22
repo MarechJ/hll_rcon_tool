@@ -144,7 +144,7 @@ _LAST_REPORTED_CACHE: defaultdict[str, datetime | None] = defaultdict(lambda: No
 
 
 def reset_cache() -> None:
-    """ Reset cache """
+    """Reset cache"""
     global _LAST_REPORTED_CACHE
     with invalidates(get_cache_value):
         _LAST_REPORTED_CACHE = defaultdict(lambda: None)
@@ -152,12 +152,12 @@ def reset_cache() -> None:
 
 @ttl_cache(ttl=10, cache_falsy=False)
 def get_cache_value(player_id: str) -> datetime | None:
-    """ Get cache value """
+    """Get cache value"""
     return _LAST_REPORTED_CACHE[player_id]
 
 
 def set_cache_value(player_id: str, last_reported: datetime) -> None:
-    """ Set cache value """
+    """Set cache value"""
     with invalidates(get_cache_value):
         _LAST_REPORTED_CACHE[player_id] = last_reported
 
@@ -176,7 +176,7 @@ def make_embed(
     server_name: str,
     author_name: str,
 ):
-    """ Prepare Discord message embed """
+    """Prepare Discord message embed"""
     embed = DiscordEmbed()
     embed.set_author(name=author_name)
     embed.timestamp = str(timestamp)
@@ -190,7 +190,9 @@ def make_embed(
     if armor_kpm > 0.0:
         embed.add_embed_field(name="Armor KPM", value=f"{armor_kpm:.1f}", inline=True)
     if artillery_kpm > 0.0:
-        embed.add_embed_field(name="Artillery KPM", value=f"{artillery_kpm:.1f}", inline=True)
+        embed.add_embed_field(
+            name="Artillery KPM", value=f"{artillery_kpm:.1f}", inline=True
+        )
     if mg_kpm > 0.0:
         embed.add_embed_field(name="MG KPM", value=f"{mg_kpm:.1f}", inline=False)
     embed.add_embed_field(
@@ -205,32 +207,40 @@ def make_embed(
 
 
 def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
-    """ Observe all players and report them if they hit k/r thresholds """
-    player_stats:dict = current_game_stats()
+    """Observe all players and report them if they hit k/r thresholds"""
+    player_stats: dict = current_game_stats()
+
+    # Create a dict of all the weapons that are whitelisted so that we can
+    # recalculate our base kill rate for the player after filtering them out
+    # so we don't get a false positive with the KPM from the player stats
+    # which includes all weapons
+    whitelisted_weapons: dict[str, bool] = {}
+    if config.whitelist_armor:
+        whitelisted_weapons |= ARMOR
+    if config.whitelist_artillery:
+        whitelisted_weapons |= ARTILLERY
+    if config.whitelist_mg:
+        whitelisted_weapons |= MGS
 
     if len(player_stats) < 2:
         logger.info("Fewer than 2 players, skipping")
         return
 
     for player_name, stats in player_stats.items():
-        player_id:str = stats["player_id"]
+        player_id: str = stats["player_id"]
 
         # Skip whitelisted players
         whitelisted: bool = False
         for flag in config.whitelist_flags:
             if player_has_flag((get_player_profile(player_id, 0)), flag):
-                logger.info(
-                    "Skipping %s/%s - Whitelist flag",
-                    player_name,
-                    player_id
-                )
+                logger.info("Skipping %s/%s - Whitelist flag", player_name, player_id)
                 whitelisted = True
                 break
         if whitelisted:
             continue
 
         # There is some wonkiness in player stat calculation and this can be negative sometimes
-        playtime_secs:int = (
+        playtime_secs: int = (
             int(stats["time_seconds"]) if stats["time_seconds"] > 0 else 0
         )
 
@@ -245,7 +255,7 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
             )
             continue
 
-        kills:int = stats["kills"]
+        kills: int = stats["kills"]
 
         # Skip players with less than minimum kills
         if kills < config.min_kills:
@@ -259,10 +269,17 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
             continue
 
         kpm: float = stats["kills_per_minute"]
-        logger.info("%s %s %s %s", player_id, playtime_secs, kills, kpm)
+        logger.info(
+            "player_id=%s playtime_secs=%s kills=%s kpm=%s",
+            player_id,
+            playtime_secs,
+            kills,
+            kpm,
+        )
         used_weapons: Counter = Counter()
-
-        # Check if player has exceeded any of the thresholds
+        # If the players unfiltered KPM doesn't meet any of the thresholds
+        # skip all the calculations because this is the highest possible KPM
+        # filtering weapons can only reduce KPM
         if kpm > min(
             config.killrate_threshold,
             config.killrate_threshold_armor,
@@ -272,7 +289,24 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
             timestamp = datetime.now()
             used_weapons = Counter(stats["weapons"])
 
-            # Armor
+            # Recalculate the players KPM after filtering out whitelisted weapons
+            # TODO: redo this section so we aren't looping over used_weapons 4 different times
+            whitelisted_kpm: float = round(
+                (
+                    (
+                        sum(
+                            kill_count
+                            for weapon, kill_count in used_weapons.items()
+                            if weapon not in whitelisted_weapons
+                        )
+                        / playtime_secs
+                        * 60
+                    )
+                    if not config.whitelist_armor
+                    else 0.0
+                ),
+                1,
+            )
             armor_kpm: float = round(
                 (
                     (
@@ -326,13 +360,18 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
                 1,
             )
 
-            # Nothing above threshold, skip
-            if not (
-                kpm > config.killrate_threshold
-                or armor_kpm > config.killrate_threshold_armor
-                or artillery_kpm > config.killrate_threshold_artillery
-                or mg_kpm > config.killrate_threshold_mg
-            ):
+            # Don't make the embed unless at least one condition is met
+            # If a category is whitelisted its KPM is set to 0.0
+            conditions_met = any(
+                [
+                    whitelisted_kpm >= config.killrate_threshold,
+                    armor_kpm >= config.killrate_threshold_armor,
+                    artillery_kpm >= config.killrate_threshold_artillery,
+                    mg_kpm >= config.killrate_threshold_mg,
+                ]
+            )
+
+            if not conditions_met:
                 continue
 
             # Threshold exceeded
@@ -407,7 +446,7 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
 
 
 def run() -> None:
-    """ Main process (loop) """
+    """Main process (loop)"""
     while True:
         server_config = RconServerSettingsUserConfig.load_from_db()
         config = WatchKillRateUserConfig.load_from_db()

@@ -9,11 +9,11 @@ import {
   IconButton,
   Toolbar,
   Typography,
+  useMediaQuery,
+  useTheme
 } from "@mui/material";
 import { ActionForm } from "./ActionForm";
 import { useActionDialog } from "@/hooks/useActionDialog";
-import useMediaQuery from "@mui/material/useMediaQuery";
-import { useTheme } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import { ClientError } from "@/components/shared/ClientError";
 import {useEffect, useRef, useState} from "react";
