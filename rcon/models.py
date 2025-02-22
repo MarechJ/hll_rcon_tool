@@ -180,6 +180,7 @@ class PlayerID(Base):
         vip_lists: List[VipListRecordWithVipListType] = [
             record.to_dict() for record in self.vip_lists
         ]
+
         return {
             "id": self.id,
             PLAYER_ID: self.player_id,
@@ -199,7 +200,13 @@ class PlayerID(Base):
             "vip_lists": vip_lists,
             "is_blacklisted": any(record["is_active"] for record in blacklists),
             "is_vip": any(
-                record["is_active"] and not record["is_expired"] for record in vip_lists
+                record["is_active"] and not record["is_expired"]
+                # Applies to the server the profile was fetched for
+                and (
+                    record["vip_list"]["servers"] is None
+                    or str(self.server_number in record["vip_list"]["servers"])
+                )
+                for record in vip_lists
             ),
             "flags": [f.to_dict() for f in (self.flags or [])],
             "watchlist": self.watchlist.to_dict() if self.watchlist else None,
