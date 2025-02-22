@@ -1,10 +1,8 @@
 import { useMemo } from "react";
 import {
-  Typography,
   Tabs,
   Tab,
   CardContent,
-  Box,
   Divider,
 } from "@mui/material";
 import {
