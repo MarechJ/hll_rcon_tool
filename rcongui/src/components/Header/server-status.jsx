@@ -36,12 +36,6 @@ const ServerStatus = ({ compact }) => {
   }`;
   const score = `${status?.score?.allied ?? 0}:${status?.score?.axis ?? 0}`;
 
-  useEffect(() => {
-    document.title = `${
-      status?.name?.short_name ?? "<Server Name>"
-    } | ${timeRemaining} | ${mapName} (${numCurrentPlayers})`;
-  }, [status]);
-
   if (isLoading) {
     return (
       <Wrapper>

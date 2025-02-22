@@ -6,7 +6,7 @@ import ListItemText from "@mui/material/ListItemText";
 import Stack from "@mui/material/Stack";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Collapse } from "@mui/material";
 import {useState} from "react";
 import { useAppStore } from "@/stores/app-state";
@@ -14,8 +14,8 @@ import { useAppStore } from "@/stores/app-state";
 const NavigationLink = ({ to, icon, text, onClick }) => {
 
   return (
-    <ListItem key={to} disablePadding sx={{ display: "block" }}>
-      <ListItemButton onClick={onClick}>
+    <ListItem key={to} onClick={onClick} disablePadding sx={{ display: "block" }}>
+      <ListItemButton component={Link} to={to}>
         {icon && <ListItemIcon>{icon}</ListItemIcon>}
         <ListItemText primary={text} />
       </ListItemButton>
@@ -52,13 +52,11 @@ const Group = ({ groupName, icon, level = 1, children }) => {
 
 export default function MenuContent({ navigationTree, isMobile }) {
   const toggleDrawer = useAppStore((state) => state.toggleDrawer);
-  const navigate = useNavigate();
 
-  const handleLinkClick = (to) => () => {
+  const handleLinkClick = () => {
     if (isMobile) {
       toggleDrawer();
     }
-    navigate(to);
   };
 
   return (
@@ -80,7 +78,7 @@ export default function MenuContent({ navigationTree, isMobile }) {
                 to={link.to}
                 text={link.name}
                 icon={link.icon}
-                onClick={handleLinkClick(link.to)}
+                onClick={handleLinkClick}
               />
             ))
           )}
@@ -95,7 +93,7 @@ export default function MenuContent({ navigationTree, isMobile }) {
                   to={link.to}
                   text={link.name}
                   icon={link.icon}
-                  onClick={handleLinkClick(link.to)}
+                  onClick={handleLinkClick}
                 />
               ))}
             </Group>

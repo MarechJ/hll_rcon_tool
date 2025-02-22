@@ -28,6 +28,7 @@ export const ControlledDesktopDateTimePicker = ({
             inputRef={field.ref} // send input ref, so we can focus on input when error appear
             disabled={field.disabled}
             format='LLL'
+            ampm={false}
             {...props}
           />
         </LocalizationProvider>

@@ -132,14 +132,6 @@ export const loader = async ({ request }) => {
   };
 };
 
-// TODO
-// - Add pagination
-// - Add export
-// - Refactor audit log details into a separate component
-// - Make the audit log details card collapsible to save space
-// - Add a button to copy the audit log details to the clipboard
-// - useMemo(columns) to handle column click to show the audit log details
-
 const AuditLogsPage = () => {
   const { data, fields, autocompleteOptions } = useLoaderData();
 
@@ -204,7 +196,10 @@ const AuditLogsPage = () => {
   };
 
   const handlePageSizeChange = (pageSize) => {
-    submit(getParams({ page_size: pageSize }), { method: "GET", replace: true });
+    submit(getParams({ page_size: pageSize }), {
+      method: "GET",
+      replace: true,
+    });
   };
 
   const handleDownload = () => {
@@ -299,71 +294,62 @@ const AuditLogsPage = () => {
         </Stack>
       </Form>
 
-      <Stack
-        component="section"
-        id="audit-logs-section"
-        spacing={1}
-        sx={{ width: "100%" }}
-      >
-        <Stack direction={{ xs: "column", lg: "row" }} spacing={1}>
-          <Stack
-            direction="column"
-            sx={{
-              width: "100%",
-              maxWidth: (theme) => theme.breakpoints.values.md,
-            }}
-          >
-            <TableToolbar>
-              <TablePageSizeSelect
-                pageSize={page_size}
-                setPageSize={handlePageSizeChange}
-              />
-              <Box sx={{ flexGrow: 1 }} />
-              <NavPagination
-                page={page}
-                maxPages={total_pages}
-                disabled={navigation.state === "loading"}
-              />
-              <Divider flexItem orientation="vertical" />
-              <IconButton
-                size="small"
-                variant="contained"
-                color="primary"
-                sx={{
-                  "&.MuiIconButton-root": {
-                    borderRadius: 0,
-                  },
-                }}
-                onClick={handleDownload}
-              >
-                <DownloadIcon />
-              </IconButton>
-            </TableToolbar>
-            <Table
-              table={table}
-              columns={auditLogsColumns}
-              rowProps={(row) => ({
-                onClick: row.getToggleSelectedHandler(),
-                sx: {
-                  cursor: "pointer",
-                  bgcolor: row.getIsSelected() ? "action.selected" : "inherit",
-                  "&:hover": {
-                    bgcolor: "action.hover",
-                  },
-                },
-              })}
+      <Stack component="section" id="audit-logs-section" spacing={1} direction={{ xs: "column", lg: "row" }}>
+        <Stack direction="column" sx={{ width: "100%", order: { xs: 2, lg: 1 } }}>
+          <TableToolbar>
+            <TablePageSizeSelect
+              pageSize={page_size}
+              setPageSize={handlePageSizeChange}
             />
-          </Stack>
-          <AuditLogCard
-            auditLog={selectedAuditLog}
-            sx={{
-              width: (theme) =>
-                theme.breakpoints.down("lg")
-                  ? "100%"
-                  : theme.breakpoints.values.sm,
-            }}
+            <Box sx={{ flexGrow: 1 }} />
+            <NavPagination
+              page={page}
+              maxPages={total_pages}
+              disabled={navigation.state === "loading"}
+            />
+            <Divider flexItem orientation="vertical" />
+            <IconButton
+              size="small"
+              variant="contained"
+              color="primary"
+              sx={{
+                "&.MuiIconButton-root": {
+                  borderRadius: 0,
+                },
+              }}
+              onClick={handleDownload}
+            >
+              <DownloadIcon />
+            </IconButton>
+          </TableToolbar>
+          <Table
+            table={table}
+            columns={auditLogsColumns}
+            rowProps={(row) => ({
+              onClick: row.getToggleSelectedHandler(),
+              sx: {
+                cursor: "pointer",
+                bgcolor: row.getIsSelected() ? "action.selected" : "inherit",
+                "&:hover": {
+                  bgcolor: "action.hover",
+                },
+              },
+            })}
           />
         </Stack>
+        <Box
+          sx={{
+            order: { xs: 1, lg: 2 },
+            maxWidth: 700,
+            width: (theme) =>
+              theme.breakpoints.down("lg") ? "100%" : "auto",
+          }}
+        >
+          <AuditLogCard
+            auditLog={selectedAuditLog}
+            sx={{ position: "sticky", top: 0 }}
+          />
+        </Box>
       </Stack>
     </Stack>
   );

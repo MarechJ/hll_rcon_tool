@@ -18,7 +18,6 @@ import { DesktopDateTimePicker } from "@mui/x-date-pickers/DesktopDateTimePicker
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { useOutletContext, useSearchParams, useLoaderData, useSubmit, Form } from "react-router-dom";
-import { useGlobalStore } from "@/hooks/useGlobalState";
 import dayjs from "dayjs";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import { TablePagination } from "@/components/table/TablePagination";
@@ -37,6 +36,7 @@ import downloadLogs from "@/pages/records/game-logs/download";
 import DownloadIcon from "@mui/icons-material/Download";
 import { DetailCard } from "../styled";
 import { cmd } from "@/utils/fetchUtils";
+import { useGlobalStore } from "@/stores/global-state";
 
 const actionOptions = Object.keys(logActions).map((option) => ({
   label: logActions[option],
