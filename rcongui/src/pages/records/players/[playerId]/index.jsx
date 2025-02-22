@@ -19,12 +19,12 @@ import {
   DetailCard,
 } from "./styled";
 import PlayerProfileSummary from "@/components/player/profile/Summary";
-import { useGlobalStore } from "@/hooks/useGlobalState";
 import PlayerProfileHeader from "@/components/player/profile/Header";
 import { generatePlayerActions } from "@/features/player-action/actions";
 import { useActionDialog } from "@/hooks/useActionDialog";
 import PlayerProfileStatusTags from "@/components/player/profile/StatusTags";
 import ReceivedActions from "./[detail]/received-actions";
+import { useGlobalStore } from "@/stores/global-state";
 
 const DETAIL_LINKS = [
   { path: "", label: "Received Actions" },

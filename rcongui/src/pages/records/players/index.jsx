@@ -24,7 +24,6 @@ import { CountryFlag } from "@/components/shared/CountryFlag";
 import { useMemo, useState, Suspense, lazy, memo } from "react";
 import countries from "country-list";
 import PlayerCard from "@/components/shared/card/PlayerCard";
-import { useGlobalStore } from "@/hooks/useGlobalState";
 import emojiData from "@emoji-mart/data/sets/15/twitter.json";
 import Emoji from "@/components/shared/Emoji";
 import AddReactionIcon from "@mui/icons-material/AddReaction";
@@ -35,6 +34,7 @@ import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import dayjs from "dayjs";
 import NavPagination from "@/pages/stats/games/nav-pagination";
 import { Box } from "@mui/material";
+import { useGlobalStore } from "@/stores/global-state";
 
 const EmojiPicker = lazy(() => import("@emoji-mart/react"));
 
