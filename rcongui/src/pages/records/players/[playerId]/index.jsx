@@ -18,6 +18,8 @@ import {
   SummaryCard,
   DetailCard,
 } from "./styled";
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import PlayerProfileSummary from "@/components/player/profile/Summary";
 import PlayerProfileHeader from "@/components/player/profile/Header";
 import { generatePlayerActions } from "@/features/player-action/actions";
@@ -128,22 +130,24 @@ export default function PlayerProfilePage() {
           </CardContent>
         </SummaryCard>
 
-        <DetailCard elevation={0} variant="outlined">
-          <CardContent>
-            <Tabs
-              value={getActiveTab()}
-              onChange={handleTabChange}
-              variant="standard"
-              sx={{ mb: 3 }}
-            >
-              {DETAIL_LINKS.map((link) => (
-                <Tab key={link.path} label={link.label} />
-              ))}
-            </Tabs>
-            {getActiveTab() === 0 && <ReceivedActions />}
-            <Outlet context={{ profile, submit }} />
-          </CardContent>
-        </DetailCard>
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <DetailCard elevation={0} variant="outlined">
+            <CardContent>
+              <Tabs
+                value={getActiveTab()}
+                onChange={handleTabChange}
+                variant="standard"
+                sx={{ mb: 3 }}
+              >
+                {DETAIL_LINKS.map((link) => (
+                  <Tab key={link.path} label={link.label} />
+                ))}
+              </Tabs>
+              {getActiveTab() === 0 && <ReceivedActions />}
+              <Outlet context={{ profile, submit }} />
+            </CardContent>
+          </DetailCard>
+        </LocalizationProvider>
       </MainContent>
     </ProfileContainer>
   );
