@@ -3,7 +3,14 @@ from enum import StrEnum
 from logging import getLogger
 from typing import Final, Literal, Optional, Self, TypedDict
 
-from pydantic import BaseModel, Field, HttpUrl, field_serializer, field_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    HttpUrl,
+    field_serializer,
+    field_validator,
+    AnyUrl,
+)
 
 from rcon.types import PlayerStatsEnum
 from rcon.user_config.legacy_scorebot import ScorebotUserConfig
@@ -82,7 +89,6 @@ class ScoreboardConfigType(TypedDict):
     # Map Rotation (own message)
     map_rotation_include_server_name: bool
     map_rotation_time_between_refreshes: int
-    show_map_rotation: bool
     current_map_format: str
     next_map_format: str
     other_map_format: str
@@ -247,53 +253,113 @@ def seed_default_player_stat_displays():
 
 
 class ScoreboardUserConfig(BaseUserConfig):
-    public_scoreboard_url: HttpUrl | None = Field(default=None)
-    hooks: list[DiscordWebhook] = Field(default_factory=list)
+    # TODO: update descriptions
+    public_scoreboard_url: HttpUrl | None = Field(
+        default=None, description="The URL of your public scoreboard/stats site"
+    )
+    hooks: list[DiscordWebhook] = Field(
+        default_factory=list,
+        description="The Discord webhooks to post the scoreboard to",
+    )
 
-    header_gamestate_enabled: bool = Field(default=True)
-    map_rotation_enabled: bool = Field(default=True)
-    player_stats_enabled: bool = Field(default=True)
+    header_gamestate_enabled: bool = Field(
+        default=True, description="Enable/disable the header/gamestate overview message"
+    )
+    map_rotation_enabled: bool = Field(
+        default=True, description="Enable/disable the map rotation message"
+    )
+    player_stats_enabled: bool = Field(
+        default=True, description="Enable/disable the player stats message"
+    )
 
-    footer_last_refreshed_text: str = Field(default="Last Refreshed")
+    footer_last_refreshed_text: str = Field(
+        default="Last Refreshed",
+        description="The text in each message footer showing the last time the message was updated",
+    )
 
     # Header / Gamestate (own message)
-    header_gamestate_include_server_name: bool = Field(default=True)
-    header_gamestate_time_between_refreshes: int = Field(default=5)
-    quick_connect_url: HttpUrl | None = Field(default=None)
-    battlemetrics_url: HttpUrl | None = Field(default=None)
-    show_map_image: bool = Field(default=True)
-    objective_score_format_generic: str = Field(default="Allied {0}: Axis {1}")
+    header_gamestate_include_server_name: bool = Field(
+        default=True,
+        description="Whether to include the server name in the title of the message",
+    )
+    header_gamestate_time_between_refreshes: int = Field(
+        default=5, description="How often (in seconds) to send updates to Discord"
+    )
+    quick_connect_url: AnyUrl | None = Field(
+        default=None, description="The steam quick connect URL for your game server"
+    )
+    battlemetrics_url: HttpUrl | None = Field(
+        default=None, description="A link to your servers page on BattleMetrics"
+    )
+    show_map_image: bool = Field(
+        default=True, description="Enable/disable the image of the current map"
+    )
+    objective_score_format_generic: str = Field(
+        default="Allied {0}: Axis {1}",
+        description="A fallback format for showing the current objective score",
+    )
     objective_score_format_ger_v_us: str = Field(
-        default="<:ico_US:1342201921045528681>  {0} : <:ico_GER:1342201866246815744> {1}"
+        default="<:ico_US:1342201921045528681>  {0} : <:ico_GER:1342201866246815744> {1}",
+        description="US versus German emojis",
     )
     objective_score_format_ger_v_sov: str = Field(
-        default="<:ico_RUS:1342201815160062002>  {0} : <:ico_GER:1342201866246815744> {1}"
+        default="<:ico_RUS:1342201815160062002>  {0} : <:ico_GER:1342201866246815744> {1}",
+        description="Soviet versus German emojis",
     )
     objective_score_format_ger_v_uk: str = Field(
-        default="<:ico_UK:1342201889676333078> {0} : <:ico_GER:1342201866246815744> {1}"
+        default="<:ico_UK:1342201889676333078> {0} : <:ico_GER:1342201866246815744> {1}",
+        description="UK versus German emojis",
     )
     header_gamestate_embeds: list[HeaderGameStateEmbedConfig] = Field(
-        default_factory=seed_default_header_gamestate_displays
+        default_factory=seed_default_header_gamestate_displays,
+        description="A list of the fields to include in the header/gamestate message; use `EMPTY` to help space them as desired.",
     )
 
     # Map Rotation (own message)
-    map_rotation_include_server_name: bool = Field(default=True)
-    map_rotation_time_between_refreshes: int = Field(default=30)
-    show_map_rotation: bool = Field(default=True)
-    current_map_format: str = Field(default="🟩 {1}. **{0}**")
-    next_map_format: str = Field(default="🟨 {1}. {0}")
-    other_map_format: str = Field(default="⬛ {1}. {0}")
-    show_map_legend: bool = Field(default=True)
-    map_rotation_title_text: str = Field(default="Map Rotation")
-    map_legend: str = Field(default=MAP_LEGEND)
+    map_rotation_include_server_name: bool = Field(
+        default=True,
+        description="Whether to include the server name in the title of the map rotation message",
+    )
+    map_rotation_time_between_refreshes: int = Field(
+        default=30, description="How often (in seconds) to send updates to Discord"
+    )
+    current_map_format: str = Field(
+        default="🟩 {1}. **{0}**",
+        description="How to format the current map in Discord",
+    )
+    next_map_format: str = Field(
+        default="🟨 {1}. {0}", description="How to format the next map in Discord"
+    )
+    other_map_format: str = Field(
+        default="⬛ {1}. {0}",
+        description="How to format any map that isn't the next or current in Discord",
+    )
+    show_map_legend: bool = Field(
+        default=True, description="Enable/disable the map rotation legend"
+    )
+    map_rotation_title_text: str = Field(
+        default="Map Rotation", description="The title of the map rotation message"
+    )
+    map_legend: str = Field(
+        default=MAP_LEGEND,
+        description="The text to show when the map rotation legend is enabled",
+    )
 
     # Player Stats (own message)
-    player_stats_include_server_name: bool = Field(default=True)
+    player_stats_include_server_name: bool = Field(
+        default=True,
+        description="Whether to include the server name in the title of the player stats message",
+    )
     player_stats_title_text: str = Field(default="Player Stats")
-    player_stats_time_between_refreshes: int = Field(default=5)
-    player_stats_num_to_display: int = Field(default=5)
+    player_stats_time_between_refreshes: int = Field(
+        default=5, description="How often (in seconds) to send updates to Discord"
+    )
+    player_stats_num_to_display: int = Field(
+        default=5, ge=1, description="How many players to show per stat type"
+    )
     player_stat_embeds: list[PlayerStatEmbedConfig] = Field(
-        default_factory=seed_default_player_stat_displays
+        default_factory=seed_default_player_stat_displays,
+        description="A list of the fields to include in player stats message; use `EMPTY` to help space them as desired.",
     )
 
     @field_serializer("quick_connect_url", "battlemetrics_url", "public_scoreboard_url")
@@ -365,7 +431,6 @@ class ScoreboardUserConfig(BaseUserConfig):
             map_rotation_time_between_refreshes=values.get(
                 "map_rotation_time_between_refreshes"
             ),
-            show_map_rotation=values.get("show_map_rotation"),
             current_map_format=values.get("current_map_format"),
             next_map_format=values.get("next_map_format"),
             other_map_format=values.get("other_map_format"),

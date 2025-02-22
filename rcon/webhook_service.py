@@ -41,6 +41,9 @@ GLOBAL_RATE_LIMIT_RESET_AFTER = f"{GLOBAL_RATE_LIMIT}:reset_after"
 # Track HTTP 401/403 errors by webhook ID
 WEBHOOK_ERRORS = f"{PREFIX}:errors"
 
+# Track failed message (HTTP 404 errors) by message ID
+MESSAGE_DOES_NOT_EXIST = f"{PREFIX}:message_404"
+
 DEFAULT_GLOBAL_RETRY_AFTER_SECS = 5 * 60
 
 # Discord response headers
@@ -83,6 +86,44 @@ except (ValueError, TypeError):
 # Global datastructures to support associating hooks with locks
 _RATE_LIMIT_BUCKETS: defaultdict[str, asyncio.Lock | None] = defaultdict(lambda: None)
 _SHARED_LOCK: asyncio.Lock | None = None
+
+
+def set_message_edit_404_failure(
+    red: redis.StrictRedis,
+    message_id: str,
+    prefix: str = MESSAGE_DOES_NOT_EXIST,
+    value: bool = True,
+    ttl=120,
+) -> None:
+    """Set a flag in redis for a message ID to communicate back to a sender that the message does not exist"""
+    red.set(f"{prefix}:{message_id}", b"1" if value else b"0", ex=ttl)
+
+
+def get_message_edit_404_failure(
+    message_id: str,
+    red: redis.StrictRedis | None = None,
+    prefix: str = MESSAGE_DOES_NOT_EXIST,
+) -> bool:
+    """Check if a specific message ID received an HTTP 404 error from Discord"""
+    # Allows easier usage for enqueing from different services/sections of CRCON
+    if red is None:
+        url = construct_redis_url(db_number=0)
+        red = get_redis_client(redis_url=url, decode_responses=False, global_pool=True)
+    return red.get(f"{prefix}:{message_id}") == b"1"
+
+
+def clear_queue_by_message_id(red: redis.StrictRedis, queue_id: str, message_id: str):
+    """Delete all messages from a queue that have message_id
+
+    This allows us to remove all queued edits to a message ID that no longer exists
+    """
+
+    # Traverse the list and identify all the values that contain message_id
+    # and then LREM them
+    for raw_message in red.lrange(queue_id, 0, -1):
+        message = unpack_message(raw_message=raw_message)
+        if message_id == message.payload["message_id"]:
+            red.lrem(queue_id, 0, raw_message)
 
 
 def get_shared_lock() -> asyncio.Lock:
@@ -430,6 +471,23 @@ def enqueue_message(
     red.rpush(queue_id, orjson.dumps(message.model_dump_json()))
 
 
+def construct_webhook(
+    payload: DiscordWebhookDict, webhook_type: WebhookType
+) -> AsyncDiscordWebhook:
+    if webhook_type == WebhookType.DISCORD:
+        unpacked: DiscordWebhookDict = payload  # type: ignore
+        wh = AsyncDiscordWebhook(**unpacked)
+    else:
+        raise TypeError(f"{webhook_type} is an unsupported webhook type")
+
+    return wh
+
+
+def unpack_message(raw_message: bytes) -> WebhookMessage:
+    message = WebhookMessage.model_validate_json(orjson.loads(raw_message))
+    return message
+
+
 async def dequeue_message(
     red: redis.StrictRedis,
     client: httpx.AsyncClient,
@@ -451,13 +509,10 @@ async def dequeue_message(
     ):
         logger.debug("Dequeueing from %s", queue_id)
         raw_message: bytes = red.lpop(queue_id)  # type: ignore
-        message = WebhookMessage.model_validate_json(orjson.loads(raw_message))
-
-        if message.webhook_type == WebhookType.DISCORD:
-            unpacked: DiscordWebhookDict = message.payload  # type: ignore
-            wh = AsyncDiscordWebhook(**unpacked)
-        else:
-            raise TypeError(f"{message.webhook_type} is an unsupported webhook type")
+        message = unpack_message(raw_message=raw_message)
+        wh = construct_webhook(
+            payload=message.payload, webhook_type=message.webhook_type
+        )
 
         if message.edit:
             res: httpx.Response = await wh.edit(client=client)
@@ -472,15 +527,24 @@ async def dequeue_message(
         # are inherently transient; so we will set the error status for the webhook ID
         # and drop the message
         if res.status_code == 404:
+            logger.error(
+                f"Received HTTP 404 from the webhook with webhook ID: {message.payload.get('webhook_id')} message ID: {message.payload.get('message_id')} purging the queue for this message ID"
+            )
+            # Mark this specific message ID as a 404 failure
+            set_message_edit_404_failure(
+                red=red, message_id=message.payload["message_id"]
+            )
+            clear_queue_by_message_id(
+                red=red, queue_id=queue_id, message_id=message.payload["message_id"]
+            )
+            # Flag this webhook as having an error
             set_webhook_error(
                 red=red,
                 webhook_id=wh.webhook_id,
                 webhook_type=message.webhook_type,
                 _404=True,
             )
-            logger.error(
-                f"Received HTTP 404 from the webhook with webhook ID: {message.payload.get('webhook_id')} message ID: {message.payload.get('message_id')} discarding the message"
-            )
+
             return
 
         bucket_data.webhook_type = message.webhook_type
