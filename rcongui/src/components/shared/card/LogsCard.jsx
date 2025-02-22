@@ -161,7 +161,7 @@ const LogsCard = ({ logs }) => {
                 <StyledListItem
                   key={index}
                 >
-                  <Box component="span" sx={{ width: 125, minWidth: 125 }}>{dayjs(log.timestamp).format(TIME_FORMAT)}</Box>
+                  <Box component="span" sx={{ width: 125, minWidth: 125 }}>{dayjs.utc(log.timestamp).tz(Intl.DateTimeFormat().resolvedOptions().timeZone).format(TIME_FORMAT)}</Box>
                   <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
                   <Message />
                 </StyledListItem>

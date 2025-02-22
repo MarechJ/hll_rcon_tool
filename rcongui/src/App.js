@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import relativeTimePlugin from 'dayjs/plugin/relativeTime';
 import durationPlugin from 'dayjs/plugin/duration';
+import timezonePlugin from 'dayjs/plugin/timezone';
 import adminRouter from "./router"
 import { QueryClientProvider } from '@tanstack/react-query';
 import localforage from 'localforage';
@@ -19,7 +20,8 @@ const App = () => {
   dayjs.extend(relativeTimePlugin);
   dayjs.extend(durationPlugin);
   dayjs.extend(utc);
-
+  dayjs.extend(timezonePlugin);
+  
   // Configure LocalForage
   localforage.config({
     name: siteConfig.appName, // Name of the database
