@@ -93,7 +93,7 @@ import VipSettings from "./pages/settings/vip"
 import { loader as vipLoader } from "./pages/settings/vip"
 
 import { AuthProvider } from "@/hooks/useAuth";
-import { GlobalState } from "@/hooks/useGlobalState";
+import { GlobalState } from "./stores/global-state";
 import RouteError from "@/components/shared/RouteError";
 
 const router = createBrowserRouter([

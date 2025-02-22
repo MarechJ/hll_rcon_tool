@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
 set -e
-set -x 
+set -x
 
 env
 # Only run the database migrations in the maintenance container
-if [ "$1" == 'maintenance' ] 
+if [ "$1" == 'maintenance' ]
 then
   alembic upgrade head
   # Convert old stye player IDs to new style (md5 hash)
@@ -14,7 +14,7 @@ then
   # LOGGING_PATH and LOGGING_FILENAME need to be passed to get it to log to the directory that is bind mounted
   SERVER_NUMBER=1 LOGGING_PATH=/logs/ LOGGING_FILENAME=startup.log python -m rcon.cli merge_duplicate_player_ids
   SERVER_NUMBER=1 LOGGING_PATH=/logs/ LOGGING_FILENAME=startup.log python -m rcon.cli convert_win_player_ids
-  cd rconweb 
+  cd rconweb
   ./manage.py makemigrations --no-input
   ./manage.py migrate --noinput
   # Create this file after migrations which is how Docker determines the container is healthy
@@ -23,23 +23,31 @@ then
   sleep infinity
 fi
 
+# Check if we're in the webhook_service container
+if [ "$1" == 'webhook_service' ]
+then
+  LOGGING_PATH=/logs/ LOGGING_FILENAME=webhook_service.log python -m rcon.webhook_service
+fi
+
 # Check if we're in a backend container
-if [ "$1" == 'web' ] 
-then  
+if [ "$1" == 'web' ]
+then
   # If the database password isn't set, bail early
-  if [ "$HLL_DB_PASSWORD" == '' ] 
+  if [ "$HLL_DB_PASSWORD" == '' ]
   then
       echo "HLL_DB_PASSWORD not set"
       exit 0
   fi
-  if [ "$HLL_HOST" == '' ] 
+  if [ "$HLL_HOST" == '' ]
   then
       exit 0
   fi
 
   python -m rcon.user_config.seed_db
+  # TODO: Temporarily handle converting users old scorebot URLs to the new format; remove in a few releases
+  SERVER_NUMBER=${SERVER_NUMBER} LOGGING_PATH=/logs/ LOGGING_FILENAME=api_${SERVER_NUMBER}.log python -m rcon.cli port_legacy_scorebot_urls
   ./manage.py register_api
-  cd rconweb 
+  cd rconweb
   ./manage.py collectstatic --noinput
   # If DONT_SEED_ADMIN_USER is not set to any value
   if [[ -z "$DONT_SEED_ADMIN_USER" ]]
@@ -53,11 +61,11 @@ then
   cd ..
   ./manage.py unregister_api
 else
-if [ "$1" == 'debug' ] 
+if [ "$1" == 'debug' ]
 then
   tail -f manage.py
 fi
-if [ "$HLL_HOST" == '' ] 
+if [ "$HLL_HOST" == '' ]
 then
     exit 0
 fi

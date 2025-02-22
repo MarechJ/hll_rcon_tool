@@ -30,7 +30,7 @@ export const logsColumns = [
     header: SortableHeader("Time"),
     accessorKey: "event_time",
     cell: ({ row }) => {
-      return dayjs(row.original.event_time).format(TIME_FORMAT);
+      return dayjs.utc(row.original.event_time).tz(Intl.DateTimeFormat().resolvedOptions().timeZone).format(TIME_FORMAT);
     },
     meta: {
       variant: "time"

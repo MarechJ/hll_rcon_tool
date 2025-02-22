@@ -1,4 +1,4 @@
-import { useGlobalStore } from "@/hooks/useGlobalState";
+import { useGlobalStore } from "@/stores/global-state";
 import { extractPlayers } from "@/utils/extractPlayers";
 import { cmd } from "@/utils/fetchUtils";
 import { normalizePlayerProfile } from "@/utils/lib";

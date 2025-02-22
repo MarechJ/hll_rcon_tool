@@ -455,6 +455,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.get_real_vip_config: "api.can_view_real_vip_config",
     rcon_api.get_recent_logs: "api.can_view_recent_logs",
     rcon_api.get_round_time_remaining: "api.can_view_round_time_remaining",
+    rcon_api.get_scoreboard_config: "api.can_view_scorebot_config",
     rcon_api.get_scorebot_config: "api.can_view_scorebot_config",
     rcon_api.get_server_name_change_config: "api.get_server_name_change_config",
     rcon_api.get_server_settings: {
@@ -490,6 +491,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.get_votemap_config: "api.can_view_votemap_config",
     rcon_api.get_votemap_status: "api.can_view_votemap_status",
     rcon_api.get_watchlist_discord_webhooks_config: "api.can_view_watchlist_discord_webhooks_config",
+    rcon_api.get_watch_killrate_config: "api.can_view_watch_killrate_config",
     rcon_api.get_welcome_message: "api.can_view_welcome_message",
     # TODO: update this name
     rcon_api.reset_votemap_state: "api.can_reset_votemap_state",
@@ -530,7 +532,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.set_rcon_connection_settings_config: "api.can_change_rcon_connection_settings_config",
     rcon_api.set_rcon_server_settings_config: "api.can_change_rcon_server_settings_config",
     rcon_api.set_real_vip_config: "api.can_change_real_vip_config",
-    rcon_api.set_scorebot_config: "api.can_change_scorebot_config",
+    rcon_api.set_scoreboard_config: "api.can_change_scorebot_config",
     rcon_api.set_server_name_change_config: "api.can_change_server_name_change_config",
     rcon_api.set_server_name: "api.can_change_server_name",
     rcon_api.set_standard_broadcast_messages: "api.can_change_standard_broadcast_messages",
@@ -546,6 +548,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.set_votekick_thresholds: "api.can_change_votekick_threshold",
     rcon_api.set_votemap_config: "api.can_change_votemap_config",
     rcon_api.set_watchlist_discord_webhooks_config: "api.can_change_watchlist_discord_webhooks_config",
+    rcon_api.set_watch_killrate_config: "api.can_change_watch_killrate_config",
     rcon_api.set_welcome_message: "api.can_change_welcome_message",
     rcon_api.validate_admin_pings_discord_webhooks_config: "api.can_change_admin_pings_discord_webhooks_config",
     rcon_api.validate_audit_discord_webhooks_config: "api.can_change_audit_discord_webhooks_config",
@@ -566,7 +569,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.validate_rcon_connection_settings_config: "api.can_change_rcon_connection_settings_config",
     rcon_api.validate_rcon_server_settings_config: "api.can_change_rcon_server_settings_config",
     rcon_api.validate_real_vip_config: "api.can_change_real_vip_config",
-    rcon_api.validate_scorebot_config: "api.can_change_scorebot_config",
+    rcon_api.validate_scoreboard_config: "api.can_change_scorebot_config",
     rcon_api.validate_server_name_change_config: "api.can_change_server_name_change_config",
     rcon_api.validate_standard_broadcast_messages: "api.can_change_standard_broadcast_messages",
     rcon_api.validate_standard_punishments_messages: "api.can_change_standard_punishment_messages",
@@ -577,6 +580,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.validate_votekick_autotoggle_config: "api.can_change_votekick_autotoggle_config",
     rcon_api.validate_votemap_config: "api.can_change_votemap_config",
     rcon_api.validate_watchlist_discord_webhooks_config: "api.can_change_watchlist_discord_webhooks_config",
+    rcon_api.validate_watch_killrate_config: "api.can_change_watch_killrate_config",
     rcon_api.get_log_stream_config: "api.can_view_log_stream_config",
     rcon_api.set_log_stream_config: "api.can_change_log_stream_config",
     rcon_api.validate_log_stream_config: "api.can_change_log_stream_config",
@@ -601,6 +605,14 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.get_seed_vip_config: "api.can_view_seed_vip_config",
     rcon_api.set_seed_vip_config: "api.can_change_seed_vip_config",
     rcon_api.validate_seed_vip_config: "api.can_change_seed_vip_config",
+    rcon_api.get_webhook_queue_overview: "api.can_view_webhook_queues",
+    rcon_api.get_all_webhook_queues: "api.can_view_webhook_queues",
+    rcon_api.get_webhook_service_summary: "api.can_view_webhook_queues",
+    rcon_api.reset_webhook_queues: "api.can_change_webhook_queues",
+    rcon_api.reset_all_webhook_queues_for_server_number: "api.can_change_webhook_queues",
+    rcon_api.reset_webhook_queue: "api.can_change_webhook_queues",
+    rcon_api.reset_webhook_queue_type: "api.can_change_webhook_queues",
+    rcon_api.reset_webhook_message_type: "api.can_change_webhook_queues",
 }
 
 PREFIXES_TO_EXPOSE = [
@@ -696,6 +708,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.get_real_vip_config: ["GET"],
     rcon_api.get_recent_logs: ["GET", "POST"],
     rcon_api.get_round_time_remaining: ["GET"],
+    rcon_api.get_scoreboard_config: ["GET"],
     rcon_api.get_scorebot_config: ["GET"],
     rcon_api.get_seed_vip_config: ["GET"],
     rcon_api.get_server_name_change_config: ["GET"],
@@ -722,6 +735,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.get_votemap_config: ["GET"],
     rcon_api.get_votemap_status: ["GET"],
     rcon_api.get_watchlist_discord_webhooks_config: ["GET"],
+    rcon_api.get_watch_killrate_config: ["GET"],
     rcon_api.get_welcome_message: ["GET"],
     rcon_api.kick: ["POST"],
     rcon_api.message_player: ["POST"],
@@ -771,7 +785,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.set_rcon_connection_settings_config: ["POST"],
     rcon_api.set_rcon_server_settings_config: ["POST"],
     rcon_api.set_real_vip_config: ["POST"],
-    rcon_api.set_scorebot_config: ["POST"],
+    rcon_api.set_scoreboard_config: ["POST"],
     rcon_api.set_seed_vip_config: ["POST"],
     rcon_api.set_server_name_change_config: ["POST"],
     rcon_api.set_server_name: ["POST"],
@@ -788,6 +802,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.set_votekick_thresholds: ["POST"],
     rcon_api.set_votemap_config: ["POST"],
     rcon_api.set_watchlist_discord_webhooks_config: ["POST"],
+    rcon_api.set_watch_killrate_config: ["POST"],
     rcon_api.set_welcome_message: ["POST"],
     rcon_api.switch_player_now: ["POST"],
     rcon_api.switch_player_on_death: ["POST"],
@@ -816,7 +831,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.validate_rcon_connection_settings_config: ["POST"],
     rcon_api.validate_rcon_server_settings_config: ["POST"],
     rcon_api.validate_real_vip_config: ["POST"],
-    rcon_api.validate_scorebot_config: ["POST"],
+    rcon_api.validate_scoreboard_config: ["POST"],
     rcon_api.validate_seed_vip_config: ["POST"],
     rcon_api.validate_server_name_change_config: ["POST"],
     rcon_api.validate_standard_broadcast_messages: ["POST"],
@@ -828,6 +843,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.validate_votekick_autotoggle_config: ["POST"],
     rcon_api.validate_votemap_config: ["POST"],
     rcon_api.validate_watchlist_discord_webhooks_config: ["POST"],
+    rcon_api.validate_watch_killrate_config: ["POST"],
     rcon_api.watch_player: ["POST"],
     rcon_api.get_date_scoreboard: ["GET"],
     rcon_api.get_blacklists: ["GET"],
@@ -840,6 +856,14 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.edit_blacklist_record: ["POST"],
     rcon_api.delete_blacklist_record: ["POST"],
     rcon_api.unblacklist_player: ["POST"],
+    rcon_api.get_webhook_queue_overview: ["GET"],
+    rcon_api.get_all_webhook_queues: ["GET"],
+    rcon_api.get_webhook_service_summary: ["GET"],
+    rcon_api.reset_webhook_queues: ["POST"],
+    rcon_api.reset_all_webhook_queues_for_server_number: ["POST"],
+    rcon_api.reset_webhook_queue: ["POST"],
+    rcon_api.reset_webhook_queue_type: ["POST"],
+    rcon_api.reset_webhook_message_type: ["POST"],
 }
 
 # Check to make sure that ENDPOINT_HTTP_METHODS and ENDPOINT_PERMISSIONS have the same endpoints
@@ -869,7 +893,9 @@ commands = [
     ("run_raw_command", run_raw_command),
 ]
 
-if not os.getenv("HLL_MAINTENANCE_CONTAINER"):
+if not os.getenv("HLL_MAINTENANCE_CONTAINER") and not os.getenv(
+    "HLL_WH_SERVICE_CONTAINER"
+):
     logger.info("Initializing endpoints")
 
     # Dynamically register all the methods from ServerCtl

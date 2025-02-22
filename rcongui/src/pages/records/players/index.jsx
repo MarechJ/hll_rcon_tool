@@ -27,7 +27,6 @@ import PlayerCard from "@/components/shared/card/PlayerCard";
 import emojiData from "@emoji-mart/data/sets/15/twitter.json";
 import Emoji from "@/components/shared/Emoji";
 import AddReactionIcon from "@mui/icons-material/AddReaction";
-
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
@@ -330,7 +329,7 @@ export default function PlayersRecords() {
                 label="Last seen from"
                 name="last_seen_from"
                 format="MMMM DD, YYYY HH:mm"
-                timezone="UTC"
+                ampm={false}
                 slotProps={{
                   textField: { fullWidth: true },
                 }}
@@ -349,7 +348,7 @@ export default function PlayersRecords() {
                 label="Last seen till"
                 name="last_seen_till"
                 format="MMMM DD, YYYY HH:mm"
-                timezone="UTC"
+                ampm={false}
                 slotProps={{
                   textField: { fullWidth: true },
                 }}
@@ -425,9 +424,6 @@ export default function PlayersRecords() {
         </Form>
 
         <Stack component="section" id="players-section" spacing={1} sx={{ width: "100%" }}>
-          <Box sx={{ height: 4 }}>
-            {navigation.state === "loading" && <LinearProgress sx={{ height: 4 }} />}
-          </Box>
           <NavPagination
             page={page}
             maxPages={total_pages}

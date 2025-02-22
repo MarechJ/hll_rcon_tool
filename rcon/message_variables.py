@@ -9,9 +9,9 @@ from typing import Any, Iterable, Sequence
 from rcon import maps
 from rcon.audit import ingame_mods, online_mods
 from rcon.maps import Layer, categorize_maps, numbered_maps
+from rcon.player_stats import get_cached_live_game_stats, get_stat
 from rcon.rcon import Rcon, get_rcon
-from rcon.scoreboard import get_cached_live_game_stats, get_stat
-from rcon.types import CachedLiveGameStats, MessageVariable, StatTypes, VipIdType
+from rcon.types import CachedLiveGameStats, MessageVariable, PlayerStatsEnum, VipIdType
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.vote_map import VoteMapUserConfig
 from rcon.user_config.webhooks import AdminPingWebhooksUserConfig
@@ -32,6 +32,7 @@ def populate_message_variables(
         rcon = get_rcon()
 
     vote_results: list[tuple[Layer, int]] | None = None
+
     def fetch_vote_results():
         nonlocal vote_results
         if vote_results is None:
@@ -50,20 +51,21 @@ def populate_message_variables(
         MessageVariable.num_online_mods: lambda: str(len(online_mods())),
         MessageVariable.num_ingame_mods: lambda: str(len(ingame_mods())),
         MessageVariable.next_map: _next_map,
+        MessageVariable.next_map_id: _next_map_id,
         MessageVariable.map_rotation: _map_rotation,
         MessageVariable.top_kills_player_name: lambda: _generic_score_ties(
-            stat_key=StatTypes.top_killers, tie_key="kills", result_key="player"
+            stat_key=PlayerStatsEnum.KILLS, tie_key="kills", result_key="player"
         ),
         MessageVariable.top_kills_player_score: lambda: _generic_score_top_only(
-            stat_key=StatTypes.top_killers, result_key="kills"
+            stat_key=PlayerStatsEnum.KILLS, result_key="kills"
         ),
         MessageVariable.top_kill_streak_player_name: lambda: _generic_score_ties(
-            stat_key=StatTypes.top_kill_streak,
+            stat_key=PlayerStatsEnum.KILLS_STREAK,
             tie_key="kills_streak",
             result_key="player",
         ),
         MessageVariable.top_kill_streak_player_score: lambda: _generic_score_top_only(
-            stat_key=StatTypes.top_kill_streak, result_key="kills_streak"
+            stat_key=PlayerStatsEnum.KILLS_STREAK, result_key="kills_streak"
         ),
         MessageVariable.votenextmap_line: partial(format_map_vote, format_type="line"),
         MessageVariable.votenextmap_noscroll: partial(
@@ -85,11 +87,19 @@ def populate_message_variables(
             format_map_vote, format_type="by_mod_split"
         ),
         MessageVariable.total_votes: lambda: (
-            sum(v for m, v in fetch_vote_results()) if fetch_vote_results() else math.nan
+            sum(v for m, v in fetch_vote_results())
+            if fetch_vote_results()
+            else math.nan
         ),
-        MessageVariable.winning_maps_short: lambda: format_winning_map(rcon, fetch_vote_results(), 2),
-        MessageVariable.winning_maps_all: lambda: format_winning_map(rcon, fetch_vote_results(), 0),
-        MessageVariable.scrolling_votemap: lambda: scrolling_votemap(rcon, fetch_vote_results()),
+        MessageVariable.winning_maps_short: lambda: format_winning_map(
+            rcon, fetch_vote_results(), 2
+        ),
+        MessageVariable.winning_maps_all: lambda: format_winning_map(
+            rcon, fetch_vote_results(), 0
+        ),
+        MessageVariable.scrolling_votemap: lambda: scrolling_votemap(
+            rcon, fetch_vote_results()
+        ),
         # Deprecated: Taken over from previous auto-broadcast
         MessageVariable.admin_names: lambda: [d["name"] for d in rcon.get_admin_ids()],
         MessageVariable.owner_names: lambda: [
@@ -337,6 +347,12 @@ def _next_map(rcon: Rcon | None = None) -> str:
     return rcon.get_next_map().pretty_name
 
 
+def _next_map_id(rcon: Rcon | None = None) -> str:
+    if rcon is None:
+        rcon = get_rcon()
+    return rcon.get_next_map().id
+
+
 def _map_rotation(rcon: Rcon | None = None):
     if rcon is None:
         rcon = get_rcon()
@@ -346,7 +362,7 @@ def _map_rotation(rcon: Rcon | None = None):
 
 
 def _generic_score_ties(
-    stat_key: StatTypes,
+    stat_key: PlayerStatsEnum,
     tie_key: str,
     result_key: str,
     stats: CachedLiveGameStats | None = None,
@@ -364,7 +380,7 @@ def _generic_score_ties(
 
 
 def _generic_score_top_only(
-    stat_key: StatTypes,
+    stat_key: PlayerStatsEnum,
     result_key: str,
     stats: CachedLiveGameStats | None = None,
 ):

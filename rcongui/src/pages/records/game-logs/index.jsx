@@ -34,7 +34,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import LiveLogsTable from "@/components/live-logs/LiveLogsTable";
-import { useGlobalStore } from "@/hooks/useGlobalState";
+import { useGlobalStore } from "@/stores/global-state";
 import dayjs from "dayjs";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import { TablePagination } from "@/components/table/TablePagination";
@@ -42,6 +42,11 @@ import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import downloadLogs from "./download";
 import DownloadIcon from "@mui/icons-material/Download";
 import { logActions } from "@/utils/lib";
+import timezonePlugin from "dayjs/plugin/timezone";
+import utcPlugin from "dayjs/plugin/utc";
+
+dayjs.extend(timezonePlugin);
+dayjs.extend(utcPlugin);
 
 /*
 IT'S POST REQUEST !!!
@@ -243,6 +248,8 @@ const GameLogsForm = ({ fields, onSubmit }) => {
     till: fields.till ? dayjs(fields.till) : null,
   });
 
+  const [actionInputValue, setActionInputValue] = useState("");
+
   const serverOptions = useMemo(() => {
     if (!server || !otherServers) return [];
 
@@ -269,7 +276,22 @@ const GameLogsForm = ({ fields, onSubmit }) => {
     }));
   };
 
+  const handleDateChange = (name) => (value) => {
+    setFormFields((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleActionChange = (event, newValue) => {
+    setFormFields((prev) => ({
+      ...prev,
+      action: newValue?.name || "",
+    }));
+  };
+
   const handleClear = () => {
+    setActionInputValue("");
     setFormFields({
       player_name: "",
       player_id: "",
@@ -337,11 +359,10 @@ const GameLogsForm = ({ fields, onSubmit }) => {
                   )
                 }}
                 value={actionOptions.find((o) => o.name === formFields.action) || null}
-                onChange={(event, newValue) => {
-                  setFormFields((prev) => ({
-                    ...prev,
-                    action: newValue?.name || "",
-                  }));
+                onChange={handleActionChange}
+                inputValue={actionInputValue}
+                onInputChange={(event, newValue) => {
+                  setActionInputValue(newValue);
                 }}
                 renderInput={(params) => (
                   <TextField name="action" {...params} label="Action" />
@@ -390,11 +411,12 @@ const GameLogsForm = ({ fields, onSubmit }) => {
 
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DesktopDateTimePicker
-                value={formFields.from}
+                value={formFields?.from}
                 label="From time"
                 name="from"
-                onChange={handleInputChange}
+                onChange={handleDateChange("from")}
                 format="YYYY/MM/DD HH:mm"
+                ampm={false}
                 slotProps={{ textField: { fullWidth: true } }}
               />
             </LocalizationProvider>
@@ -403,9 +425,10 @@ const GameLogsForm = ({ fields, onSubmit }) => {
               <DesktopDateTimePicker
                 label="Till time"
                 name="till"
-                onChange={handleInputChange}
+                onChange={handleDateChange("till")}
                 format="YYYY/MM/DD HH:mm"
-                value={formFields.till}
+                ampm={false}
+                value={formFields?.till}
                 slotProps={{ textField: { fullWidth: true } }}
               />
             </LocalizationProvider>

@@ -68,6 +68,23 @@ export const generateTeam = () => {
   return state;
 };
 
+// Generate a special null team
+export const generateNullTeam = () => {
+
+  return {
+    squads: {
+      null: generateSquad('null')
+    },
+    combat: 0,
+    offense: 0,
+    defense: 0,
+    support: 0,
+    kills: 0,
+    deaths: 0,
+    count: 1
+  };
+};
+
 // Helper to update team state (for use in the mirage server)
 export const updateTeamState = (team) => {
   team.combat = 0;

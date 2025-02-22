@@ -30,7 +30,7 @@ const InfoPanel = ({ gameData, playersData }) => {
   }
 
   for (const team in teamStates) {
-    if (team !== "lobby" && playersData.length > 0 && teamStates[team] && teamStates[team].armycommander === 0) {
+    if (team !== "lobby" && playersData.length > 0 && teamStates[team] && !teamStates[team].commander) {
       content.push({
         type: "warning",
         label: `${team.charAt(0).toUpperCase() + team.slice(1)}`,

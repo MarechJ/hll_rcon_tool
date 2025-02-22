@@ -70,10 +70,10 @@ export const ReleaseNotes = ({ release }) => {
             {open ? 'Hide Release Notes' : 'Show Release Notes'}
         </Button>
         {open && (
-            <section id='latest-release'>
+            <Box component='section' id='latest-release' sx={{ wordWrap: 'break-word' }}>
                 <Typography variant='h6'>Latest Release Notes</Typography>
                 <MarkdownContent content={release.body} />
-            </section>
+            </Box>
         )}
     </>
   );
