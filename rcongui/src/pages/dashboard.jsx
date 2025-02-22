@@ -1,4 +1,4 @@
-import { useGlobalStore } from "@/hooks/useGlobalState";
+import { useGlobalStore } from "@/stores/global-state";
 import { cmd } from "@/utils/fetchUtils";
 import {
   List,

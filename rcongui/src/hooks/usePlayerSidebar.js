@@ -1,7 +1,7 @@
 import { PlayerDetailDrawer } from "@/components/PlayerProfileDrawer";
 import { cmd } from "@/utils/fetchUtils";
 import {createContext, useContext, useMemo, useState} from "react";
-import { useGlobalStore } from "./useGlobalState";
+import { useGlobalStore } from "@/stores/global-state";
 import dayjs from "dayjs";
 import { useQuery } from "@tanstack/react-query";
 import { playerProfileQueryOptions } from "@/queries/player-profile-query";
