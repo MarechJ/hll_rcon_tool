@@ -53,8 +53,12 @@ import { loader as configLoader } from "./pages/settings/[configs]/detail"
 import { action as configAction } from "./pages/settings/[configs]/detail"
 
 import PlayerProfile from "./pages/records/players/[playerId]"
-import { loader as playerProfileLoader } from "./pages/records/players/[playerId]"
-import { action as playerProfileAction } from "./pages/records/players/[playerId]"
+import PlayerProfileDetail from "./pages/records/players/[playerId]/[detail]"
+import { loader as playerProfileLoader } from "./pages/records/players/[playerId]/router"
+import { action as playerProfileAction } from "./pages/records/players/[playerId]/router"
+
+import PlayerLogs from "./pages/records/players/[playerId]/[detail]/logs"
+import { loader as playerLogsLoader } from "./pages/records/players/[playerId]/[detail]/logs"
 
 import ServicesSettings from "./pages/settings/services"
 import { loader as servicesLoader } from "./pages/settings/services"
@@ -150,6 +154,19 @@ const router = createBrowserRouter([
                         action: playerProfileAction,
                         handle: { crumb: (data) => [<Link to={'/records/players'}>Players</Link>, <Link to={'/records/players/' + data?.profile?.player_id}>{data?.profile?.names[0]?.name ?? ''}</Link>] },
                         errorElement: <RouteError />,
+                        children: [
+                            {
+                                path: ':detail',
+                                element: <PlayerProfileDetail />,
+                                errorElement: <RouteError />,
+                            },
+                            {
+                                path: 'logs',
+                                element: <PlayerLogs />,
+                                errorElement: <RouteError />,
+                                loader: playerLogsLoader,
+                            }
+                        ]
                     },
                     {
                         path: 'blacklists',
