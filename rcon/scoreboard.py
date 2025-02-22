@@ -31,6 +31,7 @@ from rcon.webhook_service import (
     WebhookMessageType,
     WebhookType,
     enqueue_message,
+    get_message_edit_404_failure,
 )
 
 if TYPE_CHECKING:
@@ -52,11 +53,6 @@ MESSAGE_KEYS = (
     PLAYER_STATS,
 )
 SERVER_NUMBER = int(get_server_number())
-
-DB_PATH = pathlib.Path("./scoreboard.db")
-ENGINE: Engine = create_engine(
-    f"sqlite:///file:{DB_PATH}?mode=rwc&uri=true", echo=False
-)
 
 
 class Base(DeclarativeBase):
@@ -430,10 +426,13 @@ def send_message(
 ):
     wh.message_id = message_id
     wh.add_embed(embed)
-    # When a message doesn't exist; or we have no message IDs we have to
-    # create/send one; persist the ID and then enqueue future updates
-    # through the webhook service
-    if not message_id or not wh.message_exists():
+
+    # Check if the WH has flagged this as a bad (HTTP 404) message ID
+    # or if we don't have a message ID in the database
+    # The first run through when a message is deleted will cause a 404
+    # but subsequent sends should create a new one and this avoids us having to
+    # make a synch GET request to Discord for every message we want to send
+    if not message_id or get_message_edit_404_failure(message_id=message_id):
         message_id = create_initial_message(url=wh.url, embed=embed)
         save_message_id(
             session=session,
@@ -464,13 +463,13 @@ def run():
 
     try:
         if config.public_scoreboard_url is None:
-            logger.error(
+            logger.fatal(
                 "Your Public Scoreboard URL is not configured, set it and restart the Scoreboard service."
             )
             sys.exit(-1)
 
         if not config.hooks:
-            logger.error(
+            logger.fatal(
                 "You do not have any Discord webhooks configured, set some and restart the Scoreboard service."
             )
             sys.exit(-1)
@@ -573,6 +572,19 @@ def run():
 
 
 if __name__ == "__main__":
+    VOLUME_PATH = pathlib.Path("/scoreboard_db")
+
+    if not VOLUME_PATH.exists():
+        logger.fatal(
+            "Your scoreboard volume is not configured correctly in your compose.yaml file."
+        )
+        sys.exit(-1)
+
+    DB_PATH = pathlib.Path("/scoreboard_db") / pathlib.Path("./scoreboard.db")
+    ENGINE: Engine = create_engine(
+        f"sqlite:///file:{DB_PATH}?mode=rwc&uri=true", echo=False
+    )
+
     try:
         logger.info("Attempting to start scorebot")
         Base.metadata.create_all(ENGINE)
