@@ -828,4 +828,12 @@ export const permissions = [
     permission: "can_remove_all_vips",
     description: "Can remove all VIPs",
   },
+  {
+    permission: "can_view_watch_killrate_config",
+    description: "Can view the Watch KillRate config",
+  },
+  {
+    permission: "can_change_watch_killrate_config",
+    description: "Can change the Watch KillRate config",
+  },
 ];

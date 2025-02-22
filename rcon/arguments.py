@@ -1,10 +1,11 @@
 import re
 from typing import Any, Callable
 
-from rcon.message_variables import format_message_string
+from rcon.message_variables import format_message_string, populate_message_variables
+from rcon.types import MessageVariableContext
+from rcon.user_config.chat_commands import MESSAGE_VAR_RE
 
 ARG_RE = re.compile(r"\$(\d+)")
-
 
 def replace_params(ctx: dict[str, str], args: list[str], v: Any) -> Any:
     """
@@ -24,7 +25,12 @@ def replace_params(ctx: dict[str, str], args: list[str], v: Any) -> Any:
     """
     def do(value: Any, modifier: Callable[[str], str]) -> Any:
         if isinstance(value, str):
-            value = format_message_string(modifier(value), context=ctx)
+            message_vars: list[str] = MESSAGE_VAR_RE.findall(v)
+            player_id = ctx.get(MessageVariableContext.player_id.value) or ''
+            populated_variables = populate_message_variables(
+                vars=message_vars, player_id=player_id
+            )
+            value = format_message_string(modifier(value), context=ctx, populated_variables=populated_variables)
         elif isinstance(value, list):
             for li, lv in enumerate(value):
                 value[li] = replace_params(ctx, args, lv)

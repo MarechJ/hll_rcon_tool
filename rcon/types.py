@@ -17,21 +17,42 @@ class WindowsStoreIdActionType(str, enum.Enum):
 
 
 # Have to inherit from str to allow for JSON serialization w/ pydantic
-class StatTypes(str, enum.Enum):
-    top_killers = "TOP_KILLERS"
-    top_ratio = "TOP_RATIO"
-    top_performance = "TOP_PERFORMANCE"
-    try_harders = "TRY_HARDERS"
-    top_stamina = "TOP_STAMINA"
-    top_kill_streak = "TOP_KILL_STREAK"
-    most_patient = "MOST_PATIENT"
-    i_never_give_up = "I_NEVER_GIVE_UP"
-    im_clumsy = "IM_CLUMSY"
-    i_need_glasses = "I_NEED_GLASSES"
-    i_love_voting = "I_LOVE_VOTING"
-    what_is_a_break = "WHAT_IS_A_BREAK"
-    survivors = "SURVIVORS"
-    u_r_still_a_man = "U_R_STILL_A_MAN"
+class PlayerStatsEnum(str, enum.Enum):
+    KILLS = "kills"
+    KILLS_STREAK = "kills_streak"
+    DEATHS = "deaths"
+    DEATHS_WITHOUT_KILL_STREAK = "deaths_without_kill_streak"
+    TEAMKILLS = "teamkills"
+    TEAMKILLS_STREAK = "teamkills_streak"
+    DEATHS_BY_TK = "deaths_by_tk"
+    DEATHS_BY_TK_STREAK = "deaths_by_tk_streak"
+    NB_VOTE_STARTED = "nb_vote_started"
+    NB_VOTED_YES = "nb_voted_yes"
+    NB_VOTED_NO = "nb_voted_no"
+    LONGEST_LIFE_SECS = "longest_life_secs"
+    SHORTEST_LIFE_SECS = "shortest_life_secs"
+    KILL_DEATH_RATIO = "kill_death_ratio"
+    KILLS_PER_MINUTE = "kills_per_minute"
+    DEATHS_PER_MINUTE = "deaths_per_minute"
+    TIME_SECONDS = "time_seconds"
+
+
+STAT_DISPLAY_LOOKUP = {
+    PlayerStatsEnum.KILLS: "kills",
+    PlayerStatsEnum.TEAMKILLS: "teamkills",
+    PlayerStatsEnum.KILL_DEATH_RATIO: "kill_death_ratio",
+    PlayerStatsEnum.KILLS_PER_MINUTE: "kills_per_minute",
+    PlayerStatsEnum.DEATHS_PER_MINUTE: "deaths_per_minute",
+    PlayerStatsEnum.DEATHS: "deaths",
+    PlayerStatsEnum.KILLS_STREAK: "kills_streak",
+    PlayerStatsEnum.DEATHS_WITHOUT_KILL_STREAK: "deaths_without_kill_streak",
+    PlayerStatsEnum.TEAMKILLS_STREAK: "teamkills_streak",
+    PlayerStatsEnum.DEATHS_BY_TK: "deaths_by_tk",
+    PlayerStatsEnum.LONGEST_LIFE_SECS: "longest_life_secs",
+    PlayerStatsEnum.SHORTEST_LIFE_SECS: "shortest_life_secs",
+    PlayerStatsEnum.TIME_SECONDS: "time_seconds",
+    PlayerStatsEnum.NB_VOTE_STARTED: "nb_vote_started",
+}
 
 
 class MessageVariable(enum.Enum):
@@ -47,6 +68,7 @@ class MessageVariable(enum.Enum):
     num_online_mods = "num_online_mods"
     num_ingame_mods = "num_ingame_mods"
     next_map = "next_map"
+    next_map_id = "next_map_id"
     map_rotation = "map_rotation"
 
     # Deprecated: Taken over from previous auto-broadcast implementation
@@ -381,8 +403,8 @@ class DBLogLineType(TypedDict):
 
 
 class PlayerTeamConfidence(enum.Enum):
-    STRONG = 'strong'
-    MIXED = 'mixed'
+    STRONG = "strong"
+    MIXED = "mixed"
 
 
 class PlayerTeamAssociation(TypedDict):
@@ -442,7 +464,7 @@ class PlayerStat(TypedDict):
 
 class CachedLiveGameStats(TypedDict):
     snapshot_timestamp: datetime.datetime
-    stats: PlayerStatsType
+    stats: list[PlayerStatsType]
     refresh_interval_sec: int
 
 
@@ -810,11 +832,11 @@ class GameLayoutRandomConstraints(enum.IntFlag):
 
 
 class MessageTemplateCategory(enum.StrEnum):
-    MESSAGE = "MESSAGE"
-    BROADCAST = "BROADCAST"
-    WELCOME = "WELCOME"
-    REASON = "REASON"
     AUTO_SETTINGS = "AUTO_SETTINGS"
+    BROADCAST = "BROADCAST"
+    MESSAGE = "MESSAGE"
+    REASON = "REASON"
+    WELCOME = "WELCOME"
 
 
 class MessageTemplateType(TypedDict):
@@ -828,7 +850,8 @@ class MessageTemplateType(TypedDict):
 
 
 class AllMessageTemplateTypes(TypedDict):
-    MESSAGE: list[MessageTemplateType]
+    AUTO_SETTINGS: list[MessageTemplateType]
     BROADCAST: list[MessageTemplateType]
-    WELCOME: list[MessageTemplateType]
+    MESSAGE: list[MessageTemplateType]
     REASON: list[MessageTemplateType]
+    WELCOME: list[MessageTemplateType]

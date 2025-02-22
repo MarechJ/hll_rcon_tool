@@ -16,7 +16,7 @@ from rcon.utils import get_server_number
 logger = logging.getLogger(__name__)
 
 class LogRecorder:
-    def __init__(self, dump_frequency_seconds=10, log_history_fn: Callable[[], Iterable[StructuredLogLineWithMetaData]] =LogLoop.get_log_history_list):
+    def __init__(self, dump_frequency_seconds=10, log_history_fn: Callable[[], Iterable[StructuredLogLineWithMetaData]] = LogLoop.get_log_history_list):
         self.dump_frequency_seconds = dump_frequency_seconds
         self.server_id = get_server_number()
         self.log_history_fn = log_history_fn
@@ -38,19 +38,9 @@ class LogRecorder:
             if not isinstance(log, dict):
                 logger.warning("Log is invalid, not a dict: %s", log)
                 continue
-            if (
-                    not last_log
-                    or int(log["timestamp_ms"]) / 1000 > last_log.event_time.timestamp()
-            ):
-                to_store.append(log)
-            if (
-                    last_log
-                    and not int(log["timestamp_ms"]) / 1000
-                            == last_log.event_time.timestamp()
-                    and last_log.raw == log["raw"]
-            ):
-                logger.info("New logs collection at: %s", log)
-                return to_store
+            if last_log and int(log["timestamp_ms"]) / 1000 == last_log.event_time.timestamp() and '] ' + log["line_without_time"] in last_log.raw:
+                break
+            to_store.append(log)
         return to_store
 
     def _collect_player_ids(self, sess: Session, logs: list[StructuredLogLineWithMetaData]) -> dict[str, PlayerID | None]:
@@ -102,7 +92,7 @@ class LogRecorder:
     def run(self, run_immediately=False, one_off=False):
         last_run = datetime.datetime.now()
         if run_immediately or one_off:
-            last_run = last_run - datetime.timedelta(seconds=self.dump_frequency_seconds)
+            last_run = last_run - datetime.timedelta(seconds=self.dump_frequency_seconds + 1)
 
         while True:
             now = datetime.datetime.now()

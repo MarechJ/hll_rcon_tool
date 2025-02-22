@@ -23,9 +23,6 @@ from sentry_sdk.integrations.logging import LoggingIntegration
 
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 
-HLL_MAINTENANCE_CONTAINER = os.getenv("HLL_MAINTENANCE_CONTAINER")
-
-
 try:
     TAG_VERSION = (
         run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE)
@@ -36,6 +33,7 @@ except Exception:
     TAG_VERSION = "unknown"
 
 HLL_MAINTENANCE_CONTAINER = os.getenv("HLL_MAINTENANCE_CONTAINER")
+HLL_WH_SERVICE_CONTAINER = os.getenv("HLL_WH_SERVICE_CONTAINER")
 
 
 try:
@@ -166,7 +164,7 @@ CSRF_COOKIE_DOMAIN = os.getenv("CSRF_COOKIE_DOMAIN") or None
 # if we don't include the origin
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS.copy()
 
-if not HLL_MAINTENANCE_CONTAINER:
+if not HLL_MAINTENANCE_CONTAINER and not HLL_WH_SERVICE_CONTAINER:
     from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 
     rcon_config = RconServerSettingsUserConfig.load_from_db()

@@ -5,6 +5,9 @@ networks:
   common:
   server1:
 
+volumes:
+  scoreboard_db:
+
 # This is defined here and not in common-components because anchors don't
 # work between files and are prefixed with x- because they are just anchors
 # for merging later, if they're defined under services: docker will want to start them
@@ -63,6 +66,7 @@ x-supervisor: &supervisor
     - ./logs:/logs/
     - ./supervisor_data:/data
     - ./config:/config/
+    - scoreboard_db:/scoreboard_db
 x-frontend: &frontend
   build:
     context: .
