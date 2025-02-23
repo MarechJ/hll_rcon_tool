@@ -31,6 +31,7 @@ from rcon.webhook_service import (
     WebhookMessageType,
     WebhookType,
     enqueue_message,
+    get_message_edit_404_failure,
 )
 
 if TYPE_CHECKING:
@@ -52,11 +53,6 @@ MESSAGE_KEYS = (
     PLAYER_STATS,
 )
 SERVER_NUMBER = int(get_server_number())
-
-DB_PATH = pathlib.Path("./scoreboard.db")
-ENGINE: Engine = create_engine(
-    f"sqlite:///file:{DB_PATH}?mode=rwc&uri=true", echo=False
-)
 
 
 class Base(DeclarativeBase):
@@ -233,11 +229,12 @@ def build_header_gamestate_embed(
 ) -> DiscordEmbed:
     """Build an embed for the header/gamestate message"""
     embed = DiscordEmbed()
+    embed.set_url(str(config.public_scoreboard_url))
 
     gamestate: GameStateType = rcon_api.get_gamestate()
     vip_count_by_team = get_vip_count_by_team(rcon_api=rcon_api)
 
-    if config.server_name:
+    if config.header_gamestate_include_server_name:
         server_name = rcon_api.get_name()
         embed.title = server_name
 
@@ -320,11 +317,13 @@ def build_map_rotation_embed(
 ) -> DiscordEmbed:
     """Build an embed for the map rotation message"""
     embed = DiscordEmbed()
+    embed.set_url(str(config.public_scoreboard_url))
+
     rotation: list[Layer] = rcon_api.get_map_rotation()
     gamestate: GameStateType = rcon_api.get_gamestate()
 
     title = ""
-    if config.server_name:
+    if config.map_rotation_include_server_name:
         server_name = rcon_api.get_name()
         title = server_name
 
@@ -371,9 +370,10 @@ def build_player_stats_embed(
     player_stats: list[PlayerStatsType] = get_cached_live_game_stats()["stats"]
 
     embed = DiscordEmbed()
+    embed.set_url(str(config.public_scoreboard_url))
 
     title = ""
-    if config.server_name:
+    if config.player_stats_include_server_name:
         server_name = rcon_api.get_name()
         title = server_name
 
@@ -426,10 +426,13 @@ def send_message(
 ):
     wh.message_id = message_id
     wh.add_embed(embed)
-    # When a message doesn't exist; or we have no message IDs we have to
-    # create/send one; persist the ID and then enqueue future updates
-    # through the webhook service
-    if not message_id or not wh.message_exists():
+
+    # Check if the WH has flagged this as a bad (HTTP 404) message ID
+    # or if we don't have a message ID in the database
+    # The first run through when a message is deleted will cause a 404
+    # but subsequent sends should create a new one and this avoids us having to
+    # make a synch GET request to Discord for every message we want to send
+    if not message_id or get_message_edit_404_failure(message_id=message_id):
         message_id = create_initial_message(url=wh.url, embed=embed)
         save_message_id(
             session=session,
@@ -438,7 +441,7 @@ def send_message(
             value=message_id,
         )
     else:
-        logger.info(f"enqueing {wh.message_id=} {key=}")
+        logger.info(f"enqueuing {wh.message_id=} {key=}")
         enqueue_message(
             message=WebhookMessage(
                 discardable=True,
@@ -460,20 +463,22 @@ def run():
 
     try:
         if config.public_scoreboard_url is None:
-            logger.error(
+            logger.fatal(
                 "Your Public Scoreboard URL is not configured, set it and restart the Scoreboard service."
             )
             sys.exit(-1)
 
         if not config.hooks:
-            logger.error(
+            logger.fatal(
                 "You do not have any Discord webhooks configured, set some and restart the Scoreboard service."
             )
             sys.exit(-1)
 
-        last_updated_header_gamestate: datetime | None = None
-        last_updated_map_rotation: datetime | None = None
-        last_updated_player_stats: datetime | None = None
+        # Track the last updated time for each message key by webhook URL
+        last_updated: defaultdict[str, defaultdict[str, datetime | None]] = defaultdict(
+            lambda: defaultdict(lambda: None)
+        )
+
         while True:
             timestamp = datetime.now()
             config = ScoreboardUserConfig.load_from_db()
@@ -485,16 +490,16 @@ def run():
                 with enter_session() as session:
                     message_ids = get_set_wh_row(session=session, webhook_url=url)
                     for key in MESSAGE_KEYS:
-                        if key == HEADER_GAMESTATE:
+                        last_updated_key = last_updated[url][key]
+                        if key == HEADER_GAMESTATE and config.header_gamestate_enabled:
+
                             if (
-                                last_updated_header_gamestate
-                                and (
-                                    timestamp - last_updated_header_gamestate
-                                ).total_seconds()
+                                last_updated_key
+                                and (timestamp - last_updated_key).total_seconds()
                                 < config.header_gamestate_time_between_refreshes
                             ):
                                 continue
-                            last_updated_header_gamestate = timestamp
+                            last_updated[url][key] = timestamp
                             wh = DiscordWebhook(url=url)
                             embed = build_header_gamestate_embed(
                                 config=config,
@@ -509,16 +514,15 @@ def run():
                                 key=key,
                             )
 
-                        if key == MAP_ROTATION:
+                        if key == MAP_ROTATION and config.map_rotation_enabled:
+
                             if (
-                                last_updated_map_rotation
-                                and (
-                                    timestamp - last_updated_map_rotation
-                                ).total_seconds()
+                                last_updated_key
+                                and (timestamp - last_updated_key).total_seconds()
                                 < config.map_rotation_time_between_refreshes
                             ):
                                 continue
-                            last_updated_map_rotation = timestamp
+                            last_updated[url][key] = timestamp
                             wh = DiscordWebhook(url=url)
                             embed = build_map_rotation_embed(
                                 config=config,
@@ -533,16 +537,15 @@ def run():
                                 key=key,
                             )
 
-                        if key == PLAYER_STATS:
+                        if key == PLAYER_STATS and config.player_stats_enabled:
+
                             if (
-                                last_updated_player_stats
-                                and (
-                                    timestamp - last_updated_player_stats
-                                ).total_seconds()
-                                < config.player_stats_time_between_refreshes
+                                last_updated_key
+                                and (timestamp - last_updated_key).total_seconds()
+                                < config.map_rotation_time_between_refreshes
                             ):
                                 continue
-                            last_updated_player_stats = timestamp
+                            last_updated[url][key] = timestamp
                             wh = DiscordWebhook(url=url)
                             embed = build_player_stats_embed(
                                 config=config,
@@ -556,18 +559,32 @@ def run():
                                 message_id=message_ids.player_stats,
                                 key=key,
                             )
-                sleep_time = min(
-                    config.header_gamestate_time_between_refreshes,
-                    config.map_rotation_time_between_refreshes,
-                    config.player_stats_time_between_refreshes,
-                )
-                time.sleep(sleep_time)
+            sleep_time = min(
+                config.header_gamestate_time_between_refreshes,
+                config.map_rotation_time_between_refreshes,
+                config.player_stats_time_between_refreshes,
+            )
+            time.sleep(sleep_time)
+
     except Exception as e:
         logger.exception("The bot stopped", e)
         raise
 
 
 if __name__ == "__main__":
+    VOLUME_PATH = pathlib.Path("/scoreboard_db")
+
+    if not VOLUME_PATH.exists():
+        logger.fatal(
+            "Your scoreboard volume is not configured correctly in your compose.yaml file."
+        )
+        sys.exit(-1)
+
+    DB_PATH = pathlib.Path("/scoreboard_db") / pathlib.Path("./scoreboard.db")
+    ENGINE: Engine = create_engine(
+        f"sqlite:///file:{DB_PATH}?mode=rwc&uri=true", echo=False
+    )
+
     try:
         logger.info("Attempting to start scorebot")
         Base.metadata.create_all(ENGINE)

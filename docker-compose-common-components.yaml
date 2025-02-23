@@ -6,7 +6,7 @@ services:
     command: redis-server /usr/local/etc/redis/redis.conf
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      test: [ "CMD-SHELL", "redis-cli ping | grep PONG" ]
       interval: 15s
       timeout: 30s
       retries: 5
@@ -27,8 +27,7 @@ services:
       HLL_DB_USER: ${HLL_DB_USER}
     restart: always
     healthcheck:
-      test:
-        ["CMD", "pg_isready", "-U", "${HLL_DB_USER}", "-d", "${HLL_DB_NAME}"]
+      test: [ "CMD", "pg_isready", "-U", "${HLL_DB_USER}", "-d", "${HLL_DB_NAME}" ]
       interval: 15s
       timeout: 30s
       retries: 5
@@ -55,11 +54,7 @@ services:
     command: maintenance
     restart: always
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "if [ -e /code/maintenance-container-healthy ]; then echo 0; else echo 1; fi",
-        ]
+      test: [ "CMD-SHELL", "if [ -e /code/maintenance-container-healthy ]; then echo 0; else echo 1; fi" ]
       start_period: 30s
       interval: 15s
       timeout: 30s
@@ -75,6 +70,9 @@ services:
       - common
   # This is used to handle webhooks to discord (and other services in the future)
   webhook_service:
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: ${BACKEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
     environment:
       HLL_WH_SERVICE_CONTAINER: true
@@ -95,13 +93,9 @@ services:
       HLL_WH_SERVICE_RL_TIME_WINDOW: ${HLL_WH_SERVICE_RL_TIME_WINDOW}
       HLL_WH_MAX_QUEUE_LENGTH: ${HLL_WH_MAX_QUEUE_LENGTH}
     command: webhook_service
-    restart: no
+    restart: always
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "if [ -e /code/webhook-service-healthy ]; then echo 0; else echo 1; fi",
-        ]
+      test: [ "CMD-SHELL", "if [ -e /code/webhook-service-healthy ]; then echo 0; else echo 1; fi" ]
       start_period: 30s
       interval: 15s
       timeout: 30s

@@ -41,6 +41,9 @@ GLOBAL_RATE_LIMIT_RESET_AFTER = f"{GLOBAL_RATE_LIMIT}:reset_after"
 # Track HTTP 401/403 errors by webhook ID
 WEBHOOK_ERRORS = f"{PREFIX}:errors"
 
+# Track failed message (HTTP 404 errors) by message ID
+MESSAGE_DOES_NOT_EXIST = f"{PREFIX}:message_404"
+
 DEFAULT_GLOBAL_RETRY_AFTER_SECS = 5 * 60
 
 # Discord response headers
@@ -85,6 +88,44 @@ _RATE_LIMIT_BUCKETS: defaultdict[str, asyncio.Lock | None] = defaultdict(lambda:
 _SHARED_LOCK: asyncio.Lock | None = None
 
 
+def set_message_edit_404_failure(
+    red: redis.StrictRedis,
+    message_id: str,
+    prefix: str = MESSAGE_DOES_NOT_EXIST,
+    value: bool = True,
+    ttl=120,
+) -> None:
+    """Set a flag in redis for a message ID to communicate back to a sender that the message does not exist"""
+    red.set(f"{prefix}:{message_id}", b"1" if value else b"0", ex=ttl)
+
+
+def get_message_edit_404_failure(
+    message_id: str,
+    red: redis.StrictRedis | None = None,
+    prefix: str = MESSAGE_DOES_NOT_EXIST,
+) -> bool:
+    """Check if a specific message ID received an HTTP 404 error from Discord"""
+    # Allows easier usage for enqueing from different services/sections of CRCON
+    if red is None:
+        url = construct_redis_url(db_number=0)
+        red = get_redis_client(redis_url=url, decode_responses=False, global_pool=True)
+    return red.get(f"{prefix}:{message_id}") == b"1"
+
+
+def clear_queue_by_message_id(red: redis.StrictRedis, queue_id: str, message_id: str):
+    """Delete all messages from a queue that have message_id
+
+    This allows us to remove all queued edits to a message ID that no longer exists
+    """
+
+    # Traverse the list and identify all the values that contain message_id
+    # and then LREM them
+    for raw_message in red.lrange(queue_id, 0, -1):
+        message = unpack_message(raw_message=raw_message)
+        if message_id == message.payload["message_id"]:
+            red.lrem(queue_id, 0, raw_message)
+
+
 def get_shared_lock() -> asyncio.Lock:
     """Singleton instance for our shared lock that is used before a rate limit bucket is determined"""
     global _SHARED_LOCK
@@ -106,6 +147,7 @@ class DiscordErrorResponse(TypedDict):
 
     http_401: bool
     http_403: bool
+    http_404: bool
 
 
 class WebhookMessageType(StrEnum):
@@ -358,6 +400,7 @@ def set_webhook_error(
     webhook_type: WebhookType,
     auth_401: bool = False,
     auth_403: bool = False,
+    _404: bool = False,
     prefix: str = WEBHOOK_ERRORS,
 ):
     """Store the last error received for a webhook; cleared after a successful request"""
@@ -366,6 +409,7 @@ def set_webhook_error(
     payload: DiscordErrorResponse = {
         "http_401": int(auth_401),  # type: ignore
         "http_403": int(auth_403),  # type: ignore
+        "http_404": int(_404),  # type: ignore
     }
     red.hset(key, mapping=payload)  # type: ignore
 
@@ -383,6 +427,7 @@ def get_webhook_error(
     values: DiscordErrorResponse = {
         "http_401": True if raw.get(b"http_401") == b"1" else False,
         "http_403": True if raw.get(b"http_403") == b"1" else False,
+        "http_404": True if raw.get(b"http_404") == b"1" else False,
     }
     return values
 
@@ -426,6 +471,23 @@ def enqueue_message(
     red.rpush(queue_id, orjson.dumps(message.model_dump_json()))
 
 
+def construct_webhook(
+    payload: DiscordWebhookDict, webhook_type: WebhookType
+) -> AsyncDiscordWebhook:
+    if webhook_type == WebhookType.DISCORD:
+        unpacked: DiscordWebhookDict = payload  # type: ignore
+        wh = AsyncDiscordWebhook(**unpacked)
+    else:
+        raise TypeError(f"{webhook_type} is an unsupported webhook type")
+
+    return wh
+
+
+def unpack_message(raw_message: bytes) -> WebhookMessage:
+    message = WebhookMessage.model_validate_json(orjson.loads(raw_message))
+    return message
+
+
 async def dequeue_message(
     red: redis.StrictRedis,
     client: httpx.AsyncClient,
@@ -447,18 +509,43 @@ async def dequeue_message(
     ):
         logger.debug("Dequeueing from %s", queue_id)
         raw_message: bytes = red.lpop(queue_id)  # type: ignore
-        message = WebhookMessage.model_validate_json(orjson.loads(raw_message))
-
-        if message.webhook_type == WebhookType.DISCORD:
-            unpacked: DiscordWebhookDict = message.payload  # type: ignore
-            wh = AsyncDiscordWebhook(**unpacked)
-        else:
-            raise TypeError(f"{message.webhook_type} is an unsupported webhook type")
+        message = unpack_message(raw_message=raw_message)
+        wh = construct_webhook(
+            payload=message.payload, webhook_type=message.webhook_type
+        )
 
         if message.edit:
             res: httpx.Response = await wh.edit(client=client)
         else:
             res: httpx.Response = await wh.execute(client=client)  # type: ignore
+
+        # If a webhook ID is incorrect it will return 401 which we already handle
+        # but if a message ID doesn't exist it will return 404 and not have rate
+        # limit headers
+        # Technically we could make this fixable and re-enqueue the messages but
+        # the only thing we do edits for are the scoreboard and those messages
+        # are inherently transient; so we will set the error status for the webhook ID
+        # and drop the message
+        if res.status_code == 404:
+            logger.error(
+                f"Received HTTP 404 from the webhook with webhook ID: {message.payload.get('webhook_id')} message ID: {message.payload.get('message_id')} purging the queue for this message ID"
+            )
+            # Mark this specific message ID as a 404 failure
+            set_message_edit_404_failure(
+                red=red, message_id=message.payload["message_id"]
+            )
+            clear_queue_by_message_id(
+                red=red, queue_id=queue_id, message_id=message.payload["message_id"]
+            )
+            # Flag this webhook as having an error
+            set_webhook_error(
+                red=red,
+                webhook_id=wh.webhook_id,
+                webhook_type=message.webhook_type,
+                _404=True,
+            )
+
+            return
 
         bucket_data.webhook_type = message.webhook_type
         bucket_data.id = res.headers[X_RATELIMIT_BUCKET]
@@ -467,9 +554,6 @@ async def dequeue_message(
         bucket_data.reset_timestamp = math.ceil(
             datetime.now().timestamp() + bucket_data.reset_after_secs
         )
-
-        bucket_id = bucket_data.id[-4:] if bucket_data and bucket_data.id else "N/A"
-        rem_reqs = bucket_data.remaining_requests if bucket_data else None
 
         if lock == get_shared_lock():
             # Once we get a response for a webhook we know what rate limit bucket it's in and we can
@@ -589,18 +673,11 @@ def get_all_queue_keys(
     if red is None:
         red = get_redis_client(decode_responses=False, global_pool=True)
 
-    queue_ids: list[str] = []
-    cursor, keys = red.scan(match=f"{prefix}*", _type="list")  # type: ignore
-    idx = 0
-    logger.debug("cursor=%s len(keys)=%s", cursor, len(keys))
-    queue_ids.extend(keys)
-    while cursor is not None and cursor > 0:
-        idx += 1
-        cursor, keys = red.scan(match=f"{prefix}*", _type="list")  # type: ignore
-        logger.debug("%s cursor=%s len(keys)=%s", idx, cursor, len(keys))
-        queue_ids.extend(keys)
-
-    return [queue_id.decode() for queue_id in queue_ids]  # type: ignore
+    queue_ids: list[str] = [
+        queue_id.decode()
+        for queue_id in red.scan_iter(match=f"{prefix}*", _type="list")
+    ]
+    return queue_ids
 
 
 def get_all_queue_keys_and_lengths(
