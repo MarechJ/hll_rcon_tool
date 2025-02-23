@@ -19,7 +19,7 @@ import {
   TableCell,
   TableBody,
 } from "@mui/material";
-import { Close } from "@mui/icons-material";
+import { Close, ConstructionOutlined } from "@mui/icons-material";
 import { TabContext, TabPanel } from "@mui/lab";
 import dayjs from "dayjs";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
@@ -268,10 +268,7 @@ const PlayerDetails = ({ player, onClose }) => {
               profile.total_playtime_seconds ?? profile.total_playtime_seconds
             }
             vip={playerVip}
-            otherVips={profile.vips.filter(
-              // if player is not VIP on this server, the 'playerVip' will be undefined
-              (vip) => vip.server_number !== (playerVip?.server_number ?? -1)
-            )}
+            otherVips={profile.vip_lists}
             names={profile.names}
             watchlist={profile.watchlist}
           />

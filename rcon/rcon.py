@@ -10,17 +10,18 @@ from itertools import chain
 from time import sleep
 from typing import Any, Iterable, List, Literal, Optional, Sequence, overload
 
-from dateutil import parser
-
+from rcon.vip import get_vip_status_for_player_ids
 import rcon.steam_utils
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
-from rcon.commands import SUCCESS, CommandFailedError, ServerCtl, VipId
+from rcon.commands import SUCCESS, CommandFailedError, ServerCtl
 from rcon.maps import UNKNOWN_MAP_NAME, Layer, is_server_loading_map, parse_layer
-from rcon.models import PlayerID, PlayerVIP, enter_session
-from rcon.player_history import get_profiles, safe_save_player_action, save_player, get_player_profile
+from rcon.player_history import (
+    get_profiles,
+    safe_save_player_action,
+    get_player_profile,
+)
 from rcon.settings import SERVER_INFO
 from rcon.types import (
-    PlayerProfileType,
     AdminType,
     GameLayoutRandomConstraints,
     GameServerBanType,
@@ -36,17 +37,19 @@ from rcon.types import (
     StructuredLogLineType,
     StructuredLogLineWithMetaData,
     VipIdType,
+    VipIdWithExpirationType,
 )
+from rcon.steam_utils import is_steam_id_64
+from rcon.win_store_utils import is_windows_store_id
 from rcon.user_config.rcon_connection_settings import RconConnectionSettingsUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.utils import BaseUserConfig
 from rcon.utils import (
     ALL_ROLES,
     ALL_ROLES_KEY_INDEX_MAP,
-    INDEFINITE_VIP_DATE,
     default_player_info_dict,
-    get_server_number,
     parse_raw_player_info,
+    SERVER_NUMBER,
 )
 
 PLAYER_ID = "player_id"
@@ -267,7 +270,7 @@ class Rcon(ServerCtl):
 
         futures: dict[Future[Any], GetDetailedPlayer] = {}
         for player in players:
-            res =  self.run_in_pool("get_detailed_player_info", player[NAME], player)
+            res = self.run_in_pool("get_detailed_player_info", player[NAME], player)
             futures[res] = player
 
         for future in as_completed(futures):
@@ -473,7 +476,9 @@ class Rcon(ServerCtl):
         }
 
     @ttl_cache(ttl=2, cache_falsy=False)
-    def get_detailed_player_info(self, player_name: str, player: GetPlayersType | None = None) -> GetDetailedPlayer:
+    def get_detailed_player_info(
+        self, player_name: str, player: GetPlayersType | None = None
+    ) -> GetDetailedPlayer:
         raw = super().get_player_info(player_name)
         if not raw:
             raise CommandFailedError("Got bad data")
@@ -491,14 +496,14 @@ class Rcon(ServerCtl):
         """
 
         player_data = parse_raw_player_info(raw, player_name)
-        if player is not None and 'is_vip' in player:
-            player_data["is_vip"] = player.get('is_vip')
+        if player is not None and "is_vip" in player:
+            player_data["is_vip"] = player.get("is_vip")
         else:
             vip_player_ids = set(v[PLAYER_ID] for v in super().get_vip_ids())
             player_data["is_vip"] = player_data["player_id"] in vip_player_ids
 
-        if player is not None and 'profile' in player:
-            player_data["profile"] = player.get('profile')
+        if player is not None and "profile" in player:
+            player_data["profile"] = player.get("profile")
         else:
             profile = get_player_profile(player_data["player_id"], 1)
             player_data["profile"] = profile
@@ -611,156 +616,97 @@ class Rcon(ServerCtl):
         return list(filter(lambda x: x.get(PLAYER_ID) == player_id, bans))
 
     @ttl_cache(ttl=60 * 5)
-    def get_vip_ids(self) -> list[VipIdType]:
-        res: list[VipId] = super().get_vip_ids()
+    def get_vip_ids(self) -> list[VipIdWithExpirationType]:
+        vip_ids: list[VipIdType] = super().get_vip_ids()
+
+        vip_lookup = get_vip_status_for_player_ids(
+            player_ids=set(player["player_id"] for player in vip_ids)
+        )
+
         player_dicts = []
-
-        vip_expirations: dict[str, datetime]
-        with enter_session() as session:
-            server_number = get_server_number()
-
-            players: list[PlayerVIP] = (
-                session.query(PlayerVIP)
-                .filter(PlayerVIP.server_number == server_number)
-                .all()
-            )
-            vip_expirations = {
-                player.player.player_id: player.expiration for player in players
-            }
-
-        for item in res:
-            player: VipIdType = {
+        for item in vip_ids:
+            player: VipIdWithExpirationType = {
                 PLAYER_ID: item[PLAYER_ID],
                 NAME: item["name"],
-                "vip_expiration": None,
+                # Players can have VIP on the game server that we're unaware of
+                # from a VIP list; this mimics that by giving them a `None`
+                # expiration; which is the same as an indefinite VIP expiration
+                # on a VIP list
+                "expires_at": vip_lookup.get(item[PLAYER_ID], {}).get("expires_at"),
             }
-            player["vip_expiration"] = vip_expirations.get(item[PLAYER_ID], None)
             player_dicts.append(player)
 
         return sorted(player_dicts, key=lambda d: d[NAME])
 
-    def remove_vip(self, player_id) -> bool:
-        """Removes VIP status on the game server and removes their PlayerVIP record."""
-
-        # Remove VIP before anything else in case we have errors
+    def remove_vip(self, player_id: str) -> bool:
+        """Removes VIP status on the game server."""
         with invalidates(Rcon.get_vip_ids):
             result = super().remove_vip(player_id)
+            return result
 
-        server_number = get_server_number()
-        with enter_session() as session:
-            player: PlayerID | None = (
-                session.query(PlayerID)
-                .filter(PlayerID.player_id == player_id)
-                .one_or_none()
-            )
-            if player and player.vip:
-                logger.info(
-                    f"Removed VIP from {player_id} expired: {player.vip.expiration}"
-                )
-                # TODO: This is an incredibly dumb fix because I can't get
-                # the changes to persist otherwise
-                vip_record: PlayerVIP | None = (
-                    session.query(PlayerVIP)
-                    .filter(
-                        PlayerVIP.player_id_id == player.id,
-                        PlayerVIP.server_number == server_number,
-                    )
-                    .one_or_none()
-                )
-                session.delete(vip_record)
-            elif player and not player.vip:
-                logger.warning(f"{player_id} has no PlayerVIP record")
-            else:
-                # This is okay since you can give VIP to someone who has never been on a game server
-                # or that your instance of CRCON hasn't seen before, but you might want to prune these
-                logger.warning(f"{player_id} has no PlayerSteamID record")
-
-        return result
-
-    def add_vip(
-        self, player_id: str, description: str, expiration: str | None = None
-    ) -> str:
-        """Adds VIP status on the game server and adds or updates their PlayerVIP record."""
+    def add_vip(self, player_id: str, description: str) -> bool:
+        """Adds VIP status on the game server."""
         with invalidates(Rcon.get_vip_ids):
-            # Add VIP before anything else in case we have errors
+            # Prevent people from adding nonsense to the game server
+            if not is_steam_id_64(player_id) and not is_windows_store_id(player_id):
+                raise ValueError(f"{player_id} is not a valid player ID format")
             result = super().add_vip(player_id, description)
+            return result
 
-        expiration = expiration or ""
-        # postgres and Python have different max date limits
-        # https://docs.python.org/3.8/library/datetime.html#datetime.MAXYEAR
-        # https://www.postgresql.org/docs/12/datatype-datetime.html
+    def bulk_add_vips(self, vips: Iterable[VipIdType]):
+        """Use a threadpool to mass add VIPs"""
+        futures: dict[Future[Any], VipIdType] = {}
+        results_by_player: dict[str, bool] = {}
 
-        server_number = get_server_number()
-        # If we're unable to parse the date, treat them as indefinite VIPs
-        expiration_date: str | datetime
-        try:
-            expiration_date = parser.parse(expiration)
-        except (parser.ParserError, OverflowError):
-            logger.warning(
-                f"Unable to parse {expiration=} for {description=} {player_id=}"
-            )
-            # For our purposes (human lifespans) we can use 200 years in the future as
-            # the equivalent of indefinite VIP access
-            expiration_date = INDEFINITE_VIP_DATE
-
-        # Find a player and update their expiration date if it exists or create a new record if not
-        with enter_session() as session:
-            player: PlayerID | None = (
-                session.query(PlayerID)
-                .filter(PlayerID.player_id == player_id)
-                .one_or_none()
-            )
-            if player is None:
-                # If a player has never been on the server before and their record is
-                # being created from a VIP list upload, their alias will be saved with
-                # whatever name is in the upload file which may have metadata in it since
-                # people use the free form name field in VIP uploads to store stuff
-                save_player(player_name=description, player_id=player_id)
-                # Can't use a return value from save_player or it's not bound
-                # to the session https://docs.sqlalchemy.org/en/20/errors.html#error-bhk3
-                player = (
-                    session.query(PlayerID)
-                    .filter(PlayerID.player_id == player_id)
-                    .one()
-                )
-
-            vip_record: PlayerVIP | None = (
-                session.query(PlayerVIP)
-                .filter(
-                    PlayerVIP.server_number == server_number,
-                    PlayerVIP.player_id_id == player.id,
-                )
-                .one_or_none()
-            )
-
-            if vip_record is None:
-                vip_record = PlayerVIP(
-                    expiration=expiration_date,
-                    player_id_id=player.id,
-                    server_number=server_number,
-                )
-                logger.info(
-                    f"Added new PlayerVIP record {player.player_id=} {expiration_date=}"
-                )
-                session.add(vip_record)
-            else:
-                previous_expiration = vip_record.expiration.isoformat()
-                vip_record.expiration = expiration_date
-                logger.info(
-                    f"Modified PlayerVIP record {player.player_id=} {vip_record.expiration} {previous_expiration=}"
-                )
-
-        return result
-
-    def remove_all_vips(self) -> bool:
-        vips = self.get_vip_ids()
         for vip in vips:
-            try:
-                self.remove_vip(vip[PLAYER_ID])
-            except (CommandFailedError, ValueError):
-                raise
+            pool_result = self.run_in_pool("add_vip", vip["player_id"], vip["name"])
+            futures[pool_result] = vip
 
-        return True
+        fail_count = 0
+        for future in as_completed(futures):
+            vip_data = futures[future]
+            future_result = False
+
+            try:
+                future_result: bool = future.result()
+            except Exception:
+                logger.error("Failed to add VIP for %s", vip_data["player_id"])
+
+            if not future_result:
+                fail_count += 1
+            results_by_player[vip_data["player_id"]] = future_result
+
+        return {"results": results_by_player, "fail_count": fail_count}
+
+    def bulk_remove_vips(self, player_ids: Iterable[str]):
+        futures: dict[Future[Any], str] = {}
+        results_by_player: dict[str, bool] = {}
+
+        for player_id in player_ids:
+            pool_result = self.run_in_pool("remove_vip", player_id)
+            futures[pool_result] = player_id
+
+        fail_count = 0
+        for future in as_completed(futures):
+            player_id = futures[future]
+            future_result = False
+
+            try:
+                future_result: bool = future.result()
+            except Exception as e:
+                logger.error("Failed to add VIP for %s", player_id)
+
+            if not future_result:
+                fail_count += 1
+            results_by_player[player_id] = future_result
+
+        return {"results": results_by_player, "fail_count": fail_count}
+
+    def remove_all_vips(self):
+        vips = self.get_vip_ids()
+        return self.bulk_remove_vips(
+            player_ids=[player["player_id"] for player in vips]
+        )
 
     def message_player(
         self,
@@ -1079,7 +1025,7 @@ class Rcon(ServerCtl):
             "current_players": current_players,
             "max_players": max_players,
             "short_name": config.short_name,
-            "server_number": int(get_server_number()),
+            "server_number": SERVER_NUMBER,
         }
 
     @ttl_cache(ttl=60 * 60 * 24)
