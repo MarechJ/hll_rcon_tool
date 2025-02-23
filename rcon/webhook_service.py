@@ -919,7 +919,7 @@ async def main():
                 bucket_data, lock = get_bucket_lock(red=red, bucket_id=bucket_id)
                 if lock and lock.locked():
                     logger.debug("%s locked", lock)
-                    await asyncio.sleep(0.5)
+                    await asyncio.sleep(0)
                     continue
                 ts = int(datetime.now(tz=timezone.utc).timestamp())
 
@@ -977,7 +977,15 @@ async def main():
                     )
                 )
 
-        await asyncio.sleep(1.0)
+        # If we never await something we never allow any of the tasks to run
+        # but sleeping a specific amount of time can prevent queues from emptying
+        # faster than CRCON can fill them up
+        # however sleeping `0` seconds  gives the event loop an opportunity for
+        # tasks to run; this does cause CPU usage to increase because this loop
+        # runs far more often; we've limited the CPU usage by default to 1 core in
+        # the webhook service definition in `docker-compose-common-components.yaml`
+        # https://docs.python.org/3/library/asyncio-task.html#sleeping
+        await asyncio.sleep(0)
 
 
 if __name__ == "__main__":
