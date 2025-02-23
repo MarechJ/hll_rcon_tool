@@ -54,8 +54,12 @@ import { loader as configLoader } from "./pages/settings/[configs]/detail";
 import { action as configAction } from "./pages/settings/[configs]/detail";
 
 import PlayerProfile from "./pages/records/players/[playerId]";
-import { loader as playerProfileLoader } from "./pages/records/players/[playerId]";
-import { action as playerProfileAction } from "./pages/records/players/[playerId]";
+import PlayerProfileDetail from "./pages/records/players/[playerId]/[detail]";
+import { loader as playerProfileLoader } from "./pages/records/players/[playerId]/router";
+import { action as playerProfileAction } from "./pages/records/players/[playerId]/router";
+
+import PlayerLogs from "./pages/records/players/[playerId]/[detail]/logs";
+import { loader as playerLogsLoader } from "./pages/records/players/[playerId]/[detail]/logs";
 
 import ServicesSettings from "./pages/settings/services";
 import { loader as servicesLoader } from "./pages/settings/services";
@@ -90,7 +94,7 @@ import VipSettings from "./pages/settings/vip";
 import { loader as vipLoader } from "./pages/settings/vip";
 
 import { AuthProvider } from "@/hooks/useAuth";
-import { GlobalState } from "@/hooks/useGlobalState";
+import { GlobalState } from "./stores/global-state";
 import RouteError from "@/components/shared/RouteError";
 
 const router = createBrowserRouter([
@@ -160,6 +164,19 @@ const router = createBrowserRouter([
               ],
             },
             errorElement: <RouteError />,
+            children: [
+              {
+                path: ":detail",
+                element: <PlayerProfileDetail />,
+                errorElement: <RouteError />,
+              },
+              {
+                path: "logs",
+                element: <PlayerLogs />,
+                errorElement: <RouteError />,
+                loader: playerLogsLoader,
+              },
+            ],
           },
           {
             path: "blacklists",
@@ -183,7 +200,7 @@ const router = createBrowserRouter([
           {
             path: "vip-lists",
             handle: {
-              crumb: () => <Link to={"/records/vip-lists"}>VIP Lists</Link>,
+              crumb: () => <Link to={"/records/blacklists"}>VIP Lists</Link>,
             },
             element: <VipListRecords />,
             errorElement: <RouteError />,
@@ -192,7 +209,7 @@ const router = createBrowserRouter([
             path: "vip-lists/manage",
             handle: {
               crumb: () => [
-                <Link to={"/records/vip-lists"}>VIP Lists</Link>,
+                <Link to={"/records/blacklists"}>VIP Lists</Link>,
                 <span>Manage</span>,
               ],
             },

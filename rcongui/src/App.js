@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import relativeTimePlugin from 'dayjs/plugin/relativeTime';
 import durationPlugin from 'dayjs/plugin/duration';
+import timezonePlugin from 'dayjs/plugin/timezone';
 import adminRouter from "./router"
 import { QueryClientProvider } from '@tanstack/react-query';
 import localforage from 'localforage';
@@ -13,13 +14,15 @@ import {StrictMode} from "react";
 import AppTheme from "@/themes/AppTheme";
 import { CssBaseline } from '@mui/material';
 import { useAppStore } from './stores/app-state';
+import TitleManager from './features/title-manager/TitleManager';
 
 const App = () => {
   // Dayjs plugins
   dayjs.extend(relativeTimePlugin);
   dayjs.extend(durationPlugin);
   dayjs.extend(utc);
-
+  dayjs.extend(timezonePlugin);
+  
   // Configure LocalForage
   localforage.config({
     name: siteConfig.appName, // Name of the database
@@ -39,6 +42,7 @@ const App = () => {
           <RouterProvider router={adminRouter} />
           <ReactQueryDevtools initialIsOpen={false} />
         </AppTheme>
+        <TitleManager />
       </QueryClientProvider>
     </StrictMode>
   );

@@ -2,13 +2,10 @@ import {
   Box,
   IconButton,
   Typography,
-  Drawer,
   Divider,
-  Avatar,
   Tabs,
   Tab,
   Stack,
-  Badge,
   Accordion,
   AccordionSummary,
   AccordionDetails,
@@ -22,297 +19,25 @@ import {
   TableCell,
   TableBody,
 } from "@mui/material";
-import { Close } from "@mui/icons-material";
+import { Close, ConstructionOutlined } from "@mui/icons-material";
 import { TabContext, TabPanel } from "@mui/lab";
-import { styled } from "@mui/material/styles";
-import { ActionMenu } from "@/features/player-action/ActionMenu";
 import dayjs from "dayjs";
-import StarIcon from "@mui/icons-material/Star";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-import VisibilityIcon from "@mui/icons-material/Visibility";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import NoAccountsIcon from "@mui/icons-material/NoAccounts";
-import GavelIcon from "@mui/icons-material/Gavel";
-import { green, red, yellow } from "@mui/material/colors";
 import { useActionDialog } from "@/hooks/useActionDialog";
 import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
 import { generatePlayerActions } from "@/features/player-action/actions";
 import { ClientError } from "../shared/ClientError";
 import { useState } from "react";
 import {
-  getSteamProfileUrl,
-  isSteamPlayer,
-} from "@/utils/lib";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSteam } from "@fortawesome/free-brands-svg-icons";
-import { Link } from "react-router-dom";
-import { Chip } from "@mui/material";
-import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
-import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
-import PersonIcon from "@mui/icons-material/Person";
-import FlagIcon from "@mui/icons-material/Flag";
-import WarningIcon from "@mui/icons-material/Warning";
-import Emoji from "../shared/Emoji";
-import CopyableText from "../shared/CopyableText";
-import SportsEsportsIcon from '@mui/icons-material/SportsEsports';
-
-const OnlineStatusBadge = styled(Badge, {
-  shouldForwardProp: (props) => props !== "isOnline",
-})(({ theme, isOnline }) => ({
-  "& .MuiBadge-badge": {
-    backgroundColor: isOnline ? green["500"] : red["500"],
-    color: isOnline ? green["500"] : red["500"],
-    boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
-    "&::after": {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
-      borderRadius: "50%",
-      animation: isOnline ? "ripple 1.2s infinite ease-in-out" : "none",
-      border: "1px solid currentColor",
-      content: '""',
-    },
-  },
-  "@keyframes ripple": {
-    "0%": {
-      transform: "scale(.8)",
-      opacity: 1,
-    },
-    "100%": {
-      transform: "scale(2.4)",
-      opacity: 0,
-    },
-  },
-}));
-
-const ResponsiveDrawer = styled(Drawer)(({ theme }) => ({
-  "& .MuiDrawer-paper": {
-    width: "100%",
-    [theme.breakpoints.up("sm")]: {
-      width: "30rem",
-    },
-  },
-}));
-
-const ProfileWrapper = styled(Box)(({ theme }) => ({
-  width: "100%",
-  height: "100%",
-  overflowX: "hidden",
-  paddingTop: theme.spacing(1),
-  paddingBottom: theme.spacing(2),
-  [theme.breakpoints.up("sm")]: {
-    width: "30rem",
-  },
-}));
-
-const ProfileHeader = styled(Stack)(({ theme }) => ({
-  paddingRight: theme.spacing(1),
-  paddingLeft: theme.spacing(2),
-  paddingTop: theme.spacing(2),
-  marginBottom: theme.spacing(1),
-  alignItems: "center",
-  textAlign: "center",
-  position: "relative",
-}));
-
-const Message = styled(Box)(({ theme }) => ({
-  background:
-    theme.palette.mode === "dark"
-      ? theme.palette.primary.dark
-      : theme.palette.primary.light,
-  color: theme.palette.primary.contrastText,
-  paddingTop: theme.spacing(1),
-  paddingBottom: theme.spacing(1),
-  paddingRight: theme.spacing(1.5),
-  paddingLeft: theme.spacing(1.5),
-  borderRadius: theme.shape.borderRadius,
-  borderBottomRightRadius: 0,
-}));
-
-const VipEntry = ({ vip }) => {
-  // vip.expiration is null if the VIP expiration is set indefinitely
-  const expiration = dayjs(vip.expiration);
-  const isActive = expiration === null ? true : expiration.isAfter(dayjs());
-  // When the VIP is not created by CRCON, there is player.vip = true but no vip record entry exists
-  const isNotCreatedByCrcon = vip.not_created_by_crcon;
-
-  return (
-    <Stack direction="row" alignItems="center" spacing={1}>
-      <Typography variant="body2" component="span">
-        Server #{vip.server_number}
-      </Typography>
-      <div>
-        <Chip
-          label={isActive ? "VIP" : "Expired"}
-          color={isActive ? "primary" : "error"}
-          variant={isActive ? "filled" : "outlined"}
-          icon={isNotCreatedByCrcon ? <WarningIcon /> : null}
-        />
-      </div>
-      <Typography variant="body2" component="span">
-        {isActive ? "until" : "from"} {dayjs(vip.expiration).format("LLL")}
-      </Typography>
-    </Stack>
-  );
-};
-
-const VipStatus = ({ vip, otherVips }) => {
-  if (!vip && otherVips.length === 0) {
-    return <Typography>No VIP records found</Typography>;
-  }
-
-  return (
-    <Stack spacing={1}>
-      {vip && <VipEntry vip={vip} />}
-      {otherVips.length > 0 && (
-        <>
-          {vip && <Divider variant="middle" sx={{ my: 4 }} />}
-          {otherVips.map((vip) => (
-            <VipEntry key={vip.server_number} vip={vip} />
-          ))}
-        </>
-      )}
-    </Stack>
-  );
-};
-
-const WatchlistStatus = ({ watchlist }) => {
-  if (!watchlist) {
-    return <Typography>No watchlist records found</Typography>;
-  }
-
-  const isActive = watchlist.is_watched;
-
-  return (
-    <Stack spacing={1}>
-      <Typography>{watchlist.reason || "[no reason]"}</Typography>
-      <Chip
-        label={isActive ? "Active" : "Inactive"}
-        color={isActive ? "primary" : "error"}
-        variant={isActive ? "filled" : "outlined"}
-        sx={{ width: "fit-content" }}
-      />
-      <Typography>Visits since: {watchlist.count}</Typography>
-      <Typography>By: {watchlist.by}</Typography>
-      {isActive && (
-        <Typography>
-          Modified: {dayjs(watchlist.modified).format("LLL")}
-        </Typography>
-      )}
-    </Stack>
-  );
-};
-
-const FlagStatus = ({ flags }) => {
-  if (!flags.length) {
-    return <Typography>No flags found</Typography>;
-  }
-
-  return (
-    <Stack>
-      {flags.map(({ flag, comment, modified }) => (
-        <Stack direction="row" alignItems="center" spacing={1} key={flag}>
-          <Typography>
-            <Emoji emoji={flag} />
-          </Typography>
-          <Typography variant="body2">{comment || "[no comment]"}</Typography>
-        </Stack>
-      ))}
-    </Stack>
-  );
-};
-
-const BasicProfileDetails = ({
-  firstSeen,
-  lastSeen,
-  vip,
-  otherVips,
-  sessionCount,
-  flags,
-  totalPlaytime,
-  names,
-  watchlist,
-}) => {
-  return (
-    <Stack spacing={3}>
-      <Box component="section">
-        <Typography
-          variant="h6"
-          sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1 }}
-        >
-          <FlagIcon /> Flags
-        </Typography>
-        <FlagStatus flags={flags} />
-      </Box>
-
-      <Divider />
-
-      <Box component="section">
-        <Typography
-          variant="h6"
-          sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1 }}
-        >
-          <CalendarTodayIcon /> Activity
-        </Typography>
-        <Stack spacing={0.5}>
-          <Typography>First Seen: {dayjs(firstSeen).format("LLL")}</Typography>
-          <Typography>Last Seen: {dayjs(lastSeen).format("LLL")}</Typography>
-          <Typography>Visits: {sessionCount}</Typography>
-          <Typography>
-            Playtime: {Math.floor(totalPlaytime / 3600)} hours
-          </Typography>
-        </Stack>
-      </Box>
-
-      <Divider />
-
-      <Box component="section">
-        <Typography
-          variant="h6"
-          sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1 }}
-        >
-          <WorkspacePremiumIcon /> VIP Status
-        </Typography>
-        <VipStatus vip={vip} otherVips={otherVips} />
-      </Box>
-
-      <Divider />
-
-      <Box component="section">
-        <Typography
-          variant="h6"
-          sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1 }}
-        >
-          <VisibilityIcon /> Watchlist
-        </Typography>
-        <WatchlistStatus watchlist={watchlist} />
-      </Box>
-
-      <Divider />
-
-      <Box component="section">
-        <Typography
-          variant="h6"
-          sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1 }}
-        >
-          <PersonIcon /> Also known as
-        </Typography>
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-          {names?.map((nameObj) => (
-            <Chip
-              key={nameObj.id}
-              label={nameObj.name}
-              variant="outlined"
-              size="small"
-            />
-          ))}
-        </Box>
-      </Box>
-    </Stack>
-  );
-};
+  ProfileHeader,
+  ProfileWrapper,
+  ResponsiveDrawer,
+  Message,
+} from "@/components/player/profile/styled";
+import PlayerProfileHeader from "../player/profile/Header";
+import PlayerProfileSummary from "../player/profile/Summary";
+import PlayerProfileStatusTags from "../player/profile/StatusTags";
 
 const Penalties = ({ punish, kick, tempBan, parmaBan }) => (
   <dl>
@@ -481,81 +206,22 @@ const PlayerDetails = ({ player, onClose }) => {
 
   return (
     <ProfileWrapper component={"article"}>
-      <ProfileHeader rowGap={1}>
-        <OnlineStatusBadge
-          overlap="circular"
-          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-          variant="dot"
-          isOnline={isOnline}
-        >
-          <Avatar src={avatar}>{name[0]}</Avatar>
-        </OnlineStatusBadge>
-        <Box sx={{ flexGrow: 1 }}>
-          <Typography
-            component={"h1"}
-            variant="h6"
-            sx={{ textOverflow: "ellipsis" }}
-          >
-            <Link
-              style={{ color: "inherit" }}
-              to={`/records/players/${player?.player_id ?? profile.player_id}`}
-            >
-              {name}
-            </Link>
-          </Typography>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <CopyableText text={player?.player_id ?? profile.player_id} />
-          </Box>
-          <Box>
-            {isSteamPlayer(player) && (
-              <Button
-                variant={"outline"}
-                LinkComponent={"a"}
-                href={getSteamProfileUrl(player.player_id)}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <FontAwesomeIcon icon={faSteam} />
-              </Button>
-            )}
-            {!isSteamPlayer(player) && <SportsEsportsIcon />}
-          </Box>
-        </Box>
-        <IconButton
-          sx={{
-            position: "absolute",
-            top: (theme) => theme.spacing(0.5),
-            right: (theme) => theme.spacing(0.5),
-          }}
-          size="small"
-          onClick={onClose}
-        >
-          <Close />
-        </IconButton>
-        <ActionMenu
-          handleActionClick={handleActionClick([player])}
-          actionList={actionList}
-          sx={{
-            position: "absolute",
-            top: (theme) => theme.spacing(0.5),
-            left: (theme) => theme.spacing(0.5),
-          }}
-        />
-      </ProfileHeader>
+      <PlayerProfileHeader
+        player={player}
+        isOnline={isOnline}
+        onClose={onClose}
+        handleActionClick={handleActionClick([player])}
+        actionList={actionList}
+        avatar={avatar}
+        name={name}
+      />
       <Divider />
-      <Stack
-        direction="row"
-        alignItems={"center"}
-        justifyContent={"center"}
-        divider={<Divider orientation="vertical" flexItem />}
-        spacing={2}
-        sx={{ p: 1 }}
-      >
-        {isVip && <StarIcon sx={{ color: yellow["500"] }} />}
-        {isWatched && <VisibilityIcon />}
-        {isBlacklisted && <NoAccountsIcon sx={{ color: red["500"] }} />}
-        {isBanned && <GavelIcon sx={{ color: red["500"] }} />}
-      </Stack>
+      <PlayerProfileStatusTags
+        isVip={isVip}
+        isWatched={isWatched}
+        isBlacklisted={isBlacklisted}
+        isBanned={isBanned}
+      />
       <Divider />
       <TabContext value={openedTab}>
         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
@@ -592,7 +258,7 @@ const PlayerDetails = ({ player, onClose }) => {
           </Tabs>
         </Box>
         <TabPanel value="profile">
-          <BasicProfileDetails
+          <PlayerProfileSummary
             country={player.country}
             firstSeen={profile.created ?? player.created}
             lastSeen={profile?.names[0]?.last_seen}
@@ -602,10 +268,7 @@ const PlayerDetails = ({ player, onClose }) => {
               profile.total_playtime_seconds ?? profile.total_playtime_seconds
             }
             vip={playerVip}
-            otherVips={profile.vips.filter(
-              // if player is not VIP on this server, the 'playerVip' will be undefined
-              (vip) => vip.server_number !== (playerVip?.server_number ?? -1)
-            )}
+            otherVips={profile.vip_lists}
             names={profile.names}
             watchlist={profile.watchlist}
           />

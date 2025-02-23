@@ -23,7 +23,8 @@ export default function CopyableText({ text, size = "1em", ...props }) {
     }
   }, [isCopied]);
 
-  const handleCopy = () => {
+  const handleCopy = (e) => {
+    e.stopPropagation();
     navigator.clipboard.writeText(text);
     setIsCopied(true);
   };
