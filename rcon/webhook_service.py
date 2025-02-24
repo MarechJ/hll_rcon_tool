@@ -595,6 +595,22 @@ async def dequeue_message(
 
             return
 
+        # 400 is rather rare; but if someone has misconfigured a URL
+        # e.g. a URL that looks like this https://discord.com/api/webhooks/.../...
+        # it will occur
+        if res.status_code == 400:
+            logger.error("%s is not a valid webhook URL", wh.url)
+            return
+
+        # We handle these status codes below; we want an error message if
+        # we encounter an unknown status code so we can update this appropriately
+        if res.status_code not in (200, 401, 403, 429):
+            logger.error(
+                "Received HTTP %s from Discord: %s",
+                res.status_code,
+                message.model_dump(),
+            )
+
         bucket_data.webhook_type = message.webhook_type
         bucket_data.id = res.headers[X_RATELIMIT_BUCKET]
         bucket_data.remaining_requests = int(res.headers[X_RATELIMIT_REMAINING])
