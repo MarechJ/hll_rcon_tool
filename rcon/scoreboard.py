@@ -30,7 +30,7 @@ from rcon.webhook_service import (
     WebhookMessage,
     WebhookMessageType,
     WebhookType,
-    enqueue_message,
+    enqueue_scoreboard_message,
     get_message_edit_404_failure,
 )
 
@@ -442,7 +442,7 @@ def send_message(
         )
     else:
         logger.info(f"enqueuing {wh.message_id=} {key=}")
-        enqueue_message(
+        enqueue_scoreboard_message(
             message=WebhookMessage(
                 discardable=True,
                 edit=True,
@@ -450,7 +450,8 @@ def send_message(
                 message_type=WebhookMessageType.SCOREBOARD,
                 server_number=SERVER_NUMBER,
                 payload=wh.json,
-            )
+            ),
+            message_key=key,
         )
 
 

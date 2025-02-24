@@ -16,6 +16,7 @@ import redis
 from discord_webhook import AsyncDiscordWebhook, DiscordWebhookDict
 from pydantic import BaseModel, Field
 
+import redis.exceptions
 from rcon.cache_utils import construct_redis_url, get_redis_client
 from rcon.utils import get_server_number
 
@@ -29,6 +30,9 @@ logger = getLogger(__name__)
 
 # TODO: Support editing existing messages; this can only add
 # new ones, so we can't use it for scorebot yet
+
+SCOREBOARD = "scoreboard"
+SCOREBOARD_BYTES = b"scoreboard"
 
 PREFIX = "whs"
 BUCKET_ID = f"{PREFIX}"
@@ -446,6 +450,31 @@ def clear_webhook_errors(
     )
 
 
+def enqueue_scoreboard_message(
+    message: WebhookMessage,
+    message_key: str,
+    red: redis.StrictRedis | None = None,
+    prefix: str = PREFIX,
+    ttl: int = 120,
+):
+    """Accept a WebhookMessage and scorebot message key to only store the most recent update"""
+    logger.info("Enqueuing %s: %s", message_key, message)
+
+    # Allows easier usage for enqueing from different services/sections of CRCON
+    if red is None:
+        url = construct_redis_url(db_number=0)
+        red = get_redis_client(redis_url=url, decode_responses=False, global_pool=True)
+
+    # Scoreboard messages are inherently temporary since they change often;
+    # there is no point in retaining old messages
+    # So instead of using a list as a message queue; save the payload at
+    # a unique key for this scoreboard message key (header/gamestate, map rotation, player stats)
+    # overwriting anything that was there before so only the most recently queued
+    # update is used
+    key = f"{prefix}:{get_server_number()}:{message.webhook_type}:{message.message_type}:{message.payload['webhook_id']}:{message_key}"
+    red.set(key, orjson.dumps(message.model_dump_json()), ex=ttl)
+
+
 def enqueue_message(
     message: WebhookMessage, red: redis.StrictRedis | None = None, prefix: str = PREFIX
 ):
@@ -508,7 +537,22 @@ async def dequeue_message(
         lock: asyncio.Lock,
     ):
         logger.debug("Dequeueing from %s", queue_id)
-        raw_message: bytes = red.lpop(queue_id)  # type: ignore
+
+        # Scoreboard messages are stored as key/value pairs and not a list
+        if SCOREBOARD in queue_id:
+            # Old style messages may still be in the redis queue and we can't GET those
+            try:
+                raw_message: bytes = red.get(queue_id)  # type: ignore
+                red.delete(queue_id)
+            except redis.exceptions.ResponseError:
+                # If we don't remove this; it will be stuck in the queue and block it forever
+                # until the redis cache is otherwise cleared
+                logger.warning(f"Discarding wrong message type: {queue_id}")
+                red.lpop(queue_id)
+                return
+        else:
+            raw_message: bytes = red.lpop(queue_id)  # type: ignore
+
         message = unpack_message(raw_message=raw_message)
         wh = construct_webhook(
             payload=message.payload, webhook_type=message.webhook_type
@@ -605,12 +649,13 @@ async def dequeue_message(
 
             if not message.discardable:
                 logger.info(
-                    "Re-enqueing %s due to rate limit", message.payload["webhook_id"]
+                    "Re-enqueing webhook ID: %s due to rate limit",
+                    message.payload["webhook_id"],
                 )
                 message.retry_attempts += 1
                 red.lpush(queue_id, orjson.dumps(message.model_dump_json()))  # type: ignore
                 red.ltrim(queue_id, 0, WH_MAX_QUEUE_LENGTH - 1)
-        if res.status_code == 401:
+        elif res.status_code == 401:
             set_webhook_error(
                 red=red,
                 webhook_id=wh.webhook_id,
@@ -641,7 +686,7 @@ async def dequeue_message(
             )
         else:
             logger.error(
-                f"Received edit={message.edit} discardable={message.discardable} {res.status_code} for: {unpacked}"
+                f"Received edit={message.edit} discardable={message.discardable} {res.status_code} for: {wh.json}"
             )
 
         set_bucket_data(red=red, bucket=bucket_data, lock=lock)
@@ -680,6 +725,20 @@ def get_all_queue_keys(
     return queue_ids
 
 
+def get_all_scoreboard_message_keys(
+    red: redis.StrictRedis | None = None, prefix: str = PREFIX
+) -> list[str]:
+    """Retrieve each scoreboard key which acts as a queue_id"""
+    # Scoreboard messages which are stored as individual key/value pairs
+    scoreboard_messages: list[str] = [
+        queue_id.decode()
+        for queue_id in red.scan_iter(match=f"{prefix}*", _type="string")
+        if SCOREBOARD_BYTES in queue_id
+    ]
+
+    return scoreboard_messages
+
+
 def get_all_queue_keys_and_lengths(
     red: redis.StrictRedis, prefix: str = PREFIX
 ) -> list[tuple[str, int]]:
@@ -692,8 +751,11 @@ def get_all_queue_keys_not_empty(
 ) -> list[str]:
     """Scan for all the queues (identified by prefix)"""
     logger.debug("Getting all queue IDs with items from %s", PREFIX)
-
-    return [queue_id for queue_id in get_all_queue_keys(red=red, prefix=prefix) if red.llen(queue_id) > 0]  # type: ignore
+    populated_queues = [queue_id for queue_id in get_all_queue_keys(red=red, prefix=prefix) if red.llen(queue_id) > 0]  # type: ignore
+    populated_scoreboard_messages = get_all_scoreboard_message_keys(
+        red=red, prefix=prefix
+    )
+    return populated_queues + populated_scoreboard_messages
 
 
 def get_queue_overview(
@@ -904,7 +966,9 @@ async def main():
 
         # Keep each message queue under its max, dropping the oldest messages first
         for queue_id in queue_ids:
-            red.ltrim(queue_id, 0, WH_MAX_QUEUE_LENGTH - 1)
+            # Can't trim scoreboard messages which are stored as simple KEY/VALUE pairs
+            if SCOREBOARD not in queue_id:
+                red.ltrim(queue_id, 0, WH_MAX_QUEUE_LENGTH - 1)
 
         logger.debug("queue_ids=%s", queue_ids)
         queue_id: str | None = get_next_queue_id(queue_ids=queue_ids)
