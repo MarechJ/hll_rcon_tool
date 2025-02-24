@@ -614,6 +614,7 @@ async def dequeue_message(
                 res.status_code,
                 message.model_dump(),
             )
+            return
 
         bucket_data.webhook_type = message.webhook_type
         bucket_data.id = res.headers[X_RATELIMIT_BUCKET]
