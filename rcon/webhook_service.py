@@ -369,7 +369,11 @@ def set_rate_limit_bucket_data(
     red: redis.StrictRedis, bucket: DiscordRateLimitData, prefix: str = BUCKET_ID
 ) -> None:
     """Set the data for a specific rate limit bucket"""
-    name = f"{prefix}:{bucket.webhook_type}:{bucket.id}"
+    # There is a very low but non 0 chance of colliding on rate limit bucket IDs
+    # between services once we expand to support other webhook types than Discord
+    # but for now to simplify the service without having to pass in details
+    # of the message that we don't know when we GET it, skip the webhook type
+    name = f"{prefix}:{bucket.id}"
     red.set(name, orjson.dumps(bucket.model_dump_json()))
 
 
