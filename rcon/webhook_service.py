@@ -543,6 +543,10 @@ async def dequeue_message(
             # Old style messages may still be in the redis queue and we can't GET those
             try:
                 raw_message: bytes = red.get(queue_id)  # type: ignore
+                # If we don't get a message at all; return
+                # this is validated by Pydantic later
+                if raw_message is None:
+                    return
                 red.delete(queue_id)
             except redis.exceptions.ResponseError:
                 # If we don't remove this; it will be stuck in the queue and block it forever
