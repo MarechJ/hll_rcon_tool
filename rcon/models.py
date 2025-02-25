@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from typing import Any, Generator, List, Literal, Optional, Sequence, overload
 
 import pydantic
-from sqlalchemy import TIMESTAMP, Enum, ForeignKey, String, create_engine, text, ARRAY
+from sqlalchemy import TIMESTAMP, Enum, ForeignKey, String, create_engine, text, JSON
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -509,7 +509,7 @@ class Maps(Base):
     map_name: Mapped[str] = mapped_column(nullable=False, index=True)
     # A dict with the result of the game mapped as Axis=int, Allied=int
     result: Mapped[dict[str, int]] = mapped_column(nullable=True)
-    game_layout: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
+    game_layout: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=dict)
 
     player_stats: Mapped[list["PlayerStats"]] = relationship(back_populates="map")
 

@@ -290,7 +290,7 @@ class MapsHistory(FixedLenList[MapInfo]):
         self.lpush(prev)
         return prev
 
-    def save_new_map(self, new_map, guessed=True, start_timestamp: int = None, game_layout: list[str] = list):
+    def save_new_map(self, new_map, guessed=True, start_timestamp: int = None, game_layout: dict[str, list[str]] = dict):
         ts = start_timestamp or datetime.now().timestamp()
         logger.info("Saving start of new map %s at time %s", new_map, ts)
         new = MapInfo(

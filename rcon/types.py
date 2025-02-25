@@ -474,7 +474,7 @@ class MapInfo(TypedDict):
     end: float | None
     guessed: bool
     player_stats: dict[str, PlayerStat]
-    game_layout: list[str]
+    game_layout: dict[str, list[str]]
 
 
 class MapInfoISODates(TypedDict):

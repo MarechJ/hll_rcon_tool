@@ -1452,7 +1452,7 @@ class Rcon(ServerCtl):
                 )
 
         red = get_redis_client()
-        red.set('GAME_LAYOUT', json.dumps(parsed_objs))
+        red.set('GAME_LAYOUT', json.dumps({'requested': objectives, 'set': parsed_objs}))
         return super().set_game_layout(parsed_objs)
 
     @staticmethod
