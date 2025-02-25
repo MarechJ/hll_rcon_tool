@@ -324,9 +324,14 @@ def handle_new_match_start(rcon: Rcon, struct_log):
                     end_timestamp=int(struct_log["timestamp_ms"] / 1000) - 100,
                 )
 
-        red = get_redis_client()
-        raw = red.getdel('GAME_LAYOUT')
-        game_layout = json.loads(raw) if raw is not None else []
+        game_layout = []
+        try:
+            red = get_redis_client()
+            raw = red.getdel('GAME_LAYOUT')
+            game_layout = json.loads(raw) if raw is not None else []
+        except Exception as e:
+            logger.error("Could not fetch Game Layout", e)
+            pass
         maps_history.save_new_map(
             new_map=str(map_name_to_save),
             guessed=guessed,
