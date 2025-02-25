@@ -60,6 +60,7 @@ const GameDetailLayout = ({ game }: { game: ScoreboardMapStats }) => {
               text={dayjsLocal(game.start).format('LLL')}
               src={`/maps/${game.map.image_name}`}
               name={game.map.map.pretty_name}
+              gameLayout={game.game_layout}
               className="w-full h-32 lg:h-full"
             />
           </aside>
