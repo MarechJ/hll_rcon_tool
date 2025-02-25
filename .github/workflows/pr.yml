@@ -69,4 +69,6 @@ jobs:
           PYTHONPATH=. python ./rconweb/manage.py migrate --noinput
       - name: run tests
         run: |
+          export HLL_DB_URL=postgresql://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}/${HLL_DB_NAME}
+          export HLL_REDIS_URL=redis://${HLL_REDIS_HOST}:${HLL_REDIS_PORT}/${HLL_REDIS_DB}
           pytest tests/
