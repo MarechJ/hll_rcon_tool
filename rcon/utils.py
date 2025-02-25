@@ -284,17 +284,17 @@ class MapsHistory(FixedLenList[MapInfo]):
         ts = end_timestamp or datetime.now().timestamp()
         logger.info("Saving end of map %s at time %s", old_map, ts)
         prev = self.lpop() or MapInfo(
-            name=old_map, start=None, end=None, guessed=True, player_stats=dict()
+            name=old_map, start=None, end=None, guessed=True, player_stats=dict(), game_layout=[]
         )
         prev["end"] = ts
         self.lpush(prev)
         return prev
 
-    def save_new_map(self, new_map, guessed=True, start_timestamp: int = None):
+    def save_new_map(self, new_map, guessed=True, start_timestamp: int = None, game_layout: list[str] = list):
         ts = start_timestamp or datetime.now().timestamp()
         logger.info("Saving start of new map %s at time %s", new_map, ts)
         new = MapInfo(
-            name=new_map, start=ts, end=None, guessed=guessed, player_stats=dict()
+            name=new_map, start=ts, end=None, guessed=guessed, player_stats=dict(), game_layout=game_layout
         )
         self.add(new)
         return new

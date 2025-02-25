@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import random
@@ -20,7 +21,6 @@ from rcon.models import PlayerID, PlayerVIP, enter_session
 from rcon.player_history import get_profiles, safe_save_player_action, save_player, get_player_profile
 from rcon.settings import SERVER_INFO
 from rcon.types import (
-    PlayerProfileType,
     AdminType,
     GameLayoutRandomConstraints,
     GameServerBanType,
@@ -1451,6 +1451,8 @@ class Rcon(ServerCtl):
                     [c for c in obj_choices if c is not None] or obj_row
                 )
 
+        red = get_redis_client()
+        red.set('GAME_LAYOUT', json.dumps(parsed_objs))
         return super().set_game_layout(parsed_objs)
 
     @staticmethod
