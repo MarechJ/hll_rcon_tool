@@ -18,8 +18,11 @@ class ApiConfig(AppConfig):
         # Invalidate the cache on start up because you can modify Django
         # records while CRCON is offline (through the CLI, etc.)
         with invalidates(get_moderators_accounts):
-            # Register active admin accounts on startup for the ingame/online mods feature
             try:
+                # Register active admin accounts on startup for the ingame/online mods feature
                 set_registered_mods(get_moderators_accounts())
+
+            # This doesn't happen in production; only in the test environment
+            # when running github actions
             except django.db.utils.ProgrammingError as e:
                 logger.exception(e)
