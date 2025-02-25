@@ -29,16 +29,6 @@ jobs:
           tags: |
             cericmathey/hll_rcon_tool:${{  github.ref_name }}
             ${{ contains(github.ref_name, 'rc') && '' || 'cericmathey/hll_rcon_tool:latest' }}
-      - name: Build and push frontend
-        uses: docker/build-push-action@v5
-        with:
-          file: Dockerfile-frontend
-          context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            cericmathey/hll_rcon_tool_frontend:${{  github.ref_name }}
-            ${{ contains(github.ref_name, 'rc') && '' || 'cericmathey/hll_rcon_tool_frontend:latest' }}
       - name: Update repo description
         uses: peter-evans/dockerhub-description@v3
         if: ${{ ! contains(github.ref_name, 'rc') }}
@@ -46,10 +36,3 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           repository: cericmathey/hll_rcon_tool
-      - name: Update repo description
-        uses: peter-evans/dockerhub-description@v3
-        if: ${{ ! contains(github.ref_name, 'rc') }}
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: cericmathey/hll_rcon_tool_frontend
