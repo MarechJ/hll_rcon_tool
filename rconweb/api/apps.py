@@ -1,5 +1,9 @@
 from django.apps import AppConfig
 from rcon.cache_utils import invalidates
+import django.db.utils
+from logging import getLogger
+
+logger = getLogger(__name__)
 
 
 class ApiConfig(AppConfig):
@@ -15,4 +19,7 @@ class ApiConfig(AppConfig):
         # records while CRCON is offline (through the CLI, etc.)
         with invalidates(get_moderators_accounts):
             # Register active admin accounts on startup for the ingame/online mods feature
-            set_registered_mods(get_moderators_accounts())
+            try:
+                set_registered_mods(get_moderators_accounts())
+            except django.db.utils.ProgrammingError as e:
+                logger.exception(e)
