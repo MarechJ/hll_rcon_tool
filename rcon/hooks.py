@@ -322,7 +322,9 @@ def handle_new_match_start(rcon: Rcon, struct_log):
             if maps_history[0]["end"] is None and maps_history[0]["name"]:
                 maps_history.save_map_end(
                     old_map=maps_history[0]["name"],
-                    end_timestamp=int(struct_log["timestamp_ms"] / 1000) - 100,
+                    # after a match ended and a new match started, there is a cooldown of 2 minutes, where stats are shown,
+                    # etc. Apply this as the most likely match end time.
+                    end_timestamp=int(struct_log["timestamp_ms"] / 1000) - 120,
                 )
 
         maps_history.save_new_map(

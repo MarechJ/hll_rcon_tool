@@ -160,8 +160,9 @@ def record_stats_from_map(
     match_started = get_historical_logs_records(
         sess,
         from_=map_.start,
-        # to catch the possibly second MATCH START event, add a random 30 seconds to the end date of the match
-        till=map_.end + datetime.timedelta(seconds=30),
+        # to catch the possibly second MATCH START event, add 2 minutes (cooldown after a match ended in-game, where stats
+        # are shown) + 10 seconds random margin to make sure the next game started.
+        till=map_.end + datetime.timedelta(seconds=130),
         time_sort="asc",
         action="MATCH STARTED",
         exact_action=True,
