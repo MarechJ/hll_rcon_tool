@@ -10,6 +10,7 @@ from time import sleep
 
 from discord_webhook import DiscordEmbed, DiscordWebhook
 
+from rcon.api_commands import get_rcon_api, RconAPI
 from rcon.cache_utils import invalidates, ttl_cache
 from rcon.player_history import get_player_profile, player_has_flag
 from rcon.player_stats import current_game_stats
@@ -163,12 +164,17 @@ def set_cache_value(player_id: str, last_reported: datetime) -> None:
 
 
 def make_embed(
+    timestamp: datetime,
+    pretty_map_name: str,
     player_name: str,
     player_id: str,
-    timestamp: datetime,
+    player_level: int,
+    role: str,
+    loadout: str,
     playtime_secs: int,
     kills: int,
     kpm: float,
+    filtered_kpm: float,
     armor_kpm: float,
     artillery_kpm: float,
     mg_kpm: float,
@@ -180,18 +186,25 @@ def make_embed(
     embed = DiscordEmbed()
     embed.set_author(name=author_name)
     embed.timestamp = str(timestamp)
+    embed.add_embed_field(name="Current Match", value=pretty_map_name, inline=False)
     embed.add_embed_field(name="Player", value=player_name)
     embed.add_embed_field(name="Player ID", value=player_id)
+    embed.add_embed_field(name="Player Level", value=str(player_level))
+    embed.add_embed_field(name="Class", value=role, inline=False)
+    embed.add_embed_field(name="Loadout", value=loadout)
     embed.add_embed_field(
         name="Playtime", value=str(timedelta(seconds=playtime_secs)), inline=False
     )
-    embed.add_embed_field(name="Kills", value=str(kills), inline=True)
+    embed.add_embed_field(name="Kills", value=str(kills), inline=False)
     embed.add_embed_field(name="Overall KPM", value=f"{kpm:.1f}", inline=False)
+    embed.add_embed_field(
+        name="KPM w/o Armor/Artillery/MGs", value=f"{filtered_kpm:.1f}", inline=False
+    )
     if armor_kpm > 0.0:
-        embed.add_embed_field(name="Armor KPM", value=f"{armor_kpm:.1f}", inline=True)
+        embed.add_embed_field(name="Armor KPM", value=f"{armor_kpm:.1f}", inline=False)
     if artillery_kpm > 0.0:
         embed.add_embed_field(
-            name="Artillery KPM", value=f"{artillery_kpm:.1f}", inline=True
+            name="Artillery KPM", value=f"{artillery_kpm:.1f}", inline=False
         )
     if mg_kpm > 0.0:
         embed.add_embed_field(name="MG KPM", value=f"{mg_kpm:.1f}", inline=False)
@@ -206,7 +219,9 @@ def make_embed(
     return embed
 
 
-def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
+def watch_killrate(
+    api: RconAPI, config: WatchKillRateUserConfig, server_name: str
+) -> None:
     """Observe all players and report them if they hit k/r thresholds"""
     player_stats: dict = current_game_stats()
 
@@ -307,7 +322,7 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
                         / playtime_secs
                         * 60
                     )
-                    if not config.whitelist_armor
+                    if not config.ignore_armor
                     else 0.0
                 ),
                 2,
@@ -325,7 +340,7 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
                         / playtime_secs
                         * 60
                     )
-                    if not config.whitelist_artillery
+                    if not config.ignore_artillery
                     else 0.0
                 ),
                 2,
@@ -343,7 +358,7 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
                         / playtime_secs
                         * 60
                     )
-                    if not config.whitelist_mg
+                    if not config.ignore_mg
                     else 0.0
                 ),
                 2,
@@ -396,13 +411,40 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
                     used_weapons,
                 )
 
+                try:
+                    detailed_info = api.get_detailed_player_info(
+                        player_name=player_name
+                    )
+                    player_level: int = detailed_info["level"]
+                    player_role: str = detailed_info["role"]
+                    player_loadout: str = detailed_info["loadout"]
+                except Exception:
+                    logger.warning(
+                        "Unable to retrieve detailed playerinfo for %s", player_name
+                    )
+                    player_level: int = 0
+                    player_role = "Unknown"
+                    player_loadout = "Unknown"
+
+                try:
+                    gamestate = api.get_gamestate()
+                    map_name = gamestate["current_map"]["pretty_name"]
+                except Exception:
+                    logger.warning("Unable to retrieve current game state")
+                    map_name = "Unknown"
+
                 embed: DiscordEmbed = make_embed(
                     timestamp=timestamp,
+                    pretty_map_name=map_name,
                     player_name=player_name,
                     player_id=player_id,
+                    player_level=player_level,
+                    role=player_role,
+                    loadout=player_loadout,
                     kills=kills,
                     playtime_secs=playtime_secs,
                     kpm=kpm,
+                    filtered_kpm=filtered_kpm,
                     armor_kpm=armor_kpm,
                     artillery_kpm=artillery_kpm,
                     mg_kpm=mg_kpm,
@@ -443,6 +485,8 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
 
 def run() -> None:
     """Main process (loop)"""
+    api = get_rcon_api()
+
     while True:
         server_config = RconServerSettingsUserConfig.load_from_db()
         config = WatchKillRateUserConfig.load_from_db()
@@ -451,6 +495,7 @@ def run() -> None:
             break  # The service will gracefully exit
 
         watch_killrate(
+            api=api,
             config=config,
             server_name=server_config.short_name,
         )

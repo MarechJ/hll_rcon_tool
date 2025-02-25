@@ -18,9 +18,9 @@ class WatchKillRateType(TypedDict):
     killrate_threshold_mg: float
     only_report_once_per_match: bool
     whitelist_flags: list[str]
-    whitelist_armor: bool
-    whitelist_artillery: bool
-    whitelist_mg: bool
+    ignore_armor: bool
+    ignore_artillery: bool
+    ignore_mg: bool
     author: str
     webhooks: list[WebhookMentionType]
 
@@ -37,9 +37,9 @@ class WatchKillRateUserConfig(BaseUserConfig):
     killrate_threshold_mg: float = Field(default=1.5)
     only_report_once_per_match: bool = Field(default=True)
     whitelist_flags: list[str] = Field(default_factory=list)
-    whitelist_armor: bool = Field(default=True)
-    whitelist_artillery: bool = Field(default=True)
-    whitelist_mg: bool = Field(default=True)
+    ignore_armor: bool = Field(default=True)
+    ignore_artillery: bool = Field(default=True)
+    ignore_mg: bool = Field(default=True)
     author: str = Field(default="CRCON Watch KillRate")
     webhooks: list[DiscordMentionWebhook] = Field(default_factory=list)
 
@@ -74,9 +74,9 @@ class WatchKillRateUserConfig(BaseUserConfig):
             killrate_threshold_mg=values.get("killrate_threshold_mg"),
             only_report_once_per_match=values.get("only_report_once_per_match"),
             whitelist_flags=values.get("whitelist_flags"),
-            whitelist_armor=values.get("whitelist_armor"),
-            whitelist_artillery=values.get("whitelist_artillery"),
-            whitelist_mg=values.get("whitelist_mg"),
+            ignore_armor=values.get("ignore_armor"),
+            ignore_artillery=values.get("ignore_artillery"),
+            ignore_mg=values.get("ignore_mg"),
             author=values.get("author"),
             webhooks=validated_webhooks,
         )
