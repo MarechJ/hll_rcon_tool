@@ -210,17 +210,10 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
     """Observe all players and report them if they hit k/r thresholds"""
     player_stats: dict = current_game_stats()
 
-    # Create a dict of all the weapons that are whitelisted so that we can
-    # recalculate our base kill rate for the player after filtering them out
-    # so we don't get a false positive with the KPM from the player stats
-    # which includes all weapons
-    whitelisted_weapons: dict[str, bool] = {}
-    if config.whitelist_armor:
-        whitelisted_weapons |= ARMOR
-    if config.whitelist_artillery:
-        whitelisted_weapons |= ARTILLERY
-    if config.whitelist_mg:
-        whitelisted_weapons |= MGS
+    # Allow us to check if a weapon is any of ARMOR or ARTILLERY or MGS
+    # so that we can track a base KPM rate that doesn't include any of these
+    # because we track those KPMs separately.
+    not_base_weapons: dict[str, bool] = {} | ARMOR | ARTILLERY | MGS
 
     if len(player_stats) < 2:
         logger.info("Fewer than 2 players, skipping")
@@ -269,13 +262,6 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
             continue
 
         kpm: float = stats["kills_per_minute"]
-        logger.info(
-            "player_id=%s playtime_secs=%s kills=%s kpm=%s",
-            player_id,
-            playtime_secs,
-            kills,
-            kpm,
-        )
         used_weapons: Counter = Counter()
         # If the players unfiltered KPM doesn't meet any of the thresholds
         # skip all the calculations because this is the highest possible KPM
@@ -289,24 +275,27 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
             timestamp = datetime.now()
             used_weapons = Counter(stats["weapons"])
 
-            # Recalculate the players KPM after filtering out whitelisted weapons
             # TODO: redo this section so we aren't looping over used_weapons 4 different times
-            whitelisted_kpm: float = round(
+            # Recalculate the players KPM after filtering out any weapon that is tracked
+            # under a specific category (armor, artillery, mgs)
+            # So we can avoid triggerings when a specific category has a KPM > than the base rate
+            # For instance a killrate threshold of 2.0 and arilltery threshold of 4.0
+            filtered_kpm: float = round(
                 (
                     (
                         sum(
                             kill_count
                             for weapon, kill_count in used_weapons.items()
-                            if weapon not in whitelisted_weapons
+                            if weapon not in not_base_weapons
                         )
                         / playtime_secs
                         * 60
                     )
-                    if not config.whitelist_armor
-                    else 0.0
                 ),
-                1,
+                2,
             )
+
+            # Armor
             armor_kpm: float = round(
                 (
                     (
@@ -321,7 +310,7 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
                     if not config.whitelist_armor
                     else 0.0
                 ),
-                1,
+                2,
             )
 
             # Artillery
@@ -339,10 +328,10 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
                     if not config.whitelist_artillery
                     else 0.0
                 ),
-                1,
+                2,
             )
 
-            # Machinegun
+            # Machineguns
             mg_kpm: float = round(
                 (
                     (
@@ -357,14 +346,14 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
                     if not config.whitelist_mg
                     else 0.0
                 ),
-                1,
+                2,
             )
 
             # Don't make the embed unless at least one condition is met
             # If a category is whitelisted its KPM is set to 0.0
             conditions_met = any(
                 [
-                    whitelisted_kpm >= config.killrate_threshold,
+                    filtered_kpm >= config.killrate_threshold,
                     armor_kpm >= config.killrate_threshold_armor,
                     artillery_kpm >= config.killrate_threshold_artillery,
                     mg_kpm >= config.killrate_threshold_mg,
@@ -376,7 +365,7 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
 
             # Threshold exceeded
 
-            # Only report once per match
+            # Only report once per match if configured
             last_reported = get_cache_value(player_id)
             if config.only_report_once_per_match and last_reported:
                 logger.info(
@@ -395,15 +384,16 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
             ):
                 set_cache_value(player_id, timestamp)
 
-                logger.debug(
-                    "Creating embed %s/%s/%s kpm %s armor: %s arty: %s mg: %s",
+                logger.info(
+                    "Creating embed %s/%s playtime_secs=%s kills=%s kpm=%s, filtered_kpm=%s, armor_kpm=%s, arty_kpm=%s, mg_kpm=%s, %s",
                     player_name,
                     player_id,
-                    used_weapons,
                     kpm,
+                    filtered_kpm,
                     armor_kpm,
                     artillery_kpm,
                     mg_kpm,
+                    used_weapons,
                 )
 
                 embed: DiscordEmbed = make_embed(
@@ -438,10 +428,16 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
 
             else:
                 logger.info(
-                    "Already reported %s/%s at %s",
+                    "Already reported %s/%s at %s, playtime_secs=%s kills=%s kpm=%s, filtered_kpm=%s, armor_kpm=%s, arty_kpm=%s, mg_kpm=%s, %s",
                     player_name,
                     player_id,
                     last_reported,
+                    kpm,
+                    filtered_kpm,
+                    armor_kpm,
+                    artillery_kpm,
+                    mg_kpm,
+                    used_weapons,
                 )
 
 
