@@ -182,6 +182,18 @@ class QueueParts:
     id: str
 
 
+@dataclass
+class ScoreboardQueueParts:
+    """The individual components of a scoreboard key"""
+
+    prefix: str
+    server_number: str
+    wh_type: WebhookType
+    msg_type: WebhookMessageType
+    id: str
+    message_key: str
+
+
 class QueueStatus(TypedDict):
     """Overview of a message queue"""
 
@@ -192,6 +204,19 @@ class QueueStatus(TypedDict):
     length: int
     rate_limit_bucket: str | None
     rate_limited: bool
+    redis_key: str
+
+
+class ScoreboardMessageStatus(TypedDict):
+    """Overview of a scoreboard message"""
+
+    server_number: int
+    id: str
+    webhook_type: WebhookType
+    message_type: WebhookMessageType
+    rate_limit_bucket: str | None
+    rate_limited: bool
+    message_key: str
     redis_key: str
 
 
@@ -783,6 +808,38 @@ def get_all_queue_keys_not_empty(
     return populated_queues + populated_scoreboard_messages
 
 
+def get_scoreboard_message_overview(
+    queue_id: str,
+    red: redis.StrictRedis | None,
+) -> ScoreboardMessageStatus | None:
+    parts = _split_scoreboard_key(queue_id=queue_id)
+
+    if not parts:
+        return
+
+    if red is None:
+        red = get_redis_client(decode_responses=False, global_pool=True)
+
+    bucket_data: DiscordRateLimitData | None = None
+    bucket_id = get_webhook_rate_limit_bucket(
+        red=red, queue_id=queue_id, webhook_type=parts.wh_type
+    )
+    if bucket_id:
+        bucket_data = get_rate_limit_bucket_data(red=red, bucket_id=bucket_id)
+
+    overview: ScoreboardMessageStatus = {
+        "server_number": int(parts.server_number),
+        "id": parts.id,
+        "webhook_type": parts.wh_type,
+        "message_type": parts.msg_type,
+        "rate_limit_bucket": bucket_id,
+        "rate_limited": bucket_data.rate_limited if bucket_data else False,
+        "message_key": parts.message_key,
+        "redis_key": queue_id,
+    }
+    return overview
+
+
 def get_queue_overview(
     queue_id: str, red: redis.StrictRedis | None = None
 ) -> QueueStatus | None:
@@ -851,6 +908,21 @@ def webhook_service_summary(red: redis.StrictRedis | None = None):
             ].append(overview)
 
     data["queues"] = queues
+
+    scoreboard_messages: defaultdict[
+        int, dict[str, dict[str, list[ScoreboardMessageStatus]]]
+    ] = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+    for key in get_all_scoreboard_message_keys(red=red):
+        scoreboard_overview: ScoreboardMessageStatus | None = (
+            get_scoreboard_message_overview(red=red, queue_id=key)
+        )
+
+        if scoreboard_overview:
+            scoreboard_messages[scoreboard_overview["server_number"]][
+                scoreboard_overview["webhook_type"]
+            ][scoreboard_overview["message_type"]].append(scoreboard_overview)
+
+    data["scoreboard_messages"] = scoreboard_messages
     return data
 
 
@@ -951,6 +1023,22 @@ def _split_queue_id(queue_id: str) -> QueueParts | None:
         return
 
 
+def _split_scoreboard_key(queue_id: str) -> ScoreboardQueueParts | None:
+    try:
+        prefix, server_number, wh_type, msg_type, qid, message_key = queue_id.split(":")
+        return ScoreboardQueueParts(
+            prefix=prefix,
+            server_number=server_number,
+            wh_type=WebhookType(wh_type),
+            msg_type=WebhookMessageType(msg_type),
+            id=qid,
+            message_key=message_key,
+        )
+    except ValueError:
+        logger.error("Unable to parse %s received an invalid key", queue_id)
+        return
+
+
 async def main():
 
     # Essentially we want to connect to redis, monitor the set of queues of discord messages
@@ -1004,6 +1092,7 @@ async def main():
             bucket_id: str | None = get_webhook_rate_limit_bucket(
                 red=red, queue_id=queue_id, webhook_type=None
             )
+            # If we don't know the rate limit bucket; use the shared one further below
             if bucket_id:
                 bucket_data, lock = get_bucket_lock(red=red, bucket_id=bucket_id)
                 if lock and lock.locked():
