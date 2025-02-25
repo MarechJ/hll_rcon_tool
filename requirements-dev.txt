@@ -1,5 +1,5 @@
 black==25.1.0
 isort==6.0.0
 pytest==8.3.4
-cachetools==5.5.1
+cachetools==5.5.2
 daphne==4.1.2
