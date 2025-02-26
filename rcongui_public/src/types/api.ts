@@ -15,7 +15,11 @@ export type ScoreboardMap = {
     allied: number
     axis: number
   } | null
-  player_stats: []
+  game_layout: {
+    requested?: string[],
+    set?: string[],
+  },
+  player_stats: [],
   server_number: number
 }
 
