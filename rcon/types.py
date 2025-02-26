@@ -1,7 +1,7 @@
 import datetime
 import enum
 from dataclasses import dataclass
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, Sequence
 
 # # TODO: On Python 3.11.* specifically, Pydantic requires we use typing_extensions.TypedDict
 # over typing.TypedDict. Once we bump our Python image we can replace this.
@@ -468,12 +468,18 @@ class CachedLiveGameStats(TypedDict):
     refresh_interval_sec: int
 
 
+class GameLayout(TypedDict):
+    requested: Sequence[str | int | None]
+    set: list[str]
+
+
 class MapInfo(TypedDict):
     name: str
     start: float | None
     end: float | None
     guessed: bool
     player_stats: dict[str, PlayerStat]
+    game_layout: GameLayout
 
 
 class MapInfoISODates(TypedDict):
@@ -492,6 +498,7 @@ class MapsType(TypedDict):
     server_number: Optional[int]
     map_name: str
     result: Optional[dict[str, int]]
+    game_layout: GameLayout
     player_stats: List[PlayerStatsType]
 
 
