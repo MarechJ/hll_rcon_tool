@@ -1,10 +1,5 @@
 import { useMemo } from "react";
-import {
-  Tabs,
-  Tab,
-  CardContent,
-  Divider,
-} from "@mui/material";
+import { Tabs, Tab, CardContent, Divider } from "@mui/material";
 import {
   useLoaderData,
   useSubmit,
@@ -18,8 +13,8 @@ import {
   SummaryCard,
   DetailCard,
 } from "./styled";
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import PlayerProfileSummary from "@/components/player/profile/Summary";
 import PlayerProfileHeader from "@/components/player/profile/Header";
 import { generatePlayerActions } from "@/features/player-action/actions";
@@ -50,10 +45,10 @@ export default function PlayerProfilePage() {
     [onlinePlayers, profile.player_id]
   );
 
-  const playerVip = profile.vips.find(
-    (vip) => vip.server_number === server?.server_number
-  );
-  const isVip = thisOnlinePlayer?.is_vip || playerVip;
+  // const playerVip = profile.vips.find(
+  //   (vip) => vip.server_number === server?.server_number
+  // );
+  const isVip = thisOnlinePlayer?.is_vip;
   const isWatched = profile?.watchlist && profile?.watchlist?.is_watched;
   const isBlacklisted = profile?.is_blacklisted;
   const isBanned = profile?.is_banned;
@@ -116,14 +111,8 @@ export default function PlayerProfilePage() {
               sessionCount={profile.sessions_count}
               flags={profile.flags}
               totalPlaytime={profile.total_playtime_seconds}
-              vip={profile.vips.find(
-                (vip) => vip.server_number === profile.server_number
-              )}
-              otherVips={profile.vips.filter(
-                (vip) =>
-                  vip.server_number !==
-                  (thisOnlinePlayer?.vip?.server_number ?? -1)
-              )}
+              vip={profile.is_vip}
+              otherVips={profile.vip_lists}
               names={profile.names}
               watchlist={profile.watchlist}
             />
