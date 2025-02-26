@@ -1,14 +1,13 @@
 import datetime
 import enum
 from dataclasses import dataclass
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, Sequence
 
 # # TODO: On Python 3.11.* specifically, Pydantic requires we use typing_extensions.TypedDict
 # over typing.TypedDict. Once we bump our Python image we can replace this.
 from typing_extensions import TypedDict
 
 from rcon.maps import Layer, LayerType, Team
-from rcon.models import GameLayout
 
 
 class WindowsStoreIdActionType(str, enum.Enum):
@@ -467,6 +466,11 @@ class CachedLiveGameStats(TypedDict):
     snapshot_timestamp: datetime.datetime
     stats: list[PlayerStatsType]
     refresh_interval_sec: int
+
+
+class GameLayout(TypedDict):
+    requested: Sequence[str | int | None]
+    set: list[str]
 
 
 class MapInfo(TypedDict):

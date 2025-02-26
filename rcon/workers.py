@@ -15,7 +15,7 @@ from rcon.game_logs import get_historical_logs_records
 from rcon.models import Maps, PlayerStats, enter_session
 from rcon.player_history import get_player
 from rcon.player_stats import TimeWindowStats
-from rcon.types import MapInfo, PlayerStat
+from rcon.types import MapInfo, PlayerStat, GameLayout
 from rcon.utils import INDEFINITE_VIP_DATE
 
 logger = logging.getLogger("rcon")
@@ -71,7 +71,7 @@ def temporary_welcome_in(message, seconds, restore_after_seconds):
     )
 
 
-def get_or_create_map(sess: Session, start: datetime.datetime, end: datetime.datetime, server_number: int, map_name: str, game_layout: dict[str, list[str]]):
+def get_or_create_map(sess: Session, start: datetime.datetime, end: datetime.datetime, server_number: int, map_name: str, game_layout: GameLayout):
     map_ = (
         sess.query(Maps)
         .filter(
@@ -135,7 +135,7 @@ def _record_stats(map_info: MapInfo):
             end=end,
             server_number=int(os.getenv("SERVER_NUMBER")),
             map_name=map_info["name"],
-            game_layout=map_info["game_layout"] if "game_layout" in map_info else [],
+            game_layout=map_info["game_layout"] if "game_layout" in map_info else GameLayout,
         )
         record_stats_from_map(sess, map_, map_info.get("player_stats", dict()))
         sess.commit()

@@ -52,7 +52,7 @@ from rcon.types import (
     SteamPlayerSummaryType,
     StructuredLogLineWithMetaData,
     WatchListType,
-    MessageTemplateCategory, PlayerTeamAssociation, PlayerTeamConfidence,
+    MessageTemplateCategory, PlayerTeamAssociation, PlayerTeamConfidence, GameLayout,
 )
 from rcon.utils import (
     SafeStringFormat,
@@ -490,11 +490,6 @@ class LogLine(Base):
             "message": self.content,
             "sub_content": None,  # TODO
         }
-
-
-class GameLayout(TypedDict):
-    requested: Sequence[str | int | None]
-    set: list[str]
 
 
 class Maps(Base):
