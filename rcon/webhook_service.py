@@ -659,10 +659,10 @@ async def dequeue_message(
             logger.debug("Created %s for %s", lock, queue_id)
 
         if res.status_code == 429:
+            bucket_data.rate_limited = True
             update_bucket_rate_limit(
                 red=red, bucket_id=bucket_data.id, webhook_type=message.webhook_type
             )
-            bucket_data.rate_limited = True
             body = res.json()
             if body.get("global"):
                 # We're globally rate limited, parse out the relevant data and set it
