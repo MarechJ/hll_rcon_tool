@@ -65,7 +65,7 @@ except (ValueError, TypeError):
     LOCAL_RL_RESET_AFTER = 3
 
 try:
-    LOCAL_RL_REQUESTS_PER = os.getenv("HLL_WH_SERVICE_RL_REQUESTS_PER", 5)
+    LOCAL_RL_REQUESTS_PER = int(os.getenv("HLL_WH_SERVICE_RL_REQUESTS_PER", 5))
 except (ValueError, TypeError):
     LOCAL_RL_REQUESTS_PER = 5
 
