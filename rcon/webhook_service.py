@@ -366,7 +366,8 @@ def get_webhook_rate_limit_bucket(
     # between services once we expand to support other webhook types than Discord
     # but for now to simplify the service without having to pass in details
     # of the message that we don't know when we GET it, skip the webhook type
-    return red.hget(hash_name, f"{queue_id}")  # type: ignore
+    res: bytes = red.hget(hash_name, f"{queue_id}")  # type: ignore
+    return res.decode()
 
 
 def set_webhook_rate_limit_bucket(
