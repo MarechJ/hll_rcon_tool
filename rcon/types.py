@@ -493,7 +493,7 @@ class MapsType(TypedDict):
     server_number: Optional[int]
     map_name: str
     result: Optional[dict[str, int]]
-    game_layout: list[str]
+    game_layout: dict[str, list[str]]
     player_stats: List[PlayerStatsType]
 
 

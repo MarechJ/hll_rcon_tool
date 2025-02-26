@@ -1,24 +1,25 @@
 import { cn } from '@/lib/utils'
 import React, { ReactNode } from 'react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ScoreboardMap } from "@/types/api";
 
 type MapFigureProps = {
   src: string
   name: string
   text?: string
   muted?: boolean
-  gameLayout?: string[]
+  gameLayout?: ScoreboardMap['game_layout']
 } & React.ComponentProps<'figure'>
 
 export default function MapFigure({ gameLayout, src, name, text, muted, ...props }: MapFigureProps) {
   let caps = (content: ReactNode) => content;
-  if (gameLayout && gameLayout.length > 0) {
+  if (gameLayout && gameLayout?.set?.length || 0 > 0) {
     caps = (content: ReactNode) => (
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>{content}</TooltipTrigger>
           <TooltipContent>
-            <span>{gameLayout.join(', ')}</span>
+            <span>{gameLayout?.set?.join(', ')}</span>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

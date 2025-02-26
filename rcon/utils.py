@@ -284,7 +284,7 @@ class MapsHistory(FixedLenList[MapInfo]):
         ts = end_timestamp or datetime.now().timestamp()
         logger.info("Saving end of map %s at time %s", old_map, ts)
         prev = self.lpop() or MapInfo(
-            name=old_map, start=None, end=None, guessed=True, player_stats=dict(), game_layout=[]
+            name=old_map, start=None, end=None, guessed=True, player_stats=dict(), game_layout={}
         )
         prev["end"] = ts
         self.lpush(prev)

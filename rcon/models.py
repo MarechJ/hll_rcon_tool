@@ -509,7 +509,7 @@ class Maps(Base):
     map_name: Mapped[str] = mapped_column(nullable=False, index=True)
     # A dict with the result of the game mapped as Axis=int, Allied=int
     result: Mapped[dict[str, int]] = mapped_column(nullable=True)
-    game_layout: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=dict)
+    game_layout: Mapped[dict[str, list[str]]] = mapped_column(JSON, nullable=False, default=dict)
 
     player_stats: Mapped[list["PlayerStats"]] = relationship(back_populates="map")
 

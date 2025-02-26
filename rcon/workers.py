@@ -71,7 +71,7 @@ def temporary_welcome_in(message, seconds, restore_after_seconds):
     )
 
 
-def get_or_create_map(sess: Session, start: datetime.datetime, end: datetime.datetime, server_number: int, map_name: str, game_layout: list[str]):
+def get_or_create_map(sess: Session, start: datetime.datetime, end: datetime.datetime, server_number: int, map_name: str, game_layout: dict[str, list[str]]):
     map_ = (
         sess.query(Maps)
         .filter(
