@@ -93,7 +93,7 @@ services:
       HLL_WH_SERVICE_RL_TIME_WINDOW: ${HLL_WH_SERVICE_RL_TIME_WINDOW}
       HLL_WH_MAX_QUEUE_LENGTH: ${HLL_WH_MAX_QUEUE_LENGTH}
     command: webhook_service
-    restart: always
+    restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "if [ -e /code/webhook-service-healthy ]; then echo 0; else echo 1; fi" ]
       start_period: 30s
@@ -109,3 +109,8 @@ services:
       - ./logs:/logs/
     networks:
       - common
+    # This is not a CPU intensive container; but
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
