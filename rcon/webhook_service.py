@@ -359,12 +359,14 @@ def set_global_rate_limit_reset_after(red: redis.StrictRedis, limit: float) -> N
 def get_webhook_rate_limit_bucket(
     red: redis.StrictRedis,
     queue_id: str,
-    webhook_type: WebhookType | None,
     hash_name: str = WH_ID_TO_RATE_LIMIT_BUCKET,
 ) -> str | None:
     """Get the Discord rate limit bucket a webhook is associated with"""
-    if webhook_type:
-        return red.hget(hash_name, f"{webhook_type}:{queue_id}")  # type: ignore
+    # There is a very low but non 0 chance of colliding on queue IDs
+    # between services once we expand to support other webhook types than Discord
+    # but for now to simplify the service without having to pass in details
+    # of the message that we don't know when we GET it, skip the webhook type
+    return red.hget(hash_name, f"{queue_id}")  # type: ignore
 
 
 def set_webhook_rate_limit_bucket(
@@ -821,9 +823,7 @@ def get_scoreboard_message_overview(
         red = get_redis_client(decode_responses=False, global_pool=True)
 
     bucket_data: DiscordRateLimitData | None = None
-    bucket_id = get_webhook_rate_limit_bucket(
-        red=red, queue_id=queue_id, webhook_type=parts.wh_type
-    )
+    bucket_id = get_webhook_rate_limit_bucket(red=red, queue_id=queue_id)
     if bucket_id:
         bucket_data = get_rate_limit_bucket_data(red=red, bucket_id=bucket_id)
 
@@ -854,9 +854,7 @@ def get_queue_overview(
 
     length: int = red.llen(queue_id)  # type: ignore
     bucket_data: DiscordRateLimitData | None = None
-    bucket_id = get_webhook_rate_limit_bucket(
-        red=red, queue_id=queue_id, webhook_type=parts.wh_type
-    )
+    bucket_id = get_webhook_rate_limit_bucket(red=red, queue_id=queue_id)
     if bucket_id:
         bucket_data = get_rate_limit_bucket_data(red=red, bucket_id=bucket_id)
 
@@ -866,7 +864,7 @@ def get_queue_overview(
         "webhook_type": parts.wh_type,
         "message_type": parts.msg_type,
         "length": length,
-        "rate_limit_bucket": bucket_id,
+        "rate_limit_bucket": bucket_data.id if bucket_data else None,
         "rate_limited": bucket_data.rate_limited if bucket_data else False,
         "redis_key": queue_id,
     }
@@ -1090,7 +1088,7 @@ async def main():
 
         if queue_id:
             bucket_id: str | None = get_webhook_rate_limit_bucket(
-                red=red, queue_id=queue_id, webhook_type=None
+                red=red, queue_id=queue_id
             )
             # If we don't know the rate limit bucket; use the shared one further below
             if bucket_id:
