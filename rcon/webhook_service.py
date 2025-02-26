@@ -31,8 +31,8 @@ logger = getLogger(__name__)
 # TODO: Support editing existing messages; this can only add
 # new ones, so we can't use it for scorebot yet
 
-SCOREBOARD = "scoreboard"
-SCOREBOARD_BYTES = b"scoreboard"
+TRANSIENT_IDENTIFIER = "transient_identifier"
+TRANSIENT_IDENTIFIER_BYTES = b"transient_identifier"
 
 PREFIX = "whs"
 BUCKET_ID = f"{PREFIX}"
@@ -155,7 +155,7 @@ class DiscordErrorResponse(TypedDict):
 
 
 class WebhookMessageType(StrEnum):
-    """The underlying type a webhook message is for (log, audit, scorebot, etc.)
+    """The underlying type a webhook message is for (log, audit, scoreboard, etc.)
 
     This allows us to selectively remove messages from a queue
     """
@@ -183,15 +183,15 @@ class QueueParts:
 
 
 @dataclass
-class ScoreboardQueueParts:
-    """The individual components of a scoreboard key"""
+class TransientMessageParts:
+    """The individual components of a transient message key"""
 
     prefix: str
     server_number: str
     wh_type: WebhookType
     msg_type: WebhookMessageType
     id: str
-    message_key: str
+    message_group_key: str
 
 
 class QueueStatus(TypedDict):
@@ -207,8 +207,8 @@ class QueueStatus(TypedDict):
     redis_key: str
 
 
-class ScoreboardMessageStatus(TypedDict):
-    """Overview of a scoreboard message"""
+class TransientMessageStatus(TypedDict):
+    """Overview of a transient message"""
 
     server_number: int
     id: str
@@ -367,7 +367,7 @@ def get_webhook_rate_limit_bucket(
     # but for now to simplify the service without having to pass in details
     # of the message that we don't know when we GET it, skip the webhook type
     res: bytes = red.hget(hash_name, f"{queue_id}")  # type: ignore
-    return res.decode()
+    return res.decode() if res else None
 
 
 def set_webhook_rate_limit_bucket(
@@ -482,15 +482,23 @@ def clear_webhook_errors(
     )
 
 
-def enqueue_scoreboard_message(
+def enqueue_transient_message(
     message: WebhookMessage,
-    message_key: str,
+    message_group_key: str,
     red: redis.StrictRedis | None = None,
     prefix: str = PREFIX,
+    transient_identifier: str = TRANSIENT_IDENTIFIER,
     ttl: int = 120,
 ):
-    """Accept a WebhookMessage and scorebot message key to only store the most recent update"""
-    logger.info("Enqueuing %s: %s", message_key, message)
+    """Accept a WebhookMessage and message_group_key to only store the most recent update
+
+    This method should only be used for types of messages that are transient
+    and impermanent; such as a Scoreboard message update. These messages are
+    not stored as a queue; enqueueing future messages will overwrite any past ones
+    use `enqueue_message` for messages that should be stored in a queue so they are
+    # all (attempted but not guaranteed) to be sent to the remote service (Discord, etc.)
+    """
+    logger.debug("Enqueuing %s: %s", message_group_key, message)
 
     # Allows easier usage for enqueing from different services/sections of CRCON
     if red is None:
@@ -500,10 +508,10 @@ def enqueue_scoreboard_message(
     # Scoreboard messages are inherently temporary since they change often;
     # there is no point in retaining old messages
     # So instead of using a list as a message queue; save the payload at
-    # a unique key for this scoreboard message key (header/gamestate, map rotation, player stats)
+    # a unique key for this message group key (e.g. header/gamestate, map rotation, player stats)
     # overwriting anything that was there before so only the most recently queued
     # update is used
-    key = f"{prefix}:{get_server_number()}:{message.webhook_type}:{message.message_type}:{message.payload['webhook_id']}:{message_key}"
+    key = f"{prefix}:{get_server_number()}:{transient_identifier}:{message.webhook_type}:{message.message_type}:{message.payload['webhook_id']}:{message_group_key}"
     red.set(key, orjson.dumps(message.model_dump_json()), ex=ttl)
 
 
@@ -570,16 +578,14 @@ async def dequeue_message(
     ):
         logger.debug("Dequeueing from %s", queue_id)
 
-        # Scoreboard messages are stored as key/value pairs and not a list
-        if SCOREBOARD in queue_id:
+        # Transient messages are stored as key/value pairs and not a list
+        if TRANSIENT_IDENTIFIER in queue_id:
             # Old style messages may still be in the redis queue and we can't GET those
             try:
-                raw_message: bytes = red.get(queue_id)  # type: ignore
+                raw_message: bytes = red.getdel(queue_id)  # type: ignore
                 # If we don't get a message at all; return
-                # this is validated by Pydantic later
                 if raw_message is None:
                     return
-                red.delete(queue_id)
             except redis.exceptions.ResponseError:
                 # If we don't remove this; it will be stuck in the queue and block it forever
                 # until the redis cache is otherwise cleared
@@ -589,7 +595,14 @@ async def dequeue_message(
         else:
             raw_message: bytes = red.lpop(queue_id)  # type: ignore
 
-        message = unpack_message(raw_message=raw_message)
+        # If we somehow get a `None` message; log it and return gracefully
+        try:
+            message = unpack_message(raw_message=raw_message)
+        except orjson.JSONDecodeError as e:
+            logger.error(f"{raw_message=} {queue_id=} {bucket_data}")
+            logger.exception(e)
+            return
+
         wh = construct_webhook(
             payload=message.payload, webhook_type=message.webhook_type
         )
@@ -779,18 +792,18 @@ def get_all_queue_keys(
     return queue_ids
 
 
-def get_all_scoreboard_message_keys(
+def get_all_transient_message_keys(
     red: redis.StrictRedis | None = None, prefix: str = PREFIX
 ) -> list[str]:
-    """Retrieve each scoreboard key which acts as a queue_id"""
-    # Scoreboard messages which are stored as individual key/value pairs
-    scoreboard_messages: list[str] = [
+    """Retrieve each transient message key which acts as a queue_id"""
+    # Transient messages are stored as individual key/value pairs instead of a list
+    transient_message_keys: list[str] = [
         queue_id.decode()
         for queue_id in red.scan_iter(match=f"{prefix}*", _type="string")
-        if SCOREBOARD_BYTES in queue_id
+        if TRANSIENT_IDENTIFIER_BYTES in queue_id
     ]
 
-    return scoreboard_messages
+    return transient_message_keys
 
 
 def get_all_queue_keys_and_lengths(
@@ -806,17 +819,17 @@ def get_all_queue_keys_not_empty(
     """Scan for all the queues (identified by prefix)"""
     logger.debug("Getting all queue IDs with items from %s", PREFIX)
     populated_queues = [queue_id for queue_id in get_all_queue_keys(red=red, prefix=prefix) if red.llen(queue_id) > 0]  # type: ignore
-    populated_scoreboard_messages = get_all_scoreboard_message_keys(
+    populated_transient_messages = get_all_transient_message_keys(
         red=red, prefix=prefix
     )
-    return populated_queues + populated_scoreboard_messages
+    return populated_queues + populated_transient_messages
 
 
-def get_scoreboard_message_overview(
+def get_transient_message_overview(
     queue_id: str,
     red: redis.StrictRedis | None,
-) -> ScoreboardMessageStatus | None:
-    parts = _split_scoreboard_key(queue_id=queue_id)
+) -> TransientMessageStatus | None:
+    parts = _split_transient_message_key(queue_id=queue_id)
 
     if not parts:
         return
@@ -829,14 +842,14 @@ def get_scoreboard_message_overview(
     if bucket_id:
         bucket_data = get_rate_limit_bucket_data(red=red, bucket_id=bucket_id)
 
-    overview: ScoreboardMessageStatus = {
+    overview: TransientMessageStatus = {
         "server_number": int(parts.server_number),
         "id": parts.id,
         "webhook_type": parts.wh_type,
         "message_type": parts.msg_type,
         "rate_limit_bucket": bucket_id,
         "rate_limited": bucket_data.rate_limited if bucket_data else False,
-        "message_key": parts.message_key,
+        "message_key": parts.message_group_key,
         "redis_key": queue_id,
     }
     return overview
@@ -909,20 +922,22 @@ def webhook_service_summary(red: redis.StrictRedis | None = None):
 
     data["queues"] = queues
 
-    scoreboard_messages: defaultdict[
-        int, dict[str, dict[str, list[ScoreboardMessageStatus]]]
+    transient_messages: defaultdict[
+        int, dict[str, dict[str, list[TransientMessageStatus]]]
     ] = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
-    for key in get_all_scoreboard_message_keys(red=red):
-        scoreboard_overview: ScoreboardMessageStatus | None = (
-            get_scoreboard_message_overview(red=red, queue_id=key)
+    for key in get_all_transient_message_keys(red=red):
+        transient_message_overview: TransientMessageStatus | None = (
+            get_transient_message_overview(red=red, queue_id=key)
         )
 
-        if scoreboard_overview:
-            scoreboard_messages[scoreboard_overview["server_number"]][
-                scoreboard_overview["webhook_type"]
-            ][scoreboard_overview["message_type"]].append(scoreboard_overview)
+        if transient_message_overview:
+            transient_messages[transient_message_overview["server_number"]][
+                transient_message_overview["webhook_type"]
+            ][transient_message_overview["message_type"]].append(
+                transient_message_overview
+            )
 
-    data["scoreboard_messages"] = scoreboard_messages
+    data["transient_messages"] = transient_messages
     return data
 
 
@@ -1023,16 +1038,18 @@ def _split_queue_id(queue_id: str) -> QueueParts | None:
         return
 
 
-def _split_scoreboard_key(queue_id: str) -> ScoreboardQueueParts | None:
+def _split_transient_message_key(queue_id: str) -> TransientMessageParts | None:
     try:
-        prefix, server_number, wh_type, msg_type, qid, message_key = queue_id.split(":")
-        return ScoreboardQueueParts(
+        prefix, server_number, _, wh_type, msg_type, qid, message_key = queue_id.split(
+            ":"
+        )
+        return TransientMessageParts(
             prefix=prefix,
             server_number=server_number,
             wh_type=WebhookType(wh_type),
             msg_type=WebhookMessageType(msg_type),
             id=qid,
-            message_key=message_key,
+            message_group_key=message_key,
         )
     except ValueError:
         logger.error("Unable to parse %s received an invalid key", queue_id)
@@ -1079,8 +1096,8 @@ async def main():
 
         # Keep each message queue under its max, dropping the oldest messages first
         for queue_id in queue_ids:
-            # Can't trim scoreboard messages which are stored as simple KEY/VALUE pairs
-            if SCOREBOARD not in queue_id:
+            # Can't trim transient messages which are stored as simple KEY/VALUE pairs
+            if TRANSIENT_IDENTIFIER not in queue_id:
                 red.ltrim(queue_id, 0, WH_MAX_QUEUE_LENGTH - 1)
 
         logger.debug("queue_ids=%s", queue_ids)
