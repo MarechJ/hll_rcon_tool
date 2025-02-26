@@ -638,7 +638,8 @@ async def dequeue_message(
         # we encounter an unknown status code so we can update this appropriately
         if res.status_code not in (200, 401, 403, 429):
             logger.error(
-                "Received HTTP %s from Discord: %s",
+                "Received HTTP %s from Discord, headers:%s: %s",
+                res.headers,
                 res.status_code,
                 message.model_dump(),
             )
