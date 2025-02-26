@@ -29,7 +29,7 @@ from rcon.logs.loop import (
 )
 from rcon.maps import UNKNOWN_MAP_NAME, parse_layer
 from rcon.message_variables import format_message_string, populate_message_variables
-from rcon.models import PlayerID, enter_session
+from rcon.models import PlayerID, enter_session, GameLayout
 from rcon.player_history import (
     _get_set_player,
     get_player,
@@ -324,7 +324,7 @@ def handle_new_match_start(rcon: Rcon, struct_log):
                     end_timestamp=int(struct_log["timestamp_ms"] / 1000) - 100,
                 )
 
-        game_layout = {}
+        game_layout = GameLayout
         try:
             red = get_redis_client()
             raw = red.getdel('GAME_LAYOUT')

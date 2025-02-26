@@ -17,7 +17,7 @@ import rcon.steam_utils
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import SUCCESS, CommandFailedError, ServerCtl, VipId
 from rcon.maps import UNKNOWN_MAP_NAME, Layer, is_server_loading_map, parse_layer
-from rcon.models import PlayerID, PlayerVIP, enter_session
+from rcon.models import PlayerID, PlayerVIP, enter_session, GameLayout
 from rcon.player_history import get_profiles, safe_save_player_action, save_player, get_player_profile
 from rcon.settings import SERVER_INFO
 from rcon.types import (
@@ -1452,7 +1452,7 @@ class Rcon(ServerCtl):
                 )
 
         red = get_redis_client()
-        red.set('GAME_LAYOUT', json.dumps({'requested': objectives, 'set': parsed_objs}))
+        red.set('GAME_LAYOUT', json.dumps(GameLayout(requested=objectives, set=parsed_objs)))
         return super().set_game_layout(parsed_objs)
 
     @staticmethod

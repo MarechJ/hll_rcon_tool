@@ -8,6 +8,7 @@ from typing import List, Literal, Optional
 from typing_extensions import TypedDict
 
 from rcon.maps import Layer, LayerType, Team
+from rcon.models import GameLayout
 
 
 class WindowsStoreIdActionType(str, enum.Enum):
@@ -474,7 +475,7 @@ class MapInfo(TypedDict):
     end: float | None
     guessed: bool
     player_stats: dict[str, PlayerStat]
-    game_layout: dict[str, list[str]]
+    game_layout: GameLayout
 
 
 class MapInfoISODates(TypedDict):
@@ -493,7 +494,7 @@ class MapsType(TypedDict):
     server_number: Optional[int]
     map_name: str
     result: Optional[dict[str, int]]
-    game_layout: dict[str, list[str]]
+    game_layout: GameLayout
     player_stats: List[PlayerStatsType]
 
 
