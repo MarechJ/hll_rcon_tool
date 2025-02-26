@@ -19,11 +19,12 @@ from django.db.models.signals import post_delete, post_save
 from django.http import HttpResponse, QueryDict, parse_cookie
 from django.views.decorators.csrf import csrf_exempt
 
-from rcon.audit import heartbeat, ingame_mods, online_mods, set_registered_mods
-from rcon.cache_utils import ttl_cache
+from rcon.audit import heartbeat, set_registered_mods
+from rcon.cache_utils import ttl_cache, invalidates
 from rcon.types import DjangoGroup, DjangoPermission, DjangoUserPermissions
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rconweb.settings import SECRET_KEY, TAG_VERSION
+
 
 from .decorators import require_content_type, require_http_methods
 from .models import DjangoAPIKey, SteamPlayer
@@ -36,7 +37,9 @@ BEARER = ("BEARER", "BEARER:")
 
 
 def update_mods(sender, instance, **kwargs):
-    set_registered_mods(get_moderators_accounts())
+    """Update registered admin player IDs when User/SteamPlayer models are changed"""
+    with invalidates(get_moderators_accounts):
+        set_registered_mods(get_moderators_accounts())
 
 
 post_save.connect(update_mods, sender=User)
@@ -223,8 +226,13 @@ def do_login(request):
 
 
 @ttl_cache(60 * 60, cache_falsy=False)
-def get_moderators_accounts():
-    return [(u.user.username, u.steam_id_64) for u in SteamPlayer.objects.all()]
+def get_moderators_accounts() -> list[tuple[str, str]]:
+    """Return all active Django accounts associated with a player ID"""
+    return [
+        (u.user.username, u.steam_id_64)
+        for u in SteamPlayer.objects.all()
+        if u.user.is_active
+    ]
 
 
 @csrf_exempt
