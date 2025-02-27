@@ -1030,6 +1030,13 @@ class VipList(Base):
 class VipListRecord(Base):
     __tablename__ = "vip_list_record"
 
+    # To simplify some logic/endpoints; only allow one record per player per list
+    __table_args__ = (
+        UniqueConstraint(
+            "player_id_id", "vip_list_id", name="unique_vip_player_id_vip_list"
+        ),
+    )
+
     id: Mapped[int] = mapped_column(primary_key=True)
     admin_name: Mapped[str]
     created_at: Mapped[datetime] = mapped_column(
