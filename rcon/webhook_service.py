@@ -87,6 +87,11 @@ try:
 except (ValueError, TypeError):
     WH_MAX_QUEUE_LENGTH = 150
 
+try:
+    HLL_WH_LOOP_SLEEP_TIME = float(os.getenv("HLL_WH_LOOP_SLEEP_TIME"))
+except (ValueError, TypeError):
+    HLL_WH_LOOP_SLEEP_TIME = 0.006
+
 # Global datastructures to support associating hooks with locks
 _RATE_LIMIT_BUCKETS: defaultdict[str, asyncio.Lock | None] = defaultdict(lambda: None)
 _SHARED_LOCK: asyncio.Lock | None = None
@@ -1076,7 +1081,7 @@ async def main():
 
     # Grab the top message off each queue and send them off
 
-    logger.info("Starting webhook service")
+    logger.info(f"Starting webhook service {HLL_WH_LOOP_SLEEP_TIME=}")
     url = construct_redis_url()
     red = get_redis_client(redis_url=url, decode_responses=False, global_pool=True)
 
@@ -1114,7 +1119,7 @@ async def main():
                 bucket_data, lock = get_bucket_lock(red=red, bucket_id=bucket_id)
                 if lock and lock.locked():
                     logger.debug("%s locked", lock)
-                    await asyncio.sleep(0)
+                    await asyncio.sleep(HLL_WH_LOOP_SLEEP_TIME)
                     continue
                 ts = int(datetime.now(tz=timezone.utc).timestamp())
 
@@ -1180,7 +1185,7 @@ async def main():
         # runs far more often; we've limited the CPU usage by default to 1 core in
         # the webhook service definition in `docker-compose-common-components.yaml`
         # https://docs.python.org/3/library/asyncio-task.html#sleeping
-        await asyncio.sleep(0)
+        await asyncio.sleep(HLL_WH_LOOP_SLEEP_TIME)
 
 
 if __name__ == "__main__":
