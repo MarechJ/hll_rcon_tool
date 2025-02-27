@@ -327,7 +327,17 @@ def get_vip_record(
     return record
 
 
-def bulk_add_vip_records(records: Iterable[VipListRecordTypeNoId]) -> None:
+def bulk_add_vip_records(records: Iterable[VipListRecordTypeNoId]):
+    """Accept multiple records for addition
+
+    In the event the unique player ID per VIP list constraint is violated
+    only the first record will be added
+
+    Returns the player IDs and VIP list IDs that were skipped if any
+    """
+
+    player_ids_per_list: defaultdict[int, set[str]] = defaultdict(set)
+    player_id_vip_list_ids_skipped: defaultdict[str, set[int]] = defaultdict(set)
     with enter_session() as sess:
         for record in records:
             player = _get_set_player(sess, record["player_id"])
@@ -343,6 +353,19 @@ def bulk_add_vip_records(records: Iterable[VipListRecordTypeNoId]) -> None:
             # if the list doesn't exist
             if not vip_list:
                 return
+
+            if player.player_id in player_ids_per_list[vip_list.id]:
+                player_id_vip_list_ids_skipped[player.player_id].add(
+                    record["vip_list_id"]
+                )
+                logger.warning(
+                    "Skipping already seen player ID %s for VIP list ID %s",
+                    player.player_id,
+                    vip_list.id,
+                )
+                continue
+
+            player_ids_per_list[vip_list.id].add(player.player_id)
 
             create_vip_record(
                 sess=sess,
@@ -362,6 +385,8 @@ def bulk_add_vip_records(records: Iterable[VipListRecordTypeNoId]) -> None:
                     payload=VipListSynchCommand().model_dump(),
                 )
             )
+
+    return player_id_vip_list_ids_skipped
 
 
 def bulk_delete_vip_records(record_ids: Iterable[int]):
