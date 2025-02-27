@@ -790,6 +790,33 @@ def get_inactive_vip_records(
     return sess.scalars(stmt).all()
 
 
+def get_player_vip_list_record(
+    player_id: str, vip_list_id: int, sess: Session | None = None
+) -> VipListRecord | None:
+    """Return the VIP list record for a player for the indicated list if it exists"""
+
+    def _get_player_vip_list_record(player_id: str, vip_list_id: int, sess: Session):
+        stmt = (
+            select(VipListRecord)
+            .join(VipListRecord.player)
+            .join(VipListRecord.vip_list)
+            .where(PlayerID.player_id == player_id)
+            .where(VipList.id == vip_list_id)
+        )
+        res: VipListRecord | None = sess.execute(stmt).scalar_one_or_none()
+        return res
+
+    if sess is None:
+        with enter_session() as sess:
+            return _get_player_vip_list_record(
+                player_id=player_id, vip_list_id=vip_list_id, sess=sess
+            )
+    else:
+        return _get_player_vip_list_record(
+            player_id=player_id, vip_list_id=vip_list_id, sess=sess
+        )
+
+
 def get_player_vip_list_records(
     sess: Session,
     player_id: str,

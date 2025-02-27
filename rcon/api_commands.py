@@ -2017,12 +2017,18 @@ class RconAPI(Rcon):
     def delete_vip_list(self, vip_list_id: int) -> bool:
         return vip.delete_vip_list(vip_list_id=vip_list_id)
 
-    def get_vip_record(
+    def get_vip_list_record(
         self, record_id: int, strict: bool = False
     ) -> VipListRecordType | None:
         with enter_session() as sess:
             record = vip.get_vip_record(sess=sess, record_id=record_id, strict=strict)
             return record.to_dict() if record else None
+
+    def get_player_vip_list_record(self, player_id: str, vip_list_id: int):
+        return vip.get_player_vip_list_record(
+            player_id=player_id,
+            vip_list_id=vip_list_id,
+        )
 
     def add_vip_list_record(
         self,
