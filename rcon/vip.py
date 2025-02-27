@@ -153,7 +153,6 @@ def convert_old_style_vip_records(
             errors.append(f"Error on line #{idx} {line}: {e}")
 
     if vips:
-        logger.info(f"{len(vips)=}")
         bulk_add_vip_records(records=vips)
 
     return {
