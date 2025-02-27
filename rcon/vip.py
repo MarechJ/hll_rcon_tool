@@ -729,30 +729,6 @@ def delete_vip_list_record(record_id: int, synchronize: bool = True) -> bool:
     return True
 
 
-def get_highest_priority_records(vip_list_id: int) -> dict[str, VipListRecordType]:
-    """They shouldn't; but a player can have multiple records on a list
-
-    Get all the records for a list and return the top record for each player by player ID
-    """
-    records_by_player: defaultdict[str, list[VipListRecord]] = defaultdict(list)
-    top_record_by_player: dict[str, VipListRecordType] = {}
-    with enter_session() as sess:
-        vip_list = get_vip_list(sess=sess, vip_list_id=vip_list_id)
-
-        if not vip_list:
-            return top_record_by_player
-
-        for record in vip_list.records:
-            records_by_player[record.player.player_id].append(record)
-
-        for player_id, records in records_by_player.items():
-            top_record = get_highest_priority_record(records=records)
-            if top_record:
-                top_record_by_player[player_id] = top_record.to_dict()
-
-        return top_record_by_player
-
-
 def get_vip_status_for_player_ids(player_ids: set[str]) -> dict[str, VipListRecordType]:
     records_by_player: defaultdict[str, list[VipListRecord]] = defaultdict(list)
     top_record_by_player: dict[str, VipListRecordType] = {}
