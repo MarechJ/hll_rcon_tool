@@ -93,6 +93,7 @@ services:
       HLL_WH_SERVICE_RL_REQUESTS_PER: ${HLL_WH_SERVICE_RL_REQUESTS_PER}
       HLL_WH_SERVICE_RL_TIME_WINDOW: ${HLL_WH_SERVICE_RL_TIME_WINDOW}
       HLL_WH_MAX_QUEUE_LENGTH: ${HLL_WH_MAX_QUEUE_LENGTH}
+      HLL_WH_LOOP_SLEEP_TIME: ${HLL_WH_LOOP_SLEEP_TIME}
     command: webhook_service
     restart: unless-stopped
     healthcheck:
