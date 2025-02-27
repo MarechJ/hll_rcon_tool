@@ -55,7 +55,7 @@ services:
     command: maintenance
     restart: always
     healthcheck:
-      test: [ "CMD-SHELL", "if [ -e /code/maintenance-container-healthy ]; then echo 0; else echo 1; fi" ]
+      test: [ "CMD-SHELL", "-f /code/rconweb/maintenance-container-healthy ]" ]
       start_period: 30s
       interval: 15s
       timeout: 30s
