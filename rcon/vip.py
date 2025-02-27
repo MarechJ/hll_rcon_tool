@@ -875,6 +875,7 @@ def search_vip_list_records(
     page_size: int = 50,
     page: int = 1,
 ) -> tuple[Sequence[VipListRecord], int]:
+    """Filter VIP list records by the criteria/page; returning the page records and total number of records"""
     page_size = int(page_size)
     page = int(page)
 
