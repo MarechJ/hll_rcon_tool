@@ -620,6 +620,83 @@ def edit_vip_list_record(
         )
 
 
+def add_or_edit_vip_list_record(
+    player_id: str,
+    vip_list_id: int,
+    description: str | MissingType = MISSING,
+    active: bool | MissingType = MISSING,
+    expires_at: datetime | MissingType = MISSING,
+    notes: str | MissingType = MISSING,
+    admin_name: str = "CRCON",
+    sess: Session | None = None,
+) -> VipListRecordType | None:
+    """Alllow editing a VIP list record by player ID creating the record if it doesn't exist"""
+
+    def _add_or_edit(
+        sess: Session,
+        player_id: str,
+        vip_list_id: int,
+        description: str | MissingType = MISSING,
+        active: bool | MissingType = MISSING,
+        expires_at: datetime | MissingType = MISSING,
+        notes: str | MissingType = MISSING,
+        admin_name: str = "CRCON",
+    ) -> VipListRecordType | None:
+        record = get_player_vip_list_record(
+            sess=sess, player_id=player_id, vip_list_id=vip_list_id
+        )
+
+        if record:
+            return edit_vip_list_record(
+                record_id=record.id,
+                vip_list_id=vip_list_id,
+                description=description,
+                active=active,
+                expires_at=expires_at,
+                notes=notes,
+                admin_name=admin_name,
+            )
+        else:
+            _description = None if isinstance(description, MissingType) else description
+            _active = True if isinstance(active, MissingType) else active == True
+            _expires_at = None if isinstance(expires_at, MissingType) else expires_at
+            _notes = None if isinstance(notes, MissingType) else notes
+
+            return add_record_to_vip_list(
+                player_id=player_id,
+                vip_list_id=vip_list_id,
+                description=_description,
+                active=_active,
+                expires_at=_expires_at,
+                notes=_notes,
+                admin_name=admin_name,
+            )
+
+    if sess is None:
+        with enter_session() as sess:
+            return _add_or_edit(
+                sess=sess,
+                player_id=player_id,
+                vip_list_id=vip_list_id,
+                description=description,
+                active=active,
+                expires_at=expires_at,
+                notes=notes,
+                admin_name=admin_name,
+            )
+    else:
+        return _add_or_edit(
+            sess=sess,
+            player_id=player_id,
+            vip_list_id=vip_list_id,
+            description=description,
+            active=active,
+            expires_at=expires_at,
+            notes=notes,
+            admin_name=admin_name,
+        )
+
+
 def delete_vip_list_record(record_id: int, synchronize: bool = True) -> bool:
     """Delete the specified VIP list record if it exists"""
     with enter_session() as sess:

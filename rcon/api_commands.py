@@ -2064,7 +2064,29 @@ class RconAPI(Rcon):
             admin_name=admin_name,
         )
 
-    def bulk_add_vip_list_records(self, records: Iterable[VipListRecordType]) -> None:
+    def add_or_edit_vip_list_record(
+        self,
+        player_id: str,
+        vip_list_id: int,
+        description: str | MissingType = MISSING,
+        active: bool | MissingType = MISSING,
+        expires_at: datetime | MissingType = MISSING,
+        notes: str | MissingType = MISSING,
+        admin_name: str = "CRCON",
+    ):
+        return vip.add_or_edit_vip_list_record(
+            player_id=player_id,
+            vip_list_id=vip_list_id,
+            description=description,
+            active=active,
+            expires_at=expires_at,
+            notes=notes,
+            admin_name=admin_name,
+        )
+
+    def bulk_add_vip_list_records(
+        self, records: Iterable[VipListRecordType]
+    ) -> None | defaultdict[str, set[int]]:
         return vip.bulk_add_vip_records(records=records)
 
     def bulk_delete_vip_list_records(self, record_ids: Iterable[int]):
@@ -2174,9 +2196,11 @@ class RconAPI(Rcon):
         return vip.inactivate_expired_records()
 
     def extend_vip_duration(
-        self, record_id: int, duration: timedelta | int
+        self, player_id: str, vip_list_id: int, duration: timedelta | int
     ) -> VipListRecordType | None:
-        return vip.extend_vip_duration(record_id=record_id, duration=duration)
+        return vip.extend_vip_duration(
+            player_id=player_id, vip_list_id=vip_list_id, duration=duration
+        )
 
     def revoke_all_vip(self, player_id: str):
         return vip.revoke_all_vip(player_id=player_id)

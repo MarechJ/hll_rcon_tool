@@ -622,6 +622,10 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.get_vip_record: "api.can_view_vip_lists",
     rcon_api.add_vip_list_record: "api.can_add_vip_list_records",
     rcon_api.edit_vip_list_record: "api.can_change_vip_list_records",
+    rcon_api.add_or_edit_vip_list_record: {
+        "api.can_add_vip_list_records",
+        "api.can_change_vip_list_records",
+    },
     rcon_api.bulk_add_vip_list_records: "api.can_add_vip_list_records",
     rcon_api.bulk_delete_vip_list_records: "api.can_change_vip_list_records",
     rcon_api.bulk_edit_vip_list_records: "api.can_change_vip_list_records",
@@ -895,6 +899,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.get_vip_record: ["GET"],
     rcon_api.add_vip_list_record: ["POST"],
     rcon_api.edit_vip_list_record: ["POST"],
+    rcon_api.add_or_edit_vip_list_record: ["POST"],
     rcon_api.bulk_add_vip_list_records: ["POST"],
     rcon_api.bulk_delete_vip_list_records: ["POST"],
     rcon_api.bulk_edit_vip_list_records: ["POST"],
