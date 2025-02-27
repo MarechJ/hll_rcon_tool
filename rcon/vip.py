@@ -879,7 +879,6 @@ def search_vip_list_records(
     page_size = int(page_size)
     page = int(page)
 
-    """Filter VIP list records by the criteria/page; returning the page records and  total number of records"""
     if page <= 0:
         raise ValueError("page needs to be >= 1")
     if page_size <= 0:
@@ -1078,11 +1077,14 @@ def inactivate_expired_records():
 
 
 def extend_vip_duration(
-    record_id: int, duration: timedelta | int
+    player_id: str, vip_list_id: int, duration: timedelta | int
 ) -> VipListRecordType | None:
     """Extend a temporary VIP record by duration; does nothing to indefinite VIP"""
     with enter_session() as sess:
-        record = get_vip_record(sess=sess, record_id=record_id, strict=False)
+        record: VipListRecord | None = get_player_vip_list_record(
+            sess=sess, player_id=player_id, vip_list_id=vip_list_id
+        )
+
         if not record:
             return
 
