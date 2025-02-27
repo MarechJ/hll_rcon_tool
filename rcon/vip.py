@@ -6,7 +6,7 @@
 # entries and REMOVE any expired/inactive entries and UNKNOWN entries (depending on sync method)
 
 # They also need to periodically (on a timer) remove anyones VIP that has expired, these
-# entries can remain on the list (or be purged) but need to be removed from the game server
+# entries can remain on the list but need to be removed from the game server
 # A sync needs to handle/reattempt errors since it must fetch a current list, and vipadd/vipdel
 # potentially many entries
 
@@ -23,11 +23,12 @@
 # If the sync method of a list is REMOVE_UNKNOWN and a player ID has VIP on the game server but is not
 # on ANY list that applies to the game server, their VIP is removed; otherwise they are ignored when
 # the list is synced
+
 # Multiple lists can apply to the server and they can have different sync methods; but users just need
 # to pay attention and understand the system when managing lists; the default will be IGNORE_UNKNOWN
 # so they will have to explicitly configure this, and most people will likely use a single list
 # At not point will we automatically create records for players based on their existing VIP status
-# on the game server
+# on the game server because that would pollute our records
 
 
 # Because command forwarding is weird and can fail, and you can only forward commands and not get info
@@ -41,6 +42,8 @@
 # expiration date needs to be in the future
 
 # inactive OR expired VIP is removed when a list is synced
+
+# Each list is limited to one single VIP record per player ID to simplify things
 
 import os
 import struct
