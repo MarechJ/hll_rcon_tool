@@ -8,7 +8,7 @@ channels-redis==4.2.1
 orjson==3.10.15
 simplejson==3.20.1
 psycopg2-binary
-sentry-sdk[django]==2.21.0
+sentry-sdk[django]==2.22.0
 python-dateutil==2.9.0.post0
 # discord-webhook[async]
 git+https://github.com/cemathey/python-discord-webhook@89ae25140b30a6747de70e5bf16bc5ba04a9b238
@@ -22,10 +22,10 @@ paramiko==3.5.1
 ftpretty==0.4.0
 pytz>=2023.3
 pydantic==2.10.6
-discord.py==2.4.0
+discord.py==2.5.0
 # django-directory
 # django-dirctory is currently incompatible with Django 4.0+, PR is pending to fix django-directory upstream
 git+https://github.com/cemathey/django-directory@f51ee1e8dc50edf453fee4a0d9631c0e46fe9433
 pre-commit
-humanize==4.12.0
+humanize==4.12.1
 httpx==0.28.1

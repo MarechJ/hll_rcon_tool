@@ -1,11 +1,10 @@
+import json
 import logging
 import re
 import shlex
-from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from functools import wraps
-from threading import Timer
-from typing import Any, Final
+from typing import Final
 
 from discord_webhook import DiscordEmbed
 
@@ -17,7 +16,7 @@ from rcon.blacklist import (
     blacklist_or_ban,
     is_player_blacklisted,
 )
-from rcon.cache_utils import invalidates
+from rcon.cache_utils import invalidates, get_redis_client
 from rcon.commands import CommandFailedError, HLLServerError
 from rcon.discord import get_prepared_discord_hooks, send_to_discord_audit
 from rcon.logs.loop import (
@@ -30,7 +29,7 @@ from rcon.logs.loop import (
 )
 from rcon.maps import UNKNOWN_MAP_NAME, parse_layer
 from rcon.message_variables import format_message_string, populate_message_variables
-from rcon.models import PlayerID, enter_session
+from rcon.models import PlayerID, enter_session, GameLayout
 from rcon.player_history import (
     _get_set_player,
     get_player,
@@ -322,13 +321,22 @@ def handle_new_match_start(rcon: Rcon, struct_log):
             if maps_history[0]["end"] is None and maps_history[0]["name"]:
                 maps_history.save_map_end(
                     old_map=maps_history[0]["name"],
-                    end_timestamp=int(struct_log["timestamp_ms"] / 1000) - 100,
+                    end_timestamp=int(struct_log["timestamp_ms"] / 1000),
                 )
 
+        game_layout = GameLayout
+        try:
+            red = get_redis_client()
+            raw = red.getdel('GAME_LAYOUT')
+            game_layout = json.loads(raw) if raw is not None else {}
+        except Exception as e:
+            logger.error("Could not fetch Game Layout", e)
+            pass
         maps_history.save_new_map(
             new_map=str(map_name_to_save),
             guessed=guessed,
             start_timestamp=int(struct_log["timestamp_ms"] / 1000),
+            game_layout=game_layout,
         )
     except:
         raise

@@ -15,7 +15,7 @@ from rcon.game_logs import get_historical_logs_records
 from rcon.models import Maps, PlayerStats, enter_session
 from rcon.player_history import get_player
 from rcon.player_stats import TimeWindowStats
-from rcon.types import MapInfo, PlayerStat
+from rcon.types import MapInfo, PlayerStat, GameLayout
 from rcon.utils import INDEFINITE_VIP_DATE
 
 logger = logging.getLogger("rcon")
@@ -71,7 +71,7 @@ def temporary_welcome_in(message, seconds, restore_after_seconds):
     )
 
 
-def get_or_create_map(sess, start, end, server_number, map_name):
+def get_or_create_map(sess: Session, start: datetime.datetime, end: datetime.datetime, server_number: int, map_name: str, game_layout: GameLayout):
     map_ = (
         sess.query(Maps)
         .filter(
@@ -92,6 +92,7 @@ def get_or_create_map(sess, start, end, server_number, map_name):
         end=end,
         server_number=server_number,
         map_name=map_name,
+        game_layout=game_layout,
     )
     sess.add(map_)
     sess.commit()
@@ -132,8 +133,9 @@ def _record_stats(map_info: MapInfo):
             sess=sess,
             start=start,
             end=end,
-            server_number=os.getenv("SERVER_NUMBER"),
+            server_number=int(os.getenv("SERVER_NUMBER")),
             map_name=map_info["name"],
+            game_layout=map_info["game_layout"] if "game_layout" in map_info else GameLayout,
         )
         record_stats_from_map(sess, map_, map_info.get("player_stats", dict()))
         sess.commit()
@@ -160,7 +162,8 @@ def record_stats_from_map(
     match_started = get_historical_logs_records(
         sess,
         from_=map_.start,
-        # to catch the possibly second MATCH START event, add a random 30 seconds to the end date of the match
+        # to catch the possibly second MATCH START event. The match end will be the time of the MATCH START event, 30 seconds
+        # is just a random safety margin.
         till=map_.end + datetime.timedelta(seconds=30),
         time_sort="asc",
         action="MATCH STARTED",
