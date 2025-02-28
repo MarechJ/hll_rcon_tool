@@ -27,6 +27,7 @@ const Points = ({ value, type, direction = "left" }) => {
             width={16}
             height={16}
             alt={type}
+            title={type}
           />
         </SquareIcon>
         <NumberText>{value ? value.toFixed(0) : 0}</NumberText>
@@ -45,6 +46,7 @@ const Points = ({ value, type, direction = "left" }) => {
             width={16}
             height={16}
             alt={type}
+            title={type}
           />
         </SquareIcon>
       </>
