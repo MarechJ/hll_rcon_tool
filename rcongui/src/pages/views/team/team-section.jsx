@@ -282,7 +282,7 @@ export const TeamSection = ({
       <Box>
         <SquadHeader
           selected={players.every((p) => selectedPlayers.has(p.player_id))}
-          onClick={(e) =>
+          onClick={(_) =>
             onToggleSquad(
               players,
               players.every((p) => selectedPlayers.has(p.player_id))
@@ -468,7 +468,7 @@ export const TeamSection = ({
                         selected={squad.players.every((p) =>
                           selectedPlayers.has(p.player_id)
                         )}
-                        onClick={(e) =>
+                        onClick={(_) =>
                           onToggleSquad(
                             squad.players,
                             squad.players.every((p) =>

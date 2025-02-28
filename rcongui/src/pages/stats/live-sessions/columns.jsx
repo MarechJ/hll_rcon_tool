@@ -89,6 +89,7 @@ export const columns = [
               src={`/icons/teams/${teamToNation(row.original.team)}.webp`}
               width={16}
               height={16}
+              alt={row.original.team}
               title={row.original.team}
             />
           </Square>
@@ -139,6 +140,7 @@ export const columns = [
                   src={src}
                   width={16}
                   height={16}
+                  alt={row.original.type ?? row.original.role}
                   title={row.original.type ?? row.original.role}
                 />
               </Square>

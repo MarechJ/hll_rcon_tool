@@ -153,7 +153,7 @@ export const Action = styled("div", {
 
 export const TextButton = styled((props) => (
   <span role="button" tabIndex={0} {...props} />
-))(({ theme }) => ({
+))(() => ({
   cursor: "pointer",
   width: "fit-content",
   "&:hover": {
