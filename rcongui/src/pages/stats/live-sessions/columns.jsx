@@ -80,7 +80,7 @@ export const columns = [
   {
     accessorKey: "team",
     id: "team",
-    header: SortableHeader("T"),
+    header: SortableHeader("T", "Team"),
     cell: ({ row }) => {
       return (
         <Center>
@@ -89,6 +89,7 @@ export const columns = [
               src={`/icons/teams/${teamToNation(row.original.team)}.webp`}
               width={16}
               height={16}
+              title={row.original.team}
             />
           </Square>
         </Center>
@@ -100,7 +101,7 @@ export const columns = [
   },
   {
     id: "unit",
-    header: SortableHeader("U"),
+    header: SortableHeader("U","Unit"),
     accessorKey: "unit_name",
     // Group by unit name and team
     // getGroupingValue: (row) => `${row.original.unit_name ?? "-"}-${row.original.team}`,
@@ -121,7 +122,7 @@ export const columns = [
   },
   {
     id: "role",
-    header: SortableHeader("R"),
+    header: SortableHeader("R","Role"),
     accessorKey: "role",
     cell: ({ row }) => {
       const src = row.getCanExpand() ? `/icons/roles/${row.original.type ?? row.original.role}.png` : `/icons/roles/${row.original.role}.png`;
@@ -138,6 +139,7 @@ export const columns = [
                   src={src}
                   width={16}
                   height={16}
+                  title={row.original.type ?? row.original.role}
                 />
               </Square>
             </Center>
@@ -149,7 +151,7 @@ export const columns = [
   },
   {
     id: "level",
-    header: SortableHeader("LVL"),
+    header: SortableHeader("LVL","Level"),
     accessorKey: "level",
     aggregationFn: "mean",
     cell: ({ row }) => {
@@ -165,7 +167,7 @@ export const columns = [
   },
   {
     id: "actions",
-    header: "🛠️",
+    header: <span title="Actions">🛠️</span>,
     accessorKey: "actions",
     cell: ({ row }) => {
       if (row.getCanExpand()) return (
@@ -200,7 +202,7 @@ export const columns = [
   },
   {
     id: "name",
-    header: SortableHeader("Name"),
+    header: SortableHeader("Name","Name"),
     accessorKey: "name",
     cell: ({ row }) => {
       return (
@@ -219,7 +221,7 @@ export const columns = [
   },
   {
     id: "kills",
-    header: SortableHeader("K"),
+    header: SortableHeader("K","Kills"),
     accessorKey: "kills",
     aggregationFn: "sum",
     cell: ({ row }) => {
@@ -235,7 +237,7 @@ export const columns = [
   },
   {
     id: "deaths",
-    header: SortableHeader("D"),
+    header: SortableHeader("D","Deaths"),
     accessorKey: "deaths",
     aggregationFn: "sum",
     cell: ({ row }) => {
@@ -251,7 +253,7 @@ export const columns = [
   },
   {
     id: "combat",
-    header: SortableHeader("C"),
+    header: SortableHeader("C","Combat Score"),
     accessorKey: "combat",
     aggregationFn: "sum",
     cell: ({ row }) => {
@@ -267,7 +269,7 @@ export const columns = [
   },
   {
     id: "offense",
-    header: SortableHeader("O"),
+    header: SortableHeader("O", "Offense Score"),
     accessorKey: "offense",
     aggregationFn: "sum",
     cell: ({ row }) => {
@@ -283,7 +285,7 @@ export const columns = [
   },
   {
     id: "defense",
-    header: SortableHeader("D"),
+    header: SortableHeader("D", "Defense Score"),
     accessorKey: "defense",
     aggregationFn: "sum",
     cell: ({ row }) => {
@@ -299,7 +301,7 @@ export const columns = [
   },
   {
     id: "support",
-    header: SortableHeader("S"),
+    header: SortableHeader("S", "Support Score"),
     accessorKey: "support",
     aggregationFn: "sum",
     cell: ({ row }) => {
@@ -315,7 +317,7 @@ export const columns = [
   },
   {
     id: "time",
-    header: SortableHeader("Time"),
+    header: SortableHeader("Time", "Current Playtime"),
     accessorKey: "profile.current_playtime_seconds",
     aggregationFn: "mean",
     cell: ({ row }) => {

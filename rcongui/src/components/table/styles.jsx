@@ -175,10 +175,10 @@ export const HeaderButton = styled((props) => (
 }));
 
 export const SortableHeader =
-  (text) =>
+  (text, title) =>
   ({ column }) => {
     return (
-      <HeaderButton onClick={column.getToggleSortingHandler()}>
+      <HeaderButton onClick={column.getToggleSortingHandler()} title={title || ""}>
         {text}
         {column.getIsSorted() &&
           (column.getIsSorted() === "asc" ? (

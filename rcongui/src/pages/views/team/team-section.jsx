@@ -41,6 +41,7 @@ const PlayerInfo = ({ player, onProfileClick }) => (
         alt={player.role}
         width={16}
         height={16}
+        title={player.role}
       />
     ) : (
       <Typography sx={{ width: 16, height: 16, textAlign: "center" }}>
@@ -148,6 +149,7 @@ const SquadNameInfo = ({ squad, showIcon = true }) => (
         alt={squad.type}
         width={16}
         height={16}
+        title={squad.type}
       />
     )}
     <Typography
@@ -166,6 +168,7 @@ const SquadNameInfo = ({ squad, showIcon = true }) => (
       <img
         src="/icons/ping.webp"
         alt="No Leader"
+        title="Unit has no leader"
         width={16}
         height={16}
         style={{ opacity: 0.7 }}
