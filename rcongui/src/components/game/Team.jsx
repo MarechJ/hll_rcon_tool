@@ -75,7 +75,13 @@ export const TeamDesktop = ({ data }) => {
     <Stack orientation={"vertical"} sx={{ height: "100%" }}>
       <Stack direction={"row"} spacing={1}>
         {teamMetrics.map((metric) => (
-          <Stack key={metric} direction={"row"} flexBasis={1} flexGrow={1} spacing={1}>
+          <Stack
+            key={metric}
+            direction={"row"}
+            flexBasis={1}
+            flexGrow={1}
+            spacing={1}
+          >
             <Points value={team[metric]} type={metric} />
           </Stack>
         ))}
@@ -83,7 +89,13 @@ export const TeamDesktop = ({ data }) => {
       <Divider variant="middle" />
       <Stack direction={"row"} spacing={1}>
         {teamStats.map((stat) => (
-          <Stack key={stat} direction={"row"} flexBasis={1} flexGrow={1} spacing={1}>
+          <Stack
+            key={stat}
+            direction={"row"}
+            flexBasis={1}
+            flexGrow={1}
+            spacing={1}
+          >
             <Points value={team[stat]} type={stat} />
           </Stack>
         ))}
@@ -110,15 +122,14 @@ export const TeamDesktop = ({ data }) => {
           </Stack>
         ))}
       </Stack>
-        <Divider variant="middle" />
-        <Stack direction={"row"} spacing={1}>
-            <Stack direction={"row"} flexBasis={1} flexGrow={1} spacing={1}>
-                <Stack direction={"row"} flexBasis={1} flexGrow={1} spacing={1}>
-                    <Points value={teamState.vips} type={"vip"} />
-                </Stack>
-            </Stack>
+      <Divider variant="middle" />
+      <Stack direction={"row"} spacing={1}>
+        <Stack direction={"row"} flexBasis={1} flexGrow={1} spacing={1}>
+          <Stack direction={"row"} flexBasis={1} flexGrow={1} spacing={1}>
+            <Points value={teamState.vips} type={"vip"} />
+          </Stack>
         </Stack>
+      </Stack>
     </Stack>
-
   );
 };
