@@ -104,6 +104,7 @@ export const TeamDesktop = ({ data }) => {
                 src={roleSrc(role)}
                 width={16}
                 height={16}
+                title={role}
               />
             </SquareIcon>
             <NumberText>{count}</NumberText>
