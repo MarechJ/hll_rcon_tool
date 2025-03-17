@@ -2159,7 +2159,7 @@ class RconAPI(Rcon):
         # Can't use admin_name without the API introspection will set it
         # whatever user made the API call
         author_admin_name: str | None = None,
-        active: bool | None = None,
+        include_active: bool | None = None,
         description_or_player_name: str | None = None,
         notes: str | None = None,
         vip_list_id: int | None = None,
@@ -2173,7 +2173,7 @@ class RconAPI(Rcon):
                 sess=sess,
                 player_id=player_id,
                 admin_name=author_admin_name,
-                active=active,
+                active=include_active,
                 description_or_player_name=description_or_player_name,
                 notes=notes,
                 vip_list_id=vip_list_id,
