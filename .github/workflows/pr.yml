@@ -58,7 +58,7 @@ jobs:
           pip install -r requirements.txt -r requirements-dev.txt --no-compile
       - name: start dependencies
         run: docker compose -f docker-compose.dev.yml up -d postgres redis
-      - name: run tests
+      - name: perform database migrations
         run: |
           export HLL_DB_URL=postgresql://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}/${HLL_DB_NAME}
           export HLL_REDIS_URL=redis://${HLL_REDIS_HOST}:${HLL_REDIS_PORT}/${HLL_REDIS_DB}
@@ -66,4 +66,8 @@ jobs:
           PYTHONPATH=. alembic upgrade head
           PYTHONPATH=. python ./manage.py init_db
           PYTHONPATH=. python ./rconweb/manage.py migrate --noinput
+      - name: run tests
+        run: |
+          export HLL_DB_URL=postgresql://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}/${HLL_DB_NAME}
+          export HLL_REDIS_URL=redis://${HLL_REDIS_HOST}:${HLL_REDIS_PORT}/${HLL_REDIS_DB}
           pytest tests/

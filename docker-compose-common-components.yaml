@@ -51,10 +51,11 @@ services:
       HLL_DB_HOST: ${HLL_DB_HOST}
       HLL_DB_HOST_PORT: ${HLL_DB_HOST_PORT}
       HLL_DB_URL: postgresql://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}/${HLL_DB_NAME}
+      HLL_REDIS_URL: redis://${HLL_REDIS_HOST}:${HLL_REDIS_HOST_PORT}/${HLL_REDIS_DB}
     command: maintenance
     restart: always
     healthcheck:
-      test: [ "CMD-SHELL", "if [ -e /code/maintenance-container-healthy ]; then echo 0; else echo 1; fi" ]
+      test: [ "CMD-SHELL", "test -f /code/rconweb/maintenance-container-healthy" ]
       start_period: 30s
       interval: 15s
       timeout: 30s
@@ -92,8 +93,9 @@ services:
       HLL_WH_SERVICE_RL_REQUESTS_PER: ${HLL_WH_SERVICE_RL_REQUESTS_PER}
       HLL_WH_SERVICE_RL_TIME_WINDOW: ${HLL_WH_SERVICE_RL_TIME_WINDOW}
       HLL_WH_MAX_QUEUE_LENGTH: ${HLL_WH_MAX_QUEUE_LENGTH}
+      HLL_WH_LOOP_SLEEP_TIME: ${HLL_WH_LOOP_SLEEP_TIME}
     command: webhook_service
-    restart: always
+    restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "if [ -e /code/webhook-service-healthy ]; then echo 0; else echo 1; fi" ]
       start_period: 30s
@@ -109,3 +111,8 @@ services:
       - ./logs:/logs/
     networks:
       - common
+    # This is not a CPU intensive container; but
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'

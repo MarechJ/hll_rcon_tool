@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import random
@@ -10,17 +11,18 @@ from itertools import chain
 from time import sleep
 from typing import Any, Iterable, List, Literal, Optional, Sequence, overload
 
-from rcon.vip import get_vip_status_for_player_ids
 import rcon.steam_utils
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import SUCCESS, CommandFailedError, ServerCtl
 from rcon.maps import UNKNOWN_MAP_NAME, Layer, is_server_loading_map, parse_layer
+from rcon.models import GameLayout
 from rcon.player_history import (
+    get_player_profile,
     get_profiles,
     safe_save_player_action,
-    get_player_profile,
 )
 from rcon.settings import SERVER_INFO
+from rcon.steam_utils import is_steam_id_64
 from rcon.types import (
     AdminType,
     GameLayoutRandomConstraints,
@@ -39,18 +41,18 @@ from rcon.types import (
     VipIdType,
     VipIdWithExpirationType,
 )
-from rcon.steam_utils import is_steam_id_64
-from rcon.win_store_utils import is_windows_store_id
 from rcon.user_config.rcon_connection_settings import RconConnectionSettingsUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.utils import BaseUserConfig
 from rcon.utils import (
     ALL_ROLES,
     ALL_ROLES_KEY_INDEX_MAP,
+    SERVER_NUMBER,
     default_player_info_dict,
     parse_raw_player_info,
-    SERVER_NUMBER,
 )
+from rcon.vip import get_vip_status_for_player_ids
+from rcon.win_store_utils import is_windows_store_id
 
 PLAYER_ID = "player_id"
 NAME = "name"
@@ -1397,6 +1399,10 @@ class Rcon(ServerCtl):
                     [c for c in obj_choices if c is not None] or obj_row
                 )
 
+        red = get_redis_client()
+        red.set(
+            "GAME_LAYOUT", json.dumps(GameLayout(requested=objectives, set=parsed_objs))
+        )
         return super().set_game_layout(parsed_objs)
 
     @staticmethod

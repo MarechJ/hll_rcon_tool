@@ -4,11 +4,20 @@ import re
 from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
-from typing import Any, Generator, List, Literal, Optional, Sequence, overload
+from typing import (
+    Any,
+    Generator,
+    List,
+    Literal,
+    Optional,
+    Sequence,
+    TypedDict,
+    overload,
+)
 
 import dateutil.parser
 import pydantic
-from sqlalchemy import TIMESTAMP, Enum, ForeignKey, String, create_engine, text
+from sqlalchemy import JSON, TIMESTAMP, Enum, ForeignKey, String, create_engine, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -34,6 +43,7 @@ from rcon.types import (
     BlacklistType,
     BlacklistWithRecordsType,
     DBLogLineType,
+    GameLayout,
     MapsType,
     MessageTemplateCategory,
     MessageTemplateType,
@@ -519,6 +529,9 @@ class Maps(Base):
     map_name: Mapped[str] = mapped_column(nullable=False, index=True)
     # A dict with the result of the game mapped as Axis=int, Allied=int
     result: Mapped[dict[str, int]] = mapped_column(nullable=True)
+    game_layout: Mapped["GameLayout"] = mapped_column(
+        JSON, nullable=False, default=GameLayout
+    )
 
     player_stats: Mapped[list["PlayerStats"]] = relationship(back_populates="map")
 
@@ -538,6 +551,7 @@ class Maps(Base):
                 if self.result is not None and self.result.get("Allied") is not None
                 else None
             ),
+            "game_layout": self.game_layout,
             "player_stats": (
                 []
                 if not with_stats or not self.player_stats

@@ -10,6 +10,7 @@ from time import sleep
 
 from discord_webhook import DiscordEmbed, DiscordWebhook
 
+from rcon.api_commands import get_rcon_api, RconAPI
 from rcon.cache_utils import invalidates, ttl_cache
 from rcon.player_history import get_player_profile, player_has_flag
 from rcon.player_stats import current_game_stats
@@ -163,12 +164,17 @@ def set_cache_value(player_id: str, last_reported: datetime) -> None:
 
 
 def make_embed(
+    timestamp: datetime,
+    pretty_map_name: str,
     player_name: str,
     player_id: str,
-    timestamp: datetime,
+    player_level: int,
+    role: str,
+    loadout: str,
     playtime_secs: int,
     kills: int,
     kpm: float,
+    filtered_kpm: float,
     armor_kpm: float,
     artillery_kpm: float,
     mg_kpm: float,
@@ -180,18 +186,25 @@ def make_embed(
     embed = DiscordEmbed()
     embed.set_author(name=author_name)
     embed.timestamp = str(timestamp)
+    embed.add_embed_field(name="Current Match", value=pretty_map_name, inline=False)
     embed.add_embed_field(name="Player", value=player_name)
     embed.add_embed_field(name="Player ID", value=player_id)
+    embed.add_embed_field(name="Player Level", value=str(player_level))
+    embed.add_embed_field(name="Class", value=role, inline=False)
+    embed.add_embed_field(name="Loadout", value=loadout)
     embed.add_embed_field(
         name="Playtime", value=str(timedelta(seconds=playtime_secs)), inline=False
     )
-    embed.add_embed_field(name="Kills", value=str(kills), inline=True)
+    embed.add_embed_field(name="Kills", value=str(kills), inline=False)
     embed.add_embed_field(name="Overall KPM", value=f"{kpm:.1f}", inline=False)
+    embed.add_embed_field(
+        name="KPM w/o Armor/Artillery/MGs", value=f"{filtered_kpm:.1f}", inline=False
+    )
     if armor_kpm > 0.0:
-        embed.add_embed_field(name="Armor KPM", value=f"{armor_kpm:.1f}", inline=True)
+        embed.add_embed_field(name="Armor KPM", value=f"{armor_kpm:.1f}", inline=False)
     if artillery_kpm > 0.0:
         embed.add_embed_field(
-            name="Artillery KPM", value=f"{artillery_kpm:.1f}", inline=True
+            name="Artillery KPM", value=f"{artillery_kpm:.1f}", inline=False
         )
     if mg_kpm > 0.0:
         embed.add_embed_field(name="MG KPM", value=f"{mg_kpm:.1f}", inline=False)
@@ -206,21 +219,16 @@ def make_embed(
     return embed
 
 
-def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
+def watch_killrate(
+    api: RconAPI, config: WatchKillRateUserConfig, server_name: str
+) -> None:
     """Observe all players and report them if they hit k/r thresholds"""
     player_stats: dict = current_game_stats()
 
-    # Create a dict of all the weapons that are whitelisted so that we can
-    # recalculate our base kill rate for the player after filtering them out
-    # so we don't get a false positive with the KPM from the player stats
-    # which includes all weapons
-    whitelisted_weapons: dict[str, bool] = {}
-    if config.whitelist_armor:
-        whitelisted_weapons |= ARMOR
-    if config.whitelist_artillery:
-        whitelisted_weapons |= ARTILLERY
-    if config.whitelist_mg:
-        whitelisted_weapons |= MGS
+    # Allow us to check if a weapon is any of ARMOR or ARTILLERY or MGS
+    # so that we can track a base KPM rate that doesn't include any of these
+    # because we track those KPMs separately.
+    not_base_weapons: dict[str, bool] = {} | ARMOR | ARTILLERY | MGS
 
     if len(player_stats) < 2:
         logger.info("Fewer than 2 players, skipping")
@@ -269,13 +277,6 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
             continue
 
         kpm: float = stats["kills_per_minute"]
-        logger.info(
-            "player_id=%s playtime_secs=%s kills=%s kpm=%s",
-            player_id,
-            playtime_secs,
-            kills,
-            kpm,
-        )
         used_weapons: Counter = Counter()
         # If the players unfiltered KPM doesn't meet any of the thresholds
         # skip all the calculations because this is the highest possible KPM
@@ -289,24 +290,27 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
             timestamp = datetime.now()
             used_weapons = Counter(stats["weapons"])
 
-            # Recalculate the players KPM after filtering out whitelisted weapons
             # TODO: redo this section so we aren't looping over used_weapons 4 different times
-            whitelisted_kpm: float = round(
+            # Recalculate the players KPM after filtering out any weapon that is tracked
+            # under a specific category (armor, artillery, mgs)
+            # So we can avoid triggerings when a specific category has a KPM > than the base rate
+            # For instance a killrate threshold of 2.0 and arilltery threshold of 4.0
+            filtered_kpm: float = round(
                 (
                     (
                         sum(
                             kill_count
                             for weapon, kill_count in used_weapons.items()
-                            if weapon not in whitelisted_weapons
+                            if weapon not in not_base_weapons
                         )
                         / playtime_secs
                         * 60
                     )
-                    if not config.whitelist_armor
-                    else 0.0
                 ),
-                1,
+                2,
             )
+
+            # Armor
             armor_kpm: float = round(
                 (
                     (
@@ -318,10 +322,10 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
                         / playtime_secs
                         * 60
                     )
-                    if not config.whitelist_armor
+                    if not config.ignore_armor
                     else 0.0
                 ),
-                1,
+                2,
             )
 
             # Artillery
@@ -336,13 +340,13 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
                         / playtime_secs
                         * 60
                     )
-                    if not config.whitelist_artillery
+                    if not config.ignore_artillery
                     else 0.0
                 ),
-                1,
+                2,
             )
 
-            # Machinegun
+            # Machineguns
             mg_kpm: float = round(
                 (
                     (
@@ -354,17 +358,17 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
                         / playtime_secs
                         * 60
                     )
-                    if not config.whitelist_mg
+                    if not config.ignore_mg
                     else 0.0
                 ),
-                1,
+                2,
             )
 
             # Don't make the embed unless at least one condition is met
             # If a category is whitelisted its KPM is set to 0.0
             conditions_met = any(
                 [
-                    whitelisted_kpm >= config.killrate_threshold,
+                    filtered_kpm >= config.killrate_threshold,
                     armor_kpm >= config.killrate_threshold_armor,
                     artillery_kpm >= config.killrate_threshold_artillery,
                     mg_kpm >= config.killrate_threshold_mg,
@@ -376,7 +380,7 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
 
             # Threshold exceeded
 
-            # Only report once per match
+            # Only report once per match if configured
             last_reported = get_cache_value(player_id)
             if config.only_report_once_per_match and last_reported:
                 logger.info(
@@ -395,24 +399,52 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
             ):
                 set_cache_value(player_id, timestamp)
 
-                logger.debug(
-                    "Creating embed %s/%s/%s kpm %s armor: %s arty: %s mg: %s",
+                logger.info(
+                    "Creating embed %s/%s playtime_secs=%s kills=%s kpm=%s, filtered_kpm=%s, armor_kpm=%s, arty_kpm=%s, mg_kpm=%s, %s",
                     player_name,
                     player_id,
-                    used_weapons,
                     kpm,
+                    filtered_kpm,
                     armor_kpm,
                     artillery_kpm,
                     mg_kpm,
+                    used_weapons,
                 )
+
+                try:
+                    detailed_info = api.get_detailed_player_info(
+                        player_name=player_name
+                    )
+                    player_level: int = detailed_info["level"]
+                    player_role: str = detailed_info["role"]
+                    player_loadout: str = detailed_info["loadout"]
+                except Exception:
+                    logger.warning(
+                        "Unable to retrieve detailed playerinfo for %s", player_name
+                    )
+                    player_level: int = 0
+                    player_role = "Unknown"
+                    player_loadout = "Unknown"
+
+                try:
+                    gamestate = api.get_gamestate()
+                    map_name = gamestate["current_map"]["pretty_name"]
+                except Exception:
+                    logger.warning("Unable to retrieve current game state")
+                    map_name = "Unknown"
 
                 embed: DiscordEmbed = make_embed(
                     timestamp=timestamp,
+                    pretty_map_name=map_name,
                     player_name=player_name,
                     player_id=player_id,
+                    player_level=player_level,
+                    role=player_role,
+                    loadout=player_loadout,
                     kills=kills,
                     playtime_secs=playtime_secs,
                     kpm=kpm,
+                    filtered_kpm=filtered_kpm,
                     armor_kpm=armor_kpm,
                     artillery_kpm=artillery_kpm,
                     mg_kpm=mg_kpm,
@@ -438,15 +470,23 @@ def watch_killrate(config: WatchKillRateUserConfig, server_name: str) -> None:
 
             else:
                 logger.info(
-                    "Already reported %s/%s at %s",
+                    "Already reported %s/%s at %s, playtime_secs=%s kills=%s kpm=%s, filtered_kpm=%s, armor_kpm=%s, arty_kpm=%s, mg_kpm=%s, %s",
                     player_name,
                     player_id,
                     last_reported,
+                    kpm,
+                    filtered_kpm,
+                    armor_kpm,
+                    artillery_kpm,
+                    mg_kpm,
+                    used_weapons,
                 )
 
 
 def run() -> None:
     """Main process (loop)"""
+    api = get_rcon_api()
+
     while True:
         server_config = RconServerSettingsUserConfig.load_from_db()
         config = WatchKillRateUserConfig.load_from_db()
@@ -455,6 +495,7 @@ def run() -> None:
             break  # The service will gracefully exit
 
         watch_killrate(
+            api=api,
             config=config,
             server_name=server_config.short_name,
         )
