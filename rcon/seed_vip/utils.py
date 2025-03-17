@@ -2,12 +2,12 @@ from datetime import datetime, timedelta, timezone
 from logging import getLogger
 from typing import Iterable, Sequence
 
-from sqlalchemy.orm import Session
 from humanize import naturaldelta, naturaltime
+from sqlalchemy.orm import Session
 
 import discord
 from rcon.api_commands import RconAPI
-from rcon.models import VipListRecord, enter_session
+from rcon.models import VipList, VipListRecord, enter_session
 from rcon.seed_vip.models import (
     BaseCondition,
     GameState,
@@ -17,18 +17,13 @@ from rcon.seed_vip.models import (
     ServerPopulation,
     VipPlayer,
 )
-from rcon.types import (
-    GameStateType,
-    GetPlayersType,
-    VipIdWithExpirationType,
-)
-from rcon.models import VipList
+from rcon.types import GameStateType, GetPlayersType, VipIdWithExpirationType
 from rcon.user_config.seed_vip import SeedVIPUserConfig
 from rcon.vip import (
     add_record_to_vip_list,
+    get_or_create_vip_list,
     get_vip_record,
     get_vip_status_for_player_ids,
-    get_or_create_vip_list,
 )
 
 logger = getLogger(__name__)
@@ -120,6 +115,13 @@ def calc_vip_expiration_timestamp(
     if current_expiration is None:
         timestamp = from_time + config.reward.timeframe.as_timedelta
         return timestamp
+
+    # If we are re-activating an old record (say someone seeded a week ago)
+    # we have to reset their expiration time before we add on their newly
+    # earned time; otherwise it is just going to add to an old date and still
+    # be expired
+    if current_expiration < from_time:
+        current_expiration = from_time
 
     if config.reward.cumulative:
         return current_expiration + config.reward.timeframe.as_timedelta
