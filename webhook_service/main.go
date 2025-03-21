@@ -15,10 +15,19 @@
 
 	Each queue will also BLOP for efficiency and process one message at a time;
 	the key/value pairs for transient messages (scoreboard at this point)
-	will be managed by checking a set of key names and starting a worker task
-	for that key name
+	are done with redis pub/sub which naturally handles dropping unhandled messages
+	if nobody is listening and also is CPU efficient with blocking and waiting for
+	messages to arrive
 
-	Workers for
+	Workers for each rate limit bucket handle their rate limits/sleeping when they
+	need to wait for Discord
+
+	We also maintain a local rate limit window (configurable by .env vars) so people
+	can do some tuning on their end
+
+	If we become globally rate limited by Discord each worker will discover that and
+	sleep the appropriate amount; which isn't necessarily ideal but does simplify the
+	code some
 */
 
 package main
