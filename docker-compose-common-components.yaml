@@ -72,32 +72,22 @@ services:
   # This is used to handle webhooks to discord (and other services in the future)
   webhook_service:
     build:
-      context: .
-      dockerfile: Dockerfile
-    image: ${BACKEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
+      context: ./webhook_service
+      dockerfile: Dockerfile-webhook-service
+    image: ${WEBHOOK_SERVICE_DOCKER_REPOSITORY}:${TAGGED_VERSION}
     environment:
-      HLL_WH_SERVICE_CONTAINER: true
       LOGGING_LEVEL: "INFO"
       LOGGING_PATH: /logs/
-      CONFIG_DIR: /config/
       HLL_REDIS_HOST: ${HLL_REDIS_HOST}
       HLL_REDIS_PORT: ${HLL_REDIS_HOST_PORT}
-      HLL_DB_USER: ${HLL_DB_USER}
-      HLL_DB_PASSWORD: ${HLL_DB_PASSWORD}
-      HLL_DB_NAME: ${HLL_DB_NAME}
-      HLL_DB_HOST: ${HLL_DB_HOST}
-      HLL_DB_HOST_PORT: ${HLL_DB_HOST_PORT}
-      HLL_DB_URL: postgresql://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}/${HLL_DB_NAME}
-      # The local rate window limit parameters
-      HLL_WH_SERVICE_RL_RESET_SECS: ${HLL_WH_SERVICE_RL_RESET_SECS}
-      HLL_WH_SERVICE_RL_REQUESTS_PER: ${HLL_WH_SERVICE_RL_REQUESTS_PER}
+      HLL_LOCAL_MAX_SENDS_PER_SEC: ${HLL_LOCAL_MAX_SENDS_PER_SEC}
       HLL_WH_SERVICE_RL_TIME_WINDOW: ${HLL_WH_SERVICE_RL_TIME_WINDOW}
       HLL_WH_MAX_QUEUE_LENGTH: ${HLL_WH_MAX_QUEUE_LENGTH}
-      HLL_WH_LOOP_SLEEP_TIME: ${HLL_WH_LOOP_SLEEP_TIME}
-    command: webhook_service
+      HLL_WH_MAX_RETRIES: ${HLL_WH_MAX_RETRIES}
+    # command: webhook_service
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD-SHELL", "if [ -e /code/webhook-service-healthy ]; then echo 0; else echo 1; fi" ]
+      test: [ "CMD-SHELL", "test -f /app/webhook-service-healthy" ]
       start_period: 30s
       interval: 15s
       timeout: 30s
@@ -111,8 +101,3 @@ services:
       - ./logs:/logs/
     networks:
       - common
-    # This is not a CPU intensive container; but
-    deploy:
-      resources:
-        limits:
-          cpus: '1.0'

@@ -1,0 +1,22 @@
+# Use official Go image as base
+FROM golang:1.24 AS builder
+WORKDIR /app
+
+# Copy go.mod and go.sum first (for caching dependencies)
+COPY go.mod go.sum ./
+RUN go mod download
+RUN go mod tidy
+COPY . .
+RUN go build -o webhook-service *.go
+
+# Final stage
+FROM golang:1.24
+WORKDIR /app
+
+# Copy the built binary from builder
+COPY --from=builder /app/webhook-service .
+
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
+
+ENTRYPOINT ["./entrypoint.sh"]
