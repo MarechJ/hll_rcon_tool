@@ -204,8 +204,7 @@ const BlacklistRecordTile = ({
         <Grid
           container
           justifyContent="space-around"
-          spacing={0}
-          
+          spacing={1}
         >
           <Grid>
             <Tooltip title={createdAt.format("LLLL")} arrow>
