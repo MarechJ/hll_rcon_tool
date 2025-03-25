@@ -309,7 +309,7 @@ const BlacklistRecordGrid = ({
       (<Fragment>
         <Grid container>
           <Grid size={12}>
-            <ImageList cols={size} cellHeight={210} spacing={12}>
+              <ImageList cols={size} spacing={12}>
               {records.map((record) => {
                 return (
                   <ImageListItem
