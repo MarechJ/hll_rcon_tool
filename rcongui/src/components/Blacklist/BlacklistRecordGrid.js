@@ -165,7 +165,6 @@ const BlacklistRecordTile = ({
                     const text = getReportTemplate();
                     if (navigator.clipboard === undefined) {
                       alert(`This feature only works if your rcon uses HTTPS.`);
-                      return;
                     } else {
                       navigator.clipboard.writeText(text).then(
                         function () {
