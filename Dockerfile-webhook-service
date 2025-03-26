@@ -1,10 +1,15 @@
 # Use official Go image as base
 FROM golang:1.24 AS builder
+
 WORKDIR /app
 
-COPY . .
+RUN apt update && apt install -y git
+COPY .git/ .git/
+RUN git describe --tags > /app/tag_version && rm -rf .git
+
+COPY ./webhook_service .
 RUN go mod vendor
-RUN go build -o webhook-service *.go
+RUN go build -o webhook-service main.go
 
 # Final stage
 FROM golang:1.24
@@ -12,8 +17,9 @@ WORKDIR /app
 
 # Copy the built binary from builder
 COPY --from=builder /app/webhook-service .
+COPY --from=builder /app/tag_version .
+COPY ./webhook_service/entrypoint.sh .
 
-COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
 
 ENTRYPOINT ["./entrypoint.sh"]

@@ -61,7 +61,8 @@ var workerLookup map[string]*BucketWorker
 
 func init() {
 	logger = slog.New(slog.NewTextHandler(os.Stdout, nil))
-
+	tag := os.Getenv("TAGGED_VERSION")
+	logger = logger.With("tag", tag)
 	var err error
 
 	maxQueueSize, err = strconv.ParseInt(os.Getenv("HLL_WH_MAX_QUEUE_LENGTH"), 10, 64)

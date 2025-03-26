@@ -72,7 +72,7 @@ services:
   # This is used to handle webhooks to discord (and other services in the future)
   webhook_service:
     build:
-      context: ./webhook_service
+      context: .
       dockerfile: Dockerfile-webhook-service
     image: ${WEBHOOK_SERVICE_DOCKER_REPOSITORY}:${TAGGED_VERSION}
     environment:
