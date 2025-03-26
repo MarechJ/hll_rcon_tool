@@ -37,7 +37,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"math/rand"
 	"net/http"
 	"os"
@@ -45,80 +45,24 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 )
 
+var logger *slog.Logger
 var maxQueueSize int64
 var maxMsgReattempts int
 var localRateLimit int
 var rateLimitWindowSize time.Duration
 var webhookIDPattern *regexp.Regexp
 var workerLookup map[string]*BucketWorker
-var logger *Logger
-
-type Logger struct {
-	debug   *log.Logger
-	info    *log.Logger
-	warning *log.Logger
-	error   *log.Logger
-	level   string
-}
-
-func (l *Logger) Debug(msg string) {
-	if l.level == "DEBUG" {
-		l.debug.Println(msg)
-	}
-}
-
-func (l *Logger) Info(msg string) {
-	if l.level == "DEBUG" || l.level == "INFO" {
-		l.info.Println(msg)
-	}
-}
-
-func (l *Logger) Warning(msg string) {
-	if l.level == "DEBUG" || l.level == "INFO" || l.level == "WARNING" {
-		l.warning.Println(msg)
-	}
-}
-
-func (l *Logger) Error(msg string) {
-	l.error.Println(msg)
-}
 
 func init() {
+	logger = slog.New(slog.NewTextHandler(os.Stdout, nil))
+
 	var err error
-
-	logPath := os.Getenv("LOGGING_PATH")
-	fmt.Print(logPath)
-	if logPath == "" {
-		logPath = "yourlogpathisnotset.log"
-	} else {
-		logPath = filepath.Join(logPath, "webhook_service.log")
-	}
-	logLevel := strings.ToUpper(os.Getenv("LOGGING_LEVEL"))
-	if logLevel == "" {
-		logLevel = "INFO"
-	}
-	file, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		panic(fmt.Sprintf("Failed to open log file: %v", err))
-	}
-	tag := getGitTag()
-
-	// Create logger instances with different prefixes
-	baseFlags := log.LstdFlags | log.Lshortfile
-	logger = &Logger{
-		debug:   log.New(file, "["+tag+"] [DEBUG] ", baseFlags),
-		info:    log.New(file, "["+tag+"] [INFO] ", baseFlags),
-		warning: log.New(file, "["+tag+"] [WARNING] ", baseFlags),
-		error:   log.New(file, "["+tag+"] [ERROR] ", baseFlags),
-		level:   logLevel,
-	}
 
 	maxQueueSize, err = strconv.ParseInt(os.Getenv("HLL_WH_MAX_QUEUE_LENGTH"), 10, 64)
 	if err != nil {
@@ -488,12 +432,12 @@ func SendWebhook(rdb *redis.Client, msg *Message, rateLimit *RateLimitState) (st
 
 		if resp.StatusCode == http.StatusTooManyRequests {
 			UpdateBucketRateLimitCount(rdb, bucket)
-			logger.Warning(fmt.Sprintf("HTTP %d for %s", resp.StatusCode, bucket))
+			logger.Warn(fmt.Sprintf("HTTP %d for %s", resp.StatusCode, bucket))
 			rateLimit.RateLimited = true
 			if resp.Header.Get("X-RateLimit-Global") != "" {
 				// Set the global rate limit flag in Redis so it can be retrieved by the API
 				// we don't explicitly check it because each worker will flag itself as rate limited
-				logger.Warning(fmt.Sprintf("Global rate limit hit, pausing for %v", rateLimit.ResetAfter))
+				logger.Warn(fmt.Sprintf("Global rate limit hit, pausing for %v", rateLimit.ResetAfter))
 				SetGloballyRateLimited(rdb, rateLimit.ResetTime, rateLimit.ResetAfter)
 				// Force wait by maxing out the requests in our local window
 				CheckLocalRateLimit(localRateLimit, time.Now())
@@ -566,7 +510,7 @@ func (bw *BucketWorker) ProcessQueue(rdb *redis.Client) {
 
 			logger.Info(fmt.Sprintf("Retry %d for %d in bucket %s: %v", attempts+1, msg.MessageNumber, bw.rateLimit.BucketID, err))
 			if attempts == 2 {
-				logger.Warning(fmt.Sprintf("Dropped after 3 retries: %s", msg.Payload.URL))
+				logger.Warn(fmt.Sprintf("Dropped after 3 retries: %s", msg.Payload.URL))
 				break
 			}
 			wait := GetWorkerRateLimitSleepTime(bw.rateLimit)
@@ -859,15 +803,4 @@ func ClearWebhookError(rdb *redis.Client, webhookID string) {
 		"http_404": false,
 	}
 	rdb.HSet(ctx, key, payload)
-}
-
-func getGitTag() string {
-	// Run git describe --tags
-	cmd := exec.Command("git", "describe", "--tags")
-	output, err := cmd.Output()
-	if err != nil {
-		return "unknown"
-	}
-	// Convert to string and trim whitespace
-	return strings.TrimSpace(string(output))
 }
