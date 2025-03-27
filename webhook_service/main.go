@@ -55,7 +55,7 @@ var maxQueueSize int64
 var maxMsgReattempts int
 var localRateLimit int
 var rateLimitWindowSize time.Duration
-var webhookIDPattern *regexp.Regexp
+var webhookIDPattern = regexp.MustCompile(`webhooks/([0-9]+)/`)
 var workerLookup map[string]*BucketWorker
 
 func init() {
@@ -93,7 +93,6 @@ func init() {
 		rateLimitWindowSize = time.Duration(windowSize * int(time.Second))
 	}
 
-	webhookIDPattern = regexp.MustCompile(`webhooks/([0-9]+)/`)
 	workerLookup = make(map[string]*BucketWorker)
 }
 
