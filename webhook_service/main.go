@@ -41,7 +41,6 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -665,8 +664,7 @@ func main() {
 
 	// For the Docker health check
 	path := filepath.Join("/app", "webhook-service-healthy")
-	logger.Info(path)
-	exec.Command("touch", path).Start()
+	os.Create(path)
 
 	// A context is required to work with redis
 	ctx := context.Background()
