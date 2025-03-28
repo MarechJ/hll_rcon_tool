@@ -53,7 +53,6 @@ import (
 var logger *slog.Logger
 var maxQueueSize int64
 var maxMsgReattempts int
-var localRateLimit int
 var rateLimitWindowSize time.Duration
 var webhookIDPattern = regexp.MustCompile(`webhooks/([0-9]+)/`)
 var workerLookup map[string]*BucketWorker
@@ -75,14 +74,6 @@ func init() {
 		maxMsgReattempts = 5
 	} else {
 		maxMsgReattempts = maxReattempts
-	}
-
-	var maxSends int
-	maxSends, err = strconv.Atoi(os.Getenv("HLL_LOCAL_MAX_SENDS_PER_SEC"))
-	if err != nil {
-		localRateLimit = 45
-	} else {
-		localRateLimit = maxSends
 	}
 
 	var windowSize int
@@ -267,10 +258,11 @@ func (r *RateLimitState) String() string {
 }
 
 // Tracks our local rate limit window
-var localRateLimitState struct {
-	Requests int
-	Window   time.Time
-	mu       sync.Mutex
+type localRateLimitState struct {
+	Requests    int
+	MaxRequests int
+	Window      time.Time
+	mu          sync.Mutex
 }
 
 // Manages a rate limit bucket
@@ -304,23 +296,23 @@ func SetWorker(bucket string, worker *BucketWorker, mu *sync.Mutex) {
 }
 
 // Keeps us under `HLL_LOCAL_MAX_SENDS_PER_SEC` across all requests
-func CheckLocalRateLimit(requests int, now time.Time) error {
-	localRateLimitState.mu.Lock()
-	defer localRateLimitState.mu.Unlock()
+func CheckLocalRateLimit(state *localRateLimitState, requests int, now time.Time) error {
+	state.mu.Lock()
+	defer state.mu.Unlock()
 
 	// If it's been more than 1 second since our last request; reset the window
-	if now.Sub(localRateLimitState.Window) >= time.Second {
-		localRateLimitState.Requests = requests
-		localRateLimitState.Window = now
+	if now.Sub(state.Window) >= time.Second {
+		state.Requests = requests
+		state.Window = now
 	}
 
 	// Don't exceed our configured max requests per second
-	if localRateLimitState.Requests >= localRateLimit {
-		localRateLimitState.mu.Unlock()
+	if state.Requests >= localRateLimit {
+		state.mu.Unlock()
 		return fmt.Errorf("local rate limit exceeded")
 	}
 
-	localRateLimitState.Requests++
+	state.Requests++
 	return nil
 }
 
@@ -336,9 +328,9 @@ func GetWorkerRateLimitSleepTime(rateLimit *RateLimitState) time.Duration {
 }
 
 // Makes the HTTP request to Discord and updates rate limit state
-func SendWebhook(rdb *redis.Client, msg *Message, rateLimit *RateLimitState) (string, error) {
+func SendWebhook(rdb *redis.Client, state *localRateLimitState, msg *Message, rateLimit *RateLimitState) (string, error) {
 	now := time.Now()
-	if err := CheckLocalRateLimit(0, now); err != nil {
+	if err := CheckLocalRateLimit(state, 0, now); err != nil {
 		return "", err
 	}
 
@@ -439,7 +431,7 @@ func SendWebhook(rdb *redis.Client, msg *Message, rateLimit *RateLimitState) (st
 				logger.Warn(fmt.Sprintf("Global rate limit hit, pausing for %v", rateLimit.ResetAfter))
 				SetGloballyRateLimited(rdb, rateLimit.ResetTime, rateLimit.ResetAfter)
 				// Force wait by maxing out the requests in our local window
-				CheckLocalRateLimit(localRateLimit, time.Now())
+				CheckLocalRateLimit(state, localRateLimit, time.Now())
 			}
 			return bucket, fmt.Errorf("rate limited until %v", rateLimit.ResetTime)
 		}
@@ -452,7 +444,7 @@ func SendWebhook(rdb *redis.Client, msg *Message, rateLimit *RateLimitState) (st
 }
 
 // ProcessQueue handles a bucket queue with retries
-func (bw *BucketWorker) ProcessQueue(rdb *redis.Client) {
+func (bw *BucketWorker) ProcessQueue(rdb *redis.Client, state *localRateLimitState) {
 	for {
 		bw.rateLimit.mu.Lock()
 		now := time.Now()
@@ -502,7 +494,7 @@ func (bw *BucketWorker) ProcessQueue(rdb *redis.Client) {
 		// and if we're getting an error on this message; we would very likely have errors on the remaining
 		// messages anyway
 		for attempts := 0; attempts < maxMsgReattempts && !msg.Discardable; attempts++ {
-			_, err := SendWebhook(rdb, &msg, bw.rateLimit)
+			_, err := SendWebhook(rdb, state, &msg, bw.rateLimit)
 			if err == nil {
 				break
 			}
@@ -540,7 +532,7 @@ func ExecuteWebhook(method string, payload []byte, url string) (*http.Response, 
 }
 
 // ProcessFirstTime discovers buckets for unknown webhooks
-func ProcessFirstTime(rdb *redis.Client, mu *sync.Mutex) {
+func ProcessFirstTime(rdb *redis.Client, state *localRateLimitState, mu *sync.Mutex) {
 	ctx := context.Background()
 	for {
 		results, err := rdb.BLPop(ctx, 0, firstTimeQueue).Result()
@@ -581,7 +573,7 @@ func ProcessFirstTime(rdb *redis.Client, mu *sync.Mutex) {
 		// webhooks from
 		rateLimit := &RateLimitState{}
 		for attempts := 0; attempts < maxMsgReattempts && (!msg.Discardable); attempts++ {
-			bucket, err = SendWebhook(rdb, &msg, rateLimit)
+			bucket, err = SendWebhook(rdb, state, &msg, rateLimit)
 			if err == nil {
 				rdb.HSet(ctx, bucketsHash, webhookID, bucket)
 				// Start worker if new bucket
@@ -594,7 +586,7 @@ func ProcessFirstTime(rdb *redis.Client, mu *sync.Mutex) {
 					worker.rateLimit.ResetAfter = rateLimit.ResetAfter
 					worker.rateLimit.ResetTime = rateLimit.ResetTime
 					SetWorker(bucket, worker, mu)
-					go worker.ProcessQueue(rdb)
+					go worker.ProcessQueue(rdb, state)
 				}
 			} else {
 				logger.Error(fmt.Sprintf("First-time send error: %v", err))
@@ -613,7 +605,7 @@ func ProcessFirstTime(rdb *redis.Client, mu *sync.Mutex) {
 	}
 }
 
-func ProcessTransient(rdb *redis.Client, msg Message, mu *sync.Mutex) {
+func ProcessTransient(rdb *redis.Client, state *localRateLimitState, msg Message, mu *sync.Mutex) {
 	webhookID, err := ExtractWebhookID(msg.Payload.URL)
 	if err != nil {
 		logger.Error(fmt.Sprintf("could not parse webhook ID from: %s:%s", msg.Payload.URL, err))
@@ -633,7 +625,7 @@ func ProcessTransient(rdb *redis.Client, msg Message, mu *sync.Mutex) {
 	}
 
 	// No need to try reattempts; these messages are inherently discardable
-	bucket, err = SendWebhook(rdb, &msg, worker.rateLimit)
+	bucket, err = SendWebhook(rdb, state, &msg, worker.rateLimit)
 	if err != nil {
 		logger.Error(fmt.Sprintf("transient message send error for %s: %v", msg.Payload.WebhookID, err))
 	}
@@ -641,7 +633,7 @@ func ProcessTransient(rdb *redis.Client, msg Message, mu *sync.Mutex) {
 }
 
 // Subscribe to transient messages via pub/sub
-func SubscribeTransients(rdb *redis.Client, mu *sync.Mutex) {
+func SubscribeTransients(rdb *redis.Client, state *localRateLimitState, mu *sync.Mutex) {
 	ctx := context.Background()
 	pubsub := rdb.Subscribe(ctx, transientChannel)
 	defer pubsub.Close()
@@ -653,7 +645,7 @@ func SubscribeTransients(rdb *redis.Client, mu *sync.Mutex) {
 			logger.Error(fmt.Sprintf("transient unmarshal error: %v, JSON: %s", err, msg.Payload))
 			continue
 		}
-		go ProcessTransient(rdb, transientMsg, mu)
+		go ProcessTransient(rdb, state, transientMsg, mu)
 	}
 }
 
@@ -664,6 +656,13 @@ func main() {
 	// For the Docker health check
 	path := filepath.Join("/app", "webhook-service-healthy")
 	os.Create(path)
+
+	maxRequests, err := strconv.Atoi(os.Getenv("HLL_LOCAL_MAX_SENDS_PER_SEC"))
+	if err != nil {
+		maxRequests = 45
+	}
+
+	state := localRateLimitState{MaxRequests: maxRequests}
 
 	// A context is required to work with redis
 	ctx := context.Background()
@@ -720,14 +719,14 @@ func main() {
 				if _, exists := GetWorker(bucket, &mu); !exists {
 					worker := NewBucketWorker(bucket, rdb)
 					SetWorker(bucket, worker, &mu)
-					go worker.ProcessQueue(rdb)
+					go worker.ProcessQueue(rdb, &state)
 				}
 			}
 		}
 	}()
 
-	go ProcessFirstTime(rdb, &mu)
-	go SubscribeTransients(rdb, &mu)
+	go ProcessFirstTime(rdb, &state, &mu)
+	go SubscribeTransients(rdb, &state, &mu)
 
 	// Keep running
 	select {}
