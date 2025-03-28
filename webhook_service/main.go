@@ -36,6 +36,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"math/rand"
 	"net/http"
@@ -50,9 +51,20 @@ import (
 )
 
 var logger *slog.Logger
+var logFile *os.File
 
 func init() {
-	logger = slog.New(slog.NewTextHandler(os.Stdout, nil))
+	logPath := os.Getenv("LOGGING_PATH")
+	logPath = filepath.Join(logPath, "webhook_service.log")
+	logFile, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+
+	// Mimic the rest of CRCON and log to both stdout and a file
+	mw := io.MultiWriter(os.Stdout, logFile)
+
+	logger = slog.New(slog.NewTextHandler(mw, nil))
 	tag := os.Getenv("TAGGED_VERSION")
 	logger = logger.With("tag", tag)
 }
@@ -535,6 +547,7 @@ func SubscribeTransients(state *localRateLimitState, globalState *globalState) {
 }
 
 func main() {
+	defer logFile.Close()
 	logger.Info("Starting service")
 	rdb := SetupRedis()
 
