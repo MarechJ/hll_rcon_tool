@@ -33,7 +33,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -42,15 +41,13 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"sync"
 	"time"
 
+	"github.com/MarechJ/hll_rcon_tool/webhook_service/discord"
 	"github.com/redis/go-redis/v9"
 )
-
-var webhookIDPattern = regexp.MustCompile(`webhooks/([0-9]+)/`)
 
 var logger *slog.Logger
 
@@ -72,140 +69,17 @@ const (
 	discordGloballyRateLimited = "discord_webhook:global_rate_limited"
 )
 
-// WebhookType represents the type of webhook service
-type WebhookType string
-
-const (
-	WebhookTypeDiscord WebhookType = "discord"
-)
-
-// WebhookMessageType represents the underlying type of a webhook message
-type WebhookMessageType string
-
-const (
-	WebhookMessageTypeLogLine     WebhookMessageType = "log_line"
-	WebhookMessageTypeLogLineChat WebhookMessageType = "log_line_chat"
-	WebhookMessageTypeLogLineKill WebhookMessageType = "log_line_kill"
-	WebhookMessageTypeTeamkill    WebhookMessageType = "log_line_teamkill"
-	WebhookMessageTypeAdminPing   WebhookMessageType = "admin_ping"
-	WebhookMessageTypeScoreboard  WebhookMessageType = "scoreboard"
-	WebhookMessageTypeAudit       WebhookMessageType = "audit"
-	WebhookMessageTypeOther       WebhookMessageType = "other"
-)
-
-// DiscordWebhookDict represents the payload for a Discord webhook
-type DiscordWebhookDict struct {
-	URL             string               `json:"url"`
-	WebhookID       string               `json:"webhook_id"`
-	MessageID       *string              `json:"message_id,omitempty"`
-	AllowedMentions *AllowedMentionsDict `json:"allowed_mentions,omitempty"`
-	Content         *string              `json:"content,omitempty"`
-	Embeds          []DiscordEmbedDict   `json:"embeds,omitempty"`
-}
-
-// Override unmarshaling so we can ignore extra fields
-func (d *DiscordWebhookDict) UnmarshalJSON(data []byte) error {
-	type Alias DiscordWebhookDict
-	aux := struct {
-		*Alias
-		Extra map[string]any `json:"-"` // Catch-all for unknown fields
-	}{
-		Alias: (*Alias)(d),
-	}
-
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// AllowedMentionsDict specifies which mentions are allowed
-type AllowedMentionsDict struct {
-	Parse       []string `json:"parse,omitempty"`
-	Roles       []string `json:"roles,omitempty"`
-	Users       []string `json:"users,omitempty"`
-	RepliedUser *bool    `json:"replied_user,omitempty"`
-}
-
-// EmbedFooterDict represents an embed footer
-type EmbedFooterDict struct {
-	Text         string  `json:"text"`
-	IconURL      *string `json:"icon_url,omitempty"`
-	ProxyIconURL *string `json:"proxy_icon_url,omitempty"`
-}
-
-// EmbedImageDict represents an embed image
-type EmbedImageDict struct {
-	URL      string  `json:"url"`
-	ProxyURL *string `json:"proxy_url,omitempty"`
-	Height   *int    `json:"height,omitempty"`
-	Width    *int    `json:"width,omitempty"`
-}
-
-// EmbedThumbnailDict represents an embed thumbnail
-type EmbedThumbnailDict struct {
-	URL      string  `json:"url"`
-	ProxyURL *string `json:"proxy_url,omitempty"`
-	Height   *int    `json:"height,omitempty"`
-	Width    *int    `json:"width,omitempty"`
-}
-
-// EmbedVideoDict represents an embed video
-type EmbedVideoDict struct {
-	URL      *string `json:"url,omitempty"`
-	ProxyURL *string `json:"proxy_url,omitempty"`
-	Height   *int    `json:"height,omitempty"`
-	Width    *int    `json:"width,omitempty"`
-}
-
-// EmbedProviderDict represents an embed provider
-type EmbedProviderDict struct {
-	Name *string `json:"name,omitempty"`
-	URL  *string `json:"url,omitempty"`
-}
-
-// EmbedAuthorDict represents an embed author
-type EmbedAuthorDict struct {
-	Name         string  `json:"name"`
-	URL          *string `json:"url,omitempty"`
-	IconURL      *string `json:"icon_url,omitempty"`
-	ProxyIconURL *string `json:"proxy_icon_url,omitempty"`
-}
-
-// EmbedFieldDict represents an embed field
-type EmbedFieldDict struct {
-	Name   string `json:"name"`
-	Value  string `json:"value"`
-	Inline *bool  `json:"inline,omitempty"`
-}
-
-type DiscordEmbedDict struct {
-	Title       *string             `json:"title,omitempty"`
-	Description *string             `json:"description,omitempty"`
-	URL         *string             `json:"url,omitempty"`
-	Timestamp   *string             `json:"timestamp,omitempty"` // ISO 8601 string
-	Color       *int                `json:"color,omitempty"`
-	Footer      *EmbedFooterDict    `json:"footer,omitempty"`
-	Image       *EmbedImageDict     `json:"image,omitempty"`
-	Thumbnail   *EmbedThumbnailDict `json:"thumbnail,omitempty"`
-	Video       *EmbedVideoDict     `json:"video,omitempty"`
-	Provider    *EmbedProviderDict  `json:"provider,omitempty"`
-	Author      *EmbedAuthorDict    `json:"author,omitempty"`
-	Fields      []EmbedFieldDict    `json:"fields,omitempty"`
-}
-
 // Message represents the incoming message structure from Redis
 type Message struct {
-	ServerNumber  int                `json:"server_number"`
-	Discardable   bool               `json:"discardable"`
-	Edit          bool               `json:"edit"`
-	SentAt        time.Time          `json:"sent_at"`
-	RetryAttempts int                `json:"retry_attempts"`
-	PayloadType   *string            `json:"payload_type,omitempty"`
-	WebhookType   WebhookType        `json:"webhook_type"`
-	MessageType   WebhookMessageType `json:"message_type"`
-	Payload       DiscordWebhookDict `json:"payload"`
+	ServerNumber  int                        `json:"server_number"`
+	Discardable   bool                       `json:"discardable"`
+	Edit          bool                       `json:"edit"`
+	SentAt        time.Time                  `json:"sent_at"`
+	RetryAttempts int                        `json:"retry_attempts"`
+	PayloadType   *string                    `json:"payload_type,omitempty"`
+	WebhookType   discord.WebhookType        `json:"webhook_type"`
+	MessageType   discord.WebhookMessageType `json:"message_type"`
+	Payload       discord.DiscordWebhookDict `json:"payload"`
 	MessageNumber int
 }
 
@@ -382,9 +256,9 @@ func SendWebhook(state *localRateLimitState, globalState *globalState, msg *Mess
 	var resp *http.Response
 
 	if msg.Edit {
-		resp, err = ExecuteWebhook("PATCH", jsonPayload, fmt.Sprintf("%s/messages/%s", msg.Payload.URL, *msg.Payload.MessageID))
+		resp, err = discord.ExecuteWebhook("PATCH", jsonPayload, fmt.Sprintf("%s/messages/%s", msg.Payload.URL, *msg.Payload.MessageID))
 	} else {
-		resp, err = ExecuteWebhook("POST", jsonPayload, msg.Payload.URL)
+		resp, err = discord.ExecuteWebhook("POST", jsonPayload, msg.Payload.URL)
 	}
 
 	if err != nil {
@@ -399,7 +273,7 @@ func SendWebhook(state *localRateLimitState, globalState *globalState, msg *Mess
 
 	// Flag the webhook if we get these specific errors
 	// Not checking the error; if we got this far it's a URL with a parseable ID
-	webhookID, _ := ExtractWebhookID(msg.Payload.URL)
+	webhookID, _ := discord.ExtractWebhookID(msg.Payload.URL)
 	switch resp.StatusCode {
 	case http.StatusUnauthorized:
 		globalState.Errors.SetWebhookError(globalState.rdb, globalState.ctx, webhookID, true, false, false)
@@ -543,21 +417,6 @@ func (bw *BucketWorker) ProcessQueue(state *localRateLimitState, globalState *gl
 	}
 }
 
-func ExecuteWebhook(method string, payload []byte, url string) (*http.Response, error) {
-	req, err := http.NewRequest(method, url, bytes.NewBuffer(payload))
-	if err != nil {
-		return nil, fmt.Errorf("request error: %v", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("send error: %v", err)
-	}
-	defer resp.Body.Close()
-
-	return resp, nil
-}
-
 // ProcessFirstTime discovers buckets for unknown webhooks
 func ProcessFirstTime(state *localRateLimitState, globalState *globalState) {
 	ctx := context.Background()
@@ -576,7 +435,7 @@ func ProcessFirstTime(state *localRateLimitState, globalState *globalState) {
 			continue
 		}
 
-		webhookID, err := ExtractWebhookID(msg.Payload.URL)
+		webhookID, err := discord.ExtractWebhookID(msg.Payload.URL)
 		if err != nil {
 			logger.Error(fmt.Sprintf("Could not parse webhook ID from: %s:%s", msg.Payload.URL, err))
 			continue
@@ -633,7 +492,7 @@ func ProcessFirstTime(state *localRateLimitState, globalState *globalState) {
 }
 
 func ProcessTransient(state *localRateLimitState, globalState *globalState, msg Message) {
-	webhookID, err := ExtractWebhookID(msg.Payload.URL)
+	webhookID, err := discord.ExtractWebhookID(msg.Payload.URL)
 	if err != nil {
 		logger.Error(fmt.Sprintf("could not parse webhook ID from: %s:%s", msg.Payload.URL, err))
 		return
@@ -746,7 +605,7 @@ func main() {
 
 			// Check to see if we already know this webhook's rate limit bucket
 			// We check by webhook ID since multiple webhooks can share the same bucket
-			webhookID, err := ExtractWebhookID(msg.Payload.URL)
+			webhookID, err := discord.ExtractWebhookID(msg.Payload.URL)
 			if err != nil {
 				logger.Error(fmt.Sprintf("Could not parse webhook ID from: %s:%s", msg.Payload.URL, err))
 				continue
@@ -800,14 +659,6 @@ func SetupRedis() *redis.Client {
 		Addr: addr,
 		DB:   0, // CRCON uses DB #0 as a global shared database for all game servers
 	})
-}
-
-func ExtractWebhookID(url string) (string, error) {
-	matches := webhookIDPattern.FindStringSubmatch(url)
-	if len(matches) < 2 {
-		return "", fmt.Errorf("no webhook ID found in URL")
-	}
-	return matches[1], nil
 }
 
 // Add a hash entry anytime a bucket is rate limited so we can count
