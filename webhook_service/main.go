@@ -252,9 +252,7 @@ func SendWebhook(state *localRateLimitState, globalState *globalState, msg *Mess
 		payload["allowed_mentions"] = msg.Payload.AllowedMentions
 	}
 
-	var jsonPayload []byte
-	var err error
-	jsonPayload, err = json.Marshal(payload)
+	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
 		return "", fmt.Errorf("marshal error: %v", err)
 	}
