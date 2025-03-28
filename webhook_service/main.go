@@ -247,9 +247,7 @@ func SendWebhook(state *localRateLimitState, globalState *globalState, msg *Mess
 	if msg.Payload.Content != nil {
 		payload["content"] = *msg.Payload.Content
 	}
-	if len(msg.Payload.Embeds) > 0 {
-		payload["embeds"] = msg.Payload.Embeds
-	}
+	payload["embeds"] = msg.Payload.Embeds
 	if msg.Payload.AllowedMentions != nil {
 		payload["allowed_mentions"] = msg.Payload.AllowedMentions
 	}
