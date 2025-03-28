@@ -140,7 +140,6 @@ type RateLimitState struct {
 	ResetTime   time.Time
 	ResetAfter  time.Duration
 	RateLimited bool
-	mu          sync.Mutex
 }
 
 func (r *RateLimitState) String() string {
@@ -303,8 +302,6 @@ func SendWebhook(state *localRateLimitState, globalState *globalState, msg *Mess
 		globalState.Errors.ClearWebhookError(globalState.rdb, globalState.ctx, webhookID)
 		// These responses will contain valid rate limit headers
 		bucket := resp.Header.Get("X-RateLimit-Bucket")
-		rateLimit.mu.Lock()
-		defer rateLimit.mu.Unlock()
 
 		if remaining, err := strconv.Atoi(resp.Header.Get("X-RateLimit-Remaining")); err == nil {
 			rateLimit.Remaining = remaining
@@ -351,7 +348,6 @@ func SendWebhook(state *localRateLimitState, globalState *globalState, msg *Mess
 // ProcessQueue handles a bucket queue with retries
 func (bw *BucketWorker) ProcessQueue(state *localRateLimitState, globalState *globalState) {
 	for {
-		bw.rateLimit.mu.Lock()
 		now := time.Now()
 		// Reset rate limit state if ResetTime has passed
 		if now.After(bw.rateLimit.ResetTime) {
@@ -369,14 +365,12 @@ func (bw *BucketWorker) ProcessQueue(state *localRateLimitState, globalState *gl
 		// can't process anyway; Discord would just reject it
 		if bw.rateLimit.RateLimited || bw.rateLimit.Remaining <= 0 {
 			wait := time.Until(bw.rateLimit.ResetTime)
-			bw.rateLimit.mu.Unlock()
 			if wait > 0 {
 				logger.Info(fmt.Sprintf("Bucket %s waiting %v", bw.rateLimit.BucketID, wait))
 				time.Sleep(wait)
 			}
 			continue
 		}
-		bw.rateLimit.mu.Unlock()
 
 		// Grab our next message off the quueue
 		results, err := globalState.rdb.BLPop(globalState.ctx, 5*time.Second, bw.QueueKey).Result()
