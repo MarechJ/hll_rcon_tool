@@ -214,6 +214,38 @@ func (m *Message) String() string {
 		m.ServerNumber, m.Discardable, m.Edit, m.MessageNumber)
 }
 
+type WebhookError struct {
+	http_401 bool
+	http_403 bool
+	http_404 bool
+}
+
+func (wh *WebhookError) Payload() map[string]bool {
+	return map[string]bool{
+		"http_401": wh.http_401,
+		"http_403": wh.http_403,
+		"http_404": wh.http_404,
+	}
+}
+
+// Flag a webhook error in Redis so the status is available to the API
+// these are cleared on a successful request to Discord
+func (wh *WebhookError) SetWebhookError(rdb *redis.Client, ctx context.Context, webhookID string, http_401, http_403, http_404 bool) {
+	key := fmt.Sprintf("%s:%s", webhookErrors, webhookID)
+	wh.http_401 = http_401
+	wh.http_403 = http_403
+	wh.http_404 = http_404
+	rdb.HSet(ctx, key, wh.Payload())
+}
+
+func (wh *WebhookError) ClearWebhookError(rdb *redis.Client, ctx context.Context, webhookID string) {
+	key := fmt.Sprintf("%s:%s", webhookErrors, webhookID)
+	wh.http_401 = false
+	wh.http_403 = false
+	wh.http_404 = false
+	rdb.HSet(ctx, key, wh.Payload())
+}
+
 // Tracks bucket specific rate limits
 type RateLimitState struct {
 	BucketID    string
@@ -251,6 +283,7 @@ type globalState struct {
 	RateLimitWindowSize time.Duration
 	WorkerLookup        map[string]*BucketWorker
 	mu                  sync.Mutex
+	Errors              WebhookError
 }
 
 func (state *globalState) GetWorker(bucket string) (*BucketWorker, bool) {
@@ -264,6 +297,18 @@ func (state *globalState) SetWorker(bucket string, worker *BucketWorker) {
 	state.mu.Lock()
 	defer state.mu.Unlock()
 	state.WorkerLookup[bucket] = worker
+}
+
+func (state *globalState) SetGloballyRateLimited(limited bool, resetTime time.Time, resetAfter time.Duration) {
+	val := strconv.FormatInt(resetTime.Unix(), 10)
+	// The CRCON API will decode these as true/false
+	var payload string
+	if limited {
+		payload = "1"
+	} else {
+		payload = "0"
+	}
+	state.rdb.Set(state.ctx, payload, val, resetAfter)
 }
 
 // Tracks our local rate limit window
@@ -357,11 +402,11 @@ func SendWebhook(state *localRateLimitState, globalState *globalState, msg *Mess
 	webhookID, _ := ExtractWebhookID(msg.Payload.URL)
 	switch resp.StatusCode {
 	case http.StatusUnauthorized:
-		SetWebhookError(globalState.rdb, webhookID, true, false, false)
+		globalState.Errors.SetWebhookError(globalState.rdb, globalState.ctx, webhookID, true, false, false)
 	case http.StatusForbidden:
-		SetWebhookError(globalState.rdb, webhookID, false, true, false)
+		globalState.Errors.SetWebhookError(globalState.rdb, globalState.ctx, webhookID, false, true, false)
 	case http.StatusNotFound:
-		SetWebhookError(globalState.rdb, webhookID, false, false, true)
+		globalState.Errors.SetWebhookError(globalState.rdb, globalState.ctx, webhookID, false, false, true)
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
@@ -377,7 +422,7 @@ func SendWebhook(state *localRateLimitState, globalState *globalState, msg *Mess
 		return "", fmt.Errorf("%s is not a valid webhook URL", msg.Payload.URL)
 
 	} else if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNoContent || resp.StatusCode == http.StatusTooManyRequests {
-		ClearWebhookError(globalState.rdb, webhookID)
+		globalState.Errors.ClearWebhookError(globalState.rdb, globalState.ctx, webhookID)
 		// These responses will contain valid rate limit headers
 		bucket := resp.Header.Get("X-RateLimit-Bucket")
 		rateLimit.mu.Lock()
@@ -409,8 +454,9 @@ func SendWebhook(state *localRateLimitState, globalState *globalState, msg *Mess
 			if resp.Header.Get("X-RateLimit-Global") != "" {
 				// Set the global rate limit flag in Redis so it can be retrieved by the API
 				// we don't explicitly check it because each worker will flag itself as rate limited
+				// and the redis key will expire naturally due to the TTL
 				logger.Warn(fmt.Sprintf("Global rate limit hit, pausing for %v", rateLimit.ResetAfter))
-				SetGloballyRateLimited(globalState.rdb, rateLimit.ResetTime, rateLimit.ResetAfter)
+				globalState.SetGloballyRateLimited(true, rateLimit.ResetTime, rateLimit.ResetAfter)
 				// Force wait by maxing out the requests in our local window
 				state.CheckLocalRateLimit(globalState, state.MaxRequests, time.Now())
 			}
@@ -764,12 +810,6 @@ func ExtractWebhookID(url string) (string, error) {
 	return matches[1], nil
 }
 
-func SetGloballyRateLimited(rdb *redis.Client, resetTime time.Time, resetAfter time.Duration) {
-	ctx := context.Background()
-	val := strconv.FormatInt(resetTime.Unix(), 10)
-	rdb.Set(ctx, discordGloballyRateLimited, val, resetAfter)
-}
-
 // Add a hash entry anytime a bucket is rate limited so we can count
 // the number of rate limits within the user configured window size
 // and return it from the API
@@ -779,28 +819,4 @@ func UpdateBucketRateLimitCount(globalState *globalState, bucket string) {
 	key := strconv.FormatInt(time.Now().Unix(), 10)
 	globalState.rdb.HSet(ctx, hashName, key, true)
 	globalState.rdb.HExpire(ctx, hashName, globalState.RateLimitWindowSize, key)
-}
-
-// Flag a webhook error in Redis so the status is available to the API
-// these are cleared on a successful request to Discord
-func SetWebhookError(rdb *redis.Client, webhookID string, http_401, http_403, http_404 bool) {
-	ctx := context.Background()
-	key := fmt.Sprintf("%s:%s", webhookErrors, webhookID)
-	payload := map[string]bool{
-		"http_401": http_401,
-		"http_403": http_403,
-		"http_404": http_404,
-	}
-	rdb.HSet(ctx, key, payload)
-}
-
-func ClearWebhookError(rdb *redis.Client, webhookID string) {
-	ctx := context.Background()
-	key := fmt.Sprintf("%s:%s", webhookErrors, webhookID)
-	payload := map[string]bool{
-		"http_401": false,
-		"http_403": false,
-		"http_404": false,
-	}
-	rdb.HSet(ctx, key, payload)
 }
