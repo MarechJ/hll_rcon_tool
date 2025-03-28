@@ -149,9 +149,6 @@ func (r *RateLimitState) String() string {
 }
 
 func (rateLimit *RateLimitState) GetRateLimitSleepTime() time.Duration {
-	rateLimit.mu.Lock()
-	defer rateLimit.mu.Unlock()
-
 	if rateLimit.RateLimited {
 		return time.Until(rateLimit.ResetTime)
 	}
@@ -218,7 +215,6 @@ func (state *localRateLimitState) CheckLocalRateLimit(globalState *globalState, 
 
 	// Don't exceed our configured max requests per second
 	if state.Requests >= state.MaxRequests {
-		state.mu.Unlock()
 		return fmt.Errorf("local rate limit exceeded")
 	}
 
