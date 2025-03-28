@@ -230,6 +230,17 @@ func (r *RateLimitState) String() string {
 		r.BucketID, r.Remaining, r.Limit, r.ResetTime, r.ResetAfter, r.RateLimited)
 }
 
+func (rateLimit *RateLimitState) GetRateLimitSleepTime() time.Duration {
+	rateLimit.mu.Lock()
+	defer rateLimit.mu.Unlock()
+
+	if rateLimit.RateLimited {
+		return time.Until(rateLimit.ResetTime)
+	}
+
+	return 0
+}
+
 // Global settings and shared variables
 type globalState struct {
 	// A context is required to work with redis
@@ -241,6 +252,19 @@ type globalState struct {
 	mu                  sync.Mutex
 }
 
+func (state *globalState) GetWorker(bucket string) (*BucketWorker, bool) {
+	state.mu.Lock()
+	defer state.mu.Unlock()
+	worker, exists := state.WorkerLookup[bucket]
+	return worker, exists
+}
+
+func (state *globalState) SetWorker(bucket string, worker *BucketWorker) {
+	state.mu.Lock()
+	defer state.mu.Unlock()
+	state.WorkerLookup[bucket] = worker
+}
+
 // Tracks our local rate limit window
 type localRateLimitState struct {
 	Requests    int
@@ -249,38 +273,8 @@ type localRateLimitState struct {
 	mu          sync.Mutex
 }
 
-// Manages a rate limit bucket
-type BucketWorker struct {
-	QueueKey  string
-	rdb       *redis.Client
-	ctx       context.Context
-	rateLimit *RateLimitState
-}
-
-func NewBucketWorker(bucketID string, rdb *redis.Client) *BucketWorker {
-	return &BucketWorker{
-		QueueKey:  bucketQueuePrefix + bucketID,
-		rdb:       rdb,
-		ctx:       context.Background(),
-		rateLimit: &RateLimitState{BucketID: bucketID},
-	}
-}
-
-func GetWorker(globalState *globalState, bucket string) (*BucketWorker, bool) {
-	globalState.mu.Lock()
-	defer globalState.mu.Unlock()
-	worker, exists := globalState.WorkerLookup[bucket]
-	return worker, exists
-}
-
-func SetWorker(globalState *globalState, bucket string, worker *BucketWorker) {
-	globalState.mu.Lock()
-	defer globalState.mu.Unlock()
-	globalState.WorkerLookup[bucket] = worker
-}
-
 // Keeps us under `HLL_LOCAL_MAX_SENDS_PER_SEC` across all requests
-func CheckLocalRateLimit(state *localRateLimitState, globalState *globalState, requests int, now time.Time) error {
+func (state *localRateLimitState) CheckLocalRateLimit(globalState *globalState, requests int, now time.Time) error {
 	state.mu.Lock()
 	defer state.mu.Unlock()
 
@@ -300,21 +294,27 @@ func CheckLocalRateLimit(state *localRateLimitState, globalState *globalState, r
 	return nil
 }
 
-func GetWorkerRateLimitSleepTime(rateLimit *RateLimitState) time.Duration {
-	rateLimit.mu.Lock()
-	defer rateLimit.mu.Unlock()
+// Manages a rate limit bucket
+type BucketWorker struct {
+	QueueKey  string
+	rdb       *redis.Client
+	ctx       context.Context
+	rateLimit *RateLimitState
+}
 
-	if rateLimit.RateLimited {
-		return time.Until(rateLimit.ResetTime)
+func NewBucketWorker(bucketID string, rdb *redis.Client) *BucketWorker {
+	return &BucketWorker{
+		QueueKey:  bucketQueuePrefix + bucketID,
+		rdb:       rdb,
+		ctx:       context.Background(),
+		rateLimit: &RateLimitState{BucketID: bucketID},
 	}
-
-	return 0
 }
 
 // Makes the HTTP request to Discord and updates rate limit state
 func SendWebhook(rdb *redis.Client, state *localRateLimitState, globalState *globalState, msg *Message, rateLimit *RateLimitState) (string, error) {
 	now := time.Now()
-	if err := CheckLocalRateLimit(state, globalState, 0, now); err != nil {
+	if err := state.CheckLocalRateLimit(globalState, 0, now); err != nil {
 		return "", err
 	}
 
@@ -415,7 +415,7 @@ func SendWebhook(rdb *redis.Client, state *localRateLimitState, globalState *glo
 				logger.Warn(fmt.Sprintf("Global rate limit hit, pausing for %v", rateLimit.ResetAfter))
 				SetGloballyRateLimited(rdb, rateLimit.ResetTime, rateLimit.ResetAfter)
 				// Force wait by maxing out the requests in our local window
-				CheckLocalRateLimit(state, globalState, state.MaxRequests, time.Now())
+				state.CheckLocalRateLimit(globalState, state.MaxRequests, time.Now())
 			}
 			return bucket, fmt.Errorf("rate limited until %v", rateLimit.ResetTime)
 		}
@@ -488,7 +488,7 @@ func (bw *BucketWorker) ProcessQueue(rdb *redis.Client, state *localRateLimitSta
 				logger.Warn(fmt.Sprintf("Dropped after 3 retries: %s", msg.Payload.URL))
 				break
 			}
-			wait := GetWorkerRateLimitSleepTime(bw.rateLimit)
+			wait := bw.rateLimit.GetRateLimitSleepTime()
 			if wait > 0 {
 				time.Sleep(wait)
 			} else {
@@ -561,7 +561,7 @@ func ProcessFirstTime(rdb *redis.Client, state *localRateLimitState, globalState
 			if err == nil {
 				rdb.HSet(ctx, bucketsHash, webhookID, bucket)
 				// Start worker if new bucket
-				if _, exists := GetWorker(globalState, bucket); !exists {
+				if _, exists := globalState.GetWorker(bucket); !exists {
 					// Make a new worker but use the response we got from Discord
 					// for the first time the message was sent
 					worker := NewBucketWorker(bucket, rdb)
@@ -569,13 +569,13 @@ func ProcessFirstTime(rdb *redis.Client, state *localRateLimitState, globalState
 					worker.rateLimit.Remaining = rateLimit.Remaining
 					worker.rateLimit.ResetAfter = rateLimit.ResetAfter
 					worker.rateLimit.ResetTime = rateLimit.ResetTime
-					SetWorker(globalState, bucket, worker)
+					globalState.SetWorker(bucket, worker)
 					go worker.ProcessQueue(rdb, state, globalState)
 				}
 			} else {
 				logger.Error(fmt.Sprintf("First-time send error: %v", err))
 				if rateLimit.RateLimited {
-					wait := GetWorkerRateLimitSleepTime(rateLimit)
+					wait := rateLimit.GetRateLimitSleepTime()
 					time.Sleep(wait)
 				} else {
 					// We had some sort of (non rate limiting error) trying to send this message
@@ -600,12 +600,12 @@ func ProcessTransient(rdb *redis.Client, state *localRateLimitState, globalState
 	bucket, err := rdb.HGet(ctx, bucketsHash, webhookID).Result()
 	var worker *BucketWorker
 	if err != redis.Nil {
-		worker, _ = GetWorker(globalState, bucket)
+		worker, _ = globalState.GetWorker(bucket)
 	}
 
 	if worker == nil {
 		worker = NewBucketWorker(bucket, rdb)
-		SetWorker(globalState, bucket, worker)
+		globalState.SetWorker(bucket, worker)
 	}
 
 	// No need to try reattempts; these messages are inherently discardable
@@ -722,9 +722,9 @@ func main() {
 				rdb.LTrim(globalState.ctx, queueKey, 0, maxQueueSize-1)
 
 				// Start workers if new bucket
-				if _, exists := GetWorker(&globalState, bucket); !exists {
+				if _, exists := globalState.GetWorker(bucket); !exists {
 					worker := NewBucketWorker(bucket, rdb)
-					SetWorker(&globalState, bucket, worker)
+					globalState.SetWorker(bucket, worker)
 					go worker.ProcessQueue(rdb, &state, &globalState)
 				}
 			}
