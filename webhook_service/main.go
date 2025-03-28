@@ -243,6 +243,7 @@ func (rateLimit *RateLimitState) GetRateLimitSleepTime() time.Duration {
 
 // Global settings and shared variables
 type globalState struct {
+	rdb *redis.Client
 	// A context is required to work with redis
 	ctx                 context.Context
 	MaxQueueSize        int64
@@ -297,22 +298,18 @@ func (state *localRateLimitState) CheckLocalRateLimit(globalState *globalState, 
 // Manages a rate limit bucket
 type BucketWorker struct {
 	QueueKey  string
-	rdb       *redis.Client
-	ctx       context.Context
 	rateLimit *RateLimitState
 }
 
-func NewBucketWorker(bucketID string, rdb *redis.Client) *BucketWorker {
+func NewBucketWorker(bucketID string) *BucketWorker {
 	return &BucketWorker{
 		QueueKey:  bucketQueuePrefix + bucketID,
-		rdb:       rdb,
-		ctx:       context.Background(),
 		rateLimit: &RateLimitState{BucketID: bucketID},
 	}
 }
 
 // Makes the HTTP request to Discord and updates rate limit state
-func SendWebhook(rdb *redis.Client, state *localRateLimitState, globalState *globalState, msg *Message, rateLimit *RateLimitState) (string, error) {
+func SendWebhook(state *localRateLimitState, globalState *globalState, msg *Message, rateLimit *RateLimitState) (string, error) {
 	now := time.Now()
 	if err := state.CheckLocalRateLimit(globalState, 0, now); err != nil {
 		return "", err
@@ -360,17 +357,17 @@ func SendWebhook(rdb *redis.Client, state *localRateLimitState, globalState *glo
 	webhookID, _ := ExtractWebhookID(msg.Payload.URL)
 	switch resp.StatusCode {
 	case http.StatusUnauthorized:
-		SetWebhookError(rdb, webhookID, true, false, false)
+		SetWebhookError(globalState.rdb, webhookID, true, false, false)
 	case http.StatusForbidden:
-		SetWebhookError(rdb, webhookID, false, true, false)
+		SetWebhookError(globalState.rdb, webhookID, false, true, false)
 	case http.StatusNotFound:
-		SetWebhookError(rdb, webhookID, false, false, true)
+		SetWebhookError(globalState.rdb, webhookID, false, false, true)
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
 		ctx := context.Background()
 		str := fmt.Sprintf("%s:%s", message_404, *msg.Payload.MessageID)
-		rdb.Set(ctx, str, true, 0)
+		globalState.rdb.Set(ctx, str, true, 0)
 		if msg.Payload.MessageID != nil {
 			return "", fmt.Errorf("HTTP 404 for %s", *msg.Payload.MessageID)
 		} else {
@@ -380,7 +377,7 @@ func SendWebhook(rdb *redis.Client, state *localRateLimitState, globalState *glo
 		return "", fmt.Errorf("%s is not a valid webhook URL", msg.Payload.URL)
 
 	} else if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNoContent || resp.StatusCode == http.StatusTooManyRequests {
-		ClearWebhookError(rdb, webhookID)
+		ClearWebhookError(globalState.rdb, webhookID)
 		// These responses will contain valid rate limit headers
 		bucket := resp.Header.Get("X-RateLimit-Bucket")
 		rateLimit.mu.Lock()
@@ -406,14 +403,14 @@ func SendWebhook(rdb *redis.Client, state *localRateLimitState, globalState *glo
 		}
 
 		if resp.StatusCode == http.StatusTooManyRequests {
-			UpdateBucketRateLimitCount(rdb, globalState, bucket)
+			UpdateBucketRateLimitCount(globalState, bucket)
 			logger.Warn(fmt.Sprintf("HTTP %d for %s", resp.StatusCode, bucket))
 			rateLimit.RateLimited = true
 			if resp.Header.Get("X-RateLimit-Global") != "" {
 				// Set the global rate limit flag in Redis so it can be retrieved by the API
 				// we don't explicitly check it because each worker will flag itself as rate limited
 				logger.Warn(fmt.Sprintf("Global rate limit hit, pausing for %v", rateLimit.ResetAfter))
-				SetGloballyRateLimited(rdb, rateLimit.ResetTime, rateLimit.ResetAfter)
+				SetGloballyRateLimited(globalState.rdb, rateLimit.ResetTime, rateLimit.ResetAfter)
 				// Force wait by maxing out the requests in our local window
 				state.CheckLocalRateLimit(globalState, state.MaxRequests, time.Now())
 			}
@@ -428,7 +425,7 @@ func SendWebhook(rdb *redis.Client, state *localRateLimitState, globalState *glo
 }
 
 // ProcessQueue handles a bucket queue with retries
-func (bw *BucketWorker) ProcessQueue(rdb *redis.Client, state *localRateLimitState, globalState *globalState) {
+func (bw *BucketWorker) ProcessQueue(state *localRateLimitState, globalState *globalState) {
 	for {
 		bw.rateLimit.mu.Lock()
 		now := time.Now()
@@ -458,7 +455,7 @@ func (bw *BucketWorker) ProcessQueue(rdb *redis.Client, state *localRateLimitSta
 		bw.rateLimit.mu.Unlock()
 
 		// Grab our next message off the quueue
-		results, err := bw.rdb.BLPop(bw.ctx, 5*time.Second, bw.QueueKey).Result()
+		results, err := globalState.rdb.BLPop(globalState.ctx, 5*time.Second, bw.QueueKey).Result()
 		if err == redis.Nil {
 			continue
 		} else if err != nil {
@@ -478,7 +475,7 @@ func (bw *BucketWorker) ProcessQueue(rdb *redis.Client, state *localRateLimitSta
 		// and if we're getting an error on this message; we would very likely have errors on the remaining
 		// messages anyway
 		for attempts := 0; attempts < globalState.MaxMsgReattempts && !msg.Discardable; attempts++ {
-			_, err := SendWebhook(rdb, state, globalState, &msg, bw.rateLimit)
+			_, err := SendWebhook(state, globalState, &msg, bw.rateLimit)
 			if err == nil {
 				break
 			}
@@ -516,10 +513,10 @@ func ExecuteWebhook(method string, payload []byte, url string) (*http.Response, 
 }
 
 // ProcessFirstTime discovers buckets for unknown webhooks
-func ProcessFirstTime(rdb *redis.Client, state *localRateLimitState, globalState *globalState) {
+func ProcessFirstTime(state *localRateLimitState, globalState *globalState) {
 	ctx := context.Background()
 	for {
-		results, err := rdb.BLPop(ctx, 0, firstTimeQueue).Result()
+		results, err := globalState.rdb.BLPop(ctx, 0, firstTimeQueue).Result()
 		if err != nil {
 			logger.Error(fmt.Sprintf("First-time pop error: %v", err))
 			time.Sleep(time.Second)
@@ -541,13 +538,13 @@ func ProcessFirstTime(rdb *redis.Client, state *localRateLimitState, globalState
 
 		// If we've already seen this webhookID and know the bucket, insert it
 		// into the appropriate queue instead of sending here
-		bucket, err := rdb.HGet(ctx, bucketsHash, webhookID).Result()
+		bucket, err := globalState.rdb.HGet(ctx, bucketsHash, webhookID).Result()
 		if err != redis.Nil {
 			queueKey := bucketQueuePrefix + bucket
 			var msgBytes []byte
 			msgBytes, _ = json.Marshal(msg)
-			rdb.RPush(ctx, queueKey, msgBytes)
-			rdb.LTrim(ctx, queueKey, 0, globalState.MaxQueueSize-1)
+			globalState.rdb.RPush(ctx, queueKey, msgBytes)
+			globalState.rdb.LTrim(ctx, queueKey, 0, globalState.MaxQueueSize-1)
 			continue
 		}
 
@@ -557,20 +554,20 @@ func ProcessFirstTime(rdb *redis.Client, state *localRateLimitState, globalState
 		// webhooks from
 		rateLimit := &RateLimitState{}
 		for attempts := 0; attempts < globalState.MaxMsgReattempts && (!msg.Discardable); attempts++ {
-			bucket, err = SendWebhook(rdb, state, globalState, &msg, rateLimit)
+			bucket, err = SendWebhook(state, globalState, &msg, rateLimit)
 			if err == nil {
-				rdb.HSet(ctx, bucketsHash, webhookID, bucket)
+				globalState.rdb.HSet(ctx, bucketsHash, webhookID, bucket)
 				// Start worker if new bucket
 				if _, exists := globalState.GetWorker(bucket); !exists {
 					// Make a new worker but use the response we got from Discord
 					// for the first time the message was sent
-					worker := NewBucketWorker(bucket, rdb)
+					worker := NewBucketWorker(bucket)
 					worker.rateLimit.RateLimited = rateLimit.RateLimited
 					worker.rateLimit.Remaining = rateLimit.Remaining
 					worker.rateLimit.ResetAfter = rateLimit.ResetAfter
 					worker.rateLimit.ResetTime = rateLimit.ResetTime
 					globalState.SetWorker(bucket, worker)
-					go worker.ProcessQueue(rdb, state, globalState)
+					go worker.ProcessQueue(state, globalState)
 				}
 			} else {
 				logger.Error(fmt.Sprintf("First-time send error: %v", err))
@@ -585,11 +582,11 @@ func ProcessFirstTime(rdb *redis.Client, state *localRateLimitState, globalState
 			}
 		}
 		queueKey := bucketQueuePrefix + bucket
-		rdb.LTrim(ctx, queueKey, 0, globalState.MaxQueueSize-1)
+		globalState.rdb.LTrim(ctx, queueKey, 0, globalState.MaxQueueSize-1)
 	}
 }
 
-func ProcessTransient(rdb *redis.Client, state *localRateLimitState, globalState *globalState, msg Message) {
+func ProcessTransient(state *localRateLimitState, globalState *globalState, msg Message) {
 	webhookID, err := ExtractWebhookID(msg.Payload.URL)
 	if err != nil {
 		logger.Error(fmt.Sprintf("could not parse webhook ID from: %s:%s", msg.Payload.URL, err))
@@ -597,29 +594,28 @@ func ProcessTransient(rdb *redis.Client, state *localRateLimitState, globalState
 	}
 
 	ctx := context.Background()
-	bucket, err := rdb.HGet(ctx, bucketsHash, webhookID).Result()
+	bucket, err := globalState.rdb.HGet(ctx, bucketsHash, webhookID).Result()
 	var worker *BucketWorker
 	if err != redis.Nil {
 		worker, _ = globalState.GetWorker(bucket)
 	}
 
 	if worker == nil {
-		worker = NewBucketWorker(bucket, rdb)
+		worker = NewBucketWorker(bucket)
 		globalState.SetWorker(bucket, worker)
 	}
 
 	// No need to try reattempts; these messages are inherently discardable
-	bucket, err = SendWebhook(rdb, state, globalState, &msg, worker.rateLimit)
+	bucket, err = SendWebhook(state, globalState, &msg, worker.rateLimit)
 	if err != nil {
 		logger.Error(fmt.Sprintf("transient message send error for %s: %v", msg.Payload.WebhookID, err))
 	}
-	rdb.HSet(ctx, bucketsHash, webhookID, bucket)
+	globalState.rdb.HSet(ctx, bucketsHash, webhookID, bucket)
 }
 
 // Subscribe to transient messages via pub/sub
-func SubscribeTransients(rdb *redis.Client, state *localRateLimitState, globalState *globalState) {
-	ctx := context.Background()
-	pubsub := rdb.Subscribe(ctx, transientChannel)
+func SubscribeTransients(state *localRateLimitState, globalState *globalState) {
+	pubsub := globalState.rdb.Subscribe(globalState.ctx, transientChannel)
 	defer pubsub.Close()
 
 	logger.Info(fmt.Sprintf("Subscribing to: %s", transientChannel))
@@ -629,7 +625,7 @@ func SubscribeTransients(rdb *redis.Client, state *localRateLimitState, globalSt
 			logger.Error(fmt.Sprintf("transient unmarshal error: %v, JSON: %s", err, msg.Payload))
 			continue
 		}
-		go ProcessTransient(rdb, state, globalState, transientMsg)
+		go ProcessTransient(state, globalState, transientMsg)
 	}
 }
 
@@ -667,6 +663,7 @@ func main() {
 	}
 
 	globalState := globalState{
+		rdb:                 rdb,
 		ctx:                 context.Background(),
 		MaxQueueSize:        maxQueueSize,
 		MaxMsgReattempts:    maxReattempts,
@@ -723,16 +720,16 @@ func main() {
 
 				// Start workers if new bucket
 				if _, exists := globalState.GetWorker(bucket); !exists {
-					worker := NewBucketWorker(bucket, rdb)
+					worker := NewBucketWorker(bucket)
 					globalState.SetWorker(bucket, worker)
-					go worker.ProcessQueue(rdb, &state, &globalState)
+					go worker.ProcessQueue(&state, &globalState)
 				}
 			}
 		}
 	}()
 
-	go ProcessFirstTime(rdb, &state, &globalState)
-	go SubscribeTransients(rdb, &state, &globalState)
+	go ProcessFirstTime(&state, &globalState)
+	go SubscribeTransients(&state, &globalState)
 
 	// Keep running
 	select {}
@@ -776,12 +773,12 @@ func SetGloballyRateLimited(rdb *redis.Client, resetTime time.Time, resetAfter t
 // Add a hash entry anytime a bucket is rate limited so we can count
 // the number of rate limits within the user configured window size
 // and return it from the API
-func UpdateBucketRateLimitCount(rdb *redis.Client, globalState *globalState, bucket string) {
+func UpdateBucketRateLimitCount(globalState *globalState, bucket string) {
 	ctx := context.Background()
 	hashName := fmt.Sprintf("%s:%s", bucketRateLimitCountHash, bucket)
 	key := strconv.FormatInt(time.Now().Unix(), 10)
-	rdb.HSet(ctx, hashName, key, true)
-	rdb.HExpire(ctx, hashName, globalState.RateLimitWindowSize, key)
+	globalState.rdb.HSet(ctx, hashName, key, true)
+	globalState.rdb.HExpire(ctx, hashName, globalState.RateLimitWindowSize, key)
 }
 
 // Flag a webhook error in Redis so the status is available to the API
