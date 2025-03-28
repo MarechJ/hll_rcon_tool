@@ -184,7 +184,6 @@ func (state *globalState) SetWorker(bucket string, worker *BucketWorker) {
 }
 
 func (state *globalState) SetGloballyRateLimited(limited bool, resetTime time.Time, resetAfter time.Duration) {
-	val := strconv.FormatInt(resetTime.Unix(), 10)
 	// The CRCON API will decode these as true/false
 	var payload string
 	if limited {
@@ -192,7 +191,7 @@ func (state *globalState) SetGloballyRateLimited(limited bool, resetTime time.Ti
 	} else {
 		payload = "0"
 	}
-	state.rdb.Set(state.ctx, payload, val, resetAfter)
+	state.rdb.Set(state.ctx, payload, strconv.Itoa(int(resetTime.Unix())), resetAfter)
 }
 
 // Tracks our local rate limit window
@@ -672,7 +671,7 @@ func SetupRedis() *redis.Client {
 func UpdateBucketRateLimitCount(globalState *globalState, bucket string) {
 	ctx := context.Background()
 	hashName := fmt.Sprintf("%s:%s", bucketRateLimitCountHash, bucket)
-	key := strconv.FormatInt(time.Now().Unix(), 10)
+	key := strconv.Itoa(int(time.Now().Unix()))
 	globalState.rdb.HSet(ctx, hashName, key, true)
 	globalState.rdb.HExpire(ctx, hashName, globalState.RateLimitWindowSize, key)
 }
