@@ -41,9 +41,11 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strconv"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/MarechJ/hll_rcon_tool/webhook_service/discord"
@@ -533,7 +535,6 @@ func SubscribeTransients(state *localRateLimitState, globalState *globalState) {
 }
 
 func main() {
-	defer logFile.Close()
 	logger.Info("Starting service")
 	rdb := SetupRedis()
 
@@ -636,7 +637,12 @@ func main() {
 	go SubscribeTransients(&state, &globalState)
 
 	// Keep running
-	select {}
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+	<-stop
+
+	rdb.Close()
+	logFile.Close()
 }
 
 // SetupRedis initializes the Redis client
