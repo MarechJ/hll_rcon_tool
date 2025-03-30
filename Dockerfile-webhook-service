@@ -9,17 +9,17 @@ RUN git describe --tags > /app/tag_version && rm -rf .git
 
 COPY ./webhook_service .
 RUN go mod vendor
-RUN go build -o webhook-service main.go
+RUN CGO_ENABLED=0 go build -ldflags '-extldflags "-static"' -o webhook-service main.go
+RUN chmod +x webhook-service
 
 # Final stage
-FROM golang:1.24
+FROM scratch
+
 WORKDIR /app
 
-# Copy the built binary from builder
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /app/webhook-service .
 COPY --from=builder /app/tag_version .
-COPY ./webhook_service/entrypoint.sh .
 
-RUN chmod +x entrypoint.sh
 
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["/app/webhook-service"]
