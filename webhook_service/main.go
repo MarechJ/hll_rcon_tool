@@ -44,6 +44,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -66,8 +67,15 @@ func init() {
 	// Mimic the rest of CRCON and log to both stdout and a file
 	mw := io.MultiWriter(os.Stdout, logFile)
 
+	tagFile, err := os.ReadFile("tag_version")
+	var tag string
+	if err != nil {
+		tag = "unknown"
+	} else {
+		tag = strings.TrimRight(string(tagFile), "\n")
+	}
+
 	logger = slog.New(slog.NewTextHandler(mw, nil))
-	tag := os.Getenv("TAGGED_VERSION")
 	logger = logger.With("tag", tag)
 }
 
