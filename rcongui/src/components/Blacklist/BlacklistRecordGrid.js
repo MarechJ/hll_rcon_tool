@@ -165,9 +165,6 @@ const BlacklistRecordTile = ({
                     const text = getReportTemplate();
                     if (navigator.clipboard === undefined) {
                       alert(`This feature only works if your rcon uses HTTPS.`);
-                      return;
-                    }
-                    if (navigator.clipboard === undefined) {
                     } else {
                       navigator.clipboard.writeText(text).then(
                         function () {
@@ -204,8 +201,7 @@ const BlacklistRecordTile = ({
         <Grid
           container
           justifyContent="space-around"
-          spacing={0}
-          
+          spacing={1}
         >
           <Grid>
             <Tooltip title={createdAt.format("LLLL")} arrow>
@@ -313,7 +309,7 @@ const BlacklistRecordGrid = ({
       (<Fragment>
         <Grid container>
           <Grid size={12}>
-            <ImageList cols={size} cellHeight={210} spacing={12}>
+              <ImageList cols={size} spacing={12}>
               {records.map((record) => {
                 return (
                   <ImageListItem
