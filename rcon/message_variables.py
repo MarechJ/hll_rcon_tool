@@ -11,7 +11,12 @@ from rcon.audit import ingame_mods, online_mods
 from rcon.maps import Layer, categorize_maps, numbered_maps
 from rcon.player_stats import get_cached_live_game_stats, get_stat
 from rcon.rcon import Rcon, get_rcon
-from rcon.types import CachedLiveGameStats, MessageVariable, PlayerStatsEnum, VipIdType
+from rcon.types import (
+    CachedLiveGameStats,
+    MessageVariable,
+    PlayerStatsEnum,
+    VipIdWithExpirationType,
+)
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.vote_map import VoteMapUserConfig
 from rcon.user_config.webhooks import AdminPingWebhooksUserConfig
@@ -294,12 +299,11 @@ def format_message_string(
 
 def _vip_status(
     player_id: str | None = None, rcon: Rcon | None = None
-) -> VipIdType | None:
+) -> VipIdWithExpirationType | None:
     if rcon is None:
         rcon = get_rcon()
 
     vip = [v for v in rcon.get_vip_ids() if v["player_id"] == player_id]
-    logger.info(f"{vip=}")
 
     if vip:
         return vip[0]
@@ -316,7 +320,7 @@ def _vip_expiration(
 ) -> datetime | None:
     vip = _vip_status(player_id=player_id, rcon=rcon)
 
-    return vip["vip_expiration"] if vip else None
+    return vip["expires_at"] if vip else None
 
 
 def _server_short_name(config: RconServerSettingsUserConfig | None = None) -> str:

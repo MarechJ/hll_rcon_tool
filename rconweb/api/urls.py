@@ -15,7 +15,6 @@ from . import (
     services,
     user_settings,
     views,
-    vips,
 )
 from .auth import api_response
 from .decorators import ENDPOINT_HTTP_METHODS, ENDPOINT_PERMISSIONS_LOOKUP
@@ -94,9 +93,6 @@ endpoints: list[tuple[str, Callable]] = [
     ("get_services", services.get_services),
     ("do_service", services.do_service),
     ("get_server_list", multi_servers.get_server_list),
-    ("upload_vips", vips.upload_vips),
-    ("upload_vips_result", vips.upload_vips_result),
-    ("download_vips", vips.download_vips),
     ("get_live_scoreboard", scoreboards.get_live_scoreboard),
     ("get_scoreboard_maps", scoreboards.get_scoreboard_maps),
     ("get_map_scoreboard", scoreboards.get_map_scoreboard),
@@ -134,7 +130,6 @@ endpoints: list[tuple[str, Callable]] = [
         "describe_camera_notification_config",
         user_settings.describe_camera_notification_config,
     ),
-    ("describe_expired_vip_config", user_settings.describe_expired_vip_config),
     (
         "describe_server_name_change_config",
         user_settings.describe_server_name_change_config,

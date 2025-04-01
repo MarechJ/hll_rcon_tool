@@ -7,7 +7,7 @@ from functools import wraps
 from typing import Generator, List, Sequence
 
 from rcon.connection import HLLConnection
-from rcon.types import ServerInfoType, VipId
+from rcon.types import ServerInfoType, VipIdType
 from rcon.utils import exception_in_chain
 
 logger = logging.getLogger(__name__)
@@ -464,11 +464,11 @@ class ServerCtl:
     def get_slots(self) -> str:
         return self._str_request("get slots", can_fail=False)
 
-    def get_vip_ids(self) -> list[VipId]:
+    def get_vip_ids(self) -> list[VipIdType]:
         with self.with_connection() as conn:
             res = self._get_list("get vipids", can_fail=False, conn=conn)
 
-            vip_ids: List[VipId] = []
+            vip_ids: List[VipIdType] = []
             for item in res:
                 try:
                     player_id, name = item.split(" ", 1)
@@ -708,6 +708,12 @@ class ServerCtl:
 
     @_escape_params
     def add_vip(self, player_id: str, description: str) -> bool:
+        # As of 9 Feb 2025 it is possible to add an empty player ID to the VIP
+        # file on the game server which then can't be removed from RCON
+        if not player_id:
+            raise ValueError(
+                "You must include the player ID; (steam, windows store, Epic, etc.)"
+            )
         description = convert_tabs_to_spaces(description)
         return (
             self._str_request(f'vipadd {player_id} "{description}"', log_info=True)
@@ -755,7 +761,7 @@ class ServerCtl:
             can_fail=False,
         )
         return list(objectives)
-    
+
     def get_game_mode(self):
         """
         Any of "IntenseWarfare", "OffensiveWarfare", or ???
