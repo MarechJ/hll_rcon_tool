@@ -68,7 +68,7 @@ func NewQueue(l *slog.Logger, rdb *redis.Client, webhookErrors *WebhookErrors, l
 }
 
 func (q *Queue) Run(ctx context.Context) error {
-	go q.Bootstrap()
+	go q.bootstrapQueue()
 	go q.subscribeBuckets(ctx)
 	go q.subscribeTransients(ctx)
 	return nil
@@ -108,7 +108,7 @@ func (q *Queue) subscribeBuckets(ctx context.Context) {
 		var msg Message
 		var rawStr string
 		rawMessage := []byte(results[1])
-		// This is stupid but we have to get the raw JSON string into a string before we can
+		// This is stupid, but we have to get the raw JSON string into a string before we can
 		// unmarshal it into our struct because of how it's encoded from CRCON
 		if err := json.Unmarshal(rawMessage, &rawStr); err == nil {
 			if err := json.Unmarshal([]byte(rawStr), &msg); err != nil {
@@ -144,7 +144,7 @@ func (q *Queue) subscribeBuckets(ctx context.Context) {
 
 			// Start workers if new bucket
 			if _, exists := q.GetWorker(bucket); !exists {
-				worker := NewBucketWorker(q.logger.WithGroup("bucket-worker"), q.rdb, q, q.localRateLimit, q.errors, bucket, q.maxMsgReattempts, q.rateLimitWindowSize)
+				worker := q.newBucketWorker(bucket)
 				q.SetWorker(bucket, worker)
 				go worker.ProcessQueue(ctx)
 			}
@@ -152,7 +152,11 @@ func (q *Queue) subscribeBuckets(ctx context.Context) {
 	}
 }
 
-func (q *Queue) Bootstrap() {
+func (q *Queue) newBucketWorker(bucketId string) *BucketWorker {
+	return NewBucketWorker(q.logger.WithGroup("bucket-worker"), q.rdb, q, q.localRateLimit, q.errors, bucketId, q.maxMsgReattempts, q.rateLimitWindowSize)
+}
+
+func (q *Queue) bootstrapQueue() {
 	ctx := context.Background()
 	for {
 		results, err := q.rdb.BLPop(ctx, 30*time.Second, firstTimeQueue).Result()
@@ -193,7 +197,7 @@ func (q *Queue) Bootstrap() {
 		// webhooks from
 		var rateLimited *RateLimited
 		for attempts := 0; attempts < q.maxMsgReattempts && (!msg.Discardable); attempts++ {
-			worker := NewBucketWorker(q.logger.WithGroup("bucket-worker"), q.rdb, q, q.localRateLimit, q.errors, "", q.maxMsgReattempts, q.rateLimitWindowSize)
+			worker := q.newBucketWorker("")
 			bucket, err = worker.SendWebhook(ctx, &msg)
 			if err == nil {
 				q.rdb.HSet(ctx, bucketsHash, webhookID, bucket)
@@ -232,7 +236,7 @@ func (q *Queue) processTransient(ctx context.Context, msg Message) {
 	}
 
 	if worker == nil {
-		worker = NewBucketWorker(q.logger.WithGroup("bucket-worker"), q.rdb, q, q.localRateLimit, q.errors, bucket, q.maxMsgReattempts, q.rateLimitWindowSize)
+		worker = q.newBucketWorker(bucket)
 		q.SetWorker(bucket, worker)
 	}
 
