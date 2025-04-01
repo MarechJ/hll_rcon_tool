@@ -430,6 +430,16 @@ MAPS = {
             axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
             orientation=Orientation.VERTICAL,
         ),
+        Map(
+            id="tobruk",
+            name="TOBRUK",
+            tag="TBK",
+            pretty_name="Tobruk",
+            shortname="Tobruk",
+            allies=Faction(name=FactionName.GB.value, team=Team.ALLIES),
+            axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
+            orientation=Orientation.HORIZONTAL,
+        ),
     )
 }
 
@@ -1153,6 +1163,84 @@ LAYERS = {
             map=MAPS["elsenbornridge"],
             game_mode=GameMode.CONTROL,
             environment=Environment.NIGHT,
+        ),
+        Layer(
+            id="tobruk_warfare_day",
+            map=MAPS["tobruk"],
+            game_mode=GameMode.WARFARE,
+            environment=Environment.DAY,
+        ),
+        Layer(
+            id="tobruk_warfare_dusk",
+            map=MAPS["tobruk"],
+            game_mode=GameMode.WARFARE,
+            environment=Environment.DUSK,
+        ),
+        Layer(
+            id="tobruk_warfare_morning",
+            map=MAPS["tobruk"],
+            game_mode=GameMode.WARFARE,
+            environment=Environment.DAWN,
+        ),
+        Layer(
+            id="tobruk_offensivebritish_day",
+            map=MAPS["tobruk"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.ALLIES,
+            environment=Environment.DAY,
+        ),
+        Layer(
+            id="tobruk_offensiveger_day",
+            map=MAPS["tobruk"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.AXIS,
+            environment=Environment.DAY,
+        ),
+        Layer(
+            id="tobruk_offensivebritish_dusk",
+            map=MAPS["tobruk"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.ALLIES,
+            environment=Environment.DUSK,
+        ),
+        Layer(
+            id="tobruk_offensiveger_dusk",
+            map=MAPS["tobruk"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.AXIS,
+            environment=Environment.DUSK,
+        ),
+        Layer(
+            id="tobruk_offensivebritish_morning",
+            map=MAPS["tobruk"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.ALLIES,
+            environment=Environment.DAWN,
+        ),
+        Layer(
+            id="tobruk_offensiveger_morning",
+            map=MAPS["tobruk"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.AXIS,
+            environment=Environment.DAWN,
+        ),
+        Layer(
+            id="tobruk_skirmish_day",
+            map=MAPS["tobruk"],
+            game_mode=GameMode.CONTROL,
+            environment=Environment.DAY,
+        ),
+        Layer(
+            id="tobruk_skirmish_dusk",
+            map=MAPS["tobruk"],
+            game_mode=GameMode.CONTROL,
+            environment=Environment.DUSK,
+        ),
+        Layer(
+            id="tobruk_skirmish_morning",
+            map=MAPS["tobruk"],
+            game_mode=GameMode.CONTROL,
+            environment=Environment.DAWN,
         ),
     )
 }
