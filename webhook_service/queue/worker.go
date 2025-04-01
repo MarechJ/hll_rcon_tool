@@ -3,6 +3,7 @@ package queue
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/MarechJ/hll_rcon_tool/webhook_service/discord"
 	"github.com/redis/go-redis/v9"
@@ -80,9 +81,9 @@ func (bw *BucketWorker) ProcessQueue(ctx context.Context) {
 			continue
 		}
 
-		// Grab our next message off the quueue
+		// Grab our next message off the queue
 		results, err := bw.rdb.BLPop(ctx, 5*time.Second, bw.queueKey).Result()
-		if err == redis.Nil {
+		if errors.Is(err, redis.Nil) {
 			continue
 		} else if err != nil {
 			bw.logger.Error(fmt.Sprintf("Error popping from %s: %v", bw.queueKey, err))
@@ -223,7 +224,7 @@ func (bw *BucketWorker) SendWebhook(ctx context.Context, msg *Message) (string, 
 				// Force wait by maxing out the requests in our local window
 				bw.localRateLimit.GloballyRateLimited()
 			}
-			return bucket, fmt.Errorf("rate limited until %v", bw.rateLimit.ResetTime)
+			return bucket, &RateLimited{RateLimitSleepTime: bw.rateLimit.GetRateLimitSleepTime()}
 		}
 
 		bw.rateLimit.RateLimited = false
@@ -231,6 +232,14 @@ func (bw *BucketWorker) SendWebhook(ctx context.Context, msg *Message) (string, 
 	} else {
 		return "", fmt.Errorf("unhandled HTTP status %d", resp.StatusCode)
 	}
+}
+
+type RateLimited struct {
+	RateLimitSleepTime time.Duration
+}
+
+func (r RateLimited) Error() string {
+	return fmt.Sprintf("rate limited until %v", r.RateLimitSleepTime)
 }
 
 // updateBucketRateLimitCount Add a hash entry anytime a bucket is rate limited so we can count

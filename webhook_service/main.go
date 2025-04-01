@@ -109,7 +109,6 @@ func main() {
 
 	q := queue.NewQueue(logger, rdb, queue.NewWebhookErrors(rdb), queue.NewLocalRateLimit(maxRequests), maxQueueSize, maxReattempts, rateLimitWindowSize)
 
-	go q.Bootstrap()
 	if err = q.Run(ctx); err != nil {
 		logger.Error("queue-run", "error", err)
 	}

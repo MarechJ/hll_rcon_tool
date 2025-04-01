@@ -68,6 +68,7 @@ func NewQueue(l *slog.Logger, rdb *redis.Client, webhookErrors *WebhookErrors, l
 }
 
 func (q *Queue) Run(ctx context.Context) error {
+	go q.Bootstrap()
 	go q.subscribeBuckets(ctx)
 	go q.subscribeTransients(ctx)
 	return nil
@@ -97,7 +98,7 @@ func (q *Queue) Close() error {
 
 func (q *Queue) subscribeBuckets(ctx context.Context) {
 	for {
-		results, err := q.rdb.BLPop(ctx, 0, inputQueue).Result()
+		results, err := q.rdb.BLPop(ctx, 30*time.Second, inputQueue).Result()
 		if err != nil {
 			q.logger.Error(fmt.Sprintf("Input pop error: %v", err))
 			time.Sleep(time.Second)
@@ -154,7 +155,7 @@ func (q *Queue) subscribeBuckets(ctx context.Context) {
 func (q *Queue) Bootstrap() {
 	ctx := context.Background()
 	for {
-		results, err := q.rdb.BLPop(ctx, 0, firstTimeQueue).Result()
+		results, err := q.rdb.BLPop(ctx, 30*time.Second, firstTimeQueue).Result()
 		if err != nil {
 			q.logger.Error(fmt.Sprintf("First-time pop error: %v", err))
 			time.Sleep(time.Second)
@@ -190,7 +191,7 @@ func (q *Queue) Bootstrap() {
 		// fairly rare; after any successful attempt messages will be routed to the
 		// appropriate queue; and there aren't that many unique places CRCON dispatches
 		// webhooks from
-		rateLimit := &RateLimitState{}
+		var rateLimited *RateLimited
 		for attempts := 0; attempts < q.maxMsgReattempts && (!msg.Discardable); attempts++ {
 			worker := NewBucketWorker(q.logger.WithGroup("bucket-worker"), q.rdb, q, q.localRateLimit, q.errors, "", q.maxMsgReattempts, q.rateLimitWindowSize)
 			bucket, err = worker.SendWebhook(ctx, &msg)
@@ -202,16 +203,14 @@ func (q *Queue) Bootstrap() {
 					q.SetWorker(bucket, worker)
 					go worker.ProcessQueue(ctx)
 				}
+			} else if errors.As(err, &rateLimited) {
+				q.logger.Error(fmt.Sprintf("First-time rate limited: %s", err))
+				time.Sleep(rateLimited.RateLimitSleepTime)
 			} else {
-				q.logger.Error(fmt.Sprintf("First-time send error: %v", err))
-				if rateLimit.RateLimited {
-					wait := rateLimit.GetRateLimitSleepTime()
-					time.Sleep(wait)
-				} else {
-					// We had some sort of (non rate limiting error) trying to send this message
-					// back off before attempting again
-					time.Sleep(time.Second * 2 * time.Duration(attempts+1))
-				}
+				q.logger.Error(fmt.Sprintf("First-time send error: %s", err))
+				// We had some sort of (non rate limiting error) trying to send this message
+				// back off before attempting again
+				time.Sleep(time.Second * 2 * time.Duration(attempts+1))
 			}
 		}
 		queueKey := bucketQueuePrefix + bucket
