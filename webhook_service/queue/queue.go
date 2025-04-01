@@ -3,6 +3,7 @@ package queue
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/MarechJ/hll_rcon_tool/webhook_service/discord"
 	"github.com/redis/go-redis/v9"
@@ -130,7 +131,7 @@ func (q *Queue) subscribeBuckets(ctx context.Context) {
 		bucket, err := q.rdb.HGet(ctx, bucketsHash, webhookID).Result()
 		var msgBytes []byte
 		msgBytes, _ = json.Marshal(msg)
-		if err == redis.Nil {
+		if errors.Is(err, redis.Nil) {
 			// Unknown webhook, send to first-time queue
 			q.rdb.RPush(ctx, firstTimeQueue, msgBytes)
 			q.rdb.LTrim(ctx, firstTimeQueue, 0, q.maxQueueSize-1)
@@ -176,7 +177,7 @@ func (q *Queue) Bootstrap() {
 		// If we've already seen this webhookID and know the bucket, insert it
 		// into the appropriate queue instead of sending here
 		bucket, err := q.rdb.HGet(ctx, bucketsHash, webhookID).Result()
-		if err != redis.Nil {
+		if !errors.Is(err, redis.Nil) {
 			queueKey := bucketQueuePrefix + bucket
 			var msgBytes []byte
 			msgBytes, _ = json.Marshal(msg)
@@ -227,7 +228,7 @@ func (q *Queue) processTransient(ctx context.Context, msg Message) {
 
 	bucket, err := q.rdb.HGet(ctx, bucketsHash, webhookID).Result()
 	var worker *BucketWorker
-	if err != redis.Nil {
+	if !errors.Is(err, redis.Nil) {
 		worker, _ = q.GetWorker(bucket)
 	}
 
