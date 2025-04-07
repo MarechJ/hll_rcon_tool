@@ -3,7 +3,7 @@ Django==4.2.20
 django-cors-headers==4.7.0
 redis==5.2.1
 sqlalchemy==2.0.40
-channels==4.2.0
+channels==4.2.2
 channels-redis==4.2.1
 orjson==3.10.15
 simplejson==3.20.1
