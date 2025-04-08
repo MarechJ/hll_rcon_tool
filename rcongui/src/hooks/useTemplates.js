@@ -13,5 +13,5 @@ export const useTemplates = (key) => {
     initialData: [],
   });
 
-  return templates;
+  return templates.sort((a, b) => a.title.localeCompare(b.title));
 };
