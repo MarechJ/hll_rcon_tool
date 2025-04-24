@@ -1,0 +1,12 @@
+# github.com/floriansw/go-hll-rcon v0.0.0-20250421114312-973708b529c4
+## explicit; go 1.23.0
+github.com/floriansw/go-hll-rcon/rcon
+github.com/floriansw/go-hll-rcon/rconv2
+github.com/floriansw/go-hll-rcon/rconv2/api
+# github.com/floriansw/hll-geofences v0.0.0-20250424221049-a62713ee5a0c
+## explicit; go 1.24.1
+github.com/floriansw/hll-geofences/data
+github.com/floriansw/hll-geofences/worker
+# gopkg.in/yaml.v3 v3.0.1
+## explicit
+gopkg.in/yaml.v3

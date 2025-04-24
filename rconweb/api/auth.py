@@ -1,7 +1,10 @@
 import csv
 import datetime
+import hashlib
+import hmac
 import json
 import logging
+import os
 from dataclasses import asdict, dataclass
 from functools import wraps
 from typing import Any, Sequence
@@ -18,14 +21,13 @@ from django.core.exceptions import PermissionDenied
 from django.db.models.signals import post_delete, post_save
 from django.http import HttpResponse, QueryDict, parse_cookie
 from django.views.decorators.csrf import csrf_exempt
+from rconweb.settings import SECRET_KEY, TAG_VERSION
 
 from rcon.audit import heartbeat, set_registered_mods
 from rcon.cache_utils import ttl_cache, invalidates
+from rcon.settings import SERVER_INFO
 from rcon.types import DjangoGroup, DjangoPermission, DjangoUserPermissions
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
-from rconweb.settings import SECRET_KEY, TAG_VERSION
-
-
 from .decorators import require_content_type, require_http_methods
 from .models import DjangoAPIKey, SteamPlayer
 
@@ -289,6 +291,50 @@ def check_api_key(request):
         pass
 
 
+class InternalUser(User):
+    """
+    Represents a system-user, which uses the CRCon API internally.
+    This should only ever be used for components that cannot directly invoke the corresponding python APIs directly.
+    """
+
+    def has_perms(self, perm_list, obj=None) -> bool:
+        return True
+
+
+def check_internal_api(request):
+    """
+    Verifies if a request is coming from an internal user, such as the seeding automod in golang.
+    The user does not have password, and is not included in the standard Django API key or User list.
+    Everyone with this API key will automatically have every permission available.
+
+    The API key is automatically generated from the provided HLL server password and the backend API secret key and
+    can therefore be automatically created on the user side as well, whenever needed, in a container that shares the same
+    environment variables.
+    """
+    logger.info("Checking internal")
+    try:
+        logger.info(SECRET_KEY)
+        logger.info(SERVER_INFO.get("password"))
+        header_name, raw_api_key = request.META[HTTP_AUTHORIZATION_HEADER].split(
+            maxsplit=1
+        )
+        logger.info(header_name)
+        logger.info(raw_api_key)
+        if not header_name.upper().strip() in BEARER:
+            return
+        api_key = hmac.new(
+            SECRET_KEY.encode(),
+            msg=SERVER_INFO.get("password").encode(),
+            digestmod=hashlib.sha256
+        ).hexdigest().upper()
+        if raw_api_key == api_key:
+            request.user = InternalUser(username="system")
+
+    except (KeyError, ValueError) as e:
+        logger.error("", e)
+        pass
+
+
 def login_required():
     """Flag this endpoint as one that requires the user
     to be logged in.
@@ -297,6 +343,7 @@ def login_required():
     def decorator(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
+            check_internal_api(request)
             # Check if API-Key is used
             check_api_key(request)
 
