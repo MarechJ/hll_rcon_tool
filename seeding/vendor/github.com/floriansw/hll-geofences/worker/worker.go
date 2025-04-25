@@ -73,6 +73,9 @@ func (w *worker) populateSession(ctx context.Context) error {
 func (w *worker) punishPlayers(ctx context.Context) {
 	for {
 		select {
+		case <-ctx.Done():
+			w.punishTicker.Stop()
+			return
 		case <-w.punishTicker.C:
 			w.outsidePlayers.Range(func(k, v interface{}) bool {
 				id := k.(string)
@@ -101,6 +104,9 @@ func (w *worker) punishPlayer(ctx context.Context, id string) {
 func (w *worker) pollSession(ctx context.Context) {
 	for {
 		select {
+		case <-ctx.Done():
+			w.sessionTicker.Stop()
+			return
 		case <-w.sessionTicker.C:
 			if err := w.populateSession(ctx); err != nil {
 				w.l.Error("poll-session", "error", err)
@@ -112,6 +118,9 @@ func (w *worker) pollSession(ctx context.Context) {
 func (w *worker) pollPlayers(ctx context.Context) {
 	for {
 		select {
+		case <-ctx.Done():
+			w.playerTicker.Stop()
+			return
 		case <-w.playerTicker.C:
 			if len(w.alliesFences) == 0 && len(w.axisFences) == 0 {
 				continue

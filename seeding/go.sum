@@ -1,7 +1,7 @@
 github.com/floriansw/go-hll-rcon v0.0.0-20250421114312-973708b529c4 h1:GVl9QM8D0XVfACR9yoPr1fjSF3A/j58i5W8BIFOIW2M=
 github.com/floriansw/go-hll-rcon v0.0.0-20250421114312-973708b529c4/go.mod h1:ICGqIYtkRM6GJv6oBwbskUIWq5Ar4C1SNxXBPdGYgDw=
-github.com/floriansw/hll-geofences v0.0.0-20250424221049-a62713ee5a0c h1:8F3PjoYJU9ZKO+OvioJxNip26oqu7EYldtM8orDn6JQ=
-github.com/floriansw/hll-geofences v0.0.0-20250424221049-a62713ee5a0c/go.mod h1:dZb6SSJb0bL4ijBW7TYYS0YUK42haOGgwXyWxcrI45o=
+github.com/floriansw/hll-geofences v0.0.0-20250425215853-4c30cf65a19f h1:MxlhdCkj7X0bA2nQ33OyJV9tDhL5fbm7Tzl46yeVuNs=
+github.com/floriansw/hll-geofences v0.0.0-20250425215853-4c30cf65a19f/go.mod h1:dZb6SSJb0bL4ijBW7TYYS0YUK42haOGgwXyWxcrI45o=
 github.com/fsnotify/fsnotify v1.4.9 h1:hsms1Qyu0jgnwNXIxa+/V/PDsU6CfLf6CNO8H7IWoS4=
 github.com/fsnotify/fsnotify v1.4.9/go.mod h1:znqG4EE+3YCdAaPaxE2ZRY/06pZUdp0tY4IgpuI1SZQ=
 github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=

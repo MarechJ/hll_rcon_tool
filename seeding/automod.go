@@ -12,6 +12,7 @@ import (
 	"seeding/internal/crcon"
 	"strconv"
 	"syscall"
+	"time"
 )
 
 var (
@@ -33,6 +34,10 @@ var (
 	horizontalCaps = []string{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J"}
 )
 
+type CRConClient interface {
+	GetAutoModSeedingConfig(ctx context.Context) (*crcon.AutoModSeedingConfig, error)
+}
+
 func main() {
 	level := slog.LevelInfo
 	if _, ok := os.LookupEnv("DEBUG"); ok {
@@ -45,14 +50,52 @@ func main() {
 		rconBackendUrl = "http://backend:8000"
 	}
 
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
 	a := internal.NewAuthentication(hllPassword, rconWebApiSecret)
-	ac, err := crcon.NewClient(rconBackendUrl, a).GetAutoModSeedingConfig(ctx)
-	if err != nil {
-		logger.Error("find-seeding-automod-config", "error", err)
-		return
-	}
+	c := crcon.NewClient(rconBackendUrl, a)
 
+	go scheduleWorker(ctx, logger, c)
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+	<-stop
+
+	logger.Info("graceful-shutdown")
+	cancel()
+}
+
+func scheduleWorker(ctx context.Context, logger *slog.Logger, c CRConClient) {
+	refreshConfig := time.NewTicker(time.Second * 5)
+
+	var (
+		childCtx, cancelFn = context.WithCancel(ctx)
+		previous           *crcon.AutoModSeedingConfig
+	)
+	for {
+		select {
+		case <-ctx.Done():
+			refreshConfig.Stop()
+			cancelFn()
+			return
+		case <-refreshConfig.C:
+			ac, err := c.GetAutoModSeedingConfig(childCtx)
+			if err != nil {
+				logger.Error("find-seeding-automod-config", "error", err)
+				continue
+			}
+			if ac.Equals(previous) {
+				continue
+			}
+			logger.Info("config-updated-restart")
+			cancelFn()
+			previous = ac
+			childCtx, cancelFn = context.WithCancel(ctx)
+			initialize(childCtx, logger, ac)
+		}
+	}
+}
+
+func initialize(ctx context.Context, logger *slog.Logger, ac *crcon.AutoModSeedingConfig) {
 	// Prefilling fences for first-spawners on the server. Whenever a player joins a server, they are randomly assigned
 	// a spawn on either side (even before side selection). To not give them a warning that they are outside of the spawns
 	// during seeding, the HQ lines for each team opponent are allowlisted as well.
@@ -241,10 +284,4 @@ func main() {
 		go w.Run(ctx)
 		logger.Info("started-worker")
 	}
-
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
-	<-stop
-
-	logger.Info("graceful-shutdown")
 }

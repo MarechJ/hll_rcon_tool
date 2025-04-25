@@ -3,7 +3,7 @@
 github.com/floriansw/go-hll-rcon/rcon
 github.com/floriansw/go-hll-rcon/rconv2
 github.com/floriansw/go-hll-rcon/rconv2/api
-# github.com/floriansw/hll-geofences v0.0.0-20250424221049-a62713ee5a0c
+# github.com/floriansw/hll-geofences v0.0.0-20250425215853-4c30cf65a19f
 ## explicit; go 1.24.1
 github.com/floriansw/hll-geofences/data
 github.com/floriansw/hll-geofences/worker
