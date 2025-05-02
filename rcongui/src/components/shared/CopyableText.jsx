@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 
-export default function CopyableText({ text, size = "1em", ...props }) {
+export default function CopyableText({ text, label, size = "1em", ...props }) {
   const [isClipboardAvailable, setIsClipboardAvailable] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
@@ -41,7 +41,7 @@ export default function CopyableText({ text, size = "1em", ...props }) {
         visibility: "visible",
       },
     }}>
-      {text}
+      {label || text}
       {isClipboardAvailable && (
         <Tooltip title={isCopied ? "Copied!" : "Copy"}>
           <IconButton
