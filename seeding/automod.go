@@ -2,9 +2,6 @@ package main
 
 import (
 	"context"
-	"github.com/floriansw/go-hll-rcon/rconv2"
-	"github.com/floriansw/hll-geofences/data"
-	"github.com/floriansw/hll-geofences/worker"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -13,6 +10,10 @@ import (
 	"strconv"
 	"syscall"
 	"time"
+
+	"github.com/floriansw/go-hll-rcon/rconv2"
+	"github.com/floriansw/hll-geofences/data"
+	"github.com/floriansw/hll-geofences/worker"
 )
 
 var (
@@ -100,6 +101,7 @@ func initialize(ctx context.Context, logger *slog.Logger, ac *crcon.AutoModSeedi
 	// a spawn on either side (even before side selection). To not give them a warning that they are outside of the spawns
 	// during seeding, the HQ lines for each team opponent are allowlisted as well.
 	alliedFences := []data.Fence{
+
 		{
 			X: &horizontalCaps[0],
 			Condition: &data.Condition{
@@ -132,8 +134,85 @@ func initialize(ctx context.Context, logger *slog.Logger, ac *crcon.AutoModSeedi
 				},
 			},
 		},
+		// Allowlist deadzonefences: Horizontal A2 to J2
+		{
+			X: &horizontalCaps[0],
+			Y: internal.Pointer(2),
+			Condition: &data.Condition{
+				Equals: map[string][]string{
+					"map_name": axisToAlliedHorizontalMaps,
+				},
+			},
+		},
+		{
+			X: &horizontalCaps[9],
+			Y: internal.Pointer(2),
+			Condition: &data.Condition{
+				Equals: map[string][]string{
+					"map_name": alliedToAxisHorizontalMaps,
+				},
+			},
+		},
+		// Allowlist deadzonefences: Horizontal A9 to J9
+		{
+			X: &horizontalCaps[0],
+			Y: internal.Pointer(9),
+			Condition: &data.Condition{
+				Equals: map[string][]string{
+					"map_name": axisToAlliedHorizontalMaps,
+				},
+			},
+		},
+		{
+			X: &horizontalCaps[9],
+			Y: internal.Pointer(9),
+			Condition: &data.Condition{
+				Equals: map[string][]string{
+					"map_name": alliedToAxisHorizontalMaps,
+				},
+			},
+		},
+		// Allowlist deadzonefences: Vertical B2, B9
+		{
+			X: &horizontalCaps[1],
+			Y: internal.Pointer(2),
+			Condition: &data.Condition{
+				Equals: map[string][]string{
+					"map_name": axisToAlliedVerticalMaps,
+				},
+			},
+		},
+		{
+			X: &horizontalCaps[1],
+			Y: internal.Pointer(9),
+			Condition: &data.Condition{
+				Equals: map[string][]string{
+					"map_name": alliedToAxisVerticalMaps,
+				},
+			},
+		},
+		// Allowlist deadzonefences: Vertical I2, I9
+		{
+			X: &horizontalCaps[8],
+			Y: internal.Pointer(2),
+			Condition: &data.Condition{
+				Equals: map[string][]string{
+					"map_name": axisToAlliedVerticalMaps,
+				},
+			},
+		},
+		{
+			X: &horizontalCaps[8],
+			Y: internal.Pointer(9),
+			Condition: &data.Condition{
+				Equals: map[string][]string{
+					"map_name": alliedToAxisVerticalMaps,
+				},
+			},
+		},
 	}
 	axisFences := []data.Fence{
+
 		{
 			X: &horizontalCaps[9],
 			Condition: &data.Condition{
@@ -160,6 +239,82 @@ func initialize(ctx context.Context, logger *slog.Logger, ac *crcon.AutoModSeedi
 		},
 		{
 			Y: internal.Pointer(1),
+			Condition: &data.Condition{
+				Equals: map[string][]string{
+					"map_name": alliedToAxisVerticalMaps,
+				},
+			},
+		},
+		// Allowlist deadzonefences: Horizontal A2 to J2
+		{
+			X: &horizontalCaps[9],
+			Y: internal.Pointer(2),
+			Condition: &data.Condition{
+				Equals: map[string][]string{
+					"map_name": axisToAlliedHorizontalMaps,
+				},
+			},
+		},
+		{
+			X: &horizontalCaps[0],
+			Y: internal.Pointer(2),
+			Condition: &data.Condition{
+				Equals: map[string][]string{
+					"map_name": alliedToAxisHorizontalMaps,
+				},
+			},
+		},
+		// Allowlist deadzonefences: Horizontal A9 to J9
+		{
+			X: &horizontalCaps[9],
+			Y: internal.Pointer(9),
+			Condition: &data.Condition{
+				Equals: map[string][]string{
+					"map_name": axisToAlliedHorizontalMaps,
+				},
+			},
+		},
+		{
+			X: &horizontalCaps[0],
+			Y: internal.Pointer(9),
+			Condition: &data.Condition{
+				Equals: map[string][]string{
+					"map_name": alliedToAxisHorizontalMaps,
+				},
+			},
+		},
+		// Allowlist deadzonefences: Vertical B2, B9
+		{
+			X: &horizontalCaps[1],
+			Y: internal.Pointer(9),
+			Condition: &data.Condition{
+				Equals: map[string][]string{
+					"map_name": axisToAlliedVerticalMaps,
+				},
+			},
+		},
+		{
+			X: &horizontalCaps[1],
+			Y: internal.Pointer(2),
+			Condition: &data.Condition{
+				Equals: map[string][]string{
+					"map_name": alliedToAxisVerticalMaps,
+				},
+			},
+		},
+		// Allowlist deadzonefences: Vertical I2, I9
+		{
+			X: &horizontalCaps[8],
+			Y: internal.Pointer(9),
+			Condition: &data.Condition{
+				Equals: map[string][]string{
+					"map_name": axisToAlliedVerticalMaps,
+				},
+			},
+		},
+		{
+			X: &horizontalCaps[8],
+			Y: internal.Pointer(2),
 			Condition: &data.Condition{
 				Equals: map[string][]string{
 					"map_name": alliedToAxisVerticalMaps,
@@ -239,6 +394,15 @@ func initialize(ctx context.Context, logger *slog.Logger, ac *crcon.AutoModSeedi
 	}
 
 	// player count condition is always the same, same as game mode, hence adding it once only.
+	for _, fence := range alliedFences {
+		fence.Condition.GreaterThan = map[string]int{
+			"player_count": ac.EnforceCapFight.MinPlayers,
+		}
+		fence.Condition.LessThan = map[string]int{
+			"player_count": ac.EnforceCapFight.MaxPlayers,
+		}
+		fence.Condition.Equals["game_mode"] = []string{"Warfare"}
+	}
 	for _, fence := range axisFences {
 		fence.Condition.GreaterThan = map[string]int{
 			"player_count": ac.EnforceCapFight.MinPlayers,
