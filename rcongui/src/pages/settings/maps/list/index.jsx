@@ -67,7 +67,9 @@ const MapListPage = () => {
       <Typography variant="body2" gutterBottom color="textSecondary">
         Search for a map and click on it to set it as the current map.
       </Typography>
-      <MapFilter maps={maps} onFilterChange={handleFilterChange} />
+      <Box sx={{ backgroundColor: "background.paper", position: "sticky", top: 0, height: "fit-content", zIndex: (theme) => theme.zIndex.appBar, pb: 2 }}>
+        <MapFilter maps={maps} onFilterChange={handleFilterChange} />
+      </Box>
       <MapList
         maps={filteredMapOptions}
         renderItem={(mapLayer) => (
