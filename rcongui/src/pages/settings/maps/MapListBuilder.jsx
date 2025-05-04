@@ -6,7 +6,6 @@ import { handle_http_errors } from "@/utils/fetchUtils";
 import { mapsManagerQueryKeys, mapsManagerMutationOptions } from "./queries";
 import { MapFilter } from "./MapFilter";
 import { MapList } from "./MapList";
-import { useClipboard } from "@/hooks/useClipboard";
 
 /**
  * Map Rotation Builder component for managing server map rotation
@@ -37,7 +36,6 @@ export function MapListBuilder({
       const data = await response.json();
       return data.result || { enabled: false };
     },
-    refetchInterval: 10000, // Refetch every 10 seconds
   });
 
   // Mutation to save map rotation
@@ -101,29 +99,59 @@ export function MapListBuilder({
       {/* Left column - Map list */}
       <Grid size={{ xs: 12, md: 6 }}>
         <Box sx={{ mb: 3 }}>
-          <MapFilter maps={allMaps} onFilterChange={handleFilterChange} />
-          <MapList
-            maps={filteredMapOptions}
-            renderItem={(mapLayer) => (
-              <slots.MapListItem
-                key={mapLayer.id}
-                mapLayer={mapLayer}
-                onClick={addToRotation}
-              />
-            )}
-          />
+          <Box
+            sx={{
+              backgroundColor: "background.paper",
+              position: "sticky",
+              top: 0,
+              height: "fit-content",
+              zIndex: (theme) => theme.zIndex.appBar,
+              pb: 2,
+            }}
+          >
+            <MapFilter maps={allMaps} onFilterChange={handleFilterChange} />
+          </Box>
+          <Box
+            sx={{
+              maxHeight: { xs: "auto", lg: "calc(100vh - 25rem)" },
+              overflow: "auto",
+              scrollbarWidth: "thin",
+              position: "relative",
+              pr: 1,
+            }}
+          >
+            <MapList
+              maps={filteredMapOptions}
+              renderItem={(mapLayer) => (
+                <slots.MapListItem
+                  key={mapLayer.id}
+                  mapLayer={mapLayer}
+                  onClick={addToRotation}
+                />
+              )}
+            />
+          </Box>
         </Box>
       </Grid>
 
       {/* Right column - Map rotation */}
-      <Grid size={{ xs: 12, md: 6 }}>
+      <Grid
+        size={{ xs: 12, md: 6 }}
+        sx={{
+          maxHeight: { xs: "auto", lg: "calc(100vh - 20rem)" },
+          overflow: "auto",
+          scrollbarWidth: "thin",
+          position: "relative",
+          pr: 1,
+        }}
+      >
         <slots.SelectedMapList
-          rotation={mapSelection}
+          maps={mapSelection}
           onRemove={removeFromRotation}
           onSaveRotation={handleSaveRotation}
           onClearRotation={clearRotation}
           isSaveRotationDisabled={isRotationSaving || voteMapConfig.enabled}
-          setRotation={setMapSelection}
+          setMaps={setMapSelection}
           isRotationSaving={isRotationSaving}
         />
       </Grid>

@@ -7,6 +7,7 @@ export const mapsManagerQueryKeys = {
   mapRotation: [{ queryIdentifier: "get_map_rotation" }],
   gameState: [{ queryIdentifier: "get_gamestate" }],
   voteMapConfig: [{ queryIdentifier: "get_votemap_config" }],
+  votemapWhitelist: [{ queryIdentifier: "get_votemap_whitelist" }],
 };
 
 // Define query options for fetching data
@@ -54,6 +55,12 @@ export const mapsManagerQueryOptions = {
         return data.result || {};
       },
       refetchInterval: 10000, // Refetch every 10 seconds
+    }),
+
+  votemapWhitelist: () =>
+    queryOptions({
+      queryKey: mapsManagerQueryKeys.votemapWhitelist,
+      queryFn: cmd.GET_VOTEMAP_WHITELIST,
     }),
 };
 

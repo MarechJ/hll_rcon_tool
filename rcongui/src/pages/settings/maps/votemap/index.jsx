@@ -1,27 +1,29 @@
-import { MapListBuilder } from "../MapListBuilder";
 import { Typography, Box, LinearProgress } from "@mui/material";
 import { useOutletContext } from "react-router-dom";
-import { SortableRotationList } from "./SortableRotationList";
-import { MapBuilderListItem } from "./MapListItem";
 import { useQuery } from "@tanstack/react-query";
-import { mapsManagerQueryKeys } from "../queries";
-import { cmd } from "@/utils/fetchUtils";
-
+import { MapList } from "../MapList";
+import { MapBuilderListItem } from "../rotation/MapListItem";
+import MapListBuilder from "../MapListBuilder";
+import { mapsManagerQueryOptions } from "../queries";
+import { useMemo } from "react";
 /**
  * Map Rotation page that contains the map rotation builder component
  */
-function MapRotation() {
+function Votemap() {
   const { maps = [] } = useOutletContext();
-
+  
   // Query to get current map rotation
-  const { data: currentRotation, isLoading: isLoadingRotation } = useQuery({
-    queryKey: mapsManagerQueryKeys.mapRotation,
-    queryFn: cmd.GET_MAP_ROTATION,
-  });
+  const { data: whitelistIds = [], isLoading: isLoadingWhitelist } = useQuery(mapsManagerQueryOptions.votemapWhitelist());
+
+  const whitelist = useMemo(() => {
+    return whitelistIds.map((id) => maps.find((map) => map.id === id));
+  }, [whitelistIds, maps]);
+
+  console.log(maps, whitelist);
 
   return (
     <>
-      {isLoadingRotation && (
+      {isLoadingWhitelist && (
         <LinearProgress
           sx={{
             position: "absolute",
@@ -43,9 +45,9 @@ function MapRotation() {
       <Box sx={{ mt: 3 }}>
         <MapListBuilder
           maps={maps}
-          selectedMaps={currentRotation}
+          selectedMaps={whitelist}
           slots={{
-            SelectedMapList: SortableRotationList,
+            SelectedMapList: MapList,
             MapListItem: MapBuilderListItem,
           }}
         />
@@ -54,4 +56,4 @@ function MapRotation() {
   );
 }
 
-export default MapRotation;
+export default Votemap;
