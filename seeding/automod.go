@@ -2,9 +2,6 @@ package main
 
 import (
 	"context"
-	"github.com/floriansw/go-hll-rcon/rconv2"
-	"github.com/floriansw/hll-geofences/data"
-	"github.com/floriansw/hll-geofences/worker"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -13,6 +10,10 @@ import (
 	"strconv"
 	"syscall"
 	"time"
+
+	"github.com/floriansw/go-hll-rcon/rconv2"
+	"github.com/floriansw/hll-geofences/data"
+	"github.com/floriansw/hll-geofences/worker"
 )
 
 var (
@@ -100,6 +101,7 @@ func initialize(ctx context.Context, logger *slog.Logger, ac *crcon.AutoModSeedi
 	// a spawn on either side (even before side selection). To not give them a warning that they are outside of the spawns
 	// during seeding, the HQ lines for each team opponent are allowlisted as well.
 	alliedFences := []data.Fence{
+
 		{
 			X: &horizontalCaps[0],
 			Condition: &data.Condition{
@@ -166,6 +168,86 @@ func initialize(ctx context.Context, logger *slog.Logger, ac *crcon.AutoModSeedi
 				},
 			},
 		},
+	}
+
+	// Allowlist deadzonefences: Horizontal A2 to J2 and A9 to J9 for all horizontal maps
+	for _, cap := range horizontalCaps {
+		alliedFences = append(alliedFences, data.Fence{
+			X: &cap,
+			Y: internal.Pointer(2),
+			Condition: &data.Condition{
+				Equals: map[string][]string{
+					"map_name": append([]string{}, axisToAlliedHorizontalMaps..., alliedToAxisHorizontalMaps...),
+				},
+			},
+		})
+		alliedFences = append(alliedFences, data.Fence{
+			X: &cap,
+			Y: internal.Pointer(9),
+			Condition: &data.Condition{
+				Equals: map[string][]string{
+					"map_name": append([]string{}, axisToAlliedHorizontalMaps..., alliedToAxisHorizontalMaps...),
+				},
+			},
+		})
+		axisFences = append(axisFences, data.Fence{
+			X: &cap,
+			Y: internal.Pointer(2),
+			Condition: &data.Condition{
+				Equals: map[string][]string{
+					"map_name": append([]string{}, axisToAlliedHorizontalMaps..., alliedToAxisHorizontalMaps...),
+				},
+			},
+		})
+		axisFences = append(axisFences, data.Fence{
+			X: &cap,
+			Y: internal.Pointer(9),
+			Condition: &data.Condition{
+				Equals: map[string][]string{
+					"map_name": append([]string{}, axisToAlliedHorizontalMaps..., alliedToAxisHorizontalMaps...),
+				},
+			},
+		})
+	}
+
+	// Allowlist deadzonefences: Vertical B1 to B10 and I1 to I10 for all vertical maps
+	for y := 1; y <= 10; y++ {
+		alliedFences = append(alliedFences, data.Fence{
+			X: &horizontalCaps[1], // B
+			Y: internal.Pointer(y),
+			Condition: &data.Condition{
+				Equals: map[string][]string{
+					"map_name": append([]string{}, axisToAlliedVerticalMaps..., alliedToAxisVerticalMaps...),
+				},
+			},
+		})
+		alliedFences = append(alliedFences, data.Fence{
+			X: &horizontalCaps[8], // I
+			Y: internal.Pointer(y),
+			Condition: &data.Condition{
+				Equals: map[string][]string{
+					"map_name": append([]string{}, axisToAlliedVerticalMaps..., alliedToAxisVerticalMaps...),
+				},
+			},
+		})
+		axisFences = append(axisFences, data.Fence{
+			X: &horizontalCaps[1], // B
+			Y: internal.Pointer(y),
+			Condition: &data.Condition{
+				Equals: map[string][]string{
+					"map_name": append([]string{}, axisToAlliedVerticalMaps..., alliedToAxisVerticalMaps...),
+				},
+			},
+		})
+		axisFences = append(axisFences, data.Fence{
+			X: &horizontalCaps[8], // I
+			Y: internal.Pointer(y),
+			Condition: &data.Condition{
+				Equals: map[string][]string{
+					"map_name": append([]string{}, axisToAlliedVerticalMaps..., alliedToAxisVerticalMaps...),
+				},
+			},
+		})
 	}
 
 	// fill the remaining caps as configured by the user.
@@ -239,6 +321,15 @@ func initialize(ctx context.Context, logger *slog.Logger, ac *crcon.AutoModSeedi
 	}
 
 	// player count condition is always the same, same as game mode, hence adding it once only.
+	for _, fence := range alliedFences {
+		fence.Condition.GreaterThan = map[string]int{
+			"player_count": ac.EnforceCapFight.MinPlayers,
+		}
+		fence.Condition.LessThan = map[string]int{
+			"player_count": ac.EnforceCapFight.MaxPlayers,
+		}
+		fence.Condition.Equals["game_mode"] = []string{"Warfare"}
+	}
 	for _, fence := range axisFences {
 		fence.Condition.GreaterThan = map[string]int{
 			"player_count": ac.EnforceCapFight.MinPlayers,
