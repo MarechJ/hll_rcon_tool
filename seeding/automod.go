@@ -134,85 +134,8 @@ func initialize(ctx context.Context, logger *slog.Logger, ac *crcon.AutoModSeedi
 				},
 			},
 		},
-		// Allowlist deadzonefences: Horizontal A2 to J2
-		{
-			X: &horizontalCaps[0],
-			Y: internal.Pointer(2),
-			Condition: &data.Condition{
-				Equals: map[string][]string{
-					"map_name": axisToAlliedHorizontalMaps,
-				},
-			},
-		},
-		{
-			X: &horizontalCaps[9],
-			Y: internal.Pointer(2),
-			Condition: &data.Condition{
-				Equals: map[string][]string{
-					"map_name": alliedToAxisHorizontalMaps,
-				},
-			},
-		},
-		// Allowlist deadzonefences: Horizontal A9 to J9
-		{
-			X: &horizontalCaps[0],
-			Y: internal.Pointer(9),
-			Condition: &data.Condition{
-				Equals: map[string][]string{
-					"map_name": axisToAlliedHorizontalMaps,
-				},
-			},
-		},
-		{
-			X: &horizontalCaps[9],
-			Y: internal.Pointer(9),
-			Condition: &data.Condition{
-				Equals: map[string][]string{
-					"map_name": alliedToAxisHorizontalMaps,
-				},
-			},
-		},
-		// Allowlist deadzonefences: Vertical B2, B9
-		{
-			X: &horizontalCaps[1],
-			Y: internal.Pointer(2),
-			Condition: &data.Condition{
-				Equals: map[string][]string{
-					"map_name": axisToAlliedVerticalMaps,
-				},
-			},
-		},
-		{
-			X: &horizontalCaps[1],
-			Y: internal.Pointer(9),
-			Condition: &data.Condition{
-				Equals: map[string][]string{
-					"map_name": alliedToAxisVerticalMaps,
-				},
-			},
-		},
-		// Allowlist deadzonefences: Vertical I2, I9
-		{
-			X: &horizontalCaps[8],
-			Y: internal.Pointer(2),
-			Condition: &data.Condition{
-				Equals: map[string][]string{
-					"map_name": axisToAlliedVerticalMaps,
-				},
-			},
-		},
-		{
-			X: &horizontalCaps[8],
-			Y: internal.Pointer(9),
-			Condition: &data.Condition{
-				Equals: map[string][]string{
-					"map_name": alliedToAxisVerticalMaps,
-				},
-			},
-		},
 	}
 	axisFences := []data.Fence{
-
 		{
 			X: &horizontalCaps[9],
 			Condition: &data.Condition{
@@ -245,82 +168,86 @@ func initialize(ctx context.Context, logger *slog.Logger, ac *crcon.AutoModSeedi
 				},
 			},
 		},
-		// Allowlist deadzonefences: Horizontal A2 to J2
-		{
-			X: &horizontalCaps[9],
+	}
+
+	// Allowlist deadzonefences: Horizontal A2 to J2 and A9 to J9 for all horizontal maps
+	for _, cap := range horizontalCaps {
+		alliedFences = append(alliedFences, data.Fence{
+			X: &cap,
 			Y: internal.Pointer(2),
 			Condition: &data.Condition{
 				Equals: map[string][]string{
-					"map_name": axisToAlliedHorizontalMaps,
+					"map_name": append([]string{}, axisToAlliedHorizontalMaps..., alliedToAxisHorizontalMaps...),
 				},
 			},
-		},
-		{
-			X: &horizontalCaps[0],
+		})
+		alliedFences = append(alliedFences, data.Fence{
+			X: &cap,
+			Y: internal.Pointer(9),
+			Condition: &data.Condition{
+				Equals: map[string][]string{
+					"map_name": append([]string{}, axisToAlliedHorizontalMaps..., alliedToAxisHorizontalMaps...),
+				},
+			},
+		})
+		axisFences = append(axisFences, data.Fence{
+			X: &cap,
 			Y: internal.Pointer(2),
 			Condition: &data.Condition{
 				Equals: map[string][]string{
-					"map_name": alliedToAxisHorizontalMaps,
+					"map_name": append([]string{}, axisToAlliedHorizontalMaps..., alliedToAxisHorizontalMaps...),
 				},
 			},
-		},
-		// Allowlist deadzonefences: Horizontal A9 to J9
-		{
-			X: &horizontalCaps[9],
+		})
+		axisFences = append(axisFences, data.Fence{
+			X: &cap,
 			Y: internal.Pointer(9),
 			Condition: &data.Condition{
 				Equals: map[string][]string{
-					"map_name": axisToAlliedHorizontalMaps,
+					"map_name": append([]string{}, axisToAlliedHorizontalMaps..., alliedToAxisHorizontalMaps...),
 				},
 			},
-		},
-		{
-			X: &horizontalCaps[0],
-			Y: internal.Pointer(9),
+		})
+	}
+
+	// Allowlist deadzonefences: Vertical B1 to B10 and I1 to I10 for all vertical maps
+	for y := 1; y <= 10; y++ {
+		alliedFences = append(alliedFences, data.Fence{
+			X: &horizontalCaps[1], // B
+			Y: internal.Pointer(y),
 			Condition: &data.Condition{
 				Equals: map[string][]string{
-					"map_name": alliedToAxisHorizontalMaps,
+					"map_name": append([]string{}, axisToAlliedVerticalMaps..., alliedToAxisVerticalMaps...),
 				},
 			},
-		},
-		// Allowlist deadzonefences: Vertical B2, B9
-		{
-			X: &horizontalCaps[1],
-			Y: internal.Pointer(9),
+		})
+		alliedFences = append(alliedFences, data.Fence{
+			X: &horizontalCaps[8], // I
+			Y: internal.Pointer(y),
 			Condition: &data.Condition{
 				Equals: map[string][]string{
-					"map_name": axisToAlliedVerticalMaps,
+					"map_name": append([]string{}, axisToAlliedVerticalMaps..., alliedToAxisVerticalMaps...),
 				},
 			},
-		},
-		{
-			X: &horizontalCaps[1],
-			Y: internal.Pointer(2),
+		})
+		axisFences = append(axisFences, data.Fence{
+			X: &horizontalCaps[1], // B
+			Y: internal.Pointer(y),
 			Condition: &data.Condition{
 				Equals: map[string][]string{
-					"map_name": alliedToAxisVerticalMaps,
+					"map_name": append([]string{}, axisToAlliedVerticalMaps..., alliedToAxisVerticalMaps...),
 				},
 			},
-		},
-		// Allowlist deadzonefences: Vertical I2, I9
-		{
-			X: &horizontalCaps[8],
-			Y: internal.Pointer(9),
+		})
+		axisFences = append(axisFences, data.Fence{
+			X: &horizontalCaps[8], // I
+			Y: internal.Pointer(y),
 			Condition: &data.Condition{
 				Equals: map[string][]string{
-					"map_name": axisToAlliedVerticalMaps,
+					"map_name": append([]string{}, axisToAlliedVerticalMaps..., alliedToAxisVerticalMaps...),
 				},
 			},
-		},
-		{
-			X: &horizontalCaps[8],
-			Y: internal.Pointer(2),
-			Condition: &data.Condition{
-				Equals: map[string][]string{
-					"map_name": alliedToAxisVerticalMaps,
-				},
-			},
-		},
+		})
 	}
 
 	// fill the remaining caps as configured by the user.
