@@ -6,7 +6,7 @@ import CopyableText from "@/components/shared/CopyableText";
 
 export function MapDetailsCard({ mapLayer }) {
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 2, letterSpacing: 0.85 }}>
       <Box
         component="img"
         src={getMapLayerImageSrc(mapLayer)}
@@ -14,14 +14,14 @@ export function MapDetailsCard({ mapLayer }) {
         sx={{ width: 48, height: 48, borderRadius: 1, objectFit: "cover" }}
       />
       <Box>
-        <Typography variant="body1" fontWeight="medium">
-          <CopyableText text={mapLayer.id} label={mapLayer.map.pretty_name} />
+        <Typography fontWeight="medium" lineHeight={0.75}>
+          <CopyableText text={mapLayer.id} label={mapLayer.map.pretty_name} sx={{ p: 0, m: 0 }} />
         </Typography>
-        <Box sx={{ display: "flex", gap: 1, mt: 0.5 }}>
+        <Box sx={{ display: "flex", flexDirection: "column" }} lineHeight={0.75}>
           <Typography variant="body2" color="text.secondary">
-            {mapLayer.game_mode}
+            {mapLayer.game_mode} {mapLayer.game_mode === "offensive" && `(${mapLayer.attackers})`}
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="text.secondary" lineHeight={0.75}>
             {mapLayer.environment}
           </Typography>
         </Box>
