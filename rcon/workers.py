@@ -166,7 +166,7 @@ def record_stats_from_map(
         # is just a random safety margin.
         till=map_.end + datetime.timedelta(seconds=30),
         time_sort="asc",
-        action="MATCH STARTED",
+        action="MATCH START",
         exact_action=True,
         server_filter=str(map_.server_number),
         limit=2,
