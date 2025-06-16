@@ -41,7 +41,7 @@ from rcon.types import (
     BlacklistType,
     PlayerActionState,
 )
-from rcon.utils import MISSING, get_server_number
+from rcon.utils import MISSING, get_server_number, get_server_number_mask
 
 logger = logging.getLogger(__name__)
 red = get_redis_client()
@@ -73,11 +73,6 @@ def update_penalty_count(
         # Don't let errors prevent adding/editing blacklist records
         logger.error(f"Unable to save player {action=} while adding blacklist record")
         logger.exception(e)
-
-
-def get_server_number_mask():
-    server_number = SERVER_NUMBER
-    return 1 << (server_number - 1)
 
 
 def get_blacklists(sess: Session):
@@ -242,7 +237,7 @@ def search_blacklist_records(
 
 
 def is_player_blacklisted(
-    sess: Session, player_id: str, exclude: set[int] = {}
+    sess: Session, player_id: str, exclude: set[int] = set()
 ) -> BlacklistRecord | None:
     """Determine whether a player is blacklisted, and return
     the blacklist record with the highest priority.
@@ -511,7 +506,7 @@ def add_record_to_blacklist(
         player_names = [n.name for n in player.names]
         if not player:
             raise RuntimeError(
-                "Unable to create player Steam ID, check the DB connection"
+                "Unable to create PlayerID record, check the DB connection"
             )
 
         blacklist = get_blacklist(sess, blacklist_id, True)
@@ -1224,5 +1219,7 @@ class BlacklistCommandHandler:
         if online_player_ids:
             send_to_barricade(
                 request_type=ServerRequestType.SCAN_PLAYERS,
-                payload=ScanPlayersRequestPayload(player_ids=online_player_ids).model_dump(),
+                payload=ScanPlayersRequestPayload(
+                    player_ids=online_player_ids
+                ).model_dump(),
             )
