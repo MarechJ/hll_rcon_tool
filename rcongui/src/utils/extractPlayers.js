@@ -60,6 +60,7 @@ const extendPlayer = (player) => {
 // so it's not a good metric to use for KPM.
 export const extractTeamState = (aTeam, name) => {
   const team = aTeam ?? {};
+  const teamHasCommander = "commander" in team && team.commander;
 
   const totals = [
     "combat",
@@ -74,7 +75,7 @@ export const extractTeamState = (aTeam, name) => {
   // const teamKpm = [];
   const out = {};
   out["name"] = name ?? "unknown";
-  out["commander"] = "commander" in team && team.commander ? extendPlayer(team.commander) : null;
+  out["commander"] = teamHasCommander ? extendPlayer(team.commander) : null;
   out["armor"] = 0;
   out["infantry"] = 0;
   out["recon"] = 0;
@@ -83,7 +84,12 @@ export const extractTeamState = (aTeam, name) => {
   out["no_sl_squads"] = [];
   out["players_in_lobby"] = [];
   out["squads"] = [];
+  out["vips"] = 0;
   // out["kpm"] = 0;
+
+  if (teamHasCommander && team.commander.is_vip) {
+    out["vips"]++;
+  }
 
   for (const total of totals) {
     out[total] = team[total] || 0;
@@ -116,6 +122,9 @@ export const extractTeamState = (aTeam, name) => {
         default:
           out["infantry"]++;
           break;
+      }
+      if (player.is_vip) {
+        out["vips"]++;
       }
     });
 
