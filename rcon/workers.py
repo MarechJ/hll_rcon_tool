@@ -58,7 +58,7 @@ def temp_welcome_standalone(msg, seconds):
     rcon = get_rcon_api()
     prev = rcon.set_welcome_message(msg)
     queue = get_queue()
-    queue.enqueue_in(timedelta(seconds), welcome, prev)
+    queue.enqueue_in(timedelta(seconds=seconds), welcome, prev)
 
 
 def temporary_welcome_in(message, seconds, restore_after_seconds):
