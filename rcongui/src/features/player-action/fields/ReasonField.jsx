@@ -3,7 +3,7 @@ import { MenuItem, Select } from "@mui/material";
 import { useTemplates } from "@/hooks/useTemplates";
 import { useState } from "react";
 
-export const ReasonField = ({ control, errors, setValue, ...props }) => {
+export const ReasonField = ({ control, errors, setValue, helperText="The message displayed to the player.", ...props }) => {
   const templates = useTemplates("reason");
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const error = errors["reason"];
@@ -29,7 +29,7 @@ export const ReasonField = ({ control, errors, setValue, ...props }) => {
         control={control}
         rules={{ required: "Reason is required" }}
         helperText={
-          hasError ? error.message : "The message displayed to the player."
+          hasError ? error.message : helperText
         }
         multiline
         minRows={5}
