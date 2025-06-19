@@ -88,7 +88,7 @@ export const BlacklistPlayerFormFields = ({
           Never expires
         </Button>
       </Box>
-      <ReasonField control={control} errors={errors} setValue={setValue} />
+      <ReasonField control={control} errors={errors} setValue={setValue} helperText="The message displayed to the player. Available variables: {player_id}, {player_name}, {banned_at}, {banned_until}, {expires_at}, {duration}, {expires}, {ban_id}, {blacklist_name}"/>
     </Stack>
   );
 };
