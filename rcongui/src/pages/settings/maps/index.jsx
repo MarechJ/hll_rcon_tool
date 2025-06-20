@@ -1,4 +1,4 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Box, Tabs, Paper } from "@mui/material";
 import { get, getGameState } from "@/utils/fetchUtils.js";
@@ -28,18 +28,27 @@ function MapsManager() {
     refetchInterval: 60000, // Refetch every minute
   });
 
+  // Get active tab
+  const location = useLocation()
+  const tabs = [
+    { label: "List", href: "list" },
+    { label: "Rotation", href: "rotation" },
+    { label: "Votemap", href: "votemap" },
+  ]
+  const activeTab = tabs.findIndex(({ href }) => href === location.pathname.split("/").pop())
+
   return (
     <Box>      
-      {/* Pass maps and gameState data to child routes */}
-      <Tabs>
-        <NavLinkTab label="List" to="list" />
-        <NavLinkTab label="Rotation" to="rotation" />
-        <NavLinkTab label="Votemap" to="votemap" />
+      <Tabs value={activeTab} sx={{ mb: 2 }}>
+        {tabs.map(({ label, href }) => (
+          <NavLinkTab key={href} label={label} to={href} />
+        ))}
       </Tabs>
-      <Box sx={{ mt: 2 }}>
-        <Paper sx={{ p: 3, position: "relative" }}>
+      <Box>
+        <Box sx={{ position: "relative" }}>
+          {/* Pass maps and gameState data to child routes */}
           <Outlet context={{ maps, gameState }} />
-        </Paper>
+        </Box>
       </Box>
     </Box>
   );

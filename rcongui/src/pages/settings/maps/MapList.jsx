@@ -30,6 +30,12 @@ const EmptyMapList = () => {
     </Box>
   );
 };
+
+/**
+ * 
+ * @param {React.ReactNode} renderItem (optional) custom item component that accepts `mapLayer` as the only param 
+ * @returns 
+ */
 export const MapList = ({ maps, renderItem }) => {
   if (maps.length === 0) {
     return <EmptyMapList />;
@@ -38,7 +44,7 @@ export const MapList = ({ maps, renderItem }) => {
   return (
     <Box sx={{ overflow: "auto" }}>
       {maps.sort((a, b) => a.map.name.localeCompare(b.map.name)).map((mapLayer) => (
-        renderItem ? renderItem(mapLayer) : <MapListItem mapLayer={mapLayer} />
+        renderItem ? renderItem(mapLayer) : <MapListItem key={mapLayer.id} mapLayer={mapLayer} />
       ))}
     </Box>
   );

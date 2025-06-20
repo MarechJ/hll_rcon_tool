@@ -40,7 +40,7 @@ export const mapsManagerQueryOptions = {
     queryOptions({
       queryKey: mapsManagerQueryKeys.gameState,
       queryFn: async () => {
-        return await cmd.GET_GAMESTATE();
+        return await cmd.GET_GAME_STATE();
       },
       refetchInterval: 60000, // Refetch every minute
     }),
@@ -78,11 +78,6 @@ export const mapsManagerMutationOptions = {
 
   // Change current map
   changeMap: {
-    mutationFn: async (mapName) => {
-      const response = await postData(`${process.env.REACT_APP_API_URL}change_map`, {
-        map_name: mapName,
-      });
-      return response;
-    },
+    mutationFn: (mapId) => cmd.SET_MAP({ payload: { map_name: mapId } }),
   },
 }; 
