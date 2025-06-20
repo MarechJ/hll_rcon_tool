@@ -101,9 +101,6 @@ export function MapListBuilder({
         <Box sx={{ mb: 3 }}>
           <Box
             sx={{
-              backgroundColor: "background.paper",
-              position: "sticky",
-              top: 0,
               height: "fit-content",
               zIndex: (theme) => theme.zIndex.appBar,
               pb: 2,

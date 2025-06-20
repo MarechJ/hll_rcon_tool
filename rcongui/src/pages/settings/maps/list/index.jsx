@@ -15,7 +15,7 @@ import { MapChangeListItem } from "../rotation/MapListItem";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { MapDetailsCard } from "../MapDetailsCard";
 import { useGlobalStore } from "@/stores/global-state";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { mapsManagerMutationOptions, mapsManagerQueryKeys } from "../queries";
 import { toast } from "react-toastify";
 import { MapFilter } from "../MapFilter";
@@ -26,18 +26,23 @@ const MapListPage = () => {
   const [mapToConfirm, setMapToConfirm] = useState(null);
   const [filteredMapOptions, setFilteredMapOptions] = useState(maps);
   const serverState = useGlobalStore((state) => state.serverState);
+  const queryClient = useQueryClient()
 
   const { mutate: changeMap } = useMutation({
     ...mapsManagerMutationOptions.changeMap,
-    onSuccess: () => {
+    onSuccess: (response) => {
+      const mapName = response.arguments.map_name
       queryClient.invalidateQueries({
         queryKey: mapsManagerQueryKeys.gameState,
+      });
+      toast.success(`Map has been changed to ${mapName}`, {
+        toastId: `map-change-success`,
       });
       setConfirmDialogOpen(false);
     },
     onError: () => {
       toast.error("Unable to change map", {
-        toastId: "Unable to change map",
+        toastId: "map-change-error",
       });
       setConfirmDialogOpen(false);
     },
@@ -50,7 +55,6 @@ const MapListPage = () => {
 
   const handleConfirmMapChange = () => {
     if (mapToConfirm) {
-      setCurrentMap(mapToConfirm);
       changeMap(mapToConfirm.mapId || mapToConfirm.id);
     }
   };
@@ -67,7 +71,7 @@ const MapListPage = () => {
       <Typography variant="body2" gutterBottom color="textSecondary">
         Search for a map and click on it to set it as the current map.
       </Typography>
-      <Box sx={{ backgroundColor: "background.paper", position: "sticky", top: 0, height: "fit-content", zIndex: (theme) => theme.zIndex.appBar, pb: 2 }}>
+      <Box sx={{ height: "fit-content", zIndex: (theme) => theme.zIndex.appBar, pb: 2 }}>
         <MapFilter maps={maps} onFilterChange={handleFilterChange} />
       </Box>
       <MapList
@@ -75,6 +79,7 @@ const MapListPage = () => {
         renderItem={(mapLayer) => (
           <MapChangeListItem
             mapLayer={mapLayer}
+            key={mapLayer.id}
             onClick={handleChangeMapClick}
           />
         )}
@@ -106,7 +111,6 @@ const MapListPage = () => {
                 gap: 2,
                 p: 2,
                 borderRadius: 1,
-                bgcolor: "background.paper",
                 border: "1px solid",
                 borderColor: "divider",
               }}

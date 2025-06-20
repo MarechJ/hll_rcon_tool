@@ -40,7 +40,6 @@ function SortableRotationItem({ item, onRemove }) {
         p: 0.5,
         mb: 1,
         borderRadius: 1,
-        bgcolor: "background.paper",
         border: "1px solid",
         borderColor: "divider",
         boxShadow: isDragging ? 3 : 1,

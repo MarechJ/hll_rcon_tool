@@ -63,7 +63,6 @@ export function SortableRotationList({
         border: "1px solid",
         borderColor: "divider",
         borderRadius: 1,
-        bgcolor: "background.paper",
         height: "100%",
         display: "flex",
         flexDirection: "column",

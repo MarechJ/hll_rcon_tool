@@ -186,6 +186,7 @@ export const cmd = {
   SET_BROADCAST_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_auto_broadcasts_config", ...params }),
   SET_CAMERA_NOTIFICATION_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_camera_notification_config", ...params }),
   SET_IDLE_AUTOKICK_TIME: (params) => requestFactory({ method: "POST", cmd: "set_idle_autokick_time", ...params }),
+  SET_MAP: (params) => requestFactory({ method: "POST", cmd: "set_map", ...params }),
   SET_MAX_PING_AUTOKICK: (params) => requestFactory({ method: "POST", cmd: "set_max_ping_autokick", ...params }),
   SET_PROFANITIES: (params) => requestFactory({ method: "POST", cmd: "set_profanities", ...params }),
   SET_QUEUE_LENGTH: (params) => requestFactory({ method: "POST", cmd: "set_queue_length", ...params }),

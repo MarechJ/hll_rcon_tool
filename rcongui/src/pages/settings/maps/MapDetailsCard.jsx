@@ -3,6 +3,7 @@
 import { getMapLayerImageSrc } from "@/components/MapManager/helpers";
 import { Typography, Box } from "@mui/material";
 import CopyableText from "@/components/shared/CopyableText";
+import { map } from "lodash";
 
 export function MapDetailsCard({ mapLayer }) {
   return (
@@ -19,7 +20,7 @@ export function MapDetailsCard({ mapLayer }) {
         </Typography>
         <Box sx={{ display: "flex", flexDirection: "column" }} lineHeight={0.75}>
           <Typography variant="body2" color="text.secondary">
-            {mapLayer.game_mode} {mapLayer.game_mode === "offensive" && `(${mapLayer.attackers})`}
+            {mapLayer.game_mode} {mapLayer.game_mode === "offensive" && `(${mapLayer.attackers} -> ${mapLayer.attackers === "axis" ? "allies" : "axis"})`}
           </Typography>
           <Typography variant="body2" color="text.secondary" lineHeight={0.75}>
             {mapLayer.environment}

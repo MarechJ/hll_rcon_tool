@@ -5,6 +5,7 @@ import {
   Select,
   MenuItem,
   Button,
+  Stack,
 } from "@mui/material";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import CloseIcon from "@mui/icons-material/Close";
@@ -28,18 +29,18 @@ import { useState, useEffect, useMemo } from "react";
  */
 export const MapFilter = ({ maps, onFilterChange }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedMode, setSelectedMode] = useState("");
-  const [selectedWeather, setSelectedWeather] = useState("");
+  const [selectedMode, setSelectedMode] = useState("warfare");
+  const [selectedWeather, setSelectedWeather] = useState("day");
 
-  const allModes = useMemo(
-    () => Array.from(new Set(maps.map((map) => map.game_mode))).sort(),
-    [maps]
-  );
+  const allModes = useMemo(() => {
+    if (maps.length === 0) return ["warfare"]; // default value before maps load
+    return Array.from(new Set(maps.map((map) => map.game_mode))).sort();
+  }, [maps]);
 
-  const allWeather = useMemo(
-    () => Array.from(new Set(maps.map((map) => map.environment))).sort(),
-    [maps]
-  );
+  const allWeather = useMemo(() => {
+    if (maps.length === 0) return ["day"]; // default value before maps load
+    return Array.from(new Set(maps.map((map) => map.environment))).sort();
+  }, [maps]);
 
   const clearFilters = () => {
     setSearchTerm("");
@@ -76,7 +77,7 @@ export const MapFilter = ({ maps, onFilterChange }) => {
         />
       </Box>
 
-      <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+      <Stack direction={{ xs: "column", sm: "row" }} sx={{ gap: 1, mb: 2 }}>
         <FormControl size="small" sx={{ minWidth: 180 }}>
           <InputLabel>Game Mode</InputLabel>
           <Select
@@ -119,7 +120,7 @@ export const MapFilter = ({ maps, onFilterChange }) => {
             Clear Filters
           </Button>
         )}
-      </Box>
+      </Stack>
     </Box>
   );
 };

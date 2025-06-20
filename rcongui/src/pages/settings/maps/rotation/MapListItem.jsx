@@ -13,7 +13,6 @@ function MapListItemBase({ mapLayer, renderActions }) {
         p: 0.5,
         mb: 1,
         borderRadius: 1,
-        bgcolor: "background.paper",
         border: "1px solid",
         borderColor: "divider",
         "&:hover": { bgcolor: "action.hover" },

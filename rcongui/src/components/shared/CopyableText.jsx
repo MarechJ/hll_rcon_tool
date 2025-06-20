@@ -1,7 +1,7 @@
 import { Stack, IconButton, Tooltip } from "@mui/material";
 import React, { useState, useEffect } from "react";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import DoneAllIcon from '@mui/icons-material/DoneAll';
+import DoneAllIcon from "@mui/icons-material/DoneAll";
 
 export default function CopyableText({ text, label, size = "1em", ...props }) {
   const [isClipboardAvailable, setIsClipboardAvailable] = useState(false);
@@ -30,17 +30,25 @@ export default function CopyableText({ text, label, size = "1em", ...props }) {
   };
 
   return (
-    <Stack direction="row" alignItems="center" gap={"0.25em"} sx={{ ...props.sx, fontSize: size,
-      "& .copyable-text-icon-button": {
-        width: size,
-        height: size,
-        color: "text.secondary",
-        visibility: "hidden",
-      },
-      "&:hover .copyable-text-icon-button": {
-        visibility: "visible",
-      },
-    }}>
+    <Stack
+      direction="row"
+      alignItems="center"
+      component={"span"}
+      gap={"0.25em"}
+      sx={{
+        ...props.sx,
+        fontSize: size,
+        "& .copyable-text-icon-button": {
+          width: size,
+          height: size,
+          color: "text.secondary",
+          visibility: "hidden",
+        },
+        "&:hover .copyable-text-icon-button": {
+          visibility: "visible",
+        },
+      }}
+    >
       {label || text}
       {isClipboardAvailable && (
         <Tooltip title={isCopied ? "Copied!" : "Copy"}>
