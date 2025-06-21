@@ -1,4 +1,10 @@
-import { Box, Button, Typography, CircularProgress } from "@mui/material";
+import {
+  Box,
+  Button,
+  Typography,
+  CircularProgress,
+  Stack,
+} from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import {
@@ -69,56 +75,52 @@ export function SortableRotationList({
       }}
     >
       <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider" }}>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            height: 50,
-          }}
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          gap={1}
+          alignItems={"center"}
         >
           <Typography variant="h6">Map Rotation ({maps.length})</Typography>
-          {maps.length > 0 && (
-            <Box
-              sx={{
-                flexGrow: 1,
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: 1,
-              }}
+          <Box
+            sx={{
+              flexGrow: 1,
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 1,
+            }}
+          >
+            <Button
+              variant="outlined"
+              color="error"
+              onClick={onClearRotation}
+              startIcon={<DeleteIcon />}
             >
-              <Button
-                variant="outlined"
-                color="error"
-                onClick={onClearRotation}
-                startIcon={<DeleteIcon />}
-              >
-                Clear
-              </Button>
-              <CopyToClipboardButton
-                text={JSON.stringify(
-                  maps.map((item) => item.mapId || item.id),
-                  null,
-                  2
-                )}
-              />
-              <Button
-                variant="contained"
-                color="primary"
-                disabled={isSaveRotationDisabled}
-                onClick={onSaveRotation}
-                startIcon={
-                  isRotationSaving ? (
-                    <CircularProgress size={20} color="inherit" />
-                  ) : (
-                    <SaveIcon />
-                  )
-                }
-              >
-                Save Rotation
-              </Button>
-            </Box>
-          )}
-        </Box>
+              Clear
+            </Button>
+            <CopyToClipboardButton
+              text={JSON.stringify(
+                maps.map((item) => item.mapId || item.id),
+                null,
+                2
+              )}
+            />
+            <Button
+              variant="contained"
+              color="primary"
+              disabled={isSaveRotationDisabled}
+              onClick={onSaveRotation}
+              startIcon={
+                isRotationSaving ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : (
+                  <SaveIcon />
+                )
+              }
+            >
+              Save
+            </Button>
+          </Box>
+        </Stack>
       </Box>
 
       <Box sx={{ p: 2, flexGrow: 1, overflow: "auto" }}>
@@ -132,9 +134,9 @@ export function SortableRotationList({
               items={maps.map((item) => item.rotationId || item.id)}
               strategy={verticalListSortingStrategy}
             >
-              {maps.map((item) => (
+              {maps.map((item, index) => (
                 <SortableRotationItem
-                  key={item.rotationId || item.id}
+                  key={(item.rotationId || item.id) + index}
                   item={item}
                   onRemove={onRemove}
                 />

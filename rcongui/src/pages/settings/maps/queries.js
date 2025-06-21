@@ -1,10 +1,11 @@
-import { cmd, get, postData } from "@/utils/fetchUtils";
+import { cmd, get } from "@/utils/fetchUtils";
 import { queryOptions } from "@tanstack/react-query";
 
 // Define query keys to maintain consistent query identifiers
 export const mapsManagerQueryKeys = {
   maps: [{ queryIdentifier: "get_maps" }],
   mapRotation: [{ queryIdentifier: "get_map_rotation" }],
+  mapRotationShuffle: [{ queryIdentifier: "get_map_rotation_shuffle" }],
   gameState: [{ queryIdentifier: "get_gamestate" }],
   voteMapConfig: [{ queryIdentifier: "get_votemap_config" }],
   votemapWhitelist: [{ queryIdentifier: "get_votemap_whitelist" }],
@@ -16,32 +17,28 @@ export const mapsManagerQueryOptions = {
   maps: () =>
     queryOptions({
       queryKey: mapsManagerQueryKeys.maps,
-      queryFn: async () => {
-        const response = await get("get_maps");
-        const data = await response.json();
-        return data.result || [];
-      },
-      refetchInterval: 60000, // Refetch every minute
+      queryFn: cmd.GET_MAPS,
     }),
 
   // Get current map rotation
   mapRotation: () =>
     queryOptions({
       queryKey: mapsManagerQueryKeys.mapRotation,
-      queryFn: async () => {
-        const response = await get("get_map_rotation");
-        const data = await response.json();
-        return data.result || [];
-      },
+      queryFn: cmd.GET_MAP_ROTATION,
+    }),
+
+  // Get map rotation shuffle config
+  mapRotationShuffle: () =>
+    queryOptions({
+      queryKey: mapsManagerQueryKeys.mapRotationShuffle,
+      queryFn: cmd.GET_MAP_ROTATION_SHUFFLE,
     }),
 
   // Get current game state
   gameState: () =>
     queryOptions({
       queryKey: mapsManagerQueryKeys.gameState,
-      queryFn: async () => {
-        return await cmd.GET_GAME_STATE();
-      },
+      queryFn: cmd.GET_GAME_STATE,
       refetchInterval: 60000, // Refetch every minute
     }),
 
@@ -68,16 +65,25 @@ export const mapsManagerQueryOptions = {
 export const mapsManagerMutationOptions = {
   // Set map rotation
   setMapRotation: {
-    mutationFn: async (mapNames) => {
-      const response = await postData(`${process.env.REACT_APP_API_URL}set_maprotation`, {
-        map_names: mapNames,
-      });
-      return response;
-    },
+    mutationFn: (mapNames) =>
+      cmd.SET_MAP_ROTATION({
+        payload: { map_names: mapNames },
+        throwRouteError: false,
+      }),
   },
 
   // Change current map
   changeMap: {
-    mutationFn: (mapId) => cmd.SET_MAP({ payload: { map_name: mapId } }),
+    mutationFn: (mapId) =>
+      cmd.SET_MAP({ payload: { map_name: mapId }, throwRouteError: false }),
   },
-}; 
+
+  // Set map rotation shuffle
+  setMapRotationShuffle: {
+    mutationFn: (enabled) =>
+      cmd.SET_MAP_ROTATION_SHUFFLE({
+        payload: { enabled },
+        throwRouteError: false,
+      }),
+  },
+};
