@@ -76,31 +76,40 @@ export const navMenus = [
     ],
   },
   {
-    name: "Maps",
-    icon: <MapIcon />,
     links: [
       {
-        name: "Change",
-        to: "/settings/maps/change",
-        icon: <RestartAltIcon />,
-      },
-      {
-        name: "Rotation",
-        to: "/settings/maps/rotation",
-        icon: <ThreeSixtyIcon />,
-      },
-      {
-        name: "Objectives",
-        to: "/settings/maps/objectives",
-        icon: <AdsClickIcon />,
-      },
-      {
-        name: "Votemap",
-        to: "/settings/maps/votemap",
-        icon: <HowToVoteIcon />,
+        name: "Maps",
+        to: "/settings/maps/list",
+        icon: <MapIcon />,
       },
     ],
   },
+  // {
+  //   name: "Maps",
+  //   icon: <MapIcon />,
+  //   links: [
+  //     {
+  //       name: "Change",
+  //       to: "/settings/maps/change",
+  //       icon: <RestartAltIcon />,
+  //     },
+  //     {
+  //       name: "Rotation",
+  //       to: "/settings/maps/rotation",
+  //       icon: <ThreeSixtyIcon />,
+  //     },
+  //     {
+  //       name: "Objectives",
+  //       to: "/settings/maps/objectives",
+  //       icon: <AdsClickIcon />,
+  //     },
+  //     {
+  //       name: "Votemap",
+  //       to: "/settings/maps/votemap",
+  //       icon: <HowToVoteIcon />,
+  //     },
+  //   ],
+  // },
   {
     name: "Records",
     icon: <FolderIcon />,
