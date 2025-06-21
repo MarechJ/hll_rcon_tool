@@ -36,7 +36,7 @@ async function requestFactory({
       body,
     });
 
-    return await handleFetchResponse(response, method);
+    return await handleFetchResponse(response, method, cmd);
   } catch (error) {
     if (throwRouteError) {
       throw json(error, { status: error.status, statusText: error.message || error.text });
@@ -45,20 +45,22 @@ async function requestFactory({
   }
 }
 
-async function handleFetchResponse(response, method) {
-  let data;
+async function handleFetchResponse(response, method, cmd) {
+  let data, error;
 
   const contentType = response.headers.get("content-type");
   if (contentType && contentType.includes("application/json")) {
     data = await parseJsonResponse(response);
-  } else if (contentType && contentType.includes("text/plain")) {
+    error = data.error
+  } else if (contentType && contentType.includes("text/")) {
     data = await response.text();
+    error = data
   }
 
-  handleServerErrors(response, data);
-  handleClientErrors(response, data);
+  handleServerErrors(response, error, cmd);
+  handleClientErrors(response, error, cmd);
 
-  if (contentType && contentType.includes("text/plain")) {
+  if (contentType && contentType.includes("text/")) {
     return data;
   }
 
@@ -70,31 +72,30 @@ async function handleFetchResponse(response, method) {
   return data;
 }
 
-function handleServerErrors(response, data) {
+function handleServerErrors(response, error, cmd) {
   if (!response.ok && response.status >= 500) {
     switch (response.status) {
       case 504:
         throw new CRCONServerDownError("There was a problem connecting to your CRCON server.");
       default:
-        if (data) throw new UnknownError(data.error, data.command);
-        throw new UnknownError(response.statusText, response.status);
+        throw new APIError(error, cmd, response.status);
     }
   }
 }
 
-function handleClientErrors(response, data) {
+function handleClientErrors(response, error, cmd) {
   if (!response.ok) {
     switch (response.status) {
       case 401:
-        throw new AuthError("You are not authenticated.", data.command);
+        throw new AuthError("You are not authenticated.", cmd);
       case 403:
-        throw new PermissionError("You are not authorized.", data.command);
+        throw new PermissionError("You are not authorized.", cmd);
       default:
-        throw new UnknownError(data.error, data.command);
+        throw new APIError(error, cmd, response.status);
     }
   }
-  if (data.failed) {
-    throw new CommandFailedError(data.error, data.command);
+  if (error) {
+    throw new APIError(error, cmd);
   }
 }
 
@@ -144,6 +145,7 @@ export const cmd = {
   GET_LIVE_SESSIONS: (params) => requestFactory({ method: "GET", cmd: "get_live_scoreboard", ...params }),
   GET_LIVE_TEAMS: (params) => requestFactory({ method: "GET", cmd: "get_team_view", ...params }),
   GET_MAP_ROTATION: (params) => requestFactory({ method: "GET", cmd: "get_map_rotation", ...params }),
+  GET_MAPS: (params) => requestFactory({ method: "GET", cmd: "get_maps", ...params }),
   GET_MESSAGE_TEMPLATE: (params) => requestFactory({ method: "GET", cmd: "get_message_template", ...params }),
   GET_MESSAGE_TEMPLATES: (params) => requestFactory({ method: "GET", cmd: "get_message_templates", ...params }),
   GET_SEEDING_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_auto_mod_seeding_config", ...params }),
@@ -187,6 +189,7 @@ export const cmd = {
   SET_CAMERA_NOTIFICATION_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_camera_notification_config", ...params }),
   SET_IDLE_AUTOKICK_TIME: (params) => requestFactory({ method: "POST", cmd: "set_idle_autokick_time", ...params }),
   SET_MAP: (params) => requestFactory({ method: "POST", cmd: "set_map", ...params }),
+  SET_MAP_ROTATION: (params) => requestFactory({ method: "POST", cmd: "set_maprotation", ...params }),
   SET_MAX_PING_AUTOKICK: (params) => requestFactory({ method: "POST", cmd: "set_max_ping_autokick", ...params }),
   SET_PROFANITIES: (params) => requestFactory({ method: "POST", cmd: "set_profanities", ...params }),
   SET_QUEUE_LENGTH: (params) => requestFactory({ method: "POST", cmd: "set_queue_length", ...params }),
@@ -319,11 +322,11 @@ class NotJSONResponseError extends Error {
   }
 }
 
-class UnknownError extends Error {
+class APIError extends Error {
   constructor(message, command, status) {
     super(message);
     this.command = command;
-    this.name = "UnknownError";
+    this.name = "APIError";
     this.status = status ?? 400;
     this.text = message;
   }
