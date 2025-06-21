@@ -42,15 +42,12 @@ import SettingsPage from "./pages/settings"
 import { loader as settingsLoader } from "./pages/settings"
 import { action as settingsAction } from "./pages/settings"
 
-// import MapManager from "./pages/settings/map-manager"
-// import MapChange from "./pages/settings/map-manager/map-change"
-// import MapRotation from "./pages/settings/map-manager/map-rotation"
-// import MapObjectives from "./pages/settings/map-manager/objectives"
-// import MapVotemap from "./pages/settings/map-manager/votemap"
-
 import MapsManager from "./pages/settings/maps"
+import { loader as mapsManagerLoader } from "./pages/settings/maps/loader"
 import MapList from "./pages/settings/maps/list"
 import MapRotation from "./pages/settings/maps/rotation"
+import MapRotationBuilder from "./pages/settings/maps/rotation/builder"
+import MapRotationSettings from "./pages/settings/maps/rotation/settings"
 import Votemap from "./pages/settings/maps/votemap"
 
 import ConfigDetail from "./pages/settings/[configs]/detail"
@@ -118,28 +115,6 @@ const router = createBrowserRouter([
                 path: '',
                 index: true,
                 element: <Dashboard />,
-                errorElement: <RouteError />,
-            },
-            {
-                path: 'settings/maps/',
-                children: [
-                    {
-                        path: 'list',
-                        element: <MapList />,
-                        errorElement: <RouteError />,
-                    },
-                    {
-                        path: 'rotation',
-                        element: <MapRotation />,
-                        errorElement: <RouteError />,
-                    },
-                    {
-                        path: 'votemap',
-                        element: <Votemap />,
-                        errorElement: <RouteError />,
-                    }
-                ],
-                element: <MapsManager />,
                 errorElement: <RouteError />,
             },
             {
@@ -292,37 +267,41 @@ const router = createBrowserRouter([
                         action: autosettingsAction,
                         errorElement: <RouteError />,
                     },
-                    // {
-                    //     path: 'maps',
-                    //     handle: { crumb: () => <span>Maps</span> },
-                    //     element: <MapManager />,
-                    //     children: [
-                    //         {
-                    //             path: 'change',
-                    //             handle: { crumb: () => <Link to={'/settings/maps/change'}>Change</Link> },
-                    //             element: <MapChange />,
-                    //             errorElement: <RouteError />,
-                    //         },
-                    //         {
-                    //             path: 'rotation',
-                    //             handle: { crumb: () => <Link to={'/settings/maps/rotation'}>Rotation</Link> },
-                    //             element: <MapRotation />,
-                    //             errorElement: <RouteError />,
-                    //         },
-                    //         {
-                    //             path: 'objectives',
-                    //             handle: { crumb: () => <Link to={'/settings/maps/objectives'}>Objectives</Link> },
-                    //             element: <MapObjectives />,
-                    //             errorElement: <RouteError />,
-                    //         },
-                    //         {
-                    //             path: 'votemap',
-                    //             handle: { crumb: () => <Link to={'/settings/maps/votemap'}>Votemap</Link> },
-                    //             element: <MapVotemap />,
-                    //             errorElement: <RouteError />,
-                    //         }
-                    //     ]
-                    // },
+                    {
+                        path: 'maps',
+                        element: <MapsManager />,
+                        loader: mapsManagerLoader,
+                        errorElement: <RouteError />,
+                        id: "maps",
+                        children: [
+                            {
+                                path: 'list',
+                                element: <MapList />,
+                                errorElement: <RouteError />,
+                            },
+                            {
+                                path: 'rotation',
+                                element: <MapRotation />,
+                                errorElement: <RouteError />,
+                                children: [
+                                    {
+                                        path: '',
+                                        index: true,
+                                        element: <MapRotationBuilder />,
+                                    },
+                                    {
+                                        path: 'settings',
+                                        element: <MapRotationSettings />,
+                                    }
+                                ]
+                            },
+                            {
+                                path: 'votemap',
+                                element: <Votemap />,
+                                errorElement: <RouteError />,
+                            }
+                        ],
+                    },
                     {
                         path: 'templates',
                         handle: { crumb: () => <span>Templates</span> },

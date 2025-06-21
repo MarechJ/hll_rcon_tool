@@ -1,4 +1,4 @@
-import { useOutletContext } from "react-router-dom";
+import { useRouteLoaderData } from "react-router-dom";
 import { useState } from "react";
 import {
   Dialog,
@@ -8,7 +8,6 @@ import {
   DialogActions,
   Button,
   Box,
-  Typography,
 } from "@mui/material";
 import { MapList } from "../MapList";
 import { MapChangeListItem } from "../rotation/MapListItem";
@@ -21,17 +20,17 @@ import { toast } from "react-toastify";
 import { MapFilter } from "../MapFilter";
 
 const MapListPage = () => {
-  const { maps = [] } = useOutletContext();
+  const { maps } = useRouteLoaderData("maps");
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [mapToConfirm, setMapToConfirm] = useState(null);
   const [filteredMapOptions, setFilteredMapOptions] = useState(maps);
   const serverState = useGlobalStore((state) => state.serverState);
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
   const { mutate: changeMap } = useMutation({
     ...mapsManagerMutationOptions.changeMap,
     onSuccess: (response) => {
-      const mapName = response.arguments.map_name
+      const mapName = response.arguments.map_name;
       queryClient.invalidateQueries({
         queryKey: mapsManagerQueryKeys.gameState,
       });
@@ -40,10 +39,16 @@ const MapListPage = () => {
       });
       setConfirmDialogOpen(false);
     },
-    onError: () => {
-      toast.error("Unable to change map", {
-        toastId: "map-change-error",
-      });
+    onError: (error) => {
+      toast.error(
+        <div>
+          <span>{error.name}</span>
+          <p>{error.message}</p>
+        </div>,
+        {
+          toastId: "map-change-error",
+        }
+      );
       setConfirmDialogOpen(false);
     },
   });
@@ -65,13 +70,13 @@ const MapListPage = () => {
 
   return (
     <>
-      <Typography variant="h5" gutterBottom>
-        Map List
-      </Typography>
-      <Typography variant="body2" gutterBottom color="textSecondary">
-        Search for a map and click on it to set it as the current map.
-      </Typography>
-      <Box sx={{ height: "fit-content", zIndex: (theme) => theme.zIndex.appBar, pb: 2 }}>
+      <Box
+        sx={{
+          height: "fit-content",
+          zIndex: (theme) => theme.zIndex.appBar,
+          py: 2,
+        }}
+      >
         <MapFilter maps={maps} onFilterChange={handleFilterChange} />
       </Box>
       <MapList

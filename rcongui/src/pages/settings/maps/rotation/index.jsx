@@ -1,54 +1,30 @@
-import { MapListBuilder } from "../MapListBuilder";
-import { Typography, Box, LinearProgress } from "@mui/material";
-import { useOutletContext } from "react-router-dom";
-import { SortableRotationList } from "./SortableRotationList";
-import { MapBuilderListItem } from "./MapListItem";
-import { useQuery } from "@tanstack/react-query";
-import { mapsManagerQueryKeys } from "../queries";
-import { cmd } from "@/utils/fetchUtils";
+import { Box, Tabs } from "@mui/material";
+import { Outlet, useLocation } from "react-router-dom";
+import { NavLinkTab } from "@/components/shared/NavLinkTab";
 
 /**
  * Map Rotation page that contains the map rotation builder component
  */
 function MapRotation() {
-  const { maps = [] } = useOutletContext();
-
-  // Query to get current map rotation
-  const { data: currentRotation, isLoading: isLoadingRotation } = useQuery({
-    queryKey: mapsManagerQueryKeys.mapRotation,
-    queryFn: cmd.GET_MAP_ROTATION,
-  });
+  // Get active tab
+  const location = useLocation();
+  const tabs = [
+    { label: "Builder", href: "/settings/maps/rotation" },
+    { label: "Settings", href: "/settings/maps/rotation/settings" },
+  ];
+  const activeTab = tabs.findIndex(({ href }) =>
+    location.pathname.endsWith(href)
+  );
 
   return (
     <>
-      {isLoadingRotation && (
-        <LinearProgress
-          sx={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: { xs: "3px", lg: "2px" },
-          }}
-        />
-      )}
-      <Typography variant="h5" gutterBottom>
-        Map Rotation
-      </Typography>
-      <Typography variant="body2" gutterBottom color="textSecondary">
-        Configure the map rotation for your server. Drag and drop maps to
-        reorder them.
-      </Typography>
-
-      <Box sx={{ mt: 3 }}>
-        <MapListBuilder
-          maps={maps}
-          selectedMaps={currentRotation}
-          slots={{
-            SelectedMapList: SortableRotationList,
-            MapListItem: MapBuilderListItem,
-          }}
-        />
+      <Tabs value={activeTab}>
+        <NavLinkTab label={"Builder"} to={""} />
+        <NavLinkTab label={"Settings"} to={"settings"} />
+      </Tabs>
+      {/* Move to Outlet */}
+      <Box sx={{ mt: 1 }}>
+        <Outlet />
       </Box>
     </>
   );

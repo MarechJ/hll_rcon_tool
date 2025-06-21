@@ -4,11 +4,9 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Button,
   Stack,
 } from "@mui/material";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
-import CloseIcon from "@mui/icons-material/Close";
 import { useState, useEffect, useMemo } from "react";
 /**
  * @typedef {Function} onFilterChange
@@ -41,13 +39,6 @@ export const MapFilter = ({ maps, onFilterChange }) => {
     if (maps.length === 0) return ["day"]; // default value before maps load
     return Array.from(new Set(maps.map((map) => map.environment))).sort();
   }, [maps]);
-
-  const clearFilters = () => {
-    setSearchTerm("");
-    setSelectedMode("");
-    setSelectedWeather("");
-    onFilterChange(maps);
-  };
 
   useEffect(() => {
     // Filter map variants based on search term and filters
@@ -110,16 +101,6 @@ export const MapFilter = ({ maps, onFilterChange }) => {
           </Select>
         </FormControl>
 
-        {(selectedMode || selectedWeather) && (
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={clearFilters}
-            startIcon={<CloseIcon />}
-          >
-            Clear Filters
-          </Button>
-        )}
       </Stack>
     </Box>
   );
