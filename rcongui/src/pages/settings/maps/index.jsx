@@ -13,6 +13,7 @@ function MapsManager() {
     { label: "List", href: "/settings/maps/list" },
     { label: "Rotation", href: "/settings/maps/rotation" },
     { label: "Votemap", href: "/settings/maps/votemap" },
+    { label: "Objectives", href: "/settings/maps/objectives" },
   ]
   const activeTab = tabs.findIndex(({ href }) => location.pathname.startsWith(href))
 

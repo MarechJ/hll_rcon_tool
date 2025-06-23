@@ -10,12 +10,11 @@ import {
   Badge,
 } from "@mui/material";
 import WarningIcon from "@mui/icons-material/Warning";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { handle_http_errors } from "@/utils/fetchUtils";
-import { mapsManagerQueryKeys, mapsManagerMutationOptions } from "./queries";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { mapsManagerQueryKeys } from "./queries";
 import { MapFilter } from "./MapFilter";
 import { MapList } from "./MapList";
-import { styled, useTheme } from "@mui/styles";
+import { styled, useTheme } from "@mui/material";
 
 const MobileToggleGroup = styled(Grid)(({ theme }) => ({
   display: "block",

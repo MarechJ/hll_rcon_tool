@@ -49,6 +49,8 @@ import MapRotation from "./pages/settings/maps/rotation"
 import MapRotationBuilder from "./pages/settings/maps/rotation/builder"
 import MapRotationSettings from "./pages/settings/maps/rotation/settings"
 import Votemap from "./pages/settings/maps/votemap"
+import MapObjectives from "./pages/settings/maps/objectives";
+import { loader as mapObjectivesLoader } from "./pages/settings/maps/objectives/loader"
 
 import ConfigDetail from "./pages/settings/[configs]/detail"
 import { loader as configLoader } from "./pages/settings/[configs]/detail"
@@ -299,6 +301,12 @@ const router = createBrowserRouter([
                                 path: 'votemap',
                                 element: <Votemap />,
                                 errorElement: <RouteError />,
+                            },
+                            {
+                                path: 'objectives',
+                                element: <MapObjectives />,
+                                loader: mapObjectivesLoader,
+                                errorElement: <RouteError />
                             }
                         ],
                     },

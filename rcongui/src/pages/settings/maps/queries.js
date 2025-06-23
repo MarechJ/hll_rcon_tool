@@ -3,16 +3,23 @@ import { queryOptions } from "@tanstack/react-query";
 
 // Define query keys to maintain consistent query identifiers
 export const mapsManagerQueryKeys = {
+  currentMap: [{ queryIdentifier: "get_map" }],
   maps: [{ queryIdentifier: "get_maps" }],
   mapRotation: [{ queryIdentifier: "get_map_rotation" }],
   mapRotationShuffle: [{ queryIdentifier: "get_map_rotation_shuffle" }],
   gameState: [{ queryIdentifier: "get_gamestate" }],
   voteMapConfig: [{ queryIdentifier: "get_votemap_config" }],
   votemapWhitelist: [{ queryIdentifier: "get_votemap_whitelist" }],
+  objectives: [{ queryIdentifier: "get_objective_rows" }],
 };
 
 // Define query options for fetching data
 export const mapsManagerQueryOptions = {
+  currentMap: () =>
+    queryOptions({
+      queryKey: mapsManagerQueryKeys.currentMap,
+      queryFn: cmd.GET_CURRENT_MAP,
+    }),
   // Get all available maps
   maps: () =>
     queryOptions({
@@ -59,6 +66,12 @@ export const mapsManagerQueryOptions = {
       queryKey: mapsManagerQueryKeys.votemapWhitelist,
       queryFn: cmd.GET_VOTEMAP_WHITELIST,
     }),
+
+  objectives: () =>
+    queryOptions({
+      queryKey: mapsManagerQueryKeys.objectives,
+      queryFn: cmd.GET_MAP_OBJECTIVES,
+    }),
 };
 
 // Define mutation options for updating data
@@ -84,6 +97,14 @@ export const mapsManagerMutationOptions = {
       cmd.SET_MAP_ROTATION_SHUFFLE({
         payload: { enabled },
         throwRouteError: false,
+      }),
+  },
+
+  // Set map objectives
+  changeObjectives: {
+    mutationFn: ({ objectives, random_constraints }) =>
+      cmd.SET_MAP_OBJECTIVES({
+        payload: { objectives, random_constraints },
       }),
   },
 };
