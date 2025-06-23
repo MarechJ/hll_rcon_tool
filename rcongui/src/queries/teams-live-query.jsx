@@ -5,7 +5,7 @@ import { normalizePlayerProfile } from "@/utils/lib";
 import { useQuery } from "@tanstack/react-query";
 
 export const teamsLiveQueryOptions = {
-  queryKey: ["teams", "live"],
+  queryKey: [{ queryIdentifier: "get_team_view" }],
   queryFn: cmd.GET_LIVE_TEAMS,
   select: (data) => {
     // Think of this as a middleware that transforms the player data
