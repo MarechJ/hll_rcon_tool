@@ -14,6 +14,8 @@ import {
   AccordionActions,
   List,
   IconButton,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import { makeStyles } from "@mui/styles";
 import {
@@ -366,16 +368,16 @@ const VoteMapConfig = () => {
             <Box component={"section"} className={classes.section}>
               <FormControl className={classes.spacing}>
                 <InputLabel>Default map method (when no votes)</InputLabel>
-                <NativeSelect
+                <Select
                   value={config.default_method ?? ""}
                   onChange={handleConfigChange("default_method")}
                 >
                   {defaultMapOptions.map((option) => (
-                    <option key={option.name} value={option.name}>
+                    <MenuItem  key={option.name} value={option.name}>
                       {option.label}
-                    </option>
+                    </MenuItem >
                   ))}
-                </NativeSelect>
+                </Select>
               </FormControl>
 
               {padlockConfigs.map(({ name, label }) => (
