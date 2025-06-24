@@ -207,6 +207,7 @@ export const cmd = {
   SET_VOTEKICK_THRESHOLDS: (params) => requestFactory({ method: "POST", cmd: "set_votekick_thresholds", ...params }),
   SET_VOTEMAP_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_votemap_config", ...params }),
   SET_VOTEMAP_WHITELIST: (params) => requestFactory({ method: "POST", cmd: "set_votemap_whitelist", ...params }),
+  RESET_VOTEMAP_STATE: (params) => requestFactory({ method: "POST", cmd: "reset_votemap_state", ...params }),
   RESET_VOTEMAP_WHITELIST: (params) => requestFactory({ method: "POST", cmd: "reset_map_votemap_whitelist", ...params }),
   SET_WELCOME_MESSAGE: (params) => requestFactory({ method: "POST", cmd: "set_welcome_message", ...params }),
   TOGGLE_SERVICE: (params) => requestFactory({ method: "POST", cmd: "do_service", ...params }),

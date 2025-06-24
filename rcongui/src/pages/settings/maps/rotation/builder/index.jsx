@@ -1,7 +1,7 @@
 import { LinearProgress } from "@mui/material";
 import MapListBuilder from "../../MapListBuilder";
 import { SortableRotationList } from "../SortableRotationList";
-import { MapBuilderListItem } from "../MapListItem";
+import { MapBuilderListItem } from "../../MapListItem";
 import { cmd } from "@/utils/fetchUtils";
 import {
   mapsManagerMutationOptions,

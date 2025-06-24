@@ -1,4 +1,4 @@
-import { cmd, get } from "@/utils/fetchUtils";
+import { cmd } from "@/utils/fetchUtils";
 import { queryOptions } from "@tanstack/react-query";
 
 // Define query keys to maintain consistent query identifiers
@@ -8,6 +8,7 @@ export const mapsManagerQueryKeys = {
   mapRotation: [{ queryIdentifier: "get_map_rotation" }],
   mapRotationShuffle: [{ queryIdentifier: "get_map_rotation_shuffle" }],
   gameState: [{ queryIdentifier: "get_gamestate" }],
+  votemapStatus: [{ queryIdentifier: "get_votemap_status" }],
   voteMapConfig: [{ queryIdentifier: "get_votemap_config" }],
   votemapWhitelist: [{ queryIdentifier: "get_votemap_whitelist" }],
   objectives: [{ queryIdentifier: "get_objective_rows" }],
@@ -49,16 +50,17 @@ export const mapsManagerQueryOptions = {
       refetchInterval: 60000, // Refetch every minute
     }),
 
+  votemapStatus: () =>
+    queryOptions({
+      queryKey: mapsManagerQueryKeys.votemapStatus,
+      queryFn: cmd.GET_VOTEMAP_STATUS,
+    }),
+
   // Get current votemap configuration
   voteMapConfig: () =>
     queryOptions({
       queryKey: mapsManagerQueryKeys.voteMapConfig,
-      queryFn: async () => {
-        const response = await get("get_votemap_config");
-        const data = await response.json();
-        return data.result || {};
-      },
-      refetchInterval: 10000, // Refetch every 10 seconds
+      queryFn: cmd.GET_VOTEMAP_CONFIG,
     }),
 
   votemapWhitelist: () =>
@@ -105,6 +107,29 @@ export const mapsManagerMutationOptions = {
     mutationFn: ({ objectives, random_constraints }) =>
       cmd.SET_MAP_OBJECTIVES({
         payload: { objectives, random_constraints },
+        throwRouteError: false,
+      }),
+  },
+
+  resetVotemapState: {
+    mutationFn: () =>
+      cmd.RESET_VOTEMAP_STATE({
+        throwRouteError: false,
+      }),
+  },
+
+  resetVotemapWhitelist: {
+    mutationFn: () =>
+      cmd.RESET_VOTEMAP_WHITELIST({
+        throwRouteError: false,
+      }),
+  },
+
+  setVotemapConfig: {
+    mutationFn: (config) =>
+      cmd.SET_VOTEMAP_CONFIG({
+        payload: config,
+        throwRouteError: false,
       }),
   },
 };

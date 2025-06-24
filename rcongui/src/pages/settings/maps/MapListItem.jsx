@@ -1,7 +1,17 @@
-import { Box, Button, IconButton, Tooltip } from "@mui/material";
+import {
+  Box,
+  Button,
+  IconButton,
+  Tooltip,
+  Typography,
+  Popover,
+  Stack,
+} from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import { MapDetailsCard } from "../MapDetailsCard";
+import { MapDetailsCard } from "./MapDetailsCard";
+import { useState } from "react";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
 function MapListItemBase({ mapLayer, renderActions }) {
   return (
@@ -71,6 +81,58 @@ export function MapBuilderListItem({ mapLayer, onClick }) {
         >
           Add
         </Button>
+      )}
+    />
+  );
+}
+
+export function MapVotemapListItem({ mapLayer, voters }) {
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const open = Boolean(anchorEl);
+  const id = open ? `${mapLayer.id}-voters` : undefined;
+
+  return (
+    <MapListItemBase
+      mapLayer={mapLayer}
+      renderActions={() => (
+        <Stack sx={{ px: 1 }} alignItems={"center"} direction={"row"} spacing={2}>
+          <Box sx={{}}>{`Votes: ${voters.length}`}</Box>
+          <Button
+            aria-describedby={id}
+            onClick={handleClick}
+          >
+            Show
+          </Button>
+          <Popover
+            id={id}
+            open={open}
+            anchorEl={anchorEl}
+            onClose={handleClose}
+            anchorOrigin={{
+              vertical: "top",
+              horizontal: "left",
+            }}
+            transformOrigin={{
+              vertical: "bottom",
+              horizontal: "right",
+            }}
+          >
+            <Box>
+              {voters.map((voter, i) => (
+                <Box sx={{ py: 1, px: 2 }} key={voter + i}>{voter}</Box>
+              ))}
+            </Box>
+          </Popover>
+        </Stack>
       )}
     />
   );

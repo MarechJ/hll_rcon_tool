@@ -1,5 +1,5 @@
 import { Box, Typography } from "@mui/material";
-import { MapListItem } from "./rotation/MapListItem";
+import { MapListItem } from "./MapListItem";
 
 const EmptyMapList = () => {
   return (
@@ -32,20 +32,27 @@ const EmptyMapList = () => {
 };
 
 /**
- * 
- * @param {React.ReactNode} renderItem (optional) custom item component that accepts `mapLayer` as the only param 
- * @returns 
+ * The maps are sorted alphabetically be default
+ * @param {React.ReactNode} renderItem (optional) custom item component that accepts `mapLayer` as the only param
+ * @returns
  */
-export const MapList = ({ maps, renderItem }) => {
+export const MapList = ({ maps, renderItem, sort = true }) => {
   if (maps.length === 0) {
     return <EmptyMapList />;
   }
 
   return (
     <Box sx={{ overflow: "auto" }}>
-      {maps.sort((a, b) => a.map.name.localeCompare(b.map.name)).map((mapLayer) => (
-        renderItem ? renderItem(mapLayer) : <MapListItem key={mapLayer.id} mapLayer={mapLayer} />
-      ))}
+      {(sort
+        ? maps.sort((a, b) => a.map.name.localeCompare(b.map.name))
+        : maps
+      ).map((mapLayer, index, arr) =>
+        renderItem ? (
+          renderItem(mapLayer, index, arr)
+        ) : (
+          <MapListItem key={mapLayer.id} mapLayer={mapLayer} />
+        )
+      )}
     </Box>
   );
 };

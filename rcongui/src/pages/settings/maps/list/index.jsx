@@ -10,7 +10,7 @@ import {
   Box,
 } from "@mui/material";
 import { MapList } from "../MapList";
-import { MapChangeListItem } from "../rotation/MapListItem";
+import { MapChangeListItem } from "../MapListItem";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { MapDetailsCard } from "../MapDetailsCard";
 import { useGlobalStore } from "@/stores/global-state";
