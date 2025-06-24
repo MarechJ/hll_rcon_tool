@@ -3,11 +3,21 @@ import os
 import re
 from collections import defaultdict
 from contextlib import contextmanager
-from datetime import datetime, timezone
-from typing import Any, Generator, List, Literal, Optional, Sequence, overload, TypedDict
+from datetime import datetime, timedelta, timezone
+from typing import (
+    Any,
+    Generator,
+    List,
+    Literal,
+    Optional,
+    Sequence,
+    TypedDict,
+    overload,
+)
 
+import dateutil.parser
 import pydantic
-from sqlalchemy import TIMESTAMP, Enum, ForeignKey, String, create_engine, text, JSON
+from sqlalchemy import JSON, TIMESTAMP, Enum, ForeignKey, String, create_engine, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -25,7 +35,7 @@ from sqlalchemy.schema import UniqueConstraint
 from rcon.maps import Team
 from rcon.types import (
     AuditLogType,
-    MessageTemplateType,
+    BasicPlayerProfileType,
     BlacklistRecordType,
     BlacklistRecordWithBlacklistType,
     BlacklistRecordWithPlayerType,
@@ -33,7 +43,10 @@ from rcon.types import (
     BlacklistType,
     BlacklistWithRecordsType,
     DBLogLineType,
+    GameLayout,
     MapsType,
+    MessageTemplateCategory,
+    MessageTemplateType,
     PenaltyCountType,
     PlayerActionState,
     PlayerActionType,
@@ -45,14 +58,19 @@ from rcon.types import (
     PlayerProfileType,
     PlayerSessionType,
     PlayerStatsType,
-    PlayerVIPType,
+    PlayerTeamAssociation,
+    PlayerTeamConfidence,
     ServerCountType,
     SteamBansType,
     SteamInfoType,
     SteamPlayerSummaryType,
     StructuredLogLineWithMetaData,
+    VipListRecordType,
+    VipListRecordWithVipListType,
+    VipListSyncMethod,
+    VipListType,
+    VipListTypeWithRecordsType,
     WatchListType,
-    MessageTemplateCategory, PlayerTeamAssociation, PlayerTeamConfidence, GameLayout,
 )
 from rcon.utils import (
     SafeStringFormat,
@@ -60,7 +78,7 @@ from rcon.utils import (
     mask_to_server_numbers,
     server_numbers_to_mask,
 )
-from rcon.weapons import WEAPON_SIDE_MAP, ALL_WEAPONS, WeaponType
+from rcon.weapons import ALL_WEAPONS, WEAPON_SIDE_MAP, WeaponType
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +118,8 @@ class PlayerID(Base):
     player_id: Mapped[str] = mapped_column(
         "steam_id_64", nullable=False, index=True, unique=True
     )
+    email: Mapped[Optional[str]]
+    discord_id: Mapped[Optional[str]]
     created: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     names: Mapped[list["PlayerName"]] = relationship(
         back_populates="player",
@@ -120,29 +140,12 @@ class PlayerID(Base):
     comments: Mapped[list["PlayerComment"]] = relationship(back_populates="player")
     stats: Mapped["PlayerStats"] = relationship(back_populates="player")
     blacklists: Mapped[list["BlacklistRecord"]] = relationship(back_populates="player")
-
-    vips: Mapped[list["PlayerVIP"]] = relationship(
-        back_populates="player",
-        cascade="all, delete-orphan",
-        lazy="dynamic",
-    )
+    vip_lists: Mapped[list["VipListRecord"]] = relationship(back_populates="player")
     optins: Mapped[list["PlayerOptins"]] = relationship(back_populates="player")
 
     @property
     def server_number(self) -> int:
         return int(os.getenv("SERVER_NUMBER"))  # type: ignore
-
-    @hybrid_property
-    def vip(self) -> Optional["PlayerVIP"]:
-        return (
-            object_session(self)
-            .query(PlayerVIP)  # type: ignore
-            .filter(
-                PlayerVIP.player_id_id == self.id,
-                PlayerVIP.server_number == self.server_number,
-            )
-            .one_or_none()
-        )
 
     def get_penalty_count(self) -> PenaltyCountType:
         counts = defaultdict(int)
@@ -181,10 +184,18 @@ class PlayerID(Base):
         return 0
 
     def to_dict(self, limit_sessions=5) -> PlayerProfileType:
-        blacklists = [record.to_dict() for record in self.blacklists]
+        blacklists: List[BlacklistRecordWithBlacklistType] = [
+            record.to_dict() for record in self.blacklists
+        ]
+        vip_lists: List[VipListRecordWithVipListType] = [
+            record.to_dict() for record in self.vip_lists
+        ]
+
         return {
             "id": self.id,
             PLAYER_ID: self.player_id,
+            "email": self.email,
+            "discord_id": self.discord_id,
             "created": self.created,
             "names": [name.to_dict() for name in self.names],
             "sessions": [session.to_dict() for session in self.sessions][
@@ -196,11 +207,20 @@ class PlayerID(Base):
             "received_actions": [action.to_dict() for action in self.received_actions],
             "penalty_count": self.get_penalty_count(),
             "blacklists": blacklists,
+            "vip_lists": vip_lists,
             "is_blacklisted": any(record["is_active"] for record in blacklists),
+            "is_vip": any(
+                record["is_active"] and not record["is_expired"]
+                # Applies to the server the profile was fetched for
+                and (
+                    record["vip_list"]["servers"] is None
+                    or str(self.server_number in record["vip_list"]["servers"])
+                )
+                for record in vip_lists
+            ),
             "flags": [f.to_dict() for f in (self.flags or [])],
             "watchlist": self.watchlist.to_dict() if self.watchlist else None,
             "steaminfo": self.steaminfo.to_dict() if self.steaminfo else None,
-            "vips": [v.to_dict() for v in self.vips],
         }
 
     def __str__(self) -> str:
@@ -509,7 +529,9 @@ class Maps(Base):
     map_name: Mapped[str] = mapped_column(nullable=False, index=True)
     # A dict with the result of the game mapped as Axis=int, Allied=int
     result: Mapped[dict[str, int]] = mapped_column(nullable=True)
-    game_layout: Mapped["GameLayout"] = mapped_column(JSON, nullable=False, default=GameLayout)
+    game_layout: Mapped["GameLayout"] = mapped_column(
+        JSON, nullable=False, default=GameLayout
+    )
 
     player_stats: Mapped[list["PlayerStats"]] = relationship(back_populates="map")
 
@@ -547,6 +569,7 @@ def calc_weapon_type_usage(weapons: dict[str, int]) -> dict[WeaponType, int]:
             kills_by_type[weapon_type.value] += count
 
     return dict(kills_by_type)
+
 
 class PlayerStats(Base):
     __tablename__ = "player_stats"
@@ -607,10 +630,16 @@ class PlayerStats(Base):
                     axis_count += weapon[1]
 
         if len(self.death_by_weapons) > 0:
-            for weapon in sorted(self.death_by_weapons.items(), key=get_value, reverse=True):
+            for weapon in sorted(
+                self.death_by_weapons.items(), key=get_value, reverse=True
+            ):
                 if WEAPON_SIDE_MAP.get(weapon[0]) is None:
                     continue
-                op = Team.AXIS if WEAPON_SIDE_MAP.get(weapon[0]) == Team.ALLIES else Team.ALLIES
+                op = (
+                    Team.AXIS
+                    if WEAPON_SIDE_MAP.get(weapon[0]) == Team.ALLIES
+                    else Team.ALLIES
+                )
                 if op == Team.ALLIES:
                     allies_count += weapon[1]
                 elif op == Team.AXIS:
@@ -618,7 +647,9 @@ class PlayerStats(Base):
 
         assoc: PlayerTeamAssociation
         if axis_count == 0 and allies_count == 0:
-            return PlayerTeamAssociation(side=Team.UNKNOWN, confidence=PlayerTeamConfidence.STRONG, ratio=0)
+            return PlayerTeamAssociation(
+                side=Team.UNKNOWN, confidence=PlayerTeamConfidence.STRONG, ratio=0
+            )
         elif axis_count > allies_count:
             assoc = PlayerTeamAssociation(
                 side=Team.AXIS,
@@ -637,7 +668,11 @@ class PlayerStats(Base):
                 confidence=PlayerTeamConfidence.MIXED,
                 ratio=50,
             )
-        assoc['confidence'] = PlayerTeamConfidence.STRONG if assoc['ratio'] > 85 else PlayerTeamConfidence.MIXED
+        assoc["confidence"] = (
+            PlayerTeamConfidence.STRONG
+            if assoc["ratio"] > 85
+            else PlayerTeamConfidence.MIXED
+        )
         return assoc
 
     def to_dict(self) -> PlayerStatsType:
@@ -776,34 +811,6 @@ class PlayerAtCount(Base):
         }
 
 
-class PlayerVIP(Base):
-    __tablename__: str = "player_vip"
-    __table_args__ = (
-        UniqueConstraint(
-            "playersteamid_id", "server_number", name="unique_player_server_vip"
-        ),
-    )
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    expiration: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True), nullable=False
-    )
-    # Not making this unique (even though it should be) to avoid breaking existing CRCONs
-    server_number: Mapped[int] = mapped_column()
-
-    player_id_id: Mapped[int] = mapped_column(
-        "playersteamid_id", ForeignKey("steam_id_64.id"), nullable=False, index=True
-    )
-
-    player: Mapped[PlayerID] = relationship(back_populates="vips")
-
-    def to_dict(self) -> PlayerVIPType:
-        return {
-            "server_number": self.server_number,
-            "expiration": self.expiration,
-        }
-
-
 class AuditLog(Base):
     __tablename__: str = "audit_log"
 
@@ -920,7 +927,9 @@ class BlacklistRecord(Base):
                 else "forever"
             ),
             "expires_at": (
-                self.expires_at.strftime("%b %d %Y %H:%M") if self.expires_at else "never"
+                self.expires_at.strftime("%b %d %Y %H:%M")
+                if self.expires_at
+                else "never"
             ),
             "duration": (
                 humanize_timedelta(self.expires_at - self.created_at)
@@ -977,6 +986,157 @@ class BlacklistRecord(Base):
             res["formatted_reason"] = self.get_formatted_reason()
 
         return res
+
+
+class VipList(Base):
+    __tablename__ = "vip_list"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str]
+    sync: Mapped[VipListSyncMethod] = mapped_column(
+        Enum(VipListSyncMethod), default=VipListSyncMethod.IGNORE_UNKNOWN
+    )
+    servers: Mapped[Optional[int]]
+
+    records: Mapped[list["VipListRecord"]] = relationship(
+        back_populates="vip_list", cascade="all, delete"
+    )
+
+    def get_server_numbers(self) -> Optional[set[int]]:
+        if self.servers is None:
+            return None
+
+        return mask_to_server_numbers(self.servers)
+
+    def set_server_numbers(self, server_numbers: Sequence[int] | None):
+        if server_numbers is None:
+            self.set_all_servers()
+        else:
+            self.servers = server_numbers_to_mask(*server_numbers)
+
+    def set_all_servers(self):
+        self.servers = None
+
+    @overload
+    def to_dict(self, with_records: Literal[True]) -> VipListTypeWithRecordsType: ...
+    @overload
+    def to_dict(self, with_records: Literal[False]) -> VipListType: ...
+    @overload
+    def to_dict(self, with_records: bool = False) -> VipListType: ...
+
+    def to_dict(self, with_records: bool = False) -> VipListType:
+        res: VipListType = {
+            "id": self.id,
+            "name": self.name,
+            "sync": self.sync,
+            "servers": list(self.get_server_numbers()) if self.servers else None,
+        }
+
+        if with_records:
+            res_with_records: VipListTypeWithRecordsType = {
+                **res,
+                "records": [record.to_dict() for record in self.records],
+            }
+            return res_with_records
+
+        return res
+
+
+class VipListRecord(Base):
+    __tablename__ = "vip_list_record"
+
+    # To simplify some logic/endpoints; only allow one record per player per list
+    __table_args__ = (
+        UniqueConstraint(
+            "player_id_id", "vip_list_id", name="unique_vip_player_id_vip_list"
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    admin_name: Mapped[str]
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), default=lambda: datetime.now(tz=timezone.utc)
+    )
+    active: Mapped[bool]
+    description: Mapped[Optional[str]]
+    notes: Mapped[Optional[str]]
+    expires_at: Mapped[Optional[datetime]] = mapped_column(TIMESTAMP(timezone=True))
+
+    player_id_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=False, index=True
+    )
+    vip_list_id: Mapped[int] = mapped_column(
+        ForeignKey("vip_list.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+
+    player: Mapped["PlayerID"] = relationship(back_populates="vip_lists")
+    vip_list: Mapped[VipList] = relationship(back_populates="records")
+
+    def expires_in(self) -> timedelta | None:
+        if not self.expires_at:
+            return None
+        return self.expires_at - datetime.now(tz=timezone.utc)
+
+    def is_expired(self) -> bool:
+        if self.expires_at is None:
+            return False
+
+        # For whatever reason despite our mapped type SQLAlchemy sometimes (always?)
+        # is returning these as strings and not datetimes
+        try:
+            if isinstance(self.expires_at, str):
+                expires_at = dateutil.parser.parse(self.expires_at)
+            else:
+                expires_at = self.expires_at
+        except dateutil.parser.ParserError as e:
+            logger.exception(e)
+            expires_at = None
+
+        return expires_at is not None and expires_at <= datetime.now(tz=timezone.utc)
+
+    @overload
+    def to_dict(self, with_vip_list: Literal[False]) -> VipListRecordType: ...
+    @overload
+    def to_dict(self, with_vip_list: Literal[True]) -> VipListRecordWithVipListType: ...
+    @overload
+    def to_dict(self, with_vip_list: bool = True) -> VipListRecordWithVipListType: ...
+
+    def to_dict(
+        self, with_vip_list: bool = True
+    ) -> VipListRecordType | VipListRecordWithVipListType:
+        player_profile: BasicPlayerProfileType = {
+            "id": self.player.id,
+            "player_id": self.player.player_id,
+            "created": self.player.created,
+            "names": [name.to_dict() for name in self.player.names],
+            "steaminfo": (
+                self.player.steaminfo.to_dict() if self.player.steaminfo else None
+            ),
+            "email": self.player.email,
+            "discord_id": self.player.discord_id,
+        }
+
+        data: VipListRecordType = {
+            "id": self.id,
+            "vip_list_id": self.vip_list_id,
+            "player_id": self.player.player_id,
+            "admin_name": self.admin_name,
+            "is_active": self.active,
+            "is_expired": self.is_expired(),
+            "created_at": self.created_at,
+            "expires_at": self.expires_at,
+            "description": self.description,
+            "notes": self.notes,
+            "player": player_profile,
+        }
+
+        if with_vip_list:
+            data_with_list: VipListRecordWithVipListType = {
+                **data,
+                "vip_list": self.vip_list.to_dict(with_records=False),
+            }
+            return data_with_list
+        else:
+            return data
 
 
 def install_unaccent():

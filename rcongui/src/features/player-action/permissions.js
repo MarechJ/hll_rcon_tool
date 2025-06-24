@@ -28,10 +28,6 @@ export const permissions = [
     description: "Can view messages sent to players",
   },
   {
-    permission: "can_change_expired_vip_config",
-    description: "Can change Expired VIP config",
-  },
-  {
     permission: "can_change_server_name",
     description: "Can change the server name",
   },
@@ -72,6 +68,10 @@ export const permissions = [
     description: "Can unblacklist players and edit blacklist records",
   },
   {
+    permission: "can_change_vip_list_records",
+    description: "Can revoke VIP and edit VIP lists records",
+  },
+  {
     permission: "can_remove_admin_roles",
     description: "Can remove HLL game server admin roles from players",
   },
@@ -108,10 +108,6 @@ export const permissions = [
   {
     permission: "change_contenttype",
     description: "Can change content type",
-  },
-  {
-    permission: "can_view_expired_vip_config",
-    description: "Can view Expired VIP config",
   },
   {
     permission: "can_view_auto_settings",
@@ -191,6 +187,10 @@ export const permissions = [
     description: "Can add players to blacklists",
   },
   {
+    permission: "can_add_vip_list_records",
+    description: "Can add players to VIP lists",
+  },
+  {
     permission: "can_view_connection_info",
     description: "Can view CRCON's connection info",
   },
@@ -202,6 +202,10 @@ export const permissions = [
   {
     permission: "can_change_blacklists",
     description: "Can change blacklists",
+  },
+  {
+    permission: "can_change_vip_lists",
+    description: "Can change VIP lists",
   },
   {
     permission: "view_steamplayer",
@@ -279,6 +283,10 @@ export const permissions = [
   {
     permission: "can_delete_blacklists",
     description: "Can delete blacklists",
+  },
+  {
+    permission: "can_delete_vip_lists",
+    description: "Can delete VIP lists",
   },
   {
     permission: "can_view_tk_ban_on_connect_config",
@@ -470,6 +478,10 @@ export const permissions = [
     description: "Can view available blacklists",
   },
   {
+    permission: "can_view_vip_lists",
+    description: "Can view VIP lists and their records",
+  },
+  {
     permission: "can_delete_message_templates",
     description: "Can delete shared message templates",
   },
@@ -533,6 +545,10 @@ export const permissions = [
   {
     permission: "can_create_blacklists",
     description: "Can create blacklists",
+  },
+  {
+    permission: "can_create_vip_lists",
+    description: "Can create VIP lists",
   },
   {
     permission: "can_flag_player",
@@ -618,6 +634,10 @@ export const permissions = [
   {
     permission: "can_delete_blacklist_records",
     description: "Can delete blacklist records",
+  },
+  {
+    permission: "can_delete_vip_lists_records",
+    description: "Can remove players from VIP lists",
   },
   {
     permission: "can_change_max_ping_autokick",

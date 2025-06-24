@@ -9,30 +9,26 @@ const VipList = ({ vip, otherVips }) => {
 
   return (
     <Stack spacing={1}>
-      {vip && <VipEntry vip={vip} />}
-      {otherVips.length > 0 && (
-        <>
-          {vip && <Divider variant="middle" sx={{ my: 4 }} />}
-          {otherVips.map((vip) => (
-            <VipEntry key={vip.server_number} vip={vip} />
-          ))}
-        </>
-      )}
+      {otherVips.map((vip_record) => (
+        <VipEntry key={vip_record.id} vip={vip_record} />
+      ))}
     </Stack>
   );
 };
 
 const VipEntry = ({ vip }) => {
   // vip.expiration is null if the VIP expiration is set indefinitely
-  const expiration = dayjs(vip.expiration);
-  const isActive = expiration === null ? true : expiration.isAfter(dayjs());
+  const expiresAt = dayjs(vip.expires_at);
+  const isActive = vip.is_active;
   // When the VIP is not created by CRCON, there is player.vip = true but no vip record entry exists
   const isNotCreatedByCrcon = vip.not_created_by_crcon;
+
+  console.log(`${JSON.stringify(vip)}`);
 
   return (
     <Stack direction="row" alignItems="center" spacing={1}>
       <Typography variant="body2" component="span">
-        Server #{vip.server_number}
+        Server #{vip.vip_list.servers ? vip.vip_list.servers : "All"}
       </Typography>
       <div>
         <Chip
@@ -43,7 +39,10 @@ const VipEntry = ({ vip }) => {
         />
       </div>
       <Typography variant="body2" component="span">
-        {isActive ? "until" : "from"} {dayjs(vip.expiration).format("LLL")}
+        {isActive && expiresAt
+          ? "until " + dayjs(vip.expiresAt).format("LLL")
+          : ""}{" "}
+        {}
       </Typography>
     </Stack>
   );
