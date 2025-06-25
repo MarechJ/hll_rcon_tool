@@ -82,7 +82,8 @@ export function MapListBuilder({
         setMapSelection(nextSelection)
       }, 300)
     : _.throttle((mapLayer) => {
-        setMapSelection([...mapSelection, withSelectionId(mapLayer)])
+        const nextSelection = [...mapSelection, withSelectionId(mapLayer)]
+        setMapSelection(nextSelection)
       }, 500);
 
   const handleFilterChange = (filteredMaps) => {

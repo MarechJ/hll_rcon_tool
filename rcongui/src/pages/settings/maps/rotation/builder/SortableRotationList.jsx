@@ -46,13 +46,13 @@ export function SortableRotationList({
   const handleDragEnd = (event) => {
     const { active, over } = event;
 
-    if (over && active.selectionId !== over.selectionId) {
+    if (over && active.id !== over.id) {
       setMaps((items) => {
         const oldIndex = items.findIndex(
-          (item) => item.selectionId === active.selectionId
+          (item) => item.selectionId === active.id
         );
         const newIndex = items.findIndex(
-          (item) => item.selectionId === over.selectionId
+          (item) => item.selectionId === over.id
         );
 
         return arrayMove(items, oldIndex, newIndex);
@@ -172,7 +172,7 @@ export function SortableRotationList({
             >
               {maps.map((item, index) => (
                 <SortableRotationItem
-                  key={item.selectionId + index}
+                  key={item.selectionId}
                   item={item}
                   onRemove={onRemove}
                 />
