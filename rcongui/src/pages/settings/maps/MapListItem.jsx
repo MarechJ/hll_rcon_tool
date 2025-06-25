@@ -3,17 +3,16 @@ import {
   Button,
   IconButton,
   Tooltip,
-  Typography,
   Popover,
   Stack,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { MapDetailsCard } from "./MapDetailsCard";
 import { useState } from "react";
-import VisibilityIcon from "@mui/icons-material/Visibility";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import CloseIcon from "@mui/icons-material/Close";
 
-function MapListItemBase({ mapLayer, renderActions }) {
+function MapListItemBase({ mapLayer, renderActions, sx, ...props }) {
   return (
     <Box
       sx={{
@@ -26,7 +25,9 @@ function MapListItemBase({ mapLayer, renderActions }) {
         border: "1px solid",
         borderColor: "divider",
         "&:hover": { bgcolor: "action.hover" },
+        ...sx,
       }}
+      {...props}
     >
       <MapDetailsCard mapLayer={mapLayer} />
       {renderActions && (
@@ -104,12 +105,14 @@ export function MapVotemapListItem({ mapLayer, voters }) {
     <MapListItemBase
       mapLayer={mapLayer}
       renderActions={() => (
-        <Stack sx={{ px: 1 }} alignItems={"center"} direction={"row"} spacing={2}>
+        <Stack
+          sx={{ px: 1 }}
+          alignItems={"center"}
+          direction={"row"}
+          spacing={2}
+        >
           <Box sx={{}}>{`Votes: ${voters.length}`}</Box>
-          <Button
-            aria-describedby={id}
-            onClick={handleClick}
-          >
+          <Button aria-describedby={id} onClick={handleClick}>
             Show
           </Button>
           <Popover
@@ -128,11 +131,43 @@ export function MapVotemapListItem({ mapLayer, voters }) {
           >
             <Box>
               {voters.map((voter, i) => (
-                <Box sx={{ py: 1, px: 2 }} key={voter + i}>{voter}</Box>
+                <Box sx={{ py: 1, px: 2 }} key={voter + i}>
+                  {voter}
+                </Box>
               ))}
             </Box>
           </Popover>
         </Stack>
+      )}
+    />
+  );
+}
+
+export function MapVotemapWhitelistItem({ mapLayer, onClick }) {
+  return (
+    <MapListItemBase
+      mapLayer={mapLayer}
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        p: 0.5,
+        mb: 1,
+        borderRadius: 1,
+        border: "1px solid",
+        borderColor: "divider",
+        boxShadow: 1,
+      }}
+      renderActions={(mapLayer) => (
+        <Tooltip title="Remove from whitelist">
+          <IconButton
+            size="small"
+            color="error"
+            onClick={() => onClick(mapLayer)}
+          >
+            <CloseIcon />
+          </IconButton>
+        </Tooltip>
       )}
     />
   );

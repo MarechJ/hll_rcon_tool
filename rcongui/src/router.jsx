@@ -52,6 +52,7 @@ import Votemap from "./pages/settings/maps/votemap"
 import VotemapStatus from "./pages/settings/maps/votemap/status"
 import { loader as votemapStatusLoader } from "./pages/settings/maps/votemap/status/loader"
 import VotemapBuilder from "./pages/settings/maps/votemap/builder"
+import { loader as votemapBuilderLoader } from "./pages/settings/maps/votemap/builder/loader"
 import VotemapSettings from "./pages/settings/maps/votemap/settings"
 import { loader as votemapSettingsLoader } from "./pages/settings/maps/votemap/settings/loader"
 import MapObjectives from "./pages/settings/maps/objectives";
@@ -316,6 +317,7 @@ const router = createBrowserRouter([
                                     {
                                         path: 'builder',
                                         element: <VotemapBuilder />,
+                                        loader: votemapBuilderLoader,
                                     },{
                                         path: 'settings',
                                         element: <VotemapSettings />,

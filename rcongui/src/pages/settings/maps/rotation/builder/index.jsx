@@ -1,7 +1,5 @@
 import { LinearProgress } from "@mui/material";
 import MapListBuilder from "../../MapListBuilder";
-import { SortableRotationList } from "../SortableRotationList";
-import { MapBuilderListItem } from "../../MapListItem";
 import { cmd } from "@/utils/fetchUtils";
 import {
   mapsManagerMutationOptions,
@@ -10,6 +8,8 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouteLoaderData } from "react-router-dom";
 import { toast } from "react-toastify";
+import { SortableRotationList } from "./SortableRotationList";
+import { MapBuilderListItem } from "../../MapListItem";
 
 function MapRotationBuilder() {
   const { maps } = useRouteLoaderData("maps");

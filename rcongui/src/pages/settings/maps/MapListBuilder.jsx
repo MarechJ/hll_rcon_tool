@@ -1,20 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Box,
-  Typography,
-  Alert,
   Grid2 as Grid,
   ToggleButtonGroup,
   ToggleButton,
   useMediaQuery,
   Badge,
 } from "@mui/material";
-import WarningIcon from "@mui/icons-material/Warning";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { mapsManagerQueryKeys } from "./queries";
 import { MapFilter } from "./MapFilter";
 import { MapList } from "./MapList";
 import { styled, useTheme } from "@mui/material";
+import _ from "lodash";
 
 const MobileToggleGroup = styled(Grid)(({ theme }) => ({
   display: "block",
@@ -24,8 +20,15 @@ const MobileToggleGroup = styled(Grid)(({ theme }) => ({
   },
 }));
 
+// As there might be duplicate map IDs in the list
+// we need to assign a unique ID to each item
+const withSelectionId = (mapLayer) => ({
+  ...mapLayer,
+  selectionId: `${mapLayer.id}-${Math.random().toString(36).slice(2, 9)}`,
+});
+
 /**
- * Map Rotation Builder component for managing server map rotation
+ * Map Selection Builder component for managing server map selection
  */
 export function MapListBuilder({
   maps: allMaps = [],
@@ -34,79 +37,87 @@ export function MapListBuilder({
   onSave,
   isSaveDisabled,
   isSaving,
+  exclusive = false,
 }) {
-  const queryClient = useQueryClient();
   const [mapSelection, setMapSelection] = useState([]);
-  const [filteredMapOptions, setFilteredMapOptions] = useState(allMaps);
+
+  const mapOptions = useMemo(
+    () =>
+      exclusive
+        ? allMaps.filter(
+            (thisMap) =>
+              !mapSelection.find((thatMap) => thisMap.id === thatMap.id)
+          )
+        : allMaps,
+    [exclusive, allMaps, mapSelection]
+  );
+
+  const [filteredMapOptions, setFilteredMapOptions] = useState(mapOptions);
+
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
   const [view, setView] = useState("map-list");
-  const isMapListVisible = !isSmallScreen || (isSmallScreen && view === "map-list")
-  const isMapSelectionVisible = !isSmallScreen || (isSmallScreen && view === "map-selection")
+  const isMapListVisible =
+    !isSmallScreen || (isSmallScreen && view === "map-list");
+  const isMapSelectionVisible =
+    !isSmallScreen || (isSmallScreen && view === "map-selection");
 
-  // Set rotation data when it's loaded
+  // Set selection data when it's loaded
   useEffect(() => {
     if (selectedMaps.length > 0) {
-      setMapSelection(selectedMaps);
+      setMapSelection(selectedMaps.map(withSelectionId));
     }
   }, [selectedMaps]);
-
-  // Query to get votemap configuration
-  const { data: voteMapConfig = { enabled: false } } = useQuery({
-    queryKey: mapsManagerQueryKeys.voteMapConfig,
-    queryFn: async () => {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL}get_votemap_config`
-      );
-      const data = await response.json();
-      return data.result || { enabled: false };
-    },
-  });
 
   const handleViewChange = (e, newView) => {
     if (newView === null) return; // force to keep one selected
     setView(newView);
   };
 
-  // Add map to rotation
-  const addToRotation = (mapLayer) => {
-    // Create a copy of the variant with a unique rotationId
-    const mapLayerWithUniqueId = {
-      ...mapLayer,
-      rotationId: `${mapLayer.id}-${Date.now()}-${Math.random()
-        .toString(36)
-        .substr(2, 9)}`,
-    };
-
-    setMapSelection([...mapSelection, mapLayerWithUniqueId]);
-  };
+  // Add map to selection
+  const addSelectionItem = exclusive
+    ? _.debounce((mapLayer) => {
+        const uniques = new Set([...mapSelection, withSelectionId(mapLayer)].map(m => m.id))
+        console.log(uniques)
+        setMapSelection(allMaps.filter(m => uniques.has(m.id)))
+      }, 300)
+    : _.throttle((mapLayer) => {
+        setMapSelection([...mapSelection, withSelectionId(mapLayer)])
+      }, 500);
 
   const handleFilterChange = (filteredMaps) => {
     setFilteredMapOptions(filteredMaps);
   };
 
-  // Remove map from rotation
-  const removeFromRotation = (rotationId) => {
+  // Remove map from selection
+  const removeSelectedItem = (mapItem) => {
     setMapSelection(
-      mapSelection.filter((item) => (item.rotationId || item.id) !== rotationId)
+      mapSelection.filter((item) => item.selectionId !== mapItem.selectionId)
     );
   };
 
-  // Clear rotation
-  const clearRotation = () => {
+  // Clear selection
+  const clearSelection = () => {
     setMapSelection([]);
   };
 
-  // Handle save rotation
-  const handleSaveRotation = () => {
-    onSave(mapSelection.map((item) => item.mapId || item.id));
+  // Handle save selection
+  const handleSelectionSave = () => {
+    onSave(mapSelection.map((item) => item.id));
+  };
+
+  // Reset selection to init value
+  const handleSelectionReset = () => {
+    setMapSelection(selectedMaps.map(withSelectionId));
   };
 
   return (
     <>
       <Grid container spacing={1}>
         <MobileToggleGroup size={12}>
-          <ToggleButtonGroup fullWidth color="primary"
+          <ToggleButtonGroup
+            fullWidth
+            color="primary"
             value={view}
             exclusive
             onChange={handleViewChange}
@@ -125,17 +136,6 @@ export function MapListBuilder({
           </ToggleButtonGroup>
         </MobileToggleGroup>
 
-        {/* Votemap warning alert */}
-        {voteMapConfig.enabled && (
-          <Grid size={12}>
-            <Alert severity="warning" icon={<WarningIcon />}>
-              <Typography variant="body2">
-                You can't change the rotation while votemap is on
-              </Typography>
-            </Alert>
-          </Grid>
-        )}
-
         {/* Left column - Map list */}
         {isMapListVisible && (
           <Grid size={{ xs: 12, md: 6 }}>
@@ -147,7 +147,10 @@ export function MapListBuilder({
                   pb: 2,
                 }}
               >
-                <MapFilter maps={allMaps} onFilterChange={handleFilterChange} />
+                <MapFilter
+                  maps={mapOptions}
+                  onFilterChange={handleFilterChange}
+                />
               </Box>
               <Box
                 sx={{
@@ -164,7 +167,7 @@ export function MapListBuilder({
                     <slots.MapListItem
                       key={mapLayer.id}
                       mapLayer={mapLayer}
-                      onClick={addToRotation}
+                      onClick={addSelectionItem}
                     />
                   )}
                 />
@@ -173,7 +176,7 @@ export function MapListBuilder({
           </Grid>
         )}
 
-        {/* Right column - Map rotation */}
+        {/* Right column - Map selection */}
         {isMapSelectionVisible && (
           <Grid
             size={{ xs: 12, md: 6 }}
@@ -187,13 +190,14 @@ export function MapListBuilder({
           >
             <slots.SelectedMapList
               maps={mapSelection}
-              onRemove={removeFromRotation}
-              onClearRotation={clearRotation}
+              onRemove={removeSelectedItem}
+              onClear={clearSelection}
               setMaps={setMapSelection}
+              onReset={handleSelectionReset}
               // must come from parent element
-              onSaveRotation={handleSaveRotation}
-              isSaveRotationDisabled={isSaveDisabled}
-              isRotationSaving={isSaving}
+              onSave={handleSelectionSave}
+              isDisabled={isSaveDisabled}
+              isSaving={isSaving}
             />
           </Grid>
         )}

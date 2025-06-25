@@ -32,9 +32,9 @@ import SaveIcon from "@mui/icons-material/Save";
 import ReplayIcon from "@mui/icons-material/Replay";
 
 function VotemapSettingsPage() {
-  const loaderData = useLoaderData()
-  const queryClient = useQueryClient()
-  
+  const loaderData = useLoaderData();
+  const queryClient = useQueryClient();
+
   const { data: config } = useQuery({
     ...mapsManagerQueryOptions.voteMapConfig(),
     initialData: loaderData.config,
@@ -46,9 +46,10 @@ function VotemapSettingsPage() {
   const { mutate: changeConfig, isPending: isConfigSaving } = useMutation({
     ...mapsManagerMutationOptions.setVotemapConfig,
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: mapsManagerQueryKeys.voteMapConfig,
-      });
+      queryClient.invalidateQueries([
+        mapsManagerQueryKeys.voteMapConfig,
+        mapsManagerQueryKeys.votemapStatus,
+      ]);
       toast.success(`Votemap config has been changed`);
     },
     onError: (error) => {
@@ -123,7 +124,8 @@ function VotemapSettingsPage() {
   const handleWorkingChanges = (propName) => (value) => {
     // When Event object is being passed in as a value
     if (typeof value === "object" && "target" in value) {
-      value = value.target.value;
+      const isNumber = value.target.type === "number"
+      value = isNumber ? Number(value.target.value) : value.target.value;
     }
     setWorkingConfig((prevConfig) => ({
       ...prevConfig,
@@ -158,7 +160,11 @@ function VotemapSettingsPage() {
       </Stack>
       <Divider flexItem orientation={"vertical"} />
       {/* BOTTOM/RIGHT SIDE */}
-      <Stack direction={{ xs: "column-reverse", md: "column" }} sx={{ width: { xs: "100%", md: "50%" } }} spacing={1}>
+      <Stack
+        direction={{ xs: "column-reverse", md: "column" }}
+        sx={{ width: { xs: "100%", md: "50%" } }}
+        spacing={1}
+      >
         {/* Actions */}
         <Stack
           direction="row"

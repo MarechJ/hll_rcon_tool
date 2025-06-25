@@ -23,15 +23,17 @@ import {
 import { arrayMove } from "@dnd-kit/sortable";
 import SortableRotationItem from "./SortableRotationItem";
 import CopyToClipboardButton from "@/components/shared/CopyToClipboardButton";
+import ReplayIcon from "@mui/icons-material/Replay";
 
 export function SortableRotationList({
   maps,
   setMaps,
   onRemove,
-  isRotationSaving,
-  onClearRotation,
-  onSaveRotation,
-  isSaveRotationDisabled,
+  isSaving,
+  onReset,
+  onClear,
+  onSave,
+  isDisabled,
 }) {
   // Set up DnD sensors
   const sensors = useSensors(
@@ -92,30 +94,48 @@ export function SortableRotationList({
             <Button
               variant="outlined"
               color="error"
-              onClick={onClearRotation}
+              onClick={onReset}
+              startIcon={<ReplayIcon />}
+              size={"small"}
+            >
+              Reset
+            </Button>
+            <Button
+              variant="outlined"
+              color="error"
+              onClick={onClear}
               startIcon={<DeleteIcon />}
+              size={"small"}
             >
               Clear
             </Button>
             <CopyToClipboardButton
+              title={
+                <div>
+                  <div>Copy the list of selected map ids to the clipboard.</div>
+                  <div>Useful for autosettings.</div>
+                </div>
+              }
               text={JSON.stringify(
                 maps.map((item) => item.mapId || item.id),
                 null,
                 2
               )}
+              size={"small"}
             />
             <Button
               variant="contained"
               color="primary"
-              disabled={isSaveRotationDisabled}
-              onClick={onSaveRotation}
+              disabled={isDisabled}
+              onClick={onSave}
               startIcon={
-                isRotationSaving ? (
+                isSaving ? (
                   <CircularProgress size={20} color="inherit" />
                 ) : (
                   <SaveIcon />
                 )
               }
+              size={"small"}
             >
               Save
             </Button>

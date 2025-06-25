@@ -132,4 +132,9 @@ export const mapsManagerMutationOptions = {
         throwRouteError: false,
       }),
   },
+
+  setWhitelist: {
+    mutationFn: (whitelist) =>
+      cmd.SET_VOTEMAP_WHITELIST({ payload: { map_names: whitelist }, throwRouteError: false }),
+  },
 };

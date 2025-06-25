@@ -61,10 +61,11 @@ function VotemapStatusPage() {
     ...mapsManagerMutationOptions.setVotemapConfig,
     onSuccess: (response) => {
       const enabled = response.arguments.enabled;
-      queryClient.invalidateQueries({
-        queryKey: mapsManagerQueryKeys.voteMapConfig,
-      });
-      toast.success(`Votemap has been ${enabled ? "disabled" : "enabled"}.`);
+      queryClient.invalidateQueries([
+        mapsManagerQueryKeys.voteMapConfig,
+        mapsManagerQueryKeys.votemapStatus,
+      ]);
+      toast.success(`Votemap has been ${enabled ? "enabled" : "disabled"}.`);
     },
     onError: (error) => {
       toast.error(
