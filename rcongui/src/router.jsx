@@ -47,7 +47,9 @@ import { loader as mapsManagerLoader } from "./pages/settings/maps/loader"
 import MapList from "./pages/settings/maps/list"
 import MapRotation from "./pages/settings/maps/rotation"
 import MapRotationBuilder from "./pages/settings/maps/rotation/builder"
+import { loader as mapRotationBuilderLoader } from "./pages/settings/maps/rotation/builder/loader"
 import MapRotationSettings from "./pages/settings/maps/rotation/settings"
+import { loader as mapRotationSettingsLoader } from "./pages/settings/maps/rotation/settings/loader"
 import Votemap from "./pages/settings/maps/votemap"
 import VotemapStatus from "./pages/settings/maps/votemap/status"
 import { loader as votemapStatusLoader } from "./pages/settings/maps/votemap/status/loader"
@@ -56,6 +58,7 @@ import { loader as votemapBuilderLoader } from "./pages/settings/maps/votemap/bu
 import VotemapSettings from "./pages/settings/maps/votemap/settings"
 import { loader as votemapSettingsLoader } from "./pages/settings/maps/votemap/settings/loader"
 import MapObjectives from "./pages/settings/maps/objectives";
+import MapObjectivesError from "./pages/settings/maps/objectives/error";
 import { loader as mapObjectivesLoader } from "./pages/settings/maps/objectives/loader"
 
 import ConfigDetail from "./pages/settings/[configs]/detail"
@@ -283,7 +286,7 @@ const router = createBrowserRouter([
                         id: "maps",
                         children: [
                             {
-                                path: 'list',
+                                path: 'change',
                                 element: <MapList />,
                                 errorElement: <RouteError />,
                             },
@@ -295,10 +298,12 @@ const router = createBrowserRouter([
                                     {
                                         path: '',
                                         index: true,
+                                        loader: mapRotationBuilderLoader,
                                         element: <MapRotationBuilder />,
                                     },
                                     {
                                         path: 'settings',
+                                        loader: mapRotationSettingsLoader,
                                         element: <MapRotationSettings />,
                                     }
                                 ]
@@ -315,7 +320,7 @@ const router = createBrowserRouter([
                                         loader: votemapStatusLoader,
                                     },
                                     {
-                                        path: 'builder',
+                                        path: 'whitelist',
                                         element: <VotemapBuilder />,
                                         loader: votemapBuilderLoader,
                                     },{
@@ -329,7 +334,7 @@ const router = createBrowserRouter([
                                 path: 'objectives',
                                 element: <MapObjectives />,
                                 loader: mapObjectivesLoader,
-                                errorElement: <RouteError />
+                                errorElement: <MapObjectivesError />
                             }
                         ],
                     },

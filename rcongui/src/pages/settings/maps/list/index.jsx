@@ -75,20 +75,21 @@ const MapListPage = () => {
           height: "fit-content",
           zIndex: (theme) => theme.zIndex.appBar,
           py: 2,
+          maxWidth: theme => theme.breakpoints.values.md,
         }}
       >
         <MapFilter maps={maps} onFilterChange={handleFilterChange} />
+        <MapList
+          maps={filteredMapOptions}
+          renderItem={(mapLayer) => (
+            <MapChangeListItem
+              mapLayer={mapLayer}
+              key={mapLayer.id}
+              onClick={handleChangeMapClick}
+            />
+          )}
+        />
       </Box>
-      <MapList
-        maps={filteredMapOptions}
-        renderItem={(mapLayer) => (
-          <MapChangeListItem
-            mapLayer={mapLayer}
-            key={mapLayer.id}
-            onClick={handleChangeMapClick}
-          />
-        )}
-      />
       {/* Confirmation Dialog */}
       <Dialog
         open={confirmDialogOpen}
@@ -99,8 +100,8 @@ const MapListPage = () => {
         aria-describedby="alert-dialog-description"
       >
         <DialogTitle>
-          Set current map to {mapToConfirm?.pretty_name} for{" "}
-          {serverState?.name || "this server"}
+          <div>Set current map: {mapToConfirm?.pretty_name}</div>
+          <div>Server: {serverState?.name || "this server"}</div>
         </DialogTitle>
         <DialogContent>
           <DialogContentText>

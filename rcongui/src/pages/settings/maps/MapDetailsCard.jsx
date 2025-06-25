@@ -1,32 +1,36 @@
 // Component for displaying a map name, image, and description
 
 import { getMapLayerImageSrc } from "@/components/MapManager/helpers";
-import { Typography, Box } from "@mui/material";
+import { Typography, Box, Stack } from "@mui/material";
 import CopyableText from "@/components/shared/CopyableText";
-import { map } from "lodash";
+import { unifiedGamemodeName } from "./objectives/helpers";
 
 export function MapDetailsCard({ mapLayer }) {
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 2, letterSpacing: 0.85 }}>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 2, letterSpacing: 0.85, flexGrow: 1 }}>
       <Box
         component="img"
         src={getMapLayerImageSrc(mapLayer)}
         alt={mapLayer.map.pretty_name}
-        sx={{ width: 48, height: 48, borderRadius: 1, objectFit: "cover" }}
+        sx={{ width: 48, height: 32, borderRadius: 1, objectFit: "cover" }}
       />
-      <Box>
-        <Typography fontWeight="medium" lineHeight={0.75}>
+      <Stack direction={"row"} flexWrap={"wrap"} alignItems={"center"} >
+        <Typography sx={{ width: { xs: "100%", md: "175px" } }} fontWeight="medium">
           <CopyableText text={mapLayer.id} label={mapLayer.map.pretty_name} sx={{ p: 0, m: 0 }} />
         </Typography>
-        <Box sx={{ display: "flex", flexDirection: "column" }} lineHeight={0.75}>
-          <Typography variant="body2" color="text.secondary">
-            {mapLayer.game_mode} {mapLayer.game_mode === "offensive" && `(${mapLayer.attackers} -> ${mapLayer.attackers === "axis" ? "allies" : "axis"})`}
-          </Typography>
-          <Typography variant="body2" color="text.secondary" lineHeight={0.75}>
-            {mapLayer.environment}
-          </Typography>
-        </Box>
-      </Box>
+        <Stack direction={"row"} flexWrap={"wrap"}>
+          <Stack direction={"row"} alignItems={"center"} spacing={1} sx={{ flexGrow: 1, minWidth: 150, width: { xs: "100%", sm: "auto" } }}>
+            <Typography variant="body2" color="text.secondary" sx={{ textTransform: "uppercase", fontSize: 12 }}>
+              {unifiedGamemodeName(mapLayer.game_mode)} {unifiedGamemodeName(mapLayer.game_mode) === "offensive" && `(${mapLayer.attackers})`}
+            </Typography>
+          </Stack>
+          <Stack direction={"row"} alignItems={"center"} spacing={1} sx={{ width: { xs: "100%", sm: "auto" }, px: { xs: 0, md: 1 } }}>
+            <Typography variant="body2" color="text.secondary" sx={{ textTransform: "uppercase", fontSize: 12 }}>
+              {mapLayer.environment}
+            </Typography>
+          </Stack>
+        </Stack>
+      </Stack>
     </Box>
   );
 }

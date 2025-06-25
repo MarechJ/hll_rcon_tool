@@ -1,8 +1,9 @@
 import {
   Box,
-  Button,
-  CircularProgress,
+  Divider,
+  IconButton,
   Stack,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { MapListItem, MapVotemapWhitelistItem } from "./MapListItem";
@@ -60,7 +61,10 @@ export const MapList = ({ maps, renderItem, sort = true, ...props }) => {
         renderItem ? (
           renderItem(mapLayer, index, arr)
         ) : (
-          <MapListItem key={mapLayer.selectionId || mapLayer.id} mapLayer={mapLayer} />
+          <MapListItem
+            key={mapLayer.selectionId || mapLayer.id}
+            mapLayer={mapLayer}
+          />
         )
       )}
     </Box>
@@ -69,13 +73,13 @@ export const MapList = ({ maps, renderItem, sort = true, ...props }) => {
 
 export const MapWhitelistList = ({
   maps,
-  setMaps,
   onReset,
   onRemove,
   onSave,
   onClear,
   isSaving,
   isDisabled,
+  actions,
 }) => {
   return (
     <Box
@@ -92,66 +96,83 @@ export const MapWhitelistList = ({
         <Stack
           direction={{ xs: "column", sm: "row" }}
           gap={1}
-          alignItems={"center"}
+          alignItems={{ sx: "flex-start", md: "center" }}
+          justifyContent={"space-between"}
         >
-          <Typography variant="h6">Whitelist ({maps.length})</Typography>
-          <Box
-            sx={{
-              flexGrow: 1,
-              display: "flex",
-              justifyContent: "flex-end",
-              gap: 1,
-            }}
-          >
-            <Button
-              variant="outlined"
-              size={"small"}
-              color="error"
-              onClick={onReset}
-              startIcon={<ReplayIcon />}
+          <Typography variant="h6">Whitelist ({maps.length})</Typography>          
+          <Stack direction="row" spacing={1} justifyContent={{ sx: "center", md: "flex-end" }}>
+            {actions && (
+              <>
+                <Box
+                  sx={{
+                    flexGrow: 1,
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    gap: 1,
+                  }}
+                >
+                  {actions}
+                </Box>
+                <Divider flexItem orientation="vertical" />
+              </>
+            )}
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 1,
+              }}
             >
-              Reset
-            </Button>
-            <Button
-              variant="outlined"
-              size={"small"}
-              color="error"
-              onClick={onClear}
-              startIcon={<DeleteIcon />}
-            >
-              Clear
-            </Button>
-            <CopyToClipboardButton
-              title={
-                <div>
-                  <div>Copy the list of selected map ids to the clipboard.</div>
-                  <div>Useful for autosettings.</div>
-                </div>
-              }
-              text={JSON.stringify(
-                maps.map((item) => item.mapId || item.id),
-                null,
-                2
-              )}
-              size={"small"}
-            />
-            <Button
-              variant="contained"
-              size={"small"}
-              color="primary"
-              disabled={isDisabled}
-              onClick={onSave}
-              startIcon={
-                isSaving ? (
-                  <CircularProgress size={20} color="inherit" />
-                ) : (
+              <Tooltip title="Undo">
+                <IconButton
+                  variant="outlined"
+                  size={"small"}
+                  color="error"
+                  onClick={onReset}
+                >
+                  <ReplayIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Clear">
+                <IconButton
+                  variant="outlined"
+                  size={"small"}
+                  color="error"
+                  onClick={onClear}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </Tooltip>
+              <CopyToClipboardButton
+                iconOnly={true}
+                title={
+                  <div>
+                    <div>
+                      Copy the list of selected map ids to the clipboard.
+                    </div>
+                    <div>Useful for autosettings.</div>
+                  </div>
+                }
+                text={JSON.stringify(
+                  maps.map((item) => item.mapId || item.id),
+                  null,
+                  2
+                )}
+                size={"small"}
+              />
+              <Tooltip title="Save">
+                <IconButton
+                  variant="contained"
+                  size={"small"}
+                  color="primary"
+                  disabled={isDisabled}
+                  onClick={onSave}
+                >
                   <SaveIcon />
-                )
-              }
-            >
-              Save
-            </Button>
-          </Box>
+                </IconButton>
+              </Tooltip>
+            </Box>
+          </Stack>
         </Stack>
       </Box>
       <MapList

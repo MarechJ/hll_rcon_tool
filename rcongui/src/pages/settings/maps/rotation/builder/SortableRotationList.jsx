@@ -1,10 +1,4 @@
-import {
-  Box,
-  Button,
-  Typography,
-  CircularProgress,
-  Stack,
-} from "@mui/material";
+import { Box, Typography, Stack, Tooltip, IconButton } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import {
@@ -34,6 +28,7 @@ export function SortableRotationList({
   onClear,
   onSave,
   isDisabled,
+  actions,
 }) {
   // Set up DnD sensors
   const sensors = useSensors(
@@ -51,13 +46,13 @@ export function SortableRotationList({
   const handleDragEnd = (event) => {
     const { active, over } = event;
 
-    if (over && active.id !== over.id) {
+    if (over && active.selectionId !== over.selectionId) {
       setMaps((items) => {
         const oldIndex = items.findIndex(
-          (item) => (item.rotationId || item.id) === active.id
+          (item) => item.selectionId === active.selectionId
         );
         const newIndex = items.findIndex(
-          (item) => (item.rotationId || item.id) === over.id
+          (item) => item.selectionId === over.selectionId
         );
 
         return arrayMove(items, oldIndex, newIndex);
@@ -80,66 +75,87 @@ export function SortableRotationList({
         <Stack
           direction={{ xs: "column", sm: "row" }}
           gap={1}
-          alignItems={"center"}
+          alignItems={{ sx: "flex-start", md: "center" }}
+          justifyContent={"space-between"}
         >
-          <Typography variant="h6">Map Rotation ({maps.length})</Typography>
-          <Box
-            sx={{
-              flexGrow: 1,
-              display: "flex",
-              justifyContent: "flex-end",
-              gap: 1,
-            }}
+          <Typography variant="h6">Rotation ({maps.length})</Typography>
+          <Stack
+            direction="row"
+            spacing={1}
+            justifyContent={{ sx: "center", md: "flex-end" }}
           >
-            <Button
-              variant="outlined"
-              color="error"
-              onClick={onReset}
-              startIcon={<ReplayIcon />}
-              size={"small"}
+            {actions && (
+              <>
+                <Box
+                  sx={{
+                    flexGrow: 1,
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    gap: 1,
+                  }}
+                >
+                  {actions}
+                </Box>
+                <Divider flexItem orientation="vertical" />
+              </>
+            )}
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 1,
+              }}
             >
-              Reset
-            </Button>
-            <Button
-              variant="outlined"
-              color="error"
-              onClick={onClear}
-              startIcon={<DeleteIcon />}
-              size={"small"}
-            >
-              Clear
-            </Button>
-            <CopyToClipboardButton
-              title={
-                <div>
-                  <div>Copy the list of selected map ids to the clipboard.</div>
-                  <div>Useful for autosettings.</div>
-                </div>
-              }
-              text={JSON.stringify(
-                maps.map((item) => item.mapId || item.id),
-                null,
-                2
-              )}
-              size={"small"}
-            />
-            <Button
-              variant="contained"
-              color="primary"
-              disabled={isDisabled}
-              onClick={onSave}
-              startIcon={
-                isSaving ? (
-                  <CircularProgress size={20} color="inherit" />
-                ) : (
+              <Tooltip title="Undo">
+                <IconButton
+                  variant="outlined"
+                  size={"small"}
+                  color="error"
+                  onClick={onReset}
+                >
+                  <ReplayIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Clear">
+                <IconButton
+                  variant="outlined"
+                  size={"small"}
+                  color="error"
+                  onClick={onClear}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </Tooltip>
+              <CopyToClipboardButton
+                iconOnly={true}
+                title={
+                  <div>
+                    <div>
+                      Copy the list of selected map ids to the clipboard.
+                    </div>
+                    <div>Useful for autosettings.</div>
+                  </div>
+                }
+                text={JSON.stringify(
+                  maps.map((item) => item.mapId || item.id),
+                  null,
+                  2
+                )}
+                size={"small"}
+              />
+              <Tooltip title="Save">
+                <IconButton
+                  variant="contained"
+                  size={"small"}
+                  color="primary"
+                  disabled={isDisabled}
+                  onClick={onSave}
+                >
                   <SaveIcon />
-                )
-              }
-              size={"small"}
-            >
-              Save
-            </Button>
-          </Box>
+                </IconButton>
+              </Tooltip>
+            </Box>
+          </Stack>
         </Stack>
       </Box>
 
@@ -151,12 +167,12 @@ export function SortableRotationList({
             onDragEnd={handleDragEnd}
           >
             <SortableContext
-              items={maps.map((item) => item.rotationId || item.id)}
+              items={maps.map((item) => item.selectionId)}
               strategy={verticalListSortingStrategy}
             >
               {maps.map((item, index) => (
                 <SortableRotationItem
-                  key={(item.rotationId || item.id) + index}
+                  key={item.selectionId + index}
                   item={item}
                   onRemove={onRemove}
                 />

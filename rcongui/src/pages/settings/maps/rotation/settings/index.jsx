@@ -7,13 +7,18 @@ import {
 import Padlock from "@/components/shared/Padlock";
 import { Typography } from "@mui/material";
 import { toast } from "react-toastify";
+import { useLoaderData } from "react-router-dom";
 
 function MapRotationSettings() {
   const queryClient = useQueryClient();
+  const loaderData = useLoaderData()
+  
   const { data: shuffleEnabled } = useQuery({
     ...mapsManagerQueryOptions.mapRotationShuffle(),
-    initialData: false,
+    initialData: loaderData.shuffleEnabled,
+    refetchOnMount: false,
   });
+
   const { mutate: setShuffleEnabled } = useMutation({
     ...mapsManagerMutationOptions.setMapRotationShuffle,
     onSuccess: (response) => {

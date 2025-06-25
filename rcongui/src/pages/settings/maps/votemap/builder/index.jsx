@@ -1,4 +1,4 @@
-import { LinearProgress } from "@mui/material";
+import { IconButton, LinearProgress, Tooltip } from "@mui/material";
 import {
   mapsManagerMutationOptions,
   mapsManagerQueryKeys,
@@ -7,10 +7,11 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLoaderData, useRouteLoaderData } from "react-router-dom";
 import { toast } from "react-toastify";
-import { useMemo } from "react";
-import { MapList, MapWhitelistList } from "../../MapList";
-import { MapBuilderListItem, MapVotemapWhitelistItem } from "../../MapListItem";
+import { useEffect, useMemo } from "react";
+import { MapWhitelistList } from "../../MapList";
+import { MapBuilderListItem } from "../../MapListItem";
 import MapListBuilder from "../../MapListBuilder";
+import RestoreIcon from "@mui/icons-material/Restore";
 
 function VotemapBuilderPage() {
   const { maps } = useRouteLoaderData("maps");
@@ -43,6 +44,24 @@ function VotemapBuilderPage() {
     },
   });
 
+  const { mutate: resetWhitelist, isPending: isResetWhitelist } = useMutation({
+    ...mapsManagerMutationOptions.resetVotemapWhitelist,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: mapsManagerQueryKeys.votemapWhitelist,
+      });
+      toast.success("Votemap has been reset!");
+    },
+    onError: (error) => {
+      toast.error(
+        <div>
+          <span>{error.name}</span>
+          <p>{error.message}</p>
+        </div>
+      );
+    },
+  });
+
   const whitelistMaps = useMemo(
     () => whitelist.map((mapId) => maps.find((map) => map.id === mapId)),
     [whitelist]
@@ -51,6 +70,30 @@ function VotemapBuilderPage() {
   const handleWhitelistSave = (mapIds) => {
     saveWhitelist(mapIds);
   };
+
+  const checkForOutdatedMapIds = () => {
+    if (whitelist) {
+      const mapLayers = [];
+      const invalidMapIds = [];
+      whitelist.forEach((mapId) => {
+        const mapLayer = maps.find((mapLayer) => mapLayer.id === mapId);
+        if (mapLayer) {
+          mapLayers.push(mapLayer);
+        } else {
+          invalidMapIds.push(mapId);
+        }
+      });
+      if (invalidMapIds.length) {
+        toast.error(
+          `Some maps in your whitelist have been deleted or renamed: ${invalidMapIds.join(
+            ", "
+          )}. Reset the whitelist or changed your auto settings.`
+        );
+      }
+    }
+  };
+
+  useEffect(checkForOutdatedMapIds, [whitelist]);
 
   return (
     <>
@@ -76,6 +119,13 @@ function VotemapBuilderPage() {
           SelectedMapList: MapWhitelistList,
           MapListItem: MapBuilderListItem,
         }}
+        actions={
+          <Tooltip title="Apply defaults - Reset whitelist to all available maps">
+            <IconButton onClick={resetWhitelist} size="small" color="warning">
+              <RestoreIcon />
+            </IconButton>
+          </Tooltip>
+        }
       />
     </>
   );

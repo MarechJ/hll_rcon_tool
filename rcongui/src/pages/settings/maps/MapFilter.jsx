@@ -5,9 +5,26 @@ import {
   Select,
   MenuItem,
   Stack,
+  Checkbox,
+  ListItemText,
+  OutlinedInput,
 } from "@mui/material";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import { useState, useEffect, useMemo } from "react";
+import { unifiedGamemodeName } from "./objectives/helpers";
+
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+      textTransform: "uppercase",
+    },
+  },
+};
+
 /**
  * @typedef {Function} onFilterChange
  * @param {Object[]} maps - The list of maps to filter
@@ -27,12 +44,12 @@ import { useState, useEffect, useMemo } from "react";
  */
 export const MapFilter = ({ maps, onFilterChange }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedMode, setSelectedMode] = useState("warfare");
-  const [selectedWeather, setSelectedWeather] = useState("day");
+  const [selectedModes, setSelectedModes] = useState([]);
+  const [selectedWeathers, setSelectedWeathers] = useState([]);
 
   const allModes = useMemo(() => {
     if (maps.length === 0) return ["warfare"]; // default value before maps load
-    return Array.from(new Set(maps.map((map) => map.game_mode))).sort();
+    return Array.from(new Set(maps.map((map) => unifiedGamemodeName(map.game_mode)))).sort();
   }, [maps]);
 
   const allWeather = useMemo(() => {
@@ -46,62 +63,73 @@ export const MapFilter = ({ maps, onFilterChange }) => {
       const matchesSearch = mapLayer.map.pretty_name
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
-      const matchesMode = selectedMode
-        ? mapLayer.game_mode === selectedMode
-        : true;
-      const matchesWeather = selectedWeather
-        ? mapLayer.environment === selectedWeather
-        : true;
-      return matchesSearch && matchesMode && matchesWeather;
+      const matchesModes =
+        !selectedModes.length || selectedModes.includes(unifiedGamemodeName(mapLayer.game_mode));
+      const matchesWeather =
+        !selectedWeathers.length ||
+        selectedWeathers.includes(mapLayer.environment);
+      return matchesSearch && matchesModes && matchesWeather;
     });
     onFilterChange(filteredMaps);
-  }, [maps, searchTerm, selectedMode, selectedWeather]);
+  }, [maps, searchTerm, selectedModes, selectedWeathers]);
 
   return (
-    <Box>
-      <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-        <DebouncedSearchInput
-          fullWidth
-          size="small"
-          placeholder="Search maps..."
-          onChange={setSearchTerm}
-        />
-      </Box>
+    <Stack
+      alignItems={"center"}
+      flexWrap={"wrap"}
+      gap={1}
+      direction={"row"}
+      sx={{ py: 1, gap: 1 }}
+    >
+      <DebouncedSearchInput
+        size="small"
+        placeholder="Search maps..."
+        onChange={setSearchTerm}
+      />
 
-      <Stack direction={{ xs: "column", sm: "row" }} sx={{ gap: 1, mb: 2 }}>
-        <FormControl size="small" sx={{ minWidth: 180 }}>
-          <InputLabel>Game Mode</InputLabel>
+      <Stack direction={"row"} sx={{ gap: 1, mb: 2, width: "100%" }}>
+        <FormControl size="small" sx={{ width: { xs: "100%", md: "50%" } }}>
+          <InputLabel id={"game-mode"}>Game Mode</InputLabel>
           <Select
-            value={selectedMode}
-            onChange={(e) => setSelectedMode(e.target.value)}
-            label="Game Mode"
+            labelId={"game-mode"}
+            value={selectedModes}
+            onChange={(e) => setSelectedModes(e.target.value)}
+            multiple
+            renderValue={(selected) => selected.join(", ")}
+            input={<OutlinedInput label="Game Mode" />}
+            MenuProps={MenuProps}
+            SelectDisplayProps={{ style: { display: "block", textTransform: "uppercase" } }}
           >
-            <MenuItem value="">All game modes</MenuItem>
             {allModes.map((mode) => (
               <MenuItem key={mode} value={mode}>
-                {mode}
+                <Checkbox checked={selectedModes.includes(mode)} />
+                <ListItemText primary={unifiedGamemodeName(mode)} />
               </MenuItem>
             ))}
           </Select>
         </FormControl>
 
-        <FormControl size="small" sx={{ minWidth: 180 }}>
-          <InputLabel>Weather</InputLabel>
+        <FormControl size="small" sx={{ width: { xs: "100%", md: "50%" } }}>
+          <InputLabel id={"game-weather"}>Weather</InputLabel>
           <Select
-            value={selectedWeather}
-            onChange={(e) => setSelectedWeather(e.target.value)}
-            label="Weather"
+            labelId={"game-weather"}
+            value={selectedWeathers}
+            onChange={(e) => setSelectedWeathers(e.target.value)}
+            multiple
+            renderValue={(selected) => selected.join(", ")}
+            input={<OutlinedInput label="Weather" />}
+            MenuProps={MenuProps}
+            SelectDisplayProps={{ style: { display: "block", textTransform: "uppercase" } }}
           >
-            <MenuItem value="">All weather</MenuItem>
             {allWeather.map((weather) => (
               <MenuItem key={weather} value={weather}>
-                {weather}
+                <Checkbox checked={selectedWeathers.includes(weather)} />
+                <ListItemText primary={weather} />
               </MenuItem>
             ))}
           </Select>
         </FormControl>
-
       </Stack>
-    </Box>
+    </Stack>
   );
 };

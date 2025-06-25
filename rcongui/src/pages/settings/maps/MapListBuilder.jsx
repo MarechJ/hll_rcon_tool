@@ -38,6 +38,7 @@ export function MapListBuilder({
   isSaveDisabled,
   isSaving,
   exclusive = false,
+  actions,
 }) {
   const [mapSelection, setMapSelection] = useState([]);
 
@@ -77,9 +78,8 @@ export function MapListBuilder({
   // Add map to selection
   const addSelectionItem = exclusive
     ? _.debounce((mapLayer) => {
-        const uniques = new Set([...mapSelection, withSelectionId(mapLayer)].map(m => m.id))
-        console.log(uniques)
-        setMapSelection(allMaps.filter(m => uniques.has(m.id)))
+        const nextSelection = _.uniqBy([...mapSelection, withSelectionId(mapLayer)], 'id')
+        setMapSelection(nextSelection)
       }, 300)
     : _.throttle((mapLayer) => {
         setMapSelection([...mapSelection, withSelectionId(mapLayer)])
@@ -198,6 +198,7 @@ export function MapListBuilder({
               onSave={handleSelectionSave}
               isDisabled={isSaveDisabled}
               isSaving={isSaving}
+              actions={actions}
             />
           </Grid>
         )}

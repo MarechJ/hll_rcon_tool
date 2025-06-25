@@ -2,16 +2,21 @@ import { useClipboard } from "@/hooks/useClipboard";
 import {
   Button,
   Dialog,
-  DialogTitle,
   DialogContent,
   Typography,
   Tooltip,
+  IconButton,
 } from "@mui/material";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import { useState } from "react";
 
-export default function CopyToClipboardButton({ text, title, ...props }) {
+export default function CopyToClipboardButton({
+  text,
+  title,
+  iconOnly = false,
+  ...props
+}) {
   const { isClipboardAvailable, isCopied, copyToClipboard } = useClipboard();
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -25,16 +30,27 @@ export default function CopyToClipboardButton({ text, title, ...props }) {
 
   return (
     <>
-      <Tooltip title={title ?? null}>
-        <Button
-          variant="outlined"
-          color="warning"
-          onClick={handleClick}
-          startIcon={isCopied ? <DoneAllIcon /> : <ContentCopyIcon />}
-          {...props}
-        >
-          {isCopied ? "Copied!" : "Copy"}
-        </Button>
+      <Tooltip title={isCopied ? "Copied!" : (title ?? null)}>
+        {iconOnly ? (
+          <IconButton
+            variant="outlined"
+            color="warning"
+            onClick={handleClick}
+            {...props}
+          >
+            {isCopied ? <DoneAllIcon /> : <ContentCopyIcon />}
+          </IconButton>
+        ) : (
+          <Button
+            variant="outlined"
+            color="warning"
+            onClick={handleClick}
+            startIcon={isCopied ? <DoneAllIcon /> : <ContentCopyIcon />}
+            {...props}
+          >
+            {isCopied ? "Copied!" : "Copy"}
+          </Button>
+        )}
       </Tooltip>
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
         <DialogContent>

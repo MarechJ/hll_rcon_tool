@@ -46,6 +46,9 @@ function VotemapSettingsPage() {
   const { mutate: changeConfig, isPending: isConfigSaving } = useMutation({
     ...mapsManagerMutationOptions.setVotemapConfig,
     onSuccess: () => {
+      // Update this reference so the user does not get change
+      // notification about his own changes
+      prevConfig.current = workingConfig;
       queryClient.invalidateQueries([
         mapsManagerQueryKeys.voteMapConfig,
         mapsManagerQueryKeys.votemapStatus,
@@ -115,16 +118,13 @@ function VotemapSettingsPage() {
   };
 
   const handleConfigSave = () => {
-    // Update this reference so the user does not get change
-    // notification about his own changes
-    prevConfig.current = workingConfig;
     changeConfig(workingConfig);
   };
 
   const handleWorkingChanges = (propName) => (value) => {
     // When Event object is being passed in as a value
     if (typeof value === "object" && "target" in value) {
-      const isNumber = value.target.type === "number"
+      const isNumber = value.target.type === "number";
       value = isNumber ? Number(value.target.value) : value.target.value;
     }
     setWorkingConfig((prevConfig) => ({
@@ -136,13 +136,13 @@ function VotemapSettingsPage() {
   useEffect(handleIncomingConfigChange, [config, workingConfig]);
 
   return (
-    <Stack direction={{ xs: "column", md: "row" }} spacing={1}>
+    <Stack
+      component={"section"}
+      direction={{ xs: "column", md: "row" }}
+      spacing={1}
+    >
       {/* TOP/LEFT SIDE */}
-      <Stack
-        component={"section"}
-        sx={{ width: { xs: "100%", md: "50%" } }}
-        spacing={1}
-      >
+      <Stack sx={{ width: { xs: "100%", md: "50%" } }} spacing={1}>
         <Typography variant="h6">Messages</Typography>
         {messageFieldConfigs.map((configItem) => (
           <TextField

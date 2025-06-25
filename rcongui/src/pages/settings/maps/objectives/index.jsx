@@ -211,15 +211,17 @@ function MapObjectivesPage() {
         </Typography>
       </Box>
       <Stack direction={{ xs: "column", md: "row" }}>
-        <MapObjectivesPicker
-          objectives={objectives}
-          map={currentMap}
-          onClick={handleObjectiveClick}
-          loading={(objectives === null) & (currentMap === null)}
-        />
+        <Box sx={{ width: { xs: "100%", md: "50%" } }}>
+          <MapObjectivesPicker
+            objectives={objectives}
+            map={currentMap}
+            onClick={handleObjectiveClick}
+            loading={(objectives === null) & (currentMap === null)}
+          />
+        </Box>
         <Stack
           direction={{ xs: "column-reverse", md: "column" }}
-          sx={{ flexGrow: 1 }}
+          sx={{ width: { xs: "100%", md: "50%" } }}
         >
           <Stack
             direction="row"
@@ -326,7 +328,8 @@ function MapObjectivesPage() {
         aria-describedby="alert-dialog-description"
       >
         <DialogTitle>
-          Change objectives for {serverState?.name || "this server"}
+          <div>Change objectives</div>
+          <div>Server: {serverState?.name || "this server"}</div>
         </DialogTitle>
         <DialogContent>
           <DialogContentText>
