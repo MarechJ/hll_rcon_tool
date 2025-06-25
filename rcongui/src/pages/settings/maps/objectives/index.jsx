@@ -6,6 +6,7 @@ import {
   generateObjectivesGrid,
   getSelectedObjectives,
   reduceToInts,
+  unifiedGamemodeName,
 } from "./helpers";
 import {
   Box,
@@ -197,6 +198,10 @@ function MapObjectivesPage() {
     setConfirmDialogOpen(false);
     refetchObjectiveNames();
   }, [currentMap, gameState?.current_map]);
+
+  if (unifiedGamemodeName(currentMap.game_mode) === "skirmish") {
+    throw new Error("skirmish")
+  }
 
   return (
     <>
