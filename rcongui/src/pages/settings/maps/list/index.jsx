@@ -12,7 +12,7 @@ import {
 import { MapList } from "../MapList";
 import { MapChangeListItem } from "../MapListItem";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { MapDetailsCard } from "../MapDetailsCard";
+import { MapDetailsCardCompact } from "../MapDetailsCard";
 import { useGlobalStore } from "@/stores/global-state";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { mapsManagerMutationOptions, mapsManagerQueryKeys } from "../queries";
@@ -121,7 +121,7 @@ const MapListPage = () => {
                 borderColor: "divider",
               }}
             >
-              <MapDetailsCard mapLayer={mapToConfirm} />
+              <MapDetailsCardCompact mapLayer={mapToConfirm} />
             </Box>
           )}
         </DialogContent>

@@ -1,38 +1,8 @@
 import { useGlobalStore } from "@/stores/global-state";
 import { cmd } from "@/utils/fetchUtils";
-import {
-  List,
-  Card,
-  ListItem,
-  CardHeader,
-  CardContent,
-  styled,
-  Box,
-  Typography,
-  Divider,
-  Stack,
-  Tooltip,
-  IconButton,
-} from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import { Link } from "react-router-dom";
-import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { LineChart } from "@mui/x-charts";
-import dayjs from "dayjs";
-import OnlineUsersCard from "@/components/shared/card/UsersCard";
 import LogsCard from "@/components/shared/card/LogsCard";
-import ScrollableCard from "@/components/shared/card/ScrollableCard";
-import { MapAvatar } from "@/components/MapManager/map-details";
-import Emoji from "@/components/shared/Emoji";
-import SettingsIcon from "@mui/icons-material/Settings";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import CancelIcon from "@mui/icons-material/Cancel";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import StopIcon from "@mui/icons-material/Stop";
-import ErrorIcon from "@mui/icons-material/Error";
-import BlockIcon from "@mui/icons-material/Block";
-import InfoIcon from "@mui/icons-material/Info";
 import ServerSettingsCard from "@/components/cards/ServerSettingsCard";
 import ServicesCard from "@/components/cards/ServicesCard";
 import MapRotationCard from "@/components/cards/MapRotationCard";
