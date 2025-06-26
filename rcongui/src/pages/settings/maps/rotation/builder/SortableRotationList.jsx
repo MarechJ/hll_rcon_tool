@@ -8,6 +8,7 @@ import {
   useSensor,
   useSensors,
   closestCenter,
+  TouchSensor,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -33,13 +34,15 @@ export function SortableRotationList({
   // Set up DnD sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
+      // Require the mouse to move by 10 pixels before activating
       activationConstraint: {
-        distance: 8,
+        distance: 10,
       },
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
+    useSensor(TouchSensor),
   );
 
   // Handle drag end event

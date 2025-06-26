@@ -144,7 +144,6 @@ export function MapListBuilder({
               <Box
                 sx={{
                   height: "fit-content",
-                  zIndex: (theme) => theme.zIndex.appBar,
                   pb: 2,
                 }}
               >

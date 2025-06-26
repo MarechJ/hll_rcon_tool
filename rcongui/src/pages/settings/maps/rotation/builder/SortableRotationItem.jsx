@@ -23,6 +23,7 @@ function SortableRotationItem({ item, onRemove }) {
     transition,
     zIndex: isDragging ? 10 : 1,
     opacity: isDragging ? 0.8 : 1,
+    touchAction: "manipulation"
   };
 
   return (
@@ -51,6 +52,7 @@ function SortableRotationItem({ item, onRemove }) {
             p: 1,
             borderRadius: 1,
             "&:hover": { bgcolor: "action.hover" },
+            touchAction: "none",
           }}
         >
           <svg width="24" height="24" viewBox="0 0 24 24">

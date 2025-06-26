@@ -73,7 +73,6 @@ const MapListPage = () => {
       <Box
         sx={{
           height: "fit-content",
-          zIndex: (theme) => theme.zIndex.appBar,
           py: 2,
           maxWidth: theme => theme.breakpoints.values.md,
         }}
