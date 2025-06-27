@@ -180,14 +180,6 @@ export function hasRecentWarnings(received_actions) {
   return warnings.length > 0;
 }
 
-export const tierColors = {
-  Novice: red[500],
-  Apprentice: yellow[500],
-  Expert: green[500],
-  Master: blue[500],
-  Legend: purple[500],
-};
-
 export const logActions = {
   ADMIN: "🚨",
   "ADMIN MISC": "🚨",
@@ -271,4 +263,20 @@ export function getLogTeam(log) {
 
 export function getTeamColor(team) {
   return (theme) => theme.palette.text[team === "Axis" ? "red" : team === "Allies" ? "blue" : "inherit"];
+}
+
+// Returns tier colors based on theme mode ("light" or "dark")
+export const getTierColors = (mode = "light") => ({
+  Novice: mode === "dark" ? red[500] : red[700],
+  Apprentice: mode === "dark" ? yellow[500] : yellow[800],
+  Expert: mode === "dark" ? green[500] : green[700],
+  Master: mode === "dark" ? blue[500] : blue[700],
+  Legend: mode === "dark" ? purple[500] : purple[700],
+});
+
+// Custom hook for tier colors in React components
+import { useTheme } from "@mui/material/styles";
+export function useTierColors() {
+  const theme = useTheme();
+  return getTierColors(theme.palette.mode);
 }

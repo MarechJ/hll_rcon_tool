@@ -2,6 +2,7 @@ import Grid from "@mui/material/Grid2";
 import Points, { NumberText, SquareIcon } from "./Points";
 import { Box, Divider, Stack } from "@mui/material";
 import { extractTeamState } from "@/utils/extractPlayers";
+import useTheme from "./useTheme";
 
 const teamMetrics = ["combat", "offense", "defense", "support"];
 
@@ -9,10 +10,16 @@ const teamStats = ["kills", "deaths", "avg_level", "med_level"];
 
 const teamRoles = ["armycommander", "armor", "infantry", "recon"];
 
-const roleSrc = (role) => `/icons/roles/${role}.png`;
+const roleSrc = (role, mode) =>
+  mode === "light"
+    ? `/icons/roles/${role}_black.png`
+    : `/icons/roles/${role}.png`;
 
 export const TeamMobile = ({ data, align }) => {
   const team = data ?? {};
+  const theme = useTheme();
+  const mode = theme?.palette?.mode || "light";
+
   return (
     <Stack orientation={"vertical"} sx={{ height: "100%" }}>
       <Grid container size={6} sx={{ textAlign: "center", width: "100%" }}>
@@ -61,6 +68,8 @@ export const TeamMobile = ({ data, align }) => {
 
 export const TeamDesktop = ({ data }) => {
   const team = data ?? {};
+  const theme = useTheme();
+  const mode = theme?.palette?.mode || "light";
 
   const roleCounts = extractTeamState(team);
 
@@ -101,7 +110,7 @@ export const TeamDesktop = ({ data }) => {
             <SquareIcon>
               <Box
                 component={"img"}
-                src={roleSrc(role)}
+                src={roleSrc(role, mode)}
                 width={16}
                 height={16}
                 title={role}

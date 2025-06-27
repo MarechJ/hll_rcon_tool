@@ -31,6 +31,7 @@ import {
 import makePlayerProfileUrl from "../../utils/makePlayerProfileUrl";
 import moment from "moment";
 import Grid from "@mui/material/Grid2";
+import { useTheme } from "@mui/material/styles";
 
 
 const zeroPad = (num, places) => String(num).padStart(places, "0");
@@ -155,7 +156,23 @@ const formatPunitions = (profile) => {
     ));
 };
 
+const getScoreIconSrc = (type, mode) => {
+  if (mode === "light") {
+    return `icons/roles/score_${type}_black.png`;
+  }
+  return `icons/roles/score_${type}.png`;
+};
+
+const getRoleIconSrc = (role, mode) => {
+  if (mode === "light") {
+    return `icons/roles/${role}_black.png`;
+  }
+  return `icons/roles/${role}.png`;
+};
+
 const ScoreChips = ({ player }) => {
+  const theme = useTheme();
+  const mode = theme.palette.mode;
   return (
     <Fragment>
       <Grid>
@@ -165,7 +182,7 @@ const ScoreChips = ({ player }) => {
           avatar={
             <Avatar
               alt="Combat"
-              src="icons/roles/score_combat.png"
+              src={getScoreIconSrc("combat", mode)}
             />
           }
           label={player.get("combat", 0)}
@@ -178,7 +195,7 @@ const ScoreChips = ({ player }) => {
           avatar={
             <Avatar
               alt="Offensive"
-              src="icons/roles/score_offensive.png"
+              src={getScoreIconSrc("offensive", mode)}
             />
           }
           label={player.get("offense", 0)}
@@ -191,7 +208,7 @@ const ScoreChips = ({ player }) => {
           avatar={
             <Avatar
               alt="Defensive"
-              src="icons/roles/score_defensive.png"
+              src={getScoreIconSrc("defensive", mode)}
             />
           }
           label={player.get("defense", 0)}
@@ -204,7 +221,7 @@ const ScoreChips = ({ player }) => {
           avatar={
             <Avatar
               alt="Support"
-              src="icons/roles/score_support.png"
+              src={getScoreIconSrc("support", mode)}
             />
           }
           label={player.get("support", 0)}
@@ -284,6 +301,8 @@ const PlayerItem = ({
   onBlacklist,
   onVipDialogOpen,
 }) => {
+  const theme = useTheme();
+  const mode = theme.palette.mode;
   const profile = player.get("profile") ? player.get("profile") : new Map();
   const name = player.get("name");
   const player_id = player.get("player_id");
@@ -302,7 +321,7 @@ const PlayerItem = ({
           >
             <Avatar
               variant="square"
-              src={`icons/roles/${player.get("role", "rifleman")}.png`}
+              src={getRoleIconSrc(player.get("role", "rifleman"), mode)}
             ></Avatar>
           </Badge>
         </ListItemAvatar>
