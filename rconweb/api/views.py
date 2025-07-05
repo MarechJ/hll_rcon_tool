@@ -609,10 +609,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.get_all_webhook_queues: "api.can_view_webhook_queues",
     rcon_api.get_webhook_service_summary: "api.can_view_webhook_queues",
     rcon_api.reset_webhook_queues: "api.can_change_webhook_queues",
-    rcon_api.reset_all_webhook_queues_for_server_number: "api.can_change_webhook_queues",
     rcon_api.reset_webhook_queue: "api.can_change_webhook_queues",
-    rcon_api.reset_webhook_queue_type: "api.can_change_webhook_queues",
-    rcon_api.reset_webhook_message_type: "api.can_change_webhook_queues",
 }
 
 PREFIXES_TO_EXPOSE = [
@@ -860,10 +857,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.get_all_webhook_queues: ["GET"],
     rcon_api.get_webhook_service_summary: ["GET"],
     rcon_api.reset_webhook_queues: ["POST"],
-    rcon_api.reset_all_webhook_queues_for_server_number: ["POST"],
     rcon_api.reset_webhook_queue: ["POST"],
-    rcon_api.reset_webhook_queue_type: ["POST"],
-    rcon_api.reset_webhook_message_type: ["POST"],
 }
 
 # Check to make sure that ENDPOINT_HTTP_METHODS and ENDPOINT_PERMISSIONS have the same endpoints

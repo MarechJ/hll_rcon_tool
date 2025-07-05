@@ -292,7 +292,7 @@ def build_header_gamestate_embed(
                     gamestate["allied_score"], gamestate["axis_score"]
                 )
             # Not ideal but the match statement won't let us use the constant here
-            case "\u200B":
+            case "\u200b":
                 name = ""
                 value = EMPTY_EMBED
             case _:
@@ -412,6 +412,7 @@ def build_player_stats_embed(
 
 def create_initial_message(url: str, embed: DiscordEmbed) -> str:
     wh = DiscordWebhook(url=url)
+    logger.info(f"{url=}")
     wh.add_embed(embed)
     wh.execute()
     return wh.message_id
@@ -432,8 +433,14 @@ def send_message(
     # The first run through when a message is deleted will cause a 404
     # but subsequent sends should create a new one and this avoids us having to
     # make a synch GET request to Discord for every message we want to send
-    if not message_id or get_message_edit_404_failure(message_id=message_id):
+    logger.info(f"{message_id=}")
+    if (
+        not message_id
+        or message_id == "0"
+        or get_message_edit_404_failure(message_id=message_id)
+    ):
         message_id = create_initial_message(url=wh.url, embed=embed)
+        logger.info(f"Created initial message: {message_id}")
         save_message_id(
             session=session,
             webhook_url=wh.url,
