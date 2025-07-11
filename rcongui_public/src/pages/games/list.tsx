@@ -9,10 +9,11 @@ import {GameMode} from "@/types/mapLayer";
 
 export function validGame(game: ScoreboardMap) {
   const modeToTime: Record<GameMode, number> = {
-    ['warfare']: 90,
-    ['offensive']: 150,
-    ['skirmish']: 30,
-    ['control']: 30,
+    // changelog https://www.hellletloose.com/blog/dev-brief-205-patch-17-1-changelog
+    ['warfare']: 200, // 180 min game + 10 min warmup + 10 min just in case
+    ['offensive']: 360, // 300 min game + ...
+    ['skirmish']: 100, // 60 min game + ...
+    ['control']: 100, // 60 min game + ...
   }
 
   const start = dayjs(game.start)
