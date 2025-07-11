@@ -40,14 +40,15 @@ export function MapListBuilder({
   exclusive = false,
   actions,
 }) {
-  const [mapSelection, setMapSelection] = useState([]);
+  const [mapSelection, setMapSelection] = useState(selectedMaps.map(withSelectionId));
+  
   const mapOptions = useMemo(() => {
     if (!exclusive) return allMaps;
     const selectedIds = new Set(mapSelection.map((m) => m.id));
     const exclusiveOptions = allMaps.filter((m) => !selectedIds.has(m.id));
     return exclusiveOptions;
   }, [exclusive, allMaps, mapSelection]);
-
+  
   const [filteredMapOptions, setFilteredMapOptions] = useState(mapOptions);
 
   const theme = useTheme();
@@ -58,11 +59,9 @@ export function MapListBuilder({
   const isMapSelectionVisible =
     !isSmallScreen || (isSmallScreen && view === "map-selection");
 
-  // Set selection data when it's loaded
+  // Set selection data when it's changed by the parent
   useEffect(() => {
-    if (selectedMaps.length > 0) {
-      setMapSelection(selectedMaps.map(withSelectionId));
-    }
+    setMapSelection(selectedMaps.map(withSelectionId));
   }, [selectedMaps]);
 
   const handleViewChange = (e, newView) => {

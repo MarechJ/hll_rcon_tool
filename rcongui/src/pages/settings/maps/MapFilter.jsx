@@ -47,31 +47,29 @@ export const MapFilter = ({ maps, onFilterChange }) => {
   const [selectedModes, setSelectedModes] = useState([]);
   const [selectedWeathers, setSelectedWeathers] = useState([]);
 
+  // Compute unique modes and weathers for dropdowns
   const allModes = useMemo(() => {
-    if (maps.length === 0) return ["warfare"]; // default value before maps load
     return Array.from(new Set(maps.map((map) => unifiedGamemodeName(map.game_mode)))).sort();
   }, [maps]);
 
   const allWeather = useMemo(() => {
-    if (maps.length === 0) return ["day"]; // default value before maps load
     return Array.from(new Set(maps.map((map) => map.environment))).sort();
   }, [maps]);
 
-  useEffect(() => {
-    // Filter map variants based on search term and filters
-    const filteredMaps = maps.filter((mapLayer) => {
-      const matchesSearch = mapLayer.map.pretty_name
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
-      const matchesModes =
-        !selectedModes.length || selectedModes.includes(unifiedGamemodeName(mapLayer.game_mode));
-      const matchesWeather =
-        !selectedWeathers.length ||
-        selectedWeathers.includes(mapLayer.environment);
+  // Compute filtered maps based on filter criteria
+  const filteredMaps = useMemo(() => {
+    return maps.filter((mapLayer) => {
+      const matchesSearch = mapLayer.map.pretty_name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesModes = !selectedModes.length || selectedModes.includes(unifiedGamemodeName(mapLayer.game_mode));
+      const matchesWeather = !selectedWeathers.length || selectedWeathers.includes(mapLayer.environment);
       return matchesSearch && matchesModes && matchesWeather;
     });
-    onFilterChange(filteredMaps);
   }, [maps, searchTerm, selectedModes, selectedWeathers]);
+
+  // Notify parent of filter changes
+  useEffect(() => {
+    onFilterChange(filteredMaps);
+  }, [filteredMaps, onFilterChange]);
 
   return (
     <Stack
