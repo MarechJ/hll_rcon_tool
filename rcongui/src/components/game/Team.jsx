@@ -2,7 +2,7 @@ import Grid from "@mui/material/Grid2";
 import Points, { NumberText, SquareIcon } from "./Points";
 import { Box, Divider, Stack } from "@mui/material";
 import { extractTeamState } from "@/utils/extractPlayers";
-import useTheme from "./useTheme";
+import { useTheme } from "@mui/material/styles";
 
 const teamMetrics = ["combat", "offense", "defense", "support"];
 

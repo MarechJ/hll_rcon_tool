@@ -1,6 +1,6 @@
 import { Avatar, Typography, Box } from "@mui/material";
 import { styled } from "@mui/material";
-import useTheme from "@mui/material/styles/useTheme";
+import { useTheme } from "@mui/material/styles";
 
 export const NumberText = styled(Typography)(() => ({
   fontSize: "0.8rem",
