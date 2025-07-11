@@ -2,6 +2,7 @@
 compose.yaml
 db_data/
 .env
+dev.env
 broadcasts.txt
 # Byte-compiled / optimized / DLL files
 __pycache__/
