@@ -58,7 +58,7 @@ def temp_welcome_standalone(msg, seconds):
     rcon = get_rcon_api()
     prev = rcon.set_welcome_message(msg)
     queue = get_queue()
-    queue.enqueue_in(timedelta(seconds), welcome, prev)
+    queue.enqueue_in(timedelta(seconds=seconds), welcome, prev)
 
 
 def temporary_welcome_in(message, seconds, restore_after_seconds):
@@ -166,7 +166,7 @@ def record_stats_from_map(
         # is just a random safety margin.
         till=map_.end + datetime.timedelta(seconds=30),
         time_sort="asc",
-        action="MATCH STARTED",
+        action="MATCH START",
         exact_action=True,
         server_filter=str(map_.server_number),
         limit=2,

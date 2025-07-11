@@ -207,7 +207,7 @@ const BlacklistRecords = () => {
       </Grid>
       <Grid size={12}>
         <MyPagination
-          pageSize={searchQuery.pageSize}
+          pageSize={searchQuery.page_size}
           page={page}
           setPage={setPage}
           total={totalRecords}
@@ -223,7 +223,7 @@ const BlacklistRecords = () => {
       </Grid>
       <Grid size={12}>
         <MyPagination
-          pageSize={searchQuery.pageSize}
+          pageSize={searchQuery.page_size}
           page={page}
           setPage={setPage}
           total={totalRecords}

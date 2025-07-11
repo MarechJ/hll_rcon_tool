@@ -272,7 +272,7 @@ def remind_vote_map(rcon: Rcon, struct_log):
 
 
 @on_match_start
-def reset_watch_killrate_cooldown():
+def reset_watch_killrate_cooldown(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
     """Reset the last reported time cache for new matches"""
     from rcon.watch_killrate import reset_cache
 

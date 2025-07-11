@@ -91,7 +91,7 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
       { threshold: 0, root: scrollAreaRef.current }
     );
 
-    gameRefs.current.values().forEach((ref) => {
+    gameRefs.current.forEach((ref) => {
       if (ref) observer.observe(ref);
     });
 
