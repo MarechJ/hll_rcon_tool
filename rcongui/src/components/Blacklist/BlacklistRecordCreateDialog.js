@@ -113,6 +113,8 @@ export default function BlacklistRecordCreateDialog({
         );
       }
       if (initialValues.reason !== undefined) setReason(initialValues.reason);
+    } else {
+      setExpiresAt(dayjs());
     }
   }, [open]);
 
@@ -126,7 +128,7 @@ export default function BlacklistRecordCreateDialog({
     setOpen(false);
     setBlacklist("");
     setPlayerId("");
-    setExpiresAt("");
+    setExpiresAt(dayjs());
     setReason("");
   };
 
