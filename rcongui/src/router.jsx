@@ -42,11 +42,24 @@ import SettingsPage from "./pages/settings"
 import { loader as settingsLoader } from "./pages/settings"
 import { action as settingsAction } from "./pages/settings"
 
-import MapManager from "./pages/settings/map-manager"
-import MapChange from "./pages/settings/map-manager/map-change"
-import MapRotation from "./pages/settings/map-manager/map-rotation"
-import MapObjectives from "./pages/settings/map-manager/objectives"
-import MapVotemap from "./pages/settings/map-manager/votemap"
+import MapsManager from "./pages/settings/maps"
+import { loader as mapsManagerLoader } from "./pages/settings/maps/loader"
+import MapList from "./pages/settings/maps/list"
+import MapRotation from "./pages/settings/maps/rotation"
+import MapRotationBuilder from "./pages/settings/maps/rotation/builder"
+import { loader as mapRotationBuilderLoader } from "./pages/settings/maps/rotation/builder/loader"
+import MapRotationSettings from "./pages/settings/maps/rotation/settings"
+import { loader as mapRotationSettingsLoader } from "./pages/settings/maps/rotation/settings/loader"
+import Votemap from "./pages/settings/maps/votemap"
+import VotemapStatus from "./pages/settings/maps/votemap/status"
+import { loader as votemapStatusLoader } from "./pages/settings/maps/votemap/status/loader"
+import VotemapBuilder from "./pages/settings/maps/votemap/builder"
+import { loader as votemapBuilderLoader } from "./pages/settings/maps/votemap/builder/loader"
+import VotemapSettings from "./pages/settings/maps/votemap/settings"
+import { loader as votemapSettingsLoader } from "./pages/settings/maps/votemap/settings/loader"
+import MapObjectives from "./pages/settings/maps/objectives";
+import MapObjectivesError from "./pages/settings/maps/objectives/error";
+import { loader as mapObjectivesLoader } from "./pages/settings/maps/objectives/loader"
 
 import ConfigDetail from "./pages/settings/[configs]/detail"
 import { loader as configLoader } from "./pages/settings/[configs]/detail"
@@ -267,34 +280,63 @@ const router = createBrowserRouter([
                     },
                     {
                         path: 'maps',
-                        handle: { crumb: () => <span>Maps</span> },
-                        element: <MapManager />,
+                        element: <MapsManager />,
+                        loader: mapsManagerLoader,
+                        errorElement: <RouteError />,
+                        id: "maps",
                         children: [
                             {
                                 path: 'change',
-                                handle: { crumb: () => <Link to={'/settings/maps/change'}>Change</Link> },
-                                element: <MapChange />,
+                                element: <MapList />,
                                 errorElement: <RouteError />,
                             },
                             {
                                 path: 'rotation',
-                                handle: { crumb: () => <Link to={'/settings/maps/rotation'}>Rotation</Link> },
                                 element: <MapRotation />,
                                 errorElement: <RouteError />,
-                            },
-                            {
-                                path: 'objectives',
-                                handle: { crumb: () => <Link to={'/settings/maps/objectives'}>Objectives</Link> },
-                                element: <MapObjectives />,
-                                errorElement: <RouteError />,
+                                children: [
+                                    {
+                                        path: '',
+                                        index: true,
+                                        loader: mapRotationBuilderLoader,
+                                        element: <MapRotationBuilder />,
+                                    },
+                                    {
+                                        path: 'settings',
+                                        loader: mapRotationSettingsLoader,
+                                        element: <MapRotationSettings />,
+                                    }
+                                ]
                             },
                             {
                                 path: 'votemap',
-                                handle: { crumb: () => <Link to={'/settings/maps/votemap'}>Votemap</Link> },
-                                element: <MapVotemap />,
+                                element: <Votemap />,
                                 errorElement: <RouteError />,
+                                children: [
+                                    {
+                                        path: '',
+                                        index: true,
+                                        element: <VotemapStatus />,
+                                        loader: votemapStatusLoader,
+                                    },
+                                    {
+                                        path: 'whitelist',
+                                        element: <VotemapBuilder />,
+                                        loader: votemapBuilderLoader,
+                                    },{
+                                        path: 'settings',
+                                        element: <VotemapSettings />,
+                                        loader: votemapSettingsLoader,
+                                    }
+                                ]
+                            },
+                            {
+                                path: 'objectives',
+                                element: <MapObjectives />,
+                                loader: mapObjectivesLoader,
+                                errorElement: <MapObjectivesError />
                             }
-                        ]
+                        ],
                     },
                     {
                         path: 'templates',

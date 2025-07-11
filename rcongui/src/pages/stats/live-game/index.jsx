@@ -16,7 +16,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Board } from "@/components/game/Board";
 import dayjs from "dayjs";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { VoteStatus } from "@/pages/settings/map-manager/votemap/vote-status";
 
 export const loader = async () => {
   const stats = await cmd.GET_LIVE_GAME();
@@ -61,15 +60,6 @@ const LiveGamePage = () => {
           }}
         />
       </section>
-
-      <Accordion>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography>Vote Map Status</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <VoteStatus voteStatus={game.vote_status} />
-        </AccordionDetails>
-      </Accordion>
 
       <Accordion>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>

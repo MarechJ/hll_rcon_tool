@@ -10,15 +10,15 @@ const SearchWrapper = styled(Box)({
   minWidth: 250,
 });
 
-const StyledInput = styled(InputBase)({
-  ml: 1,
+const StyledInput = styled(InputBase)(({theme}) => ({
+  marginLeft: theme.spacing(1),
   "& .MuiButtonBase-root": {
     display: "none",
   },
   "&:hover .MuiButtonBase-root": {
     display: "inline-flex",
   }
-})
+}))
 
 export const SearchInput = React.forwardRef(({ ...props }, ref) => {
   const { sx, onClear, ...rest } = props;
