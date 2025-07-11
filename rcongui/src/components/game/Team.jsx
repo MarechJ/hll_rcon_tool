@@ -10,6 +10,7 @@ const teamStats = ["kills", "deaths", "avg_level", "med_level"];
 
 const teamRoles = ["armycommander", "armor", "infantry", "recon"];
 
+const teamMisc = ["vips"]
 const roleSrc = (role, mode) =>
   mode === "light"
     ? `/icons/roles/${role}_black.png`
@@ -62,6 +63,26 @@ export const TeamMobile = ({ data, align }) => {
           </Grid>
         ))}
       </Grid>
+      <Grid container size={6} sx={{ textAlign: "center", width: "100%" }}>
+        {teamMisc.map((stat) => (
+          <Grid
+            key={stat}
+            size={6}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: align,
+              gap: 1,
+            }}
+          >
+            <Points
+              value={team[stat]}
+              type={stat}
+              direction={align === "start" ? "left" : "right"}
+            />
+          </Grid>
+        ))}
+      </Grid>
     </Stack>
   );
 };
@@ -71,20 +92,26 @@ export const TeamDesktop = ({ data }) => {
   const theme = useTheme();
   const mode = theme?.palette?.mode || "light";
 
-  const roleCounts = extractTeamState(team);
+  const teamState = extractTeamState(team);
 
-  roleCounts.armycommander = !!team.commander ? 1 : 0;
+  teamState.armycommander = !!team.commander ? 1 : 0;
 
   const counts = teamRoles.map((role) => ({
     role,
-    count: roleCounts[role],
+    count: teamState[role],
   }));
 
   return (
     <Stack orientation={"vertical"} sx={{ height: "100%" }}>
       <Stack direction={"row"} spacing={1}>
         {teamMetrics.map((metric) => (
-          <Stack key={metric} direction={"row"} flexBasis={1} flexGrow={1} spacing={1}>
+          <Stack
+            key={metric}
+            direction={"row"}
+            flexBasis={1}
+            flexGrow={1}
+            spacing={1}
+          >
             <Points value={team[metric]} type={metric} />
           </Stack>
         ))}
@@ -92,7 +119,13 @@ export const TeamDesktop = ({ data }) => {
       <Divider variant="middle" />
       <Stack direction={"row"} spacing={1}>
         {teamStats.map((stat) => (
-          <Stack key={stat} direction={"row"} flexBasis={1} flexGrow={1} spacing={1}>
+          <Stack
+            key={stat}
+            direction={"row"}
+            flexBasis={1}
+            flexGrow={1}
+            spacing={1}
+          >
             <Points value={team[stat]} type={stat} />
           </Stack>
         ))}
@@ -117,6 +150,20 @@ export const TeamDesktop = ({ data }) => {
               />
             </SquareIcon>
             <NumberText>{count}</NumberText>
+          </Stack>
+        ))}
+      </Stack>
+      <Divider variant="middle" />
+      <Stack direction={"row"} spacing={1}>
+        {teamMisc.map((stat) => (
+          <Stack
+            key={stat}
+            direction={"row"}
+            flexBasis={1}
+            flexGrow={1}
+            spacing={1}
+          >
+            <Points value={team[stat]} type={stat} />
           </Stack>
         ))}
       </Stack>
