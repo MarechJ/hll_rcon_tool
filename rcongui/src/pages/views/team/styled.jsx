@@ -1,5 +1,5 @@
 import { Box, styled } from "@mui/material";
-import { tierColors, getPlayerTier } from "@/utils/lib";
+import { getTierColors, getPlayerTier } from "@/utils/lib";
 
 export const TeamContainer = styled(Box)(({ theme }) => ({
   display: "flex",
@@ -163,7 +163,7 @@ export const PlayerRow = styled(
     color: selected
       ? theme.palette.primary.main
       : level
-      ? tierColors[getPlayerTier(level)]
+      ? getTierColors(theme.palette.mode)[getPlayerTier(level)]
       : "inherit",
   },
   [theme.breakpoints.down("sm")]: {
@@ -282,7 +282,7 @@ export const CommanderRow = styled(
     color: selected
       ? theme.palette.primary.main
       : level
-      ? tierColors[getPlayerTier(level)]
+      ? getTierColors(theme.palette.mode)[getPlayerTier(level)]
       : "inherit",
   },
   [theme.breakpoints.down("sm")]: {
