@@ -109,7 +109,7 @@ export function SortableRotationList({
                 gap: 1,
               }}
             >
-              <Tooltip title="Undo">
+              <Tooltip title="Reset changes">
                 <IconButton
                   variant="outlined"
                   size={"small"}

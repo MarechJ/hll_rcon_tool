@@ -12,7 +12,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ReplayIcon from "@mui/icons-material/Replay";
 
-const EmptyMapList = () => {
+const EmptyMapList = ({ reason }) => {
   return (
     <Box
       sx={{
@@ -36,7 +36,7 @@ const EmptyMapList = () => {
         No maps found
       </Typography>
       <Typography variant="body2">
-        Try adjusting your filters or search term
+        {reason ?? "Try adjusting your filters or search term"}
       </Typography>
     </Box>
   );
@@ -47,9 +47,15 @@ const EmptyMapList = () => {
  * @param {React.ReactNode} renderItem (optional) custom item component that accepts `mapLayer` as the only param
  * @returns
  */
-export const MapList = ({ maps, renderItem, sort = true, ...props }) => {
+export const MapList = ({
+  maps,
+  renderItem,
+  sort = true,
+  emptyListMessage,
+  ...props
+}) => {
   if (maps.length === 0) {
-    return <EmptyMapList />;
+    return <EmptyMapList reason={emptyListMessage} />;
   }
 
   return (
@@ -99,8 +105,12 @@ export const MapWhitelistList = ({
           alignItems={{ sx: "flex-start", md: "center" }}
           justifyContent={"space-between"}
         >
-          <Typography variant="h6">Whitelist ({maps.length})</Typography>          
-          <Stack direction="row" spacing={1} justifyContent={{ sx: "center", md: "flex-end" }}>
+          <Typography variant="h6">Whitelist ({maps.length})</Typography>
+          <Stack
+            direction="row"
+            spacing={1}
+            justifyContent={{ sx: "center", md: "flex-end" }}
+          >
             {actions && (
               <>
                 <Box
@@ -123,7 +133,7 @@ export const MapWhitelistList = ({
                 gap: 1,
               }}
             >
-              <Tooltip title="Undo">
+              <Tooltip title="Reset changes">
                 <IconButton
                   variant="outlined"
                   size={"small"}

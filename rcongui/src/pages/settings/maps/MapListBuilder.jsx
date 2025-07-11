@@ -41,17 +41,12 @@ export function MapListBuilder({
   actions,
 }) {
   const [mapSelection, setMapSelection] = useState([]);
-
-  const mapOptions = useMemo(
-    () =>
-      exclusive
-        ? allMaps.filter(
-            (thisMap) =>
-              !mapSelection.find((thatMap) => thisMap.id === thatMap.id)
-          )
-        : allMaps,
-    [exclusive, allMaps, mapSelection]
-  );
+  const mapOptions = useMemo(() => {
+    if (!exclusive) return allMaps;
+    const selectedIds = new Set(mapSelection.map((m) => m.id));
+    const exclusiveOptions = allMaps.filter((m) => !selectedIds.has(m.id));
+    return exclusiveOptions;
+  }, [exclusive, allMaps, mapSelection]);
 
   const [filteredMapOptions, setFilteredMapOptions] = useState(mapOptions);
 
@@ -78,12 +73,15 @@ export function MapListBuilder({
   // Add map to selection
   const addSelectionItem = exclusive
     ? _.debounce((mapLayer) => {
-        const nextSelection = _.uniqBy([...mapSelection, withSelectionId(mapLayer)], 'id')
-        setMapSelection(nextSelection)
+        const nextSelection = _.uniqBy(
+          [...mapSelection, withSelectionId(mapLayer)],
+          "id"
+        );
+        setMapSelection(nextSelection);
       }, 300)
     : _.throttle((mapLayer) => {
-        const nextSelection = [...mapSelection, withSelectionId(mapLayer)]
-        setMapSelection(nextSelection)
+        const nextSelection = [...mapSelection, withSelectionId(mapLayer)];
+        setMapSelection(nextSelection);
       }, 500);
 
   const handleFilterChange = (filteredMaps) => {
@@ -143,7 +141,6 @@ export function MapListBuilder({
             <Box sx={{ mb: 3 }}>
               <Box
                 sx={{
-                  height: "fit-content",
                   pb: 2,
                 }}
               >
@@ -154,7 +151,6 @@ export function MapListBuilder({
               </Box>
               <Box
                 sx={{
-                  maxHeight: { xs: "auto", lg: "calc(100vh - 25rem)" },
                   overflow: "auto",
                   scrollbarWidth: "thin",
                   position: "relative",
@@ -163,6 +159,7 @@ export function MapListBuilder({
               >
                 <MapList
                   maps={filteredMapOptions}
+                  emptyListMessage={"There are no more maps to add."}
                   renderItem={(mapLayer) => (
                     <slots.MapListItem
                       key={mapLayer.id}
@@ -181,7 +178,6 @@ export function MapListBuilder({
           <Grid
             size={{ xs: 12, md: 6 }}
             sx={{
-              maxHeight: { xs: "auto", lg: "calc(100vh - 20rem)" },
               overflow: "auto",
               scrollbarWidth: "thin",
               position: "relative",
