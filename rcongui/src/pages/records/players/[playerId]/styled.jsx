@@ -2,7 +2,6 @@ import { styled } from '@mui/material/styles';
 import { Paper, Box, Avatar, Chip, Card as MuiCard, Alert, Tooltip } from '@mui/material';
 
 export const ProfileContainer = styled(Box)(({ theme }) => ({
-  margin: '0 auto',
   backgroundColor: theme.palette.background.default,
   minHeight: '100vh',
 }));
