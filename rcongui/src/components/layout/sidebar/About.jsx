@@ -60,7 +60,7 @@ export default function AboutDialog() {
     }
   }, [open])
 
-  const latestReleaseVersion = releases?.[0]?.tag_name ?? ''
+  const latestReleaseVersion = (releases?.[0]?.tag_name || releases?.[0]?.name)  ?? ''
   const isUpToDate = isNewerVersion(apiVersion.trim(), latestReleaseVersion.trim())
 
   return (
