@@ -89,7 +89,7 @@ def _do_punitions(
             if method == ActionMethod.PUNISH:
                 if not aplayer.details.dry_run:
                     rcon.punish(
-                        aplayer.name, aplayer.details.message, by=aplayer.details.author
+                        aplayer.name, aplayer.details.message, by=aplayer.details.author, player_id=aplayer.player_id
                     )
                 audit(
                     discord_webhook_url=aplayer.details.discord_audit_url,

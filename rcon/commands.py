@@ -1,23 +1,18 @@
 import logging
-import socket
 import threading
 import time
 from contextlib import contextmanager, nullcontext
 from functools import wraps
-from typing import Generator, List, Sequence
+from typing import Generator, Sequence, Any
 
-from rcon.connection import HLLConnection
-from rcon.types import ServerInfoType, VipId
+from rcon.connection import HLLConnection, Response, HLLMessageError
+from rcon.maps import LayerType
+from rcon.types import ServerInfoType, VipId, GameStateType
 from rcon.utils import exception_in_chain
 
 logger = logging.getLogger(__name__)
 
 SUCCESS = "SUCCESS"
-
-
-def convert_tabs_to_spaces(value: str) -> str:
-    """Convert tabs to a space to not break HLL tab delimited lists"""
-    return value.replace("\t", " ")
 
 
 def escape_string(s):
@@ -103,7 +98,7 @@ class ServerCtl:
     """
 
     def __init__(
-        self, config: ServerInfoType, auto_retry=1, max_open=20, max_idle=20
+            self, config: ServerInfoType, auto_retry=1, max_open=20, max_idle=20
     ) -> None:
         self.maxOpen: int = max_open
         self.maxIdle: int = max_idle
@@ -169,7 +164,7 @@ class ServerCtl:
             # connection itself. Instead of reconnecting the existing connection here (conditionally), we simply discard
             # the connection, assuming it is broken. The pool will establish a new connection when needed.
             if isinstance(e.__context__, RuntimeError | OSError) or exception_in_chain(
-                e, OSError
+                    e, OSError
             ):
                 logger.warning(
                     "Connection (%s) errored in thread %s: %s, removing from pool",
@@ -222,36 +217,14 @@ class ServerCtl:
             logger.exception("Invalid connection information", e)
             raise
 
-    @staticmethod
-    def _ends_on_complete_code_point(byte_chunk: bytes) -> bool:
-        """Return if byte_chunk ends on a valid UTF-8 code point"""
-        finalBytes = byte_chunk[-4:]
-        numBytesLeft = len(finalBytes)
-
-        for b in finalBytes:
-            numBytesLeft -= 1
-            if b < 0b10000000:
-                # First bit is 0, means we have a 1-byte char
-                # Will be most common so most efficient to check this case first
-                continue
-            if (
-                (b >= 0b11110000 and numBytesLeft < 3)
-                or (b >= 0b11100000 and numBytesLeft < 2)
-                or (b >= 0b11000000 and numBytesLeft < 1)
-            ):
-                # Need to receive another chunk
-                return False
-
-        return True
-
     @_auto_retry
-    def _bytes_request(
-        self,
-        command: str,
-        can_fail=True,
-        log_info=False,
-        conn: HLLConnection | None = None,
-    ) -> bytes:
+    def request(
+            self,
+            command: str,
+            content: dict[str, Any] | str = "",
+            log_info=False,
+            conn: HLLConnection | None = None,
+    ) -> Response:
         if conn is None:
             raise ValueError("conn parameter should never be None")
         if log_info:
@@ -259,508 +232,323 @@ class ServerCtl:
         else:
             logger.debug(command)
         try:
-            conn.send(command.encode())
-            byte_chunks: list[bytes] = []
-            result: bytes = conn.receive()
-            byte_chunks.append(result)
-            while not self._ends_on_complete_code_point(byte_chunks[-1]):
-                result: bytes = conn.receive()
-                byte_chunks.append(result)
+            return conn.exchange(command, 2, content)
         except (
-            RuntimeError,
-            UnicodeDecodeError,
+                RuntimeError,
+                UnicodeDecodeError,
         ) as e:
             logger.exception("Failed request")
             raise HLLServerError(command) from e
-
-        result = b"".join(byte_chunks)
-
-        if result == b"FAIL":
-            if can_fail:
-                raise CommandFailedError(command)
-            else:
-                raise HLLServerError(f"Got FAIL for {command}")
-
-        return result
-
-    @_auto_retry
-    def _str_request(
-        self,
-        command: str,
-        can_fail=True,
-        log_info=False,
-        conn: HLLConnection | None = None,
-    ) -> str:
-        if conn is None:
-            raise ValueError("conn parameter should never be None")
-        if log_info:
-            logger.info(command)
-        else:
-            logger.debug(command)
-        try:
-            conn.send(command.encode())
-            byte_chunks: list[bytes] = []
-            result: bytes = conn.receive()
-            byte_chunks.append(result)
-            while not self._ends_on_complete_code_point(byte_chunks[-1]):
-                result: bytes = conn.receive()
-                byte_chunks.append(result)
-        except (
-            RuntimeError,
-            UnicodeDecodeError,
-        ) as e:
-            logger.exception("Failed request")
-            raise HLLServerError(command) from e
-
-        result = b"".join(byte_chunks)
-        decoded_result = result.decode()
-
-        if decoded_result == "FAIL":
-            if can_fail:
-                raise CommandFailedError(command)
-            else:
-                raise HLLServerError(f"Got FAIL for {command}")
-
-        return decoded_result
-
-    def _read_list(self, raw: bytes, conn: HLLConnection) -> list[str]:
-        res = raw.split(b"\t")
-
-        try:
-            expected_len = int(res[0])
-            logger.debug("Expected list length %s", expected_len)
-        except ValueError:
-            raise HLLServerError(
-                "Unexpected response from server." "Unable to get list length"
-            )
-
-        # Max 30 tries
-        for i in range(1000):
-            if expected_len <= len(res) - 1 and raw[-1] in [0, 9, 10]:  # \0 \t or \n
-                logger.debug(
-                    "List seems complete length is %s/%s last char is %s",
-                    len(res),
-                    expected_len,
-                    raw[-1],
-                )
-                break
-            logger.debug(
-                "Reading again list length is %s/%s last char is %s",
-                len(res),
-                expected_len,
-                raw[-1],
-            )
-            raw += conn.receive()
-            res = raw.split(b"\t")
-
-        if res[-1] == b"":
-            # There's a trailing \t
-            res = res[:-1]
-        if expected_len < len(res) - 1:
-            raise HLLServerError(
-                "Server returned incomplete list,"
-                f" expected {expected_len} got {len(res) - 1}"
-            )
-
-        return [l.decode() for l in res[1:]]
-
-    @_auto_retry
-    def _get_list(
-        self,
-        item: str,
-        can_fail=True,
-        conn: HLLConnection | None = None,
-        fail_msgs: Sequence[str] = [],
-    ) -> list[str]:
-        if conn is None:
-            raise ValueError("conn parameter should never be None")
-
-        res = self._bytes_request(item, can_fail=can_fail, conn=conn)
-
-        # Some commands do not return "FAIL" when they fail. Normally we can handle them in the command implementation,
-        # but not with lists, where we need to do it here.
-        try:
-            decoded_res = res.decode()
-        except UnicodeDecodeError:
-            pass
-        else:
-            if decoded_res in fail_msgs:
-                if can_fail:
-                    raise CommandFailedError(decoded_res)
-                else:
-                    raise HLLServerError(f"Got FAIL for {item}: {decoded_res}")
-
-        return self._read_list(res, conn)
 
     def get_profanities(self) -> list[str]:
-        return self._get_list("get profanity", can_fail=False)
+        return self.request("GetServerInformation", {"Name": "bannedwords", "Value": ""}).content_dict["bannedWords"]
 
     def ban_profanities(self, profanities: str) -> bool:
-        profanities = convert_tabs_to_spaces(profanities)
-        return self._str_request(f"BanProfanity {profanities}") == SUCCESS
+        self.request("AddBannedWords", {"BannedWords": profanities})
+        return True
 
     def unban_profanities(self, profanities: str) -> bool:
-        return self._str_request(f"UnbanProfanity {profanities}") == SUCCESS
+        self.request("RemoveBannedWords", {"BannedWords": profanities})
+        return True
 
     def get_name(self) -> str:
-        return self._str_request("get name", can_fail=False)
+        return self.request("GetServerInformation", {"Name": "session", "Value": ""}).content_dict["serverName"]
 
     def get_map(self) -> str:
-        return self._str_request("get map", can_fail=False)
+        # TODO: Either get from the current map sequence or from session GetServerInformation, both needs to be validated
+        return ""
 
     def get_maps(self) -> list[str]:
-        return sorted(self._get_list("get mapsforrotation", can_fail=False))
+        # TODO: Not available right now
+        return []
 
     def get_players(self) -> list[str]:
-        return self._get_list("get players", can_fail=False)
+        # TODO: Overwritten in subclass, maybe there is a better way now with rconv2
+        pass
 
     def get_playerids(self) -> list[str]:
-        return self._get_list("get playerids", can_fail=False)
+        return [x["iD"] for x in self.request("GetServerInformation", {"Name": "players", "Value": ""}).content_dict["players"]]
 
-    def _is_info_correct(self, player, raw_data) -> bool:
-        try:
-            lines = raw_data.split("\n")
-            return lines[0] == f"Name: {player}"
-        except Exception:
-            logger.exception("Bad playerinfo data")
-            return False
-
-    def get_player_info(self, player_name: str, can_fail=True) -> str:
-        data = self._str_request(f"playerinfo {player_name}", can_fail=can_fail)
-        if not self._is_info_correct(player_name, data):
-            data = self._str_request(f"playerinfo {player_name}", can_fail=can_fail)
-        if not self._is_info_correct(player_name, data):
-            raise BrokenHllConnection() from CommandFailedError(
-                "The game server is returning the wrong player info for %s we got %s",
-                player_name,
-                data,
-            )
-        return data
+    def get_player_info(self, player_name: str, can_fail=True) -> dict[str, str] | None:
+        for p in self.request("GetServerInformation", {"Name": "players", "Value": ""}).content_dict["players"]:
+            if p["name"] == player_name:
+                return p
+        return None
 
     def get_admin_ids(self) -> list[str]:
-        return self._get_list("get adminids", can_fail=False)
+        return [x["UserId"] for x in self.request("GetAdminUsers").content_dict["AdminUsers"]]
 
     def get_temp_bans(self) -> list[str]:
-        return self._get_list("get tempbans", can_fail=False)
+        return [x["UserId"] for x in self.request("GetTemporaryBans").content_dict["banList"]]
 
     def get_perma_bans(self) -> list[str]:
-        return self._get_list("get permabans", can_fail=False)
+        return [x["UserId"] for x in self.request("GetPermanentBans").content_dict["banList"]]
 
-    def get_team_switch_cooldown(self) -> str:
-        return self._str_request("get teamswitchcooldown", can_fail=False)
+    def get_team_switch_cooldown(self) -> int:
+        # TODO: Not available right now
+        return 0
 
-    def get_autobalance_threshold(self) -> str:
-        return self._str_request("get autobalancethreshold", can_fail=False)
+    def get_autobalance_threshold(self) -> int:
+        # TODO: Not available right now
+        return 0
 
-    def get_votekick_enabled(self) -> str:
-        return self._str_request("get votekickenabled", can_fail=False)
+    def get_votekick_enabled(self) -> bool:
+        # TODO: Not available right now
+        return False
 
-    def get_votekick_thresholds(self) -> str:
-        return self._str_request("get votekickthreshold", can_fail=False)
+    def get_votekick_thresholds(self) -> int:
+        # TODO: Not available right now
+        return 0
 
     def get_map_rotation(self) -> list[str]:
-        return self._str_request("rotlist", can_fail=False).split("\n")[:-1]
+        # TODO: Not available right now
+        return [x["iD"] for x in self.request("GetServerInformation", {"Name": "maprotation", "Value": ""}).content_dict["mAPS"]]
 
     def get_slots(self) -> str:
-        return self._str_request("get slots", can_fail=False)
+        # TODO: Not available right now
+        return ""
 
     def get_vip_ids(self) -> list[VipId]:
-        with self.with_connection() as conn:
-            res = self._get_list("get vipids", can_fail=False, conn=conn)
-
-            vip_ids: List[VipId] = []
-            for item in res:
-                try:
-                    player_id, name = item.split(" ", 1)
-                    name = name.replace('"', "")
-                    name = name.replace("\n", "")
-                    name = name.strip()
-                    vip_ids.append({"player_id": player_id, "name": name})
-                except ValueError as e:
-                    raise BrokenHllConnection() from e
-            return vip_ids
+        # TODO: Not available right now
+        return []
 
     def get_admin_groups(self) -> list[str]:
-        return self._get_list("get admingroups", can_fail=False)
+        return self.request("GetAdminGroups").content_dict["groupNames"]
 
-    def get_autobalance_enabled(self) -> str:
-        return self._str_request("get autobalanceenabled", can_fail=False)
+    def get_autobalance_enabled(self) -> bool:
+        # TODO: Not available right now
+        return False
 
-    @_auto_retry
     def get_logs(
-        self,
-        since_min_ago: str | int,
-        filter_: str = "",
-        conn: HLLConnection | None = None,
+            self,
+            since_min_ago: str | int,
+            filter_: str = "",
+            conn: HLLConnection | None = None,
     ) -> str:
-        if conn is None:
-            raise ValueError("conn parameter should never be None")
-        res = self._str_request(f"showlog {since_min_ago}", conn=conn)
-        if res == "EMPTY":
-            return ""
-        for i in range(30):
-            if res[-1] == "\n":
-                break
-            try:
-                # res *should* already be a decodable byte chunk because of how _request works
-                extra_chunks: list[bytes] = []
-                next_chunk: bytes = conn.receive()
-                extra_chunks.append(next_chunk)
-                while not self._ends_on_complete_code_point(extra_chunks[-1]):
-                    next_chunk: bytes = conn.receive()
-                    extra_chunks.append(next_chunk)
+        # TODO: Returned an empty list of entries on my test server, recheck when actual rconv2 is available
+        return "\n".join(self.request("GetAdminLog", {"LogBackTrackTime": since_min_ago}).content_dict["entries"])
 
-                res += b"".join(extra_chunks).decode()
-            except (
-                RuntimeError,
-                BrokenPipeError,
-                socket.timeout,
-                ConnectionResetError,
-                UnicodeDecodeError,
-            ):
-                logger.exception("Failed request")
-                raise HLLServerError(f"showlog {since_min_ago}")
+    def get_idle_autokick_time(self) -> int:
+        return 0
 
-        return res
+    def get_max_ping_autokick(self) -> int:
+        # TODO: Not available right now
+        return 0
 
-    def get_idle_autokick_time(self) -> str:
-        return self._str_request("get idletime", can_fail=False)
+    def get_queue_length(self) -> int:
+        # TODO: Verify if this value is updated instantly or after the current session ends or any async time
+        return self.request("GetServerInformation", {"Name": "session", "Value": ""}).content_dict["maxQueueCount"]
 
-    def get_max_ping_autokick(self) -> str:
-        return self._str_request("get highping", can_fail=False)
+    def get_vip_slots_num(self) -> int:
+        # TODO: Verify if this value is updated instantly or after the current session ends or any async time
+        return self.request("GetServerInformation", {"Name": "session", "Value": ""}).content_dict["maxVipQueueCount"]
 
-    def get_queue_length(self) -> str:
-        return self._str_request("get maxqueuedplayers", can_fail=False)
+    def set_autobalance_enabled(self, value: bool) -> bool:
+        self.request("SetAutoBalance", {"EnableAutoBalance": value})
+        return True
 
-    def get_vip_slots_num(self) -> str:
-        return self._str_request("get numvipslots", can_fail=False)
+    def set_welcome_message(self, message):
+        self.request("SendServerMessage", {"Message": message})
 
-    def set_autobalance_enabled(self, value: str) -> bool:
-        """
-        String bool is on / off
-        """
-        return self._str_request(f"setautobalanceenabled {value}") == SUCCESS
-
-    def set_welcome_message(self, message) -> str:
-        return self._str_request(f"say {message}", log_info=True, can_fail=False)
-
-    def set_map(self, map_name: str) -> str:
-        return self._str_request(f"map {map_name}", log_info=True)
+    def set_map(self, map_name: str):
+        self.request("ChangeMap", {"MapName": map_name})
 
     def get_current_map_sequence(self) -> list[str]:
-        return self._str_request("listcurrentmapsequence").split("\n")[:-1]
+        # TODO: No command to get this info right now
+        return [x["iD"] for x in self.request("GetServerInformation", {"Name": "maprotation", "Value": ""}).content_dict["mAPS"]]
 
     def get_map_shuffle_enabled(self) -> bool:
-        return self._str_request("querymapshuffle").endswith("TRUE")
+        # TODO: No command to get this info right now
+        return False
 
     def set_map_shuffle_enabled(self, enabled: bool) -> None:
-        current = self.get_map_shuffle_enabled()
-        if current != enabled:
-            self._str_request(f"togglemapshuffle")
+        self.request("ShuffleMapSequence", {"Enable": enabled})
 
     def set_idle_autokick_time(self, minutes) -> bool:
-        return self._str_request(f"setkickidletime {minutes}", log_info=True) == SUCCESS
+        self.request("SetIdleKickDuration", {"IdleTimeoutMinutes": minutes})
+        return True
 
     def set_max_ping_autokick(self, max_ms) -> bool:
-        return self._str_request(f"sethighping {max_ms}", log_info=True) == SUCCESS
+        self.request("SetHighPingThreshold", {"HighPingThresholdMs": max_ms})
+        return True
 
     def set_autobalance_threshold(self, max_diff: int):
-        return (
-            self._str_request(f"setautobalancethreshold {max_diff}", log_info=True)
-            == SUCCESS
-        )
+        self.request("SetAutoBalanceThreshold", {"AutoBalanceThreshold": max_diff})
+        return True
 
     def set_team_switch_cooldown(self, minutes: int) -> bool:
-        return (
-            self._str_request(f"setteamswitchcooldown {minutes}", log_info=True)
-            == SUCCESS
-        )
+        self.request("SetTeamSwitchCooldown", {"TeamSwitchTimer": minutes})
+        return True
 
     def set_queue_length(self, value: int) -> bool:
-        return (
-            self._str_request(f"setmaxqueuedplayers {value}", log_info=True) == SUCCESS
-        )
+        self.request("SetMaxQueuedPlayers", {"MaxQueuedPlayers": value})
+        return True
 
     def set_vip_slots_num(self, value: int) -> bool:
-        return self._str_request(f"setnumvipslots {value}", log_info=True) == SUCCESS
+        self.request("SetVipSlotCount", {"VipSlotCount": value})
+        return True
 
     @_escape_params
     def set_broadcast(self, message: str):
-        return self._str_request(
-            f'broadcast "{message}"', log_info=True, can_fail=False
-        )
+        self.request("ServerBroadcast", {"Message": message})
 
-    def set_votekick_enabled(self, value: str) -> bool:
-        """
-        String bool is on / off
-        """
-        return self._str_request(f"setvotekickenabled {value}") == SUCCESS
+    def set_votekick_enabled(self, value: bool) -> bool:
+        self.request("SetVoteKick", {"Enabled": value})
+        return True
 
-    def set_votekick_thresholds(self, threshold_pairs: str) -> str:
-        """
-        PlayerCount,Threshold[,PlayerCount,Threshold,...]
-        """
-        return self._str_request(f"setvotekickthreshold {threshold_pairs}")
+    def set_votekick_thresholds(self, threshold_pairs: str):
+        self.request("ResetKickThreshold", {"ThresholdValue": threshold_pairs})
 
     def reset_votekick_thresholds(self) -> bool:
-        return self._str_request(f"resetvotekickthreshold", log_info=True) == SUCCESS
+        self.request("ResetKickThreshold", {})
+        return True
 
-    def switch_player_on_death(self, player_name) -> bool:
-        return (
-            self._str_request(f"switchteamondeath {player_name}", log_info=True)
-            == SUCCESS
-        )
+    def switch_player_on_death(self, player_id) -> bool:
+        # TODO: player_name changed to player_id: Possibly the frontend needs to be changed as well
+        self.request("ForceTeamSwitch", {"PlayerId": player_id, "ForceMode": 0})
+        return True
 
-    def switch_player_now(self, player_name: str) -> bool:
-        return (
-            self._str_request(f"switchteamnow {player_name}", log_info=True) == SUCCESS
-        )
+    def switch_player_now(self, player_id: str) -> bool:
+        # TODO: player_name changed to player_id: Possibly the frontend needs to be changed as well
+        self.request("ForceTeamSwitch", {"PlayerId": player_id, "ForceMode": 1})
+        return True
 
     def add_map_to_rotation(
-        self,
-        map_name: str,
-        after_map_name: str,
-        after_map_name_number: int | None = None,
-    ) -> str:
-        cmd = f"rotadd {map_name} {after_map_name}"
-        if after_map_name_number:
-            cmd = f"{cmd} {after_map_name_number}"
-
-        return self._str_request(cmd, can_fail=False, log_info=True)
+            self,
+            map_name: str,
+            after_map_name: str,
+            after_map_name_number: int | None = None,
+    ):
+        # TODO: Verify that index logic is correct (hint: it probably isn't)
+        # TODO #2: Remove after_map_name argument
+        self.request("AddMapFromRotation", {"MapName": map_name, "Index": after_map_name_number + 1})
 
     def remove_map_from_rotation(
-        self, map_name: str, map_number: int | None = None
-    ) -> str:
-        cmd = f"rotdel {map_name}"
-        if map_number:
-            cmd = f"{cmd} {map_number}"
-
-        return self._str_request(cmd, can_fail=False, log_info=True)
+            self, map_name: str, map_number: int | None = None
+    ):
+        # TODO: Change signature to remove map name as possible argument
+        self.request("RemoveMapFromRotation", {"Index": map_number})
 
     @_escape_params
-    def punish(self, player_name: str, reason: str) -> bool:
-        return (
-            self._str_request(f'punish "{player_name}" "{reason}"', log_info=True)
-            == SUCCESS
-        )
+    def punish(self, player_id: str, reason: str) -> bool:
+        self.request("PunishPlayer", {"PlayerId": player_id, "Reason": reason})
+        return True
 
     @_escape_params
-    def kick(self, player_name: str, reason: str) -> bool:
-        return (
-            self._str_request(f'kick "{player_name}" "{reason}"', log_info=True)
-            == SUCCESS
-        )
+    def kick(self, player_id: str, reason: str) -> bool:
+        self.request("KickPlayer", {"PlayerId": player_id, "Reason": reason})
+        return True
 
     @_escape_params
     def temp_ban(
-        self,
-        player_name: str | None = None,
-        player_id: str | None = None,
-        duration_hours: int = 2,
-        reason: str = "",
-        admin_name: str = "",
+            self,
+            player_name: str | None = None,
+            player_id: str | None = None,
+            duration_hours: int = 2,
+            reason: str = "",
+            admin_name: str = "",
     ) -> bool:
-        reason = convert_tabs_to_spaces(reason)
-        return (
-            self._str_request(
-                f'tempban "{player_id or player_name}" {duration_hours} "{reason}" "{admin_name}"',
-                log_info=True,
-            )
-            == SUCCESS
-        )
+        self.request("TemporaryBanPlayer", {"PlayerId": player_id, "Duration": duration_hours, "Reason": reason, "AdminName": admin_name})
+        return True
 
     @_escape_params
     def perma_ban(
-        self,
-        player_name: str | None = None,
-        player_id: str | None = None,
-        reason: str = "",
-        admin_name: str = "",
+            self,
+            player_name: str | None = None,
+            player_id: str | None = None,
+            reason: str = "",
+            admin_name: str = "",
     ) -> bool:
-        reason = convert_tabs_to_spaces(reason)
-        return (
-            self._str_request(
-                f'permaban "{player_id or player_name}" "{reason}" "{admin_name}"',
-                log_info=True,
-            )
-            == SUCCESS
-        )
+        self.request("PermanentBanPlayer", {"PlayerId": player_id, "Reason": reason, "AdminName": admin_name})
+        return True
 
     def remove_temp_ban(self, player_id: str) -> bool:
-        return self._str_request(f"pardontempban {player_id}", log_info=True) == SUCCESS
+        self.request("RemoveTemporaryBan", {"PlayerId": player_id})
+        return True
 
     def remove_perma_ban(self, player_id: str) -> bool:
-        return (
-            self._str_request(f"pardonpermaban {player_id}", log_info=True) == SUCCESS
-        )
+        self.request("RemovePermanentBan", {"PlayerId": player_id})
+        return True
 
     @_escape_params
     def add_admin(self, player_id, role, description) -> bool:
-        description = convert_tabs_to_spaces(description)
-        res = self._str_request(
-            f'adminadd "{player_id}" "{role}" "{description}"', log_info=True
-        )
-
-        return res == SUCCESS
+        self.request("AddAdmin", {"PlayerId": player_id, "Description": description})
+        return True
 
     def remove_admin(self, player_id) -> bool:
-        return self._str_request(f"admindel {player_id}", log_info=True) == SUCCESS
+        self.request("RemoveAdmin", {"PlayerId": player_id})
+        return True
 
     @_escape_params
     def add_vip(self, player_id: str, description: str) -> bool:
-        description = convert_tabs_to_spaces(description)
-        return (
-            self._str_request(f'vipadd {player_id} "{description}"', log_info=True)
-            == SUCCESS
-        )
+        self.request("AddVipPlayer", {"PlayerId": player_id, "Description": description})
+        return True
 
     def remove_vip(self, player_id) -> bool:
-        return self._str_request(f"vipdel {player_id}", log_info=True) == SUCCESS
+        self.request("RemoveVipPlayer", {"PlayerId": player_id})
+        return True
 
     @_escape_params
-    def message_player(self, player_name=None, player_id=None, message="") -> str:
-        return self._str_request(
-            f'message "{player_id or player_name}" {message}',
-            log_info=True,
+    def message_player(self, player_name=None, player_id=None, message=""):
+        self.request("MessagePlayer", {"Message": message, "PlayerId": player_id})
+
+    def get_gamestate(self) -> GameStateType:
+        s = self.request("GetServerInformation", {"Name": "session", "Value": ""}).content_dict
+        # TODO: next_map is not included in session, and map name needs to be parsed, if possible.
+        return GameStateType(
+            next_map=None,
+            axis_score=s["AxisScore"],
+            allied_score=s["AlliedScore"],
+            current_map=LayerType(
+                map=s["MapName"],
+                game_mode=s["GameMode"],
+            ),
+            time_remaining=s["RemainingMatchTime"],
+            num_axis_players=s["AxisPlayerCount"],
+            num_allied_players=s["AlliedPlayerCount"],
+            raw_time_remaining=s["RemainingMatchTime"],
         )
-
-    def get_gamestate(self) -> list[str]:
-        """
-        Players: Allied: 0 - Axis: 1
-        Score: Allied: 2 - Axis: 2
-        Remaining Time: 0:11:51
-        Map: foy_warfare
-        Next Map: stmariedumont_warfare
-
-        """
-        # Has no trailing "\n"
-
-        return self._str_request("get gamestate", can_fail=False).split("\n")
 
     def get_objective_row(self, row: int):
         if not (0 <= row <= 4):
             raise ValueError("Row must be between 0 and 4")
 
-        return self._get_list(
-            f"get objectiverow_{row}",
-            fail_msgs="Cannot execute command for this gamemode.",
+        return self.get_objective_rows()[row]
+
+    def get_objective_rows(self):
+        details = self.request("GetClientReferenceData", "SetSectorLayout")
+        parameters = details.content_dict["dialogueParameters"]
+        if not parameters or not all(
+                p["iD"].startswith("Sector_") for p in parameters[:5]
+        ):
+            msg = "Received unexpected response from server."
+            raise HLLMessageError(msg)
+
+        return (
+            parameters[0]["valueMember"].split(","),
+            parameters[1]["valueMember"].split(","),
+            parameters[2]["valueMember"].split(","),
+            parameters[3]["valueMember"].split(","),
+            parameters[4]["valueMember"].split(","),
         )
 
     def set_game_layout(self, objectives: Sequence[str]):
         if len(objectives) != 5:
             raise ValueError("5 objectives must be provided")
-        self._str_request(
-            f'gamelayout "{objectives[0]}" "{objectives[1]}" "{objectives[2]}" "{objectives[3]}" "{objectives[4]}"',
-            log_info=True,
-            can_fail=False,
-        )
+        print(self.request("SetSectorLayout", {
+            "Sector_1": objectives[0],
+            "Sector_2": objectives[1],
+            "Sector_3": objectives[2],
+            "Sector_4": objectives[3],
+            "Sector_5": objectives[4],
+        }).content)
         return list(objectives)
-    
+
     def get_game_mode(self):
         """
         Any of "IntenseWarfare", "OffensiveWarfare", or ???
         """
-        return self._str_request("get gamemode", can_fail=False)
+        return self.request("GetServerInformation", {"Name": "session", "Value": ""}).content_dict["gameMode"]
 
 
 if __name__ == "__main__":

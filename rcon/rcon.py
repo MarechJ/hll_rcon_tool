@@ -1175,26 +1175,27 @@ class Rcon(ServerCtl):
         with invalidates(self.get_profanities):
             return super().ban_profanities(",".join(profanities))
 
-    def punish(self, player_name: str, reason: str, by: str) -> bool:
-        res = super().punish(player_name, reason)
+    def punish(self, player_name: str, reason: str, by: str, player_id: str | None = None) -> bool:
+        res = super().punish(player_id, reason)
         safe_save_player_action(
             rcon=self,
             player_name=player_name,
             action_type=PlayerActionState.PUNISH,
             reason=reason,
             by=by,
+            player_id=player_id,
         )
         return res
 
-    def switch_player_now(self, player_name: str) -> bool:
-        return super().switch_player_now(player_name)
+    def switch_player_now(self, player_id: str) -> bool:
+        return super().switch_player_now(player_id)
 
-    def switch_player_on_death(self, player_name, by) -> bool:
-        return super().switch_player_on_death(player_name)
+    def switch_player_on_death(self, player_id, by) -> bool:
+        return super().switch_player_on_death(player_id)
 
     def kick(self, player_name, reason, by, player_id: str | None = None) -> bool:
         with invalidates(Rcon.get_players):
-            res = super().kick(player_name, reason)
+            res = super().kick(player_id, reason)
 
         safe_save_player_action(
             rcon=self,
