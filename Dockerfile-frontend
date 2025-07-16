@@ -1,4 +1,4 @@
-ARG buildImage=node:20-buster-slim
+ARG buildImage=node:20-bookworm-slim
 
 FROM $buildImage AS adminbuild
 
