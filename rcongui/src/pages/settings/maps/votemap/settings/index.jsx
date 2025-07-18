@@ -30,6 +30,11 @@ import {
 import Padlock from "@/components/shared/Padlock";
 import SaveIcon from "@mui/icons-material/Save";
 import ReplayIcon from "@mui/icons-material/Replay";
+import { lazy, Suspense } from "react";
+const EmojiPicker = lazy(() => import("@emoji-mart/react"));
+import emojiData from "@emoji-mart/data/sets/15/twitter.json";
+import DeleteIcon from "@mui/icons-material/Delete";
+import Emoji from "@/components/shared/Emoji";
 
 function VotemapSettingsPage() {
   const loaderData = useLoaderData();
@@ -67,10 +72,12 @@ function VotemapSettingsPage() {
 
   const prevConfig = useRef(config);
   const [workingConfig, setWorkingConfig] = useState(config);
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+  const [emojiPickerIndex, setEmojiPickerIndex] = useState(null);
 
   // Compare incoming config changes
   const handleIncomingConfigChange = () => {
-    // check how the configs differ
+    // check how the configs differ (deep comparison)
     const diff = _.transform(
       prevConfig.current,
       (result, value, key) => {
@@ -89,27 +96,30 @@ function VotemapSettingsPage() {
 
     // update reference
     // this will also prevent infinite toasting for the same changes
-    prevConfig.current = config;
+    prevConfig.current = _.cloneDeep(config);
 
     // if only 'enabled' changed do nothing
     if (enabledOnly) return;
 
     // announce there have been some changes made
-    toast.info(VotemapChangeNotification, {
-      onClose: (changesAccepted) => {
-        if (changesAccepted) {
-          // only override what has actually changed on the server
-          // to keep any other local changes
+    toast(VotemapChangeNotification, {
+      onClose(reason) {
+        // No-op: all logic is handled in the onAccept callback below
+      },
+      data: {
+        changes: diff,
+        onAccept: () => {
           setWorkingConfig((prev) => {
             const combined = { ...prev };
             diff.forEach((key) => {
-              combined[key] = config[key];
+              combined[key] = _.cloneDeep(config[key]);
             });
             return combined;
           });
-        }
+        },
       },
-      data: { changes: diff },
+      autoClose: false,
+      closeOnClick: false,
     });
   };
 
@@ -131,6 +141,52 @@ function VotemapSettingsPage() {
       ...prevConfig,
       [propName]: value,
     }));
+  };
+
+  // vote_flags handlers
+  const handleAddVoteFlag = () => {
+    setWorkingConfig((prev) => ({
+      ...prev,
+      vote_flags: [
+        ...(prev.vote_flags || []),
+        { flag: "", vote_count: 0 },
+      ],
+    }));
+  };
+
+  const handleRemoveVoteFlag = (index) => {
+    setWorkingConfig((prev) => ({
+      ...prev,
+      vote_flags: prev.vote_flags.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleVoteFlagChange = (index, key, value) => {
+    setWorkingConfig((prev) => {
+      const updated = [...(prev.vote_flags || [])];
+      if (key === "vote_count") {
+        value = Math.max(0, Math.min(100, Number(value)));
+      }
+      updated[index] = { ...updated[index], [key]: value };
+      return { ...prev, vote_flags: updated };
+    });
+  };
+
+  const handleOpenEmojiPicker = (index) => {
+    setEmojiPickerIndex(index);
+    setEmojiPickerOpen(true);
+  };
+
+  const handleCloseEmojiPicker = () => {
+    setEmojiPickerOpen(false);
+    setEmojiPickerIndex(null);
+  };
+
+  const handleEmojiSelected = (emoji) => {
+    if (emojiPickerIndex !== null) {
+      handleVoteFlagChange(emojiPickerIndex, "flag", emoji.native);
+    }
+    handleCloseEmojiPicker();
   };
 
   useEffect(handleIncomingConfigChange, [config, workingConfig]);
@@ -250,6 +306,72 @@ function VotemapSettingsPage() {
               onChange={handleWorkingChanges(configItem.name)}
             />
           ))}
+
+          <Divider flexItem orientation={"horizontal"} />
+          
+          {/* Vote Flags Section */}
+          <Typography variant="subtitle1">Vote Flags</Typography>
+          <Stack spacing={1}>
+            {(workingConfig.vote_flags || []).map((item, idx) => (
+              <Stack key={idx} direction="row" spacing={1} alignItems="center">
+                <Button
+                  variant="outlined"
+                  onClick={() => handleOpenEmojiPicker(idx)}
+                  sx={{ minWidth: 48, fontSize: 24 }}
+                >
+                  <Emoji emoji={item.flag || "❓"} />
+                </Button>
+                <TextField
+                  type="number"
+                  label="Vote Count"
+                  slotProps={{ input: { min: 0, max: 100 } }}
+                  value={item.vote_count}
+                  onChange={(e) => handleVoteFlagChange(idx, "vote_count", e.target.value)}
+                  sx={{ width: 120 }}
+                />
+                <Button
+                  color="error"
+                  onClick={() => handleRemoveVoteFlag(idx)}
+                  startIcon={<DeleteIcon />}
+                >
+                  Remove
+                </Button>
+              </Stack>
+            ))}
+            <Button variant="outlined" onClick={handleAddVoteFlag}>
+              Add Vote Flag
+            </Button>
+          </Stack>
+
+          {/* Emoji Picker Dialog */}
+          {emojiPickerOpen && (
+            <div
+              style={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                width: "100vw",
+                height: "100vh",
+                background: "rgba(0,0,0,0.2)",
+                zIndex: 1300,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              onClick={handleCloseEmojiPicker}
+            >
+              <div onClick={e => e.stopPropagation()}>
+                <Suspense fallback={<div>Loading emoji picker...</div>}>
+                  <EmojiPicker
+                    set="twitter"
+                    theme="light"
+                    data={emojiData}
+                    onEmojiSelect={handleEmojiSelected}
+                  />
+                </Suspense>
+              </div>
+            </div>
+          )}
         </Stack>
       </Stack>
     </Stack>

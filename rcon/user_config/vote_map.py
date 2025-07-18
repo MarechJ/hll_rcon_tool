@@ -1,7 +1,7 @@
 import enum
 from typing import TypedDict
 
-from pydantic import Field
+from pydantic import Field, constr, BaseModel
 
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
@@ -26,6 +26,7 @@ class VoteMapType(TypedDict):
     reminder_frequency_minutes: int
     allow_opt_out: bool
     help_text: str | None
+    vote_flags: list["VoteFlag"]
 
 
 # Has to inherit from str to allow JSON serialization when
@@ -36,6 +37,18 @@ class DefaultMethods(str, enum.Enum):
     random_suggestions = "random_from_suggestions"
     random_all_maps = "random_from_all_maps"
 
+class VoteFlag(BaseModel):
+    flag: str = Field(
+        ..., 
+        description="A single-character flag", 
+        min_length=1, 
+    )
+    vote_count: int = Field(
+        ..., 
+        ge=0,
+        le=100,
+        description="Number of votes (must be 0 or greater)"
+    )
 
 INSTRUCTION_TEXT = """Vote for the nextmap:
 Type in the chat !votemap <map number>
@@ -80,13 +93,19 @@ class VoteMapUserConfig(BaseUserConfig):
     no_vote_text: str = Field(default=NO_VOTE_TEXT)
     reminder_frequency_minutes: int = Field(ge=0, default=20)
     allow_opt_out: bool = Field(default=True)
-    help_text: str | None = Field(default="")
+    help_text: str | None = Field(default="") # TODO why is this possibly None?
+    vote_flags: list[VoteFlag] = Field(default_factory=list, title="Vote Flags", description="Players with a listed flag have their vote counted n times (use lowest value if multiple flags; n ≥ 0).")
+
 
     @staticmethod
     def save_to_db(values: VoteMapType, dry_run=False):
         key_check(
             VoteMapType.__required_keys__, VoteMapType.__optional_keys__, values.keys()
         )
+
+        # model_fields = VoteMapUserConfig.model_fields.keys()
+        # filtered_values = {k: v for k, v in values.items() if k in model_fields}
+        # validated_conf = VoteMapUserConfig(**filtered_values) # type: ignore
 
         validated_conf = VoteMapUserConfig(
             enabled=values.get("enabled"),
@@ -112,6 +131,7 @@ class VoteMapUserConfig(BaseUserConfig):
             reminder_frequency_minutes=values.get("reminder_frequency_minutes"),
             allow_opt_out=values.get("allow_opt_out"),
             help_text=values.get("help_text"),
+            vote_flags=values.get("vote_flags"),
         )
 
         if not dry_run:

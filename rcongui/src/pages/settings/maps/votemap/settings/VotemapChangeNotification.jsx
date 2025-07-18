@@ -1,7 +1,6 @@
 import { Button } from "@mui/material";
 
 export function VotemapChangeNotification({ closeToast, data }) {
-  const acceptChanges = true;
   return (
     <div>
       <div>Config has changed</div>
@@ -13,14 +12,17 @@ export function VotemapChangeNotification({ closeToast, data }) {
       <Button
         size="small"
         color="primary"
-        onClick={() => closeToast(acceptChanges)}
+        onClick={() => {
+          if (data.onAccept) data.onAccept();
+          closeToast("accept");
+        }}
       >
         Accept
       </Button>
       <Button
         size="small"
         color="secondary"
-        onClick={() => closeToast(!acceptChanges)}
+        onClick={() => closeToast("ignore")}
       >
         Ignore
       </Button>
