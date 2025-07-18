@@ -102,6 +102,8 @@ function VotemapStatusPage() {
     });
   };
 
+  const nextMap = [...mapListStatus].sort((a, b) => b.vote_counts - a.vote_counts)[0]
+
   return (
     <Stack direction={{ xs: "column-reverse", md: "row" }} spacing={1}>
       <MapListContainer>
@@ -113,6 +115,7 @@ function VotemapStatusPage() {
               key={mapLayer.id}
               mapLayer={mapLayer}
               voters={mapListStatus[index].voters}
+              votesCount={mapListStatus[index].votes_count}
             />
           )}
         />
@@ -124,7 +127,7 @@ function VotemapStatusPage() {
         <Typography variant="subtitle2" component={"div"}>
           Next map:{" "}
           {config.enabled
-            ? mapListStatus[0]?.map?.pretty_name ?? "Unknown"
+            ? nextMap?.map?.pretty_name ?? "Unknown"
             : "N/A"}
         </Typography>
         <Divider orientation="horizontal" sx={{ my: 1 }} />
