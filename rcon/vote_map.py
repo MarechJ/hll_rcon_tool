@@ -13,7 +13,12 @@ from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 
 from rcon import maps
 from rcon.cache_utils import get_redis_client
-from rcon.maps import categorize_maps, numbered_maps, sort_maps_by_gamemode
+from rcon.maps import (
+    Environment,
+    GameMode,
+    categorize_maps,
+    sort_maps_by_gamemode,
+)
 from rcon.models import PlayerID, PlayerOptins, enter_session
 from rcon.player_history import get_player
 from rcon.rcon import CommandFailedError, Rcon, get_rcon
@@ -482,7 +487,9 @@ class VoteMap:
         cmd_handler = VoteMapCommandHandler(self, self._rcon, self._config_loader())
         return cmd_handler.execute(struct_log, player_id)
 
-    def register_vote(self, player_id: str, timestamp: int, entry: int, count: int | None = None):
+    def register_vote(
+        self, player_id: str, timestamp: int, entry: int, count: int | None = None
+    ):
         """
         Checks whether the player exists, the vote is not too old and
         if there is any game going on.\n
@@ -541,7 +548,9 @@ class VoteMap:
         # Check for player's flags
         # Pick the one with the lowest vote_count
         else:
-            player_flags = list(map(lambda flag_record: flag_record["flag"], player["flags"]))
+            player_flags = list(
+                map(lambda flag_record: flag_record["flag"], player["flags"])
+            )
             config_flags = self._config_loader().vote_flags
             flag_vote_counts = []
             for flag in config_flags:
@@ -578,7 +587,7 @@ class VoteMap:
         return selected_map_id
 
     @validate_map_ids
-    def register_player_choice(self, map_id: str, player_id: str, player_name: str):
+    def register_player_choice(self, map_id: str, player_id: str):
         if self.get_player_choice():
             raise Exception("Player's map choice was already selected.")
 
@@ -605,6 +614,8 @@ class VoteMap:
                 raise PlayerNotFound(
                     f"Map choice not registered!\nSomething went wrong while searching for your {player_id=} profile."
                 )
+
+        player_name = player["names"][0]["name"]
 
         self._state.set_player_choice(player_id, player_name)
         # Access state's method directly to prevent sorting by game mode
@@ -911,7 +922,10 @@ class VoteMapCommandHandler:
     SHOW_CMD_PATTERN = re.compile(r"(!votemap|!vm)$", re.IGNORECASE)
     NEVER_CMD_PATTERN = re.compile(r"(!votemap|!vm)\s*never$", re.IGNORECASE)
     ALLOW_CMD_PATTERN = re.compile(r"(!votemap|!vm)\s*allow$", re.IGNORECASE)
-    CHOICE_CMD_PATTERN = re.compile(r"(!votemap|!vm)\s*add$", re.IGNORECASE)
+    CHOICE_HELP_CMD_PATTERN = re.compile(r"(!votemap|!vm)\s*add\s*help$", re.IGNORECASE)
+    CHOICE_CMD_PATTERN = re.compile(
+        r"(!votemap|!vm)\s*add\s+(\w{3}\s+\w+\s+\w+|\w{3}\s+\w+|\w{3})", re.IGNORECASE
+    )
 
     def __init__(self, votemap: VoteMap, rcon: Rcon, config: VoteMapUserConfig):
         self.votemap = votemap
@@ -934,8 +948,11 @@ class VoteMapCommandHandler:
                 self.handle_opt_out(player_id)
             elif self.ALLOW_CMD_PATTERN.match(message):
                 self.handle_opt_in(player_id)
-            elif self.CHOICE_CMD_PATTERN.match(message):
-                self.handle_player_choice(player_id, log)
+            elif self.CHOICE_HELP_CMD_PATTERN.match(message):
+                self.handle_player_choice_help(player_id)
+            elif match := self.CHOICE_CMD_PATTERN.match(message):
+                args = match.group(2).lower().split()
+                self.handle_player_choice(player_id, *args)
             else:
                 # fallback
                 message = "INVALID COMMAND!\n" + (
@@ -948,9 +965,78 @@ class VoteMapCommandHandler:
 
         return True
 
-    # TODO
-    def handle_player_choice(self, player_id: str, log: StructuredLogLineWithMetaData):
-        pass
+    def handle_player_choice_help(self, player_id: str):
+        all_maps = self.rcon.get_maps()
+        tag_to_id = {m.map.tag: m.map.shortname for m in all_maps}
+        environments = [weather.value for weather in Environment]
+        game_modes = [mode.value for mode in GameMode]
+
+
+        help_text = "How to add your map?"
+        help_text += "\n\nType in the chat:\n'!vm add <map_tag> [game_mode] [environment]'"
+        help_text += "\nDefaults: game_mode=warfare, environment=day"
+        help_text += "\neg. '!vm add car' -> carentan warfare day"
+        help_text += "\n\nMAP_TAG options:"
+        help_text += "\n" + "\n".join(f"{key} -> {value}" for key, value in tag_to_id.items())
+        help_text += "\n\nGAME_MODE options:"
+        help_text += "\n" + "\n".join(game_modes)
+        help_text += "\n\nENVIRONMENT options:"
+        help_text += "\n" + "\n".join(environments)
+
+        self.rcon.message_player(player_id=player_id, message=help_text)
+
+    def handle_player_choice(
+        self,
+        player_id: str,
+        map_tag: str,
+        game_mode: str = "warfare",
+        environment: str = "day",
+    ):
+        all_maps = self.rcon.get_maps()
+        tag_to_id = {m.map.tag: m.map.shortname for m in all_maps}
+        environments = [weather.value for weather in Environment]
+        game_modes = [mode.value for mode in GameMode]
+
+        if map_tag.upper() not in tag_to_id:
+            raise Exception(
+                f"""INVALID MAP\n
+                OPTIONS:\n\
+                {"\n".join(f"{key} -> {value}" for key, value in tag_to_id.items())}"""
+            )
+
+        if game_mode not in game_modes:
+            raise Exception(
+                f"""INVALID GAME MODE\n
+                OPTIONS:\n\
+                {"\n".join(game_modes)}"""
+            )
+
+        if environment not in environments:
+            raise Exception(
+                f"""INVALID ENVIRONMENT\n
+                OPTIONS:\n
+                {"\n".join(environments)}"""
+            )
+
+        map_found = list(filter(
+            lambda m: m.map.tag == map_tag.upper()
+            and m.game_mode == game_mode
+            and m.environment == environment,
+            all_maps,
+        ))
+
+        if len(map_found) == 0:
+            raise Exception(
+                f"""INVALID OPTIONS\n
+                The map with the given options does not exist.\n
+                OPTIONS:\n
+                {"\n".join([f"{map_tag=}", f"{game_mode=}", f"{environment=}"])}"""
+            )
+
+        map_choice = map_found[0]
+        self.votemap.register_player_choice(map_choice.id, player_id)
+        success_msg = f"SUCCESS\n\nMap selected:\n{map_choice.pretty_name}\nType !vm too see the new selection"
+        self.rcon.message_player(player_id=player_id, message=success_msg)
 
     def handle_vote(
         self, player_id: str, log: StructuredLogLineWithMetaData, entry: int
@@ -1239,6 +1325,7 @@ class VoteMapNoInitialised(Exception):
 
 class PlayerNotFound(Exception):
     pass
+
 
 class PlayerVoteMapBan(Exception):
     def __init__(self, message="Player is banned from voting"):
