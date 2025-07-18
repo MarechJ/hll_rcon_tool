@@ -39,12 +39,10 @@ class DefaultMethods(str, enum.Enum):
 
 class VoteFlag(BaseModel):
     flag: str = Field(
-        ..., 
         description="A single-character flag", 
         min_length=1, 
     )
     vote_count: int = Field(
-        ..., 
         ge=0,
         le=100,
         description="Number of votes (must be 0 or greater)"
