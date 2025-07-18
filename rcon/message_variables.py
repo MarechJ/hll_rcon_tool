@@ -180,7 +180,7 @@ def format_winning_map(
 
 def vote_status() -> list[tuple[Layer, int]]:
     logger.info(f"Crunching vote_status")
-    vote_results = VoteMap().get_vote_overview()
+    vote_results = VoteMap.instance().get_vote_overview()
     if vote_results:
         return [(m, v) for m, v in vote_results.items()]
     else:
@@ -213,10 +213,11 @@ def join_vote_options(
 
 
 def format_map_vote(format_type="line"):
-    selection = VoteMap().get_selection()
+    selection = VoteMap.instance().get_selection()
     if not selection:
         return ""
 
+    selection = [maps.parse_layer(map) for map in selection]
     # 0: map 1, 1: map 2, etc.
     vote_dict = numbered_maps(selection)
     # map 1: 0, map 2: 1, etc.
