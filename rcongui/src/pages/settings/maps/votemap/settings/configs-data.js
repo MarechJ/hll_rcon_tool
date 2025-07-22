@@ -28,6 +28,12 @@ export const messageFieldConfigs = [
         helperText: "This text will show to the player in case of a bad !votemap command, or if the user types !votemap help",
         rows: 10,
     },
+    {
+        name: "player_choice_help_text",
+        label: "Help text:",
+        helperText: "This text will show to the player if the user types !votemap add or !votemap add help command. This help text is followed by a list of options.",
+        rows: 10,
+    },
 ];
 
 export const textFieldConfigs = [
