@@ -2,8 +2,9 @@ import logging
 import threading
 import time
 from contextlib import contextmanager, nullcontext
+from enum import StrEnum
 from functools import wraps
-from typing import Generator, Sequence, Any
+from typing import Generator, Sequence, Any, List
 
 from rcon.connection import HLLConnection, Response, HLLMessageError
 from rcon.maps import LayerType
@@ -13,6 +14,12 @@ from rcon.utils import exception_in_chain
 logger = logging.getLogger(__name__)
 
 SUCCESS = "SUCCESS"
+
+
+class GameMode(StrEnum):
+    Warfare = "Warfare"
+    Offensive = "Offensive"
+    Skirmish = "Skirmish"
 
 
 def escape_string(s):
@@ -515,7 +522,7 @@ class ServerCtl:
 
         return self.get_objective_rows()[row]
 
-    def get_objective_rows(self):
+    def get_objective_rows(self) -> List[List[str]]:
         details = self.request("GetClientReferenceData", "SetSectorLayout")
         parameters = details.content_dict["dialogueParameters"]
         if not parameters or not all(
@@ -524,13 +531,13 @@ class ServerCtl:
             msg = "Received unexpected response from server."
             raise HLLMessageError(msg)
 
-        return (
+        return [
             parameters[0]["valueMember"].split(","),
             parameters[1]["valueMember"].split(","),
             parameters[2]["valueMember"].split(","),
             parameters[3]["valueMember"].split(","),
             parameters[4]["valueMember"].split(","),
-        )
+        ]
 
     def set_game_layout(self, objectives: Sequence[str]):
         if len(objectives) != 5:
@@ -549,6 +556,22 @@ class ServerCtl:
         Any of "IntenseWarfare", "OffensiveWarfare", or ???
         """
         return self.request("GetServerInformation", {"Name": "session", "Value": ""}).content_dict["gameMode"]
+
+
+    def set_match_timer(self, game_mode: GameMode, length: int):
+        self.request("SetMatchTimer", {"GameMode": game_mode.value, "MatchLength": length})
+
+
+    def remove_match_timer(self, game_mode: GameMode):
+        self.request("RemoveMatchTimer", {"GameMode": game_mode.value})
+
+
+    def set_warmup_timer(self, game_mode: GameMode, length: int):
+        self.request("SetWarmupTimer", {"GameMode": game_mode.value, "WarmupLength": length})
+
+
+    def remove_warmup_timer(self, game_mode: GameMode):
+        self.request("RemoveWarmupTimer", {"GameMode": game_mode.value})
 
 
 if __name__ == "__main__":

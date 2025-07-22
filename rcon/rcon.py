@@ -1358,12 +1358,8 @@ class Rcon(ServerCtl):
 
         return self.get_map_rotation()
 
-    @ttl_cache(ttl=10)
-    def get_objective_row(self, row: int):
-        return super().get_objective_row(row)
-
     def get_objective_rows(self) -> List[List[str]]:
-        return [self.get_objective_row(row) for row in range(5)]
+        return super().get_objective_rows()
 
     def set_game_layout(
         self,
