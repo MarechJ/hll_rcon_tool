@@ -5,16 +5,20 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
-import { FormControl, InputLabel, MenuItem, Select, Typography } from "@mui/material";
+import { Alert, FormControl, InputLabel, MenuItem, Select, Typography } from "@mui/material";
 import moment from "moment";
 import { getServerStatus, getSharedMessages } from "@/utils/fetchUtils";
 import TextHistory from "../textHistory";
 import { TimePickerButtons } from "@/components/shared/TimePickerButtons";
 import Grid from "@mui/material/Grid2";
 import {Fragment, useEffect, useState} from "react";
+import dayjs from 'dayjs';
+import { DesktopDateTimePicker } from '@mui/x-date-pickers/DesktopDateTimePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 
 const presetTimes = [
-  [1, "hour"],
+  [2, "hours"],
   [1, "day"],
   [1, "week"],
   [1, "month"],
@@ -67,7 +71,7 @@ export default function BlacklistRecordCreateDialog({
 }) {
   const [blacklist, setBlacklist] = useState("");
   const [playerId, setPlayerId] = useState("");
-  const [expiresAt, setExpiresAt] = useState("");
+  const [expiresAt, setExpiresAt] = useState(dayjs());
   const [reason, setReason] = useState("");
   const [currentServer, setCurrentServer] = useState({});
   const [punishMessages, setPunishMessages] = useState([]);
@@ -102,14 +106,15 @@ export default function BlacklistRecordCreateDialog({
         );
         if (blacklist) setBlacklist(blacklist);
       }
-      if (initialValues.playerId !== undefined)
-        setPlayerId(initialValues.playerId);
+      if (initialValues.playerId !== undefined) setPlayerId(initialValues.playerId);
       if (initialValues.expiresAt !== undefined) {
         setExpiresAt(
-          initialValues.expiresAt === null ? "" : initialValues.expiresAt
+          initialValues.expiresAt === null ? null : dayjs(initialValues.expiresAt)
         );
       }
       if (initialValues.reason !== undefined) setReason(initialValues.reason);
+    } else {
+      setExpiresAt(dayjs());
     }
   }, [open]);
 
@@ -123,7 +128,7 @@ export default function BlacklistRecordCreateDialog({
     setOpen(false);
     setBlacklist("");
     setPlayerId("");
-    setExpiresAt("");
+    setExpiresAt(dayjs());
     setReason("");
   };
 
@@ -138,8 +143,7 @@ export default function BlacklistRecordCreateDialog({
           const data = {
             blacklistId: blacklist.id,
             playerId,
-            expiresAt:
-              expiresAt === "" ? null : moment(expiresAt).utc().toISOString(),
+            expiresAt,
             reason,
           };
           onSubmit(data);
@@ -193,20 +197,33 @@ export default function BlacklistRecordCreateDialog({
             {/* EXPIRY */}
             <Grid container spacing={2} alignItems="center">
               <Grid size={12}>
-                <TextField
-                  margin="dense"
-                  id="expiresAt"
-                  name="expiresAt"
-                  label="Expires At (empty for never)"
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  type="datetime-local"
-                  value={expiresAt}
-                  onChange={(e) => setExpiresAt(e.target.value)}
-                  fullWidth
-                  variant="standard"
-                />
+              {expiresAt !== null ? (
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DesktopDateTimePicker
+                    onChange={(value) => setExpiresAt(value)}
+                    value={expiresAt}
+                    id="expiresAt"
+                    name="expiresAt"
+                    format='LLL'
+                    ampm={false}
+                    slotProps={{
+                      textField: {
+                        helperText: 'The date this action will expire.',
+                        fullWidth: true,
+                      },
+                    }}
+                    maxDate={dayjs("3000-01-01T00:00:00+00:00")}
+                    disablePast={!disablePlayerId}
+                  />
+                </LocalizationProvider>
+              ) : (
+                <>
+                  <Alert severity="info">
+                    Selected players will be blacklisted indefinitely.
+                  </Alert>
+                  <input type="hidden" name="expiresAt" value={null} />
+                </>
+              )}
               </Grid>
               <Grid size={12}>
                 {presetTimes.map(([amount, unit], index) => (
@@ -214,15 +231,20 @@ export default function BlacklistRecordCreateDialog({
                     key={unit + index}
                     amount={amount}
                     unit={unit}
-                    expirationTimestamp={expiresAt}
-                    setExpirationTimestamp={(timestamp) => {
-                      setExpiresAt(
-                        moment(timestamp).format("YYYY-MM-DDTHH:mm")
-                      );
-                    }}
+                    expirationTimestamp={expiresAt ?? dayjs()}
+                    setExpirationTimestamp={(value) => setExpiresAt(value)}
                   />
                 ))}
               </Grid>
+              <Button
+                variant="outlined"
+                size="small"
+                color="secondary"
+                style={{ display: "block", width: "100%" }}
+                onClick={() => setExpiresAt(null)}
+              >
+                Never expires
+              </Button>
             </Grid>
             {/* REASON */}
             <Grid container spacing={2} alignItems="top">
