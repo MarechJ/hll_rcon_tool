@@ -657,7 +657,9 @@ class RconAPI(Rcon):
     
     def reset_votemap_state(self) -> list[VoteMapMapStatus]:
         v = VoteMap.instance()
-        v.restart()
+        v.reset_selection()
+        v.reset_votes()
+        v.apply_results()
         status = v.get_status()
         return status
 
