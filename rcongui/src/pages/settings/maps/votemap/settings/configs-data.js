@@ -64,6 +64,12 @@ export const textFieldConfigs = [
         helperText: "Exclude the last N played maps from the selection. The current map is always excluded.",
         inputProps: { min: 0, max: 6, step: 1 },
     },
+    {
+        name: "vip_vote_count",
+        label: "Vote count for VIP players:",
+        helperText: "Players with VIP have their vote counted n times.",
+        inputProps: { min: 1, max: 100, step: 1 },
+    },
 ];
 
 export const defaultMapOptions = [
