@@ -4,8 +4,7 @@ import random
 import re
 from datetime import datetime
 from functools import partial
-import threading
-from typing import Any, Counter, Dict, Iterable, List, Set, Tuple, cast
+from typing import Any, Callable, Counter, Dict, Iterable, List, Set, Tuple, cast
 from collections.abc import Iterable
 
 from sqlalchemy import and_
@@ -20,7 +19,7 @@ from rcon.maps import (
     sort_maps_by_gamemode,
 )
 from rcon.models import PlayerID, PlayerOptins, enter_session
-from rcon.player_history import get_player, get_player_profile
+from rcon.player_history import get_player
 from rcon.rcon import CommandFailedError, Rcon, get_rcon
 from rcon.types import (
     PlayerProfileType,
@@ -28,7 +27,12 @@ from rcon.types import (
     VoteMapVote,
     VoteMapMapStatus,
 )
-from rcon.user_config.vote_map import HELP_TEXT, PLAYER_CHOICE_HELP_TEXT, DefaultMethods, VoteMapUserConfig
+from rcon.user_config.vote_map import (
+    HELP_TEXT,
+    PLAYER_CHOICE_HELP_TEXT,
+    DefaultMethods,
+    VoteMapUserConfig,
+)
 from rcon.utils import MapsHistory
 
 logger = logging.getLogger(__name__)
@@ -56,29 +60,18 @@ def validate_map_ids(func):
 
 
 class VoteMap:
-    """Singleton"""
-
-    _instance = None
-    _lock = threading.Lock()
-
-    @classmethod
-    def instance(cls):
-        return cls()
-
-    def __new__(cls, *args, **kwargs):
-        if cls._instance is None:
-            with cls._lock:
-                if cls._instance is None:
-                    cls._instance = super().__new__(cls)
-        return cls._instance
-
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        rcon: Rcon | None = None,
+        config_loader: Callable[None, VoteMapUserConfig] | None = None,
+        maps_history: MapsHistory | None = None,
+    ) -> None:
         self.OPTIN_NAME = "votemap_reminder"
         self.SELECTION_LIMIT = 20
-        self._rcon = get_rcon()
+        self._rcon = rcon or get_rcon()
+        self.__config_loader = config_loader or VoteMapUserConfig.load_from_db
+        self._maps_history = maps_history or MapsHistory()
         self._state = VotemapState()
-        self._config_loader = VoteMapUserConfig.load_from_db
-
         whitelist_not_initialized = len(self._state.get_whitelist()) == 0
         if whitelist_not_initialized:
             self.reset_map_whitelist()
@@ -180,8 +173,9 @@ class VoteMap:
     #  GETTERS AND SETTERS  #
     #                       #
     #########################
-    def get_config(self):
-        return self._config_loader()
+    @property
+    def config(self):
+        return self.__config_loader()
 
     def get_last_reminder_time(self) -> datetime | None:
         return self._state.get_last_reminder_time()
@@ -256,19 +250,16 @@ class VoteMap:
                 f"Cannot add {map_id=} to votemap selection. Max selection limit {self.SELECTION_LIMIT} would be exceeded."
             )
         if map_id in selection:
-            raise Exception(
-                f"Map {map_id=} is already in the selection."
-            )
+            raise Exception(f"Map {map_id=} is already in the selection.")
 
         new_selection = selection + [map_id]
         self.set_selection(new_selection)
 
     def get_new_selection(self) -> list[str]:
-        config = self._config_loader()
+        config = self.config
         new_selection = []
-
         options = {
-            "maps_history": [maps.parse_layer(m["name"]) for m in MapsHistory()],
+            "maps_history": [maps.parse_layer(m["name"]) for m in self._maps_history],
             "current_map": self._rcon.current_map,
             "allowed_maps": set(
                 [maps.parse_layer(m) for m in self.get_map_whitelist()]
@@ -357,8 +348,7 @@ class VoteMap:
             raise Exception("Something went wrong while restarting votemap.")
 
     def is_time_for_reminder(self) -> bool:
-        config = self._config_loader()
-        reminder_frequency = config.reminder_frequency_minutes * 60
+        reminder_frequency = self.config.reminder_frequency_minutes * 60
         last_time_reminded = self._state.get_last_reminder_time()
 
         reminder_disabled = reminder_frequency == 0
@@ -375,7 +365,6 @@ class VoteMap:
         return False
 
     def _get_optin_players(self) -> List[Tuple[str, str]]:
-        config = self._config_loader()
         online_players = self._rcon.get_playerids()
         online_player_ids = [player_id for _, player_id in online_players]
 
@@ -406,7 +395,7 @@ class VoteMap:
         optin_players = list(
             filter(
                 lambda player: (
-                    player[1] not in opted_out if config.allow_opt_out else True
+                    player[1] not in opted_out if self.config.allow_opt_out else True
                 ),
                 online_players,
             )
@@ -420,7 +409,7 @@ class VoteMap:
         Forcing will ignore reminder frequency cooldown
         """
         logger.debug("Attempting to send votemap reminder.")
-        config = self._config_loader()
+        config = self.config
         instructions = config.instruction_text
 
         votemap_disabled = not config.enabled
@@ -471,7 +460,7 @@ class VoteMap:
         """Handles (!vm|!votemap) chat command and returns True if handled as expected, False otherwise."""
         sub_content = struct_log.get("sub_content")
         message = sub_content.strip() if sub_content else ""
-        config = self._config_loader()
+        config = self.config
         rcon = self._rcon
 
         if not message.lower().startswith(("!votemap", "!vm")):
@@ -486,11 +475,15 @@ class VoteMap:
             rcon.message_player(player_id=player_id, message="Invalid vote.")
             return False
 
-        cmd_handler = VoteMapCommandHandler(self, self._rcon, self._config_loader())
+        cmd_handler = VoteMapCommandHandler(self, self._rcon, config)
         return cmd_handler.execute(struct_log, player_id)
 
     def register_vote(
-        self, player_id: str, timestamp: int, entry: int, count: int | None = None
+        self,
+        player: PlayerProfileType,
+        timestamp: int,
+        entry: int,
+        count: int | None = None,
     ):
         """
         Checks whether the player exists, the vote is not too old and
@@ -499,6 +492,41 @@ class VoteMap:
         with the `count` number of votes.\n
         This also allows voting for players outside the server.\n
         """
+        player_name = player["names"][0]["name"]
+        player_id = player["player_id"]
+
+        player_flags = list(
+            map(lambda flag_record: flag_record["flag"], player["flags"])
+        )
+        if set(self.config.vote_ban_flags).intersection(set(player_flags)):
+            raise PlayerVoteMapBan()
+
+        # Vote count is 1 by default
+        vote_count = 1
+        # If user calls this function directly with count param set use that
+        if count is not None:
+            vote_count = count
+        # Check for player's flags and vip status
+        # Pick the one with the highest vote_count
+        else:
+            vote_counts = []
+            is_player_vip = next(
+                (
+                    vip
+                    for vip in self._rcon.get_vip_ids()
+                    if vip["player_id"] == player_id
+                ),
+                False,
+            )
+            if is_player_vip:
+                vote_counts.append(self.config.vip_vote_count)
+            for flag in self.config.vote_flags:
+                if flag.flag in player_flags:
+                    vote_counts.append(flag.vote_count)
+            vote_count = max(vote_counts, default=vote_count)
+        # Value less than 1 is considered as disallowed from voting
+        if vote_count < 1:
+            raise PlayerVoteMapBan()
 
         selection = self.get_selection()
         # The selection in-game text starts from index 1 as index 0 is reserved for player's choice
@@ -522,33 +550,8 @@ class VoteMap:
                 f"Vote must be a number between {start} and {end - 1}"
             )
 
-        # Attempt to get player
-        player = self._get_player(player_id)
-        player_name = player["names"][0]["name"]
-
-        # Vote count is 1 by default
-        vote_count = 1
-        # If user calls this function directly with count param set use that
-        if count is not None:
-            vote_count = count
-        # Check for player's flags
-        # Pick the one with the lowest vote_count
-        else:
-            player_flags = list(
-                map(lambda flag_record: flag_record["flag"], player["flags"])
-            )
-            config_flags = self._config_loader().vote_flags
-            flag_vote_counts = []
-            for flag in config_flags:
-                if flag.flag in player_flags:
-                    flag_vote_counts.append(flag.vote_count)
-            vote_count = min(flag_vote_counts, default=vote_count)
-        # Value less than 1 is considered as disallowed from voting
-        if vote_count < 1:
-            raise PlayerVoteMapBan()
-
         try:
-            current_map = MapsHistory()[0]
+            current_map = self._maps_history[0]
             map_start = current_map["start"]
         except IndexError as e:
             raise VoteMapNoInitialised(
@@ -568,12 +571,12 @@ class VoteMap:
         self._state.add_vote(player_id, player_name, selected_map_id, vote_count)
 
         logger.info(
-            f"Registered vote from {player_name=}({player_id=}) for {selected_map_id=} - {entry=}"
+            f"Registered vote from {player_name}({player_id}) for {selected_map_id=} - {entry=}"
         )
         return selected_map_id
 
     @validate_map_ids
-    def register_player_choice(self, map_id: str, player_id: str):
+    def register_player_choice(self, map_id: str, player: PlayerProfileType):
 
         if self.get_player_choice():
             raise VoteMapException("Player's map choice was already selected.")
@@ -584,15 +587,24 @@ class VoteMap:
                 f"{maps.parse_layer(map_id).pretty_name} is already in the selection. Pick another map."
             )
 
-        player = self._get_player(player_id)
         player_name = player["names"][0]["name"]
+        player_id = player["player_id"]
+
+        config_flags = self.config.player_choice_flags
+        # If config_flags list is not empty, player needs to have
+        # one of the flags set in the config
+        if len(config_flags) > 0:
+            player_flags = list(
+                map(lambda flag_record: flag_record["flag"], player["flags"])
+            )
+            if not set(player_flags).intersection(set(config_flags)):
+                raise PlayerChoiceNotAllowed(
+                    "NOT ALLOWED!\n\nYou are not allowed to use this command on this server."
+                )
 
         self._state.set_player_choice(player_id, player_name)
         # Access state's method directly to prevent sorting by game mode
         self._state.set_selection([map_id] + selection)
-        # Automatically register player's vote for the selected map
-        timestamp = int(datetime.now().timestamp())
-        self.register_vote(player_id, timestamp, entry=0)
 
     def get_vote_overview(self) -> dict[maps.Layer, int] | None:
         try:
@@ -624,15 +636,14 @@ class VoteMap:
         most_voted_map, _ = counter.most_common()[0]
         return most_voted_map
 
-    def __get_least_played_map(self, maps_to_pick_from: list[str]) -> str:
-        maps_history = MapsHistory()
+    def _get_least_played_map(self, maps_to_pick_from: list[str]) -> str:
 
         if not maps_to_pick_from:
             raise ValueError(
                 "Cannot get the least played map as a default map. There are no maps to pick from."
             )
 
-        map_id_counts = dict(Counter(map["name"] for map in maps_history))
+        map_id_counts = dict(Counter(map["name"] for map in self._maps_history))
         least_played_map, max_count = maps_to_pick_from[0], float("inf")
 
         for map_id in maps_to_pick_from:
@@ -646,11 +657,10 @@ class VoteMap:
 
         return least_played_map
 
-    def __get_default_next_map(self) -> str:
+    def _get_default_next_map(self) -> str:
         selection = [maps.parse_layer(m) for m in self.get_selection()]
         all_maps = [maps.parse_layer(m) for m in self._rcon.get_maps()]
-        config = self._config_loader()
-        maps_history = MapsHistory()
+        config = self.config
 
         if not config.allow_default_to_offensive:
             logger.debug(
@@ -664,21 +674,23 @@ class VoteMap:
             selection = [m for m in selection if not m.game_mode.is_small()]
             all_maps = [m for m in all_maps if not m.game_mode.is_small()]
 
-        if not maps_history:
+        if not self._maps_history:
             choice = random.choice([m for m in self.get_map_whitelist()])
             return choice
 
         selection = [map.id for map in selection]
         all_maps = [map.id for map in all_maps]
-        last_played_map = lambda map: map != maps_history[0]["name"]
+        last_played_map = lambda map: map != self._maps_history[0]["name"]
 
         try:
             next_default_map: str = {
                 DefaultMethods.least_played_suggestions: partial(
-                    self.__get_least_played_map, selection
+                    self._get_least_played_map,
+                    selection,
                 ),
                 DefaultMethods.least_played_all_maps: partial(
-                    self.__get_least_played_map, all_maps
+                    self._get_least_played_map,
+                    all_maps,
                 ),
                 DefaultMethods.random_all_maps: lambda: random.choice(
                     list(filter(last_played_map, all_maps))
@@ -820,7 +832,7 @@ class VoteMap:
 
         :return The selected map_id
         """
-        config = self._config_loader()
+        config = self.config
         votemap_enabled = config.enabled
         selected_map = None
 
@@ -829,7 +841,7 @@ class VoteMap:
 
         most_voted_map = self.get_most_voted_map()
         if not most_voted_map:
-            selected_map = self.__get_default_next_map()
+            selected_map = self._get_default_next_map()
             logger.warning(
                 "No votes recorded, defaulting with %s using default winning map %s",
                 config.default_method.value,
@@ -895,9 +907,7 @@ class VoteMap:
                 player = db_session.query(PlayerID).filter_by(player_id=player_id).one()
                 player = player.to_dict()
             except NoResultFound as e:
-                raise PlayerNotFound(
-                    f"Player {player_id=} not found."
-                ) from e
+                raise PlayerNotFound(f"Player {player_id=} not found.") from e
             except MultipleResultsFound as e:
                 raise Exception(
                     f"Multiple entries found for player {player_id=}."
@@ -955,7 +965,10 @@ class VoteMapCommandHandler:
             self.rcon.message_player(player_id=player_id, message=str(e))
             return False
         except Exception as e:
-            self.rcon.message_player(player_id=player_id, message="Something went wrong!\n\nSorry about that.")
+            self.rcon.message_player(
+                player_id=player_id,
+                message="Something went wrong!\n\nSorry about that.",
+            )
             logger.exception(str(e))
             return False
 
@@ -968,19 +981,28 @@ class VoteMapCommandHandler:
         game_modes = [mode.value for mode in GameMode]
         teams = ["axis", "allies"]
         help_text = self.config.player_choice_help_text or PLAYER_CHOICE_HELP_TEXT
-        help_text += """
+        help_text += (
+            """
 
         <map_tag> options:
-        """ + "\n".join(f"{key} -> {value}" for key, value in tag_to_id.items()) + """
+        """
+            + "\n".join(f"{key} -> {value}" for key, value in tag_to_id.items())
+            + """
 
         [game_mode] options:
-        """ + "\n".join(game_modes) + """
+        """
+            + "\n".join(game_modes)
+            + """
 
         [attackers] options:
-        """ + "\n".join(teams) + """
+        """
+            + "\n".join(teams)
+            + """
 
         [environment] options:
-        """ + "\n".join(environments)
+        """
+            + "\n".join(environments)
+        )
         self.rcon.message_player(player_id=player_id, message=help_text)
 
     def handle_player_choice(
@@ -992,18 +1014,6 @@ class VoteMapCommandHandler:
         Provide args in the following order:\n
         <map_tag> [game_mode] [attackers | only if game_mode=offensive] [environment]
         """
-
-        config_flags = self.votemap._config_loader().player_choice_flags
-        # If config_flags list is not empty, player needs to have
-        # one of the flags set in the config
-        if len(config_flags) > 0:
-            player = self.votemap._get_player(player_id)
-            player_flags = list(
-                map(lambda flag_record: flag_record["flag"], player["flags"])
-            )
-            if not set(player_flags).intersection(set(config_flags)):
-                raise PlayerChoiceNotAllowed("NOT ALLOWED!\n\nYou are not allowed to use this command on this server.")
-
         all_maps = self.rcon.get_maps()
         tag_to_id = {m.map.tag: m.map.shortname for m in all_maps}
         environments = [weather.value for weather in Environment]
@@ -1073,19 +1083,30 @@ class VoteMapCommandHandler:
         Type !vm too see the new selection"""
 
         try:
-            self.votemap.register_player_choice(map_choice.id, player_id)
+            player = self.votemap._get_player(player_id)
+            self.votemap.register_player_choice(map_choice.id, player)
+            # Automatically register player's vote for the selected map
+            timestamp = int(datetime.now().timestamp())
+            self.votemap.register_vote(
+                player, timestamp, entry=0
+            )  # It's always at index 0
         except PlayerVoteMapBan:
-            self.rcon.message_player(player_id=player_id, message=f"{map_choice.pretty_name} was added, but you are banned from voting.")    
-        else:    
+            self.rcon.message_player(
+                player_id=player_id,
+                message=f"{map_choice.pretty_name} was added, but you are banned from voting.",
+            )
+        else:
             self.rcon.message_player(player_id=player_id, message=success_msg)
 
     def handle_vote(
         self, player_id: str, log: StructuredLogLineWithMetaData, entry: int
     ):
         logger.info("Registering vote %s", log)
+        player = self.votemap._get_player(player_id)
+        player_id = player["player_id"]
         try:
             map_id = self.votemap.register_vote(
-                player_id, log["timestamp_ms"] // 1000, entry
+                player, log["timestamp_ms"] // 1000, entry
             )
         except InvalidVoteError as e:
             exception_message = f"INVALID VOTE!\n{e}\n{self.config.help_text or "Type '!votemap' in the chat."}"
@@ -1142,7 +1163,9 @@ class VoteMapCommandHandler:
 
     def handle_opt_out(self, player_id: str):
         if not self.config.allow_opt_out:
-            raise VoteMapException("You cannot opt-out of vote map reminders on this server.")
+            raise VoteMapException(
+                "You cannot opt-out of vote map reminders on this server."
+            )
 
         logger.info(f"Player {player_id=} opting out of vote reminders")
 
@@ -1360,28 +1383,36 @@ class VotemapState:
 class VoteMapException(Exception):
     pass
 
+
 class SelectionLimitExceeded(Exception):
     pass
+
 
 class RestrictiveFilterError(Exception):
     pass
 
+
 class InvalidVoteError(VoteMapException):
     pass
+
 
 class VoteMapNoInitialised(VoteMapException):
     pass
 
+
 class PlayerNotFound(Exception):
     pass
+
 
 class PlayerVoteMapBan(VoteMapException):
     def __init__(self, message="Player is banned from voting"):
         super().__init__(message)
 
+
 class PlayerChoiceNotAllowed(VoteMapException):
     def __init__(self, message="Player does not have any of required flags."):
         super().__init__(message)
+
 
 class InvalidMapParam(VoteMapException):
     pass

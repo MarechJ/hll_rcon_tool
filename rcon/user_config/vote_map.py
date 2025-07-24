@@ -25,8 +25,10 @@ class VoteMapType(TypedDict):
     allow_opt_out: bool
     help_text: str
     vote_flags: list["VoteFlag"]
+    vote_ban_flags: list[str]
     player_choice_flags: list[str]
     player_choice_help_text: str
+    vip_vote_count: int
 
 
 # Has to inherit from str to allow JSON serialization when
@@ -43,7 +45,7 @@ class VoteFlag(BaseModel):
         min_length=1, 
     )
     vote_count: int = Field(
-        ge=0,
+        ge=1,
         le=100,
         description="Number of votes (must be 0 or greater)"
     )
@@ -108,9 +110,11 @@ class VoteMapUserConfig(BaseUserConfig):
     reminder_frequency_minutes: int = Field(ge=0, default=20)
     allow_opt_out: bool = Field(default=True)
     help_text: str = Field(default=HELP_TEXT)
-    vote_flags: list[VoteFlag] = Field(default_factory=list, title="Vote Flags", description="Players with a listed flag have their vote counted n times (use lowest value if multiple flags; n ≥ 0).")
+    vote_flags: list[VoteFlag] = Field(default_factory=list, title="Vote Flags", description="Players with a listed flag have their vote counted n times (use highest value if multiple flags or vip; 0 <= n <= 100).")
+    vote_ban_flags: list[str] = Field(default_factory=list, title="Vote Ban Flags", description="Players having one of these flags are banned from voting.")
     player_choice_flags: list[str] = Field(default_factory=list, title="Player Choice Flags", description="Players having one of these flags are allowed to run `!vm add` commands. When no flags provided, everyone can run it.")
     player_choice_help_text: str = Field(default=PLAYER_CHOICE_HELP_TEXT)
+    vip_vote_count: int = Field(default=1, ge=1, le=100, title="VIP Vote Counts", description="VIP Players have their vote counted n times (use highest value if multiple flags or vip; 0 <= n <= 100).")
 
     @staticmethod
     def save_to_db(values: VoteMapType, dry_run=False):
@@ -147,8 +151,10 @@ class VoteMapUserConfig(BaseUserConfig):
             allow_opt_out=values.get("allow_opt_out"),
             help_text=values.get("help_text"),
             vote_flags=values.get("vote_flags"),
+            vote_ban_flags=values.get("vote_ban_flags"),
             player_choice_flags=values.get("player_choice_flags"),
             player_choice_help_text=values.get("player_choice_help_text"),
+            vip_vote_count=values.get("vip_vote_count"),
         )
 
         if not dry_run:
