@@ -165,17 +165,30 @@ function VotemapSettingsPage() {
     }));
   };
 
+  const handleRemoveVoteBanFlag = (index) => {
+    setWorkingConfig((prev) => ({
+      ...prev,
+      vote_ban_flags: prev.vote_ban_flags.filter(
+        (_, i) => i !== index
+      ),
+    }));
+  };
+
   const handleRemoveFlag = (index) => {
     switch (emojiPickerMode) {
       case "update_vote_flag":
-        handleRemoveVoteFlag(index)
+        handleRemoveVoteFlag(index);
         break;
       case "update_player_choice_flag":
-        handleRemovePlayerChoiceFlag(index)
+        handleRemovePlayerChoiceFlag(index);
+        break
+      case "update_vote_ban_flag":
+        handleRemoveVoteBanFlag(index);
+        break
       default:
         break;
     }
-  }
+  };
 
   const handlePlayerChoiceFlagChange = (index, value) => {
     setWorkingConfig((prev) => {
@@ -189,6 +202,21 @@ function VotemapSettingsPage() {
     setWorkingConfig((prev) => {
       const updated = (prev.player_choice_flags || []).concat(value);
       return { ...prev, player_choice_flags: updated };
+    });
+  };
+
+  const handleVoteBanFlagChange = (index, value) => {
+    setWorkingConfig((prev) => {
+      const updated = [...(prev.vote_ban_flags || [])];
+      updated[index] = value;
+      return { ...prev, vote_ban_flags: updated };
+    });
+  };
+
+  const handleAddVoteBanFlag = (index, value) => {
+    setWorkingConfig((prev) => {
+      const updated = (prev.vote_ban_flags || []).concat(value);
+      return { ...prev, vote_ban_flags: updated };
     });
   };
 
@@ -234,6 +262,12 @@ function VotemapSettingsPage() {
           break;
         case "add_player_choice_flag":
           handleAddPlayerChoiceFlag(emojiPickerIndex, emoji.native);
+          break;
+        case "update_vote_ban_flag":
+          handleVoteBanFlagChange(emojiPickerIndex, emoji.native);
+          break;
+        case "add_vote_ban_flag":
+          handleAddVoteBanFlag(emojiPickerIndex, emoji.native);
           break;
         case "add_vote_flag":
           handleAddVoteFlag(emojiPickerIndex, emoji.native);
@@ -369,13 +403,14 @@ function VotemapSettingsPage() {
           <Typography variant="subtitle1">Vote Count Flags</Typography>
           <Typography variant="caption">
             Players with a listed flag have their vote counted n times (use
-            lowest value if multiple flags; n ≥ 0 ≥ 100).
+            highest value if multiple flags and if VIP;  0 ≤ n ≤ 100).
           </Typography>
-          <Typography variant="caption">
-            You can effectively ban a player from voting by giving him a flag
-            with vote count 0.
-          </Typography>
-          <Stack direction="row" gap={1} flexWrap={"wrap"} alignItems={"center"}>
+          <Stack
+            direction="row"
+            gap={1}
+            flexWrap={"wrap"}
+            alignItems={"center"}
+          >
             {(workingConfig.vote_flags || []).map((item, idx) => (
               <Stack key={idx} direction="row" gap={0.25} alignItems="center">
                 <Button
@@ -388,7 +423,7 @@ function VotemapSettingsPage() {
                 <TextField
                   type="number"
                   label="Vote Count"
-                  slotProps={{ input: { min: 0, max: 100 } }}
+                  slotProps={{ input: { min: 1, max: 100 } }}
                   value={item.vote_count}
                   onChange={(e) =>
                     handleVoteFlagChange(idx, "vote_count", e.target.value)
@@ -403,6 +438,39 @@ function VotemapSettingsPage() {
                 handleOpenEmojiPicker(
                   workingConfig.vote_flags.length,
                   "add_vote_flag"
+                )
+              }
+            >
+              <AddCircleIcon />
+            </IconButton>
+          </Stack>
+
+          <Divider flexItem orientation={"horizontal"} />
+
+          {/* Vote Ban Flags Section */}
+          <Typography variant="subtitle1">Vote Ban Flags</Typography>
+          <Typography variant="caption">
+            Players having one of these flags are banned from voting maps.
+          </Typography>
+          <Stack direction="row" flexWrap={"wrap"} gap={1} alignItems="center">
+            {(workingConfig.vote_ban_flags || []).map((item, idx) => (
+              <Button
+                key={idx}
+                variant="outlined"
+                onClick={() =>
+                  handleOpenEmojiPicker(idx, "update_vote_ban_flag")
+                }
+                sx={{ minWidth: 48, fontSize: 24 }}
+              >
+                <Emoji emoji={item ?? "❓"} />
+              </Button>
+            ))}
+            <IconButton
+              variant="outlined"
+              onClick={() =>
+                handleOpenEmojiPicker(
+                  workingConfig.vote_ban_flags.length,
+                  "add_vote_ban_flag"
                 )
               }
             >
