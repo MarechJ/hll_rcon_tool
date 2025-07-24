@@ -3,3 +3,4 @@ isort==6.0.1
 pytest==8.4.1
 cachetools==6.1.0
 daphne==4.2.1
+fakeredis==2.30.1
