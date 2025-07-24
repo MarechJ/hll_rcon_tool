@@ -652,12 +652,12 @@ class RconAPI(Rcon):
         )
 
     def get_votemap_status(self) -> list[VoteMapMapStatus]:
-        v = VoteMap.instance()
+        v = VoteMap()
         status = v.get_status(sort_by_vote=False)
         return status
     
     def reset_votemap_state(self) -> list[VoteMapMapStatus]:
-        v = VoteMap.instance()
+        v = VoteMap()
         v.reset_selection()
         v.reset_votes()
         v.apply_results()
@@ -665,38 +665,37 @@ class RconAPI(Rcon):
         return status
 
     def get_votemap_whitelist(self) -> list[str]:
-        v = VoteMap.instance()
+        v = VoteMap()
         whitelist = list(v.get_map_whitelist())
         return whitelist
 
     def add_map_to_votemap_whitelist(self, map_name: str):
-        v = VoteMap.instance()
+        v = VoteMap()
         v.add_map_to_whitelist(map_name)
 
     def add_maps_to_votemap_whitelist(self, map_names: Iterable[str]):
-        v = VoteMap.instance()
+        v = VoteMap()
         v.add_maps_to_whitelist(map_names)
 
     def remove_map_from_votemap_whitelist(self, map_name: str):
-        v = VoteMap.instance()
+        v = VoteMap()
         v.remove_map_from_whitelist(map_name)
 
     def remove_maps_from_votemap_whitelist(self, map_names: Iterable[str]):
-        v = VoteMap.instance()
+        v = VoteMap()
         v.remove_maps_from_whitelist(map_names)
 
     def reset_map_votemap_whitelist(self):
-        v = VoteMap.instance()
+        v = VoteMap()
         v.reset_map_whitelist()
 
     def set_votemap_whitelist(self, map_names: Iterable[str]):
-        v = VoteMap.instance()
+        v = VoteMap()
         v.set_map_whitelist(map_names)
 
     def get_votemap_config(self) -> VoteMapUserConfig:
-        v = VoteMap.instance()
-        config = v.get_config()
-        return config
+        v = VoteMap()
+        return v.config
 
     def validate_votemap_config(
         self,
