@@ -28,6 +28,12 @@ export const messageFieldConfigs = [
         helperText: "This text will show to the player in case of a bad !votemap command, or if the user types !votemap help",
         rows: 10,
     },
+    {
+        name: "player_choice_help_text",
+        label: "Help text:",
+        helperText: "This text will show to the player if the user types !votemap add or !votemap add help command. This help text is followed by a list of options.",
+        rows: 10,
+    },
 ];
 
 export const textFieldConfigs = [
@@ -57,6 +63,12 @@ export const textFieldConfigs = [
         label: "Number of recently played maps excluded:",
         helperText: "Exclude the last N played maps from the selection. The current map is always excluded.",
         inputProps: { min: 0, max: 6, step: 1 },
+    },
+    {
+        name: "vip_vote_count",
+        label: "Vote count for VIP players:",
+        helperText: "Players with VIP have their vote counted n times.",
+        inputProps: { min: 1, max: 100, step: 1 },
     },
 ];
 
