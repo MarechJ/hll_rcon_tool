@@ -461,3 +461,34 @@ def test_player_fails_to_register_player_choice_duplicate_map(votemap):
     map_1 = CAR_OFF_AXIS.id
     with pytest.raises(VoteMapException):
         votemap.register_player_choice(map_1, player)
+
+def test_ensure_next_map_with_empty_selection(votemap):
+    votemap.set_selection([])
+    next_map = votemap.get_next_map()
+    all_maps = [m.id for m in ALL_MAPS]
+    assert next_map in all_maps
+
+def test_ensure_selection_when_no_maps_to_select_from(votemap):
+    """Excludes last 3 played, HUR is the last played"""
+    votemap.set_map_whitelist([HUR_WARFARE_DAY.id])
+    new_selection = votemap.get_new_selection()
+    assert len(new_selection) > 0
+    assert HUR_WARFARE_DAY.id not in new_selection
+
+def test_no_cmd_handling_while_disabled(votemap_disabled):
+    out = votemap_disabled.handle_vote_command({})
+    assert out is None
+
+def test_no_reminder_sent_while_disabled(votemap_disabled):
+    t1 = votemap_disabled.get_last_reminder_time()
+    out = votemap_disabled.send_reminder()
+    t2 = votemap_disabled.get_last_reminder_time()
+    assert out is None
+    assert t1 == t2
+
+def test_reminder_sent_while_enabled(votemap):
+    t1 = votemap.get_last_reminder_time()
+    out = votemap.send_reminder()
+    t2 = votemap.get_last_reminder_time()
+    assert out is True
+    assert t1 != t2
