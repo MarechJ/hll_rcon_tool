@@ -77,6 +77,15 @@ class VoteMap:
             self.reset_map_whitelist()
 
     @staticmethod
+    def require_enabled(func):
+        def wrapper(self, *args, **kwargs):
+            if not self.enabled:
+                logger.warning(f"Method {func.__name__} skipped: Votemap 'enabled' is False")
+                return None
+            return func(self, *args, **kwargs)
+        return wrapper
+
+    @staticmethod
     def join_vote_options(
         selection: list[maps.Layer],
         maps_to_numbers: dict[maps.Layer, str],
@@ -176,6 +185,10 @@ class VoteMap:
     @property
     def config(self):
         return self.__config_loader()
+
+    @property
+    def enabled(self):
+        return self.config.enabled
 
     def get_last_reminder_time(self) -> datetime | None:
         return self._state.get_last_reminder_time()
@@ -402,7 +415,8 @@ class VoteMap:
         )
         return optin_players
 
-    def send_reminder(self, force=False):
+    @require_enabled
+    def send_reminder(self, force=False) -> bool:
         """
         Send vote reminder to all players except the ones
         who opted out of reminders.\n
@@ -412,20 +426,16 @@ class VoteMap:
         config = self.config
         instructions = config.instruction_text
 
-        votemap_disabled = not config.enabled
-        if votemap_disabled:
-            return
-
         cannot_remind = not self.is_time_for_reminder() and not force
         if cannot_remind:
-            return
+            return False
 
         not_valid_instructions = "{map_selection}" not in instructions
         if not_valid_instructions:
             logger.error(
                 "Votemap is not configured properly, {map_selection} is not present in the instruction text."
             )
-            return
+            return False
 
         players_to_remind = list(
             filter(
@@ -452,10 +462,12 @@ class VoteMap:
                 logger.warning(f"Unable to message {name}")
 
         self.set_last_reminder_time()
+        return True
 
     def has_player_voted(self, player_id: str) -> bool:
         return True if self._state.get_vote(player_id) else False
 
+    @require_enabled
     def handle_vote_command(self, struct_log: StructuredLogLineWithMetaData) -> bool:
         """Handles (!vm|!votemap) chat command and returns True if handled as expected, False otherwise."""
         sub_content = struct_log.get("sub_content")
@@ -464,10 +476,7 @@ class VoteMap:
         rcon = self._rcon
 
         if not message.lower().startswith(("!votemap", "!vm")):
-            return config.enabled
-
-        if not config.enabled:
-            return config.enabled
+            return False
 
         player_id = struct_log["player_id_1"]
         if not player_id:
@@ -627,11 +636,12 @@ class VoteMap:
         self._state.delete_votes()
 
     def get_most_voted_map(self) -> str | None:
-        votes = self.get_votes()
-        if len(votes) == 0:
+        selection = set(self.get_selection())
+        valid_votes = [vote for vote in self.get_votes() if vote["map_id"] in selection]
+        if len(valid_votes) == 0:
             return None
         counter = Counter()
-        for vote in votes:
+        for vote in valid_votes:
             counter[vote["map_id"]] += vote["vote_count"]
         most_voted_map, _ = counter.most_common()[0]
         return most_voted_map
@@ -824,7 +834,30 @@ class VoteMap:
         logger.info("Suggestion %s", [m.pretty_name for m in selection])
         return selection
 
-    def apply_results(self) -> str | None:
+    def get_next_map(self) -> str:
+        most_voted_map = self.get_most_voted_map()
+        if not most_voted_map:
+            next_map = self._get_default_next_map()
+            logger.warning(
+                "No votes recorded, defaulting with %s using default winning map %s",
+                self.config.default_method.value,
+                next_map,
+            )
+        else:
+            next_map = most_voted_map
+            if next_map not in [map.id for map in self._rcon.get_maps()]:
+                logger.error(
+                    f"{next_map=} is not part of the all map list maps={self._rcon.get_maps()}"
+                )
+            if next_map not in (selection := self.get_selection()):
+                logger.error(
+                    f"{next_map=} is not part of vote selection {selection=}"
+                )
+            logger.info(f"Winning map {next_map=}")
+        return next_map
+
+    @require_enabled
+    def apply_results(self) -> str:
         """
         Replaces the current map rotation on the server with a single map.\n
         The map with the most votes is selected.\n
@@ -832,35 +865,9 @@ class VoteMap:
 
         :return The selected map_id
         """
-        config = self.config
-        votemap_enabled = config.enabled
-        selected_map = None
-
-        if not votemap_enabled:
-            return selected_map
-
-        most_voted_map = self.get_most_voted_map()
-        if not most_voted_map:
-            selected_map = self._get_default_next_map()
-            logger.warning(
-                "No votes recorded, defaulting with %s using default winning map %s",
-                config.default_method.value,
-                selected_map,
-            )
-        else:
-            selected_map = most_voted_map
-            if selected_map not in [map.id for map in self._rcon.get_maps()]:
-                logger.error(
-                    f"{selected_map=} is not part of the all map list maps={self._rcon.get_maps()}"
-                )
-            if selected_map not in (selection := self.get_selection()):
-                logger.error(
-                    f"{selected_map=} is not part of vote selection {selection=}"
-                )
-            logger.info(f"Winning map {selected_map=}")
+        next_map = self.get_next_map()        
 
         # Apply rotation safely
-
         current_rotation = self._rcon.get_map_rotation()
 
         while len(current_rotation) > 1:
@@ -869,22 +876,22 @@ class VoteMap:
             self._rcon.remove_map_from_rotation(map_.id)
 
         current_next_map = current_rotation[0].id
-        if current_next_map != selected_map:
+        if current_next_map != next_map:
             # Replace the only map left in rotation
-            self._rcon.add_map_to_rotation(selected_map)
+            self._rcon.add_map_to_rotation(next_map)
             self._rcon.remove_map_from_rotation(current_next_map)
 
         # Check that it worked
         current_rotation = self._rcon.get_map_rotation()
-        if len(current_rotation) != 1 or current_rotation[0].id != selected_map:
+        if len(current_rotation) != 1 or current_rotation[0].id != next_map:
             raise ValueError(
-                f"Applying the winning map {selected_map=} failed: {current_rotation=}"
+                f"Applying the winning map {next_map=} failed: {current_rotation=}"
             )
 
         logger.info(
-            f"Successfully applied winning mapp {selected_map=}, new rotation {current_rotation=}"
+            f"Successfully applied winning mapp {next_map=}, new rotation {current_rotation=}"
         )
-        return selected_map
+        return next_map
 
     def apply_with_retry(self, nb_retry: int = 2):
         success = False
