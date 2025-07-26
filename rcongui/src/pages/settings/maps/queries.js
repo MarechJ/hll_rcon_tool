@@ -89,8 +89,8 @@ export const mapsManagerMutationOptions = {
 
   // Change current map
   changeMap: {
-    mutationFn: (mapId) =>
-      cmd.SET_MAP({ payload: { map_name: mapId }, throwRouteError: false }),
+    mutationFn: ({ mapId, mapOrdinal = 1 }) =>
+      cmd.SET_MAP({ payload: { map_name: mapId, map_ordinal: mapOrdinal }, throwRouteError: false }),
   },
 
   // Set map rotation shuffle

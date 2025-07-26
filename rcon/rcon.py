@@ -896,10 +896,10 @@ class Rcon(ServerCtl):
 
         return self.next_map
 
-    def set_map(self, map_name: str) -> None:
+    def set_map(self, map_name: str, map_ordinal: int = 1) -> None:
         with invalidates(Rcon.get_map, Rcon.get_next_map):
             try:
-                res = super().set_map(map_name)
+                res = super().set_map(map_name, map_ordinal)
                 if res != SUCCESS:
                     raise CommandFailedError(res)
             except CommandFailedError:
@@ -907,7 +907,7 @@ class Rcon(ServerCtl):
                 self.add_map_to_rotation(
                     map_name, maps[len(maps) - 1], maps.count(maps[len(maps) - 1])
                 )
-                if res := super().set_map(map_name) != SUCCESS:
+                if res := super().set_map(map_name, map_ordinal) != SUCCESS:
                     raise CommandFailedError(res)
 
     @ttl_cache(ttl=10)
