@@ -19,6 +19,7 @@ import { arrayMove } from "@dnd-kit/sortable";
 import SortableRotationItem from "./SortableRotationItem";
 import CopyToClipboardButton from "@/components/shared/CopyToClipboardButton";
 import ReplayIcon from "@mui/icons-material/Replay";
+import { useMapChange } from "@/hooks/useMapChange";
 
 export function SortableRotationList({
   maps,
@@ -30,7 +31,10 @@ export function SortableRotationList({
   onSave,
   isDisabled,
   actions,
+  unsavedChanges,
 }) {
+  const { MapChangeDialog, openMapChangeDialog } = useMapChange();
+
   // Set up DnD sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -173,13 +177,18 @@ export function SortableRotationList({
               items={maps.map((item) => item.selectionId)}
               strategy={verticalListSortingStrategy}
             >
-              {maps.map((item, index) => (
-                <SortableRotationItem
-                  key={item.selectionId}
-                  item={item}
-                  onRemove={onRemove}
-                />
-              ))}
+              {maps.map((item, index, arr) => {
+                let mapOrdinal = arr.slice(0, index + 1).filter(m => m.id === item.id).length
+                return (
+                  <SortableRotationItem
+                    key={item.selectionId}
+                    item={item}
+                    remove={() => onRemove(item)}
+                    mapChange={() => openMapChangeDialog(item, mapOrdinal)}
+                    mapChangeDisabled={unsavedChanges}
+                  />
+                )
+              })}
             </SortableContext>
           </DndContext>
         ) : (
@@ -210,6 +219,7 @@ export function SortableRotationList({
           </Box>
         )}
       </Box>
+      <MapChangeDialog />
     </Box>
   );
 }
