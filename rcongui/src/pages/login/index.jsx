@@ -29,9 +29,24 @@ export const loader = async ({ request }) => {
   try {
     user = await cmd.IS_AUTHENTICATED({ throwRouteError: false });
   } catch (error) {
+
+    if (error.status === 401) {
+      return {
+        error: error.name,
+        message: "Invalid login credentials. Try it again.",
+      };
+    }
+
+    if (error.status === 500) {
+      return {
+        error: error.name,
+        message: "Server side CRCON application is not responding.",
+      };
+    }
+
     return {
       error: error,
-      message: error?.text,
+      message: `Unknown error. Open the developer's tool in your browser, navigate to Network tab, record your activity and let us know about it.`,
     };
   }
 
@@ -58,11 +73,17 @@ export const action = async ({ request }) => {
     });
     isAuth = result;
   } catch (error) {
-    console.log(error)
     if (error.status === 401) {
       return {
         error: error.name,
         message: "Invalid login credentials. Try it again.",
+      };
+    }
+
+    if (error.status === 500) {
+      return {
+        error: error.name,
+        message: "Server side CRCON application is not responding.",
       };
     }
 
