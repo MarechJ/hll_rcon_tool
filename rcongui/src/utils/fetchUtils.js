@@ -12,7 +12,8 @@ async function requestFactory({
   headers = { "Content-Type": "application/json" },
 } = {}) {
   // Construct the full URL using the URL API
-  const url = new URL(cmd, CRCON_API);
+  const base = new URL(CRCON_API, document.location.origin)
+  const url = new URL(cmd, base);
 
   // Append query parameters for GET requests
   if (params instanceof URLSearchParams) {

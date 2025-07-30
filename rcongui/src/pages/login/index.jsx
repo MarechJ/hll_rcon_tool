@@ -87,6 +87,7 @@ export const action = async ({ request }) => {
       };
     }
 
+    console.error(error)
     return {
       error: error,
       message: `Unknown error. Open the developer's tool in your browser, navigate to Network tab, record your activity and let us know about it.`,
