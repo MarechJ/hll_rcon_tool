@@ -44,7 +44,6 @@ from rcon.types import (
     PlayerFlagType,
     PlayerProfileTypeEnriched,
     ServerInfoType,
-    VoteMapMapStatus,
 )
 from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
 from rcon.user_config.auto_kick import AutoVoteKickUserConfig
@@ -651,15 +650,17 @@ class RconAPI(Rcon):
             inclusive_filter=inclusive_filter,
         )
 
-    def get_votemap_status(self) -> list[VoteMapMapStatus]:
+    def get_votemap_status(self):
         v = VoteMap()
         return v.get_status(sort_by_vote=False)
-    
-    def reset_votemap_state(self) -> list[VoteMapMapStatus]:
+
+    def send_votemap_reminder(self):
         v = VoteMap()
-        v.reset_selection()
-        v.reset_votes()
-        v.apply_results()
+        v.send_reminder(force=True)
+    
+    def reset_votemap_state(self):
+        v = VoteMap()
+        v.restart()
         return v.get_status()
 
     def get_votemap_whitelist(self) -> list[str]:

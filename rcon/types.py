@@ -737,10 +737,16 @@ class VoteMapVoter(TypedDict):
     player_name: str
     count: int
 
-class VoteMapMapStatus(TypedDict):
+class VoteMapMapResult(TypedDict):
     map: Layer
     voters: list[VoteMapVoter]
     votes_count: int
+
+class VoteMapStatus(TypedDict):
+    enabled: bool
+    results: list[VoteMapMapResult]
+    next_map: str
+    last_reminder: datetime.datetime | None
 
 
 # Have to inherit from str to allow for JSON serialization w/ pydantic
@@ -834,7 +840,7 @@ class PublicInfoType(TypedDict):
     player_count_by_team: PublicInfoPlayerType
     score: PublicInfoScoreType
     time_remaining: float
-    vote_status: list[VoteMapMapStatus]
+    vote_status: VoteMapStatus
     name: PublicInfoNameType
 
 
