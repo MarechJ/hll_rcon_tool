@@ -3,7 +3,7 @@ import logging
 import pickle
 import random
 import re
-from datetime import datetime
+from datetime import UTC, datetime
 from functools import partial
 from typing import Any, Dict, List, Set, Tuple, cast
 from collections.abc import Iterable, Callable
@@ -26,8 +26,9 @@ from rcon.rcon import CommandFailedError, Rcon, get_rcon
 from rcon.types import (
     PlayerProfileType,
     StructuredLogLineWithMetaData,
+    VoteMapStatus,
     VoteMapVote,
-    VoteMapMapStatus,
+    VoteMapMapResult,
 )
 from rcon.user_config.vote_map import (
     HELP_TEXT,
@@ -63,6 +64,8 @@ def validate_map_ids(func):
 
 
 class VoteMap:
+    next_map = None
+
     def __init__(
         self,
         rcon: Rcon | None = None,
@@ -75,12 +78,19 @@ class VoteMap:
         self.__config_loader = config_loader or VoteMapUserConfig.load_from_db
         self._maps_history = maps_history or MapsHistory()
         self._state = VotemapState()
+
         whitelist_not_initialized = len(self._state.get_whitelist()) == 0
         if whitelist_not_initialized:
             self.reset_map_whitelist()
 
+        if not self.next_map:
+            self.apply_results()
+        
+        
+
     @staticmethod
     def require_enabled(func):
+        @functools.wraps(func)
         def wrapper(self, *args, **kwargs):
             if not self.enabled:
                 logger.warning("Method %s skipped: Votemap 'enabled' is False", func.__name__)
@@ -196,8 +206,8 @@ class VoteMap:
     def get_last_reminder_time(self) -> datetime | None:
         return self._state.get_last_reminder_time()
 
-    def set_last_reminder_time(self, the_time: datetime | None = None) -> None:
-        dt = the_time or datetime.now()
+    def set_last_reminder_time(self) -> None:
+        dt = datetime.now(tz=UTC)
         self._state.set_last_reminder_time(dt)
 
     def reset_last_reminder_time(self) -> None:
@@ -306,10 +316,17 @@ class VoteMap:
 
         return [map.id for map in new_selection]
 
-    def get_status(self, sort_by_vote: bool = True) -> list[VoteMapMapStatus]:
-        """Aggregates votes and returns a list of map states sorted by vote count desc."""
+    def get_status(self, sort_by_vote: bool = True) -> VoteMapStatus:
+        if not self.config.enabled:
+            return {
+            "enabled": False,
+            "results": [],
+            "last_reminder": None,
+            "next_map": None,
+        }
+
         votes = self.get_votes()
-        map_states: dict[str, VoteMapMapStatus] = {
+        map_states: dict[str, VoteMapMapResult] = {
             map_id: {
                 "voters": [],
                 "map": maps.parse_layer(map_id),
@@ -336,8 +353,13 @@ class VoteMap:
                 map_states.values(), key=lambda d: d["votes_count"], reverse=True
             )
 
-        return list(map_states.values())
-
+        return {
+            "enabled": True,
+            "results": list(map_states.values()),
+            "last_reminder": self.get_last_reminder_time(),
+            "next_map": maps.parse_layer(self.next_map).pretty_name,
+        }
+ 
     def get_player_choice(self) -> Dict[str, str] | None:
         return self._state.get_player_choice()
 
@@ -359,7 +381,6 @@ class VoteMap:
         try:
             self.reset_votes()
             self.reset_selection()
-            self.reset_last_reminder_time()
             self.apply_results()
         except Exception as e:
             logger.exception("Something went wrong while restarting votemap.", e)
@@ -377,7 +398,7 @@ class VoteMap:
         if not_reminded_yet:
             return True
 
-        time_since_last_reminder = (datetime.now() - last_time_reminded).total_seconds()
+        time_since_last_reminder = (datetime.now(tz=UTC) - last_time_reminded).total_seconds()
         if time_since_last_reminder > reminder_frequency:
             return True
         return False
@@ -900,6 +921,7 @@ class VoteMap:
         logger.info(
             "Successfully applied winning mapp %s, new rotation %s", next_map, current_rotation
         )
+        self.next_map = next_map
         return next_map
 
     def apply_with_retry(self, nb_retry: int = 2):
@@ -1315,9 +1337,8 @@ class VotemapState:
             as_date = pickle.loads(res)  # type: ignore
         return as_date
 
-    def set_last_reminder_time(self, the_time: datetime | None = None) -> None:
-        dt = the_time or datetime.now()
-        self.client.set(self.LATEST_REMINDER, pickle.dumps(dt))
+    def set_last_reminder_time(self, the_time: datetime) -> None:
+        self.client.set(self.LATEST_REMINDER, pickle.dumps(the_time))
 
     def delete_last_reminder_time(self) -> None:
         self.client.delete(self.LATEST_REMINDER)

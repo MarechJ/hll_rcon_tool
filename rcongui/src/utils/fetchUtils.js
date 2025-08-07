@@ -185,6 +185,7 @@ export const cmd = {
   LOGOUT: (params) => requestFactory({ method: "GET", cmd: "logout", ...params }),
   RECONNECT_GAME_SERVER: (params) => requestFactory({ method: "POST", cmd: "reconnect_gameserver", ...params }),
   RESET_VOTEKICK_THRESHOLDS: (params) => requestFactory({ method: "POST", cmd: "reset_votekick_thresholds", ...params }),
+  SEND_VOTEMAP_REMINDER: (params) => requestFactory({ method: "POST", cmd: "send_votemap_reminder", ...params }),
   SET_AUTOBALANCE_ENABLED: (params) => requestFactory({ method: "POST", cmd: "set_autobalance_enabled", ...params }),
   SET_AUTOBALANCE_THRESHOLD: (params) => requestFactory({ method: "POST", cmd: "set_autobalance_threshold", ...params }),
   SET_AUTOSETTINGS: (params) => requestFactory({ method: "POST", cmd: "set_auto_settings", ...params }),

@@ -53,7 +53,14 @@ export const mapsManagerQueryOptions = {
   votemapStatus: () =>
     queryOptions({
       queryKey: mapsManagerQueryKeys.votemapStatus,
-      queryFn: cmd.GET_VOTEMAP_STATUS,
+      queryFn: async () => {
+        const updated = new Date()
+        const res = await cmd.GET_VOTEMAP_STATUS()
+        return {
+          ...res,
+          updated,
+        }
+      },
     }),
 
   // Get current votemap configuration
@@ -135,6 +142,13 @@ export const mapsManagerMutationOptions = {
 
   setWhitelist: {
     mutationFn: (whitelist) =>
-      cmd.SET_VOTEMAP_WHITELIST({ payload: { map_names: whitelist }, throwRouteError: false }),
+      cmd.SET_VOTEMAP_WHITELIST({
+        payload: { map_names: whitelist },
+        throwRouteError: false,
+      }),
+  },
+
+  sendVotemapReminder: {
+    mutationFn: () => cmd.SEND_VOTEMAP_REMINDER({ throwRouteError: false }),
   },
 };
