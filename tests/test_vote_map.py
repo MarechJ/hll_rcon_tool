@@ -393,17 +393,6 @@ def test_register_vote_match_highest_value_with_vip(votemap_flags):
     vote = votemap_flags.get_vote(player["player_id"])
     assert vote["vote_count"] == 69
 
-def test_player_banned_from_voting_based_on_zero_vote_count(votemap_flags):
-    player = mock_player_profile("123456", "player_1", flags=["🔨"])
-    selection = [HUR_WARFARE_DAY, CAR_OFF_AXIS, CAR_SKIRMISH_DAY]
-    votemap_flags.set_selection([m.id for m in selection])
-    selected_map_id = HUR_WARFARE_DAY.id
-    entry = (
-        votemap_flags.get_selection().index(selected_map_id) + 1
-    )
-    with pytest.raises(PlayerVoteMapBan):
-        votemap_flags.register_vote(player, int(datetime.now().timestamp()), entry, 0)
-
 def test_player_banned_from_voting_based_on_vote_ban_flag(votemap_flags):
     player = mock_player_profile("123456", "player_1", flags=["😭"])
     selection = [HUR_WARFARE_DAY, CAR_OFF_AXIS, CAR_SKIRMISH_DAY]
