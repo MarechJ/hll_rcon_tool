@@ -547,6 +547,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.get_welcome_message: "api.can_view_welcome_message",
     # TODO: update this name
     rcon_api.reset_votemap_state: "api.can_reset_votemap_state",
+    rcon_api.send_votemap_reminder: "api.can_send_votemap_reminder",
     rcon_api.set_admin_pings_discord_webhooks_config: "api.can_change_admin_pings_discord_webhooks_config",
     rcon_api.set_audit_discord_webhooks_config: "api.can_change_audit_discord_webhooks_config",
     rcon_api.set_auto_broadcasts_config: "api.can_change_auto_broadcast_config",
@@ -814,6 +815,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.reset_map_votemap_whitelist: ["POST"],
     rcon_api.reset_votekick_thresholds: ["POST"],
     rcon_api.reset_votemap_state: ["POST"],
+    rcon_api.send_votemap_reminder: ["POST"],
     rcon_api.set_admin_pings_discord_webhooks_config: ["POST"],
     rcon_api.set_audit_discord_webhooks_config: ["POST"],
     rcon_api.set_auto_broadcasts_config: ["POST"],
