@@ -110,11 +110,11 @@ class VoteMapUserConfig(BaseUserConfig):
     reminder_frequency_minutes: int = Field(ge=0, default=20)
     allow_opt_out: bool = Field(default=True)
     help_text: str = Field(default=HELP_TEXT)
-    vote_flags: list[VoteFlag] = Field(default_factory=list, title="Vote Flags", description="Players with a listed flag have their vote counted n times (use highest value if multiple flags or vip; 0 <= n <= 100).")
+    vote_flags: list[VoteFlag] = Field(default_factory=list, title="Vote Flags", description="Players with a listed flag have their vote counted n times (use highest value if multiple flags or vip; 1 <= n <= 100).")
     vote_ban_flags: list[str] = Field(default_factory=list, title="Vote Ban Flags", description="Players having one of these flags are banned from voting.")
     player_choice_flags: list[str] = Field(default_factory=list, title="Player Choice Flags", description="Players having one of these flags are allowed to run `!vm add` commands. When no flags provided, everyone can run it.")
     player_choice_help_text: str = Field(default=PLAYER_CHOICE_HELP_TEXT)
-    vip_vote_count: int = Field(default=1, ge=1, le=100, title="VIP Vote Counts", description="VIP Players have their vote counted n times (use highest value if multiple flags or vip; 0 <= n <= 100).")
+    vip_vote_count: int = Field(default=1, ge=1, le=100, title="VIP Vote Counts", description="VIP Players have their vote counted n times (use highest value if multiple flags or vip; 1 <= n <= 100).")
 
     @staticmethod
     def save_to_db(values: VoteMapType, dry_run=False):

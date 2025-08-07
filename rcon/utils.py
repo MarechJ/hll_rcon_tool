@@ -264,7 +264,7 @@ class FixedLenList(Generic[T]):
             raise IndexError("Index out of bound")
         return self.deserializer(val)
 
-    def lpop(self):
+    def lpop(self) -> T | None:
         val = self.red.lpop(self.key)
         if val is None:
             return val
@@ -288,7 +288,7 @@ class MapsHistory(FixedLenList[MapInfo]):
     def save_map_end(self, old_map: str, end_timestamp: int | None = None) -> MapInfo:
         ts = end_timestamp or datetime.now().timestamp()
         logger.info("Saving end of map %s at time %s", old_map, ts)
-        prev = cast(MapInfo, self.lpop()) or MapInfo(
+        prev = self.lpop() or MapInfo(
             name=old_map, start=None, end=None, guessed=True, player_stats=dict(), game_layout=GameLayout
         )
         prev["end"] = ts
