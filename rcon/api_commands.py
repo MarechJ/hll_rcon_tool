@@ -652,21 +652,18 @@ class RconAPI(Rcon):
 
     def get_votemap_status(self) -> list[VoteMapMapStatus]:
         v = VoteMap()
-        status = v.get_status(sort_by_vote=False)
-        return status
+        return v.get_status(sort_by_vote=False)
     
     def reset_votemap_state(self) -> list[VoteMapMapStatus]:
         v = VoteMap()
         v.reset_selection()
         v.reset_votes()
         v.apply_results()
-        status = v.get_status()
-        return status
+        return v.get_status()
 
     def get_votemap_whitelist(self) -> list[str]:
         v = VoteMap()
-        whitelist = list(v.get_map_whitelist())
-        return whitelist
+        return list(v.get_map_whitelist())
 
     def add_map_to_votemap_whitelist(self, map_name: str):
         v = VoteMap()
