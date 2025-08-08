@@ -1349,7 +1349,7 @@ class VoteMapCommandHandler:
 
 
 class VotemapState:
-    LATEST_REMINDER = "votemap:reminder"
+    LATEST_REMINDER = "votemap:last-reminder"
     MAP_WHITELIST = "votemap:whitelist"
     MAP_SELECTION = "votemap:selection"
     VOTES = "votemap:votes"
