@@ -349,6 +349,7 @@ def test_get_default_next_map_as_least_played_from_all(
             rcon=mock_rcon,
             maps_history=mock_maps_history,
             config_loader=lambda: VoteMapUserConfig(
+                enabled=True,
                 default_method=DefaultMethods.least_played_all_maps
             ),
         )
@@ -485,19 +486,19 @@ def test_ensure_selection_when_no_maps_to_select_from(votemap):
     assert HUR_WARFARE_DAY.id not in new_selection
 
 def test_no_cmd_handling_while_disabled(votemap_disabled):
-    out = votemap_disabled.handle_vote_command({})
-    assert out is None
+    result = votemap_disabled.handle_vote_command({})
+    assert result.ok == False
 
 def test_no_reminder_sent_while_disabled(votemap_disabled):
     t1 = votemap_disabled.get_last_reminder_time()
-    out = votemap_disabled.send_reminder()
+    result = votemap_disabled.send_reminder()
     t2 = votemap_disabled.get_last_reminder_time()
-    assert out is None
+    assert result.ok == False
     assert t1 == t2
 
 def test_reminder_sent_while_enabled(votemap):
     t1 = votemap.get_last_reminder_time()
-    out = votemap.send_reminder()
+    result = votemap.send_reminder()
     t2 = votemap.get_last_reminder_time()
-    assert out is True
+    assert result.ok is True
     assert t1 != t2

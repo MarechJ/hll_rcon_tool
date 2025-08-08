@@ -7,6 +7,8 @@ export const padlockConfigs = [
     { name: "allow_consecutive_skirmishes", label: "Allow consecutive skirmish map" },
     { name: "allow_default_to_offensive", label: "Allow default map to be an offensive" },
     { name: "allow_default_to_skirmish", label: "Allow default map to be a skirmish" },
+    { name: "remind_on_match_start", label: "Send reminder on match start" },
+    { name: "remind_on_match_end", label: "Send reminder on match end" },
 ];
 
 export const messageFieldConfigs = [
@@ -33,6 +35,12 @@ export const messageFieldConfigs = [
         label: "Help text:",
         helperText: "This text will show to the player if the user types !votemap add or !votemap add help command. This help text is followed by a list of options.",
         rows: 10,
+    },
+    {
+        name: "no_vote_text",
+        label: "No vote text:",
+        helperText: "This text will show in {scrolling_votemap} as winning map when no votes taken",
+        rows: 1,
     },
 ];
 
