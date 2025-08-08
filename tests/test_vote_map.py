@@ -2,6 +2,7 @@ from datetime import datetime
 import pytest
 from fakeredis import FakeStrictRedis
 from unittest.mock import MagicMock, patch
+from rcon import maps
 from rcon.user_config.vote_map import DefaultMethods
 from rcon.vote_map import InvalidVoteError, PlayerChoiceNotAllowed, PlayerVoteMapBan, VoteMap, VoteMapException, VoteMapUserConfig
 from rcon.maps import LAYERS, MAPS, Environment, Layer, GameMode, Team
@@ -90,10 +91,29 @@ def mock_rcon():
         ("Player2", "0j8dkd3fj948h9fhv3m9thvm578"),
     ]
     rcon.get_vip_ids.return_value = [{ "player_id": "ID_WITH_VIP" }]
-    rcon.get_map_rotation.return_value = SAMPLE_MAPS[
-        :1
-    ]  # Default rotation with one map
+    # Initialize dynamic rotation state
+    rotation = SAMPLE_MAPS[:1]  # Start with one map
+    rcon.get_map_rotation.side_effect = lambda: rotation
     rcon.current_map = SAMPLE_MAPS[0]
+
+    # Mock remove_map_from_rotation
+    def remove_map_from_rotation(map_id):
+        nonlocal rotation
+        map = maps.parse_layer(map_id)
+        rotation = [m for m in rotation if m != map]
+        return rotation
+    
+    rcon.remove_map_from_rotation.side_effect = remove_map_from_rotation
+
+    # Mock add_map_to_rotation
+    def add_map_to_rotation(map_id):
+        nonlocal rotation
+        map = maps.parse_layer(map_id)
+        if map not in rotation:
+            rotation.append(map)
+        return rotation
+
+    rcon.add_map_to_rotation.side_effect = add_map_to_rotation
     return rcon
 
 
