@@ -248,10 +248,11 @@ def chat_help_command(rcon: Rcon, command: BaseChatCommand, ctx: dict[str, str])
 
 @on_match_end
 def remind_vote_map(_, struct_log):
-    logger.info("Match ended reminding to vote map. %s", struct_log)
-    vote_map = VoteMap()
-    vote_map.apply_with_retry()
-    vote_map.send_reminder(force=True)
+    vm = VoteMap()
+    if vm.enabled:
+        logger.info("Match ended reminding to vote map. %s", struct_log)
+        vm.apply_with_retry()
+        vm.send_reminder(force=vm.config.remind_on_match_end)
 
 
 @on_match_start
@@ -324,8 +325,11 @@ def handle_new_match_start(rcon: Rcon, struct_log):
     except:
         raise
     finally:
-        logger.info("New match started initializing vote map. %s", struct_log)
-        VoteMap().restart()
+        vm = VoteMap()
+        if vm.enabled:
+            logger.info("New match started initializing vote map. %s", struct_log)
+            vm.restart()
+            vm.send_reminder(force=vm.config.remind_on_match_start)
         try:
             record_stats_worker(MapsHistory()[1])
         except Exception:

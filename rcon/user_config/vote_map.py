@@ -29,6 +29,8 @@ class VoteMapType(TypedDict):
     player_choice_flags: list[str]
     player_choice_help_text: str
     vip_vote_count: int
+    remind_on_match_start: bool
+    remind_on_match_end: bool
 
 
 # Has to inherit from str to allow JSON serialization when
@@ -115,6 +117,8 @@ class VoteMapUserConfig(BaseUserConfig):
     player_choice_flags: list[str] = Field(default_factory=list, title="Player Choice Flags", description="Players having one of these flags are allowed to run `!vm add` commands. When no flags provided, everyone can run it.")
     player_choice_help_text: str = Field(default=PLAYER_CHOICE_HELP_TEXT)
     vip_vote_count: int = Field(default=1, ge=1, le=100, title="VIP Vote Counts", description="VIP Players have their vote counted n times (use highest value if multiple flags or vip; 1 <= n <= 100).")
+    remind_on_match_start: bool = Field(default=False)
+    remind_on_match_end: bool = Field(default=True)
 
     @staticmethod
     def save_to_db(values: VoteMapType, dry_run=False):
@@ -155,6 +159,8 @@ class VoteMapUserConfig(BaseUserConfig):
             player_choice_flags=values.get("player_choice_flags"),
             player_choice_help_text=values.get("player_choice_help_text"),
             vip_vote_count=values.get("vip_vote_count"),
+            remind_on_match_start=values.get("remind_on_match_start"),
+            remind_on_match_end=values.get("remind_on_match_end"),
         )
 
         if not dry_run:
