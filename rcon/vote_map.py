@@ -102,7 +102,7 @@ class VoteMap:
         if whitelist_not_initialized:
             self.reset_map_whitelist()
 
-        if self.enabled and not self.next_map:
+        if self.enabled and not self.get_next_map():
             self.apply_results()
         
         
@@ -225,6 +225,16 @@ class VoteMap:
     @property
     def enabled(self):
         return self.config.enabled
+
+    def get_next_map(self) -> str | None:
+        return self._state.get_next_map()
+
+    @validate_map_ids
+    def set_next_map(self, map_id: str):
+        self._state.set_next_map(map_id)
+
+    def reset_next_map(self):
+        self._state.delete_next_map()
 
     def get_last_reminder_time(self) -> datetime | None:
         return self._state.get_last_reminder_time()
@@ -377,12 +387,11 @@ class VoteMap:
             return sorted(
                 map_states.values(), key=lambda d: d["votes_count"], reverse=True
             )
-
         return {
             "enabled": True,
             "results": list(map_states.values()),
             "last_reminder": self.get_last_reminder_time(),
-            "next_map": maps.parse_layer(self.next_map).pretty_name,
+            "next_map": maps.parse_layer(self.get_next_map()).pretty_name,
         }
  
     def get_player_choice(self) -> Dict[str, str] | None:
@@ -407,6 +416,7 @@ class VoteMap:
     def reset(self):
         self.reset_votes()
         self.reset_selection()
+        self.reset_next_map()
         self.delete_player_choice()
 
     def restart(self):
@@ -640,6 +650,10 @@ class VoteMap:
         logger.info(
             "Registered vote from %s(%s) for {%s} - {%d}", player_name, player_id, selected_map_id, entry
         )
+
+        # Recalculate results
+        self.apply_results()
+
         return selected_map_id
 
     @validate_map_ids
@@ -899,7 +913,7 @@ class VoteMap:
         logger.info("Suggestion %s", [m.pretty_name for m in selection])
         return selection
 
-    def get_next_map(self) -> str:
+    def generate_next_map(self) -> str:
         most_voted_map = self.get_most_voted_map()
         if not most_voted_map:
             next_map = self._get_default_next_map()
@@ -930,7 +944,7 @@ class VoteMap:
 
         :return The selected map_id
         """
-        next_map = self.get_next_map()        
+        next_map = self.generate_next_map()        
 
         # Apply rotation safely
 
@@ -957,7 +971,7 @@ class VoteMap:
         logger.info(
             "Successfully applied winning map %s, new rotation %s", next_map, current_rotation
         )
-        self.next_map = next_map
+        self.set_next_map(next_map)
         return next_map
 
     def apply_with_retry(self, nb_retry: int = 2):
@@ -1183,7 +1197,6 @@ class VoteMapCommandHandler:
                 "We cannot register your vote at this time.\nVote map is not initialised"
             ) from e
         else:
-            self.votemap.apply_results()
             if msg := self.config.thank_you_text:
                 msg = msg.format(
                     player_name=log["player_name_1"],
@@ -1341,6 +1354,7 @@ class VotemapState:
     MAP_SELECTION = "votemap:selection"
     VOTES = "votemap:votes"
     PLAYER_CHOICE = "votemap:player-choice"
+    NEXT_MAP = "votemap:next-map"
 
     def __init__(self) -> None:
         self.client = get_redis_client()
@@ -1447,6 +1461,21 @@ class VotemapState:
 
     def delete_selection(self):
         self.client.delete(self.MAP_SELECTION)
+
+    ###
+    # NEXT MAP
+    ###
+    def get_next_map(self):
+        next_map = cast(bytes | None, self.client.get(self.NEXT_MAP))
+        if next_map is None:
+            return None
+        return next_map.decode()
+
+    def set_next_map(self, map_id: str):
+        self.client.set(self.NEXT_MAP, map_id)
+
+    def delete_next_map(self):
+        self.client.delete(self.NEXT_MAP)
 
 
 class VoteMapException(Exception):
