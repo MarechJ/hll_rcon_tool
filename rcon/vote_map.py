@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+from enum import Enum
 import functools
 import logging
 import pickle
@@ -5,7 +7,7 @@ import random
 import re
 from datetime import UTC, datetime
 from functools import partial
-from typing import Any, Dict, List, Set, Tuple, cast
+from typing import Any, Dict, List, Optional, Set, Tuple, cast
 from collections.abc import Iterable, Callable
 from collections import Counter
 
@@ -63,6 +65,23 @@ def validate_map_ids(func):
     return wrapper
 
 
+class ActionOutcome(Enum):
+    SUCCESS = "success"
+    DISABLED = "disabled"
+    ON_COOLDOWN = "on_cooldown"
+    INVALID_CONFIG = "invalid_config"
+
+
+@dataclass(frozen=True)
+class ActionResult:
+    ok: bool
+    outcome: ActionOutcome
+    message: Optional[str] = None
+
+    def __bool__(self) -> bool:
+        return self.ok
+
+
 class VoteMap:
     next_map = None
 
@@ -83,7 +102,7 @@ class VoteMap:
         if whitelist_not_initialized:
             self.reset_map_whitelist()
 
-        if not self.next_map:
+        if self.enabled and not self.next_map:
             self.apply_results()
         
         
@@ -93,8 +112,12 @@ class VoteMap:
         @functools.wraps(func)
         def wrapper(self, *args, **kwargs):
             if not self.enabled:
-                logger.warning("Method %s skipped: Votemap 'enabled' is False", func.__name__)
-                return None
+                logger.warning("Method %s skipped: Votemap is disabled", func.__name__)
+                return ActionResult(
+                    ok=False,
+                    outcome=ActionOutcome.DISABLED,
+                    message="Votemap is disabled."
+                )
             return func(self, *args, **kwargs)
         return wrapper
 
@@ -252,7 +275,9 @@ class VoteMap:
         return self._state.get_selection()
 
     def reset_selection(self):
-        self.delete_player_choice()
+        self._state.delete_selection()
+
+    def rebuild_selection(self):
         self.set_selection(self.get_new_selection())
 
     @validate_map_ids
@@ -368,8 +393,10 @@ class VoteMap:
         if not self.get_player_choice():
             return
         self._state.delete_player_choice()
-        # Using _state directly to prevent
-        self.set_selection(self.get_selection()[1:])
+        selection = self.get_selection()
+        if len(selection) == 0:
+            return
+        self.set_selection(selection[1:])
 
     #########################
     #                       #
@@ -377,14 +404,16 @@ class VoteMap:
     #                       #
     #########################
 
+    def reset(self):
+        self.reset_votes()
+        self.reset_selection()
+        self.delete_player_choice()
+
     def restart(self):
-        try:
-            self.reset_votes()
-            self.reset_selection()
+        self.reset()
+        if self.enabled:
+            self.rebuild_selection()
             self.apply_results()
-        except Exception as e:
-            logger.exception("Something went wrong while restarting votemap.", e)
-            raise Exception("Something went wrong while restarting votemap.")
 
     def is_time_for_reminder(self) -> bool:
         reminder_frequency = self.config.reminder_frequency_minutes * 60
@@ -442,7 +471,7 @@ class VoteMap:
         return optin_players
 
     @require_enabled
-    def send_reminder(self, force=False) -> bool:
+    def send_reminder(self, force: bool = False) -> ActionResult:
         """
         Send vote reminder to all players except the ones
         who opted out of reminders.\n
@@ -452,22 +481,25 @@ class VoteMap:
         config = self.config
         instructions = config.instruction_text
 
-        cannot_remind = not self.is_time_for_reminder() and not force
-        if cannot_remind:
-            return False
-
-        not_valid_instructions = "{map_selection}" not in instructions
-        if not_valid_instructions:
-            logger.error(
-                "Votemap is not configured properly, %s is not present in the instruction text.", map_selection
+        if not self.is_time_for_reminder() and not force:
+            return ActionResult(
+                ok=False,
+                outcome=ActionOutcome.ON_COOLDOWN,
+                message="Cooldown not elapsed and reminder not forced.",
             )
-            return False
+
+        if "{map_selection}" not in instructions:
+            logger.error(
+                "Votemap is not configured properly, %s is not present in the instruction text.", "map_selection"
+            )
+            return ActionResult(
+                ok=False,
+                outcome=ActionOutcome.INVALID_CONFIG,
+                message="'{map_selection}' missing from instruction text.",
+            )
 
         players_to_remind = list(
-            filter(
-                lambda player: not self.has_player_voted(player[1]),
-                self._get_optin_players(),
-            )
+            filter(lambda player: not self.has_player_voted(player[1]), self._get_optin_players())
         )
 
         map_selection = self.format_map_vote(
@@ -488,7 +520,10 @@ class VoteMap:
                 logger.warning("Unable to message %s", name)
 
         self.set_last_reminder_time()
-        return True
+        return ActionResult(
+            ok=True,
+            outcome=ActionOutcome.SUCCESS,
+        )
 
     def has_player_voted(self, player_id: str) -> bool:
         return True if self._state.get_vote(player_id) else False
@@ -919,7 +954,7 @@ class VoteMap:
             )
 
         logger.info(
-            "Successfully applied winning mapp %s, new rotation %s", next_map, current_rotation
+            "Successfully applied winning map %s, new rotation %s", next_map, current_rotation
         )
         self.next_map = next_map
         return next_map
@@ -1401,13 +1436,16 @@ class VotemapState:
         return [item.decode() for item in raw]
 
     def set_selection(self, map_ids: Iterable[str]):
-        self.client.delete(self.MAP_SELECTION)
+        self.delete_selection()
         # Add each map_id with its index as score
         for idx, map_id in enumerate(map_ids):
             self.client.zadd(self.MAP_SELECTION, {map_id: idx})
 
     def remove_map_from_selection(self, map_id: str):
         self.client.zrem(self.MAP_SELECTION, map_id)
+
+    def delete_selection(self):
+        self.client.delete(self.MAP_SELECTION)
 
 
 class VoteMapException(Exception):

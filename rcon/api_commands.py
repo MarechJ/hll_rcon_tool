@@ -655,7 +655,9 @@ class RconAPI(Rcon):
 
     def send_votemap_reminder(self):
         v = VoteMap()
-        v.send_reminder(force=True)
+        result = v.send_reminder(force=True)
+        if not result.ok:
+            raise Exception(result.message)
     
     def reset_votemap_state(self):
         v = VoteMap()
@@ -732,7 +734,11 @@ class RconAPI(Rcon):
 
         # on -> off or off -> on
         if old_config.enabled != new_config.enabled:
-            self.reset_votemap_state()
+            vm = VoteMap()
+            if new_config.enabled:
+                vm.restart()
+            else:
+                vm.reset()
 
         return True
 
