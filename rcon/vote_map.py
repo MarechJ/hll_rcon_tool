@@ -1358,7 +1358,7 @@ class VotemapState:
     NEXT_MAP = "votemap:next-map"
 
     def __init__(self) -> None:
-        self.version = 0.1
+        self.version = 0.2
         self.client = get_redis_client()
         if self.get_version() != self.version:
             self.delete_last_reminder_time()
@@ -1367,18 +1367,18 @@ class VotemapState:
             self.delete_selection()
             self.delete_votes()
             self.set_version(self.version)
-            
+
     ###
     # VERSION
     ###
     def get_version(self):
-        version = cast(bytes | None, self.client.get(self.NEXT_MAP))
+        version = cast(bytes | None, self.client.get(self.VERSION))
         if version is None:
             return None
         return float(version.decode())
 
     def set_version(self, version: float):
-        self.client.set(version)
+        self.client.set(self.VERSION, version)
 
     ###
     # PLAYER CHOICE
