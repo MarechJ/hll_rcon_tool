@@ -1348,7 +1348,8 @@ class VoteMapCommandHandler:
 
 
 class VotemapState:
-    LATEST_REMINDER = "votemap:last-reminder"
+    VERSION = "votemap:version"
+    LATEST_REMINDER = "votemap:reminder"
     MAP_WHITELIST = "votemap:whitelist"
     MAP_SELECTION = "votemap:selection"
     VOTES = "votemap:votes"
@@ -1356,7 +1357,27 @@ class VotemapState:
     NEXT_MAP = "votemap:next-map"
 
     def __init__(self) -> None:
+        self.version = 0.1
         self.client = get_redis_client()
+        if self.get_version() != self.version:
+            self.delete_last_reminder_time()
+            self.delete_next_map()
+            self.delete_player_choice()
+            self.delete_selection()
+            self.delete_votes()
+            self.set_version(self.version)
+            
+    ###
+    # VERSION
+    ###
+    def get_version(self):
+        version = cast(bytes | None, self.client.get(self.NEXT_MAP))
+        if version is None:
+            return None
+        return float(version.decode())
+
+    def set_version(self, version: float):
+        self.client.set(version)
 
     ###
     # PLAYER CHOICE
