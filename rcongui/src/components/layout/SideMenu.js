@@ -11,6 +11,7 @@ import AboutDialog from "./sidebar/About";
 import ServerStatus from "../Header/server-status";
 import { useAppStore } from "@/stores/app-state";
 import { UserActions } from "./sidebar/UserActions";
+import SystemUsage from "./sidebar/SystemUsage";
 
 const drawerWidth = 240;
 
@@ -57,10 +58,16 @@ export default function SideMenu() {
       <Divider />
       <MenuContent navigationTree={navMenus} />
       <List dense>
-        <ListItem>
+        <ListItem sx={{ height: 20, "& .MuiListItemText-root .MuiListItemText-primary": { fontSize: "0.75rem" } }}>
           <ListItemText
             sx={{ marginLeft: -0.5 }}
             primary={<ConnectionStatus />}
+          />
+        </ListItem>
+        <ListItem sx={{ height: 20, "& .MuiListItemText-root .MuiListItemText-primary": { fontSize: "0.75rem" } }}>
+          <ListItemText
+            sx={{ marginLeft: -0.5 }}
+            primary={<SystemUsage />}
           />
         </ListItem>
         <AboutDialog />

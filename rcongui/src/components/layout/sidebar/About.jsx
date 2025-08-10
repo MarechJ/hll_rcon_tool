@@ -11,13 +11,12 @@ import ListItemButton from '@mui/material/ListItemButton'
 import { Divider, Stack, Typography, IconButton, Skeleton, useTheme, useMediaQuery } from '@mui/material'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDiscord, faGithub } from '@fortawesome/free-brands-svg-icons'
-import { faBook } from '@fortawesome/free-solid-svg-icons'
+import { faBook, faCircleQuestion } from '@fortawesome/free-solid-svg-icons'
 import siteConfig from '@/config/siteConfig'
 import { cmd } from '@/utils/fetchUtils'
 import { useQuery } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { useGithubReleases } from '@/hooks/useGithubReleases'
-import { Box } from '@mui/material'
 import NewReleasesIcon from "@mui/icons-material/NewReleases";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { Suspense } from 'react';
@@ -65,18 +64,17 @@ export default function AboutDialog() {
 
   return (
     <React.Fragment>
-      <ListItem disablePadding onClick={handleClickOpen}>
-        <ListItemButton>
-          <ListItemText 
+      <ListItem disablePadding onClick={handleClickOpen} sx={{ height: 24, "& .MuiListItemText-root .MuiListItemText-primary": { fontSize: "0.75rem" } }}>
+        <ListItemButton sx={{ marginLeft: 0.5 }}>
+          <ListItemText
             primary={
-              <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>About</Box>
+              <Stack direction={"row"} justifyContent={"space-between"} alignItems={"center"}>
+                <Stack alignItems={"center"} direction={"row"} gap={0.5}><FontAwesomeIcon icon={faCircleQuestion} />Version: {apiVersion}</Stack>
                 {unreadCount > 0 && (
                   <NewReleasesIcon sx={{ fill: (theme) => theme.palette.secondary.main }} />
                 )}
-              </Box>
+              </Stack>
             }
-            secondary={apiVersion}
           />
         </ListItemButton>
       </ListItem>

@@ -8,7 +8,7 @@ const connectionStatus = {
   backend: 2,
 };
 
-const StatusText = styled(Typography, {
+const StatusText = styled("div", {
   shouldForwardProp: (prop) => prop !== "status",
 })(({ theme, status }) => ({
   "&:before": {
@@ -46,7 +46,7 @@ const ConnectionStatus = () => {
 
   return (
     <Box>
-      <StatusText variant="subtitle2" status={status}>
+      <StatusText status={status}>
         {status === connectionStatus.full
           ? "Connected"
           : status === connectionStatus.backend
