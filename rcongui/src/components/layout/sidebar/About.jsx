@@ -21,6 +21,7 @@ import NewReleasesIcon from "@mui/icons-material/NewReleases";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { Suspense } from 'react';
 import { ReleaseNotes } from './ReleaseNotes';
+import { HIGHLIGHT } from './utils'
 
 const isNewerVersion = (a, b) => {
   const [aMajor, aMinor, aPatch] = a.split('.');
@@ -69,10 +70,7 @@ export default function AboutDialog() {
           <ListItemText
             primary={
               <Stack direction={"row"} justifyContent={"space-between"} alignItems={"center"}>
-                <Stack alignItems={"center"} direction={"row"} gap={0.5}><FontAwesomeIcon icon={faCircleQuestion} />Version: {apiVersion}</Stack>
-                {unreadCount > 0 && (
-                  <NewReleasesIcon sx={{ fill: (theme) => theme.palette.secondary.main }} />
-                )}
+                <Stack alignItems={"center"} direction={"row"} gap={0.5}><FontAwesomeIcon icon={faCircleQuestion} color={unreadCount > 0 ? HIGHLIGHT.danger : ""} />Version: {apiVersion}</Stack>
               </Stack>
             }
           />

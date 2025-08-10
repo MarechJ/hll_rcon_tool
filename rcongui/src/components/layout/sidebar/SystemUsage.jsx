@@ -13,6 +13,7 @@ import {
   faHardDrive,
   faMemory,
 } from "@fortawesome/free-solid-svg-icons";
+import { byUsage } from "./utils";
 
 const SystemUsage = () => {
   const { data: system, isLoading } = useQuery({
@@ -21,68 +22,108 @@ const SystemUsage = () => {
     refetchInterval: 15 * 1000,
   });
 
+  if (isLoading)
+    return (
+      <ListItem
+        sx={{
+          height: 20,
+          "& .MuiListItemText-root .MuiListItemText-primary": {
+            fontSize: "0.75rem",
+          },
+        }}
+      >
+        <ListItemText
+          sx={{ marginLeft: -0.5 }}
+          primary={
+            <Stack direction={"row"} justifyContent={"space-between"}>
+              <FontAwesomeIcon icon={faMicrochip} />
+              <FontAwesomeIcon icon={faMemory} />
+              <FontAwesomeIcon icon={faHardDrive} />
+            </Stack>
+          }
+        />
+      </ListItem>
+    );
+
   return (
-    <Stack direction={"row"} justifyContent={"space-between"}>
-      <Tooltip
-        title={
-          !isLoading
-            ? `CPU Usage: ${system.cpu_usage.percent}% on a system with ${system.cpu_usage.cores} cores running ${system.cpu_usage.process_count} processes`
-            : "Loading..."
-        }
-      >
-        <Stack
-          direction={"row"}
-          justifyContent={"start"}
-          alignItems={"center"}
-          gap={0.5}
-        >
-          <FontAwesomeIcon icon={faMicrochip} />
-          <div>{`${!isLoading ? system.cpu_usage.percent : "?"}%`}</div>
-        </Stack>
-      </Tooltip>
-      <Tooltip
-        title={
-          !isLoading
-            ? `RAM Usage: ${system.ram_usage.percent}%. Used ${Number(
+    <ListItem
+      sx={{
+        height: 20,
+        "& .MuiListItemText-root .MuiListItemText-primary": {
+          fontSize: "0.75rem",
+        },
+      }}
+    >
+      <ListItemText
+        sx={{ marginLeft: -0.5 }}
+        primary={
+          <Stack direction={"row"} justifyContent={"space-between"}>
+            <Tooltip
+              enterDelay={500}
+              enterNextDelay={500}
+              title={`CPU Usage: ${system.cpu_usage.percent}% on a system with ${system.cpu_usage.cores} cores running ${system.cpu_usage.process_count} processes [CRCON environment]`}
+            >
+              <Stack
+                direction={"row"}
+                justifyContent={"start"}
+                alignItems={"center"}
+                gap={0.5}
+              >
+                <FontAwesomeIcon
+                  icon={faMicrochip}
+                  color={byUsage(system.cpu_usage.percent)}
+                />
+                <div>{`${system.cpu_usage.percent}%`}</div>
+              </Stack>
+            </Tooltip>
+            <Tooltip
+              enterDelay={500}
+              enterNextDelay={500}
+              title={`RAM Usage: ${system.ram_usage.percent}% (${Number(
                 system.ram_usage.used
-              ).toFixed(1)} GB out of ${Number(system.ram_usage.total).toFixed(
-                1
-              )} GB of total memory`
-            : "Loading..."
-        }
-      >
-        <Stack
-          direction={"row"}
-          justifyContent={"start"}
-          alignItems={"center"}
-          gap={0.5}
-        >
-          <FontAwesomeIcon icon={faMemory} />
-          <div>{`${!isLoading ? system.ram_usage.percent : "?"}%`}</div>
-        </Stack>
-      </Tooltip>
-      <Tooltip
-        title={
-          !isLoading
-            ? `Storage Usage: ${system.disk_usage.percent}%. Used ${Number(
+              ).toFixed(1)} used GB out of ${Number(
+                system.ram_usage.total
+              ).toFixed(1)} GB of total CRCON environment)`}
+            >
+              <Stack
+                direction={"row"}
+                justifyContent={"start"}
+                alignItems={"center"}
+                gap={0.5}
+              >
+                <FontAwesomeIcon
+                  icon={faMemory}
+                  color={byUsage(system.ram_usage.percent)}
+                />
+                <div>{`${system.ram_usage.percent}%`}</div>
+              </Stack>
+            </Tooltip>
+            <Tooltip
+              enterDelay={500}
+              enterNextDelay={500}
+              title={`Storage Usage: ${system.disk_usage.percent}% (${Number(
                 system.disk_usage.used
-              ).toFixed(1)} GB out of ${Number(system.disk_usage.total).toFixed(
-                1
-              )} GB of total disk space`
-            : "Loading..."
+              ).toFixed(1)} GB used out of ${Number(
+                system.disk_usage.total
+              ).toFixed(1)} GB of total CRCON environment)`}
+            >
+              <Stack
+                direction={"row"}
+                justifyContent={"start"}
+                alignItems={"center"}
+                gap={0.5}
+              >
+                <FontAwesomeIcon
+                  icon={faHardDrive}
+                  color={byUsage(system.disk_usage.percent)}
+                />
+                <div>{`${system.disk_usage.percent}%`}</div>
+              </Stack>
+            </Tooltip>
+          </Stack>
         }
-      >
-        <Stack
-          direction={"row"}
-          justifyContent={"start"}
-          alignItems={"center"}
-          gap={0.5}
-        >
-          <FontAwesomeIcon icon={faHardDrive} />
-          <div>{`${!isLoading ? system.disk_usage.percent : "?"}%`}</div>
-        </Stack>
-      </Tooltip>
-    </Stack>
+      />
+    </ListItem>
   );
 };
 

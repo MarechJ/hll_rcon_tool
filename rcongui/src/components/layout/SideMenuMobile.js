@@ -43,19 +43,9 @@ function AdminSideMenuMobile({ open, toggleDrawer }) {
   return (
     <MobileDrawer open={open} toggleDrawer={toggleDrawer}>
       <MenuContent navigationTree={navMenus} isMobile={true} />
-      <List>
-        <ListItem sx={{ height: 20, "& .MuiListItemText-root .MuiListItemText-primary": { fontSize: "0.75rem" } }}>
-          <ListItemText
-            sx={{ marginLeft: -0.5 }}
-            primary={<ConnectionStatus />}
-          />
-        </ListItem>
-        <ListItem sx={{ height: 20, "& .MuiListItemText-root .MuiListItemText-primary": { fontSize: "0.75rem" } }}>
-          <ListItemText
-            sx={{ marginLeft: -0.5 }}
-            primary={<SystemUsage />}
-          />
-        </ListItem>
+      <List dense sx={{ color: theme => theme.palette.text.secondary }}>
+        <ConnectionStatus />
+        <SystemUsage />
         <AboutDialog />
       </List>
       <Divider />
