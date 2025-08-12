@@ -216,6 +216,7 @@ def record_stats_from_map(
                 p_offense=0,
                 p_defense=0,
                 p_support=0,
+                level=0,
             )
             if existing is not None:
                 default_stat = PlayerStat(
@@ -227,6 +228,7 @@ def record_stats_from_map(
                     p_defense=0,
                     support=existing.support,
                     p_support=0,
+                    level=existing.level
                 )
             map_stats: PlayerStat = ps.get(player_id, default_stat)
             player_stat = dict(
@@ -258,6 +260,7 @@ def record_stats_from_map(
                 offense=map_stats.get("offense", 0) + map_stats.get("p_offense", 0),
                 defense=map_stats.get("defense", 0) + map_stats.get("p_defense", 0),
                 support=map_stats.get("support", 0) + map_stats.get("p_support", 0),
+                level=map_stats.get("level", 0),
             )
             if existing is not None and force != True:
                 continue
@@ -291,6 +294,7 @@ def record_stats_from_map(
                 existing.offense = player_stat.get("offense")
                 existing.defense = player_stat.get("defense")
                 existing.support = player_stat.get("support")
+                existing.level = player_stat.get("level")
             else:
                 logger.debug(f"Saving stats %s", player_stat)
                 player_stat_record = PlayerStats(**player_stat)
