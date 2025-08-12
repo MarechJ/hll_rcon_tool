@@ -14,6 +14,7 @@ import {HeartCrackIcon, HeartOffIcon, ScaleIcon, SkullIcon, ZapIcon} from "lucid
 import {ColumnCategory} from "@/lib/tables";
 import {Awards} from "@/components/game/statistics/award";
 import {PlayerBaseWithAwards} from "@/pages/games/[id]";
+import { Level } from './level'
 
 const threeDigitsWidth = 40
 const fourDigitsWidth = 50
@@ -417,12 +418,32 @@ const statusColumn: ColumnDef<Player | PlayerWithStatus> = {
   enableHiding: false,
 }
 
+const levelColumn = (): ColumnDef<Player | PlayerWithStatus> => {
+  const { t } = useTranslation('game')
+
+  return {
+    id: 'level',
+    accessorKey: 'level',
+    meta: { label: t('playersTable.level'), category: ColumnCategory.GENERAL },
+    size: threeDigitsWidth,
+    header: function LevelHeader() {
+      const { t } = useTranslation('game')
+      return <div>{t('playersTable.level')}</div>
+    },
+    cell: ({ row }) => {
+      const player = row.original
+      return <div className='text-center font-bold'><Level level={player.level} /></div>
+    },
+  }
+}
+
 export const getLiveGameColumns = (handlePlayerClick: (id: string) => void): ColumnDef<Player | PlayerWithStatus>[] => [
   statusColumn,
+  levelColumn(),
   playerColumn(handlePlayerClick),
   ...pointColumns(false),
 ]
 
 export const getCompletedGameColumns = (
   handlePlayerClick: (id: string) => void,
-): ColumnDef<Player | PlayerWithStatus | PlayerBaseWithAwards>[] => [teamColumn(), playerColumn(handlePlayerClick), awardColumn(), ...pointColumns(true)]
+): ColumnDef<Player | PlayerWithStatus | PlayerBaseWithAwards>[] => [teamColumn(), levelColumn(), playerColumn(handlePlayerClick), awardColumn(), ...pointColumns(true)]
