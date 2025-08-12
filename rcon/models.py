@@ -592,6 +592,7 @@ class PlayerStats(Base):
         foreign_keys=[player_id_id], back_populates="stats"
     )
     map: Mapped[Maps] = relationship(back_populates="player_stats")
+    level: Mapped[int] = mapped_column()
 
     def detect_team(self) -> PlayerTeamAssociation:
         def get_value(item):
@@ -680,6 +681,7 @@ class PlayerStats(Base):
             "weapons": self.weapons,
             "death_by_weapons": self.death_by_weapons,
             "team": self.detect_team(),
+            "level": self.level,
         }
 
 

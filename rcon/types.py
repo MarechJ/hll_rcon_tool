@@ -460,6 +460,7 @@ class PlayerStat(TypedDict):
     p_defense: int
     support: int
     p_support: int
+    level: int
 
 
 class CachedLiveGameStats(TypedDict):
