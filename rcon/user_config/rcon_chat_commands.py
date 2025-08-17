@@ -120,8 +120,9 @@ class RConChatCommandsUserConfig(BaseChatCommandUserConfig):
                 description="Punishes yourself to redeploy in 10s instead of 20s.",
                 commands={
                     "punish": {
-                        "player_name": "{player_name}",
+                        "by": "{player_name}",
                         "reason": "Executing redeploy command",
+                        "player_name": "{player_name}",
                     }
                 },
             ),
