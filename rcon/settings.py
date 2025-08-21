@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import os
 import re
 import socket
@@ -32,6 +33,35 @@ SERVER_INFO: ServerInfoType = {
     "port": os.getenv("HLL_PORT"),
     "password": os.getenv("HLL_PASSWORD"),
 }
+
+
+@dataclass(frozen=True)
+class RconCredentials:
+    """
+        Parameters
+    ----------
+    host : str
+        The hostname or IP address of the RCON server.
+    port : int
+        The port of the RCON server.
+    password : str
+        The password for the RCON server.
+    """
+
+    host: str
+    port: int
+    password: str
+
+
+def get_rcon_credentials() -> RconCredentials:
+    host = os.getenv("HLL_HOST")
+    port = os.getenv("HLL_PORT")
+    password = os.getenv("HLL_PASSWORD")
+
+    if not (host and port and password):
+        raise RuntimeError("Missing required environment variables")
+
+    return RconCredentials(host, int(port), password)
 
 
 def check_config():
