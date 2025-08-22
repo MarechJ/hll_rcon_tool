@@ -19,6 +19,7 @@ from rcon.cache_utils import get_redis_client, ttl_cache
 from rcon.maps import (
     Environment,
     GameMode,
+    Layer,
     categorize_maps,
     sort_maps_by_gamemode,
 )
@@ -43,23 +44,23 @@ from rcon.utils import MapsHistory
 logger = logging.getLogger(__name__)
 
 
-def validate_map_ids(func):
+def validate_maps(func):
     @functools.wraps(func)
     def wrapper(self, map_arg, *args, **kwargs):
-        all_map_ids = {m.id for m in self._rcon.get_maps()}
-        # Check for string (single map_id)
-        if isinstance(map_arg, str):
-            if map_arg not in all_map_ids:
+        all_maps = self._rcon.get_maps()
+        # Check for Layer
+        if isinstance(map_arg, Layer):
+            if map_arg not in all_maps:
                 raise Exception(
                     f"Map `{map_arg}` is not a valid map on the game server."
                 )
         # Check for iterable of strings (but not a string itself)
-        elif isinstance(map_arg, Iterable) and not isinstance(map_arg, str):
-            invalid = [mid for mid in map_arg if mid not in all_map_ids]
+        elif isinstance(map_arg, Iterable) and not isinstance(map_arg, Layer):
+            invalid = [map for map in map_arg if map not in all_maps]
             if invalid:
-                raise Exception(f"Invalid map_ids: {', '.join(invalid)}")
+                raise Exception(f"Invalid maps: {', '.join(invalid)}")
         else:
-            raise Exception("Invalid argument type for map_id(s)")
+            raise Exception("Invalid argument type for map(s)")
         return func(self, map_arg, *args, **kwargs)
 
     return wrapper
@@ -104,8 +105,6 @@ class VoteMap:
 
         if self.enabled and not self.get_next_map():
             self.apply_results()
-        
-        
 
     @staticmethod
     def require_enabled(func):
@@ -116,9 +115,10 @@ class VoteMap:
                 return ActionResult(
                     ok=False,
                     outcome=ActionOutcome.DISABLED,
-                    message="Votemap is disabled."
+                    message="Votemap is disabled.",
                 )
             return func(self, *args, **kwargs)
+
         return wrapper
 
     @staticmethod
@@ -136,7 +136,7 @@ class VoteMap:
 
     @staticmethod
     def format_map_vote(
-        selection: list[str],
+        selection: list[Layer],
         votes: list[VoteMapVote],
         format_type="vertical",
         player_choice: Dict[str, str] | None = None,
@@ -158,12 +158,11 @@ class VoteMap:
         for vote in votes:
             ranked_votes[vote["map_id"]] += vote["vote_count"]
             total_vote_counts += vote["vote_count"]
-        selection_map_layers = [maps.parse_layer(map_id) for map_id in selection]
 
         # 0: map 1, 1: map 2, etc.
         vote_dict = {}
         entry_id = 1 if not player_choice else 0
-        for map in selection_map_layers:
+        for map in selection:
             vote_dict[entry_id] = map
             entry_id += 1
 
@@ -178,11 +177,11 @@ class VoteMap:
             maps_to_numbers = dict(zip(vote_dict.values(), vote_dict.keys()))
 
             if player_choice:
-                map_choice = selection_map_layers.pop(0)
+                map_choice = selection.pop(0)
                 s = f"{player_choice["player_name"]}'s pick:\n"
                 s += f"[{maps_to_numbers[map_choice]}] {map_choice.pretty_name} - {ranked_votes[map_choice]}/{total_vote_counts} votes"
                 text.append(s)
-            categorized = categorize_maps(selection_map_layers)
+            categorized = categorize_maps(selection)
             if len(categorized[maps.GameMode.WARFARE]):
                 vote_options = VoteMap.join_vote_options(
                     selection=categorized[maps.GameMode.WARFARE],
@@ -226,12 +225,12 @@ class VoteMap:
     def enabled(self):
         return self.config.enabled
 
-    def get_next_map(self) -> str | None:
+    def get_next_map(self) -> Layer | None:
         return self._state.get_next_map()
 
-    @validate_map_ids
-    def set_next_map(self, map_id: str):
-        self._state.set_next_map(map_id)
+    @validate_maps
+    def set_next_map(self, map: Layer):
+        self._state.set_next_map(map)
 
     def reset_next_map(self):
         self._state.delete_next_map()
@@ -255,33 +254,33 @@ class VoteMap:
     def get_map_whitelist(self):
         return self._state.get_whitelist()
 
-    @validate_map_ids
-    def add_map_to_whitelist(self, map_id: str):
-        self._state.add_map_to_whitelist(map_id)
+    @validate_maps
+    def add_map_to_whitelist(self, map: Layer):
+        self._state.add_map_to_whitelist(map)
 
-    @validate_map_ids
-    def add_maps_to_whitelist(self, map_ids: Iterable[str]):
-        for map_id in map_ids:
-            self._state.add_map_to_whitelist(map_id)
+    @validate_maps
+    def add_maps_to_whitelist(self, maps: Iterable[Layer]):
+        for map in maps:
+            self._state.add_map_to_whitelist(map)
 
-    def remove_map_from_whitelist(self, map_id: str):
-        self._state.remove_map_from_whitelist(map_id)
+    def remove_map_from_whitelist(self, map: Layer):
+        self._state.remove_map_from_whitelist(map)
 
-    def remove_maps_from_whitelist(self, map_ids):
-        for map_id in map_ids:
-            self.remove_map_from_whitelist(map_id)
+    def remove_maps_from_whitelist(self, maps):
+        for map in maps:
+            self.remove_map_from_whitelist(map)
 
     def reset_map_whitelist(self):
-        all_map_ids = set([map.id for map in self._rcon.get_maps()])
-        self.set_map_whitelist(all_map_ids)
+        all_maps = self._rcon.get_maps()
+        self.set_map_whitelist(all_maps)
 
-    @validate_map_ids
-    def set_map_whitelist(self, map_ids: Iterable[str]):
-        if len([*map_ids]) < 1:
+    @validate_maps
+    def set_map_whitelist(self, maps: Iterable[Layer]):
+        if len([*maps]) < 1:
             raise Exception("Votemap whitelist must have at least 1 one map.")
-        self._state.set_whitelist(map_ids)
+        self._state.set_whitelist(maps)
 
-    def get_selection(self) -> list[str]:
+    def get_selection(self) -> list[Layer]:
         return self._state.get_selection()
 
     def reset_selection(self):
@@ -290,41 +289,35 @@ class VoteMap:
     def rebuild_selection(self):
         self.set_selection(self.get_new_selection())
 
-    @validate_map_ids
-    def set_selection(self, map_ids: Iterable[str]):
-        if len([*map_ids]) > self.SELECTION_LIMIT:
+    @validate_maps
+    def set_selection(self, maps: Iterable[Layer]):
+        if len([*maps]) > self.SELECTION_LIMIT:
             raise SelectionLimitExceeded(
                 f"Cannot change votemap selection. Max selection limit {self.SELECTION_LIMIT} would be exceeded."
             )
-        map_ids = set(map_ids)
-        sorted_layers = sort_maps_by_gamemode(
-            [maps.parse_layer(map_id) for map_id in map_ids]
-        )
-        map_ids = [map.id for map in sorted_layers]
-        self._state.set_selection(map_ids)
+        sorted_map_selection = sort_maps_by_gamemode(list(set(maps)))
+        self._state.set_selection(sorted_map_selection)
 
-    @validate_map_ids
-    def add_map_to_selection(self, map_id: str):
+    @validate_maps
+    def add_map_to_selection(self, map: Layer):
         selection = self.get_selection()
         if len(selection) >= self.SELECTION_LIMIT:
             raise SelectionLimitExceeded(
-                f"Cannot add {map_id=} to votemap selection. Max selection limit {self.SELECTION_LIMIT} would be exceeded."
+                f"Cannot add {map=} to votemap selection. Max selection limit {self.SELECTION_LIMIT} would be exceeded."
             )
-        if map_id in selection:
-            raise Exception(f"Map {map_id=} is already in the selection.")
+        if map in selection:
+            raise Exception(f"Map {map=} is already in the selection.")
 
-        new_selection = selection + [map_id]
+        new_selection = selection + [map]
         self.set_selection(new_selection)
 
-    def get_new_selection(self) -> list[str]:
+    def get_new_selection(self) -> list[Layer]:
         config = self.config
         new_selection = []
         options = {
             "maps_history": [maps.parse_layer(m["name"]) for m in self._maps_history],
             "current_map": self._rcon.current_map,
-            "allowed_maps": set(
-                [maps.parse_layer(m) for m in self.get_map_whitelist()]
-            ),
+            "allowed_maps": set(self.get_map_whitelist()),
             **config.model_dump(),
         }
 
@@ -335,7 +328,7 @@ class VoteMap:
             %s
             """,
             self._rcon.get_maps(),
-            config
+            config,
         )
 
         try:
@@ -349,25 +342,25 @@ class VoteMap:
             )
             new_selection = self.__suggest_new_selection(**options)
 
-        return [map.id for map in new_selection]
+        return new_selection
 
     def get_status(self, sort_by_vote: bool = True) -> VoteMapStatus:
         if not self.config.enabled:
-            return {
-            "enabled": False,
-            "results": [],
-            "last_reminder": None,
-            "next_map": None,
-        }
+            return VoteMapStatus(
+                enabled=False,
+                results=[],
+                last_reminder=None,
+                next_map=None,
+            )
 
         votes = self.get_votes()
         map_states: dict[str, VoteMapMapResult] = {
-            map_id: {
-                "voters": [],
-                "map": maps.parse_layer(map_id),
-                "votes_count": 0,
-            }
-            for map_id in self.get_selection()
+            map.id: VoteMapMapResult(
+                voters=[],
+                map=map,
+                votes_count=0,
+            )
+            for map in self.get_selection()
         }
         for vote in votes:
             try:
@@ -383,17 +376,22 @@ class VoteMap:
             except KeyError:
                 logger.exception("Invalid vote. Map not in the selection", vote)
 
+        results = list(map_states.values())
         if sort_by_vote:
-            return sorted(
-                map_states.values(), key=lambda d: d["votes_count"], reverse=True
+            results = sorted(
+                results, key=lambda d: d["votes_count"], reverse=True
             )
+
+        next_map = self.get_next_map()
+        if next_map:
+            next_map = next_map.pretty_name
         return {
             "enabled": True,
-            "results": list(map_states.values()),
+            "results": results,
             "last_reminder": self.get_last_reminder_time(),
-            "next_map": maps.parse_layer(self.get_next_map()).pretty_name,
+            "next_map": next_map,
         }
- 
+
     def get_player_choice(self) -> Dict[str, str] | None:
         return self._state.get_player_choice()
 
@@ -437,7 +435,9 @@ class VoteMap:
         if not_reminded_yet:
             return True
 
-        time_since_last_reminder = (datetime.now(tz=UTC) - last_time_reminded).total_seconds()
+        time_since_last_reminder = (
+            datetime.now(tz=UTC) - last_time_reminded
+        ).total_seconds()
         if time_since_last_reminder > reminder_frequency:
             return True
         return False
@@ -500,7 +500,8 @@ class VoteMap:
 
         if "{map_selection}" not in instructions:
             logger.error(
-                "Votemap is not configured properly, %s is not present in the instruction text.", "map_selection"
+                "Votemap is not configured properly, %s is not present in the instruction text.",
+                "map_selection",
             )
             return ActionResult(
                 ok=False,
@@ -509,7 +510,10 @@ class VoteMap:
             )
 
         players_to_remind = list(
-            filter(lambda player: not self.has_player_voted(player[1]), self._get_optin_players())
+            filter(
+                lambda player: not self.has_player_voted(player[1]),
+                self._get_optin_players(),
+            )
         )
 
         map_selection = self.format_map_vote(
@@ -579,7 +583,9 @@ class VoteMap:
             map(lambda flag_record: flag_record["flag"], player["flags"])
         )
         if set(self.config.vote_ban_flags).intersection(set(player_flags)):
-            raise PlayerVoteMapBan("NOT ALLOWED!\n\nYou are not allowed to use this command on this server.")
+            raise PlayerVoteMapBan(
+                "NOT ALLOWED!\n\nYou are not allowed to use this command on this server."
+            )
 
         # Vote count is 1 by default
         vote_count = 1
@@ -621,7 +627,7 @@ class VoteMap:
         try:
             if entry not in range(start, end):
                 raise ValueError
-            selected_map_id = selection[map_index]
+            selected_map = selection[map_index]
         except (TypeError, ValueError, IndexError):
             raise InvalidVoteError(
                 f"Vote must be a number between {start} and {end - 1}"
@@ -641,30 +647,40 @@ class VoteMap:
 
         if map_start is None or timestamp < map_start:
             logger.warning(
-                "Vote is too old %s, %s, %d, %s", player_name, timestamp, entry, current_map 
+                "Vote is too old %s, %s, %d, %s",
+                player_name,
+                timestamp,
+                entry,
+                current_map,
             )
 
         # Vote registered
-        self._state.add_vote(player_id, player_name, selected_map_id, vote_count)
+        self._state.add_vote(player_id, player_name, selected_map, vote_count)
 
         logger.info(
-            "Registered vote from %s(%s) for {%s} - {%d}", player_name, player_id, selected_map_id, entry
+            "Registered vote from %s(%s) for {%s} - {%d}",
+            player_name,
+            player_id,
+            selected_map,
+            entry,
         )
 
         # Recalculate results
         self.apply_results()
 
-        return selected_map_id
+        return selected_map
 
-    @validate_map_ids
-    def register_player_choice(self, map_id: str, player: PlayerProfileType):
+    @validate_maps
+    def register_player_choice(self, map_choice: Layer, player: PlayerProfileType):
 
         player_flags = list(
             map(lambda flag_record: flag_record["flag"], player["flags"])
         )
 
         if set(self.config.vote_ban_flags).intersection(set(player_flags)):
-            raise PlayerVoteMapBan("NOT ALLOWED!\n\nYou are not allowed to use this command on this server.")
+            raise PlayerVoteMapBan(
+                "NOT ALLOWED!\n\nYou are not allowed to use this command on this server."
+            )
 
         player_choice_flags = self.config.player_choice_flags
         # If player_choice_flags list is not empty, player needs to have
@@ -679,9 +695,9 @@ class VoteMap:
             raise VoteMapException("Players' map choice was already selected.")
 
         selection = self.get_selection()
-        if map_id in selection:
+        if map_choice in selection:
             raise VoteMapException(
-                f"{maps.parse_layer(map_id).pretty_name} is already in the selection. Pick another map."
+                f"{map_choice.pretty_name} is already in the selection. Pick another map."
             )
 
         player_name = player["names"][0]["name"]
@@ -689,25 +705,22 @@ class VoteMap:
 
         self._state.set_player_choice(player_id, player_name)
         # Access state's method directly to prevent sorting by game mode
-        self._state.set_selection([map_id] + selection)
+        self._state.set_selection([map_choice] + selection)
 
-    def get_vote_overview(self) -> list[tuple[maps.Layer, int]]:
-        try:
-            counter = self.get_selection_counter()
-            if not counter:
-                return []
-            ranked_maps = counter.most_common()
-            return [
-                (maps.parse_layer(map_id), vote_count)
-                for map_id, vote_count in ranked_maps
-            ]
-        except Exception:
-            logger.exception("Can't produce vote overview")
+    def get_vote_overview(self) -> list[tuple[Layer, int]]:
+        counter = self.get_selection_counter()
+        if not counter:
+            return []
+        ranked_maps = counter.most_common()
+        return [
+            (maps.parse_layer(map_id), vote_count)
+            for map_id, vote_count in ranked_maps
+        ]
 
     def reset_votes(self):
         self._state.delete_votes()
 
-    def get_selection_counter(self) -> Counter | None:
+    def get_selection_counter(self) -> Counter[str] | None:
         selection = set(self.get_selection())
         valid_votes = [vote for vote in self.get_votes() if vote["map_id"] in selection]
         if len(valid_votes) == 0:
@@ -717,15 +730,14 @@ class VoteMap:
             counter[vote["map_id"]] += vote["vote_count"]
         return counter
 
-
-    def get_most_voted_map(self) -> str | None:
+    def get_most_voted_map(self) -> Layer | None:
         counter = self.get_selection_counter()
         if not counter:
             return None
         most_voted_map, _ = counter.most_common()[0]
-        return most_voted_map
+        return maps.parse_layer(most_voted_map)
 
-    def _get_least_played_map(self, maps_to_pick_from: list[str]) -> str:
+    def _get_least_played_map(self, maps_to_pick_from: list[Layer]) -> Layer:
 
         if not maps_to_pick_from:
             raise ValueError(
@@ -735,20 +747,20 @@ class VoteMap:
         map_id_counts = dict(Counter(map["name"] for map in self._maps_history))
         least_played_map, max_count = maps_to_pick_from[0], float("inf")
 
-        for map_id in maps_to_pick_from:
-            count = map_id_counts.get(map_id, 0)
+        for map in maps_to_pick_from:
+            count = map_id_counts.get(map.id, 0)
             if count == 0:
-                least_played_map = map_id
+                least_played_map = map
                 break
             if count < max_count:
-                least_played_map = map_id
+                least_played_map = map
                 max_count = count
 
         return least_played_map
 
-    def _get_default_next_map(self) -> str:
-        selection = [maps.parse_layer(m) for m in self.get_selection()]
-        all_maps = [maps.parse_layer(m) for m in self._rcon.get_maps()]
+    def _get_default_next_map(self) -> Layer:
+        selection = self.get_selection()
+        all_maps = self._rcon.get_maps()
         config = self.config
 
         if not config.allow_default_to_offensive:
@@ -764,15 +776,13 @@ class VoteMap:
             all_maps = [m for m in all_maps if not m.game_mode.is_small()]
 
         if not self._maps_history:
-            choice = random.choice([m for m in self.get_map_whitelist()])
+            choice = random.choice(self.get_map_whitelist())
             return choice
 
-        selection = [map.id for map in selection]
-        all_maps = [map.id for map in all_maps]
-        last_played_map = lambda map: map != self._maps_history[0]["name"]
+        last_played_map = lambda map: map.id != self._maps_history[0]["name"]
 
         try:
-            next_default_map: str = {
+            next_default_map: Layer = {
                 DefaultMethods.least_played_suggestions: partial(
                     self._get_least_played_map,
                     selection,
@@ -792,7 +802,8 @@ class VoteMap:
             logger.exception(e)
             next_default_map = random.choice(list(filter(last_played_map, all_maps)))
             logger.info(
-                "Next default map was randomly picked from all maps - %s", next_default_map
+                "Next default map was randomly picked from all maps - %s",
+                next_default_map,
             )
 
         return next_default_map
@@ -913,7 +924,7 @@ class VoteMap:
         logger.info("Suggestion %s", [m.pretty_name for m in selection])
         return selection
 
-    def generate_next_map(self) -> str:
+    def generate_next_map(self) -> Layer:
         most_voted_map = self.get_most_voted_map()
         if not most_voted_map:
             next_map = self._get_default_next_map()
@@ -924,27 +935,27 @@ class VoteMap:
             )
         else:
             next_map = most_voted_map
-            if next_map not in [map.id for map in self._rcon.get_maps()]:
+            if next_map not in self._rcon.get_maps():
                 logger.error(
-                    "%s is not part of the all map list maps=%s", next_map, self._rcon.get_maps()
+                    "%s is not part of the all map list maps=%s",
+                    next_map,
+                    self._rcon.get_maps(),
                 )
             if next_map not in (selection := self.get_selection()):
-                logger.error(
-                    "%s is not part of vote selection %s", next_map, selection
-                )
+                logger.error("%s is not part of vote selection %s", next_map, selection)
             logger.info("Winning map %s", next_map)
         return next_map
 
     @require_enabled
-    def apply_results(self) -> str:
+    def apply_results(self) -> Layer:
         """
         Replaces the current map rotation on the server with a single map.\n
         The map with the most votes is selected.\n
         If no votes were registered, user selected default method is applied to find one.\n
 
-        :return The selected map_id
+        :return The selected map
         """
-        next_map = self.generate_next_map()        
+        next_map = self.generate_next_map()
 
         # Apply rotation safely
 
@@ -955,21 +966,23 @@ class VoteMap:
             map_ = current_rotation.pop(1)
             self._rcon.remove_map_from_rotation(map_.id)
 
-        current_next_map = current_rotation[0].id
+        current_next_map = current_rotation[0]
         if current_next_map != next_map:
             # Replace the only map left in rotation
-            self._rcon.add_map_to_rotation(next_map)
-            self._rcon.remove_map_from_rotation(current_next_map)
+            self._rcon.add_map_to_rotation(next_map.id)
+            self._rcon.remove_map_from_rotation(current_next_map.id)
 
         # Check that it worked
         current_rotation = self._rcon.get_map_rotation()["maps"]
-        if len(current_rotation) != 1 or current_rotation[0].id != next_map:
+        if len(current_rotation) != 1 or current_rotation[0] != next_map:
             raise ValueError(
                 f"Applying the winning map {next_map=} failed: {current_rotation=}"
             )
 
         logger.info(
-            "Successfully applied winning map %s, new rotation %s", next_map, current_rotation
+            "Successfully applied winning map %s, new rotation %s",
+            next_map,
+            current_rotation,
         )
         self.set_next_map(next_map)
         return next_map
@@ -1171,12 +1184,10 @@ class VoteMapCommandHandler:
         Type !vm too see the new selection"""
 
         player = self.votemap._get_player(player_id)
-        self.votemap.register_player_choice(map_choice.id, player)
+        self.votemap.register_player_choice(map_choice, player)
         # Automatically register player's vote for the selected map
         timestamp = int(datetime.now().timestamp())
-        self.votemap.register_vote(
-            player, timestamp, entry=0
-        )  # It's always at index 0
+        self.votemap.register_vote(player, timestamp, entry=0)  # It's always at index 0
         self.rcon.message_player(player_id=player_id, message=success_msg)
 
     def handle_vote(
@@ -1186,9 +1197,7 @@ class VoteMapCommandHandler:
         player = self.votemap._get_player(player_id)
         player_id = player["player_id"]
         try:
-            map_id = self.votemap.register_vote(
-                player, log["timestamp_ms"] // 1000, entry
-            )
+            map = self.votemap.register_vote(player, log["timestamp_ms"] // 1000, entry)
         except InvalidVoteError as e:
             exception_message = f"INVALID VOTE!\n{e}\n{self.config.help_text or "Type '!votemap' in the chat."}"
             raise VoteMapException(exception_message) from e
@@ -1200,7 +1209,7 @@ class VoteMapCommandHandler:
             if msg := self.config.thank_you_text:
                 msg = msg.format(
                     player_name=log["player_name_1"],
-                    map_name=maps.parse_layer(map_id).pretty_name,
+                    map_name=map.pretty_name,
                 )
                 self.rcon.message_player(player_id=player_id, message=msg)
 
@@ -1286,7 +1295,9 @@ class VoteMapCommandHandler:
                 )
             except Exception as e:
                 logger.exception(
-                    "Unable to add votemap reminder optin for %s. Exception %s", player_id, str(e)
+                    "Unable to add votemap reminder optin for %s. Exception %s",
+                    player_id,
+                    str(e),
                 )
                 raise VoteMapException(
                     "Something went wrong while opting out of vote map reminders.\nPlease try again later."
@@ -1332,7 +1343,9 @@ class VoteMapCommandHandler:
                 )
             except Exception as e:
                 logger.exception(
-                    "Unable to add votemap reminder optin for %s. Exception %s", player_id, str(e)
+                    "Unable to add votemap reminder optin for %s. Exception %s",
+                    player_id,
+                    str(e),
                 )
                 raise VoteMapException(
                     "Something went wrong while opting in to vote map reminders.\nPlease try again later."
@@ -1431,13 +1444,13 @@ class VotemapState:
         return pickle.loads(vote)
 
     def add_vote(
-        self, player_id: str, player_name: str, map_id: str, vote_count: int = 1
+        self, player_id: str, player_name: str, map: Layer, vote_count: int = 1
     ):
         vote = pickle.dumps(
             {
                 "player_id": player_id,
                 "player_name": player_name,
-                "map_id": map_id,
+                "map_id": map.id,
                 "vote_count": vote_count,
             }
         )
@@ -1449,36 +1462,38 @@ class VotemapState:
     ###
     # MAP WHITELIST
     ###
-    def get_whitelist(self) -> set[str]:
+    def get_whitelist(self) -> list[Layer]:
         raw = cast(Set[bytes], self.client.smembers(self.MAP_WHITELIST))
-        return {item.decode() for item in raw}
+        uniques = {item.decode() for item in raw}
+        return [maps.parse_layer(map_id) for map_id in uniques]
 
-    def add_map_to_whitelist(self, map_id: str):
-        self.client.sadd(self.MAP_WHITELIST, map_id)
+    def add_map_to_whitelist(self, map: Layer):
+        self.client.sadd(self.MAP_WHITELIST, map.id)
 
-    def remove_map_from_whitelist(self, map_id: str):
-        self.client.srem(self.MAP_WHITELIST, map_id)
+    def remove_map_from_whitelist(self, map: Layer):
+        self.client.srem(self.MAP_WHITELIST, map.id)
 
-    def set_whitelist(self, map_ids: Iterable[str]):
+    def set_whitelist(self, maps: Iterable[Layer]):
         self.client.delete(self.MAP_WHITELIST)
-        self.client.sadd(self.MAP_WHITELIST, *map_ids)
+        self.client.sadd(self.MAP_WHITELIST, *[map.id for map in maps])
 
     ###
     # MAP SELECTION
     ###
-    def get_selection(self) -> list[str]:
+    def get_selection(self) -> list[Layer]:
         # Get all map ids in order
         raw = cast(Set[bytes], self.client.zrange(self.MAP_SELECTION, 0, -1))
-        return [item.decode() for item in raw]
+        return [maps.parse_layer(item.decode()) for item in raw]
 
-    def set_selection(self, map_ids: Iterable[str]):
+    def set_selection(self, maps: Iterable[Layer]):
         self.delete_selection()
         # Add each map_id with its index as score
-        for idx, map_id in enumerate(map_ids):
+        for idx, map in enumerate(maps):
+            map_id = map.id
             self.client.zadd(self.MAP_SELECTION, {map_id: idx})
 
-    def remove_map_from_selection(self, map_id: str):
-        self.client.zrem(self.MAP_SELECTION, map_id)
+    def remove_map_from_selection(self, map: Layer):
+        self.client.zrem(self.MAP_SELECTION, map.id)
 
     def delete_selection(self):
         self.client.delete(self.MAP_SELECTION)
@@ -1486,14 +1501,14 @@ class VotemapState:
     ###
     # NEXT MAP
     ###
-    def get_next_map(self):
+    def get_next_map(self) -> Layer | None:
         next_map = cast(bytes | None, self.client.get(self.NEXT_MAP))
         if next_map is None:
             return None
-        return next_map.decode()
+        return maps.parse_layer(next_map.decode())
 
-    def set_next_map(self, map_id: str):
-        self.client.set(self.NEXT_MAP, map_id)
+    def set_next_map(self, map: Layer):
+        self.client.set(self.NEXT_MAP, map.id)
 
     def delete_next_map(self):
         self.client.delete(self.NEXT_MAP)
