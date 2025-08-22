@@ -4,7 +4,7 @@ from fakeredis import FakeStrictRedis
 from unittest.mock import MagicMock, patch
 from rcon import maps
 from rcon.user_config.vote_map import DefaultMethods
-from rcon.vote_map import InvalidVoteError, PlayerChoiceNotAllowed, PlayerVoteMapBan, VoteMap, VoteMapException, VoteMapUserConfig
+from rcon.vote_map import InvalidVoteError, PlayerChoiceNotAllowed, PlayerVoteNotAllowed, VoteMap, VoteMapException, VoteMapUserConfig
 from rcon.maps import LAYERS, MAPS, Environment, Layer, GameMode, Team
 from rcon.types import PlayerProfileType
 
@@ -425,7 +425,7 @@ def test_player_banned_from_voting_based_on_vote_ban_flag(votemap_flags):
     entry = (
         votemap_flags.get_selection().index(selected_map) + 1
     )
-    with pytest.raises(PlayerVoteMapBan):
+    with pytest.raises(PlayerVoteNotAllowed):
         votemap_flags.register_vote(player, int(datetime.now().timestamp()), entry)
 
 
