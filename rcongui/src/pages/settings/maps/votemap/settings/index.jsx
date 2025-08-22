@@ -36,7 +36,6 @@ import ReplayIcon from "@mui/icons-material/Replay";
 import { lazy, Suspense } from "react";
 const EmojiPicker = lazy(() => import("@emoji-mart/react"));
 import emojiData from "@emoji-mart/data/sets/15/twitter.json";
-import DeleteIcon from "@mui/icons-material/Delete";
 import Emoji from "@/components/shared/Emoji";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 
@@ -174,6 +173,15 @@ function VotemapSettingsPage() {
     }));
   };
 
+  const handleRemoveAllowOnlyFlag = (index) => {
+    setWorkingConfig((prev) => ({
+      ...prev,
+      vote_ban_flags: prev.vote_ban_flags.filter(
+        (_, i) => i !== index
+      ),
+    }));
+  };
+
   const handleRemoveFlag = (index) => {
     switch (emojiPickerMode) {
       case "update_vote_flag":
@@ -184,6 +192,9 @@ function VotemapSettingsPage() {
         break
       case "update_vote_ban_flag":
         handleRemoveVoteBanFlag(index);
+        break
+      case "update_allow_flag_only":
+        handleRemoveAllowOnlyFlag(index);
         break
       default:
         break;
@@ -213,6 +224,14 @@ function VotemapSettingsPage() {
     });
   };
 
+  const handleAllowOnlyFlagChange = (index, value) => {
+    setWorkingConfig((prev) => {
+      const updated = [...(prev.allow_flag_only || [])];
+      updated[index] = value;
+      return { ...prev, allow_flag_only: updated };
+    });
+  };
+
   const handleAddVoteBanFlag = (index, value) => {
     setWorkingConfig((prev) => {
       const updated = (prev.vote_ban_flags || []).concat(value);
@@ -225,6 +244,14 @@ function VotemapSettingsPage() {
       const another = { flag: value, vote_count: 1 };
       const updated = (prev.vote_flags || []).concat(another);
       return { ...prev, vote_flags: updated };
+    });
+  };
+
+  const handleAddAllowOnlyFlag = (index, value) => {
+    setWorkingConfig((prev) => {
+      const another = { flag: value, vote_count: 1 };
+      const updated = (prev.allow_flag_only || []).concat(another);
+      return { ...prev, allow_flag_only: updated };
     });
   };
 
@@ -260,17 +287,23 @@ function VotemapSettingsPage() {
         case "update_player_choice_flag":
           handlePlayerChoiceFlagChange(emojiPickerIndex, emoji.native);
           break;
+        case "update_vote_ban_flag":
+            handleVoteBanFlagChange(emojiPickerIndex, emoji.native);
+            break;
+        case "update_allow_flag_only":
+          handleAllowOnlyFlagChange(emojiPickerIndex, emoji.native);
+          break;
         case "add_player_choice_flag":
           handleAddPlayerChoiceFlag(emojiPickerIndex, emoji.native);
-          break;
-        case "update_vote_ban_flag":
-          handleVoteBanFlagChange(emojiPickerIndex, emoji.native);
           break;
         case "add_vote_ban_flag":
           handleAddVoteBanFlag(emojiPickerIndex, emoji.native);
           break;
         case "add_vote_flag":
           handleAddVoteFlag(emojiPickerIndex, emoji.native);
+          break;
+        case "add_allow_flag_only":
+          handleAddAllowOnlyFlag(emojiPickerIndex, emoji.native);
           break;
         default:
           break;
@@ -448,6 +481,37 @@ function VotemapSettingsPage() {
           <Divider flexItem orientation={"horizontal"} />
 
           {/* Vote Ban Flags Section */}
+          <Typography variant="subtitle1">Vote Whitelist Flags</Typography>
+          <Typography variant="caption">
+            Only players having one of these flags are allowed to use votemap. When no flags provided, everyone is allowed.
+          </Typography>
+          <Stack direction="row" flexWrap={"wrap"} gap={1} alignItems="center">
+            {(workingConfig.allow_flag_only || []).map((item, idx) => (
+              <Button
+                key={idx}
+                variant="outlined"
+                onClick={() =>
+                  handleOpenEmojiPicker(idx, "update_allow_flag_only")
+                }
+                sx={{ minWidth: 48, fontSize: 24 }}
+              >
+                <Emoji emoji={item ?? "❓"} />
+              </Button>
+            ))}
+            <IconButton
+              variant="outlined"
+              onClick={() =>
+                handleOpenEmojiPicker(
+                  workingConfig.allow_flag_only.length,
+                  "add_allow_flag_only"
+                )
+              }
+            >
+              <AddCircleIcon />
+            </IconButton>
+          </Stack>
+
+          {/* Vote Ban Flags Section */}
           <Typography variant="subtitle1">Vote Ban Flags</Typography>
           <Typography variant="caption">
             Players having one of these flags are banned from voting maps.
@@ -481,10 +545,10 @@ function VotemapSettingsPage() {
           <Divider flexItem orientation={"horizontal"} />
 
           {/* Player Choice Flags Section */}
-          <Typography variant="subtitle1">Player Choice Flags</Typography>
+          <Typography variant="subtitle1">Player Choice Whitelist Flags</Typography>
           <Typography variant="caption">
             Players having one of these flags are allowed to run `!vm add`
-            commands. When no flags provided, everyone can run it..
+            commands. When no flags provided, everyone is allowed.
           </Typography>
           <Stack direction="row" flexWrap={"wrap"} gap={1} alignItems="center">
             {(workingConfig.player_choice_flags || []).map((item, idx) => (
