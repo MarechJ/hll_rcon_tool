@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, IntFlag
 import functools
 import logging
 import pickle
@@ -81,6 +81,11 @@ class ActionResult:
 
     def __bool__(self) -> bool:
         return self.ok
+
+
+class VotemapPermissions(IntFlag):
+    REGISTER_VOTE = 1
+    REGISTER_CHOICE = 2
 
 
 class VoteMap:
@@ -378,9 +383,7 @@ class VoteMap:
 
         results = list(map_states.values())
         if sort_by_vote:
-            results = sorted(
-                results, key=lambda d: d["votes_count"], reverse=True
-            )
+            results = sorted(results, key=lambda d: d["votes_count"], reverse=True)
 
         next_map = self.get_next_map()
         if next_map:
@@ -562,6 +565,34 @@ class VoteMap:
         cmd_handler = VoteMapCommandHandler(self, self._rcon, config)
         return cmd_handler.execute(struct_log, player_id)
 
+    def _get_player_permissions(self, player: PlayerProfileType) -> VotemapPermissions:
+        perm = VotemapPermissions(0)
+        config = self.config
+        player_flags = {flag_record["flag"] for flag_record in player["flags"]}
+        is_vip = any(
+            vip["player_id"] == player["player_id"] for vip in self._rcon.get_vip_ids()
+        )
+        not_banned = not set(config.vote_ban_flags) & set(player_flags)
+
+        if (
+            not_banned
+            and (not config.allow_vip_only or (config.allow_vip_only and is_vip))
+            and (
+                not config.allow_flag_only
+                or (player_flags & set(config.allow_flag_only))
+            )
+        ):
+            perm |= VotemapPermissions.REGISTER_VOTE
+        else:
+            return perm
+
+        if not config.player_choice_flags or (player_flags & set(
+            config.player_choice_flags)
+        ):
+            perm |= VotemapPermissions.REGISTER_CHOICE
+
+        return perm
+
     def register_vote(
         self,
         player: PlayerProfileType,
@@ -579,11 +610,8 @@ class VoteMap:
         player_name = player["names"][0]["name"]
         player_id = player["player_id"]
 
-        player_flags = list(
-            map(lambda flag_record: flag_record["flag"], player["flags"])
-        )
-        if set(self.config.vote_ban_flags).intersection(set(player_flags)):
-            raise PlayerVoteMapBan(
+        if VotemapPermissions.REGISTER_VOTE not in self._get_player_permissions(player):
+            raise PlayerVoteNotAllowed(
                 "NOT ALLOWED!\n\nYou are not allowed to use this command on this server."
             )
 
@@ -595,15 +623,13 @@ class VoteMap:
         # Check for player's flags and vip status
         # Pick the one with the highest vote_count
         else:
-            vote_counts = []
-            is_player_vip = next(
-                (
-                    vip
-                    for vip in self._rcon.get_vip_ids()
-                    if vip["player_id"] == player_id
-                ),
-                False,
+            is_player_vip = any(
+                vip["player_id"] == player_id for vip in self._rcon.get_vip_ids()
             )
+            player_flags = list(
+                map(lambda flag_record: flag_record["flag"], player["flags"])
+            )
+            vote_counts = []
             if is_player_vip:
                 vote_counts.append(self.config.vip_vote_count)
             for flag in self.config.vote_flags:
@@ -673,23 +699,12 @@ class VoteMap:
     @validate_maps
     def register_player_choice(self, map_choice: Layer, player: PlayerProfileType):
 
-        player_flags = list(
-            map(lambda flag_record: flag_record["flag"], player["flags"])
-        )
-
-        if set(self.config.vote_ban_flags).intersection(set(player_flags)):
-            raise PlayerVoteMapBan(
+        if not (
+            self._get_player_permissions(player) & VotemapPermissions.REGISTER_CHOICE
+        ):
+            raise PlayerChoiceNotAllowed(
                 "NOT ALLOWED!\n\nYou are not allowed to use this command on this server."
             )
-
-        player_choice_flags = self.config.player_choice_flags
-        # If player_choice_flags list is not empty, player needs to have
-        # one of the flags set in the config
-        if len(player_choice_flags) > 0:
-            if not set(player_flags).intersection(set(player_choice_flags)):
-                raise PlayerChoiceNotAllowed(
-                    "NOT ALLOWED!\n\nYou are not allowed to use this command on this server."
-                )
 
         if self.get_player_choice():
             raise VoteMapException("Players' map choice was already selected.")
@@ -713,8 +728,7 @@ class VoteMap:
             return []
         ranked_maps = counter.most_common()
         return [
-            (maps.parse_layer(map_id), vote_count)
-            for map_id, vote_count in ranked_maps
+            (maps.parse_layer(map_id), vote_count) for map_id, vote_count in ranked_maps
         ]
 
     def reset_votes(self):
@@ -1538,8 +1552,8 @@ class PlayerNotFound(Exception):
     pass
 
 
-class PlayerVoteMapBan(VoteMapException):
-    def __init__(self, message="Player is banned from voting"):
+class PlayerVoteNotAllowed(VoteMapException):
+    def __init__(self, message="Player is not allowed to vote map"):
         super().__init__(message)
 
 
