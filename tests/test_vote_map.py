@@ -61,6 +61,11 @@ UTAH_WARFARE_DAY = Layer(
     map=MAPS["utahbeach"],
     game_mode=GameMode.WARFARE,
 )
+INVALID_MAP = Layer(
+    id="invalid",
+    map=MAPS["utahbeach"],
+    game_mode=GameMode.WARFARE,
+)
 
 # Sample map data for mocking
 SAMPLE_MAPS = [
@@ -271,61 +276,59 @@ def mock_player_profile(
 
 def test_initialization_default_state(votemap, mock_rcon):
     """Test that VoteMap initializes with a default whitelist."""
-    assert votemap.get_map_whitelist() == {m.id for m in mock_rcon.get_maps()}
+    assert set(votemap.get_map_whitelist()) == set(mock_rcon.get_maps())
     assert votemap.get_selection() == []  # Initially empty
 
 
 def test_set_map_whitelist(votemap):
     """Test setting list of maps as whitelist"""
-    map_ids = [m.id for m in SAMPLE_MAPS]
-    votemap.set_map_whitelist(map_ids)
-    assert set(map_ids) == votemap.get_map_whitelist()
+    votemap.set_map_whitelist(SAMPLE_MAPS)
+    assert set(SAMPLE_MAPS) == set(votemap.get_map_whitelist())
 
 
 def test_add_map_to_whitelist(votemap):
     """Test adding a map to the whitelist."""
-    map_ids = [m.id for m in SAMPLE_MAPS]
-    votemap.set_map_whitelist(map_ids)
-    votemap.add_map_to_whitelist(UTAH_WARFARE_DAY.id)
-    assert UTAH_WARFARE_DAY.id in votemap.get_map_whitelist()
+    votemap.set_map_whitelist(SAMPLE_MAPS)
+    votemap.add_map_to_whitelist(UTAH_WARFARE_DAY)
+    assert UTAH_WARFARE_DAY in votemap.get_map_whitelist()
 
 
 def test_add_duplicate_map_to_whitelist(votemap):
     """Test adding a duplicate map to the whitelist does nothing"""
-    map_id = list(votemap.get_map_whitelist())[0]
+    map = list(votemap.get_map_whitelist())[0]
     original_length = len(votemap.get_map_whitelist())
-    votemap.add_map_to_whitelist(map_id)  # Add duplicate
-    assert map_id in votemap.get_map_whitelist()
+    votemap.add_map_to_whitelist(map)  # Add duplicate
+    assert map in votemap.get_map_whitelist()
     assert len(votemap.get_map_whitelist()) == original_length  # No duplicates added
 
 
 def test_add_invalid_map_to_whitelist(votemap):
     """Test adding map with invalid id to the whitelist raises error"""
     with pytest.raises(Exception):
-        votemap.add_map_to_whitelist("invalid_map_id")
+        votemap.add_map_to_whitelist(INVALID_MAP)
 
 
 def test_set_invalid_maps_to_whitelist(votemap):
     """Test adding maps with invalid id to the whitelist raises error"""
     with pytest.raises(Exception):
         whitelist = votemap.get_map_whitelist()
-        whitelist.add("invalid_map_id")
+        whitelist.add(INVALID_MAP)
         votemap.add_maps_to_whitelist(whitelist)
 
 
 def test_remove_map_from_whitelist(votemap):
     """Test removing map from whitelist"""
     whitelist = votemap.get_map_whitelist()
-    map_id = whitelist.pop()
-    votemap.remove_map_from_whitelist(map_id)
+    map = whitelist.pop()
+    votemap.remove_map_from_whitelist(map)
     assert votemap.get_map_whitelist() == whitelist
 
 
 def test_select_least_played_map(votemap):
     least_played_map = votemap._get_least_played_map(
-        maps_to_pick_from=[m.id for m in SAMPLE_MAPS]
+        maps_to_pick_from=SAMPLE_MAPS
     )
-    assert least_played_map == CAR_WARFARE_NIGHT.id
+    assert least_played_map == CAR_WARFARE_NIGHT
 
 
 def test_select_least_played_map_with_empty_selection(votemap):
@@ -335,10 +338,10 @@ def test_select_least_played_map_with_empty_selection(votemap):
 
 def test_get_default_next_map_as_least_played_from_selection(votemap):
     votemap.set_selection(
-        [m.id for m in [CAR_WARFARE_DAY, HUR_WARFARE_DAY, UTAH_WARFARE_DAY]]
+        [CAR_WARFARE_DAY, HUR_WARFARE_DAY, UTAH_WARFARE_DAY]
     )
     least_played_map = votemap._get_default_next_map()
-    assert least_played_map == UTAH_WARFARE_DAY.id
+    assert least_played_map == UTAH_WARFARE_DAY
 
 
 def test_get_default_next_map_as_least_played_from_all(
@@ -353,7 +356,7 @@ def test_get_default_next_map_as_least_played_from_all(
                 default_method=DefaultMethods.least_played_all_maps
             ),
         )
-    selection = [m.id for m in [HUR_WARFARE_DAY, CAR_OFF_AXIS, CAR_SKIRMISH_DAY]]
+    selection = [HUR_WARFARE_DAY, CAR_OFF_AXIS, CAR_SKIRMISH_DAY]
     votemap.set_selection(selection)
     least_played_map = votemap._get_default_next_map()
     assert least_played_map not in selection
@@ -362,11 +365,11 @@ def test_get_default_next_map_as_least_played_from_all(
 def test_register_vote(votemap):
     player = mock_player_profile("123456", "player_1")
     votemap.set_selection(
-        [m.id for m in [HUR_WARFARE_DAY, CAR_OFF_AXIS, CAR_SKIRMISH_DAY]]
+        [HUR_WARFARE_DAY, CAR_OFF_AXIS, CAR_SKIRMISH_DAY]
     )
-    selected_map_id = HUR_WARFARE_DAY.id
+    selected_map = HUR_WARFARE_DAY
     entry = (
-        votemap.get_selection().index(selected_map_id) + 1
+        votemap.get_selection().index(selected_map) + 1
     )  # selection starts from 1
     votemap.register_vote(player, int(datetime.now().timestamp()), entry)
     votes = votemap.get_votes()
@@ -376,13 +379,13 @@ def test_register_vote(votemap):
     assert vote["player_id"] == player["player_id"]
     assert vote["player_name"] == player["names"][0]["name"]
     assert vote["vote_count"] == 1
-    assert vote["map_id"] == selected_map_id
+    assert vote["map_id"] == selected_map.id
 
 
 def test_register_vote_invalid_entry(votemap):
     player = mock_player_profile("123456", "player_1")
     selection = [HUR_WARFARE_DAY, CAR_OFF_AXIS, CAR_SKIRMISH_DAY]
-    votemap.set_selection([m.id for m in selection])
+    votemap.set_selection(selection)
     entry = 0  # without player choice the selection starts from 1
     with pytest.raises(InvalidVoteError):
         votemap.register_vote(player, int(datetime.now().timestamp()), entry)
@@ -393,10 +396,10 @@ def test_register_vote_invalid_entry(votemap):
 def test_register_vote_match_highest_value_without_vip(votemap_flags):
     player = mock_player_profile("123456", "player_1", flags=["🔨", "❤️"])
     selection = [HUR_WARFARE_DAY, CAR_OFF_AXIS, CAR_SKIRMISH_DAY]
-    votemap_flags.set_selection([m.id for m in selection])
-    selected_map_id = HUR_WARFARE_DAY.id
+    votemap_flags.set_selection(selection)
+    selected_map = HUR_WARFARE_DAY
     entry = (
-        votemap_flags.get_selection().index(selected_map_id) + 1
+        votemap_flags.get_selection().index(selected_map) + 1
     )
     votemap_flags.register_vote(player, int(datetime.now().timestamp()), entry)
     vote = votemap_flags.get_vote(player["player_id"])
@@ -405,10 +408,10 @@ def test_register_vote_match_highest_value_without_vip(votemap_flags):
 def test_register_vote_match_highest_value_with_vip(votemap_flags):
     player = mock_player_profile("ID_WITH_VIP", "VIP_PLAYER", flags=["🔨", "❤️"])
     selection = [HUR_WARFARE_DAY, CAR_OFF_AXIS, CAR_SKIRMISH_DAY]
-    votemap_flags.set_selection([m.id for m in selection])
-    selected_map_id = HUR_WARFARE_DAY.id
+    votemap_flags.set_selection(selection)
+    selected_map = HUR_WARFARE_DAY
     entry = (
-        votemap_flags.get_selection().index(selected_map_id) + 1
+        votemap_flags.get_selection().index(selected_map) + 1
     )
     votemap_flags.register_vote(player, int(datetime.now().timestamp()), entry)
     vote = votemap_flags.get_vote(player["player_id"])
@@ -417,10 +420,10 @@ def test_register_vote_match_highest_value_with_vip(votemap_flags):
 def test_player_banned_from_voting_based_on_vote_ban_flag(votemap_flags):
     player = mock_player_profile("123456", "player_1", flags=["😭"])
     selection = [HUR_WARFARE_DAY, CAR_OFF_AXIS, CAR_SKIRMISH_DAY]
-    votemap_flags.set_selection([m.id for m in selection])
-    selected_map_id = HUR_WARFARE_DAY.id
+    votemap_flags.set_selection(selection)
+    selected_map = HUR_WARFARE_DAY
     entry = (
-        votemap_flags.get_selection().index(selected_map_id) + 1
+        votemap_flags.get_selection().index(selected_map) + 1
     )
     with pytest.raises(PlayerVoteMapBan):
         votemap_flags.register_vote(player, int(datetime.now().timestamp()), entry)
@@ -429,37 +432,37 @@ def test_player_banned_from_voting_based_on_vote_ban_flag(votemap_flags):
 def test_player_not_allowed_register_player_choice(votemap_flags):
     player = mock_player_profile("123456", "player_1")
     selection = [HUR_WARFARE_DAY, CAR_OFF_AXIS, CAR_SKIRMISH_DAY]
-    votemap_flags.set_selection([m.id for m in selection])
-    selected_map_id = UTAH_WARFARE_DAY.id
+    votemap_flags.set_selection(selection)
+    selected_map = UTAH_WARFARE_DAY
     with pytest.raises(PlayerChoiceNotAllowed):
-        votemap_flags.register_player_choice(selected_map_id, player)
+        votemap_flags.register_player_choice(selected_map, player)
 
 def test_player_can_register_player_choice_when_only_flagged_allowed(votemap_flags):
     player = mock_player_profile("123456", "player_1", flags=["✅"])
     selection = [HUR_WARFARE_DAY, CAR_OFF_AXIS, CAR_SKIRMISH_DAY]
-    votemap_flags.set_selection([m.id for m in selection])
-    selected_map_id = UTAH_WARFARE_DAY.id
-    votemap_flags.register_player_choice(selected_map_id, player)
+    votemap_flags.set_selection(selection)
+    selected_map = UTAH_WARFARE_DAY
+    votemap_flags.register_player_choice(selected_map, player)
     selection = votemap_flags.get_selection()
     assert len(selection) == 4
-    assert selection[0] == selected_map_id
+    assert selection[0] == selected_map
 
 def test_player_can_register_player_choice_when_everyone_allowed(votemap):
     player = mock_player_profile("123456", "player_1")
     selection = [HUR_WARFARE_DAY, CAR_OFF_AXIS, CAR_SKIRMISH_DAY]
-    votemap.set_selection([m.id for m in selection])
-    selected_map_id = UTAH_WARFARE_DAY.id
-    votemap.register_player_choice(selected_map_id, player)
+    votemap.set_selection(selection)
+    selected_map = UTAH_WARFARE_DAY
+    votemap.register_player_choice(selected_map, player)
     selection = votemap.get_selection()
     assert len(selection) == 4
-    assert selection[0] == selected_map_id
+    assert selection[0] == selected_map
     
 def test_player_fails_to_register_player_choice_again(votemap):
     player = mock_player_profile("123456", "player_1")
     selection = [HUR_WARFARE_DAY, CAR_OFF_AXIS, CAR_SKIRMISH_DAY]
-    votemap.set_selection([m.id for m in selection])
-    map_1 = UTAH_WARFARE_DAY.id
-    map_2 = CAR_SKIRMISH_RAIN.id
+    votemap.set_selection(selection)
+    map_1 = UTAH_WARFARE_DAY
+    map_2 = CAR_SKIRMISH_RAIN
     votemap.register_player_choice(map_1, player)
     with pytest.raises(VoteMapException):
         votemap.register_player_choice(map_2, player)
@@ -467,23 +470,22 @@ def test_player_fails_to_register_player_choice_again(votemap):
 def test_player_fails_to_register_player_choice_duplicate_map(votemap):
     player = mock_player_profile("123456", "player_1")
     selection = [HUR_WARFARE_DAY, CAR_OFF_AXIS, CAR_SKIRMISH_DAY]
-    votemap.set_selection([m.id for m in selection])
-    map_1 = CAR_OFF_AXIS.id
+    votemap.set_selection(selection)
+    map_1 = CAR_OFF_AXIS
     with pytest.raises(VoteMapException):
         votemap.register_player_choice(map_1, player)
 
 def test_ensure_next_map_with_empty_selection(votemap):
     votemap.set_selection([])
     next_map = votemap.get_next_map()
-    all_maps = [m.id for m in ALL_MAPS]
-    assert next_map in all_maps
+    assert next_map in ALL_MAPS
 
 def test_ensure_selection_when_no_maps_to_select_from(votemap):
     """Excludes last 3 played, HUR is the last played"""
-    votemap.set_map_whitelist([HUR_WARFARE_DAY.id])
+    votemap.set_map_whitelist([HUR_WARFARE_DAY])
     new_selection = votemap.get_new_selection()
     assert len(new_selection) > 0
-    assert HUR_WARFARE_DAY.id not in new_selection
+    assert HUR_WARFARE_DAY not in new_selection
 
 def test_no_cmd_handling_while_disabled(votemap_disabled):
     result = votemap_disabled.handle_vote_command({})
