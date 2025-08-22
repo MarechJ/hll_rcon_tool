@@ -745,7 +745,7 @@ class VoteMapMapResult(TypedDict):
 class VoteMapStatus(TypedDict):
     enabled: bool
     results: list[VoteMapMapResult]
-    next_map: str
+    next_map: str | None
     last_reminder: datetime.datetime | None
 
 
