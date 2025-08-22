@@ -9,6 +9,7 @@ export const padlockConfigs = [
     { name: "allow_default_to_skirmish", label: "Allow default map to be a skirmish" },
     { name: "remind_on_match_start", label: "Send reminder on match start" },
     { name: "remind_on_match_end", label: "Send reminder on match end" },
+    { name: "allow_vip_only", label: "Allow votemap to VIP players only" },
 ];
 
 export const messageFieldConfigs = [
