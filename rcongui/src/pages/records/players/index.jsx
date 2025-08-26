@@ -133,6 +133,7 @@ export default function PlayersRecords() {
   const submit = useSubmit();
   const navigation = useNavigation();
   const server = useGlobalStore((state) => state.serverState);
+  const onlinePlayers = useGlobalStore((state) => state.onlinePlayers);
   const [formFields, setFormFields] = useState({
     player_name: fields.player_name || "",
     player_id: fields.player_id || "",
@@ -143,7 +144,6 @@ export default function PlayersRecords() {
     last_seen_from: fields.last_seen_from ? dayjs(fields.last_seen_from) : null,
     last_seen_till: fields.last_seen_till ? dayjs(fields.last_seen_till) : null,
   });
-  console.log(formFields);
   const [selectedCountry, setSelectedCountry] = useState(fields.country);
   const [selectedEmoji, setSelectedEmoji] = useState(fields.flags);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -151,13 +151,27 @@ export default function PlayersRecords() {
 
   const players = useMemo(() => {
     if (!server) return playersData;
-    return playersData.map((player) => ({
-      ...player,
-      is_vip:
-        player.vips &&
-        player.vips.some((vip) => vip.server_number === server.server_number),
-    }));
-  }, [playersData, server]);
+    return playersData.map((player) => {
+      const thisOnlinePlayer = onlinePlayers.find(
+        (aPlayer) => aPlayer.player_id === player.player_id
+      );
+
+      const profile = {
+        ...player,
+        is_online: false,
+        is_vip:
+          player.vips &&
+          player.vips.some((vip) => vip.server_number === server.server_number),
+      }
+
+      if (thisOnlinePlayer) {
+        profile.is_online = true
+        profile.level = thisOnlinePlayer.level
+      }
+
+      return profile
+    });
+  }, [playersData, server, onlinePlayers]);
 
   const handleEmojiButtonClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -423,7 +437,12 @@ export default function PlayersRecords() {
           </Stack>
         </Form>
 
-        <Stack component="section" id="players-section" spacing={1} sx={{ width: "100%" }}>
+        <Stack
+          component="section"
+          id="players-section"
+          spacing={1}
+          sx={{ width: "100%" }}
+        >
           <NavPagination
             page={page}
             maxPages={total_pages}

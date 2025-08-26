@@ -1,15 +1,10 @@
-import { ActionMenuButton } from "@/features/player-action/ActionMenu";
 import { generatePlayerActions } from "@/features/player-action/actions";
 import {
   Card,
-  CardHeader,
   CardContent,
-  Avatar,
   Stack,
   Divider,
   Typography,
-  Box,
-  Badge,
 } from "@mui/material";
 import StarIcon from "@mui/icons-material/Star";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -17,11 +12,21 @@ import NoAccountsIcon from "@mui/icons-material/NoAccounts";
 import GavelIcon from "@mui/icons-material/Gavel";
 import dayjs from "dayjs";
 import Emoji from "@/components/shared/Emoji";
-import CopyableText from "../CopyableText";
-import { Link } from "react-router-dom";
-import { CountryFlag } from "../CountryFlag";
+import PlayerProfileHeader from "@/components/player/profile/Header";
+import { useActionDialog } from "@/hooks/useActionDialog";
 
 export default function PlayerCard({ player }) {
+  const { openDialog } = useActionDialog();
+
+  const handleActionClick = (recipients) => (action) => {
+    openDialog(action, recipients);
+  };
+
+  const actionList = generatePlayerActions({
+    multiAction: false,
+    onlineAction: player.is_online,
+  });
+
   const name = player.names.length > 0 ? player.names[0].name : "???";
   const avatar = player?.steaminfo?.profile?.avatar ?? name;
   const flags = player?.flags;
@@ -39,57 +44,32 @@ export default function PlayerCard({ player }) {
     .duration(player.total_playtime_seconds * 1000)
     .asHours()
     .toFixed(1);
+  const level = player?.level ?? player?.profile?.level ?? 0;
 
   return (
-    <Card sx={{ height: "100%", width: "100%" }}>
-      <CardHeader
-        avatar={
-          <Badge
-            overlap="circular"
-            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-            badgeContent={country ? <CountryFlag country={country} /> : null}
-          >
-            <Avatar src={avatar}>{name.charAt(0)}</Avatar>
-          </Badge>
-        }
-        title={
-          <Box
-            component={Link}
-            to={`/records/players/${player.player_id}`}
-            sx={{
-              fontSize: "1rem",
-              color: "text.primary",
-              fontWeight: 500,
-            }}
-          >
-            {name}
-          </Box>
-        }
-        subheader={<CopyableText text={player.player_id} />}
-        subheaderTypographyProps={{
-          fontSize: "0.7rem",
-        }}
-        titleTypographyProps={{
-          fontSize: 18,
-        }}
-        action={
-          <ActionMenuButton
-            withProfile
-            recipients={{
+    <Card>
+      <CardContent>
+        <PlayerProfileHeader
+          player={player}
+          isOnline={player.is_online}
+          handleActionClick={handleActionClick([
+            {
               player_id: player.player_id,
               name,
-            }}
-            actions={generatePlayerActions()}
-          />
-        }
-      />
-      <CardContent>
+            },
+          ])}
+          actionList={actionList}
+          avatar={avatar}
+          name={name}
+          country={country}
+          level={level}
+        />
         <Stack
           direction="row"
           alignItems={"center"}
           justifyContent={"center"}
           spacing={1}
-          sx={{ pt: 1, height: 30 }}
+          sx={{ height: 30 }}
         >
           {flags?.map(({ flag }) => (
             <Typography key={flag} variant="body" color="text.secondary">
