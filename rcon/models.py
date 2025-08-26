@@ -128,6 +128,23 @@ class PlayerID(Base):
     )
     optins: Mapped[list["PlayerOptins"]] = relationship(back_populates="player")
 
+    @hybrid_property
+    def level(self) -> int:
+        query = (
+            object_session(self)
+            .query(PlayerStats)  # type: ignore
+            .join(PlayerID)
+            .filter(PlayerID.player_id == self.player_id)
+            .order_by(PlayerStats.id.desc())
+            .first()
+        )
+        if not query:
+            logger.debug("Player level could not be retreived")
+            return 0
+        stats = query.to_dict()
+        return stats["level"]
+
+
     @property
     def server_number(self) -> int:
         return int(os.getenv("SERVER_NUMBER"))  # type: ignore
@@ -187,6 +204,7 @@ class PlayerID(Base):
             PLAYER_ID: self.player_id,
             "created": self.created,
             "names": [name.to_dict() for name in self.names],
+            "level": self.level,
             "sessions": [session.to_dict() for session in self.sessions][
                 :limit_sessions
             ],
