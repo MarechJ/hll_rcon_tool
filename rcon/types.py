@@ -449,6 +449,7 @@ class PlayerStatsType(TypedDict):
     weapons: Optional[dict]
     death_by_weapons: Optional[dict]
     team: Optional[PlayerTeamAssociation]
+    level: int
 
 
 class PlayerStat(TypedDict):
@@ -602,6 +603,7 @@ class PlayerProfileType(BasicPlayerProfileType):
     flags: list[PlayerFlagType]
     watchlist: Optional[WatchListType]
     vips: Optional[list[PlayerVIPType]]
+    level: int
 
 
 class PlayerProfileTypeEnriched(PlayerProfileType):
