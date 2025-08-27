@@ -118,7 +118,7 @@ class PlayerID(Base):
     watchlist: Mapped["WatchList"] = relationship(back_populates="player")
     steaminfo: Mapped["SteamInfo"] = relationship(back_populates="player")
     comments: Mapped[list["PlayerComment"]] = relationship(back_populates="player")
-    stats: Mapped["PlayerStats"] = relationship(back_populates="player")
+    stats: Mapped[list["PlayerStats"]] = relationship(back_populates="player", order_by="PlayerStats.id.desc()")
     blacklists: Mapped[list["BlacklistRecord"]] = relationship(back_populates="player")
 
     vips: Mapped[list["PlayerVIP"]] = relationship(
@@ -128,21 +128,19 @@ class PlayerID(Base):
     )
     optins: Mapped[list["PlayerOptins"]] = relationship(back_populates="player")
 
-    @hybrid_property
+    @property
     def level(self) -> int:
-        query = (
-            object_session(self)
-            .query(PlayerStats)  # type: ignore
-            .join(PlayerID)
-            .filter(PlayerID.player_id == self.player_id)
-            .order_by(PlayerStats.id.desc())
-            .first()
-        )
-        if not query:
-            logger.debug("Player level could not be retreived")
+        try:
+            if not self.stats:
+                logger.debug("Player has no stats records")
+                return 0
+            
+            # Get the most recent stats (first in the ordered list)
+            latest_stats = self.stats[0]
+            return latest_stats.level
+        except Exception as e:
+            logger.error(f"Error retrieving player level: {e}")
             return 0
-        stats = query.to_dict()
-        return stats["level"]
 
 
     @property
