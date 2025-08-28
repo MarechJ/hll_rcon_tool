@@ -31,11 +31,17 @@ const refetchInterval = 30 * 1000;
 const globalQueries = [
   queryOptions({
     queryKey: [{ queryIdentifier: "get_status" }],
-    queryFn: cmd.GET_GAME_SERVER_STATUS,
-    select: (data) => {
-      useGlobalStore.setState((state) => ({ status: data }));
-      return data;
+    queryFn: async () => {
+      let result;
+      try {
+        result = await cmd.GET_GAME_SERVER_STATUS()
+        useGlobalStore.setState((state) => ({ status: result }));
+      } catch (error) {
+        useGlobalStore.setState((state) => ({ status: null }));
+      }
+      return result
     },
+    retry: 1,
   }),
   queryOptions({
     queryKey: [{ queryIdentifier: "get_gamestate" }],
