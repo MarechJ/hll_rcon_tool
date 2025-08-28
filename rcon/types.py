@@ -5,6 +5,7 @@ from typing import List, Literal, Optional, Sequence
 
 # # TODO: On Python 3.11.* specifically, Pydantic requires we use typing_extensions.TypedDict
 # over typing.TypedDict. Once we bump our Python image we can replace this.
+from pydantic import BaseModel, field_serializer
 from typing_extensions import TypedDict
 
 from rcon.maps import GameMode, Layer, LayerType, Team
@@ -894,3 +895,21 @@ class MapSequenceResponse(TypedDict):
 class GetMapSequence(TypedDict):
     maps: list[Layer]
     current_index: int
+
+class AnalyticsServerStatusType(BaseModel):
+    id: int
+    created_at: datetime.datetime
+    server_number: int
+    axis_count: int
+    allies_count: int
+    lobby_count: int
+    vip_count: int
+    mod_count: int
+
+    @field_serializer('created_at')
+    def serialize_created_at(self, created_at: datetime.datetime, _info) -> str:
+        return created_at.isoformat()
+
+    model_config = {
+            "from_attributes": True  # Enables conversion from SQLAlchemy objects
+    }
