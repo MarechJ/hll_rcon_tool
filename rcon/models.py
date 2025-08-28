@@ -24,6 +24,8 @@ from sqlalchemy.schema import UniqueConstraint
 
 from rcon.maps import Team
 from rcon.types import (
+    AdminUserType,
+    AnalyticsServerStatusType,
     AuditLogType,
     GetDetailedPlayer,
     MessageTemplateType,
@@ -1260,3 +1262,64 @@ class MessageTemplate(Base):
             "updated_at": self.updated_at,
             "updated_by": self.updated_by,
         }
+
+
+class AnalyticsServerStatus(Base):
+    __tablename__ = "analytics_server_status"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), default=lambda: datetime.now(tz=timezone.utc)
+    )
+    server_number: Mapped[int] = mapped_column()
+    axis_count: Mapped[int] = mapped_column(default=0)
+    allies_count: Mapped[int] = mapped_column(default=0)
+    lobby_count: Mapped[int] = mapped_column(default=0)
+    vip_count: Mapped[int] = mapped_column(default=0)
+    mod_count: Mapped[int] = mapped_column(default=0)
+
+    @classmethod
+    def save(
+        cls,
+        server_number: int,
+        players: list[GetDetailedPlayer],
+        ingame_mods: list[AdminUserType],
+    ):
+        vip_count = 0
+        mod_count = 0
+        axis_count = 0
+        allies_count = 0
+        lobby_count = 0
+
+        online_mods = {mod["player_id"] for mod in ingame_mods}
+
+        for player in players:
+            if player["team"] == "axis":
+                axis_count += 1
+            elif player["team"] == "allies":
+                allies_count += 1
+            else:
+                lobby_count += 1
+
+            if player["is_vip"]:
+                vip_count += 1
+
+            if player["player_id"] in online_mods:
+                mod_count += 1
+
+        with enter_session() as sess:
+            new_record = cls(
+                server_number=server_number,
+                axis_count=axis_count,
+                allies_count=allies_count,
+                lobby_count=lobby_count,
+                vip_count=vip_count,
+                mod_count=mod_count,
+            )
+            sess.add(new_record)
+            sess.commit()
+            sess.refresh(new_record)
+            return new_record.to_dict()
+
+    def to_dict(self):
+        return AnalyticsServerStatusType.model_validate(self).model_dump()
