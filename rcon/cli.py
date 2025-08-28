@@ -10,6 +10,7 @@ import pydantic
 from sqlalchemy import func as pg_func
 from sqlalchemy import select, text, update
 
+import rcon.analytics.service
 import rcon.expiring_vips.service
 import rcon.seed_vip.service
 import rcon.user_config
@@ -142,6 +143,11 @@ def run_automod():
 @cli.command(name="blacklists")
 def run_blacklists():
     BlacklistCommandHandler().run()
+
+
+@cli.command(name="analytics")
+def run_analytics():
+    rcon.analytics.service.run()
 
 
 @cli.command(name="log_recorder")
