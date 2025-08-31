@@ -3,7 +3,7 @@ import os
 import re
 from collections import defaultdict
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Generator, List, Literal, Optional, Sequence, overload, TypedDict
 
 import pydantic
@@ -22,10 +22,12 @@ from sqlalchemy.orm import (
 )
 from sqlalchemy.schema import UniqueConstraint
 
+from rcon.analytics.system_usage import SystemUsage
 from rcon.maps import Team
 from rcon.types import (
     AdminUserType,
     AnalyticsServerStatusType,
+    AnalyticsSystemUsageType,
     AuditLogType,
     GetDetailedPlayer,
     MessageTemplateType,
@@ -1323,3 +1325,52 @@ class AnalyticsServerStatus(Base):
 
     def to_dict(self):
         return AnalyticsServerStatusType.model_validate(self).model_dump()
+
+
+class AnalyticsSystemUsage(Base):
+    __tablename__ = "analytics_system_usage"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), default=lambda: datetime.now(tz=timezone.utc)
+    )
+    cpu_cores: Mapped[int] = mapped_column(default=0)
+    cpu_percent: Mapped[float] = mapped_column(default=0.0)
+    cpu_process_count: Mapped[int] = mapped_column(default=0)
+    ram_total: Mapped[float] = mapped_column(default=0.0)
+    ram_used: Mapped[float] = mapped_column(default=0.0)
+    ram_percent: Mapped[float] = mapped_column(default=0.0)
+    disk_total: Mapped[float] = mapped_column(default=0.0)
+    disk_used: Mapped[float] = mapped_column(default=0.0)
+    disk_percent: Mapped[float] = mapped_column(default=0.0)
+
+    @classmethod
+    def save(cls, system_usage: SystemUsage, interval_sec: int):
+        with enter_session() as sess:
+            prev_record = sess.query(cls).order_by(cls.created_at.desc()).first()
+
+            # only create a new record if the previous one was created 'interval' time ago
+            if prev_record and (datetime.now(tz=timezone.utc) - prev_record.created_at) < timedelta(
+                seconds=interval_sec * 0.9
+            ):
+                return
+
+            new_record = cls(
+                cpu_cores=system_usage["cpu_usage"]["cores"],
+                cpu_percent=system_usage["cpu_usage"]["percent"],
+                cpu_process_count=system_usage["cpu_usage"]["process_count"],
+                ram_total=system_usage["ram_usage"]["total"],
+                ram_used=system_usage["ram_usage"]["used"],
+                ram_percent=system_usage["ram_usage"]["percent"],
+                disk_total=system_usage["disk_usage"]["total"],
+                disk_used=system_usage["disk_usage"]["used"],
+                disk_percent=system_usage["disk_usage"]["percent"],
+            )
+
+            sess.add(new_record)
+            sess.commit()
+            sess.refresh(new_record)
+            return new_record.to_dict()
+
+    def to_dict(self):
+        return AnalyticsSystemUsageType.model_validate(self).model_dump()
