@@ -6,7 +6,7 @@ import traceback
 from functools import wraps
 from subprocess import PIPE, run
 from typing import Any, Callable
-import psutil
+from rcon.analytics.system_usage import get_system_usage as _get_system_usage
 
 import pydantic
 from django.http import (
@@ -152,37 +152,8 @@ def get_public_info(request):
 @csrf_exempt
 @require_http_methods(["GET"])
 def get_system_usage(request):
-    # CPU usage (percentage)
-    cpu_percent = psutil.cpu_percent(interval=None)
-    process_count = len(list(psutil.process_iter()))
-    cpu_usage = {
-        "cores": psutil.cpu_count(),
-        "percent": cpu_percent,
-        "process_count": process_count,
-    }
-
-    # RAM usage
-    memory = psutil.virtual_memory()
-    ram_usage = {
-        "total": memory.total / (1024**3),  # Convert to GB
-        "used": memory.used / (1024**3),
-        "percent": memory.percent,
-    }
-
-    # Disk usage
-    disk = psutil.disk_usage("/")
-    disk_usage = {
-        "total": disk.total / (1024**3),  # Convert to GB
-        "used": disk.used / (1024**3),
-        "percent": disk.percent,
-    }
-
     return api_response(
-        result={
-            "cpu_usage": cpu_usage,
-            "ram_usage": ram_usage,
-            "disk_usage": disk_usage,
-        },
+        result=_get_system_usage(),
         failed=False,
         command="get_system_usage",
     )

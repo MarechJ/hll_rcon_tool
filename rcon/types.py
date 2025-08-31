@@ -885,3 +885,25 @@ class AnalyticsServerStatusType(BaseModel):
     model_config = {
             "from_attributes": True  # Enables conversion from SQLAlchemy objects
     }
+
+class AnalyticsSystemUsageType(BaseModel):
+    id: int
+    created_at: datetime.datetime
+    cpu_cores: int
+    cpu_percent: float
+    cpu_process_count: int
+    ram_total: float
+    ram_used: float
+    ram_percent: float
+    disk_total: float
+    disk_used: float
+    disk_percent: float
+
+
+    @field_serializer('created_at')
+    def serialize_created_at(self, created_at: datetime.datetime, _info) -> str:
+        return created_at.isoformat()
+
+    model_config = {
+            "from_attributes": True
+    }
