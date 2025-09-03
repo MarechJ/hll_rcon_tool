@@ -251,7 +251,7 @@ def remind_vote_map(_, struct_log):
     vm = VoteMap()
     if vm.enabled:
         logger.info("Match ended reminding to vote map. %s", struct_log)
-        vm.apply_with_retry()
+        vm.apply_results()
         vm.send_reminder(force=vm.config.remind_on_match_end)
 
 
@@ -266,7 +266,7 @@ def reset_watch_killrate_cooldown(rcon: Rcon, struct_log: StructuredLogLineWithM
 @on_match_start
 def handle_new_match_start(rcon: Rcon, struct_log):
     try:
-        logger.info("New match started recording map %s", struct_log)
+        logger.info("MATCH START: Started recording map %s", struct_log)
         with invalidates(Rcon.get_map, Rcon.get_next_map):
             try:
                 # Don't use the current_map property and clear the cache to pull the new map name
@@ -327,13 +327,24 @@ def handle_new_match_start(rcon: Rcon, struct_log):
     finally:
         vm = VoteMap()
         if vm.enabled:
-            logger.info("New match started initializing vote map. %s", struct_log)
+            logger.info("MATCH START: Restarting votemap")
+            vm_status = vm.get_status()
+            votemap_result=f"""
+            ### Vote map result
+            Winner map: {vm_status["next_map"]}
+            Total votes: {sum([d["votes_count"] for d in vm_status["results"]])}
+            {"\n".join([f"1. {d["map"].pretty_name} [{d["votes_count"]} votes]" for d in vm_status['results']])}
+            """
+            send_to_discord_audit(
+                command_name="on_match_start",
+                message=votemap_result,
+            )
             vm.restart()
             vm.send_reminder(force=vm.config.remind_on_match_start)
         try:
             record_stats_worker(MapsHistory()[1])
-        except Exception:
-            logger.exception("Unexpected error while running stats worker")
+        except Exception as e:
+            logger.exception("Unexpected error while running stats worker\n%s", e)
 
 
 @on_match_end
