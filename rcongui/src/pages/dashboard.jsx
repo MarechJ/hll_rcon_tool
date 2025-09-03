@@ -12,6 +12,8 @@ import ModeratorsCard from "@/components/cards/ModeratorsCard";
 import GamesCard from "@/components/cards/GamesCard";
 import MapStatsCard from "@/components/cards/MapStatsCard";
 import AutomodsCard from "@/components/cards/AutomodsCard";
+import ServerAnalyticsChart from "@/components/graphs/ServerStateAnalyticsChart";
+import ServerUsageAnalyticsChart from "@/components/graphs/ServerUsageAnalyticsChart";
 
 const SMALL_CARD_SIZE = {
   xs: 12,
@@ -111,6 +113,7 @@ const Dashboard = () => {
 
   return (
     <Grid container sx={{ overflow: "hidden" }} spacing={2}>
+
       <Grid size={SMALL_CARD_SIZE}>
         <ServerSettingsCard />
       </Grid>
@@ -141,6 +144,14 @@ const Dashboard = () => {
 
       <Grid size={LARGE_CARD_SIZE}>
         <LogsCard logs={logs} />
+      </Grid>
+
+      <Grid size={MEDIUM_CARD_SIZE}>
+        <ServerAnalyticsChart />
+      </Grid>
+
+      <Grid size={MEDIUM_CARD_SIZE}>
+        <ServerUsageAnalyticsChart />
       </Grid>
 
       <Grid size={MEDIUM_CARD_SIZE}>
