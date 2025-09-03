@@ -1,3 +1,4 @@
+from datetime import timedelta, datetime, timezone
 import inspect
 import logging
 import os
@@ -21,6 +22,7 @@ from discord.utils import escape_markdown
 from rcon.api_commands import get_rcon_api
 from rcon.commands import CommandFailedError
 from rcon.discord import send_to_discord_audit
+from rcon.models import AnalyticsServerStatus, AnalyticsSystemUsage, Maps
 from rcon.types import (
     PublicInfoMapType,
     PublicInfoNameType,
@@ -149,7 +151,6 @@ def get_public_info(request):
     )
 
 @login_required()
-@csrf_exempt
 @require_http_methods(["GET"])
 def get_system_usage(request):
     return api_response(
@@ -157,6 +158,74 @@ def get_system_usage(request):
         failed=False,
         command="get_system_usage",
     )
+
+
+@login_required()
+@require_http_methods(["GET"])
+def get_server_usage_analytics(request):
+    days = int(request.GET.get("days", 1))
+    from_date = (datetime.now(tz=timezone.utc) - timedelta(days=days))
+    result = AnalyticsSystemUsage.get_from(from_date)
+
+    return api_response(
+        result=result,
+        failed=False,
+        command="get_server_usage_analytics",
+    )
+
+@login_required()
+@require_http_methods(["GET"])
+def get_server_status_analytics(request):
+    days = int(request.GET.get("days", 1))
+    from_date = (datetime.now(tz=timezone.utc) - timedelta(days=days))
+    server = int(get_server_number())
+    data = AnalyticsServerStatus.get_from(server, from_date)
+    matches = Maps.get_from(server, from_date)
+    for match in matches:
+        match["start"] = match["start"].astimezone(tz=timezone.utc)
+    matches_data = [{ k: match[k] for k in {"id", "start", "map_name"}} for match in matches]
+    # Aggregate data into a single dictionary of { key: list[value] }
+    result = {k: [d[k] for d in data] for k in data[0]}
+    result["matches"] = matches_data
+
+    return api_response(
+        result=result,
+        failed=False,
+        command="get_server_status_analytics",
+    )
+
+@login_required()
+@require_http_methods(["GET"])
+def get_system_usage_analytics(request):
+    days = int(request.GET.get("days", 1))
+    now = datetime.now(tz=timezone.utc)
+    from_date = (now - timedelta(days=days))
+    log_frequency_min = 5
+    intervals = ((now - from_date).total_seconds() / 60 / log_frequency_min) - 1
+    pivots = (
+        [from_date]
+        + [
+            from_date + timedelta(minutes=5 * i)
+            for i in range(1, int(intervals + 1))
+        ]
+        + [now]
+    )
+    status = AnalyticsServerStatus.get_all_from(from_date, pivots)
+    system = AnalyticsSystemUsage.get_from(from_date, pivots)
+    player_counts = { server: [log["total_count"] for log in status[server]] for server in status }
+    result = {
+        "created_at": pivots,
+        "player_counts": player_counts,
+        "cpu_percent": [log["cpu_percent"] for log in system],
+        "ram_percent": [log["ram_percent"] for log in system],
+    }
+
+    return api_response(
+        result=result,
+        failed=False,
+        command="get_server_status_analytics",
+    )
+    
 
 
 def audit(func_name, request, arguments):
@@ -902,7 +971,10 @@ commands = [
     ("get_connection_info", get_connection_info),
     ("get_public_info", get_public_info),
     ("run_raw_command", run_raw_command),
-    ("get_system_usage", get_system_usage)
+    ("get_system_usage", get_system_usage),
+    ("get_server_usage_analytics", get_server_usage_analytics),
+    ("get_system_usage_analytics", get_system_usage_analytics),
+    ("get_server_status_analytics", get_server_status_analytics),
 ]
 
 if not os.getenv("HLL_MAINTENANCE_CONTAINER") and not os.getenv(
