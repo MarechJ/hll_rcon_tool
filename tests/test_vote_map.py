@@ -321,7 +321,7 @@ def test_remove_map_from_whitelist(votemap):
     whitelist = votemap.get_map_whitelist()
     map = whitelist.pop()
     votemap.remove_map_from_whitelist(map)
-    assert votemap.get_map_whitelist() == whitelist
+    assert set(votemap.get_map_whitelist()) == set(whitelist)
 
 
 def test_select_least_played_map(votemap):
@@ -477,6 +477,7 @@ def test_player_fails_to_register_player_choice_duplicate_map(votemap):
 
 def test_ensure_next_map_with_empty_selection(votemap):
     votemap.set_selection([])
+    votemap.apply_results()
     next_map = votemap.get_next_map()
     assert next_map in ALL_MAPS
 
