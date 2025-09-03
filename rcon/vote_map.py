@@ -108,9 +108,6 @@ class VoteMap:
         if whitelist_not_initialized:
             self.reset_map_whitelist()
 
-        if self.enabled and not self.get_next_map():
-            self.apply_results()
-
     @staticmethod
     def require_enabled(func):
         @functools.wraps(func)
@@ -586,8 +583,8 @@ class VoteMap:
         else:
             return perm
 
-        if not config.player_choice_flags or (player_flags & set(
-            config.player_choice_flags)
+        if not config.player_choice_flags or (
+            player_flags & set(config.player_choice_flags)
         ):
             perm |= VotemapPermissions.REGISTER_CHOICE
 
@@ -949,19 +946,21 @@ class VoteMap:
             )
         else:
             next_map = most_voted_map
-            if next_map not in self._rcon.get_maps():
-                logger.error(
-                    "%s is not part of the all map list maps=%s",
-                    next_map,
-                    self._rcon.get_maps(),
-                )
-            if next_map not in (selection := self.get_selection()):
-                logger.error("%s is not part of vote selection %s", next_map, selection)
-            logger.info("Winning map %s", next_map)
+
+        if next_map not in self._rcon.get_maps():
+            logger.error(
+                "%s is not part of the all map list maps=%s",
+                next_map,
+                self._rcon.get_maps(),
+            )
+        if next_map not in (selection := self.get_selection()):
+            logger.info("%s is not part of vote selection %s", next_map, selection)
+
+        logger.info("Next map %s", next_map)
         return next_map
 
     @require_enabled
-    def apply_results(self) -> Layer:
+    def apply_results(self, retries: int = 2) -> Layer | None:
         """
         Replaces the current map rotation on the server with a single map.\n
         The map with the most votes is selected.\n
@@ -989,31 +988,23 @@ class VoteMap:
         # Check that it worked
         current_rotation = self._rcon.get_map_rotation()["maps"]
         if len(current_rotation) != 1 or current_rotation[0] != next_map:
-            raise ValueError(
-                f"Applying the winning map {next_map=} failed: {current_rotation=}"
-            )
+            if retries > 0:
+                return self.apply_results(retries - 1)
+            else:
+                logger.error(
+                    "Applying the votemap results failed. Next map %s. Rotation: %s",
+                    next_map,
+                    current_rotation,
+                )
+                return None
 
+        self.set_next_map(next_map)
         logger.info(
-            "Successfully applied winning map %s, new rotation %s",
+            "Successfully applied next map %s, rotation %s",
             next_map,
             current_rotation,
         )
-        self.set_next_map(next_map)
         return next_map
-
-    def apply_with_retry(self, nb_retry: int = 2):
-        success = False
-
-        for i in range(nb_retry):
-            try:
-                success = self.apply_results()
-            except:
-                logger.exception("Applying vote map result failed.")
-            else:
-                break
-
-        if not success:
-            logger.warning("Unable to set votemap results")
 
     @ttl_cache(ttl=5)
     def _get_player(self, player_id: str) -> PlayerProfileType:
