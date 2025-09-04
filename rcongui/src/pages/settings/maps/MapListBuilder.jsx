@@ -109,6 +109,8 @@ export function MapListBuilder({
     setMapSelection(selectedMaps.map(withSelectionId));
   };
 
+  const changesMade = !_.isEqual(selectedMaps.map(m => m.id), mapSelection.map(m => m.id))
+
   return (
     <>
       <Grid container spacing={1}>
@@ -189,6 +191,7 @@ export function MapListBuilder({
               onClear={clearSelection}
               setMaps={setMapSelection}
               onReset={handleSelectionReset}
+              unsavedChanges={changesMade}
               // must come from parent element
               onSave={handleSelectionSave}
               isDisabled={isSaveDisabled}

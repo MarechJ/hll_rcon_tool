@@ -544,8 +544,8 @@ class ServerCtl:
     def set_welcome_message(self, message) -> str:
         return self._str_request(f"say {message}", log_info=True, can_fail=False)
 
-    def set_map(self, map_name: str) -> str:
-        return self._str_request(f"map {map_name}", log_info=True)
+    def set_map(self, map_name: str, map_ordinal: int = 1) -> str:
+        return self._str_request(f"map {map_name} {map_ordinal}", log_info=True)
 
     def get_current_map_sequence(self) -> list[str]:
         return self._str_request("listcurrentmapsequence").split("\n")[:-1]
