@@ -45,7 +45,7 @@ def run():
     while True:
         try:
             toggle_votekick(rcon)
-            VoteMap().vote_map_reminder(rcon)
+            VoteMap().send_reminder()
         except CommandFailedError:
             max_fails -= 1
             if max_fails <= 0:

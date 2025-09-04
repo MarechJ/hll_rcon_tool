@@ -402,6 +402,9 @@ class DBLogLineType(TypedDict):
     server: str
     weapon: Optional[str]
 
+class Player(TypedDict):
+    id: str
+    name: str
 
 class PlayerTeamConfidence(enum.Enum):
     STRONG = "strong"
@@ -703,21 +706,27 @@ class VipId(TypedDict):
     player_id: str
     name: str
 
-
-class VoteMapPlayerVoteType(TypedDict):
+class VoteMapVote(TypedDict):
+    player_id: str
     player_name: str
-    map_name: str
+    map_id: str
+    vote_count: int
 
+class VoteMapVoter(TypedDict):
+    player_id: str
+    player_name: str
+    count: int
 
-class VoteMapResultType(TypedDict):
+class VoteMapMapResult(TypedDict):
     map: Layer
-    num_votes: int
+    voters: list[VoteMapVoter]
+    votes_count: int
 
-
-# TODO: finish this typing
-class VoteMapStatusType(TypedDict):
-    map: Layer
-    voters: dict[Layer, list[str]]
+class VoteMapStatus(TypedDict):
+    enabled: bool
+    results: list[VoteMapMapResult]
+    next_map: str | None
+    last_reminder: datetime.datetime | None
 
 
 # Have to inherit from str to allow for JSON serialization w/ pydantic
@@ -811,7 +820,7 @@ class PublicInfoType(TypedDict):
     player_count_by_team: PublicInfoPlayerType
     score: PublicInfoScoreType
     time_remaining: float
-    vote_status: list[VoteMapStatusType]
+    vote_status: VoteMapStatus
     name: PublicInfoNameType
 
 
