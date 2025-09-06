@@ -744,11 +744,17 @@ class Rcon(ServerCtl):
                 )
                 session.add(vip_record)
             else:
-                previous_expiration = vip_record.expiration.isoformat()
-                vip_record.expiration = expiration_date
-                logger.info(
-                    f"Modified PlayerVIP record {player.player_id=} {vip_record.expiration} {previous_expiration=}"
-                )
+                previous_expiration_dt = vip_record.expiration
+                # Do not shorten existing expirations
+                if expiration_date > previous_expiration_dt:
+                    vip_record.expiration = expiration_date
+                    logger.info(
+                        f"Modified PlayerVIP record {player.player_id=} {vip_record.expiration} previous_expiration={previous_expiration_dt.isoformat()}"
+                    )
+                else:
+                    logger.info(
+                        f"Preserved PlayerVIP record {player.player_id=} previous_expiration={previous_expiration_dt.isoformat()} (ignored shorter expiration_date={expiration_date})"
+                    )
 
         return result
 
