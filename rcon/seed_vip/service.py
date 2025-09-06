@@ -110,13 +110,11 @@ def run():
             if is_seeding and is_seeded(config=config, gamestate=gamestate):
                 seeded_timestamp = datetime.now(tz=timezone.utc)
                 logger.info(f"Server seeded at {seeded_timestamp.isoformat()}")
-                current_vips = get_vips(rcon=rcon_api)
+                # Use the full VIP list for logic so offline VIPs are respected
+                all_vips = get_vips(rcon=rcon_api)
 
-                # only include online players in the current_vips
-                current_vips = filter_online_players(current_vips, online_players)
-
-                # no vip reward needed for indefinite vip holders
-                indefinite_vip_steam_ids = filter_indefinite_vip_steam_ids(current_vips)
+                # no vip reward needed for indefinite vip holders (using full list)
+                indefinite_vip_steam_ids = filter_indefinite_vip_steam_ids(all_vips)
                 to_add_vip_steam_ids -= indefinite_vip_steam_ids
 
                 # Players who were online when we seeded but didn't meet the criteria for VIP
@@ -131,7 +129,7 @@ def run():
                         from_time=seeded_timestamp or datetime.now(tz=timezone.utc),
                     )
                 )
-                for player in current_vips.values():
+                for player in all_vips.values():
                     expiration_timestamps[player.player.player_id] = (
                         calc_vip_expiration_timestamp(
                             config=config,
@@ -140,12 +138,12 @@ def run():
                         )
                     )
 
-                # Add or update VIP in CRCON
+                # Add or update VIP in CRCON using full VIP map
                 reward_players(
                     rcon=rcon_api,
                     config=config,
                     to_add_vip_steam_ids=to_add_vip_steam_ids,
-                    current_vips=current_vips,
+                    current_vips=all_vips,
                     players_lookup=player_name_lookup,
                     expiration_timestamps=expiration_timestamps,
                 )
