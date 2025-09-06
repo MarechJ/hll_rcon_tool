@@ -252,7 +252,7 @@ def reward_players(
 
         if has_indefinite_vip(player):
             logger.info(
-                f"{config.dry_run=} Skipping! pre-existing indefinite VIP for {player_id=} {player=} {vip_name=} {expiration_date=}"
+                f"{config.dry_run=} Skipping! pre-existing indefinite VIP for {player_id=} {player=} {expiration_date=}"
             )
             continue
 
