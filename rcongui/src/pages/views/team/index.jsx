@@ -8,7 +8,9 @@ import {
   Typography,
   IconButton,
   Tooltip,
+  TextField,
 } from "@mui/material";
+import Autocomplete from "@mui/material/Autocomplete";
 import { ActionMenuButton } from "@/features/player-action/ActionMenu";
 import { generatePlayerActions } from "@/features/player-action/actions";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
@@ -73,6 +75,15 @@ const TeamViewPage = () => {
       alliesTeam: extractTeamState(teams?.allies, "allies"),
       lobbyTeam: extractTeamState(teams?.none, "lobby"),
     };
+  }, [teams]);
+
+  // Get all players for the search field
+  const allPlayers = useMemo(() => {
+    if (!teams) return [];
+    return extractPlayers(teams).map((player) => ({
+      player_id: player.player_id,
+      name: player.name,
+    }));
   }, [teams]);
 
   // Get all squads from both teams
@@ -207,7 +218,6 @@ const TeamViewPage = () => {
   };
 
   const handleSelectAll = () => {
-    const allPlayers = extractPlayers(teams);
     const allPlayersMap = new Map(
       allPlayers.map((p) => [
         p.player_id,
@@ -279,8 +289,35 @@ const TeamViewPage = () => {
             "& > *": { height: "100%" },
             width: "100%",
             px: 2,
+            alignItems: "center",
           }}
         >
+          <Autocomplete
+            multiple
+            id="player-search"
+            options={allPlayers}
+            getOptionLabel={(option) => option.name}
+            value={Array.from(selectedPlayers.values())}
+            onChange={(event, newValue) => {
+              const newSelectedPlayers = new Map(
+                newValue.map((player) => [
+                  player.player_id,
+                  { player_id: player.player_id, name: player.name },
+                ])
+              );
+              setSelectedPlayers(newSelectedPlayers);
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                variant="outlined"
+                label="Search players"
+                placeholder="Select players"
+                size="small"
+              />
+            )}
+            sx={{ minWidth: 300, mr: 2 }}
+          />
           <ActionMenuButton
             actions={generatePlayerActions({
               multiAction: true,
