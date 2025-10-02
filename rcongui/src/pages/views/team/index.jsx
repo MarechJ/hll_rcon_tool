@@ -115,6 +115,30 @@ const TeamViewPage = () => {
     return squads;
   }, [alliesTeam, axisTeam, lobbyTeam]);
 
+  // Map player_id to location {team, squad}
+  const playerLocations = useMemo(() => {
+    const locations = new Map();
+    const processTeam = (teamData, teamName) => {
+      if (teamData && teamData.squads) {
+        teamData.squads.forEach(squad => {
+          if (squad.players) {
+            squad.players.forEach(player => {
+              locations.set(player.player_id, { team: teamName, squad: squad.name });
+            });
+          }
+        });
+        // Handle commander
+        if (teamData.commander) {
+          locations.set(teamData.commander.player_id, { team: teamName, squad: "command" });
+        }
+      }
+    };
+    processTeam(alliesTeam, "allies");
+    processTeam(axisTeam, "axis");
+    processTeam(lobbyTeam, "lobby");
+    return locations;
+  }, [alliesTeam, axisTeam, lobbyTeam]);
+
   const handleToggleSquad = (team, squadName) => {
     setExpandedSquads((prev) => ({
       ...prev,
@@ -306,6 +330,24 @@ const TeamViewPage = () => {
                 ])
               );
               setSelectedPlayers(newSelectedPlayers);
+
+              // Expand squads for newly selected players
+              const prevValues = Array.from(selectedPlayers.values());
+              const addedPlayers = newValue.filter(
+                (p) => !prevValues.some((pv) => pv.player_id === p.player_id)
+              );
+              addedPlayers.forEach((player) => {
+                const loc = playerLocations.get(player.player_id);
+                if (loc && loc.squad !== "command") {
+                  setExpandedSquads((prev) => ({
+                    ...prev,
+                    [loc.team]: {
+                      ...prev[loc.team],
+                      [loc.squad]: true,
+                    },
+                  }));
+                }
+              });
             }}
             renderInput={(params) => (
               <TextField
