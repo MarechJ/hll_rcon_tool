@@ -74,10 +74,10 @@ def _do_punitions(
             if method == ActionMethod.MESSAGE:
                 if not aplayer.details.dry_run:
                     rcon.message_player(
-                        aplayer.name,
                         aplayer.player_id,
                         aplayer.details.message,
                         by=aplayer.details.author,
+                        player_name=aplayer.name,
                     )
                 audit(
                     discord_webhook_url=aplayer.details.discord_audit_url,

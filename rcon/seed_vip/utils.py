@@ -215,25 +215,28 @@ def message_players(
     steam_ids: Iterable[str],
     expiration_timestamps: defaultdict[str, datetime] | None,
 ):
-    for steam_id in steam_ids:
-        if expiration_timestamps:
-            formatted_message = format_player_message(
-                message=message,
-                vip_reward=config.reward.timeframe.as_timedelta,
-                vip_expiration=expiration_timestamps[steam_id],
-                nice_time_delta=config.nice_time_delta,
-                nice_expiration_date=config.nice_expiration_date,
-            )
-        else:
-            formatted_message = message
+    player_ids = list(steam_ids)
+    messages = [
+        format_player_message(
+            message=message,
+            vip_reward=config.reward.timeframe.as_timedelta,
+            vip_expiration=expiration_timestamps[player_id],
+            nice_time_delta=config.nice_time_delta,
+            nice_expiration_date=config.nice_expiration_date,
+        )
+        if expiration_timestamps
+        else message
+        for player_id in player_ids
+    ]
 
-        if config.dry_run:
-            logger.info(f"{config.dry_run=} messaging {steam_id}: {formatted_message}")
-        else:
-            rcon.message_player(
-                player_id=steam_id,
-                message=formatted_message,
-            )
+    if config.dry_run:
+        for player_id, formatted_message in zip(player_ids, messages):
+            logger.info(f"{config.dry_run=} messaging {player_id}: {formatted_message}")
+    else:
+        rcon.bulk_message_players(
+            player_ids=player_ids,
+            messages=messages,
+        )
 
 
 def reward_players(

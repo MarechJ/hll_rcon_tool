@@ -540,6 +540,21 @@ class ServerCtl:
     @_escape_params
     def message_player(self, player_id: str, message: str) -> bool:
         return self.exchange_success("MessagePlayer", 2, {"Message": message, "PlayerId": player_id})
+    
+    @_escape_params
+    def bulk_message_players(self, player_ids: list[str], messages: list[str]) -> bool:
+        if len(player_ids) != len(messages):
+            raise HLLCommandFailedError("Must have an equal amount of players and messages")
+
+        handles = [
+            self.send("MessagePlayer", 2, {"Message": message, "PlayerId": player_id})
+            for player_id, message in zip(player_ids, messages)
+        ]
+        responses = [
+            self.receive_success(handle)
+            for handle in handles
+        ]
+        return any(responses)
 
     def get_gamestate(self) -> GameStateType:
         s = self.exchange("GetServerInformation", 2, {"Name": "session", "Value": ""}).content_dict
