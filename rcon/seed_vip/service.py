@@ -12,7 +12,6 @@ from rcon.seed_vip.utils import (
     calc_vip_expiration_timestamp,
     collect_steam_ids,
     filter_indefinite_vip_steam_ids,
-    filter_online_players,
     get_gamestate,
     get_next_player_bucket,
     get_online_players,

@@ -32,17 +32,6 @@ def filter_indefinite_vip_steam_ids(current_vips: dict[str, VipPlayer]) -> set[s
     }
 
 
-def filter_online_players(
-    vips: dict[str, VipPlayer], players: ServerPopulation
-) -> dict[str, VipPlayer]:
-    """Return a dictionary of players that are online"""
-    return {
-        player_id: vip_player
-        for player_id, vip_player in vips.items()
-        if player_id in players.players
-    }
-
-
 def has_indefinite_vip(player: VipPlayer | None) -> bool:
     """Return true if the player has an indefinite VIP status"""
     if player is None or player.expiration_date is None:
