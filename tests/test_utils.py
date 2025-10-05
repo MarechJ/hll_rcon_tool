@@ -98,19 +98,26 @@ def mock_get_detailed_player(
 
 
 @pytest.mark.parametrize(
-    "raw, expected",
+    "raw, name, expected",
     [
         (
-            """Name: MasterShake
-steamID64: 76561199502921234
-Team: Axis
-Role: Support
-Unit: 9 - JIG
-Loadout: Standard Issue
-Kills: 11 - Deaths: 9
-Score: C 72, O 100, D 220, S 65
-Level: 16
-""",
+            {
+                "iD": "76561199502921234",
+                "team": 0,
+                "role": 5,
+                "level": "16",
+                "loadout": "Standard Issue",
+                "platoon": "JIG",
+                "kills": 11,
+                "deaths": 9,
+                "scoreData": {
+                    "cOMBAT": 72,
+                    "offense": 100,
+                    "defense": 220,
+                    "support": 65,
+                },
+            },
+            "MasterShake",
             mock_get_detailed_player(
                 name="",
                 player_id="76561199502921234",
@@ -129,23 +136,30 @@ Level: 16
             ),
         ),
         (
-            """Name: MasterShake
-steamID64: a21af8b5-59df-5vbr-88gf-ab4239r4g6f4
-Team: Axis
-Role: Support
-Unit: 9 - JIG
-Loadout: Standard Issue
-Kills: 11 - Deaths: 9
-Score: C 72, O 100, D 220, S 65
-Level: 16
-""",
+            {
+                "iD": "a21af8b5-59df-5vbr-88gf-ab4239r4g6f4",
+                "team": 1,
+                "role": 0,
+                "level": "16",
+                "loadout": "Standard Issue",
+                "platoon": "ABLE",
+                "kills": 11,
+                "deaths": 9,
+                "scoreData": {
+                    "cOMBAT": 72,
+                    "offense": 100,
+                    "defense": 220,
+                    "support": 65,
+                },
+            },
+            "MasterShake",
             mock_get_detailed_player(
                 name="",
                 player_id="a21af8b5-59df-5vbr-88gf-ab4239r4g6f4",
-                team="axis",
-                role="support",
-                unit_id=9,
-                unit_name="jig",
+                team="allies",
+                role="rifleman",
+                unit_id=0,
+                unit_name="able",
                 loadout="standard issue",
                 kills=11,
                 deaths=9,
@@ -158,5 +172,5 @@ Level: 16
         ),
     ],
 )
-def test_parse_raw_player_info(raw, expected):
+def test_parse_raw_player_info(raw, name, expected):
     assert parse_raw_player_info(raw=raw, player="") == expected
