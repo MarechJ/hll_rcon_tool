@@ -2,41 +2,49 @@ import { json } from "react-router-dom";
 import { toast } from "react-toastify";
 
 const CRCON_API = `${process.env.REACT_APP_API_URL}`;
-const usingCRCON = (path) => `${CRCON_API}${path}`;
 
 async function requestFactory({
   method = "GET",
   cmd,
-  params = {},
-  payload = {},
+  params = {},         // For query parameters (GET)
+  payload = {},        // For body data (POST)
   throwRouteError = true,
   headers = { "Content-Type": "application/json" },
 } = {}) {
-  let url = cmd;
+  // Construct the full URL using the URL API
+  const base = new URL(CRCON_API, document.location.origin)
+  const url = new URL(cmd, base);
 
-  if (params) {
-    if (params instanceof URLSearchParams) {
-      url += "?" + params.toString();
-    } else if (method === "GET") {
-      url += "?" + new URLSearchParams(params).toString();
-    }
+  // Append query parameters for GET requests
+  if (params instanceof URLSearchParams) {
+    url.search = params.toString()
+  } else if (method === "GET" && Object.keys(params).length > 0) {
+    url.search = new URLSearchParams(params).toString();
   }
 
-  const body = method === "POST" ? headers["Content-Type"] === "application/json" ? JSON.stringify(payload) : payload : null;
+  // Define request options
+  const requestOptions = {
+    method,
+    mode: "cors",
+    cache: "default",
+    credentials: "include",
+    headers,
+    redirect: "follow",
+    referrerPolicy: "origin",
+  };
 
+  // Add body for POST requests
+  if (method === "POST") {
+    requestOptions.body = headers["Content-Type"] === "application/json" 
+      ? JSON.stringify(payload) 
+      : payload;
+  }
+
+  // Create a Request object
+  const req = new Request(url.toString(), requestOptions);
   try {
-    const response = await fetch(usingCRCON(url), {
-      method,
-      mode: "cors",
-      cache: "default",
-      credentials: "include",
-      headers,
-      redirect: "follow",
-      referrerPolicy: "origin",
-      body,
-    });
-
-    return await handleFetchResponse(response, method, cmd);
+    const res = await fetch(req);
+    return await handleFetchResponse(req, res, cmd);
   } catch (error) {
     if (throwRouteError) {
       throw json(error, { status: error.status, statusText: error.message || error.text });
@@ -45,58 +53,40 @@ async function requestFactory({
   }
 }
 
-async function handleFetchResponse(response, method, cmd) {
+async function handleFetchResponse(req, res, cmd) {
   let data, error;
 
-  const contentType = response.headers.get("content-type");
-  if (contentType && contentType.includes("application/json")) {
-    data = await parseJsonResponse(response);
-    error = data.error
-  } else if (contentType && contentType.includes("text/")) {
-    data = await response.text();
-    error = data
-  }
+  const contentType = res.headers.get("content-type");
+  const isJSON = contentType && contentType.includes("application/json")
+  const isText = contentType && contentType.includes("text/")
 
-  handleServerErrors(response, error, cmd);
-  handleClientErrors(response, error, cmd);
-
-  if (contentType && contentType.includes("text/")) {
-    return data;
-  }
-
-  if (method === "GET") {
-    return data.result
-  } else if (method === "POST") {
-    return data;
-  }
-  return data;
-}
-
-function handleServerErrors(response, error, cmd) {
-  if (!response.ok && response.status >= 500) {
-    switch (response.status) {
-      case 504:
-        throw new CRCONServerDownError("There was a problem connecting to your CRCON server.");
-      default:
-        throw new APIError(error, cmd, response.status);
+  if (isJSON) {
+    data = await parseJsonResponse(res);
+    if (req.method === "GET") {
+      data = data.result
     }
+    error = data.error
+  } else if (isText) {
+    data = await res.text();
   }
-}
 
-function handleClientErrors(response, error, cmd) {
-  if (!response.ok) {
-    switch (response.status) {
+  if (!res.ok) {
+    if (isText) {
+      error = data
+    }
+    switch (res.status) {
       case 401:
         throw new AuthError("You are not authenticated.", cmd);
       case 403:
         throw new PermissionError("You are not authorized.", cmd);
+      case 504:
+        throw new CRCONServerDownError("There was a problem connecting to your CRCON server.");
       default:
-        throw new APIError(error, cmd, response.status);
+        throw new APIError(error, cmd, res.status);
     }
   }
-  if (error) {
-    throw new APIError(error, cmd);
-  }
+  
+  return data;
 }
 
 async function parseJsonResponse(response) {
@@ -451,7 +441,7 @@ async function showResponse(response, command, showSuccess) {
         });
       }
     } catch (error) {
-      console.log("Error checking forwards status", error);
+      console.error("Error checking forwards status", error);
     }
 
     return res;

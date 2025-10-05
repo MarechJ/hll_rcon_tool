@@ -4,7 +4,7 @@ import fs from "fs/promises";
 import path from "path";
 
 const DEFAULT_CRCON_SERVER_URL = "http://localhost:8010";
-const DEFAULT_CRCON_API_ENDPOINT = "api";
+const DEFAULT_CRCON_API_ENDPOINT = "/api/";
 
 export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
