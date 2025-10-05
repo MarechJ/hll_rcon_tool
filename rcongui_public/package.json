@@ -6,6 +6,7 @@
     "prepare": "husky install",
     "dev": "vite",
     "build": "npm run typecheck && vite build",
+    "preview": "vite build && vite preview --mode development --port 3000",
     "typecheck": "tsc --noEmit",
     "typecheck:watch": "tsc --noEmit --watch",
     "lint": "eslint --quiet src -c eslintrc.mjs && stylelint src/**/*.less",
