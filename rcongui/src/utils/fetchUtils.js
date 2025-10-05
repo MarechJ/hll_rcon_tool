@@ -193,7 +193,7 @@ export const cmd = {
   SET_IDLE_AUTOKICK_TIME: (params) => requestFactory({ method: "POST", cmd: "set_idle_autokick_time", ...params }),
   SET_MAP: (params) => requestFactory({ method: "POST", cmd: "set_map", ...params }),
   SET_MAP_OBJECTIVES: (params) => requestFactory({ method: "POST", cmd: "set_game_layout", ...params }),
-  SET_MAP_ROTATION: (params) => requestFactory({ method: "POST", cmd: "set_maprotation", ...params }),
+  SET_MAP_ROTATION: (params) => requestFactory({ method: "POST", cmd: "set_map_rotation", ...params }),
   SET_MAP_ROTATION_SHUFFLE: (params) => requestFactory({ method: "POST", cmd: "set_map_shuffle_enabled", ...params }),
   SET_MAX_PING_AUTOKICK: (params) => requestFactory({ method: "POST", cmd: "set_max_ping_autokick", ...params }),
   SET_PROFANITIES: (params) => requestFactory({ method: "POST", cmd: "set_profanities", ...params }),
@@ -243,7 +243,7 @@ export function handleHttpError(error) {
       };
       init = { status: 401 };
       break;
-    case "CommandFailedError":
+    case "HLLCommandFailedError":
       errorObject = {
         message: error?.message,
         error: error?.name,
@@ -291,11 +291,11 @@ class PermissionError extends Error {
   }
 }
 
-class CommandFailedError extends Error {
+class HLLCommandFailedError extends Error {
   constructor(message, command) {
     super(message);
     this.command = command;
-    this.name = "CommandFailedError";
+    this.name = "HLLCommandFailedError";
     this.text = message;
     this.status = 404;
   }

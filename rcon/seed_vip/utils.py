@@ -6,6 +6,7 @@ from typing import Iterable, Sequence
 from humanize import naturaldelta, naturaltime
 
 import discord
+import humanize
 from rcon.api_commands import RconAPI
 from rcon.seed_vip.models import (
     BaseCondition,

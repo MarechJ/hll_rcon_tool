@@ -14,7 +14,7 @@ from rcon.cache_utils import get_redis_client
 from rcon.maps import categorize_maps, numbered_maps, sort_maps_by_gamemode
 from rcon.models import PlayerID, PlayerOptins, enter_session
 from rcon.player_history import get_player
-from rcon.rcon import CommandFailedError, Rcon, get_rcon
+from rcon.rcon import HLLCommandFailedError, Rcon, get_rcon
 from rcon.types import (
     StructuredLogLineWithMetaData,
     VoteMapPlayerVoteType,
@@ -366,7 +366,7 @@ class VoteMap:
             return
 
         self.set_last_reminder_time()
-        players = rcon.get_playerids()
+        players = rcon.get_player_ids()
         # Get optins
         player_ids = [player_id for _, player_id in players]
         opted_out = {}
@@ -407,7 +407,7 @@ class VoteMap:
                         )
                     ),
                 )
-            except CommandFailedError:
+            except HLLCommandFailedError:
                 logger.warning("Unable to message %s", name)
 
     def handle_vote_command(
@@ -792,19 +792,7 @@ class VoteMap:
 
         rcon = get_rcon()
         # Apply rotation safely
-
-        current_rotation = rcon.get_map_rotation()
-
-        while len(current_rotation) > 1:
-            # Make sure only 1 map is in rotation
-            map_ = current_rotation.pop(1)
-            rcon.remove_map_from_rotation(map_.id)
-
-        current_next_map = current_rotation[0]
-        if current_next_map != next_map:
-            # Replace the only map left in rotation
-            rcon.add_map_to_rotation(str(next_map))
-            rcon.remove_map_from_rotation(current_next_map.id)
+        rcon.set_map_rotation([next_map.id])
 
         # Check that it worked
         current_rotation = rcon.get_map_rotation()
@@ -814,7 +802,7 @@ class VoteMap:
             )
 
         logger.info(
-            f"Successfully applied winning mapp {next_map=}, new rotation {current_rotation=}"
+            f"Successfully applied winning map {next_map=}, new rotation {current_rotation=}"
         )
         return True
 

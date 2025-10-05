@@ -1,30 +1,34 @@
 import array
 import base64
+from contextlib import contextmanager
 import itertools
 import json
 import logging
 import socket
 import struct
+import threading
 import uuid
 from enum import IntEnum
 from threading import get_ident
-from typing import Any, Self, ClassVar
+from typing import Any, Self, ClassVar, TypeAlias
+
+from cachetools import TTLCache
 
 TIMEOUT_SEC = 20
 HEADER_FORMAT = "<II"
 
 logger = logging.getLogger(__name__)
 
+class HLLServerError(Exception):
+    """Raised when the server failed to execute a command or responded unexpectedly"""
 
-class HLLAuthError(Exception):
-    pass
+class HLLBrokenConnectionError(HLLServerError):
+    """Raised when the connection has broken and needs to be re-established"""
 
+class HLLCommandFailedError(HLLServerError):
+    """Raised when a command failed"""
 
-class HLLError(Exception):
-    pass
-
-
-class HLLCommandError(HLLError):
+class HLLCommandError(HLLServerError):
     def __init__(self, status_code: int, *args: object) -> None:
         self.status_code = status_code
         super().__init__(*args)
@@ -36,10 +40,6 @@ class HLLCommandError(HLLError):
         return f"{header} {exc_str}".rstrip()
 
 
-class HLLMessageError(HLLError):
-    """Raised when the game server returns an unexpected value."""
-
-
 class Request:
     __request_id_counter: ClassVar["itertools.count[int]"] = itertools.count(start=1)
 
@@ -48,8 +48,15 @@ class Request:
         self.version = version
         self.auth_token = auth_token
         self.content = content
+        self.request_id = next(self.__request_id_counter)
+    
+    def __str__(self) -> str:
+        return f"Request #{self.request_id} ({self.name}, {self.version}, {self.content})"
+    
+    def __repr__(self) -> str:
+        return "<" + self.__str__() + ">"
 
-    def to_bytes(self) -> bytes:
+    def to_bytes(self) -> tuple[bytes, bytes]:
         body = {
             "authToken": self.auth_token or "",
             "version": self.version,
@@ -57,7 +64,8 @@ class Request:
             "contentBody": (self.content if isinstance(self.content, str) else json.dumps(self.content, separators=(",", ":"))),
         }
         body = json.dumps(body, separators=(",", ":")).encode()
-        return body
+        header = struct.pack(HEADER_FORMAT, self.request_id, len(body))
+        return header, body
 
 
 class ResponseStatus(IntEnum):
@@ -73,6 +81,17 @@ class ResponseStatus(IntEnum):
     INTERNAL_ERROR = 500
     """An internal server error occurred."""
 
+
+class Handle:
+    def __init__(self, conn: 'HLLConnection', request: 'Request') -> None:
+        self.conn = conn
+        self.request = request
+        self._response: Response | None = None
+    
+    def receive(self) -> 'Response':
+        if self._response is None:
+            self._response = self.conn.receive(self.request.request_id)
+        return self._response
 
 class Response:
     def __init__(
@@ -90,6 +109,16 @@ class Response:
         self.status_code = status_code
         self.status_message = status_message
         self.content = content
+
+    def is_ok(self) -> bool:
+        return self.status_code == ResponseStatus.OK
+
+    def is_successful(self) -> bool:
+        if self.status_code >= ResponseStatus.INTERNAL_ERROR:
+            raise HLLCommandError(self.status_code, self.status_message)
+        elif self.status_code >= ResponseStatus.BAD_REQUEST:
+            return False
+        return True
 
     @property
     def content_dict(self) -> dict[str, Any]:
@@ -133,6 +162,16 @@ class Response:
             raise HLLCommandError(self.status_code, self.status_message)
 
 
+@contextmanager
+def set_timeout(sock: socket.socket, timeout: float):
+    original_timeout = sock.gettimeout()
+    sock.settimeout(timeout)
+    try:
+        yield sock
+    finally:
+        sock.settimeout(original_timeout)
+
+
 class HLLConnection:
     def __init__(self) -> None:
         self.xorkey = None
@@ -140,18 +179,17 @@ class HLLConnection:
         self.sock.settimeout(TIMEOUT_SEC)
         self.id = f"{get_ident()}-{uuid.uuid4()}"
         self.auth_token = None
+        self.mu = threading.Lock()
+        self._response_cache: TTLCache[int, Response] = TTLCache(maxsize=1024, ttl=60)
 
     def connect(self, host, port, password: str):
         self.sock.connect((host, port))
-        # read first 4 bytes (RCONv1 XOR key, which is not used anymore)
-        self.sock.recv(4)
 
         server_hello = self.exchange("ServerConnect", 2, "")
         server_hello.raise_for_status()
 
         if not isinstance(server_hello.content, str):
-            msg = "ServerConnect response content is not a string"
-            raise HLLMessageError(msg)
+            raise HLLBrokenConnectionError("ServerConnect response content is not a string")
         self.xorkey = base64.b64decode(server_hello.content)
 
         auth_token_resp = self.exchange("Login", 2, password)
@@ -166,7 +204,7 @@ class HLLConnection:
             logger.debug("Unable to send socket shutdown")
         self.sock.close()
 
-    def exchange(self, command: str, version: int, body: dict[str, Any] | str = ""):
+    def send(self, command: str, version: int, body: dict[str, Any] | str = "") -> Handle:
         request = Request(
             command=command,
             version=version,
@@ -174,18 +212,42 @@ class HLLConnection:
             content=body,
         )
 
-        message = self._xor(request.to_bytes())
+        req_header, req_body = request.to_bytes()
+        message = req_header + self._xor(req_body)
         self.sock.send(message)
-        header_len = struct.calcsize(HEADER_FORMAT)
-        header_bytes = self.sock.recv(header_len)
-        req_id, body_len = struct.unpack(HEADER_FORMAT, header_bytes)
-        self.sock.settimeout(1)
 
-        raw: bytearray = bytearray()
-        while len(raw) < body_len:
-            raw += self.sock.recv(body_len - len(raw))
-        msg = self._xor(raw)
-        return Response.from_bytes(req_id, msg)
+        return Handle(self, request)
+
+    def receive(self, request_id: int) -> Response:
+        # Not sure if this lock is still necessary, but better safe than sorry
+        self.mu.acquire()
+        try:
+            while request_id not in self._response_cache:
+                header_len = struct.calcsize(HEADER_FORMAT)
+                header_bytes = self.sock.recv(header_len)
+                try:
+                    req_id, body_len = struct.unpack(HEADER_FORMAT, header_bytes)
+                except struct.error:
+                    raise HLLBrokenConnectionError(f"Failed to unpack response header: {header_bytes}")
+
+                with set_timeout(self.sock, 3):
+                    raw = bytearray()
+                    while len(raw) < body_len:
+                        raw += self.sock.recv(body_len - len(raw))
+
+                msg = self._xor(raw)
+                response = Response.from_bytes(req_id, msg)
+
+                self._response_cache[response.request_id] = response
+        finally:
+            self.mu.release()
+
+        response = self._response_cache.pop(request_id)
+        return response
+
+    def exchange(self, command: str, version: int, body: dict[str, Any] | str = ""):
+        handle = self.send(command, version, body)
+        return handle.receive()
 
     def _xor(self, msg) -> bytes:
         if not self.xorkey:

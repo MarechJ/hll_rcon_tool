@@ -3,7 +3,7 @@ import random
 import re
 import time
 
-from rcon.commands import CommandFailedError
+from rcon.commands import HLLCommandFailedError
 from rcon.message_variables import format_message_string, populate_message_variables
 from rcon.types import MessageVariable
 from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
@@ -87,7 +87,7 @@ def run():
             logger.debug("Broadcasting for %s seconds: %s", msg.time_sec, formatted)
             try:
                 ctl.set_broadcast(formatted)
-            except CommandFailedError:
+            except HLLCommandFailedError:
                 logger.exception("Unable to broadcast %s %s", msg.time_sec, msg.message)
             time.sleep(int(msg.time_sec))
 

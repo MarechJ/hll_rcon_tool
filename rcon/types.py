@@ -7,7 +7,7 @@ from typing import List, Literal, Optional, Sequence
 # over typing.TypedDict. Once we bump our Python image we can replace this.
 from typing_extensions import TypedDict
 
-from rcon.maps import Layer, LayerType, Team
+from rcon.maps import GameMode, Layer, LayerType, Team
 
 
 class WindowsStoreIdActionType(str, enum.Enum):
@@ -686,6 +686,7 @@ class GameStateType(TypedDict):
     time_remaining: datetime.timedelta
     current_map: "LayerType"
     next_map: "LayerType"
+    game_mode: GameMode
 
 
 class VACGameBansConfigType(TypedDict):

@@ -168,6 +168,21 @@ class Map(pydantic.BaseModel):
             return str(self).lower() == str(other).lower()
         return NotImplemented
 
+    if TYPE_CHECKING:
+        # Ensure type checkers see the correct return type
+        def model_dump(
+            self,
+            *,
+            mode: Literal["json", "python"] | str = "python",
+            include: Any = None,
+            exclude: Any = None,
+            by_alias: bool = False,
+            exclude_unset: bool = False,
+            exclude_defaults: bool = False,
+            exclude_none: bool = False,
+            round_trip: bool = False,
+            warnings: bool = True,
+        ) -> MapType: ...
 
 class Layer(pydantic.BaseModel):
     id: str
@@ -205,11 +220,6 @@ class Layer(pydantic.BaseModel):
             round_trip: bool = False,
             warnings: bool = True,
         ) -> LayerType: ...
-
-    else:
-
-        def model_dump(self, **kwargs):
-            return super().model_dump(**kwargs)
 
     @property
     def attacking_faction(self):

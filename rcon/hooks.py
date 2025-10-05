@@ -17,7 +17,7 @@ from rcon.blacklist import (
     is_player_blacklisted,
 )
 from rcon.cache_utils import invalidates, get_redis_client
-from rcon.commands import CommandFailedError, HLLServerError
+from rcon.commands import HLLCommandFailedError
 from rcon.discord import get_prepared_discord_hooks, send_to_discord_audit
 from rcon.logs.loop import (
     on_camera,
@@ -287,7 +287,7 @@ def handle_new_match_start(rcon: Rcon, struct_log):
             try:
                 # Don't use the current_map property and clear the cache to pull the new map name
                 current_map = rcon.get_map()
-            except (CommandFailedError, HLLServerError):
+            except HLLCommandFailedError:
                 current_map = parse_layer(UNKNOWN_MAP_NAME)
                 logger.error(
                     "Unable to get current map, falling back to recording map as %s",
@@ -354,7 +354,7 @@ def record_map_end(rcon: Rcon, struct_log):
     maps_history = MapsHistory()
     try:
         current_map = rcon.current_map
-    except (CommandFailedError, HLLServerError):
+    except HLLCommandFailedError:
         current_map = parse_layer(UNKNOWN_MAP_NAME)
         logger.error(
             "Unable to get current map, falling back to recording map as %s",
@@ -501,7 +501,7 @@ def handle_on_connect(
 ):
     try:
         rcon.get_players.cache_clear()
-        rcon.get_player_info.clear_for(player=struct_log["player_name_1"])
+        rcon.get_player_info.clear_for(player=struct_log["player_id_1"])
     except Exception:
         logger.exception("Unable to clear cache for %s", player_id)
 
