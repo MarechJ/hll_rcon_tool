@@ -1,10 +1,11 @@
 import { Box, IconButton, Tooltip } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import SubdirectoryArrowLeftIcon from '@mui/icons-material/SubdirectoryArrowLeft';
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { MapDetailsCard } from "../../MapDetailsCard";
 
-function SortableRotationItem({ item, onRemove }) {
+function SortableRotationItem({ item, remove, mapChange, mapChangeDisabled }) {
   const {
     attributes,
     listeners,
@@ -65,8 +66,13 @@ function SortableRotationItem({ item, onRemove }) {
         <MapDetailsCard mapLayer={mapLayer} />
       </Box>
       <Box sx={{ display: "flex", gap: 1 }}>
+      <Tooltip title="Set to current map">
+          <IconButton size="small" onClick={mapChange} disabled={mapChangeDisabled} color="primary">
+            <SubdirectoryArrowLeftIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
         <Tooltip title="Remove from rotation">
-          <IconButton size="small" onClick={() => onRemove(mapLayer)} color="error">
+          <IconButton size="small" onClick={remove} color="error">
             <CloseIcon fontSize="small" />
           </IconButton>
         </Tooltip>
