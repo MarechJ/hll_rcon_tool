@@ -1524,8 +1524,8 @@ class Rcon(ServerCtl):
                 logger.error(f"Unable to parse log line: '{raw_log}'")
                 continue
 
-            for raw_relative_time, raw_timestamp, raw_log_line in log.groups():
-                yield raw_relative_time, raw_timestamp, raw_log_line.strip()
+            (raw_relative_time, raw_timestamp, raw_log_line) = log.groups()
+            yield raw_relative_time, raw_timestamp, raw_log_line.strip()
 
     @staticmethod
     def parse_logs(
