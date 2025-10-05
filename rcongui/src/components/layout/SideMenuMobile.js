@@ -11,6 +11,7 @@ import ToggleColorMode from "./ColorModeIconDropdown";
 import ColorSchemeSelector from "./ColorSchemeSelector";
 import { UserActions } from "./sidebar/UserActions";
 import CloseIcon from "@mui/icons-material/Close";
+import SystemUsage from "./sidebar/SystemUsage";
 
 const MobileDrawer = ({ open, toggleDrawer, children }) => {
   return (
@@ -42,13 +43,9 @@ function AdminSideMenuMobile({ open, toggleDrawer }) {
   return (
     <MobileDrawer open={open} toggleDrawer={toggleDrawer}>
       <MenuContent navigationTree={navMenus} isMobile={true} />
-      <List dense>
-        <ListItem>
-          <ListItemText
-            sx={{ marginLeft: -0.5 }}
-            primary={<ConnectionStatus />}
-          />
-        </ListItem>
+      <List dense sx={{ color: theme => theme.palette.text.secondary }}>
+        <ConnectionStatus />
+        <SystemUsage />
         <AboutDialog />
       </List>
       <Divider />
