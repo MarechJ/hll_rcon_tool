@@ -33,9 +33,19 @@ const TitleManager = () => {
     isLoading: isServerLoading,
   } = useQuery({
     queryKey: [{ queryIdentifier: "get_status" }],
-    queryFn: cmd.GET_GAME_SERVER_STATUS,
+    queryFn: async () => {
+      let result;
+      try {
+        result = await cmd.GET_GAME_SERVER_STATUS()
+        useGlobalStore.setState((state) => ({ status: result }));
+      } catch (error) {
+        useGlobalStore.setState((state) => ({ status: null }));
+      }
+      return result
+    },
     refetchIntervalInBackground: true,
     refetchInterval: 30_000,
+    retry: 1,
   });
 
   const [pendingTitleIcon, setPendingTitleIcon] = useState("");
