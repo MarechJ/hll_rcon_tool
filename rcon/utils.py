@@ -445,6 +445,11 @@ def parse_raw_player_info(raw: dict[str, Any], player) -> GetDetailedPlayer:
     data["defense"] = int(raw["scoreData"]["defense"])
     data["support"] = int(raw["scoreData"]["support"])
 
+    data["platform"] = raw["platform"]
+    data["clan_tag"] = raw["clanTag"]
+    data["eos_id"] = raw["eosId"]
+    data["world_position"] = raw["worldPosition"]
+
     return data
 
 

@@ -625,6 +625,10 @@ class GetDetailedPlayer(TypedDict):
     defense: int
     support: int
     level: int
+    platform: str
+    eos_id: str
+    world_position: dict[str, float]
+    clan_tag: str
 
 
 class GetDetailedPlayers(TypedDict):
