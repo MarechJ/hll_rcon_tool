@@ -91,14 +91,14 @@ def run():
                 sleep(config.poll_time_seeding)
                 continue
 
-            total_players = gamestate.num_allied_players + gamestate.num_axis_players
+            total_players = gamestate["num_allied_players"] + gamestate["num_axis_players"]
 
             player_name_lookup |= {
                 p.player_id: p.name for p in online_players.players.values()
             }
 
             logger.debug(
-                f"{is_seeding=} {len(online_players.players.keys())} online players (`get_players`), {gamestate.num_allied_players} allied {gamestate.num_axis_players} axis players (gamestate)",
+                f"{is_seeding=} {len(online_players.players.keys())} online players (`get_players`), {gamestate["num_allied_players"]} allied {gamestate["num_axis_players"]} axis players (gamestate)",
             )
             to_add_vip_steam_ids = collect_steam_ids(
                 config=config,
@@ -176,10 +176,10 @@ def run():
                     embed = make_seed_announcement_embed(
                         message=config.player_messages.seeding_complete_message,
                         current_map=rcon_api.current_map.pretty_name,
-                        time_remaining=gamestate.raw_time_remaining,
+                        time_remaining=gamestate["raw_time_remaining"],
                         player_count_message=config.player_messages.player_count_message,
-                        num_allied_players=gamestate.num_allied_players,
-                        num_axis_players=gamestate.num_axis_players,
+                        num_allied_players=gamestate["num_allied_players"],
+                        num_axis_players=gamestate["num_axis_players"],
                     )
                     if embed:
                         for wh in config.hooks:
@@ -245,10 +245,10 @@ def run():
                             player_count=total_players
                         ),
                         current_map=rcon_api.current_map.pretty_name,
-                        time_remaining=gamestate.raw_time_remaining,
+                        time_remaining=gamestate["raw_time_remaining"],
                         player_count_message=config.player_messages.player_count_message,
-                        num_allied_players=gamestate.num_allied_players,
-                        num_axis_players=gamestate.num_axis_players,
+                        num_allied_players=gamestate["num_allied_players"],
+                        num_axis_players=gamestate["num_axis_players"],
                     )
                     if next_player_bucket == config.player_announce_thresholds[-1]:
                         logger.debug(f"setting last_bucket_announced=True")

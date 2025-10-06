@@ -6,13 +6,10 @@ from typing import Iterable, Sequence
 from humanize import naturaldelta, naturaltime
 
 import discord
-import humanize
 from rcon.api_commands import RconAPI
 from rcon.seed_vip.models import (
     BaseCondition,
-    GameState,
     Player,
-    PlayerCountCondition,
     PlayTimeCondition,
     ServerPopulation,
     VipPlayer,
@@ -56,34 +53,6 @@ def all_met(conditions: Iterable[BaseCondition]) -> bool:
     return all(c.is_met() for c in conditions)
 
 
-def check_population_conditions(
-    config: SeedVIPUserConfig, gamestate: GameState
-) -> bool:
-    """Return if the current player count is within min/max players for seeding"""
-    player_count_conditions = [
-        PlayerCountCondition(
-            faction="allies",
-            min_players=config.requirements.min_allies,
-            max_players=config.requirements.max_allies,
-            current_players=gamestate.num_allied_players,
-        ),
-        PlayerCountCondition(
-            faction="axis",
-            min_players=config.requirements.min_axis,
-            max_players=config.requirements.max_axis,
-            current_players=gamestate.num_axis_players,
-        ),
-    ]
-
-    logger.debug(
-        f"{player_count_conditions[0]}={player_count_conditions[0].is_met()} {player_count_conditions[1]}={player_count_conditions[1].is_met()} breaking",
-    )
-    if not all_met(player_count_conditions):
-        return False
-
-    return True
-
-
 def check_player_conditions(
     config: SeedVIPUserConfig, server_pop: ServerPopulation
 ) -> set[str]:
@@ -98,11 +67,11 @@ def check_player_conditions(
     )
 
 
-def is_seeded(config: SeedVIPUserConfig, gamestate: GameState) -> bool:
+def is_seeded(config: SeedVIPUserConfig, gamestate: GameStateType) -> bool:
     """Return if the server has enough players to be out of seeding"""
     return (
-        gamestate.num_allied_players >= config.requirements.max_allies
-        and gamestate.num_axis_players >= config.requirements.max_axis
+        gamestate["num_allied_players"] >= config.requirements.max_allies
+        and gamestate["num_axis_players"] >= config.requirements.max_axis
     )
 
 
@@ -326,9 +295,8 @@ def get_online_players(
     return ServerPopulation(players=players)
 
 
-def get_gamestate(rcon: RconAPI) -> GameState:
-    result: GameStateType = rcon.get_gamestate()
-    return GameState.model_validate(result)
+def get_gamestate(rcon: RconAPI) -> GameStateType:
+    return rcon.get_gamestate()
 
 
 def get_vips(
