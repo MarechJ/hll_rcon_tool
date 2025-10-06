@@ -687,6 +687,13 @@ class GameStateType(TypedDict):
     current_map: "LayerType"
     next_map: "LayerType"
     game_mode: GameMode
+    queue_count: int
+    max_queue_count: int
+    vip_queue_count: int
+    max_vip_queue_count: int
+    match_time: int
+    server_name: str
+
 
 
 class VACGameBansConfigType(TypedDict):

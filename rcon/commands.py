@@ -304,13 +304,13 @@ class ServerCtl:
         return self.exchange("GetServerInformation", 2, {"Name": "player", "Value": player_id}).content_dict
 
     def get_admin_ids(self) -> list[str]:
-        return [x["UserId"] for x in self.exchange("GetAdminUsers", 2).content_dict["AdminUsers"]]
+        return [x["userId"] for x in self.exchange("GetAdminUsers", 2).content_dict["adminUsers"]]
 
     def get_temp_bans(self) -> list[str]:
-        return [x["UserId"] for x in self.exchange("GetTemporaryBans", 2).content_dict["banList"]]
+        return [x["userId"] for x in self.exchange("GetTemporaryBans", 2).content_dict["banList"]]
 
     def get_perma_bans(self) -> list[str]:
-        return [x["UserId"] for x in self.exchange("GetPermanentBans", 2).content_dict["banList"]]
+        return [x["userId"] for x in self.exchange("GetPermanentBans", 2).content_dict["banList"]]
 
     def get_team_switch_cooldown(self) -> int:
         # TODO: Not available right now
@@ -332,7 +332,8 @@ class ServerCtl:
         return [x["iD"] for x in self.exchange("GetServerInformation", 2, {"Name": "maprotation", "Value": ""}).content_dict["mAPS"]]
 
     def get_map_sequence(self) -> list[str]:
-        return [x["iD"] for x in self.exchange("GetServerInformation", 2, {"Name": "mapsequence", "Value": ""}).content_dict["mAPS"]]
+        # Map[iD] returns '/Game/Maps/driel_offensive_ger'
+        return [x["iD"].split("/")[-1] for x in self.exchange("GetServerInformation", 2, {"Name": "mapsequence", "Value": ""}).content_dict["mAPS"]]
 
     def get_slots(self) -> SlotsType:
         resp = self.exchange("GetServerInformation", 2, {"Name": "session", "Value": ""}).content_dict
@@ -450,6 +451,12 @@ class ServerCtl:
         # TODO: player_name changed to player_id: Possibly the frontend needs to be changed as well
         return self.exchange_success("ForceTeamSwitch", 2, {"PlayerId": player_id, "ForceMode": 1})
 
+    def remove_player_from_squad(self, player_id: str, reason: str) -> None:
+        self.exchange_success("RemovePlayerFromPlatoon", 2, {"PlayerId": player_id, "Reason": reason})
+
+    def disband_squad(self, team_index: int, squad_index: int, reason: str) -> None:
+        self.exchange_success("DisbandPlatoon", 2, { "TeamIndex": team_index, "SquadIndex": squad_index, "Reason": reason })
+
     def add_map_to_rotation(
             self,
             map_name: str,
@@ -525,17 +532,17 @@ class ServerCtl:
 
     @_escape_params
     def add_admin(self, player_id, role, description) -> bool:
-        return self.exchange_success("AddAdmin", 2, {"PlayerId": player_id, "Description": description})
+        return self.exchange_success("AddAdmin", 2, {"PlayerId": player_id, "AdminGroup": role, "Comment": description})
 
     def remove_admin(self, player_id) -> bool:
         return self.exchange_success("RemoveAdmin", 2, {"PlayerId": player_id})
 
     @_escape_params
     def add_vip(self, player_id: str, description: str) -> bool:
-        return self.exchange_success("AddVipPlayer", 2, {"PlayerId": player_id, "Description": description})
+        return self.exchange_success("AddVip", 2, {"PlayerId": player_id, "Description": description})
 
     def remove_vip(self, player_id) -> bool:
-        return self.exchange_success("RemoveVipPlayer", 2, {"PlayerId": player_id})
+        return self.exchange_success("RemoveVip", 2, {"PlayerId": player_id})
 
     @_escape_params
     def message_player(self, player_id: str, message: str) -> bool:
@@ -560,11 +567,10 @@ class ServerCtl:
         s = self.exchange("GetServerInformation", 2, {"Name": "session", "Value": ""}).content_dict
 
         time_remaining = timedelta(seconds=int(s["remainingMatchTime"]))
-        seconds_remaining = time_remaining.total_seconds()
+        seconds_remaining = int(time_remaining.total_seconds())
         raw_time_remaining = f"{seconds_remaining // 3600}:{(seconds_remaining // 60) % 60:02}:{seconds_remaining % 60:02}"
 
         # TODO: next_map is not included in session, map_name is pretty name instead of ID
-        # TODO: extend with additional info
         return GameStateType(
             next_map=LAYERS[UNKNOWN_MAP_NAME].model_dump(),
             axis_score=s["axisScore"],
@@ -587,6 +593,12 @@ class ServerCtl:
             num_axis_players=s["axisPlayerCount"],
             num_allied_players=s["alliedPlayerCount"],
             game_mode=GameMode(s["gameMode"].lower()),
+            match_time=s["matchTime"],
+            queue_count=s["queueCount"],
+            max_queue_count=s["maxQueueCount"],
+            vip_queue_count=s["vipQueueCount"],
+            max_vip_queue_count=s["maxVipQueueCount"],
+            server_name=s["serverName"],
         )
 
     def get_objective_row(self, row: int):
