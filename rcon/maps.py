@@ -801,11 +801,18 @@ LAYERS = {
             game_mode=GameMode.OFFENSIVE,
             attackers=Team.AXIS,
         ),
+        # Deprecated since U18
         Layer(
             id="stalingrad_warfare",
             map=MAPS["stalingrad"],
             game_mode=GameMode.WARFARE,
         ),
+        Layer(
+            id="STA_L_1942_Warfare",
+            map=MAPS["stalingrad"],
+            game_mode=GameMode.WARFARE,
+        ),
+        # Deprecated since U18
         Layer(
             id="stalingrad_warfare_night",
             map=MAPS["stalingrad"],
@@ -813,16 +820,48 @@ LAYERS = {
             environment=Environment.NIGHT,
         ),
         Layer(
+            id="STA_L_1942_Warfare_Night",
+            map=MAPS["stalingrad"],
+            game_mode=GameMode.WARFARE,
+            environment=Environment.NIGHT,
+        ),
+        # Deprecated since U18
+        Layer(
             id="stalingrad_offensive_rus",
             map=MAPS["stalingrad"],
             game_mode=GameMode.OFFENSIVE,
             attackers=Team.ALLIES,
         ),
         Layer(
+            id="STA_L_1942_OffensiveRUS",
+            map=MAPS["stalingrad"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.ALLIES,
+        ),
+        # Deprecated since U18
+        Layer(
             id="stalingrad_offensive_ger",
             map=MAPS["stalingrad"],
             game_mode=GameMode.OFFENSIVE,
             attackers=Team.AXIS,
+        ),
+        Layer(
+            id="STA_L_1942_OffensiveGER",
+            map=MAPS["stalingrad"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.AXIS,
+        ),
+        Layer(
+            id="STA_S_1942_P_Skirmish_Dusk",
+            map=MAPS["stalingrad"],
+            game_mode=GameMode.SKIRMISH,
+            environment=Environment.DUSK,
+        ),
+        Layer(
+            id="STA_S_1942_P_Skirmish_Overcast",
+            map=MAPS["stalingrad"],
+            game_mode=GameMode.SKIRMISH,
+            environment=Environment.OVERCAST,
         ),
         Layer(
             id="remagen_warfare",
