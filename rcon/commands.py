@@ -575,7 +575,7 @@ class ServerCtl:
                     (m for m in MAPS.values() if m.name == s["mapName"]),
                     MAPS[UNKNOWN_MAP_NAME]
                 ).model_dump(),
-                game_mode=s["gameMode"],
+                game_mode=s["gameMode"].lower(),
                 attackers=None,
                 environment=Environment.DAY,
                 pretty_name=s["mapName"].capitalize(),
