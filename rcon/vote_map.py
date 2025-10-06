@@ -179,7 +179,7 @@ def _suggest_next_maps(
         categorized_maps[maps.GameMode.OFFENSIVE], num_offensive
     )
     skirmishes_control: list[maps.Layer] = _get_random_map_selection(
-        categorized_maps[maps.GameMode.CONTROL], num_skirmish_control
+        categorized_maps[maps.GameMode.SKIRMISH], num_skirmish_control
     )
 
     if (
@@ -193,7 +193,7 @@ def _suggest_next_maps(
         offensives = []
 
     if not allow_consecutive_skirmishes and current_map.game_mode in (
-        maps.GameMode.CONTROL,
+        maps.GameMode.SKIRMISH,
         maps.GameMode.PHASED,
         maps.GameMode.MAJORITY,
     ):
@@ -301,11 +301,11 @@ class VoteMap:
                     join_char="\n",
                 )
                 vote_string += f"OFFENSIVES:\n{vote_options}"
-            if categorized[maps.GameMode.CONTROL]:
+            if categorized[maps.GameMode.SKIRMISH]:
                 if vote_string:
                     vote_string += "\n\n"
                 vote_options = VoteMap.join_vote_options(
-                    selection=categorized[maps.GameMode.CONTROL],
+                    selection=categorized[maps.GameMode.SKIRMISH],
                     maps_to_numbers=maps_to_numbers,
                     ranked_votes=ranked_votes,
                     total_votes=len(votes),

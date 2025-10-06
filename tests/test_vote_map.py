@@ -104,7 +104,7 @@ def test_get_opposite_side(team, expected):
             Layer(
                 id="DRL_S_1944_P_Skirmish",
                 map=MAPS["driel"],
-                game_mode=GameMode.CONTROL,
+                game_mode=GameMode.SKIRMISH,
                 environment=Environment.DAWN,
             ),
         ),
@@ -113,7 +113,7 @@ def test_get_opposite_side(team, expected):
             Layer(
                 id="DRL_S_1944_Night_P_Skirmish",
                 map=MAPS["driel"],
-                game_mode=GameMode.CONTROL,
+                game_mode=GameMode.SKIRMISH,
                 environment=Environment.NIGHT,
             ),
         ),
@@ -122,7 +122,7 @@ def test_get_opposite_side(team, expected):
             Layer(
                 id="DRL_S_1944_Day_P_Skirmish",
                 map=MAPS["driel"],
-                game_mode=GameMode.CONTROL,
+                game_mode=GameMode.SKIRMISH,
                 environment=Environment.DAY,
             ),
         ),
@@ -131,7 +131,7 @@ def test_get_opposite_side(team, expected):
             Layer(
                 id="ELA_S_1942_P_Skirmish",
                 map=MAPS["driel"],
-                game_mode=GameMode.CONTROL,
+                game_mode=GameMode.SKIRMISH,
                 environment=Environment.DAY,
             ),
         ),
@@ -140,7 +140,7 @@ def test_get_opposite_side(team, expected):
             Layer(
                 id="ELA_S_1942_Night_P_Skirmish",
                 map=MAPS["driel"],
-                game_mode=GameMode.CONTROL,
+                game_mode=GameMode.SKIRMISH,
                 environment=Environment.DUSK,
             ),
         ),
