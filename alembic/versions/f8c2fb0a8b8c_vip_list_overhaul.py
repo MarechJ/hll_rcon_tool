@@ -1,7 +1,7 @@
 """VIP list overhaul
 
 Revision ID: f8c2fb0a8b8c
-Revises: 1e8fd0c19cb0
+Revises: f80b6dc2833a
 Create Date: 2025-02-05 03:03:23.902509
 
 """
@@ -11,7 +11,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "f8c2fb0a8b8c"
-down_revision = "1e8fd0c19cb0"
+down_revision = "f80b6dc2833a"
 branch_labels = None
 depends_on = None
 

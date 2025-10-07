@@ -369,6 +369,8 @@ def get_server_number() -> str:
 # Add a quick shorthand for the SERVER NUMBER but don't fail in the maintenance container
 if os.getenv("SERVER_NUMBER"):
     SERVER_NUMBER = int(get_server_number())
+else:
+    SERVER_NUMBER = 0
 
 
 def exception_in_chain(e: BaseException, c) -> bool:
