@@ -25,7 +25,7 @@ from rcon.maps import (
 )
 from rcon.models import PlayerID, PlayerOptins, enter_session
 from rcon.player_history import get_player
-from rcon.rcon import CommandFailedError, Rcon, get_rcon
+from rcon.rcon import HLLCommandFailedError, Rcon, get_rcon
 from rcon.types import (
     PlayerProfileType,
     StructuredLogLineWithMetaData,
@@ -202,7 +202,7 @@ class VoteMap:
                     join_char="\n",
                 )
                 text.append(f"OFFENSIVES:\n{vote_options}")
-            if len(categorized[maps.GameMode.CONTROL]):
+            if len(categorized[maps.GameMode.SKIRMISH]):
                 vote_options = VoteMap.join_vote_options(
                     selection=categorized[maps.GameMode.SKIRMISH],
                     maps_to_numbers=maps_to_numbers,
@@ -210,7 +210,7 @@ class VoteMap:
                     total_votes=total_vote_counts,
                     join_char="\n",
                 )
-                text.append(f"CONTROL SKIRMISHES:\n{vote_options}")
+                text.append(f"SKIRMISHES:\n{vote_options}")
 
         return "\n\n".join(text)
 
@@ -443,7 +443,7 @@ class VoteMap:
         return False
 
     def _get_optin_players(self) -> List[Tuple[str, str]]:
-        online_players = self._rcon.get_playerids()
+        online_players = self._rcon.get_player_ids()
         online_player_ids = [player_id for _, player_id in online_players]
 
         # No players online
@@ -530,7 +530,7 @@ class VoteMap:
                     player_id=player_id,
                     message=reminder_message,
                 )
-            except CommandFailedError:
+            except HLLCommandFailedError:
                 logger.warning("Unable to message %s", name)
 
         self.set_last_reminder_time()
@@ -902,7 +902,7 @@ class VoteMap:
             categorized_maps[maps.GameMode.OFFENSIVE], num_offensive_options
         )
         skirmishes_control: list[maps.Layer] = self.__get_random_map_selection(
-            categorized_maps[maps.GameMode.CONTROL], num_skirmish_control_options
+            categorized_maps[maps.GameMode.SKIRMISH], num_skirmish_control_options
         )
 
         if (
@@ -916,7 +916,7 @@ class VoteMap:
             offensives = []
 
         if not allow_consecutive_skirmishes and current_map.game_mode in (
-            maps.GameMode.CONTROL,
+            maps.GameMode.SKIRMISH,
             maps.GameMode.PHASED,
             maps.GameMode.MAJORITY,
         ):
