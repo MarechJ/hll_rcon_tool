@@ -8,7 +8,7 @@ from typing import Generator, Literal, Sequence, Any, List
 
 from rcon.connection import HLLCommandError, HLLConnection, Handle, Response
 from rcon.maps import LAYERS, MAPS, UNKNOWN_MAP_NAME, Environment, GameMode, LayerType
-from rcon.types import ServerInfoType, SlotsType, VipId, GameStateType
+from rcon.types import ServerInfoType, SlotsType, VipId, GameStateType, AdminType
 from rcon.utils import exception_in_chain
 
 logger = logging.getLogger(__name__)
@@ -314,8 +314,12 @@ class ServerCtl:
         # TODO: Updated function signatures
         return self.exchange("GetServerInformation", 2, {"Name": "player", "Value": player_id}).content_dict
 
-    def get_admin_ids(self) -> list[str]:
-        return [x["userId"] for x in self.exchange("GetAdminUsers", 2).content_dict["adminUsers"]]
+    def get_admin_ids(self) -> list[AdminType]:
+        return [{
+            "player_id": x["userId"],
+            "name": x["comment"],
+            "role": x["group"],
+        } for x in self.exchange("GetAdminUsers", 2).content_dict["adminUsers"]]
 
     def get_temp_bans(self) -> list[str]:
         return [x["userId"] for x in self.exchange("GetTemporaryBans", 2).content_dict["banList"]]

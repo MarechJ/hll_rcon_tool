@@ -482,12 +482,7 @@ class Rcon(ServerCtl):
 
     @ttl_cache(ttl=60 * 10)
     def get_admin_ids(self) -> list[AdminType]:
-        res = super().get_admin_ids()
-        admins: list[AdminType] = []
-        for item in res:
-            player_id, role, name = item.split(" ", 2)
-            admins.append({PLAYER_ID: player_id, NAME: name[1:-1], ROLE: role})
-        return admins
+        return super().get_admin_ids()
 
     def add_admin(self, player_id, role, description) -> bool:
         with invalidates(Rcon.get_admin_ids):
