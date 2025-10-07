@@ -36,19 +36,19 @@ CAR_OFF_AXIS = Layer(
 CAR_SKIRMISH_DAY = Layer(
     id="CAR_S_1944_Day_P_Skirmish",
     map=MAPS["carentan"],
-    game_mode=GameMode.CONTROL,
+    game_mode=GameMode.SKIRMISH,
     environment=Environment.DAY,
 )
 CAR_SKIRMISH_RAIN = Layer(
     id="CAR_S_1944_Rain_P_Skirmish",
     map=MAPS["carentan"],
-    game_mode=GameMode.CONTROL,
+    game_mode=GameMode.SKIRMISH,
     environment=Environment.RAIN,
 )
 CAR_SKIRMISH_DUSK = Layer(
     id="CAR_S_1944_Dusk_P_Skirmish",
     map=MAPS["carentan"],
-    game_mode=GameMode.CONTROL,
+    game_mode=GameMode.SKIRMISH,
     environment=Environment.DUSK,
 )
 HUR_WARFARE_DAY = Layer(
@@ -91,7 +91,7 @@ def mock_rcon():
     """Fixture for mocking Rcon interactions."""
     rcon = MagicMock()
     rcon.get_maps.return_value = ALL_MAPS
-    rcon.get_playerids.return_value = [
+    rcon.get_player_ids.return_value = [
         ("Player1", "71234567890"),
         ("Player2", "0j8dkd3fj948h9fhv3m9thvm578"),
     ]
