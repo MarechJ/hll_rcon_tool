@@ -1,6 +1,6 @@
 import { teamsLiveQueryOptions } from "@/queries/teams-live-query";
 import { cmd } from "@/utils/fetchUtils";
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { queryOptions, useQueries, useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { create } from "zustand";
 
@@ -29,52 +29,58 @@ const refetchInterval = 30 * 1000;
 
 // Define your global queries with onSuccess callbacks
 const globalQueries = [
-  {
-    queryKey: ["server", "state"],
-    queryFn: cmd.GET_GAME_SERVER_STATUS,
-    select: (data) => {
-      useGlobalStore.setState((state) => ({ status: data }));
-      return data;
+  queryOptions({
+    queryKey: [{ queryIdentifier: "get_status" }],
+    queryFn: async () => {
+      let result;
+      try {
+        result = await cmd.GET_GAME_SERVER_STATUS()
+        useGlobalStore.setState((state) => ({ status: result }));
+      } catch (error) {
+        useGlobalStore.setState((state) => ({ status: null }));
+      }
+      return result
     },
-  },
-  {
-    queryKey: ["game", "state"],
+    retry: 1,
+  }),
+  queryOptions({
+    queryKey: [{ queryIdentifier: "get_gamestate" }],
     queryFn: cmd.GET_GAME_STATE,
     select: (data) => {
       useGlobalStore.setState((state) => ({ gameState: data }));
       return data;
     },
-  },
-  {
-    queryKey: ["server", "list"],
+  }),
+  queryOptions({
+    queryKey: [{ queryIdentifier: "get_server_list" }],
     queryFn: cmd.GET_GAME_SERVER_LIST,
     select: (data) => {
       useGlobalStore.setState((state) => ({ servers: data }));
       return data;
     },
-  },
-  {
-    queryKey: ["ingame-mods", "live"],
+  }),
+  queryOptions({
+    queryKey: [{ queryIdentifier: "get_ingame_mods" }],
     queryFn: cmd.GET_INGAME_MODS,
     select: (data) => {
       useGlobalStore.setState((state) => ({ onlineIngameMods: data }));
       return data;
     },
-  },
-  {
-    queryKey: ["crcon-mods", "live"],
+  }),
+  queryOptions({
+    queryKey: [{ queryIdentifier: "get_online_mods" }],
     queryFn: cmd.GET_CRCON_MODS,
     select: (data) => {
       useGlobalStore.setState((state) => ({ onlineCrconMods: data }));
       return data;
     },
-  },
+  }),
   teamsLiveQueryOptions,
 ];
 
 export const GlobalState = () => {
   const { data, isSuccess: isCrconConnected } = useQuery({
-    queryKey: ["crcon", "state"],
+    queryKey: [{ queryIdentifier: "get_connection_info" }],
     queryFn: cmd.GET_CRCON_SERVER_CONNECTION,
     refetchInterval,
     retry: 1,
@@ -89,7 +95,7 @@ export const GlobalState = () => {
   }, [isCrconConnected]);
 
   useQueries({
-    queries: globalQueries.map((query) => ({
+    queries: globalQueries.map((query) => queryOptions({
       staleTime,
       refetchInterval,
       enabled: isCrconConnected,

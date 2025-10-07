@@ -11,6 +11,7 @@ import AboutDialog from "./sidebar/About";
 import ServerStatus from "../Header/server-status";
 import { useAppStore } from "@/stores/app-state";
 import { UserActions } from "./sidebar/UserActions";
+import SystemUsage from "./sidebar/SystemUsage";
 
 const drawerWidth = 240;
 
@@ -56,13 +57,10 @@ export default function SideMenu() {
       <ServerStatus />
       <Divider />
       <MenuContent navigationTree={navMenus} />
-      <List dense>
-        <ListItem>
-          <ListItemText
-            sx={{ marginLeft: -0.5 }}
-            primary={<ConnectionStatus />}
-          />
-        </ListItem>
+      <Divider />
+      <List dense sx={{ color: theme => theme.palette.text.secondary }}>
+        <ConnectionStatus />
+        <SystemUsage />
         <AboutDialog />
       </List>
       <Divider />

@@ -7,6 +7,7 @@ from functools import wraps
 from subprocess import PIPE, run
 from typing import Any, Callable
 
+import psutil
 import pydantic
 from django.http import (
     HttpRequest,
@@ -18,7 +19,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from discord.utils import escape_markdown
 from rcon.api_commands import get_rcon_api
-from rcon.commands import CommandFailedError
+from rcon.commands import HLLCommandFailedError
 from rcon.discord import send_to_discord_audit
 from rcon.types import (
     PublicInfoMapType,
@@ -148,6 +149,46 @@ def get_public_info(request):
     )
 
 
+@login_required()
+@csrf_exempt
+@require_http_methods(["GET"])
+def get_system_usage(request):
+    # CPU usage (percentage)
+    cpu_percent = psutil.cpu_percent(interval=None)
+    process_count = len(list(psutil.process_iter()))
+    cpu_usage = {
+        "cores": psutil.cpu_count(),
+        "percent": cpu_percent,
+        "process_count": process_count,
+    }
+
+    # RAM usage
+    memory = psutil.virtual_memory()
+    ram_usage = {
+        "total": memory.total / (1024**3),  # Convert to GB
+        "used": memory.used / (1024**3),
+        "percent": memory.percent,
+    }
+
+    # Disk usage
+    disk = psutil.disk_usage("/")
+    disk_usage = {
+        "total": disk.total / (1024**3),  # Convert to GB
+        "used": disk.used / (1024**3),
+        "percent": disk.percent,
+    }
+
+    return api_response(
+        result={
+            "cpu_usage": cpu_usage,
+            "ram_usage": ram_usage,
+            "disk_usage": disk_usage,
+        },
+        failed=False,
+        command="get_system_usage",
+    )
+
+
 def audit(func_name, request, arguments):
     # A few get_ methods can be called w/ POST but don't modify anything
     # so filtering like this should work since this is only for the RconAPI exposed
@@ -264,7 +305,7 @@ def expose_api_endpoint(
                 error = e.asdict()
             else:
                 error = str(e)
-        except CommandFailedError as e:
+        except HLLCommandFailedError as e:
             failure = True
             error = e.args[0] if e.args else None
 
@@ -345,7 +386,7 @@ def run_raw_command(request):
     else:
         try:
             res = rcon_api._str_request(command, can_fail=True, log_info=True)
-        except CommandFailedError:
+        except HLLCommandFailedError:
             res = "Command returned FAIL"
         except:
             logging.exception("Internal error when executing raw command")
@@ -416,7 +457,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.get_chat_commands_config: "api.can_view_chat_commands_config",
     rcon_api.get_rcon_chat_commands_config: "api.can_view_rcon_chat_commands_config",
     rcon_api.get_chat_discord_webhooks_config: "api.can_view_chat_discord_webhooks_config",
-    rcon_api.get_current_map_sequence: "api.can_view_current_map_sequence",
+    rcon_api.get_map_sequence: "api.can_view_current_map_sequence",
     rcon_api.get_detailed_player_info: "api.can_view_detailed_player_info",
     rcon_api.get_detailed_players: "api.can_view_detailed_players",
     rcon_api.get_gamestate: "api.can_view_gamestate",
@@ -443,7 +484,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.get_perma_bans: "api.can_view_perma_bans",
     rcon_api.get_player_info: "api.can_view_player_info",
     rcon_api.get_player_profile: "api.can_view_player_profile",
-    rcon_api.get_playerids: "api.can_view_playerids",
+    rcon_api.get_player_ids: "api.can_view_playerids",
     rcon_api.get_player_comments: "api.can_view_player_comments",
     rcon_api.post_player_comment: "api.can_add_player_comments",
     rcon_api.get_player_messages: "api.can_view_player_messages",
@@ -516,7 +557,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.set_log_line_webhook_config: "api.can_change_log_line_discord_webhook_config",
     rcon_api.set_map_shuffle_enabled: "api.can_change_map_shuffle_enabled",
     rcon_api.set_map: "api.can_change_current_map",
-    rcon_api.set_maprotation: {
+    rcon_api.set_map_rotation: {
         "api.can_add_map_to_rotation",
         "api.can_remove_map_from_rotation",
         "api.can_view_map_rotation",
@@ -598,7 +639,6 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
         "api.can_remove_temp_bans",
         "api.can_remove_perma_bans",
     },
-    rcon_api.get_objective_row: "api.can_view_current_map",
     rcon_api.get_objective_rows: "api.can_view_current_map",
     rcon_api.set_game_layout: "api.can_change_game_layout",
     rcon_api.get_seed_vip_config: "api.can_view_seed_vip_config",
@@ -693,11 +733,10 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.get_chat_commands_config: ["GET"],
     rcon_api.get_rcon_chat_commands_config: ["GET"],
     rcon_api.get_chat_discord_webhooks_config: ["GET"],
-    rcon_api.get_current_map_sequence: ["GET"],
+    rcon_api.get_map_sequence: ["GET"],
     rcon_api.get_detailed_player_info: ["GET"],
     rcon_api.get_detailed_players: ["GET"],
     rcon_api.get_gamestate: ["GET"],
-    rcon_api.get_objective_row: ["GET"],
     rcon_api.get_objective_rows: ["GET"],
     rcon_api.get_historical_logs: ["GET", "POST"],
     rcon_api.get_idle_autokick_time: ["GET"],
@@ -723,7 +762,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.get_perma_bans: ["GET"],
     rcon_api.get_player_info: ["GET"],
     rcon_api.get_player_profile: ["GET"],
-    rcon_api.get_playerids: ["GET"],
+    rcon_api.get_player_ids: ["GET"],
     rcon_api.get_player_comments: ["GET"],
     rcon_api.post_player_comment: ["POST"],
     rcon_api.get_player_messages: ["GET"],
@@ -804,7 +843,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.set_map_shuffle_enabled: ["POST"],
     rcon_api.set_votemap_whitelist: ["POST"],
     rcon_api.set_map: ["POST"],
-    rcon_api.set_maprotation: ["POST"],
+    rcon_api.set_map_rotation: ["POST"],
     rcon_api.set_max_ping_autokick: ["POST"],
     rcon_api.set_name_kick_config: ["POST"],
     rcon_api.set_profanities: ["POST"],
@@ -946,6 +985,7 @@ commands = [
     ("get_connection_info", get_connection_info),
     ("get_public_info", get_public_info),
     ("run_raw_command", run_raw_command),
+    ("get_system_usage", get_system_usage),
 ]
 
 if not os.getenv("HLL_MAINTENANCE_CONTAINER") and not os.getenv(

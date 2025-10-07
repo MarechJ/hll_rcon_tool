@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { gameQueryOptions } from "@/queries/game-query";
 import dayjs from "dayjs";
+import { useGlobalStore } from "@/stores/global-state";
+import { gameQueryOptions } from "@/queries/game-query";
+import { useQuery } from "@tanstack/react-query";
+import { cmd } from "@/utils/fetchUtils";
 
 const icons = {
   idle: "⚫",
@@ -17,12 +19,33 @@ const blinkInterval = 500;
 
 const TitleManager = () => {
   const {
-    data: status,
-    isLoading,
-    isError,
+    data: gameState,
+    isLoading: isGameLoading,
   } = useQuery({
-    ...gameQueryOptions.publicState(),
+    queryKey: [{ queryIdentifier: "get_gamestate" }],
+    queryFn: cmd.GET_GAME_STATE,
     refetchIntervalInBackground: true,
+    refetchInterval: 30_000,
+  });
+
+  const {
+    data: serverState,
+    isLoading: isServerLoading,
+  } = useQuery({
+    queryKey: [{ queryIdentifier: "get_status" }],
+    queryFn: async () => {
+      let result;
+      try {
+        result = await cmd.GET_GAME_SERVER_STATUS()
+        useGlobalStore.setState((state) => ({ status: result }));
+      } catch (error) {
+        useGlobalStore.setState((state) => ({ status: null }));
+      }
+      return result
+    },
+    refetchIntervalInBackground: true,
+    refetchInterval: 30_000,
+    retry: 1,
   });
 
   const [pendingTitleIcon, setPendingTitleIcon] = useState("");
@@ -34,21 +57,18 @@ const TitleManager = () => {
     let text = "";
     let icon = icons.normal;
 
-    if (isLoading) {
+    if (isGameLoading || isServerLoading) {
       text = "Loading...";
       icon = icons.loading;
-    } else if (isError) {
-      text = "Error loading server status";
-      icon = icons.error;
     } else {
-      const serverName = status.name.short_name;
-      const numCurrentPlayers = status.player_count;
-      const map = status.current_map.map;
-      const mapName = map.pretty_name;
+      const serverName = serverState.short_name;
+      const numCurrentPlayers = serverState.current_players;
+      const map = gameState.current_map.map;
+      const mapName = gameState.current_map.pretty_name;
 
-      if (status.time_remaining === 0) {
+      if (gameState.time_remaining === 0) {
         icon = icons.idle;
-      } else if (status.time_remaining <= 90) {
+      } else if (gameState.time_remaining <= 90) {
         // Not sure how to handle offensive mode
         // Lets just use a flag for now although it's not perfect
         icon = icons.ending;
@@ -57,13 +77,13 @@ const TitleManager = () => {
       }
 
       text = `${serverName} (${numCurrentPlayers}) | ${dayjs
-        .duration(status.time_remaining, "seconds")
+        .duration(gameState.time_remaining, "seconds")
         .format("HH:mm:ss")} | ${mapName}`;
     }
 
     setTitleText(text);
     setPendingTitleIcon(icon);
-  }, [status, isLoading, isError]);
+  }, [serverState, gameState]);
 
   useEffect(() => {
     let counter = 0;

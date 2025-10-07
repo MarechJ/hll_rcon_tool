@@ -69,7 +69,7 @@ class Orientation(str, Enum):
 class GameMode(str, Enum):
     WARFARE = "warfare"
     OFFENSIVE = "offensive"
-    CONTROL = "control"
+    SKIRMISH = "skirmish"
     PHASED = "phased"
     MAJORITY = "majority"
 
@@ -83,7 +83,7 @@ class GameMode(str, Enum):
     @classmethod
     def small(cls):
         return (
-            cls.CONTROL,
+            cls.SKIRMISH,
             cls.PHASED,
             cls.MAJORITY,
         )
@@ -168,6 +168,21 @@ class Map(pydantic.BaseModel):
             return str(self).lower() == str(other).lower()
         return NotImplemented
 
+    if TYPE_CHECKING:
+        # Ensure type checkers see the correct return type
+        def model_dump(
+            self,
+            *,
+            mode: Literal["json", "python"] | str = "python",
+            include: Any = None,
+            exclude: Any = None,
+            by_alias: bool = False,
+            exclude_unset: bool = False,
+            exclude_defaults: bool = False,
+            exclude_none: bool = False,
+            round_trip: bool = False,
+            warnings: bool = True,
+        ) -> MapType: ...
 
 class Layer(pydantic.BaseModel):
     id: str
@@ -205,11 +220,6 @@ class Layer(pydantic.BaseModel):
             round_trip: bool = False,
             warnings: bool = True,
         ) -> LayerType: ...
-
-    else:
-
-        def model_dump(self, **kwargs):
-            return super().model_dump(**kwargs)
 
     @property
     def attacking_faction(self):
@@ -430,6 +440,16 @@ MAPS = {
             axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
             orientation=Orientation.VERTICAL,
         ),
+        Map(
+            id="tobruk",
+            name="TOBRUK",
+            tag="TBK",
+            pretty_name="Tobruk",
+            shortname="Tobruk",
+            allies=Faction(name=FactionName.GB.value, team=Team.ALLIES),
+            axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
+            orientation=Orientation.HORIZONTAL,
+        ),
     )
 }
 
@@ -468,19 +488,19 @@ LAYERS = {
         Layer(
             id="SME_S_1944_Day_P_Skirmish",
             map=MAPS["stmereeglise"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
             environment=Environment.DAY,
         ),
         Layer(
             id="SME_S_1944_Morning_P_Skirmish",
             map=MAPS["stmereeglise"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
             environment=Environment.DAWN,
         ),
         Layer(
             id="SME_S_1944_Night_P_Skirmish",
             map=MAPS["stmereeglise"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
             environment=Environment.NIGHT,
         ),
         Layer(
@@ -604,19 +624,19 @@ LAYERS = {
         Layer(
             id="PHL_S_1944_Rain_P_Skirmish",
             map=MAPS["purpleheartlane"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
             environment=Environment.RAIN,
         ),
         Layer(
             id="PHL_S_1944_Morning_P_Skirmish",
             map=MAPS["purpleheartlane"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
             environment=Environment.DAWN,
         ),
         Layer(
             id="PHL_S_1944_Night_P_Skirmish",
             map=MAPS["purpleheartlane"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
             environment=Environment.NIGHT,
         ),
         Layer(
@@ -645,19 +665,19 @@ LAYERS = {
         Layer(
             id="CAR_S_1944_Day_P_Skirmish",
             map=MAPS["carentan"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
             environment=Environment.DAY,
         ),
         Layer(
             id="CAR_S_1944_Rain_P_Skirmish",
             map=MAPS["carentan"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
             environment=Environment.RAIN,
         ),
         Layer(
             id="CAR_S_1944_Dusk_P_Skirmish",
             map=MAPS["carentan"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
             environment=Environment.DUSK,
         ),
         Layer(
@@ -709,19 +729,19 @@ LAYERS = {
         Layer(
             id="HIL_S_1944_Day_P_Skirmish",
             map=MAPS["hill400"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
             environment=Environment.DAY,
         ),
         Layer(
             id="HIL_S_1944_Dusk_P_Skirmish",
             map=MAPS["hill400"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
             environment=Environment.DUSK,
         ),
         Layer(
             id="HIL_S_1944_Night_P_Skirmish",
             map=MAPS["hill400"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
             environment=Environment.NIGHT,
         ),
         Layer(
@@ -750,12 +770,12 @@ LAYERS = {
         Layer(
             id="FOY_S_1944_P_Skirmish",
             map=MAPS["foy"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
         ),
         Layer(
             id="FOY_S_1944_Night_P_Skirmish",
             map=MAPS["foy"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
             environment=Environment.NIGHT,
         ),
         Layer(
@@ -781,11 +801,18 @@ LAYERS = {
             game_mode=GameMode.OFFENSIVE,
             attackers=Team.AXIS,
         ),
+        # Deprecated since U18
         Layer(
             id="stalingrad_warfare",
             map=MAPS["stalingrad"],
             game_mode=GameMode.WARFARE,
         ),
+        Layer(
+            id="STA_L_1942_Warfare",
+            map=MAPS["stalingrad"],
+            game_mode=GameMode.WARFARE,
+        ),
+        # Deprecated since U18
         Layer(
             id="stalingrad_warfare_night",
             map=MAPS["stalingrad"],
@@ -793,16 +820,48 @@ LAYERS = {
             environment=Environment.NIGHT,
         ),
         Layer(
+            id="STA_L_1942_Warfare_Night",
+            map=MAPS["stalingrad"],
+            game_mode=GameMode.WARFARE,
+            environment=Environment.NIGHT,
+        ),
+        # Deprecated since U18
+        Layer(
             id="stalingrad_offensive_rus",
             map=MAPS["stalingrad"],
             game_mode=GameMode.OFFENSIVE,
             attackers=Team.ALLIES,
         ),
         Layer(
+            id="STA_L_1942_OffensiveRUS",
+            map=MAPS["stalingrad"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.ALLIES,
+        ),
+        # Deprecated since U18
+        Layer(
             id="stalingrad_offensive_ger",
             map=MAPS["stalingrad"],
             game_mode=GameMode.OFFENSIVE,
             attackers=Team.AXIS,
+        ),
+        Layer(
+            id="STA_L_1942_OffensiveGER",
+            map=MAPS["stalingrad"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.AXIS,
+        ),
+        Layer(
+            id="STA_S_1942_P_Skirmish_Dusk",
+            map=MAPS["stalingrad"],
+            game_mode=GameMode.SKIRMISH,
+            environment=Environment.DUSK,
+        ),
+        Layer(
+            id="STA_S_1942_P_Skirmish_Overcast",
+            map=MAPS["stalingrad"],
+            game_mode=GameMode.SKIRMISH,
+            environment=Environment.OVERCAST,
         ),
         Layer(
             id="remagen_warfare",
@@ -853,12 +912,12 @@ LAYERS = {
         Layer(
             id="KHA_S_1944_P_Skirmish",
             map=MAPS["kharkov"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
         ),
         Layer(
             id="KHA_S_1944_Night_P_Skirmish",
             map=MAPS["kharkov"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
             environment=Environment.NIGHT,
         ),
         Layer(
@@ -887,19 +946,19 @@ LAYERS = {
         Layer(
             id="DRL_S_1944_P_Skirmish",
             map=MAPS["driel"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
             environment=Environment.DAWN,
         ),
         Layer(
             id="DRL_S_1944_Night_P_Skirmish",
             map=MAPS["driel"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
             environment=Environment.NIGHT,
         ),
         Layer(
             id="DRL_S_1944_Day_P_Skirmish",
             map=MAPS["driel"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
             environment=Environment.DAY,
         ),
         Layer(
@@ -928,30 +987,30 @@ LAYERS = {
         Layer(
             id="ELA_S_1942_P_Skirmish",
             map=MAPS["elalamein"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
             environment=Environment.DAY,
         ),
         Layer(
             id="ELA_S_1942_Night_P_Skirmish",
             map=MAPS["elalamein"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
             environment=Environment.DUSK,
         ),
         Layer(
             id="SMDM_S_1944_Day_P_Skirmish",
             map=MAPS["stmariedumont"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
         ),
         Layer(
             id="SMDM_S_1944_Night_P_Skirmish",
             map=MAPS["stmariedumont"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
             environment=Environment.NIGHT,
         ),
         Layer(
             id="SMDM_S_1944_Rain_P_Skirmish",
             map=MAPS["stmariedumont"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
             environment=Environment.RAIN,
         ),
         Layer(
@@ -1034,24 +1093,24 @@ LAYERS = {
         Layer(
             id="mortain_skirmish_day",
             map=MAPS["mortain"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
         ),
         Layer(
             id="mortain_skirmish_overcast",
             map=MAPS["mortain"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
             environment=Environment.OVERCAST,
         ),
         Layer(
             id="mortain_skirmish_dusk",
             map=MAPS["mortain"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
             environment=Environment.DUSK,
         ),
         Layer(
             id="mortain_skirmish_night",
             map=MAPS["mortain"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
             environment=Environment.NIGHT,
         ),
         Layer(
@@ -1134,25 +1193,103 @@ LAYERS = {
         Layer(
             id="elsenbornridge_skirmish_day",
             map=MAPS["elsenbornridge"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
         ),
         Layer(
             id="elsenbornridge_skirmish_morning",
             map=MAPS["elsenbornridge"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
             environment=Environment.DAWN,
         ),
         Layer(
             id="elsenbornridge_skirmish_evening",
             map=MAPS["elsenbornridge"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
             environment=Environment.DUSK,
         ),
         Layer(
             id="elsenbornridge_skirmish_night",
             map=MAPS["elsenbornridge"],
-            game_mode=GameMode.CONTROL,
+            game_mode=GameMode.SKIRMISH,
             environment=Environment.NIGHT,
+        ),
+        Layer(
+            id="tobruk_warfare_day",
+            map=MAPS["tobruk"],
+            game_mode=GameMode.WARFARE,
+            environment=Environment.DAY,
+        ),
+        Layer(
+            id="tobruk_warfare_dusk",
+            map=MAPS["tobruk"],
+            game_mode=GameMode.WARFARE,
+            environment=Environment.DUSK,
+        ),
+        Layer(
+            id="tobruk_warfare_morning",
+            map=MAPS["tobruk"],
+            game_mode=GameMode.WARFARE,
+            environment=Environment.DAWN,
+        ),
+        Layer(
+            id="tobruk_offensivebritish_day",
+            map=MAPS["tobruk"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.ALLIES,
+            environment=Environment.DAY,
+        ),
+        Layer(
+            id="tobruk_offensiveger_day",
+            map=MAPS["tobruk"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.AXIS,
+            environment=Environment.DAY,
+        ),
+        Layer(
+            id="tobruk_offensivebritish_dusk",
+            map=MAPS["tobruk"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.ALLIES,
+            environment=Environment.DUSK,
+        ),
+        Layer(
+            id="tobruk_offensiveger_dusk",
+            map=MAPS["tobruk"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.AXIS,
+            environment=Environment.DUSK,
+        ),
+        Layer(
+            id="tobruk_offensivebritish_morning",
+            map=MAPS["tobruk"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.ALLIES,
+            environment=Environment.DAWN,
+        ),
+        Layer(
+            id="tobruk_offensiveger_morning",
+            map=MAPS["tobruk"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.AXIS,
+            environment=Environment.DAWN,
+        ),
+        Layer(
+            id="tobruk_skirmish_day",
+            map=MAPS["tobruk"],
+            game_mode=GameMode.SKIRMISH,
+            environment=Environment.DAY,
+        ),
+        Layer(
+            id="tobruk_skirmish_dusk",
+            map=MAPS["tobruk"],
+            game_mode=GameMode.SKIRMISH,
+            environment=Environment.DUSK,
+        ),
+        Layer(
+            id="tobruk_skirmish_morning",
+            map=MAPS["tobruk"],
+            game_mode=GameMode.SKIRMISH,
+            environment=Environment.DAWN,
         ),
     )
 }
@@ -1275,11 +1412,11 @@ def get_opposite_side(team: Team) -> Literal[Team.AXIS, Team.ALLIES]:
 def sort_maps_by_gamemode(maps: Sequence[Layer]) -> list[Layer]:
     warfare = [m for m in maps if m.game_mode == GameMode.WARFARE]
     offensive = [m for m in maps if m.game_mode == GameMode.OFFENSIVE]
-    control = [m for m in maps if m.game_mode == GameMode.CONTROL]
+    skirmish = [m for m in maps if m.game_mode == GameMode.SKIRMISH]
     phased = [m for m in maps if m.game_mode == GameMode.PHASED]
     majority = [m for m in maps if m.game_mode == GameMode.MAJORITY]
 
-    return warfare + offensive + control + phased + majority
+    return warfare + offensive + skirmish + phased + majority
 
 
 def numbered_maps(maps: list[Layer]) -> dict[str, Layer]:
@@ -1294,7 +1431,7 @@ def categorize_maps(maps: Iterable[Layer]) -> dict[GameMode, list[Layer]]:
             map_ for map_ in maps if map_.game_mode == GameMode.OFFENSIVE
         ],
         GameMode.WARFARE: [map_ for map_ in maps if map_.game_mode == GameMode.WARFARE],
-        GameMode.CONTROL: [map_ for map_ in maps if map_.game_mode == GameMode.CONTROL],
+        GameMode.SKIRMISH: [map_ for map_ in maps if map_.game_mode == GameMode.SKIRMISH],
     }
 
     return categories

@@ -35,17 +35,6 @@ class PlayTimeCondition(BaseCondition):
         return self.current_time_secs >= self.min_time_secs
 
 
-class GameState(pydantic.BaseModel):
-    num_allied_players: int
-    num_axis_players: int
-    allied_score: int
-    axis_score: int
-    raw_time_remaining: str
-    time_remaining: timedelta
-    current_map: Layer
-    next_map: Layer
-
-
 class Player(pydantic.BaseModel):
     name: str
     player_id: str

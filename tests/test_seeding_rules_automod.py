@@ -15,6 +15,7 @@ from rcon.automods.models import (
     WatchStatus,
 )
 from rcon.automods.seeding_rules import SeedingRulesAutomod
+from rcon.maps import GameMode
 from rcon.types import GameStateType, StructuredLogLineWithMetaData
 from rcon.user_config.auto_mod_seeding import (
     AutoModSeedingUserConfig,
@@ -194,6 +195,8 @@ game_state: GameStateType = {
     "num_allied_players": 30,
     "num_axis_players": 30,
     "time_remaining": timedelta(10),
+    "raw_time_remaining": "00:00:10",
+    "game_mode": GameMode.WARFARE,
 }
 
 line = "[29:42 min (1606340690)] KILL: [CPC] [1.Fjg] FlorianSW(Allies/76561198012102485) -> Karadoc(Axis/76561198080212634) with MK2_Grenade"

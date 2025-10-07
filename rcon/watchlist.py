@@ -7,8 +7,9 @@ from rcon.logs.loop import on_connected
 from rcon.hooks import inject_player_ids
 from rcon.models import WatchList, enter_session
 from rcon.player_history import _get_set_player, get_player
-from rcon.rcon import CommandFailedError, Rcon
+from rcon.rcon import HLLCommandFailedError, Rcon
 from rcon.types import PlayerProfileType, StructuredLogLineWithMetaData
+from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.webhooks import WatchlistWebhooksUserConfig
 
 
@@ -29,6 +30,7 @@ def watchdog(rcon: Rcon, log: StructuredLogLineWithMetaData, name: str, player_i
                 session_count = watched_player["watchlist"]["count"]
                 reason = watched_player["watchlist"]["reason"]
                 names = ", ".join(n["name"] for n in watched_player["names"])
+                short_name = RconServerSettingsUserConfig.load_from_db().short_name
 
                 embed = DiscordEmbed(
                     title=f"{player_name}  - {player_id}",
@@ -41,6 +43,7 @@ def watchdog(rcon: Rcon, log: StructuredLogLineWithMetaData, name: str, player_i
                     """,
                     color=242424,
                 )
+                embed.set_footer(text=short_name)
                 for h in hooks:
                     h.add_embed(embed)
                     h.execute()
@@ -74,7 +77,7 @@ class PlayerWatch:
         with enter_session() as sess:
             player = get_player(sess, self.player_id)
             if not player:
-                raise CommandFailedError(
+                raise HLLCommandFailedError(
                     "Can't remove player to watchlist, player not found"
                 )
             if player.watchlist:

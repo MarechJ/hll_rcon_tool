@@ -2,46 +2,50 @@ import { json } from "react-router-dom";
 import { toast } from "react-toastify";
 
 const CRCON_API = `${process.env.REACT_APP_API_URL}`;
-const usingCRCON = (path) => `${CRCON_API}${path}`;
 
 async function requestFactory({
   method = "GET",
   cmd,
-  params = {},
-  payload = {},
+  params = {}, // For query parameters (GET)
+  payload = {}, // For body data (POST)
   throwRouteError = true,
   headers = { "Content-Type": "application/json" },
 } = {}) {
-  let url = cmd;
+  // Construct the full URL using the URL API
+  const base = new URL(CRCON_API, document.location.origin);
+  const url = new URL(cmd, base);
 
-  if (params) {
-    if (params instanceof URLSearchParams) {
-      url += "?" + params.toString();
-    } else if (method === "GET") {
-      url += "?" + new URLSearchParams(params).toString();
-    }
+  // Append query parameters for GET requests
+  if (params instanceof URLSearchParams) {
+    url.search = params.toString();
+  } else if (method === "GET" && Object.keys(params).length > 0) {
+    url.search = new URLSearchParams(params).toString();
   }
 
-  const body =
-    method === "POST"
-      ? headers["Content-Type"] === "application/json"
+  // Define request options
+  const requestOptions = {
+    method,
+    mode: "cors",
+    cache: "default",
+    credentials: "include",
+    headers,
+    redirect: "follow",
+    referrerPolicy: "origin",
+  };
+
+  // Add body for POST requests
+  if (method === "POST") {
+    requestOptions.body =
+      headers["Content-Type"] === "application/json"
         ? JSON.stringify(payload)
-        : payload
-      : null;
+        : payload;
+  }
 
+  // Create a Request object
+  const req = new Request(url.toString(), requestOptions);
   try {
-    const response = await fetch(usingCRCON(url), {
-      method,
-      mode: "cors",
-      cache: "default",
-      credentials: "include",
-      headers,
-      redirect: "follow",
-      referrerPolicy: "origin",
-      body,
-    });
-
-    return await handleFetchResponse(response, method);
+    const res = await fetch(req);
+    return await handleFetchResponse(req, res, cmd);
   } catch (error) {
     if (throwRouteError) {
       throw json(error, {
@@ -53,59 +57,42 @@ async function requestFactory({
   }
 }
 
-async function handleFetchResponse(response, method) {
-  let data;
+async function handleFetchResponse(req, res, cmd) {
+  let data, error;
 
-  const contentType = response.headers.get("content-type");
-  if (contentType && contentType.includes("application/json")) {
-    data = await parseJsonResponse(response);
-  } else if (contentType && contentType.includes("text/plain")) {
-    data = await response.text();
+  const contentType = res.headers.get("content-type");
+  const isJSON = contentType && contentType.includes("application/json");
+  const isText = contentType && contentType.includes("text/");
+
+  if (isJSON) {
+    data = await parseJsonResponse(res);
+    if (req.method === "GET") {
+      data = data.result;
+    }
+    error = data.error;
+  } else if (isText) {
+    data = await res.text();
   }
 
-  handleServerErrors(response, data);
-  handleClientErrors(response, data);
-
-  if (contentType && contentType.includes("text/plain")) {
-    return data;
-  }
-
-  if (method === "GET") {
-    return data.result;
-  } else if (method === "POST") {
-    return data;
-  }
-  return data;
-}
-
-function handleServerErrors(response, data) {
-  if (!response.ok && response.status >= 500) {
-    switch (response.status) {
+  if (!res.ok) {
+    if (isText) {
+      error = data;
+    }
+    switch (res.status) {
+      case 401:
+        throw new AuthError("You are not authenticated.", cmd);
+      case 403:
+        throw new PermissionError("You are not authorized.", cmd);
       case 504:
         throw new CRCONServerDownError(
           "There was a problem connecting to your CRCON server."
         );
       default:
-        if (data) throw new UnknownError(data.error, data.command);
-        throw new UnknownError(response.statusText, response.status);
+        throw new APIError(error, cmd, res.status);
     }
   }
-}
 
-function handleClientErrors(response, data) {
-  if (!response.ok) {
-    switch (response.status) {
-      case 401:
-        throw new AuthError("You are not authenticated.", data.command);
-      case 403:
-        throw new PermissionError("You are not authorized.", data.command);
-      default:
-        throw new UnknownError(data.error, data.command);
-    }
-  }
-  if (data.failed) {
-    throw new CommandFailedError(data.error, data.command);
-  }
+  return data;
 }
 
 async function parseJsonResponse(response) {
@@ -207,8 +194,20 @@ export const cmd = {
     requestFactory({ method: "GET", cmd: "get_live_scoreboard", ...params }),
   GET_LIVE_TEAMS: (params) =>
     requestFactory({ method: "GET", cmd: "get_team_view", ...params }),
+  GET_CURRENT_MAP: (params) =>
+    requestFactory({ method: "GET", cmd: "get_map", ...params }),
+  GET_MAPS: (params) =>
+    requestFactory({ method: "GET", cmd: "get_maps", ...params }),
   GET_MAP_ROTATION: (params) =>
     requestFactory({ method: "GET", cmd: "get_map_rotation", ...params }),
+  GET_MAP_OBJECTIVES: (params) =>
+    requestFactory({ method: "GET", cmd: "get_objective_rows", ...params }),
+  GET_MAP_ROTATION_SHUFFLE: (params) =>
+    requestFactory({
+      method: "GET",
+      cmd: "get_map_shuffle_enabled",
+      ...params,
+    }),
   GET_MESSAGE_TEMPLATE: (params) =>
     requestFactory({ method: "GET", cmd: "get_message_template", ...params }),
   GET_MESSAGE_TEMPLATES: (params) =>
@@ -290,6 +289,8 @@ export const cmd = {
     requestFactory({ method: "GET", cmd: "get_server_settings", ...params }),
   GET_SERVICES: (params) =>
     requestFactory({ method: "GET", cmd: "get_services", ...params }),
+  GET_SYSTEM_USAGE: (params) =>
+    requestFactory({ method: "GET", cmd: "get_system_usage", ...params }),
   GET_VERSION: (params) =>
     requestFactory({ method: "GET", cmd: "get_version", ...params }),
   GET_VIPS: (params) =>
@@ -300,6 +301,12 @@ export const cmd = {
       cmd: "get_votekick_autotoggle_config",
       ...params,
     }),
+  GET_VOTEMAP_WHITELIST: (params) =>
+    requestFactory({ method: "GET", cmd: "get_votemap_whitelist", ...params }),
+  GET_VOTEMAP_CONFIG: (params) =>
+    requestFactory({ method: "GET", cmd: "get_votemap_config", ...params }),
+  GET_VOTEMAP_STATUS: (params) =>
+    requestFactory({ method: "GET", cmd: "get_votemap_status", ...params }),
   GET_WELCOME_MESSAGE: (params) =>
     requestFactory({ method: "GET", cmd: "get_welcome_message", ...params }),
   IS_AUTHENTICATED: (params) =>
@@ -346,6 +353,18 @@ export const cmd = {
       cmd: "set_idle_autokick_time",
       ...params,
     }),
+  SET_MAP: (params) =>
+    requestFactory({ method: "POST", cmd: "set_map", ...params }),
+  SET_MAP_OBJECTIVES: (params) =>
+    requestFactory({ method: "POST", cmd: "set_game_layout", ...params }),
+  SET_MAP_ROTATION: (params) =>
+    requestFactory({ method: "POST", cmd: "set_map_rotation", ...params }),
+  SET_MAP_ROTATION_SHUFFLE: (params) =>
+    requestFactory({
+      method: "POST",
+      cmd: "set_map_shuffle_enabled",
+      ...params,
+    }),
   SET_MAX_PING_AUTOKICK: (params) =>
     requestFactory({ method: "POST", cmd: "set_max_ping_autokick", ...params }),
   SET_PROFANITIES: (params) =>
@@ -376,6 +395,18 @@ export const cmd = {
     requestFactory({
       method: "POST",
       cmd: "set_votekick_thresholds",
+      ...params,
+    }),
+  SET_VOTEMAP_CONFIG: (params) =>
+    requestFactory({ method: "POST", cmd: "set_votemap_config", ...params }),
+  SET_VOTEMAP_WHITELIST: (params) =>
+    requestFactory({ method: "POST", cmd: "set_votemap_whitelist", ...params }),
+  RESET_VOTEMAP_STATE: (params) =>
+    requestFactory({ method: "POST", cmd: "reset_votemap_state", ...params }),
+  RESET_VOTEMAP_WHITELIST: (params) =>
+    requestFactory({
+      method: "POST",
+      cmd: "reset_map_votemap_whitelist",
       ...params,
     }),
   SET_WELCOME_MESSAGE: (params) =>
@@ -418,7 +449,7 @@ export function handleHttpError(error) {
       };
       init = { status: 401 };
       break;
-    case "CommandFailedError":
+    case "HLLCommandFailedError":
       errorObject = {
         message: error?.message,
         error: error?.name,
@@ -466,11 +497,11 @@ class PermissionError extends Error {
   }
 }
 
-class CommandFailedError extends Error {
+class HLLCommandFailedError extends Error {
   constructor(message, command) {
     super(message);
     this.command = command;
-    this.name = "CommandFailedError";
+    this.name = "HLLCommandFailedError";
     this.text = message;
     this.status = 404;
   }
@@ -503,11 +534,11 @@ class NotJSONResponseError extends Error {
   }
 }
 
-class UnknownError extends Error {
+class APIError extends Error {
   constructor(message, command, status) {
     super(message);
     this.command = command;
-    this.name = "UnknownError";
+    this.name = "APIError";
     this.status = status ?? 400;
     this.text = message;
   }
@@ -626,7 +657,7 @@ async function showResponse(response, command, showSuccess) {
         });
       }
     } catch (error) {
-      console.log("Error checking forwards status", error);
+      console.error("Error checking forwards status", error);
     }
 
     return res;

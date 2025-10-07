@@ -62,12 +62,12 @@ MOR_GER_OFFENSIVE_OVERCAST = Layer(
 MOR_CONTROL_DAY = Layer(
     id="mortain_skirmish_day",
     map=MAPS["mortain"],
-    game_mode=GameMode.CONTROL,
+    game_mode=GameMode.SKIRMISH,
 )
 MOR_CONTROL_OVERCAST = Layer(
     id="mortain_skirmish_overcast",
     map=MAPS["mortain"],
-    game_mode=GameMode.CONTROL,
+    game_mode=GameMode.SKIRMISH,
     environment=Environment.OVERCAST,
 )
 
@@ -94,20 +94,20 @@ SME_WARFARE = Layer(
 SMDM_SKIRMISH_DAY = Layer(
     id="SMDM_S_1944_Day_P_Skirmish",
     map=MAPS["stmariedumont"],
-    game_mode=GameMode.CONTROL,
+    game_mode=GameMode.SKIRMISH,
 )
 
 SMDM_SKIRMISH_NIGHT = Layer(
     id="SMDM_S_1944_Night_P_Skirmish",
     map=MAPS["stmariedumont"],
-    game_mode=GameMode.CONTROL,
+    game_mode=GameMode.SKIRMISH,
     environment=Environment.NIGHT,
 )
 
 SMDM_SKIRMISH_RAIN = Layer(
     id="SMDM_S_1944_Rain_P_Skirmish",
     map=MAPS["stmariedumont"],
-    game_mode=GameMode.CONTROL,
+    game_mode=GameMode.SKIRMISH,
     environment=Environment.RAIN,
 )
 

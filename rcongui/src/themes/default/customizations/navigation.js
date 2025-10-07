@@ -170,11 +170,13 @@ export const navigationCustomizations = ({ gray, brand }) => ({
   },
   MuiTabs: {
     styleOverrides: {
-      root: { minHeight: 'fit-content' },
-      indicator: ({ theme }) => ({
-        backgroundColor: theme.palette.grey[800],
+      root: {
+        borderBottom: `1px solid ${gray[500]}`
+      },
+      '& .MuiTabs-indicator': ({ theme }) => ({
+        backgroundColor: brand[800],
         ...theme.applyStyles('dark', {
-          backgroundColor: theme.palette.grey[200],
+          backgroundColor: brand[200],
         }),
       }),
     },
@@ -182,31 +184,29 @@ export const navigationCustomizations = ({ gray, brand }) => ({
   MuiTab: {
     styleOverrides: {
       root: ({ theme }) => ({
-        padding: '6px 8px',
-        marginBottom: '8px',
         textTransform: 'none',
-        minWidth: 'fit-content',
-        minHeight: 'fit-content',
-        color: theme.palette.text.secondary,
-        borderRadius: theme.shape.borderRadius,
-        border: '1px solid',
-        borderColor: 'transparent',
-        ':hover': {
-          color: theme.palette.text.primary,
-          backgroundColor: gray[100],
-          borderColor: gray[200],
+        minWidth: 0,
+        [theme.breakpoints.up('sm')]: {
+          minWidth: 0,
         },
-        [`&.${tabClasses.selected}`]: {
-          color: gray[900],
+        fontWeight: theme.typography.fontWeightRegular,
+        marginRight: theme.spacing(1),
+        '&:hover': {
+          color: brand[300],
+        },
+        '&.Mui-selected': {
+          color: theme.palette.text.primary,
+          fontWeight: theme.typography.fontWeightMedium,
+        },
+        '&.Mui-focusVisible': {
+          backgroundColor: brand[500],
         },
         ...theme.applyStyles('dark', {
           ':hover': {
-            color: theme.palette.text.primary,
-            backgroundColor: gray[800],
-            borderColor: gray[700],
+            color: brand[300],
           },
           [`&.${tabClasses.selected}`]: {
-            color: '#fff',
+            color: theme.palette.text.primary,
           },
         }),
       }),

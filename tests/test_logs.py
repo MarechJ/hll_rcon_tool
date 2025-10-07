@@ -11,42 +11,42 @@ from rcon.rcon import Rcon
     "raw_logs, expected",
     [
         (
-            """
-[17:46 min (1704335313)] CHAT[Team][WinstonsDomain(Allies/3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq)]: test
-[17:40 min (1704335318)] CHAT[Unit][WinstonsDomain(Allies/3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq)]: test
-[2:14:33 hours (1703272319)] VOTESYS: Vote [3] prematurely expired.
-[29:55 min (1606340690)] KILL: Karadoc(Axis/76561198080212634) -> Bullitt-FR(Allies/76561198000776367) with G43
-[29:55 min (1606340690)] KILL: Karadoc(Axis/a21af8b5-59df-5vbr-88gf-ab4239r4g6f4) -> Bullitt-FR(Allies/76561198000776367) with G43
-[29:42 min (1606340690)] KILL: 湊あくあ(Axis/76561198202984515) -> fguitou(Allies/76561198034763447) with None
-[3:35 min (1675366030)] TEAM KILL: Ð¡Ð°ÑÐºÐ°(Allies/76561198346893462) -> Milk Dick(Allies/76561198044472891) with 155MM HOWITZER [M114]
-[2:07:28 hours (1675358597)] TEAM KILL: Oz(Allies/76561198163789126) -> Sic_Anger(Allies/76561199201574614) with PPSH 41 W/DRUM
-[29:37 min (1606340690)] CONNECTED Waxxeer (12345678901234567)
-[29:40 min (1606340690)] DISCONNECTED Dieter Schlüter: b (12345678901234567)
-[1.89 sec (1606340677)] CHAT[Team][bananacocoo(Allies/76561198003251789)]: pas jouable la map
-[29:59 min (1606340690)] CHAT[Team][]bananacocoo(Axis/76561198003251789)]: Blah
-[29:59 min (1606340690)] CHAT[Unit][bananacocoo : toto(Allies/76561198003251789)]: Blah
-[29:59 min (1606340690)] CHAT[Unit][[bananacocoo(Axis/76561198003251789)]: Blah
-[8.23 sec (1645012372)] TEAMSWITCH T17 Scott (Axis > None)
-[6.14 sec (1645012374)] TEAMSWITCH T17 Scott (None > Allies)
-[41.9 sec (1645012996)] KICK: [T17 Scott] has been kicked. [KICKED FOR TEAM KILLING!]
-[1:03 min (1645012776)] KICK: [T17 Scott] has been kicked. [BANNED FOR 2 HOURS FOR TEAM KILLING!]
-[4:48 min (1646331637)] KICK: [VegaBond] has been kicked. [BANNED FOR 1 HOURS BY THE ADMINISTRATOR!
-[27.8 sec (1646334121)] KICK: [GinPick]ledYak] has been kicked. [PERMANENTLY BANNED BY THE ADMINISTRATOR!
-[2:00 min (1646137918)] BAN: [(WTH) Abusify] has been banned. [BANNED FOR 2 HOURS BY THE ADMINISTRATOR!
-[2:00 min (1646137918)] KICK: [adamtfitz] has been kicked. [YOU WERE KICKED FOR BEING IDLE]
-[128 sec (1645012281)] MATCH START UTAH BEACH OFFENSIVE
-[6.06 sec (16250121723)] MATCH ENDED `UTAH BEACH OFFENSIVE` ALLIED (1 - 4) AXIS
-[57:13 min (1675362812)] Player [Fachi (76561198312191879)] Entered Admin Camera
-[15.5 sec (1675360329)] VOTESYS: Player [NoodleArms] Started a vote of type (PVR_Kick_Abuse) against [buscÃ´O-sensei]. VoteID: [2]
-[9.85 sec (1675360334)] VOTESYS: Player [Dingbat252] voted [PV_Favour] for VoteID[2]
-[4.56 sec (1675360340)] VOTESYS: Vote [2] completed. Result: PVR_Passed
-[4.56 sec (1675360340)] VOTESYS: Vote Kick {buscÃ´O-sensei} successfully passed. [For: 2/1 - Against: 0]
-[5.73 sec (1675270564)] MESSAGE: player [Tacsquatch(76561198104788712)], content [please ignore this
+            [
+                "[17:46 min (1704335313)] CHAT[Team][WinstonsDomain(Allies/3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq)]: test",
+                "[17:40 min (1704335318)] CHAT[Unit][WinstonsDomain(Allies/3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq)]: test",
+                "[2:14:33 hours (1703272319)] VOTESYS: Vote [3] prematurely expired.",
+                "[29:55 min (1606340690)] KILL: Karadoc(Axis/76561198080212634) -> Bullitt-FR(Allies/76561198000776367) with G43",
+                "[29:55 min (1606340690)] KILL: Karadoc(Axis/a21af8b5-59df-5vbr-88gf-ab4239r4g6f4) -> Bullitt-FR(Allies/76561198000776367) with G43",
+                "[29:42 min (1606340690)] KILL: 湊あくあ(Axis/76561198202984515) -> fguitou(Allies/76561198034763447) with None",
+                "[3:35 min (1675366030)] TEAM KILL: Ð¡Ð°ÑÐºÐ°(Allies/76561198346893462) -> Milk Dick(Allies/76561198044472891) with 155MM HOWITZER [M114]",
+                "[2:07:28 hours (1675358597)] TEAM KILL: Oz(Allies/76561198163789126) -> Sic_Anger(Allies/76561199201574614) with PPSH 41 W/DRUM",
+                "[29:37 min (1606340690)] CONNECTED Waxxeer (12345678901234567)",
+                "[29:40 min (1606340690)] DISCONNECTED Dieter Schlüter: b (12345678901234567)",
+                "[1.89 sec (1606340677)] CHAT[Team][bananacocoo(Allies/76561198003251789)]: pas jouable la map",
+                "[29:59 min (1606340690)] CHAT[Team][]bananacocoo(Axis/76561198003251789)]: Blah",
+                "[29:59 min (1606340690)] CHAT[Unit][bananacocoo : toto(Allies/76561198003251789)]: Blah",
+                "[29:59 min (1606340690)] CHAT[Unit][[bananacocoo(Axis/76561198003251789)]: Blah",
+                "[8.23 sec (1645012372)] TEAMSWITCH T17 Scott (Axis > None)",
+                "[6.14 sec (1645012374)] TEAMSWITCH T17 Scott (None > Allies)",
+                "[41.9 sec (1645012996)] KICK: [T17 Scott] has been kicked. [KICKED FOR TEAM KILLING!]",
+                "[1:03 min (1645012776)] KICK: [T17 Scott] has been kicked. [BANNED FOR 2 HOURS FOR TEAM KILLING!]",
+                "[4:48 min (1646331637)] KICK: [VegaBond] has been kicked. [BANNED FOR 1 HOURS BY THE ADMINISTRATOR!",
+                "[27.8 sec (1646334121)] KICK: [GinPick]ledYak] has been kicked. [PERMANENTLY BANNED BY THE ADMINISTRATOR!",
+                "[2:00 min (1646137918)] BAN: [(WTH) Abusify] has been banned. [BANNED FOR 2 HOURS BY THE ADMINISTRATOR!",
+                "[2:00 min (1646137918)] KICK: [adamtfitz] has been kicked. [YOU WERE KICKED FOR BEING IDLE]",
+                "[128 sec (1645012281)] MATCH START UTAH BEACH OFFENSIVE",
+                "[6.06 sec (16250121723)] MATCH ENDED `UTAH BEACH OFFENSIVE` ALLIED (1 - 4) AXIS",
+                "[57:13 min (1675362812)] Player [Fachi (76561198312191879)] Entered Admin Camera",
+                "[15.5 sec (1675360329)] VOTESYS: Player [NoodleArms] Started a vote of type (PVR_Kick_Abuse) against [buscÃ´O-sensei]. VoteID: [2]",
+                "[9.85 sec (1675360334)] VOTESYS: Player [Dingbat252] voted [PV_Favour] for VoteID[2]",
+                "[4.56 sec (1675360340)] VOTESYS: Vote [2] completed. Result: PVR_Passed",
+                "[4.56 sec (1675360340)] VOTESYS: Vote Kick {buscÃ´O-sensei} successfully passed. [For: 2/1 - Against: 0]",
+                """[5.73 sec (1675270564)] MESSAGE: player [Tacsquatch(76561198104788712)], content [please ignore this
 I just need a multiline message in the RCON logs
-to test something]
-[4.56 sec (1675270564)] MESSAGE: player [ð“¼ð“ºð“¾ð“²ð“­ð“­ [KRKN](76561198062837577)], content [Please ignore this just need a message in the RCON logs to test something.]
-[3:41 min (1699465895)] KICK: [Elinho] has been kicked. [Kicked for failing auth]
-""",
+to test something]""",
+                "[4.56 sec (1675270564)] MESSAGE: player [ð“¼ð“ºð“¾ð“²ð“­ð“­ [KRKN](76561198062837577)], content [Please ignore this just need a message in the RCON logs to test something.]",
+                "[3:41 min (1699465895)] KICK: [Elinho] has been kicked. [Kicked for failing auth]",
+            ],
             [
                 (
                     "[17:46 min (1704335313)]",

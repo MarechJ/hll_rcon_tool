@@ -19,7 +19,7 @@ import {
   hasRecentWarnings,
   isSteamPlayer,
   teamToNation,
-  tierColors,
+  getTierColors,
 } from "@/utils/lib";
 import { SortableHeader, TextButton } from "@/components/table/styles";
 import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";
@@ -28,6 +28,7 @@ import CopyableText from "@/components/shared/CopyableText";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSteam } from "@fortawesome/free-brands-svg-icons";
 import Emoji from "@/components/shared/Emoji";
+import useTheme from "@mui/material/styles/useTheme";
 
 export const Square = styled(Box)(({ theme }) => ({
   display: "flex",
@@ -42,13 +43,11 @@ export const Square = styled(Box)(({ theme }) => ({
 
 const LevelColored = styled(Box, {
   shouldForwardProp: (prop) => prop !== "level",
-})((styledProps) => {
-  const level = styledProps.level;
+})(({ theme, level }) => {
   if (!level) return {};
   const tier = getPlayerTier(level);
-  const color = tierColors[tier];
   return {
-    color,
+    color: getTierColors(theme.palette.mode)[tier],
   };
 });
 
@@ -140,16 +139,17 @@ export const columns = [
     header: SortableHeader("R", "Role"),
     accessorKey: "role",
     cell: ({ row }) => {
+      const theme = useTheme();
+      const mode = theme?.palette?.mode || "light";
+      const src =
+        mode === "light"
+          ? `/icons/roles/${row.original.role}_black.png`
+          : `/icons/roles/${row.original.role}.png`;
       return (
         <Center>
-          <Square
-            sx={{
-              bgcolor: (theme) =>
-                theme.palette.mode === "dark" ? "background.paper" : "#121212",
-            }}
-          >
+          <Square>
             <img
-              src={`/icons/roles/${row.original.role}.png`}
+              src={src}
               width={16}
               height={16}
               alt={row.original.role}

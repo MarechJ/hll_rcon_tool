@@ -18,7 +18,7 @@ from rcon.barricade import (
     send_to_barricade,
 )
 from rcon.cache_utils import get_redis_client
-from rcon.commands import CommandFailedError
+from rcon.commands import HLLCommandFailedError
 from rcon.discord import dict_to_discord, send_to_discord_audit
 from rcon.models import (
     Blacklist,
@@ -63,10 +63,9 @@ def update_penalty_count(
 
     try:
         safe_save_player_action(
-            rcon=None,
             action_type=action,
-            player_name=player_name,
             player_id=player_id,
+            player_name=player_name,
             by=admin_name,
         )
     except Exception as e:
@@ -98,7 +97,7 @@ def get_blacklist(
 ) -> Blacklist | None:
     blacklist = sess.get(Blacklist, blacklist_id)
     if not blacklist and strict:
-        raise CommandFailedError("No blacklist found with ID %s" % blacklist_id)
+        raise HLLCommandFailedError("No blacklist found with ID %s" % blacklist_id)
     return blacklist
 
 
@@ -119,7 +118,7 @@ def get_record(
 def get_record(sess: Session, record_id: int, strict: bool = False):
     record = sess.get(BlacklistRecord, record_id)
     if not record and strict:
-        raise CommandFailedError("No record found with ID %s" % record_id)
+        raise HLLCommandFailedError("No record found with ID %s" % record_id)
     return record
 
 
@@ -386,7 +385,7 @@ def synchronize_ban(
                 rcon.remove_temp_ban(player_id)
             elif old_state == BanState.PERMA:
                 rcon.remove_perma_ban(player_id)
-        except CommandFailedError:
+        except HLLCommandFailedError:
             pass
 
     # If there is no new record we are done and can return
@@ -395,7 +394,7 @@ def synchronize_ban(
 
     # Check whether the player is online (and grab their name)
     player_name = next(
-        (p_name for p_name, p_id in rcon.get_playerids() if p_id == player_id), None
+        (p_name for p_name, p_id in rcon.get_player_ids() if p_id == player_id), None
     )
     is_online = player_name is not None
 
@@ -1212,7 +1211,7 @@ class BlacklistCommandHandler:
     ):
         online_player_ids = [
             player_id
-            for _, player_id in self.rcon.get_playerids()
+            for _, player_id in self.rcon.get_player_ids()
             if player_id in payload.player_ids
         ]
 

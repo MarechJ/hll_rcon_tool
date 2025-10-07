@@ -62,7 +62,7 @@
     "react-hook-form": "^7.53.0",
     "react-markdown": "^9.0.1",
     "react-router-dom": "^6.26.1",
-    "react-toastify": "^10.0.5",
+    "react-toastify": "^11.0.5",
     "react-window": "^1.8.10",
     "remark-gfm": "^4.0.0",
     "tiny-invariant": "^1.2.0",
@@ -75,10 +75,10 @@
     "@testing-library/user-event": "^7.1.2",
     "@types/lodash": "^4.17.13",
     "@types/react-window": "^1.8.8",
-    "@vitejs/plugin-react": "^4.2.1",
+    "@vitejs/plugin-react": "^4.5.2",
     "miragejs": "^0.1.48",
     "prettier": "^2.8.8",
-    "vite": "^5.4.14"
+    "vite": "^6.3.5"
   },
   "browserslist": {
     "production": [

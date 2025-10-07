@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
-import { getPlayerTier, tierColors } from "@/utils/lib";
+import { getPlayerTier, useTierColors } from "@/utils/lib";
 import StarIcon from "@mui/icons-material/Star";
 import {
   TeamBox,
@@ -19,6 +19,7 @@ import PersonOffIcon from "@mui/icons-material/PersonOff";
 import Collapse from "@mui/material/Collapse";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
+import useTheme from "@mui/material/styles/useTheme";
 
 export const UNASSIGNED = "null";
 
@@ -33,30 +34,39 @@ const PlayerStats = ({ player }) => (
   </>
 );
 
-const PlayerInfo = ({ player, onProfileClick }) => (
-  <Box className="player-info">
-    {player.role ? (
-      <img
-        src={`/icons/roles/${player.role}.png`}
-        alt={player.role}
-        width={16}
-        height={16}
-        title={player.role}
-      />
-    ) : (
-      <Typography sx={{ width: 16, height: 16, textAlign: "center" }}>
-        {"-"}
+const roleSrc = (role, mode) =>
+  mode === "light"
+    ? `/icons/roles/${role}_black.png`
+    : `/icons/roles/${role}.png`;
+
+const PlayerInfo = ({ player, onProfileClick }) => {
+  const theme = useTheme();
+  const mode = theme?.palette?.mode || "light";
+  return (
+    <Box className="player-info">
+      {player.role ? (
+        <img
+          src={roleSrc(player.role, mode)}
+          alt={player.role}
+          width={16}
+          height={16}
+          title={player.role}
+        />
+      ) : (
+        <Typography sx={{ width: 16, height: 16, textAlign: "center" }}>
+          {"-"}
+        </Typography>
+      )}
+      <Typography
+        className="player-name"
+        onClick={(e) => onProfileClick(player, e)}
+      >
+        {player.name}
       </Typography>
-    )}
-    <Typography
-      className="player-name"
-      onClick={(e) => onProfileClick(player, e)}
-    >
-      {player.name}
-    </Typography>
-    {player.is_vip && <StarIcon sx={{ fontSize: 16 }} />}
-  </Box>
-);
+      {player.is_vip && <StarIcon sx={{ fontSize: 16 }} />}
+    </Box>
+  );
+};
 
 const PlayerRowWrapper = ({
   player,
@@ -141,67 +151,74 @@ const SquadGroupHeader = ({ type }) => (
   </Typography>
 );
 
-const SquadNameInfo = ({ squad, showIcon = true }) => (
-  <Box className="squad-name-container">
-    {showIcon && squad.type && (
-      <img
-        src={`/icons/roles/${squad.type}.png`}
-        alt={squad.type}
-        width={16}
-        height={16}
-        title={squad.type}
-      />
-    )}
-    <Typography
-      variant="subtitle2"
-      sx={{
-        textTransform: "uppercase",
-        fontWeight: "bold",
-        minWidth: 0,
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-      }}
-    >
-      {squad.name} ({squad.players.length})
-    </Typography>
-    {!squad.has_leader && (
-      <img
-        src="/icons/ping.webp"
-        alt="No Leader"
-        title="Unit has no leader"
-        width={16}
-        height={16}
-        style={{ opacity: 0.7 }}
-      />
-    )}
-  </Box>
-);
-
-const SquadHeaderContent = ({ squad, expandedSquads, onToggleExpand }) => (
-  <Box className="squad-info">
-    <IconButton
-      size="small"
-      onClick={(e) => {
-        e.stopPropagation();
-        onToggleExpand(squad.name);
-      }}
-    >
-      {expandedSquads[squad.name] ? <ExpandMoreIcon /> : <ChevronRightIcon />}
-    </IconButton>
-    <SquadNameInfo squad={squad} />
-    <Typography variant="caption" sx={{ ml: "auto" }}>
-      ∅{" "}
-      <Box
-        component="span"
+const SquadNameInfo = ({ squad, showIcon = true }) => {
+  const theme = useTheme();
+  const mode = theme?.palette?.mode || "light";
+  return (
+    <Box className="squad-name-container">
+      {showIcon && squad.type && (
+        <img
+          src={roleSrc(squad.type, mode)}
+          alt={squad.type}
+          width={16}
+          height={16}
+          title={squad.type}
+        />
+      )}
+      <Typography
+        variant="subtitle2"
         sx={{
-          color: tierColors[getPlayerTier(squad.level)],
+          textTransform: "uppercase",
+          fontWeight: "bold",
+          minWidth: 0,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
         }}
       >
-        {squad.level.toFixed(0)}
-      </Box>
-    </Typography>
-  </Box>
-);
+        {squad.name} ({squad.players.length})
+      </Typography>
+      {!squad.has_leader && (
+        <img
+          src="/icons/ping.webp"
+          alt="No Leader"
+          title="Unit has no leader"
+          width={16}
+          height={16}
+          style={{ opacity: 0.7 }}
+        />
+      )}
+    </Box>
+  );
+};
+
+const SquadHeaderContent = ({ squad, expandedSquads, onToggleExpand }) => {
+  const tierColors = useTierColors();
+  return (
+    <Box className="squad-info">
+      <IconButton
+        size="small"
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleExpand(squad.name);
+        }}
+      >
+        {expandedSquads[squad.name] ? <ExpandMoreIcon /> : <ChevronRightIcon />}
+      </IconButton>
+      <SquadNameInfo squad={squad} />
+      <Typography variant="caption" sx={{ ml: "auto" }}>
+        ∅{" "}
+        <Box
+          component="span"
+          sx={{
+            color: tierColors[getPlayerTier(squad.level)],
+          }}
+        >
+          {squad.level.toFixed(0)}
+        </Box>
+      </Typography>
+    </Box>
+  );
+};
 
 export const TeamSection = ({
   team,

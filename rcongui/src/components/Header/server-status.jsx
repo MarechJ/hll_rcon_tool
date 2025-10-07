@@ -1,9 +1,9 @@
-import { useEffect } from "react";
 import { Skeleton, Stack, Typography } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { useQuery } from "@tanstack/react-query";
 import { gameQueryOptions } from "@/queries/game-query";
 import dayjs from "dayjs";
+import { useGlobalStore } from "@/stores/global-state";
 
 const Wrapper = styled("div")(({ theme }) => ({
   color: theme.palette.text.primary,
@@ -20,23 +20,21 @@ const Wrapper = styled("div")(({ theme }) => ({
 }));
 
 const ServerStatus = ({ compact }) => {
-  const { data: status, isLoading } = useQuery({
-    ...gameQueryOptions.publicState(),
-  });
-
-  const name = status?.name?.short_name ?? "<Server Name>";
-  const numCurrentPlayers = status?.player_count ?? 0;
-  const maxPlayers = status?.max_player_count ?? 100;
-  const mapName = status?.current_map?.map?.pretty_name ?? "Unknown Map";
+  const serverState = useGlobalStore((state) => state.status)
+  const gameState = useGlobalStore((state) => state.gameState)
+  const name = serverState?.short_name ?? "<Server Name>";
+  const numCurrentPlayers = serverState?.current_players ?? 0;
+  const maxPlayers = serverState?.max_players ?? 100;
+  const mapName = gameState?.current_map?.pretty_name ?? "Unknown Map";
   const timeRemaining = dayjs
-    .duration(status?.time_remaining ?? 0, "seconds")
+    .duration(gameState?.time_remaining ?? 0, "seconds")
     .format("HH:mm:ss");
-  const balance = `${status?.player_count_by_team?.allied ?? 0}vs${
-    status?.player_count_by_team?.axis ?? 0
+  const balance = `${gameState?.num_allied_players ?? 0}vs${
+    gameState?.num_axis_players ?? 0
   }`;
-  const score = `${status?.score?.allied ?? 0}:${status?.score?.axis ?? 0}`;
+  const score = `${gameState?.allied_score ?? 0}:${gameState?.axis_score ?? 0}`;
 
-  if (isLoading) {
+  if (!(serverState && gameState)) {
     return (
       <Wrapper>
         <Stack

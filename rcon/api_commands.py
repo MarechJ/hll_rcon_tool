@@ -1869,9 +1869,6 @@ class RconAPI(Rcon):
 
         return result
 
-    def get_objective_row(self, row: int):
-        return super().get_objective_row(int(row))
-
     def get_message_templates(
         self, category: MessageTemplateCategory
     ) -> list[MessageTemplateType]:

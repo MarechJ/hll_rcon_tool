@@ -199,11 +199,11 @@ def do_init(force):
     init(force)
 
 
-@cli.command(name="set_maprotation")
+@cli.command(name="set_map_rotation")
 @click.argument("maps", nargs=-1)
 def maprot(maps):
     ctl = get_rcon()
-    ctl.set_maprotation(list(maps))
+    ctl.set_map_rotation(list(maps))
 
 
 @cli.command(name="register_api")
@@ -602,7 +602,7 @@ def convert_win_player_ids():
 
 
 PREFIXES_TO_EXPOSE = ["get_", "set_", "do_"]
-EXCLUDED: Set[str] = {"set_maprotation", "connection_pool"}
+EXCLUDED: Set[str] = {"set_map_rotation", "connection_pool"}
 
 # For this to work correctly with click it has to be at the top level of the module and ran on import
 ctl = get_rcon()

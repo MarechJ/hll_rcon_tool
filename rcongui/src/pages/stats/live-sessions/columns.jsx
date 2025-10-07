@@ -10,11 +10,12 @@ import { generatePlayerActions } from "@/features/player-action/actions";
 import {
   getPlayerTier,
   teamToNation,
-  tierColors,
+  getTierColors,
 } from "@/utils/lib";
 import { SortableHeader } from "@/components/table/styles";
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import useTheme from "@mui/material/styles/useTheme";
 
 export const Square = styled(Box)(({ theme }) => ({
   display: "flex",
@@ -33,9 +34,9 @@ const LevelColored = styled(Box, {
   const level = styledProps.level;
   if (!level) return {};
   const tier = getPlayerTier(level);
-  const color = tierColors[tier];
+  // Use theme-aware tier color
   return {
-    color,
+    color: (theme) => getTierColors(theme.palette.mode)[tier],
   };
 });
 
@@ -126,25 +127,29 @@ export const columns = [
     header: SortableHeader("R","Role"),
     accessorKey: "role",
     cell: ({ row }) => {
-      const src = row.getCanExpand() ? `/icons/roles/${row.original.type ?? row.original.role}.png` : `/icons/roles/${row.original.role}.png`;
+      const theme = useTheme();
+      const mode = theme?.palette?.mode || "light";
+      const iconKey = row.original.type ?? row.original.role;
+      const src = row.getCanExpand()
+        ? mode === "light"
+          ? `/icons/roles/${iconKey}_black.png`
+          : `/icons/roles/${iconKey}.png`
+        : mode === "light"
+          ? `/icons/roles/${row.original.role}_black.png`
+          : `/icons/roles/${row.original.role}.png`;
 
       return row.team !== "neutral" ? (
-            <Center>
-              <Square
-                sx={{
-                  bgcolor: (theme) =>
-                    theme.palette.mode === "dark" ? "background.paper" : "#121212",
-                }}
-              >
-                <img
-                  src={src}
-                  width={16}
-                  height={16}
-                  alt={row.original.type ?? row.original.role}
-                  title={row.original.type ?? row.original.role}
-                />
-              </Square>
-            </Center>
+        <Center>
+          <Square>
+            <img
+              src={src}
+              width={16}
+              height={16}
+              alt={iconKey}
+              title={iconKey}
+            />
+          </Square>
+        </Center>
       ) : null;
     },
     meta: {

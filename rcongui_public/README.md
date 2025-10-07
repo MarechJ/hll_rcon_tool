@@ -1,70 +1,71 @@
-## Vite-React-TS-Tailwind-Starter
+# CRCON GUI
 
-Choosing a technology stack is a very subjective matter, if you happen to like using `Vite`, `Tailwind`, `TS` and `shadcn ui` and more to build React SPA applications, then give it a try.
-
-## Run
-
-
-```sh
-yarn
-yarn dev
-```
-
-We prefer `Yarn` as package manager, If you want to use `pnpm` or `npm`, feel free to use
-
+A React-based web interface displaying match results and player statistics for community-hosted Hell Let Loose game servers.
 
 ## Tech Stack
 
-- [vite](https://vitejs.dev/)
-- [react](https://reactjs.org/)
-- [shadcn ui](https://ui.shadcn.com/)
-- [react-i18next](https://github.com/i18next/react-i18next)
-- [react-lucide](https://lucide.dev/)
-- [transmart](https://github.com/Quilljou/transmart)
-- [react-query](https://tanstack.com/query/latest/)
-- [tailwindcss](https://tailwindcss.com/)
-- [less](http://lesscss.org/)
-- [postcss](https://postcss.org/)
-- [react-router-dom](https://reactrouter.com/en/6.16.0)
-- [eslint](https://eslint.org/)/[stylelint](https://stylelint.io/)
-- [prettier](https://prettier.io/)
-- [svgr](https://react-svgr.com/)
-- [editorconfig](https://editorconfig.org/)
-- [husky](https://typicode.github.io/husky/#/)/[lint-staged](https://github.com/okonet/lint-staged)
-- [commitlint](https://commitlint.js.org/)
+- React 18
+- Typescript
+- Vite
+- React Router 6
+- Tanstack Query 5
+- Tanstack Table 8
+- shadcn-ui
+- Tailwind CSS
 
+## Prerequisites
 
-## Project Structure
+- Node.js (v18 or higher)
+- NPM package manager
+- A running CRCON server instance
 
-```sh
-src
-├── app.tsx     # App entry
-├── assets      # Assets for images, favicon etc
-├── components  # React components
-├── hooks       # React hooks
-├── i18n        # i18n files
-├── lib         # Utils、tools、services
-├── main.tsx    # File entry
-├── pages       # One .tsx per page
-├── router.tsx  # Routers
-├── styles      # Less files
-├── types       # Typescript types
-└── vite-env.d.ts
+## Setup
+
+1. Clone the repository
+2. Navigate to the project directory
+
+```bash
+cd rcongui_public
 ```
 
-## Deploy
+3. Install dependencies:
 
-[Cloudflare Pages](https://pages.cloudflare.com/) is my first option to deploy React App，follow [this documentation](https://developers.cloudflare.com/pages/framework-guides/deploy-a-react-site/#deploying-with-cloudflare-pages) to deploy your site. Don't forget build directory should	choose `dist`
+```bash
+npm install
+```
 
-[Vercel](https://pages.cloudflare.com/) is a good option too，Go to [Vercel](https://vercel.com/new) and link to your Git Repo
+3. Create a `.env.development.local` file in the root directory from the `example.env` file:
 
-Enjoy building.
+```bash
+cp example.env .env.development.local
+```
 
+4. Set the following variables in the `.env` file:
 
-## Related
+You don't necessarily need to change anything here.
 
-- [Next Starter](https://github.com/Quilljou/next-ts-tailwind-starter)
+- `VITE_CRCON_API_URL`: The API endpoint of your CRCON server
 
-- [React Starter](https://github.com/Quilljou/vite-react-ts-tailwind-starter)
+If you don't have your own server, you should be able to use the URL of any other CRCON managed HLL server e.g. `stats.hll-community.com`
 
-- [Figma Starter](https://github.com/Quilljou/figma-react-tailwind-starter)
+5. Start the development server:
+
+```bash
+npm run dev
+```
+
+## Other commands
+
+Build and preview the production version:
+
+```bash
+npm run preview
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a new branch
+3. Make your changes and commit them
+4. Push your changes to your fork
+5. Create a pull request

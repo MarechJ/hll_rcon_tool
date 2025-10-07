@@ -387,8 +387,7 @@ class SeedingRulesAutomod:
                             )
                         )
 
-                layer = parse_layer(game_state["current_map"]["id"])
-                if layer.game_mode != GameMode.WARFARE:
+                if game_state["game_mode"] != GameMode.WARFARE:
                     self._disable_for_round("enforce_cap_fight")
 
                 if not self._is_seeding_rule_disabled("enforce_cap_fight") and (
