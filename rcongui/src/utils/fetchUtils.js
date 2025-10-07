@@ -102,10 +102,13 @@ export const cmd = {
   ADD_MESSAGE_TEMPLATE: (params) => requestFactory({ method: "POST", cmd: "add_message_template", ...params }),
   ADD_VIP: (params) => requestFactory({ method: "POST", cmd: "add_vip", ...params }),
   AUTHENTICATE: (params) => requestFactory({ method: "POST", cmd: "login", ...params }),
+  MESSAGE_PLAYER: (params) => requestFactory({ method: "POST", cmd: "message_player", ...params }),
+  BULK_MESSAGE_PLAYERS: (params) => requestFactory({ method: "POST", cmd: "bulk_message_players", ...params }),
   CLEAR_APPLICATION_CACHE: (params) => requestFactory({ method: "POST", cmd: "clear_cache", ...params }),
   DELETE_CONSOLE_ADMIN: (params) => requestFactory({ method: "POST", cmd: "remove_admin", ...params }),
   DELETE_MESSAGE_TEMPLATE: (params) => requestFactory({ method: "POST", cmd: "delete_message_template", ...params }),
   DELETE_VIP: (params) => requestFactory({ method: "POST", cmd: "remove_vip", ...params }),
+  DISBAND_SQUAD: (params) => requestFactory({ method: "POST", cmd: "disband_squad", ...params }),
   EDIT_MESSAGE_TEMPLATE: (params) => requestFactory({ method: "POST", cmd: "edit_message_template", ...params }),
   FLAG_PLAYER: (params) => requestFactory({ method: "POST", cmd: "flag_player", ...params }),
   GET_AUDIT_LOGS: (params) => requestFactory({ method: "GET", cmd: "get_audit_logs", ...params }),
@@ -123,6 +126,7 @@ export const cmd = {
   GET_CONSOLE_ADMINS: (params) => requestFactory({ method: "GET", cmd: "get_admin_ids", ...params }),
   GET_CRCON_MODS: (params) => requestFactory({ method: "GET", cmd: "get_online_mods", ...params }),
   GET_CRCON_SERVER_CONNECTION: (params) => requestFactory({ method: "GET", cmd: "get_connection_info", ...params }),
+  GET_GAME_MODE: (params) => requestFactory({ method: "GET", cmd: "get_game_mode", ...params }),
   GET_GAME_SERVER_LIST: (params) => requestFactory({ method: "GET", cmd: "get_server_list", ...params }),
   GET_GAME_SERVER_STATUS: (params) => requestFactory({ method: "GET", cmd: "get_status", ...params }),
   GET_GAME_STATE: (params) => requestFactory({ method: "GET", cmd: "get_gamestate", ...params }),
@@ -175,17 +179,24 @@ export const cmd = {
   IS_AUTHENTICATED: (params) => requestFactory({ method: "GET", cmd: "is_logged_in", ...params }),
   LOGOUT: (params) => requestFactory({ method: "GET", cmd: "logout", ...params }),
   RECONNECT_GAME_SERVER: (params) => requestFactory({ method: "POST", cmd: "reconnect_gameserver", ...params }),
+  REMOVE_MATCH_TIMER: (params) => requestFactory({ method: "POST", cmd: "remove_match_timer", ...params }),
+  REMOVE_PLAYER_FROM_SQUAD: (params) => requestFactory({ method: "POST", cmd: "remove_player_from_squad", ...params }),
+  REMOVE_WARMUP_TIMER: (params) => requestFactory({ method: "POST", cmd: "remove_warmup_timer", ...params }),
+  RESET_VOTEMAP_STATE: (params) => requestFactory({ method: "POST", cmd: "reset_votemap_state", ...params }),
+  RESET_VOTEMAP_WHITELIST: (params) => requestFactory({ method: "POST", cmd: "reset_map_votemap_whitelist", ...params }),
   RESET_VOTEKICK_THRESHOLDS: (params) => requestFactory({ method: "POST", cmd: "reset_votekick_thresholds", ...params }),
   SET_AUTOBALANCE_ENABLED: (params) => requestFactory({ method: "POST", cmd: "set_autobalance_enabled", ...params }),
   SET_AUTOBALANCE_THRESHOLD: (params) => requestFactory({ method: "POST", cmd: "set_autobalance_threshold", ...params }),
   SET_AUTOSETTINGS: (params) => requestFactory({ method: "POST", cmd: "set_auto_settings", ...params }),
   SET_BROADCAST_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_auto_broadcasts_config", ...params }),
   SET_CAMERA_NOTIFICATION_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_camera_notification_config", ...params }),
+  SET_DYNAMIC_WEATHER_ENABLED: (params) => requestFactory({ method: "POST", cmd: "set_dynamic_weather_enabled", ...params }),
   SET_IDLE_AUTOKICK_TIME: (params) => requestFactory({ method: "POST", cmd: "set_idle_autokick_time", ...params }),
   SET_MAP: (params) => requestFactory({ method: "POST", cmd: "set_map", ...params }),
   SET_MAP_OBJECTIVES: (params) => requestFactory({ method: "POST", cmd: "set_game_layout", ...params }),
-  SET_MAP_ROTATION: (params) => requestFactory({ method: "POST", cmd: "set_maprotation", ...params }),
+  SET_MAP_ROTATION: (params) => requestFactory({ method: "POST", cmd: "set_map_rotation", ...params }),
   SET_MAP_ROTATION_SHUFFLE: (params) => requestFactory({ method: "POST", cmd: "set_map_shuffle_enabled", ...params }),
+  SET_MATCH_TIMER: (params) => requestFactory({ method: "POST", cmd: "set_match_timer", ...params }),
   SET_MAX_PING_AUTOKICK: (params) => requestFactory({ method: "POST", cmd: "set_max_ping_autokick", ...params }),
   SET_PROFANITIES: (params) => requestFactory({ method: "POST", cmd: "set_profanities", ...params }),
   SET_QUEUE_LENGTH: (params) => requestFactory({ method: "POST", cmd: "set_queue_length", ...params }),
@@ -198,8 +209,7 @@ export const cmd = {
   SET_VOTEKICK_THRESHOLDS: (params) => requestFactory({ method: "POST", cmd: "set_votekick_thresholds", ...params }),
   SET_VOTEMAP_CONFIG: (params) => requestFactory({ method: "POST", cmd: "set_votemap_config", ...params }),
   SET_VOTEMAP_WHITELIST: (params) => requestFactory({ method: "POST", cmd: "set_votemap_whitelist", ...params }),
-  RESET_VOTEMAP_STATE: (params) => requestFactory({ method: "POST", cmd: "reset_votemap_state", ...params }),
-  RESET_VOTEMAP_WHITELIST: (params) => requestFactory({ method: "POST", cmd: "reset_map_votemap_whitelist", ...params }),
+  SET_WARMUP_TIMER: (params) => requestFactory({ method: "POST", cmd: "set_warmup_timer", ...params }),
   SET_WELCOME_MESSAGE: (params) => requestFactory({ method: "POST", cmd: "set_welcome_message", ...params }),
   TOGGLE_SERVICE: (params) => requestFactory({ method: "POST", cmd: "do_service", ...params }),
   UNFLAG_PLAYER: (params) => requestFactory({ method: "POST", cmd: "unflag_player", ...params }),
@@ -234,7 +244,7 @@ export function handleHttpError(error) {
       };
       init = { status: 401 };
       break;
-    case "CommandFailedError":
+    case "HLLCommandFailedError":
       errorObject = {
         message: error?.message,
         error: error?.name,
@@ -282,11 +292,11 @@ class PermissionError extends Error {
   }
 }
 
-class CommandFailedError extends Error {
+class HLLCommandFailedError extends Error {
   constructor(message, command) {
     super(message);
     this.command = command;
-    this.name = "CommandFailedError";
+    this.name = "HLLCommandFailedError";
     this.text = message;
     this.status = 404;
   }

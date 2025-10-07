@@ -44,6 +44,11 @@ class RconUser(User):
     class Meta:
         default_permissions = ()
         permissions = (
+            ("can_set_warmup_timer", "Can change the match warmup timer"),
+            ("can_set_match_timer", "Can change the match timer"),
+            ("can_remove_match_timer", "Can remove the custom match timer"),
+            ("can_remove_warmup_timer", "Can remove the custom warmup timer"),
+            ("can_set_dynamic_weather_enabled", "Can enable or disable dynamic weather"),
             ("can_add_admin_roles", "Can add HLL game server admin roles to players"),
             ("can_add_map_to_rotation", "Can add a map to the rotation"),
             ("can_add_map_to_whitelist", "Can add a map to the votemap whitelist"),

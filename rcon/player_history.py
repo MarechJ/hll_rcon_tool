@@ -10,7 +10,7 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, contains_eager, selectinload
 from sqlalchemy.sql.functions import ReturnTypeFromArgs
 
-from rcon.commands import CommandFailedError
+from rcon.commands import HLLCommandFailedError
 from rcon.models import (
     BlacklistRecord,
     PlayerActionState,
@@ -314,18 +314,14 @@ def save_player(player_name: str, player_id: str, timestamp: int | None = None) 
 
 
 def save_player_action(
-    rcon,
     action_type: PlayerActionState,
-    player_name: str,
+    player_id: str,
+    player_name: str | None,
     by: str,
     reason: str = "",
-    player_id: str | None = None,
     timestamp=None,
 ):
     with enter_session() as sess:
-        player_id = (
-            player_id or rcon.get_player_info(player_name, can_fail=True)["player_id"]
-        )
         player = _get_set_player(
             sess, player_name=player_name, player_id=player_id, timestamp=timestamp
         )
@@ -340,15 +336,14 @@ def save_player_action(
 
 
 def safe_save_player_action(
-    rcon,
     action_type: PlayerActionState,
-    player_name: str,
+    player_id: str,
+    player_name: str | None,
     by: str,
     reason: str = "",
-    player_id: str | None = None,
 ):
     try:
-        return save_player_action(rcon, action_type, player_name, by, reason, player_id)
+        return save_player_action(action_type, player_id, player_name, by, reason)
     except Exception as e:
         logger.exception(
             "Failed to record player action: %s %s", action_type, player_name
@@ -453,7 +448,7 @@ def add_flag_to_player(
         )
         if exists:
             logger.warning("Flag already exists")
-            raise CommandFailedError("Flag already exists")
+            raise HLLCommandFailedError("Flag already exists")
         new = PlayerFlag(flag=flag, comment=comment, player=player)
         sess.add(new)
         sess.commit()
@@ -481,7 +476,7 @@ def remove_flag(
 
         if not exists:
             logger.warning("Flag does not exists")
-            raise CommandFailedError("Flag does not exists")
+            raise HLLCommandFailedError("Flag does not exists")
         player = exists.player.to_dict()
         old_flag = exists.to_dict()
         sess.delete(exists)

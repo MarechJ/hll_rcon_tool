@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 from itertools import islice
 from typing import Any, Generic, Iterable, TypeVar
 
+import hllrcon
 import orjson
 import redis
 import redis.exceptions
@@ -411,85 +412,43 @@ def default_player_info_dict(player) -> GetDetailedPlayer:
     }
 
 
-def parse_raw_player_info(raw: str, player) -> GetDetailedPlayer:
+def parse_raw_player_info(raw: dict[str, Any], player) -> GetDetailedPlayer:
     """Parse the result of the playerinfo command from the game server"""
 
-    """
-        Name: T17 Scott
-        steamID64: 01234567890123456
-        Team: Allies            # "None" when not in team
-        Role: Officer
-        Unit: 0 - Able          # Absent when not in unit
-        Loadout: NCO            # Absent when not in team
-        Kills: 0 - Deaths: 0
-        Score: C 50, O 0, D 40, S 10
-        Level: 34
-
-    """
-
     data = default_player_info_dict(player)
-    raw_data = {}
 
-    for line in raw.split("\n"):
-        if not line:
-            continue
-        if ": " not in line:
-            logger.warning("Invalid info line: %s", line)
-            continue
-
-        key, val = line.split(": ", 1)
-        raw_data[key.lower()] = val
-
-    logger.debug(raw_data)
     # Remap keys and parse values
-    data[PLAYER_ID] = raw_data.get("steamid64")  # type: ignore
-    data["team"] = raw_data.get("team", "None")
-    if raw_data["role"].lower() == "armycommander":
-        data["unit_id"], data["unit_name"] = (-1, "Command")
+    data[PLAYER_ID] = raw["iD"]
+
+    faction = hllrcon.data.Faction.by_id(raw["team"])
+    role = hllrcon.data.Role.by_id(raw["role"])
+
+    data["team"] = faction.team.name.lower() if faction else None
+    data["role"] = role.name.lower() if role else None
+    data["loadout"] = raw["loadout"].lower()
+    data["level"] = int(raw["level"])
+    data["kills"] = int(raw["kills"])
+    data["deaths"] = int(raw["deaths"])
+
+    if role is hllrcon.data.Role.COMMANDER:
+        data["unit_id"], data["unit_name"] = (-1, "command")
+    elif not raw["platoon"]:
+        data["unit_id"], data["unit_name"] = (0, "unassigned")
     else:
         data["unit_id"], data["unit_name"] = (
-            raw_data.get("unit").split(" - ")  # type: ignore
-            if raw_data.get("unit")
-            else ("None", None)
+            ord(raw["platoon"][0]) - ord("A"),
+            raw["platoon"].lower(),
         )
-    data["kills"], data["deaths"] = (  # type: ignore
-        raw_data.get("kills").split(" - Deaths: ")  # type: ignore
-        if raw_data.get("kills")
-        else ("0", "0")
-    )
-    for k in ["role", "loadout", "level"]:
-        data[k] = raw_data.get(k)
 
-    scores = dict(
-        [
-            score.split(" ", 1)
-            for score in raw_data.get("score", "C 0, O 0, D 0, S 0").split(", ")
-        ]
-    )
-    map_score = {"C": "combat", "O": "offense", "D": "defense", "S": "support"}
-    for key, val in map_score.items():
-        data[map_score[key]] = scores.get(key, "0")
+    data["combat"] = int(raw["scoreData"]["cOMBAT"])
+    data["offense"] = int(raw["scoreData"]["offense"])
+    data["defense"] = int(raw["scoreData"]["defense"])
+    data["support"] = int(raw["scoreData"]["support"])
 
-    # Typecast values
-    # cast strings to lower
-    for key in ["team", "unit_name", "role", "loadout"]:
-        data[key] = data[key].lower() if data.get(key) else None
-
-    # cast string numbers to ints
-    for key in [
-        "kills",
-        "deaths",
-        "level",
-        "combat",
-        "offense",
-        "defense",
-        "support",
-        "unit_id",
-    ]:
-        try:
-            data[key] = int(data[key])
-        except (ValueError, TypeError):
-            data[key] = 0
+    data["platform"] = raw["platform"]
+    data["clan_tag"] = raw["clanTag"]
+    data["eos_id"] = raw["eosId"]
+    data["world_position"] = raw["worldPosition"]
 
     return data
 

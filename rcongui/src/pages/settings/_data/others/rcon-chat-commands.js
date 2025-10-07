@@ -15,7 +15,7 @@ const RconChatCommandsNotes = `
           "switch_player_now": {
             /* Parameters of the command to execute, see the API documentation (/api/get_api_documentation) for possible parameters */
             /* Parameter values can have context parameters replace. Context parameters are things like player_name or player_id of the player issuing the command. */
-            "player_name": "{player_name}"
+            "player_id": "{player_id}"
           }
         },
         /* Whether the command is enabled or not (true == enabled) */

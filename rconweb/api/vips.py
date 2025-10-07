@@ -10,7 +10,7 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
-from rcon.commands import CommandFailedError
+from rcon.commands import HLLCommandFailedError
 from rcon.discord import send_to_discord_audit
 from rcon.models import PlayerID, PlayerVIP, enter_session
 from rcon.steam_utils import is_steam_id_64
