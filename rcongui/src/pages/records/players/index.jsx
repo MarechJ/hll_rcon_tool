@@ -143,7 +143,6 @@ export default function PlayersRecords() {
     last_seen_from: fields.last_seen_from ? dayjs(fields.last_seen_from) : null,
     last_seen_till: fields.last_seen_till ? dayjs(fields.last_seen_till) : null,
   });
-  console.log(formFields);
   const [selectedCountry, setSelectedCountry] = useState(fields.country);
   const [selectedEmoji, setSelectedEmoji] = useState(fields.flags);
   const [anchorEl, setAnchorEl] = useState(null);

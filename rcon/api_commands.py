@@ -1899,9 +1899,6 @@ class RconAPI(Rcon):
 
         return result
 
-    def get_objective_row(self, row: int):
-        return super().get_objective_row(int(row))
-
     def get_message_templates(
         self, category: MessageTemplateCategory
     ) -> list[MessageTemplateType]:
@@ -1989,3 +1986,18 @@ class RconAPI(Rcon):
     ) -> int:
         """Delete each queue of wh_type (discord, etc.) returning the number of deleted queues"""
         return webhook_service.reset_message_type(message_type=message_type)
+
+    def set_match_timer(self, game_mode: str, length: int):
+        super().set_match_timer(maps.GameMode[game_mode.upper()], length)
+
+
+    def remove_match_timer(self, game_mode: str):
+        super().remove_match_timer(maps.GameMode[game_mode.upper()])
+
+
+    def set_warmup_timer(self, game_mode: str, length: int):
+        super().set_warmup_timer(maps.GameMode[game_mode.upper()], length)
+
+
+    def remove_warmup_timer(self, game_mode: str):
+        super().remove_warmup_timer(maps.GameMode[game_mode.upper()])

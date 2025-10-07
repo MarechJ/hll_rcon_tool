@@ -13,6 +13,7 @@ class RconConnectionSettingsType(TypedDict):
 
 class RconConnectionSettingsUserConfig(BaseUserConfig):
     # TODO: max open and threadpool seem redundant
+    # TODO: been made entirely redundant since RCON V2, remove
     thread_pool_size: int = Field(ge=1, le=100, default=20)
     max_open: int = Field(ge=1, le=100, default=20)
     max_idle: int = Field(ge=1, le=100, default=20)

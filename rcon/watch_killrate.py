@@ -413,14 +413,14 @@ def watch_killrate(
 
                 try:
                     detailed_info = api.get_detailed_player_info(
-                        player_name=player_name
+                        player_id=player_id
                     )
                     player_level: int = detailed_info["level"]
                     player_role: str = detailed_info["role"]
                     player_loadout: str = detailed_info["loadout"]
                 except Exception:
                     logger.warning(
-                        "Unable to retrieve detailed playerinfo for %s", player_name
+                        "Unable to retrieve detailed playerinfo for %s", player_id
                     )
                     player_level: int = 0
                     player_role = "Unknown"

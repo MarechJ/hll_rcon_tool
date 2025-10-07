@@ -7,7 +7,7 @@ from rcon.logs.loop import on_connected
 from rcon.hooks import inject_player_ids
 from rcon.models import WatchList, enter_session
 from rcon.player_history import _get_set_player, get_player
-from rcon.rcon import CommandFailedError, Rcon
+from rcon.rcon import HLLCommandFailedError, Rcon
 from rcon.types import PlayerProfileType, StructuredLogLineWithMetaData
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.webhooks import WatchlistWebhooksUserConfig
@@ -77,7 +77,7 @@ class PlayerWatch:
         with enter_session() as sess:
             player = get_player(sess, self.player_id)
             if not player:
-                raise CommandFailedError(
+                raise HLLCommandFailedError(
                     "Can't remove player to watchlist, player not found"
                 )
             if player.watchlist:

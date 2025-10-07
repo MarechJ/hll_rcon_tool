@@ -5,7 +5,7 @@ from typing import Callable
 import pytz
 
 from rcon.audit import ingame_mods, online_mods
-from rcon.commands import BrokenHllConnection, CommandFailedError
+from rcon.connection import HLLCommandError
 from rcon.models import PlayerID
 
 logger = logging.getLogger(__name__)
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 def _get_current_map_metric(rcon):
     try:
         rcon.current_map = str(rcon.get_map())
-    except (CommandFailedError, BrokenHllConnection):
+    except HLLCommandError:
         logger.exception("Failed to get current map")
     return str(rcon.current_map)
 

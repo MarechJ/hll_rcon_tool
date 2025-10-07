@@ -13,7 +13,7 @@ from rcon.automods.no_leader import NoLeaderAutomod
 from rcon.automods.no_solotank import NoSoloTankAutomod
 from rcon.automods.seeding_rules import SeedingRulesAutomod
 from rcon.cache_utils import get_redis_client
-from rcon.commands import CommandFailedError, HLLServerError
+from rcon.commands import HLLCommandFailedError
 from rcon.discord import send_to_discord_audit
 from rcon.hooks import inject_player_ids
 from rcon.logs.loop import on_kill, on_connected
@@ -74,10 +74,10 @@ def _do_punitions(
             if method == ActionMethod.MESSAGE:
                 if not aplayer.details.dry_run:
                     rcon.message_player(
-                        aplayer.name,
                         aplayer.player_id,
                         aplayer.details.message,
                         by=aplayer.details.author,
+                        player_name=aplayer.name,
                     )
                 audit(
                     discord_webhook_url=aplayer.details.discord_audit_url,
@@ -89,7 +89,7 @@ def _do_punitions(
             if method == ActionMethod.PUNISH:
                 if not aplayer.details.dry_run:
                     rcon.punish(
-                        aplayer.name, aplayer.details.message, by=aplayer.details.author
+                        aplayer.name, aplayer.details.message, by=aplayer.details.author, player_id=aplayer.player_id
                     )
                 audit(
                     discord_webhook_url=aplayer.details.discord_audit_url,
@@ -112,7 +112,7 @@ def _do_punitions(
                     msg=f"---> KICKING <---: {aplayer}",
                     author=aplayer.details.author,
                 )
-        except (CommandFailedError, HLLServerError):
+        except HLLCommandFailedError:
             logger.warning(
                 "Couldn't `%s` player `%s`. Will retry.", repr(method), repr(aplayer)
             )
@@ -248,9 +248,9 @@ def on_connected(rcon: Rcon, _, name: str, player_id: str):
     # get detailed player info for use by on_connected_hook
     detailed_player_info: GetDetailedPlayer | None = None
     try:
-        detailed_player_info = rcon.get_detailed_player_info(name)
+        detailed_player_info = rcon.get_detailed_player_info(player_id)
     except Exception as e:
-        logger.error(f"get_detailed_player_info threw an exception for {name}: {e}")
+        logger.error(f"get_detailed_player_info threw an exception for {player_id}: {e}")
 
     punitions_to_apply: PunitionsToApply = PunitionsToApply()
     for mod in mods:

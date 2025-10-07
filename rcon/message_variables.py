@@ -239,23 +239,23 @@ def format_map_vote(format_type="line"):
             maps_to_numbers=maps_to_numbers,
         )
         control_skirmish = join_vote_options(
-            selection=categorized[maps.GameMode.CONTROL],
+            selection=categorized[maps.GameMode.SKIRMISH],
             maps_to_numbers=maps_to_numbers,
         )
         if format_type == "by_mod_line":
-            return "OFFENSIVE: {} WARFARE: {} CONTROL SKIRMISH: {}".format(
+            return "OFFENSIVE: {} WARFARE: {} SKIRMISH: {}".format(
                 off, warfare, control_skirmish
             )
         if format_type == "by_mod_vertical":
-            return "OFFENSIVE:\n{}\nWARFARE:\n{}\nCONTROL SKIRMISH:\n{}".format(
+            return "OFFENSIVE:\n{}\nWARFARE:\n{}\nSKIRMISH:\n{}".format(
                 off, warfare, control_skirmish
             )
         if format_type == "by_mod_split":
-            return "OFFENSIVE: {}\nWARFARE: {}\nCONTROL SKIRMISH: {}".format(
+            return "OFFENSIVE: {}\nWARFARE: {}\nSKIRMISH: {}".format(
                 off, warfare, control_skirmish
             )
         if format_type == "by_mod_vertical_all":
-            return "OFFENSIVE:\n{}\nWARFARE:\n{}\nCONTROL SKIRMISH:\n{}".format(
+            return "OFFENSIVE:\n{}\nWARFARE:\n{}\nSKIRMISH:\n{}".format(
                 join_vote_options(
                     selection=categorized[maps.GameMode.OFFENSIVE],
                     maps_to_numbers=maps_to_numbers,
@@ -267,7 +267,7 @@ def format_map_vote(format_type="line"):
                     join_char="\n",
                 ),
                 join_vote_options(
-                    selection=categorized[maps.GameMode.CONTROL],
+                    selection=categorized[maps.GameMode.SKIRMISH],
                     maps_to_numbers=maps_to_numbers,
                     join_char="\n",
                 ),
