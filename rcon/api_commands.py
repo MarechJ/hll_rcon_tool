@@ -43,7 +43,6 @@ from rcon.types import (
     PlayerFlagType,
     PlayerProfileTypeEnriched,
     ServerInfoType,
-    VoteMapStatusType,
 )
 from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
 from rcon.user_config.auto_kick import AutoVoteKickUserConfig
@@ -650,51 +649,40 @@ class RconAPI(Rcon):
             inclusive_filter=inclusive_filter,
         )
 
-    def get_votemap_status(self) -> list[VoteMapStatusType]:
+    def get_votemap_status(self):
         v = VoteMap()
+        return v.get_status(sort_by_vote=False)
 
-        votes = v.get_votes()
-        votes_by_map: dict[maps.Layer, list[str]] = defaultdict(list)
-        for player, map_ in votes.items():
-            votes_by_map[map_].append(player)
-
-        selection = v.get_selection()
-
-        result = []
-        for map_ in selection:
-            result.append({"map": map_, "voters": votes_by_map[map_]})
-
-        return sorted(result, key=lambda m: len(m["voters"]), reverse=True)
-
-    def reset_votemap_state(self) -> list[VoteMapStatusType]:
+    def send_votemap_reminder(self):
         v = VoteMap()
-        v.clear_votes()
-        v.gen_selection()
-        v.apply_results()
-
-        return self.get_votemap_status()
+        result = v.send_reminder(force=True)
+        if not result.ok:
+            raise Exception(result.message)
+    
+    def reset_votemap_state(self):
+        v = VoteMap()
+        v.restart()
+        return v.get_status()
 
     def get_votemap_whitelist(self) -> list[str]:
         v = VoteMap()
-
-        # TODO: update this when we return `Layer`s instead of strings
         return [str(map) for map in v.get_map_whitelist()]
 
     def add_map_to_votemap_whitelist(self, map_name: str):
         v = VoteMap()
-        v.add_map_to_whitelist(map_name=map_name)
+        v.add_map_to_whitelist(maps.parse_layer(map_name))
 
     def add_maps_to_votemap_whitelist(self, map_names: Iterable[str]):
         v = VoteMap()
-        v.add_maps_to_whitelist(map_names=map_names)
+        v.add_maps_to_whitelist([maps.parse_layer(map) for map in map_names])
 
     def remove_map_from_votemap_whitelist(self, map_name: str):
         v = VoteMap()
-        v.remove_map_from_whitelist(map_name=map_name)
+        v.remove_map_from_whitelist(maps.parse_layer(map_name))
 
     def remove_maps_from_votemap_whitelist(self, map_names: Iterable[str]):
         v = VoteMap()
-        v.remove_maps_from_whitelist(map_names=map_names)
+        v.remove_maps_from_whitelist(map_names)
 
     def reset_map_votemap_whitelist(self):
         v = VoteMap()
@@ -702,10 +690,11 @@ class RconAPI(Rcon):
 
     def set_votemap_whitelist(self, map_names: Iterable[str]):
         v = VoteMap()
-        v.set_map_whitelist(map_names=map_names)
+        v.set_map_whitelist([maps.parse_layer(map) for map in map_names])
 
     def get_votemap_config(self) -> VoteMapUserConfig:
-        return VoteMapUserConfig.load_from_db()
+        v = VoteMap()
+        return v.config
 
     def validate_votemap_config(
         self,
@@ -745,7 +734,11 @@ class RconAPI(Rcon):
 
         # on -> off or off -> on
         if old_config.enabled != new_config.enabled:
-            self.reset_votemap_state()
+            vm = VoteMap()
+            if new_config.enabled:
+                vm.restart()
+            else:
+                vm.reset()
 
         return True
 
