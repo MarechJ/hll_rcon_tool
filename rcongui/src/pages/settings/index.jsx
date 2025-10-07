@@ -20,8 +20,9 @@ import {
   Divider,
   TextField,
   Alert,
+  Autocomplete,
 } from "@mui/material";
-import {Suspense, useState} from "react";
+import { Suspense, useState } from "react";
 import { useLoaderData, defer, Await } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -31,6 +32,8 @@ import { AsyncClientError } from "@/components/shared/AsyncClientError";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useInputHandlers } from "./useInputHandlers";
 import { toast } from "react-toastify";
+import { useQuery } from "@tanstack/react-query";
+import { mapsManagerQueryKeys } from "./maps/queries";
 
 const INTENT = {
   SINGLE: 0,
@@ -53,6 +56,12 @@ export const loader = async () => {
     cameraNotifications: cameraNotificationsPromise,
     realVipSlots: realVipSlotsPromise,
     serverName: serverNamePromise,
+    warfare_match_timer: new Promise((res) => res(90)),
+    offensive_match_timer: new Promise((res) => res(150)),
+    skirmish_match_timer: new Promise((res) => res(30)),
+    warfare_warmup_timer: new Promise((res) => res(3)),
+    skirmish_warmup_timer: new Promise((res) => res(3)),
+    dynamicWeather: new Promise((res) => res(true)),
   });
 };
 
@@ -101,7 +110,9 @@ export const action = async ({ request }) => {
           executeCommand = cmd.SET_VIP_SLOTS_NUM;
           break;
         default:
-          throw new ProgrammingError(`Trying to execute invalid command: ${key}`);
+          throw new ProgrammingError(
+            `Trying to execute invalid command: ${key}`
+          );
       }
       return executeCommand({ payload, throwRouteError: false });
     });
@@ -129,6 +140,18 @@ export const action = async ({ request }) => {
     case "set_real_vip_config":
       executeCommand = cmd.SET_REAL_VIP_CONFIG;
       break;
+    case "set_dynamic_weather_enabled":
+      executeCommand = cmd.SET_DYNAMIC_WEATHER_ENABLED;
+      break;
+    case "warfare_match_timer":
+    case "offensive_match_timer":
+    case "skirmish_match_timer":
+      executeCommand = cmd.SET_MATCH_TIMER;
+      break;
+    case "warfare_warmup_timer":
+    case "skirmish_warmup_timer":
+      executeCommand = cmd.SET_WARMUP_TIMER;
+      break;
   }
 
   try {
@@ -140,7 +163,7 @@ export const action = async ({ request }) => {
 };
 
 // Helper functions
-const getMaxValue = (key) => {
+export const getMaxValue = (key) => {
   switch (key) {
     case "team_switch_cooldown":
       return 30;
@@ -152,11 +175,37 @@ const getMaxValue = (key) => {
       return 6;
     case "vip_slots_num":
       return 100;
+    case "warfare_match_timer":
+      return 180;
+    case "offensive_match_timer":
+      return 300;
+    case "skirmish_match_timer":
+      return 60;
+    case "skirmish_warmup_timer":
+    case "warfare_warmup_timer":
+      return 10;
     case "players":
     case "autobalance_threshold":
       return 50;
     default:
       return 100; // Default max value
+  }
+};
+
+// Helper functions
+export const getMinValue = (key) => {
+  switch (key) {
+    case "warfare_match_timer":
+      return 30;
+    case "offensive_match_timer":
+      return 50;
+    case "skirmish_match_timer":
+      return 10;
+    case "warfare_warmup_timer":
+    case "skirmish_warmup_timer":
+      return 1;
+    default:
+      return 0; // Default min value
   }
 };
 
@@ -200,6 +249,15 @@ const getHelpText = (key) => {
       return "Maximum # of people waiting";
     case "vip_slots_num":
       return "# slots reserved for VIPs";
+    case "warfare_match_timer":
+      return "Default is 90 minutes";
+    case "offensive_match_timer":
+      return "Default is 150 minutes";
+    case "skirmish_match_timer":
+      return "Default is 30 minutes";
+    case "warfare_warmup_timer":
+    case "skirmish_warmup_timer":
+      return "Default is 3";
     default:
       return "0 to disable";
   }
@@ -215,6 +273,10 @@ const getStep = (key) => {
     case "queue_length":
     case "vip_slots_num":
       return 1;
+    case "warfare_match_timer":
+    case "offensive_match_timer":
+    case "skirmish_match_timer":
+      return 5;
     default:
       return 1;
   }
@@ -333,6 +395,11 @@ const GeneralSettingsContent = ({ settings }) => {
       </Stack>
       {error && <ClientError error={error} />}
       <Stack gap={1}>
+        <Alert severity="warning">
+          Displayed values may not match current settings, as the server doesn't
+          provide this data as of version U18. You can still adjust settings.
+          This will be fixed in a future update.
+        </Alert>
         <Box>
           <Typography variant="h6" id="autobalance-slider" gutterBottom>
             Autobalance{" "}
@@ -881,8 +948,195 @@ const ServerNameContent = ({ settings }) => {
   );
 };
 
+const TimerContent =
+  (key) =>
+  ({ settings }) => {
+    const {
+      pendingSettings,
+      setPendingSettings,
+      isSubmitting,
+      error,
+      submit,
+      reset,
+      isAltered,
+    } = useSettingsState(settings);
+
+    const submitChanges = () => {
+      const payload = {
+        length: pendingSettings,
+        cmd: key,
+        game_mode: key.split("_")[0],
+      };
+      submit(payload, { method: "POST", encType: "application/json" });
+    };
+
+    const handleBlur = () => {
+      if (pendingSettings < getMinValue(key)) {
+        setPendingSettings(getMinValue(key));
+      } else if (pendingSettings > getMaxValue(key)) {
+        setPendingSettings(getMaxValue(key));
+      }
+    };
+
+    const handleInputChange = (event) => {
+      const type = event.target.type;
+      const value =
+        type === "number"
+          ? event.target.value === ""
+            ? ""
+            : Number(event.target.value)
+          : event.target.value;
+      setPendingSettings(value);
+    };
+
+    const handleSliderChange = (event, value) => {
+      setPendingSettings(value);
+    };
+
+    return (
+      <Box>
+        <Stack
+          direction={"row"}
+          sx={{ p: 1, mb: 1 }}
+          justifyContent={"end"}
+          alignItems={"center"}
+          gap={1}
+        >
+          <Button disabled={!isAltered} variant="contained" onClick={reset}>
+            Reset
+          </Button>
+          <Button
+            disabled={!isAltered}
+            variant="contained"
+            onClick={submitChanges}
+          >
+            {isSubmitting ? "Loading..." : "Apply"}
+          </Button>
+        </Stack>
+        {error && <ClientError error={error} />}
+        <Stack gap={1}>
+          <Alert severity="warning">
+            Displayed values may not match current settings, as the server
+            doesn't provide this data as of version U18. You can still adjust
+            settings. This will be fixed in a future update.
+          </Alert>
+          <Typography>
+            The slider allows adjustment of the {key.split("_")[1]} duration in
+            minutes.
+          </Typography>
+          <Divider flexItem />
+          <Box sx={{ width: "100%" }}>
+            <Grid container spacing={4} sx={{ alignItems: "center" }}>
+              <Grid size={{ xs: 10 }}>
+                <Slider
+                  value={
+                    typeof pendingSettings === "number" ? pendingSettings : 0
+                  }
+                  onChange={handleSliderChange}
+                  aria-labelledby={`${key}-slider`}
+                  max={getMaxValue(key)}
+                  min={getMinValue(key)}
+                  marks={getMarks(key)}
+                  step={getStep(key)}
+                  valueLabelDisplay="auto"
+                  size="small"
+                />
+              </Grid>
+              <Grid size={{ xs: 2 }}>
+                <Input
+                  value={pendingSettings}
+                  size="small"
+                  onChange={handleInputChange}
+                  onBlur={handleBlur}
+                  inputProps={{
+                    step: getStep(key),
+                    min: getMinValue(key),
+                    max: getMaxValue(key),
+                    type: "number",
+                    "aria-labelledby": `${key}-slider`,
+                  }}
+                />
+              </Grid>
+            </Grid>
+            <Typography variant="caption" color="text.secondary">
+              {getHelpText(key)}
+            </Typography>
+          </Box>
+        </Stack>
+      </Box>
+    );
+  };
+
+const DynamicWeatherContent = ({ settings }) => {
+  const [selectedMap, setSelectedMap] = useState("notSelected");
+
+  const { data: maps } = useQuery({
+    queryKey: mapsManagerQueryKeys.maps,
+    queryFn: cmd.GET_MAPS,
+    initialData: [],
+  });
+
+  const mapOptions = [
+    ...maps,
+    { id: "notSelected", name: "SELECT OPTION" },
+  ].map((map) => ({
+    id: map.id,
+    name: map.pretty_name,
+  }));
+
+  const { error, submit } = useSettingsState(settings);
+
+  const submitChanges = (enabled) => {
+    const payload = {
+      cmd: "set_dynamic_weather_enabled",
+      map_name: selectedMap,
+      enabled: enabled,
+    };
+    submit(payload, { method: "POST", encType: "application/json" });
+  };
+
+  return (
+    <Box>
+      {error && <ClientError error={error} />}
+      <Stack gap={1}>
+        <Alert severity="warning">
+          Displayed values may not match current settings, as the server doesn't
+          provide this data as of version U18. You can still adjust settings.
+          This will be fixed in a future update.
+        </Alert>
+        <Typography>Description</Typography>
+        <Divider flexItem />
+        <Box sx={{ width: "100%" }}>
+          <Autocomplete
+            options={mapOptions}
+            getOptionLabel={(option) => option?.name ?? ""}
+            value={mapOptions.find((map) => map.id === selectedMap) || null}
+            onChange={(event, newValue) => {
+              setSelectedMap(newValue?.id || "");
+            }}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            renderInput={(params) => (
+              <TextField {...params} label="Map Name" fullWidth />
+            )}
+          />
+          <Stack direction={"row"} gap={1} sx={{ mt: 1 }}>
+            <Button disabled={selectedMap === "notSelected"} variant="contained" color="success" onClick={() => submitChanges(true)}>ON</Button>
+            <Button disabled={selectedMap === "notSelected"} variant="contained" color="error" onClick={() => submitChanges(false)}>OFF</Button>  
+          </Stack>           
+        </Box>
+      </Stack>
+    </Box>
+  );
+};
+
 const PANEL_TITLES = {
   settings: "General Settings",
+  warfare_match_timer: "Warfare Match Timer",
+  offensive_match_timer: "Offensive Match Timer",
+  skirmish_match_timer: "Skirmish Match Timer",
+  warfare_warmup_timer: "Warfare Warmup Timer",
+  skirmish_warmup_timer: "Skirmish Warmup Timer",
+  dynamicWeather: "Dynamic Weather",
   autoVotekickToggle: "Auto Votekick",
   cameraNotifications: "Camera Notifications",
   realVipSlots: "Real VIP Slots",
@@ -891,6 +1145,12 @@ const PANEL_TITLES = {
 
 const PANEL_COMPONENTS = {
   settings: GeneralSettingsContent,
+  warfare_match_timer: TimerContent("warfare_match_timer"),
+  offensive_match_timer: TimerContent("offensive_match_timer"),
+  skirmish_match_timer: TimerContent("skirmish_match_timer"),
+  warfare_warmup_timer: TimerContent("warfare_warmup_timer"),
+  skirmish_warmup_timer: TimerContent("skirmish_warmup_timer"),
+  dynamicWeather: DynamicWeatherContent,
   autoVotekickToggle: AutoVotekickContent,
   cameraNotifications: CameraNotificationsContent,
   realVipSlots: RealVipSlotsContent,
@@ -901,7 +1161,8 @@ const SettingsPage = () => {
   const data = useLoaderData();
   const [expanded, setExpanded] = useState(false);
   const [isFlushingCache, setIsFlushingCache] = useState(false);
-  const [isReconnectingToGameserver, setIsReconnectingToGameserver] = useState(false);
+  const [isReconnectingToGameserver, setIsReconnectingToGameserver] =
+    useState(false);
 
   const handleChange = (panel) => (event, isExpanded) => {
     setExpanded(isExpanded ? panel : false);

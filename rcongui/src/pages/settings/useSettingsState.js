@@ -36,7 +36,7 @@ export const useSettingsState = (initialSettings) => {
           return true;
         }
       }
-    } else if (typeof initialSettings === "string") {
+    } else if (typeof initialSettings === "string" || typeof initialSettings === "number") {
       return initialSettings !== pendingSettings;
     }
     return false;
