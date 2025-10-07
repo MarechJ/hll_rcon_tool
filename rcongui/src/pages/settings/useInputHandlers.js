@@ -1,22 +1,4 @@
-const getMaxValue = (key) => {
-  switch (key) {
-    case "team_switch_cooldown":
-      return 30;
-    case "idle_autokick_time":
-      return 200;
-    case "max_ping_autokick":
-      return 2000;
-    case "queue_length":
-      return 6;
-    case "vip_slots_num":
-      return 100;
-    case "players":
-    case "autobalance_threshold":
-      return 50;
-    default:
-      return 100; // Default max value
-  }
-};
+import { getMaxValue, getMinValue } from ".";
 
 export const useInputHandlers = (pendingSettings, setPendingSettings) => {
   const handleInputChange = (key) => (event) => {
@@ -32,7 +14,7 @@ export const useInputHandlers = (pendingSettings, setPendingSettings) => {
 
   const handleBlur = (key) => () => {
     if (pendingSettings[key] < 0) {
-      setPendingSettings((prev) => ({ ...prev, [key]: 0 }));
+      setPendingSettings((prev) => ({ ...prev, [key]: getMinValue(key) }));
     } else if (pendingSettings[key] > getMaxValue(key)) {
       setPendingSettings((prev) => ({ ...prev, [key]: getMaxValue(key) }));
     }

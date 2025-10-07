@@ -112,6 +112,10 @@ export const cmd = {
     requestFactory({ method: "POST", cmd: "add_vip", ...params }),
   AUTHENTICATE: (params) =>
     requestFactory({ method: "POST", cmd: "login", ...params }),
+  MESSAGE_PLAYER: (params) =>
+    requestFactory({ method: "POST", cmd: "message_player", ...params }),
+  BULK_MESSAGE_PLAYERS: (params) =>
+    requestFactory({ method: "POST", cmd: "bulk_message_players", ...params }),
   CLEAR_APPLICATION_CACHE: (params) =>
     requestFactory({ method: "POST", cmd: "clear_cache", ...params }),
   DELETE_CONSOLE_ADMIN: (params) =>
@@ -124,6 +128,8 @@ export const cmd = {
     }),
   DELETE_VIP: (params) =>
     requestFactory({ method: "POST", cmd: "remove_vip", ...params }),
+  DISBAND_SQUAD: (params) =>
+    requestFactory({ method: "POST", cmd: "disband_squad", ...params }),
   EDIT_MESSAGE_TEMPLATE: (params) =>
     requestFactory({ method: "POST", cmd: "edit_message_template", ...params }),
   FLAG_PLAYER: (params) =>
@@ -174,6 +180,8 @@ export const cmd = {
     requestFactory({ method: "GET", cmd: "get_online_mods", ...params }),
   GET_CRCON_SERVER_CONNECTION: (params) =>
     requestFactory({ method: "GET", cmd: "get_connection_info", ...params }),
+  GET_GAME_MODE: (params) =>
+    requestFactory({ method: "GET", cmd: "get_game_mode", ...params }),
   GET_GAME_SERVER_LIST: (params) =>
     requestFactory({ method: "GET", cmd: "get_server_list", ...params }),
   GET_GAME_SERVER_STATUS: (params) =>
@@ -315,6 +323,24 @@ export const cmd = {
     requestFactory({ method: "GET", cmd: "logout", ...params }),
   RECONNECT_GAME_SERVER: (params) =>
     requestFactory({ method: "POST", cmd: "reconnect_gameserver", ...params }),
+  REMOVE_MATCH_TIMER: (params) =>
+    requestFactory({ method: "POST", cmd: "remove_match_timer", ...params }),
+  REMOVE_PLAYER_FROM_SQUAD: (params) =>
+    requestFactory({
+      method: "POST",
+      cmd: "remove_player_from_squad",
+      ...params,
+    }),
+  REMOVE_WARMUP_TIMER: (params) =>
+    requestFactory({ method: "POST", cmd: "remove_warmup_timer", ...params }),
+  RESET_VOTEMAP_STATE: (params) =>
+    requestFactory({ method: "POST", cmd: "reset_votemap_state", ...params }),
+  RESET_VOTEMAP_WHITELIST: (params) =>
+    requestFactory({
+      method: "POST",
+      cmd: "reset_map_votemap_whitelist",
+      ...params,
+    }),
   RESET_VOTEKICK_THRESHOLDS: (params) =>
     requestFactory({
       method: "POST",
@@ -347,6 +373,12 @@ export const cmd = {
       cmd: "set_camera_notification_config",
       ...params,
     }),
+  SET_DYNAMIC_WEATHER_ENABLED: (params) =>
+    requestFactory({
+      method: "POST",
+      cmd: "set_dynamic_weather_enabled",
+      ...params,
+    }),
   SET_IDLE_AUTOKICK_TIME: (params) =>
     requestFactory({
       method: "POST",
@@ -365,6 +397,8 @@ export const cmd = {
       cmd: "set_map_shuffle_enabled",
       ...params,
     }),
+  SET_MATCH_TIMER: (params) =>
+    requestFactory({ method: "POST", cmd: "set_match_timer", ...params }),
   SET_MAX_PING_AUTOKICK: (params) =>
     requestFactory({ method: "POST", cmd: "set_max_ping_autokick", ...params }),
   SET_PROFANITIES: (params) =>
@@ -401,14 +435,8 @@ export const cmd = {
     requestFactory({ method: "POST", cmd: "set_votemap_config", ...params }),
   SET_VOTEMAP_WHITELIST: (params) =>
     requestFactory({ method: "POST", cmd: "set_votemap_whitelist", ...params }),
-  RESET_VOTEMAP_STATE: (params) =>
-    requestFactory({ method: "POST", cmd: "reset_votemap_state", ...params }),
-  RESET_VOTEMAP_WHITELIST: (params) =>
-    requestFactory({
-      method: "POST",
-      cmd: "reset_map_votemap_whitelist",
-      ...params,
-    }),
+  SET_WARMUP_TIMER: (params) =>
+    requestFactory({ method: "POST", cmd: "set_warmup_timer", ...params }),
   SET_WELCOME_MESSAGE: (params) =>
     requestFactory({ method: "POST", cmd: "set_welcome_message", ...params }),
   TOGGLE_SERVICE: (params) =>
