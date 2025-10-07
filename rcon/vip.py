@@ -61,7 +61,7 @@ from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from rcon.cache_utils import get_redis_client
-from rcon.commands import CommandFailedError
+from rcon.commands import HLLCommandFailedError
 from rcon.models import PlayerID, PlayerName, VipList, VipListRecord, enter_session
 from rcon.player_history import _get_set_player, remove_accent, unaccent
 from rcon.steam_utils import is_steam_id_64
@@ -184,7 +184,7 @@ def get_vip_list(
     """Return a specific VIP list if it exists"""
     vip_list = sess.get(VipList, vip_list_id)
     if not vip_list and strict:
-        raise CommandFailedError(f"No vip list found with ID {vip_list_id}")
+        raise HLLCommandFailedError(f"No vip list found with ID {vip_list_id}")
     return vip_list
 
 
@@ -322,7 +322,7 @@ def get_vip_record(
     """Return a specific VIP list record by ID if it exists"""
     record = sess.get(VipListRecord, record_id)
     if not record and strict:
-        raise CommandFailedError(f"No vip list record found with ID {record_id}")
+        raise HLLCommandFailedError(f"No vip list record found with ID {record_id}")
     return record
 
 
