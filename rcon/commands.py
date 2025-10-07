@@ -282,7 +282,18 @@ class ServerCtl:
 
     def get_map(self) -> str:
         # TODO: Currently returns pretty name instead of map name, f.e. "CARENTAN" instead of "carentan_warfare"
-        return self.exchange("GetServerInformation", 2, {"Name": "session", "Value": ""}).content_dict["mapName"]
+        session = self.exchange("GetServerInformation", 2, {"Name": "session", "Value": ""}).content_dict
+        layer = next(
+            (
+                l for l in LAYERS.values()
+                if l.map.name == session["mapName"]
+                   and l.game_mode == GameMode(session["gameMode"].lower())
+            ),
+            None,
+        )
+        if not layer:
+            layer = LAYERS[UNKNOWN_MAP_NAME]
+        return layer.id
 
     def get_maps(self) -> list[str]:
         details = self.exchange("GetClientReferenceData", 2, "AddMapToRotation")
