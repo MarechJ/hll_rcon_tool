@@ -38,9 +38,19 @@ import Login from "./pages/login"
 import { loader as loginLoader } from "./pages/login"
 import { action as loginAction } from "./pages/login"
 
-import SettingsPage from "./pages/settings"
-import { loader as settingsLoader } from "./pages/settings"
-import { action as settingsAction } from "./pages/settings"
+import SettingsPage from "./pages/settings/general-group"
+import GeneralSettingsPage from "./pages/settings/general-group/general";
+import { loader as generalSettingsLoader } from "./pages/settings/general-group/general/loader"
+import AutoVotekickSettingsPage from "./pages/settings/general-group/auto-votekick";
+import { loader as autoVotekickSettingsLoader } from "./pages/settings/general-group/auto-votekick/loader"
+import DynamicWeatherSettingsPage from "./pages/settings/general-group/dynamic-weather";
+import { loader as dynamicWeatherSettingsLoader } from "./pages/settings/general-group/dynamic-weather/loader"
+import ServerNameSettingsPage from "./pages/settings/general-group/server-name";
+import { loader as serverNameSettingsLoader } from "./pages/settings/general-group/server-name/loader"
+import CrconAppSettingsPage from "./pages/settings/general-group/crcon-app";
+import { loader as crconAppSettingsLoader } from "./pages/settings/general-group/crcon-app/loader"
+import GameTimersSettingsPage from "./pages/settings/general-group/game-timers";
+import { loader as gameTimersSettingsLoader } from "./pages/settings/general-group/game-timers/loader"
 
 import MapsManager from "./pages/settings/maps"
 import { loader as mapsManagerLoader } from "./pages/settings/maps/loader"
@@ -212,146 +222,180 @@ const router = createBrowserRouter([
             {
                 path: 'settings',
                 errorElement: <RouteError />,
+                element: <SettingsPage />,
                 handle: { crumb: () => <span>Settings</span> },
                 children: [
                     {
-                        path: '',
+                        path: 'general',
                         handle: { crumb: () => <span>General</span> },
-                        element: <SettingsPage />,
-                        loader: settingsLoader,
-                        action: settingsAction,
-                        index: true,
+                        element: <GeneralSettingsPage />,
+                        loader: generalSettingsLoader,
                         errorElement: <RouteError />,
                     },
                     {
-                        path: 'services',
-                        handle: { crumb: () => <span>Services</span> },
-                        element: <ServicesSettings />,
-                        loader: servicesLoader,
-                        action: servicesAction,
+                        path: 'auto-votekick',
+                        handle: { crumb: () => <span>Auto Votekick</span> },
+                        element: <AutoVotekickSettingsPage />,
+                        loader: autoVotekickSettingsLoader,
                         errorElement: <RouteError />,
                     },
                     {
-                        path: 'vip',
-                        handle: { crumb: () => <Link to={'/settings/vip'}>Vip</Link> },
-                        loader: vipLoader,
-                        element: <VipSettings />,
+                        path: 'server-name',
+                        handle: { crumb: () => <span>Server Name</span> },
+                        element: <ServerNameSettingsPage />,
+                        loader: serverNameSettingsLoader,
                         errorElement: <RouteError />,
                     },
                     {
-                        path: 'console-admins',
-                        handle: { crumb: () => <Link to={'/settings/console-admins'}>Console Admins</Link> },
-                        element: <ConsoleAdminSettings />,
-                        loader: consoleAdminSettingsLoader,
-                        action: consoleAdminSettingsAction,
+                        path: 'game-timers',
+                        handle: { crumb: () => <span>Game Timers</span> },
+                        element: <GameTimersSettingsPage />,
+                        loader: gameTimersSettingsLoader,
                         errorElement: <RouteError />,
                     },
                     {
-                        path: 'profanity-filter',
-                        handle: { crumb: () => <span>Profanity Filter</span> },
-                        element: <ProfanityFilterSettings />,
-                        loader: profanityFilterLoader,
-                        action: profanityFilterAction,
+                        path: 'dynamic-weather',
+                        handle: { crumb: () => <span>Dynamic Weather</span> },
+                        element: <DynamicWeatherSettingsPage />,
+                        loader: dynamicWeatherSettingsLoader,
                         errorElement: <RouteError />,
                     },
                     {
-                        path: 'welcome-message',
-                        handle: { crumb: () => <span>Welcome Message</span> },
-                        element: <WelcomeMessageSettings />,
-                        loader: welcomeMessageLoader,
-                        action: welcomeMessageAction,
+                        path: 'crcon',
+                        handle: { crumb: () => <span>CRCON APP</span> },
+                        element: <CrconAppSettingsPage />,
+                        loader: crconAppSettingsLoader,
+                        errorElement: <RouteError />,
+                    },
+                ]
+            },
+            {
+                path: 'settings/services',
+                handle: { crumb: () => <span>Services</span> },
+                element: <ServicesSettings />,
+                loader: servicesLoader,
+                action: servicesAction,
+                errorElement: <RouteError />,
+            },
+            {
+                path: 'settings/vip',
+                handle: { crumb: () => <Link to={'/settings/vip'}>Vip</Link> },
+                loader: vipLoader,
+                element: <VipSettings />,
+                errorElement: <RouteError />,
+            },
+            {
+                path: 'settings/console-admins',
+                handle: { crumb: () => <Link to={'/settings/console-admins'}>Console Admins</Link> },
+                element: <ConsoleAdminSettings />,
+                loader: consoleAdminSettingsLoader,
+                action: consoleAdminSettingsAction,
+                errorElement: <RouteError />,
+            },
+            {
+                path: 'settings/profanity-filter',
+                handle: { crumb: () => <span>Profanity Filter</span> },
+                element: <ProfanityFilterSettings />,
+                loader: profanityFilterLoader,
+                action: profanityFilterAction,
+                errorElement: <RouteError />,
+            },
+            {
+                path: 'settings/welcome-message',
+                handle: { crumb: () => <span>Welcome Message</span> },
+                element: <WelcomeMessageSettings />,
+                loader: welcomeMessageLoader,
+                action: welcomeMessageAction,
+                errorElement: <RouteError />,
+            },
+            {
+                path: 'settings/broadcast-message',
+                handle: { crumb: () => <span>Broadcast Message</span> },
+                element: <BroadcastMessageSettings />,
+                loader: broadcastMessageLoader,
+                action: broadcastMessageAction,
+                errorElement: <RouteError />,
+            },
+            {
+                path: 'settings/autosettings',
+                handle: { crumb: () => <span>Autosettings</span> },
+                element: <AutoSettings />,
+                loader: autosettingsLoader,
+                action: autosettingsAction,
+                errorElement: <RouteError />,
+            },
+            {
+                path: 'settings/maps',
+                element: <MapsManager />,
+                loader: mapsManagerLoader,
+                errorElement: <RouteError />,
+                id: "maps",
+                children: [
+                    {
+                        path: 'change',
+                        element: <MapList />,
                         errorElement: <RouteError />,
                     },
                     {
-                        path: 'broadcast-message',
-                        handle: { crumb: () => <span>Broadcast Message</span> },
-                        element: <BroadcastMessageSettings />,
-                        loader: broadcastMessageLoader,
-                        action: broadcastMessageAction,
+                        path: 'rotation',
+                        element: <MapRotation />,
                         errorElement: <RouteError />,
-                    },
-                    {
-                        path: 'autosettings',
-                        handle: { crumb: () => <span>Autosettings</span> },
-                        element: <AutoSettings />,
-                        loader: autosettingsLoader,
-                        action: autosettingsAction,
-                        errorElement: <RouteError />,
-                    },
-                    {
-                        path: 'maps',
-                        element: <MapsManager />,
-                        loader: mapsManagerLoader,
-                        errorElement: <RouteError />,
-                        id: "maps",
                         children: [
                             {
-                                path: 'change',
-                                element: <MapList />,
-                                errorElement: <RouteError />,
+                                path: '',
+                                index: true,
+                                loader: mapRotationBuilderLoader,
+                                element: <MapRotationBuilder />,
                             },
                             {
-                                path: 'rotation',
-                                element: <MapRotation />,
-                                errorElement: <RouteError />,
-                                children: [
-                                    {
-                                        path: '',
-                                        index: true,
-                                        loader: mapRotationBuilderLoader,
-                                        element: <MapRotationBuilder />,
-                                    },
-                                    {
-                                        path: 'settings',
-                                        loader: mapRotationSettingsLoader,
-                                        element: <MapRotationSettings />,
-                                    }
-                                ]
-                            },
-                            {
-                                path: 'votemap',
-                                element: <Votemap />,
-                                errorElement: <RouteError />,
-                                children: [
-                                    {
-                                        path: '',
-                                        index: true,
-                                        element: <VotemapStatus />,
-                                        loader: votemapStatusLoader,
-                                    },
-                                    {
-                                        path: 'whitelist',
-                                        element: <VotemapBuilder />,
-                                        loader: votemapBuilderLoader,
-                                    },{
-                                        path: 'settings',
-                                        element: <VotemapSettings />,
-                                        loader: votemapSettingsLoader,
-                                    }
-                                ]
-                            },
-                            {
-                                path: 'objectives',
-                                element: <MapObjectives />,
-                                loader: mapObjectivesLoader,
-                                errorElement: <MapObjectivesError />
+                                path: 'settings',
+                                loader: mapRotationSettingsLoader,
+                                element: <MapRotationSettings />,
                             }
-                        ],
+                        ]
                     },
                     {
-                        path: 'templates',
-                        handle: { crumb: () => <span>Templates</span> },
-                        element: <TemplatesSettings />,
+                        path: 'votemap',
+                        element: <Votemap />,
+                        errorElement: <RouteError />,
                         children: [
                             {
-                                path: ':category',
-                                handle: { crumb: () => <span>Detail</span> },
-                                loader: templatesLoader,
-                                action: templatesAction,
-                                errorElement: <RouteError />,
-                                element: <TemplatesDetail />,
+                                path: '',
+                                index: true,
+                                element: <VotemapStatus />,
+                                loader: votemapStatusLoader,
                             },
+                            {
+                                path: 'whitelist',
+                                element: <VotemapBuilder />,
+                                loader: votemapBuilderLoader,
+                            },{
+                                path: 'settings',
+                                element: <VotemapSettings />,
+                                loader: votemapSettingsLoader,
+                            }
                         ]
+                    },
+                    {
+                        path: 'objectives',
+                        element: <MapObjectives />,
+                        loader: mapObjectivesLoader,
+                        errorElement: <MapObjectivesError />
+                    }
+                ],
+            },
+            {
+                path: 'settings/templates',
+                handle: { crumb: () => <span>Templates</span> },
+                element: <TemplatesSettings />,
+                children: [
+                    {
+                        path: ':category',
+                        handle: { crumb: () => <span>Detail</span> },
+                        loader: templatesLoader,
+                        action: templatesAction,
+                        errorElement: <RouteError />,
+                        element: <TemplatesDetail />,
                     },
                 ]
             },
