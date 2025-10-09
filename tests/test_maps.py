@@ -157,7 +157,11 @@ def test_is_server_loading_map(map_name, expected):
 def test_all_map_images_exist():
     ALL_MAP_IMAGES = [f for f in os.listdir(Path("./rcongui/public/maps"))]
     ALL_MAP_ICONS = [f for f in os.listdir(Path("./rcongui/public/maps/icons"))]
+    ALL_PUBLIC_MAP_IMAGES = [f for f in os.listdir(Path("./rcongui_public/public/maps"))]
+    ALL_PUBLIC_MAP_ICONS = [f for f in os.listdir(Path("./rcongui_public/public/maps/icons"))]
 
     for l in LAYERS.values():
         assert l.image_name in ALL_MAP_IMAGES
         assert l.image_name in ALL_MAP_ICONS
+        assert l.image_name in ALL_PUBLIC_MAP_IMAGES
+        assert l.image_name in ALL_PUBLIC_MAP_ICONS
