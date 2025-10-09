@@ -321,11 +321,11 @@ class ServerCtl:
             "role": x["group"],
         } for x in self.exchange("GetAdminUsers", 2).content_dict["adminUsers"]]
 
-    def get_temp_bans(self) -> list[str]:
-        return [x["userId"] for x in self.exchange("GetTemporaryBans", 2).content_dict["banList"]]
+    def get_temp_bans(self) -> list[dict]:
+        return self.exchange("GetTemporaryBans", 2).content_dict["banList"]
 
-    def get_perma_bans(self) -> list[str]:
-        return [x["userId"] for x in self.exchange("GetPermanentBans", 2).content_dict["banList"]]
+    def get_perma_bans(self) -> list[dict]:
+        return self.exchange("GetPermanentBans", 2).content_dict["banList"]
 
     def get_team_switch_cooldown(self) -> int:
         # TODO: Not available right now

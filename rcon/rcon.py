@@ -494,73 +494,29 @@ class Rcon(ServerCtl):
 
     @ttl_cache(ttl=60)
     def get_perma_bans(self) -> list[GameServerBanType]:
-        bans: list[GameServerBanType] = []
-        for raw_ban in super().get_perma_bans():
-            try:
-                ban = self._struct_ban(ban=raw_ban, type_=PERMA_BAN)
-                bans.append(ban)
-            except ValueError:
-                logger.exception("Invalid perma ban line: %s", raw_ban)
-
-        return bans
+        return [
+            self._struct_ban(ban=x, type_=PERMA_BAN) for x in super().get_perma_bans()
+        ]
 
     @ttl_cache(ttl=60)
     def get_temp_bans(self) -> list[GameServerBanType]:
-        bans: list[GameServerBanType] = []
-        for raw_ban in super().get_temp_bans():
-            try:
-                ban = self._struct_ban(ban=raw_ban, type_=TEMP_BAN)
-                bans.append(ban)
-            except ValueError:
-                logger.exception("Invalid temp ban line: %s", raw_ban)
-
-        return bans
+        return [
+            self._struct_ban(ban=x, type_=TEMP_BAN) for x in super().get_perma_bans()
+        ]
 
     def _struct_ban(self, ban, type_) -> GameServerBanType:
-        # Avoid errors on empty temp bans
-        if ban == "":
-            return {
-                "type": type_,
-                "name": None,
-                PLAYER_ID: None,
-                "timestamp": None,
-                "ban_time": None,
-                "reason": None,
-                "by": None,
-                "raw": ban,
-            }
-
-        # name, time = ban.split(', banned on ')
         # '76561197984877751 : nickname "Dr.WeeD" banned for 2 hours on 2020.12.03-12.40.08 for "None" by admin "test"'
-        player_id, rest = ban.split(" :", 1)
-        name = None
-        reason = None
-        by = None
-        date = None
-
-        if "nickname" in rest:
-            name = rest.split('" banned', 1)[0]
-            name = name.split(' nickname "', 1)[-1]
-
-        groups = re.match(r".*(\d{4}\.\d{2}\.\d{2}-\d{2}\.\d{2}.\d{2}) (.*)", ban)
-        if groups and groups.groups():
-            date = groups.group(1)
-            try:
-                reason = groups.group(2)
-            except:
-                logger.error("Unable to extract reason from ban")
-        by = ban.split(" by admin ", -1)[-1]
-
+        # {'userId': '76561199200242461', 'userName': '', 'timeOfBanning': '2025-10-08T00:20:33.035Z', 'durationHours': 2, 'banReason': 'Test :)', 'adminName': 'Fragger'}
         return {
             "type": type_,
-            "name": name,
-            PLAYER_ID: player_id,
+            "name": ban["userName"],
+            PLAYER_ID: ban["userId"],
             # TODO FIX
             "timestamp": None,
-            "ban_time": date,
-            "reason": reason,
-            "by": by.replace('"', ""),
-            "raw": ban,
+            "ban_time": ban["timeOfBanning"],
+            "reason": ban["banReason"],
+            "by": ban["adminName"],
+            "raw": f'{ban["userId"]} : nickname "{ban["userId"]}" banned for {ban["durationHours"]} hours on {datetime.fromisoformat(ban["timeOfBanning"]):%Y.%m.%d-%H.%M.%S} for "{ban["banReason"]}" by admin "{ban["adminName"]}"',
         }
 
     def get_bans(self) -> list[GameServerBanType]:
