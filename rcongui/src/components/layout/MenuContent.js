@@ -6,15 +6,13 @@ import ListItemText from "@mui/material/ListItemText";
 import Stack from "@mui/material/Stack";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Collapse } from "@mui/material";
-import { useState } from "react";
+import {useState} from "react";
 import { useAppStore } from "@/stores/app-state";
 
-/**
- * Ein einzelner Navigationslink
- */
 const NavigationLink = ({ to, icon, text, onClick }) => {
+
   return (
     <ListItem key={to} onClick={onClick} disablePadding sx={{ display: "block" }}>
       <ListItemButton component={Link} to={to}>
@@ -25,15 +23,11 @@ const NavigationLink = ({ to, icon, text, onClick }) => {
   );
 };
 
-/**
- * Eine Menügruppe (z. B. "Players", "Maps", "Admin")
- * → jetzt standardmäßig expanded beim Laden
- */
 const Group = ({ groupName, icon, level = 1, children }) => {
-  const [open, setOpen] = useState(true); // ✅ Menüs starten geöffnet
+  const [open, setOpen] = useState(true);
 
   const handleClick = () => {
-    setOpen(!open); // erlaubt weiterhin manuelles Einklappen
+    setOpen(!open);
   };
 
   return (
@@ -43,8 +37,7 @@ const Group = ({ groupName, icon, level = 1, children }) => {
         <ListItemText primary={groupName} />
         {open ? <ExpandLessIcon /> : <ExpandMoreIcon />}
       </ListItemButton>
-
-      <Collapse in={open} timeout="auto" unmountOnExit>
+      <Collapse in={open} timeout={"auto"} unmountOnExit>
         <List
           dense
           sx={{ "& .MuiListItemButton-root": { pl: 2 * level } }}
@@ -57,9 +50,6 @@ const Group = ({ groupName, icon, level = 1, children }) => {
   );
 };
 
-/**
- * Gesamtes Menü (Sidebar-Inhalt)
- */
 export default function MenuContent({ navigationTree, isMobile }) {
   const toggleDrawer = useAppStore((state) => state.toggleDrawer);
 
@@ -79,7 +69,6 @@ export default function MenuContent({ navigationTree, isMobile }) {
       }}
     >
       <List dense sx={{ overflowY: "auto" }}>
-        {/* Links ohne Gruppen-Header */}
         {navigationTree
           .filter((group) => !("name" in group))
           .map((group) =>
@@ -94,15 +83,10 @@ export default function MenuContent({ navigationTree, isMobile }) {
             ))
           )}
 
-        {/* Gruppen mit expand/collapse */}
         {navigationTree
           .filter((group) => "name" in group)
           .map((group) => (
-            <Group
-              key={group.name}
-              groupName={group.name}
-              icon={group.icon}
-            >
+            <Group key={group.name} groupName={group.name} icon={group.icon}>
               {group.links.map((link) => (
                 <NavigationLink
                   key={link.to}
