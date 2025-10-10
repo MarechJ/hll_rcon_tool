@@ -62,10 +62,10 @@ async function handleFetchResponse(req, res, cmd) {
 
   if (isJSON) {
     data = await parseJsonResponse(res);
+    error = data.error
     if (req.method === "GET") {
       data = data.result
     }
-    error = data.error
   } else if (isText) {
     data = await res.text();
   }
