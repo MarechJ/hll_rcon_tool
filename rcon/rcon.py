@@ -516,7 +516,7 @@ class Rcon(ServerCtl):
             "ban_time": ban["timeOfBanning"],
             "reason": ban["banReason"],
             "by": ban["adminName"],
-            "raw": f'{ban["userId"]} : nickname "{ban["userId"]}" banned for {ban["durationHours"]} hours on {datetime.fromisoformat(ban["timeOfBanning"]):%Y.%m.%d-%H.%M.%S} for "{ban["banReason"]}" by admin "{ban["adminName"]}"',
+            "raw": f'{ban["userId"]} : nickname "{ban["userName"]}" banned for {ban["durationHours"]} hours on {datetime.fromisoformat(ban["timeOfBanning"]):%Y.%m.%d-%H.%M.%S} for "{ban["banReason"]}" by admin "{ban["adminName"]}"',
         }
 
     def get_bans(self) -> list[GameServerBanType]:
