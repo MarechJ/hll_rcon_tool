@@ -567,6 +567,7 @@ class Rcon(ServerCtl):
 
     def remove_vip(self, player_id) -> bool:
         """Removes VIP status on the game server and removes their PlayerVIP record."""
+        player_id = str(player_id)
 
         # Remove VIP before anything else in case we have errors
         with invalidates(Rcon.get_vip_ids):
@@ -607,6 +608,8 @@ class Rcon(ServerCtl):
         self, player_id: str, description: str, expiration: str | None = None
     ) -> bool:
         """Adds VIP status on the game server and adds or updates their PlayerVIP record."""
+        player_id = str(player_id)
+
         with invalidates(Rcon.get_vip_ids):
             # Add VIP before anything else in case we have errors
             result = super().add_vip(player_id, description)
