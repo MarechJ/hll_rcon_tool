@@ -30,7 +30,7 @@ import { ClientError } from "@/components/shared/ClientError";
 import { useSettingsState } from "./useSettingsState";
 import { AsyncClientError } from "@/components/shared/AsyncClientError";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { useInputHandlers } from "./useInputHandlers";
+import { useInputHandlers } from "./general-group/general/useInputHandlers";
 import { toast } from "react-toastify";
 import { useQuery } from "@tanstack/react-query";
 import { mapsManagerQueryKeys } from "./maps/queries";

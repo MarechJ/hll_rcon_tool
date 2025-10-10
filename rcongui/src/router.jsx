@@ -41,16 +41,14 @@ import { action as loginAction } from "./pages/login"
 import SettingsPage from "./pages/settings/general-group"
 import GeneralSettingsPage from "./pages/settings/general-group/general";
 import { loader as generalSettingsLoader } from "./pages/settings/general-group/general/loader"
-import AutoVotekickSettingsPage from "./pages/settings/general-group/auto-votekick";
-import { loader as autoVotekickSettingsLoader } from "./pages/settings/general-group/auto-votekick/loader"
-import DynamicWeatherSettingsPage from "./pages/settings/general-group/dynamic-weather";
-import { loader as dynamicWeatherSettingsLoader } from "./pages/settings/general-group/dynamic-weather/loader"
+import AdminCamSettingsPage from "./pages/settings/general-group/admin-cam-notifications";
+import { loader as adminCamSettingsLoader } from "./pages/settings/general-group/admin-cam-notifications/loader"
 import ServerNameSettingsPage from "./pages/settings/general-group/server-name";
 import { loader as serverNameSettingsLoader } from "./pages/settings/general-group/server-name/loader"
 import CrconAppSettingsPage from "./pages/settings/general-group/crcon-app";
 import { loader as crconAppSettingsLoader } from "./pages/settings/general-group/crcon-app/loader"
-import GameTimersSettingsPage from "./pages/settings/general-group/game-timers";
-import { loader as gameTimersSettingsLoader } from "./pages/settings/general-group/game-timers/loader"
+import GameSettingsPage from "./pages/settings/general-group/game";
+import { loader as gameSettingsLoader } from "./pages/settings/general-group/game/loader"
 
 import MapsManager from "./pages/settings/maps"
 import { loader as mapsManagerLoader } from "./pages/settings/maps/loader"
@@ -233,10 +231,10 @@ const router = createBrowserRouter([
                         errorElement: <RouteError />,
                     },
                     {
-                        path: 'auto-votekick',
-                        handle: { crumb: () => <span>Auto Votekick</span> },
-                        element: <AutoVotekickSettingsPage />,
-                        loader: autoVotekickSettingsLoader,
+                        path: 'admin-cam-notifications',
+                        handle: { crumb: () => <span>Admin Cam Notifications</span> },
+                        element: <AdminCamSettingsPage />,
+                        loader: adminCamSettingsLoader,
                         errorElement: <RouteError />,
                     },
                     {
@@ -247,17 +245,10 @@ const router = createBrowserRouter([
                         errorElement: <RouteError />,
                     },
                     {
-                        path: 'game-timers',
-                        handle: { crumb: () => <span>Game Timers</span> },
-                        element: <GameTimersSettingsPage />,
-                        loader: gameTimersSettingsLoader,
-                        errorElement: <RouteError />,
-                    },
-                    {
-                        path: 'dynamic-weather',
-                        handle: { crumb: () => <span>Dynamic Weather</span> },
-                        element: <DynamicWeatherSettingsPage />,
-                        loader: dynamicWeatherSettingsLoader,
+                        path: 'game',
+                        handle: { crumb: () => <span>Game</span> },
+                        element: <GameSettingsPage />,
+                        loader: gameSettingsLoader,
                         errorElement: <RouteError />,
                     },
                     {

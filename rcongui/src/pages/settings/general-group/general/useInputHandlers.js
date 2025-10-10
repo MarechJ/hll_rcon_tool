@@ -1,4 +1,4 @@
-import { getMaxValue, getMinValue } from "./index2";
+import { getMaxValue, getMinValue } from "../utils";
 
 export const useInputHandlers = (pendingSettings, setPendingSettings) => {
   const handleInputChange = (key) => (event) => {
