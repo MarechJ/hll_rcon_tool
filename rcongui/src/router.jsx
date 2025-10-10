@@ -46,7 +46,6 @@ import { loader as adminCamSettingsLoader } from "./pages/settings/general-group
 import ServerNameSettingsPage from "./pages/settings/general-group/server-name";
 import { loader as serverNameSettingsLoader } from "./pages/settings/general-group/server-name/loader"
 import CrconAppSettingsPage from "./pages/settings/general-group/crcon-app";
-import { loader as crconAppSettingsLoader } from "./pages/settings/general-group/crcon-app/loader"
 import GameSettingsPage from "./pages/settings/general-group/game";
 import { loader as gameSettingsLoader } from "./pages/settings/general-group/game/loader"
 
@@ -255,7 +254,6 @@ const router = createBrowserRouter([
                         path: 'crcon',
                         handle: { crumb: () => <span>CRCON APP</span> },
                         element: <CrconAppSettingsPage />,
-                        loader: crconAppSettingsLoader,
                         errorElement: <RouteError />,
                     },
                 ]
