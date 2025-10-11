@@ -10,9 +10,9 @@ export const loader = async () => {
                 default: 90,
             },
             offensive: {
-                min: 50,
-                max: 300,
-                default: 150,
+                min: 10,
+                max: 60,
+                default: 30,
             },
             skirmish: {
                 min: 10,

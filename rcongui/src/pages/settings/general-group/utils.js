@@ -13,7 +13,7 @@ export const getMaxValue = (key) => {
     case "match_warfare_timer":
       return 180;
     case "match_offensive_timer":
-      return 300;
+      return 60;
     case "match_skirmish_timer":
       return 60;
     case "warmup_skirmish_timer":
@@ -32,7 +32,7 @@ export const getMinValue = (key) => {
     case "match_warfare_timer":
       return 30;
     case "match_offensive_timer":
-      return 50;
+      return 10;
     case "match_skirmish_timer":
       return 10;
     case "warmup_warfare_timer":
@@ -88,7 +88,7 @@ export const getHelpText = (key) => {
     case "match_warfare_timer":
       return "Default is 90 minutes";
     case "match_offensive_timer":
-      return "Default is 150 minutes";
+      return "Default is 30 minutes";
     case "match_skirmish_timer":
       return "Default is 30 minutes";
     case "warmup_warfare_timer":
