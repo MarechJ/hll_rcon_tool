@@ -33,9 +33,10 @@ function GameTimersSettings() {
             title={`${
               gameMode[0].toUpperCase() + gameMode.slice(1)
             } Match Timer`}
-            subheader="The total length of the match."
+            subheader={gameMode === "offensive" ? "The length of each control point phase." : "The total length of the match."}
             icon={TimerIcon}
-            mutationFn={cmd.SET_MATCH_TIMER}
+            setTimer={cmd.SET_MATCH_TIMER}
+            removeTimer={cmd.REMOVE_MATCH_TIMER}
             initialData={loaderData.timers.match[gameMode].default}
           />
         ))}
@@ -52,7 +53,8 @@ function GameTimersSettings() {
             } Warm Up Timer`}
             subheader="The length of the match warm up."
             icon={SelfImprovementIcon}
-            mutationFn={cmd.SET_WARMUP_TIMER}
+            setTimer={cmd.SET_WARMUP_TIMER}
+            removeTimer={cmd.REMOVE_WARMUP_TIMER}
             initialData={loaderData.timers.warmup[gameMode].default}
           />
         ))}
@@ -62,6 +64,9 @@ function GameTimersSettings() {
       </Typography>
       <Typography variant="body2" color="text.secondary" component="div">
         <em>Note: The changes will be applied on a map change.</em>
+      </Typography>
+      <Typography variant="body2" color="text.secondary" component="div">
+        <em>Note: Removing the timer will set the timer to its default value and the label from the HLL server browser will be removed as well.</em>
       </Typography>
     </Stack>
   );

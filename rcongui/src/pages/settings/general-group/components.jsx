@@ -3,6 +3,7 @@ import {
   Autocomplete,
   Box,
   Button,
+  ButtonGroup,
   Card,
   CardContent,
   CardHeader,
@@ -706,12 +707,13 @@ export const SliderTimer = ({
   title,
   subheader,
   icon: Icon,
-  mutationFn,
+  setTimer,
+  removeTimer,
   initialData,
 }) => {
   const { mutate, isPending } = useMutation({
     mutationFn: (value) =>
-      mutationFn({
+      setTimer({
         payload: { game_mode: gameMode, length: value },
         throwRouteError: false,
       }),
@@ -720,6 +722,19 @@ export const SliderTimer = ({
     },
     onError: (error) =>
       toast.error(`Failed to update ${title.toLowerCase()}: ${error.message}`),
+  });
+
+  const { mutate: mutateEnabled, isPending: isPendingEnabled } = useMutation({
+    mutationFn: () =>
+      removeTimer({
+        payload: { game_mode: gameMode },
+        throwRouteError: false,
+      }),
+    onSuccess: () => {
+      toast.success(`Timer for ${gameMode} removed successfully!`);
+    },
+    onError: (error) =>
+      toast.error(`Failed to remove timer for ${gameMode}: ${error.message}`),
   });
 
   const form = useForm({ defaultValues: { [settingKey]: initialData || 0 } });
@@ -739,16 +754,25 @@ export const SliderTimer = ({
           title={title}
           subheader={subheader}
           action={
-            <Button
-              type="submit"
-              form={`${settingKey}-form`}
-              variant="contained"
+            <ButtonGroup
               size="small"
-              startIcon={<SaveIcon />}
-              disabled={form.formState.isSubmitting || isPending}
+              disabled={
+                form.formState.isSubmitting || isPending || isPendingEnabled
+              }
             >
-              {isPending ? "Saving..." : "Save"}
-            </Button>
+              <Button color="error" variant="contained" onClick={mutateEnabled}>
+                Remove
+              </Button>
+              <Button
+                type="submit"
+                form={`${settingKey}-form`}
+                variant="contained"
+                size="small"
+                startIcon={<SaveIcon />}
+              >
+                {isPending ? "Saving..." : "Save"}
+              </Button>
+            </ButtonGroup>
           }
         />
         <Divider flexItem sx={{ mt: 1, mb: 2 }} />
