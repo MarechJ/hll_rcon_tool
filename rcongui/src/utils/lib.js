@@ -41,12 +41,8 @@ export const parseVotekickThresholds = (thresholds) => {
 
 export const getVipExpirationStatus = (vip) => {
   if (!vip) return "none";
-  if (
-    vip.vip_expiration === NEVER_EXPIRES_VIP_DATE ||
-    vip.vip_expiration === null
-  )
-    return "never";
-  if (dayjs(vip.vip_expiration).isBefore(dayjs())) return "expired";
+  if (vip.expires_at === null) return "never";
+  if (dayjs(vip.expires_at).isBefore(dayjs())) return "expired";
   return "active";
 };
 
@@ -76,7 +72,7 @@ export const normalizePlayerProfile = (profile) => {
   return {
     ...profile,
     received_actions: profile.received_actions ?? [],
-    vips: profile.vips ?? [],
+    // vips: profile.vips ?? [],
     blacklists: profile.blacklists ?? [],
     flags: profile.flags ?? [],
     penalty_count: profile.penalty_count ?? {
@@ -216,40 +212,42 @@ export const logActions = {
 };
 
 export function getGameDuration(start, end) {
-  const totalSeconds = dayjs(end).diff(dayjs(start), 'seconds');
+  const totalSeconds = dayjs(end).diff(dayjs(start), "seconds");
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
 
   // Format the result as hh:mm:ss
-  const formattedTime = `${String(hours).padStart(2, '0')}:${String(
+  const formattedTime = `${String(hours).padStart(2, "0")}:${String(
     minutes
-  ).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  ).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 
   return formattedTime;
 }
 
 export function isLeader(role) {
-  return ["officer", "tankcommander", "spotter", "armycommander"].includes(role);
+  return ["officer", "tankcommander", "spotter", "armycommander"].includes(
+    role
+  );
 }
 
 export function isSteamPlayer(player) {
-  const { player_id: id } = player
-  return id.length === 17 && !Number.isNaN(Number(id))
+  const { player_id: id } = player;
+  return id.length === 17 && !Number.isNaN(Number(id));
 }
 
 export function getSteamProfileUrl(id) {
-  return `https://steamcommunity.com/profiles/${id}`
+  return `https://steamcommunity.com/profiles/${id}`;
 }
 
 export function getXboxProfileUrl(playerName) {
-  return `https://xboxgamertag.com/search/${playerName}`
+  return `https://xboxgamertag.com/search/${playerName}`;
 }
 
 export function removeLogPlayerIds(message) {
   const regex = /\((?:(?:Axis|Allies)\/)?(?:[0-9]{17}|[a-z0-9]{32})\)/g;
   return message.replace(regex, "");
-};
+}
 
 export function getLogTeam(log) {
   let searched = log.message;
@@ -262,7 +260,10 @@ export function getLogTeam(log) {
 }
 
 export function getTeamColor(team) {
-  return (theme) => theme.palette.text[team === "Axis" ? "red" : team === "Allies" ? "blue" : "inherit"];
+  return (theme) =>
+    theme.palette.text[
+      team === "Axis" ? "red" : team === "Allies" ? "blue" : "inherit"
+    ];
 }
 
 // Returns tier colors based on theme mode ("light" or "dark")

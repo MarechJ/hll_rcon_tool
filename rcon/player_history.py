@@ -21,6 +21,7 @@ from rcon.models import (
     PlayersAction,
     PlayerSession,
     SteamInfo,
+    VipListRecord,
     WatchList,
     enter_session,
 )
@@ -32,7 +33,7 @@ from rcon.types import (
     PlayerProfileType,
 )
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
-from rcon.utils import strtobool
+from rcon.utils import MISSING, MissingType, strtobool
 
 
 class unaccent(ReturnTypeFromArgs):
@@ -128,6 +129,7 @@ def get_players_by_appearance(
     player_id: str | None = None,
     player_name: str | None = None,
     blacklisted: bool | None = None,
+    is_vip: bool | None = None,
     is_watched: bool | None = None,
     exact_name_match: bool = False,
     ignore_accent: bool = True,
@@ -144,6 +146,7 @@ def get_players_by_appearance(
         last_seen_till = parser.parse(last_seen_till)
 
     blacklisted = strtobool(blacklisted)
+    is_vip = strtobool(is_vip)
     is_watched = strtobool(is_watched)
     exact_name_match = strtobool(exact_name_match)
     ignore_accent = strtobool(ignore_accent)
@@ -194,6 +197,18 @@ def get_players_by_appearance(
                     or_(
                         BlacklistRecord.expires_at.is_(None),
                         BlacklistRecord.expires_at > func.now(),
+                    ),
+                )
+                .exists()
+            )
+        if is_vip is True:
+            query = query.filter(
+                sess.query(VipListRecord)
+                .where(
+                    VipListRecord.player_id_id == PlayerID.id,
+                    or_(
+                        VipListRecord.expires_at.is_(None),
+                        VipListRecord.expires_at > func.now(),
                     ),
                 )
                 .exists()
@@ -260,7 +275,6 @@ def get_players_by_appearance(
                     "last_seen_timestamp_ms": (
                         int(p[2].timestamp() * 1000) if p[2] else None
                     ),
-                    "vip_expiration": p[0].vip.expiration if p[0].vip else None,
                 }
                 for p in players
             ],
@@ -510,6 +524,20 @@ def post_player_comment(player_id: str, comment, user: str = "Bot"):
         player = sess.query(PlayerID).filter_by(player_id=player_id).one()
         player.comments.append(PlayerComment(content=comment, by=user))
         sess.commit()
+
+
+def update_player_profile(
+    player_id: str,
+    email: str | MissingType = MISSING,
+    discord_id: str | MissingType = MISSING,
+):
+    with enter_session() as sess:
+        player = _get_set_player(sess, player_name=None, player_id=player_id)
+
+        if isinstance(email, str):
+            player.email = email
+        if isinstance(discord_id, str):
+            player.discord_id = discord_id
 
 
 if __name__ == "__main__":

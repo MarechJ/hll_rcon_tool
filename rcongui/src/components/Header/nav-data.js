@@ -48,6 +48,7 @@ import DvrIcon from "@mui/icons-material/Dvr";
 import OndemandVideoIcon from "@mui/icons-material/OndemandVideo";
 import MilitaryTechIcon from "@mui/icons-material/MilitaryTech";
 import SearchIcon from "@mui/icons-material/Search";
+import StarIcon from "@mui/icons-material/Star";
 
 export const navMenus = [
   {
@@ -114,6 +115,11 @@ export const navMenus = [
         name: "Blacklist",
         to: "/records/blacklists",
         icon: <AccountBalanceIcon />,
+      },
+      {
+        name: "VIP Lists",
+        to: "/records/vip-lists",
+        icon: <StarIcon />,
       },
       {
         name: "Game Logs",
@@ -299,11 +305,7 @@ export const navMenus = [
         to: "/settings/others/steam",
         icon: <RemoveRedEyeIcon />,
       },
-      {
-        name: "Expired VIP",
-        to: "/settings/others/expired-vip",
-        icon: <TimerOffIcon />,
-      },
+
       {
         name: "GTX Server Name Change",
         to: "/settings/others/gtx-server",
