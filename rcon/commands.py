@@ -8,7 +8,7 @@ from typing import Any, Generator, List, Literal, Sequence
 
 from rcon.connection import Handle, HLLCommandError, HLLConnection, Response
 from rcon.maps import LAYERS, MAPS, UNKNOWN_MAP_NAME, Environment, GameMode, LayerType
-from rcon.types import GameStateType, ServerInfoType, SlotsType, VipIdType
+from rcon.types import AdminType, GameStateType, ServerInfoType, SlotsType, VipIdType
 from rcon.utils import exception_in_chain
 
 logger = logging.getLogger(__name__)
@@ -335,23 +335,21 @@ class ServerCtl:
             "GetServerInformation", 2, {"Name": "player", "Value": player_id}
         ).content_dict
 
-    def get_admin_ids(self) -> list[str]:
+    def get_admin_ids(self) -> list[AdminType]:
         return [
-            x["userId"]
+            {
+                "player_id": x["userId"],
+                "name": x["comment"],
+                "role": x["group"],
+            }
             for x in self.exchange("GetAdminUsers", 2).content_dict["adminUsers"]
         ]
 
-    def get_temp_bans(self) -> list[str]:
-        return [
-            x["userId"]
-            for x in self.exchange("GetTemporaryBans", 2).content_dict["banList"]
-        ]
+    def get_temp_bans(self) -> list[dict]:
+        return self.exchange("GetTemporaryBans", 2).content_dict["banList"]
 
-    def get_perma_bans(self) -> list[str]:
-        return [
-            x["userId"]
-            for x in self.exchange("GetPermanentBans", 2).content_dict["banList"]
-        ]
+    def get_perma_bans(self) -> list[dict]:
+        return self.exchange("GetPermanentBans", 2).content_dict["banList"]
 
     def get_team_switch_cooldown(self) -> int:
         # TODO: Not available right now

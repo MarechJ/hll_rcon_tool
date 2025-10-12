@@ -12,7 +12,6 @@ from rcon.seed_vip.utils import (
     calc_vip_expiration_timestamp,
     collect_steam_ids,
     filter_indefinite_vip_steam_ids,
-    filter_online_players,
     get_gamestate,
     get_next_player_bucket,
     get_online_players,
@@ -111,20 +110,41 @@ def run():
             if is_seeding and is_seeded(config=config, gamestate=gamestate):
                 seeded_timestamp = datetime.now(tz=timezone.utc)
                 logger.info(f"Server seeded at {seeded_timestamp.isoformat()}")
-                current_vips = get_vips(rcon=rcon_api)
+                # Use the full VIP list for logic so offline VIPs are respected
+                all_vips = get_vips(rcon=rcon_api)
 
-                # only include online players in the current_vips
-                current_vips = filter_online_players(current_vips, online_players)
+                # no vip reward needed for indefinite vip holders (using full list)
+                indefinite_vip_steam_ids = filter_indefinite_vip_steam_ids(all_vips)
+                to_add_vip_steam_ids -= indefinite_vip_steam_ids
 
                 # Players who were online when we seeded but didn't meet the criteria for VIP
                 no_reward_steam_ids = {
                     p.player_id for p in online_players.players.values()
                 } - to_add_vip_steam_ids
 
-                # Update VIP list records
+                expiration_timestamps = defaultdict(
+                    lambda: calc_vip_expiration_timestamp(
+                        config=config,
+                        expiration=None,
+                        from_time=seeded_timestamp or datetime.now(tz=timezone.utc),
+                    )
+                )
+                for player in all_vips.values():
+                    expiration_timestamps[player.player.player_id] = (
+                        calc_vip_expiration_timestamp(
+                            config=config,
+                            expiration=player.expiration_date if player else None,
+                            from_time=seeded_timestamp,
+                        )
+                    )
+
+                # Add or update VIP in CRCON using full VIP map
                 reward_players(
                     config=config,
                     to_add_vip_steam_ids=to_add_vip_steam_ids,
+                    current_vips=all_vips,
+                    players_lookup=player_name_lookup,
+                    expiration_timestamps=expiration_timestamps,
                 )
 
                 # Message those who earned VIP
