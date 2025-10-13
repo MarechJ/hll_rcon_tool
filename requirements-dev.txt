@@ -1,5 +1,5 @@
 black==25.9.0
 isort==6.1.0
-pytest==8.4.1
+pytest==8.4.2
 cachetools==6.1.0
 daphne==4.2.1
