@@ -6,7 +6,7 @@ sqlalchemy==2.0.43
 channels==4.2.2
 channels-redis==4.3.0
 orjson==3.11.3
-simplejson==3.20.1
+simplejson==3.20.2
 psycopg2-binary
 sentry-sdk[django]==2.39.0
 python-dateutil==2.9.0.post0
