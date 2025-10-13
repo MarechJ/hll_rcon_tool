@@ -24,6 +24,7 @@ import { TabContext, TabPanel } from "@mui/lab";
 import dayjs from "dayjs";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import CloseIcon from "@mui/icons-material/Close";
 import { useActionDialog } from "@/hooks/useActionDialog";
 import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
 import { generatePlayerActions } from "@/features/player-action/actions";
@@ -38,6 +39,7 @@ import {
 import PlayerProfileHeader from "../player/profile/Header";
 import PlayerProfileSummary from "../player/profile/Summary";
 import PlayerProfileStatusTags from "../player/profile/StatusTags";
+import { ActionMenu } from "@/features/player-action/ActionMenu";
 
 const Penalties = ({ punish, kick, tempBan, parmaBan }) => (
   <dl>
@@ -203,18 +205,43 @@ const PlayerDetails = ({ player, onClose }) => {
   });
   const name = player?.name ?? profile.names[0]?.name ?? "?";
   const avatar = profile?.steaminfo?.profile?.avatar;
+  const country = profile?.country ?? profile?.steaminfo?.country;
+  const level = player?.level ?? player?.profile?.level ?? 0;
 
   return (
     <ProfileWrapper component={"article"}>
-      <PlayerProfileHeader
-        player={player}
-        isOnline={isOnline}
-        onClose={onClose}
-        handleActionClick={handleActionClick([player])}
+      <Box sx={{ paddingTop: 2, paddingLeft: 8 }}>
+        <PlayerProfileHeader
+          player={player}
+          isOnline={isOnline}
+          avatar={avatar}
+          name={name}
+          country={country}
+          level={level}
+        />
+      </Box>
+      <ActionMenu
+        handleActionClick={handleActionClick}
         actionList={actionList}
-        avatar={avatar}
-        name={name}
+        sx={{
+          position: "absolute",
+          top: (theme) => theme.spacing(1),
+          left: (theme) => theme.spacing(0.5),
+        }}
       />
+      {onClose && (
+        <IconButton
+          sx={{
+            position: "absolute",
+            top: (theme) => theme.spacing(1),
+            right: (theme) => theme.spacing(0.5),
+          }}
+          size="small"
+          onClick={onClose}
+        >
+          <CloseIcon />
+        </IconButton>
+      )}
       <Divider />
       <PlayerProfileStatusTags
         isVip={isVip}

@@ -118,7 +118,7 @@ class PlayerID(Base):
     watchlist: Mapped["WatchList"] = relationship(back_populates="player")
     steaminfo: Mapped["SteamInfo"] = relationship(back_populates="player")
     comments: Mapped[list["PlayerComment"]] = relationship(back_populates="player")
-    stats: Mapped["PlayerStats"] = relationship(back_populates="player")
+    stats: Mapped[list["PlayerStats"]] = relationship(back_populates="player", order_by="PlayerStats.id.desc()")
     blacklists: Mapped[list["BlacklistRecord"]] = relationship(back_populates="player")
 
     vips: Mapped[list["PlayerVIP"]] = relationship(
@@ -127,6 +127,21 @@ class PlayerID(Base):
         lazy="dynamic",
     )
     optins: Mapped[list["PlayerOptins"]] = relationship(back_populates="player")
+
+    @property
+    def level(self) -> int:
+        try:
+            if not self.stats:
+                logger.debug("Player has no stats records")
+                return 0
+            
+            # Get the most recent stats (first in the ordered list)
+            latest_stats = self.stats[0]
+            return latest_stats.level
+        except Exception as e:
+            logger.error(f"Error retrieving player level: {e}")
+            return 0
+
 
     @property
     def server_number(self) -> int:
@@ -187,6 +202,7 @@ class PlayerID(Base):
             PLAYER_ID: self.player_id,
             "created": self.created,
             "names": [name.to_dict() for name in self.names],
+            "level": self.level,
             "sessions": [session.to_dict() for session in self.sessions][
                 :limit_sessions
             ],
@@ -592,6 +608,7 @@ class PlayerStats(Base):
         foreign_keys=[player_id_id], back_populates="stats"
     )
     map: Mapped[Maps] = relationship(back_populates="player_stats")
+    level: Mapped[int] = mapped_column()
 
     def detect_team(self) -> PlayerTeamAssociation:
         def get_value(item):
@@ -680,6 +697,7 @@ class PlayerStats(Base):
             "weapons": self.weapons,
             "death_by_weapons": self.death_by_weapons,
             "team": self.detect_team(),
+            "level": self.level,
         }
 
 
