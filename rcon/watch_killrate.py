@@ -140,6 +140,13 @@ ARMOR: dict[str, bool] = {
     "Bedford OYD (Supply)": True,
 }
 
+COMMANDER: dict[str, bool] = {
+    "BOMBING RUN": True,
+    "PRECISION STRIKE": True,
+    "STRAFING RUN": True,
+    "Unknown": True,  # Katyushas volleys, commander's artillery
+}
+
 
 _LAST_REPORTED_CACHE: defaultdict[str, datetime | None] = defaultdict(lambda: None)
 
@@ -178,6 +185,7 @@ def make_embed(
     armor_kpm: float,
     artillery_kpm: float,
     mg_kpm: float,
+    commander_kpm: float,
     used_weapons: Counter[str],
     server_name: str,
     author_name: str,
@@ -208,6 +216,8 @@ def make_embed(
         )
     if mg_kpm > 0.0:
         embed.add_embed_field(name="MG KPM", value=f"{mg_kpm:.1f}", inline=False)
+    if commander_kpm > 0.0:
+        embed.add_embed_field(name="COMMANDER KPM", value=f"{commander_kpm:.1f}", inline=False)
     embed.add_embed_field(
         name="Weapons",
         value="\n".join(
@@ -225,10 +235,10 @@ def watch_killrate(
     """Observe all players and report them if they hit k/r thresholds"""
     player_stats: dict = current_game_stats()
 
-    # Allow us to check if a weapon is any of ARMOR or ARTILLERY or MGS
+    # Allow us to check if a weapon is any of ARMOR or ARTILLERY or MGS or COMMANDER
     # so that we can track a base KPM rate that doesn't include any of these
     # because we track those KPMs separately.
-    not_base_weapons: dict[str, bool] = {} | ARMOR | ARTILLERY | MGS
+    not_base_weapons: dict[str, bool] = {} | ARMOR | ARTILLERY | MGS | COMMANDER
 
     if len(player_stats) < 2:
         logger.info("Fewer than 2 players, skipping")
@@ -286,6 +296,7 @@ def watch_killrate(
             config.killrate_threshold_armor,
             config.killrate_threshold_artillery,
             config.killrate_threshold_mg,
+            config.killrate_threshold_commander,
         ):
             timestamp = datetime.now()
             used_weapons = Counter(stats["weapons"])
@@ -364,6 +375,24 @@ def watch_killrate(
                 2,
             )
 
+            # Commander
+            commander_kpm: float = round(
+                (
+                    (
+                        sum(
+                            kill_count
+                            for weapon, kill_count in used_weapons.items()
+                            if weapon in COMMANDER
+                        )
+                        / playtime_secs
+                        * 60
+                    )
+                    if not config.ignore_commander
+                    else 0.0
+                ),
+                2,
+            )
+
             # Don't make the embed unless at least one condition is met
             # If a category is whitelisted its KPM is set to 0.0
             conditions_met = any(
@@ -372,6 +401,7 @@ def watch_killrate(
                     armor_kpm >= config.killrate_threshold_armor,
                     artillery_kpm >= config.killrate_threshold_artillery,
                     mg_kpm >= config.killrate_threshold_mg,
+                    commander_kpm >= config.killrate_threshold_commander,
                 ]
             )
 
@@ -400,7 +430,7 @@ def watch_killrate(
                 set_cache_value(player_id, timestamp)
 
                 logger.info(
-                    "Creating embed %s/%s playtime_secs=%s kills=%s kpm=%s, filtered_kpm=%s, armor_kpm=%s, arty_kpm=%s, mg_kpm=%s, %s",
+                    "Creating embed %s/%s playtime_secs=%s kills=%s kpm=%s, filtered_kpm=%s, armor_kpm=%s, arty_kpm=%s, mg_kpm=%s, commander_kpm=%s, %s",
                     player_name,
                     player_id,
                     kpm,
@@ -408,6 +438,7 @@ def watch_killrate(
                     armor_kpm,
                     artillery_kpm,
                     mg_kpm,
+                    commander_kpm,
                     used_weapons,
                 )
 
@@ -448,6 +479,7 @@ def watch_killrate(
                     armor_kpm=armor_kpm,
                     artillery_kpm=artillery_kpm,
                     mg_kpm=mg_kpm,
+                    commander_kpm=commander_kpm,
                     used_weapons=used_weapons,
                     server_name=server_name,
                     author_name=config.author,
@@ -470,7 +502,7 @@ def watch_killrate(
 
             else:
                 logger.info(
-                    "Already reported %s/%s at %s, playtime_secs=%s kills=%s kpm=%s, filtered_kpm=%s, armor_kpm=%s, arty_kpm=%s, mg_kpm=%s, %s",
+                    "Already reported %s/%s at %s, playtime_secs=%s kills=%s kpm=%s, filtered_kpm=%s, armor_kpm=%s, arty_kpm=%s, mg_kpm=%s, commander_kpm=%s, %s",
                     player_name,
                     player_id,
                     last_reported,
@@ -479,6 +511,7 @@ def watch_killrate(
                     armor_kpm,
                     artillery_kpm,
                     mg_kpm,
+                    commander_kpm,
                     used_weapons,
                 )
 
