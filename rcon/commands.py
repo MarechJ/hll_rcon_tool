@@ -589,7 +589,11 @@ class ServerCtl:
         return GameStateType(
             next_map=LAYERS[UNKNOWN_MAP_NAME].model_dump(),
             axis_score=s["axisScore"],
+            axis_faction=s["axisFaction"],
+            num_axis_players=s["axisPlayerCount"],
             allied_score=s["alliedScore"],
+            allied_faction=s["alliedFaction"],
+            num_allied_players=s["alliedPlayerCount"],
             current_map=LayerType(
                 id=s["mapName"],
                 map=next(
@@ -605,8 +609,6 @@ class ServerCtl:
             ),
             raw_time_remaining=raw_time_remaining,
             time_remaining=time_remaining,
-            num_axis_players=s["axisPlayerCount"],
-            num_allied_players=s["alliedPlayerCount"],
             game_mode=GameMode(s["gameMode"].lower()),
             match_time=s["matchTime"],
             queue_count=s["queueCount"],
