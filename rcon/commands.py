@@ -348,7 +348,9 @@ class ServerCtl:
 
     def get_map_sequence(self) -> list[str]:
         # Map[iD] returns '/Game/Maps/driel_offensive_ger'
-        return [x["iD"].split("/")[-1] for x in self.exchange("GetServerInformation", 2, {"Name": "mapsequence", "Value": ""}).content_dict["mAPS"]]
+        result = self.exchange("GetServerInformation", 2, {"Name": "mapsequence", "Value": ""}).content_dict["mAPS"]
+        sequence = [x["iD"].split("/")[-1] for x in result]
+        return sequence
 
     def get_slots(self) -> SlotsType:
         resp = self.exchange("GetServerInformation", 2, {"Name": "session", "Value": ""}).content_dict
@@ -585,23 +587,32 @@ class ServerCtl:
         seconds_remaining = int(time_remaining.total_seconds())
         raw_time_remaining = f"{seconds_remaining // 3600}:{(seconds_remaining // 60) % 60:02}:{seconds_remaining % 60:02}"
 
+        current_layer = next(
+            (
+                l for l in LAYERS.values()
+                if l.map.name == s["mapName"]
+                   and l.game_mode == GameMode(s["gameMode"].lower())
+            ),
+            None,
+        )
+
+        if not current_layer:
+            current_layer = LAYERS[UNKNOWN_MAP_NAME]
+
         # TODO: next_map is not included in session, map_name is pretty name instead of ID
         return GameStateType(
             next_map=LAYERS[UNKNOWN_MAP_NAME].model_dump(),
             axis_score=s["axisScore"],
             allied_score=s["alliedScore"],
             current_map=LayerType(
-                id=s["mapName"],
-                map=next(
-                    (m for m in MAPS.values() if m.name == s["mapName"]),
-                    MAPS[UNKNOWN_MAP_NAME]
-                ).model_dump(),
+                id=current_layer.id,
+                map=current_layer.map.model_dump(),
                 game_mode=s["gameMode"].lower(),
-                attackers=None,
-                environment=Environment.DAY,
-                pretty_name=s["mapName"].capitalize(),
-                image_name="",
-                image_url="",
+                attackers=current_layer.attackers.value if current_layer.attackers else None,
+                environment=current_layer.environment.value,
+                pretty_name=current_layer.pretty_name,
+                image_name=current_layer.image_name,
+                image_url=current_layer.image_url,
             ),
             raw_time_remaining=raw_time_remaining,
             time_remaining=time_remaining,

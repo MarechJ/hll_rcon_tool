@@ -732,7 +732,61 @@ class Rcon(ServerCtl):
             Rcon.get_team_objective_scores,
             Rcon.get_round_time_remaining,
         ):
-            return super().get_gamestate()
+            gamestate = super().get_gamestate()
+
+            try:
+                sequence = self.get_map_sequence()
+                if not sequence:
+                    return gamestate
+
+                # Get current map info from gamestate
+                current_map_id = gamestate["current_map"]["id"]
+                current_map_name = gamestate["current_map"]["map"]["name"]
+                current_game_mode = gamestate["current_map"]["game_mode"]
+
+                # Find current map in sequence
+                current_index = None
+                if current_map_id != "unknown":
+                    for idx, layer in enumerate(sequence):
+                        if layer.id.lower() == current_map_id.lower():
+                            current_index = idx
+                            break
+
+                # If not found by ID, try by map name and game mode
+                if current_index is None:
+                    for idx, layer in enumerate(sequence):
+                        if (layer.map.name == current_map_name and
+                            layer.game_mode.value == current_game_mode):
+                            current_index = idx
+                            break
+
+                # Calculate next map index
+                if current_index is not None:
+                    next_index = (current_index + 1) % len(sequence)
+                    next_layer = sequence[next_index]
+
+                    # Update the next_map property for tracking
+                    self.next_map = next_layer.id
+
+                    # Update gamestate with proper next_map data
+                    gamestate["next_map"] = next_layer.model_dump()
+                else:
+                    # Current map not found in sequence
+                    # This can happen when the current map is not in the rotation
+                    # In this case, the next map is the first map in the sequence
+                    if sequence:
+                        next_layer = sequence[0]
+
+                        # Update the next_map property for tracking
+                        self.next_map = next_layer.id
+
+                        # Update gamestate with proper next_map data
+                        gamestate["next_map"] = next_layer.model_dump()
+            except Exception as e:
+                logger.exception(f"Exception calculating next_map: {e}")
+                # Keep the default UNKNOWN_MAP_NAME that was set by ServerCtl.get_gamestate()
+
+            return gamestate
 
     @ttl_cache(ttl=2, cache_falsy=False)
     def team_sizes(self) -> tuple[int, int]:

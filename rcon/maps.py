@@ -256,6 +256,11 @@ class Layer(pydantic.BaseModel):
     def image_name(self) -> str:
         return f"{self.map.id}-{self.environment.value}.webp".lower()
 
+    @pydantic.computed_field
+    @property
+    def image_url(self) -> str:
+        return f"/maps/{self.image_name}"
+
 
 MAPS = {
     m.id.lower(): m
