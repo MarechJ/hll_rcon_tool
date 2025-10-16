@@ -501,7 +501,7 @@ class Rcon(ServerCtl):
     @ttl_cache(ttl=60)
     def get_temp_bans(self) -> list[GameServerBanType]:
         return [
-            self._struct_ban(ban=x, type_=TEMP_BAN) for x in super().get_perma_bans()
+            self._struct_ban(ban=x, type_=TEMP_BAN) for x in super().get_temp_bans()
         ]
 
     def _struct_ban(self, ban, type_) -> GameServerBanType:
@@ -516,7 +516,7 @@ class Rcon(ServerCtl):
             "ban_time": ban["timeOfBanning"],
             "reason": ban["banReason"],
             "by": ban["adminName"],
-            "raw": f'{ban["userId"]} : nickname "{ban["userId"]}" banned for {ban["durationHours"]} hours on {datetime.fromisoformat(ban["timeOfBanning"]):%Y.%m.%d-%H.%M.%S} for "{ban["banReason"]}" by admin "{ban["adminName"]}"',
+            "raw": f'{ban["userId"]} : nickname "{ban["userName"]}" banned for {ban["durationHours"]} hours on {datetime.fromisoformat(ban["timeOfBanning"]):%Y.%m.%d-%H.%M.%S} for "{ban["banReason"]}" by admin "{ban["adminName"]}"',
         }
 
     def get_bans(self) -> list[GameServerBanType]:
