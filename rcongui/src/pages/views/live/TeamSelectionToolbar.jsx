@@ -81,7 +81,7 @@ export const TeamSelectionToolbar = ({ table, teamData }) => {
         units.push({
           team,
           unit_name,
-          unit: unit_name === "null" ? "Unassigned" : unit_name,
+          unit: unit_name,
           type: unit.type,
           count: unit.players.length,
           leader:

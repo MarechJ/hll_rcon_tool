@@ -1990,14 +1990,43 @@ class RconAPI(Rcon):
     def set_match_timer(self, game_mode: str, length: int):
         super().set_match_timer(maps.GameMode[game_mode.upper()], length)
 
-
     def remove_match_timer(self, game_mode: str):
         super().remove_match_timer(maps.GameMode[game_mode.upper()])
-
 
     def set_warmup_timer(self, game_mode: str, length: int):
         super().set_warmup_timer(maps.GameMode[game_mode.upper()], length)
 
-
     def remove_warmup_timer(self, game_mode: str):
         super().remove_warmup_timer(maps.GameMode[game_mode.upper()])
+
+    def disband_squad_by_name(self, team_name: str, squad_name: str, reason: str):
+        game_state = self.get_gamestate()
+        team_name, squad_name = team_name.lower(), squad_name.lower()
+        if team_name == "allies":
+            team_index = game_state["allied_faction"]
+        elif team_name == "axis":
+            team_index = game_state["axis_faction"]
+        else:
+            raise ValueError(
+                "Invalid team_name argument. It must be either 'axis' or 'allies'."
+            )
+        online_players = self.get_detailed_players()["players"]
+        any_squad_player = next(
+            (
+                online_players[id]
+                for id in online_players
+                if online_players[id]["team"] == team_name
+                and online_players[id]["unit_name"] == squad_name
+            ),
+            None,
+        )
+
+        if not any_squad_player:
+            raise ValueError(f"Squad {squad_name} was not found in team {team_name}. It might have been disbanded already.")
+
+        squad_index = any_squad_player["unit_id"]
+
+        if squad_index is None:
+            raise ValueError(f"Invalid squad index for squad {squad_name} in team {team_name}")
+
+        super().disband_squad(team_index, squad_index, reason)

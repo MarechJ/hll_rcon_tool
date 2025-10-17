@@ -686,6 +686,8 @@ class GameStateType(TypedDict):
     num_axis_players: int
     allied_score: int
     axis_score: int
+    allied_faction: int
+    axis_faction: int
     raw_time_remaining: str
     time_remaining: datetime.timedelta
     current_map: "LayerType"
