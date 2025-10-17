@@ -7,7 +7,7 @@ import { normalizePlayerProfile } from "./lib";
  */
 export const extractPlayers = (game) => {
   const players = [];
-  const teams = ["axis", "allies", "none", "null"];
+  const teams = ["axis", "allies", "unassigned"];
 
   for (const teamKey of teams) {
     if (!(teamKey in game)) continue;

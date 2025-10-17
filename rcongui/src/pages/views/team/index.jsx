@@ -51,9 +51,9 @@ const TeamViewPage = () => {
           ...extractTeamState(teams?.axis ?? {}),
           ...(teams?.axis ?? {}),
         },
-        none: {
-          ...extractTeamState(teams?.none ?? {}),
-          ...(teams?.none ?? {}),
+        [UNASSIGNED]: {
+          ...extractTeamState(teams?.[UNASSIGNED] ?? {}),
+          ...(teams?.[UNASSIGNED] ?? {}),
         },
       };
     }
@@ -71,7 +71,7 @@ const TeamViewPage = () => {
     return {
       axisTeam: extractTeamState(teams?.axis, "axis"),
       alliesTeam: extractTeamState(teams?.allies, "allies"),
-      lobbyTeam: extractTeamState(teams?.none, "lobby"),
+      lobbyTeam: extractTeamState(teams?.[UNASSIGNED], "lobby"),
     };
   }, [teams]);
 
