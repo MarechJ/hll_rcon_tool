@@ -248,6 +248,14 @@ export const columns = [
     },
   },
   {
+    id: "clan-tag",
+    header: SortableHeader("Clan","Clan Tag"),
+    accessorKey: "clan_tag",
+    cell: ({ row }) => {
+      return <>{row.original.clan_tag}</>;
+    },
+  },
+  {
     id: "name",
     header: SortableHeader("Name", "Name"),
     accessorKey: "name",
