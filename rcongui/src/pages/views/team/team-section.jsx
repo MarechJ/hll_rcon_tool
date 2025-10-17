@@ -206,7 +206,7 @@ const SquadHeaderContent = ({ squad, expandedSquads, onToggleExpand }) => {
       </IconButton>
       <SquadNameInfo squad={squad} />
       <Typography variant="caption" sx={{ ml: "auto" }}>
-        ∅{" "}
+        Ø{" "}
         <Box
           component="span"
           sx={{
@@ -242,44 +242,29 @@ export const TeamSection = ({
 
   const { commander, squadGroups, unassignedPlayers, allPlayers } =
     useMemo(() => {
-      // Filter out command squad and sort remaining squads
       const squads = team.squads
         .filter((s) => s.name !== "command" && s.name !== UNASSIGNED)
         .sort((a, b) => a.name.localeCompare(b.name));
 
-      // Group squads by type
       const grouped = squads.reduce((acc, squad) => {
         const type = squad.type || "infantry";
-        if (!acc[type]) {
-          acc[type] = [];
-        }
+        if (!acc[type]) acc[type] = [];
         acc[type].push(squad);
         return acc;
       }, {});
 
-      // Define the order of squad types
       const typeOrder = ["infantry", "armor", "recon"];
       const squadGroups = typeOrder.reduce((acc, type) => {
-        if (grouped[type]?.length > 0) {
-          acc.push({
-            type,
-            squads: grouped[type],
-          });
-        }
+        if (grouped[type]?.length > 0) acc.push({ type, squads: grouped[type] });
         return acc;
       }, []);
 
       const unassignedSquad = team.squads.find((s) => s.name === UNASSIGNED);
 
-      // Create a list of all players for selection
       const allPlayers = [];
-      if (team.commander) {
-        allPlayers.push(team.commander);
-      }
+      if (team.commander) allPlayers.push(team.commander);
       squadGroups.forEach(({ squads }) => {
-        squads.forEach((squad) => {
-          allPlayers.push(...squad.players);
-        });
+        squads.forEach((squad) => allPlayers.push(...squad.players));
       });
       allPlayers.push(...(unassignedSquad?.players || []));
 
@@ -292,9 +277,7 @@ export const TeamSection = ({
     }, [team]);
 
   const getUnassignedSquad = (players) => {
-    if (players.length === 0) {
-      return null;
-    }
+    if (players.length === 0) return null;
     return (
       <Box>
         <SquadHeader
@@ -349,9 +332,7 @@ export const TeamSection = ({
   };
 
   const getLobbyPlayers = (players) => {
-    if (players.length === 0) {
-      return null;
-    }
+    if (players.length === 0) return null;
     return (
       <SquadPlayers
         squad={{ players }}
@@ -446,12 +427,15 @@ export const TeamSection = ({
                 <Box>Support</Box>
               </HeaderRow>
               <TeamHeaderRow>
-                <Box>∅ {team.avg_level.toFixed(0)}</Box>
+                <Box>Ø {team.avg_level.toFixed(0)}</Box>
                 <Box style={{ textAlign: "center" }}>
                   Total ({team.count} players)
                 </Box>
                 <PlayerStats player={team} />
               </TeamHeaderRow>
+
+              {/* --- UNASSIGNED Spieler jetzt ganz oben --- */}
+              {getUnassignedSquad(unassignedPlayers)}
 
               {commander ? (
                 <PlayerRowWrapper
@@ -473,8 +457,6 @@ export const TeamSection = ({
                   <PlayerStats player={{}} />
                 </CommanderRow>
               ) : null}
-
-              {getUnassignedSquad(unassignedPlayers)}
 
               {squadGroups.map(({ type, squads }) => (
                 <Box key={type}>

@@ -24,7 +24,7 @@ const NavigationLink = ({ to, icon, text, onClick }) => {
 };
 
 const Group = ({ groupName, icon, level = 1, children }) => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
 
   const handleClick = () => {
     setOpen(!open);

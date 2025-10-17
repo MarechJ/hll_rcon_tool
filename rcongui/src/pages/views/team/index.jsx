@@ -8,7 +8,9 @@ import {
   Typography,
   IconButton,
   Tooltip,
+  TextField,
 } from "@mui/material";
+import Autocomplete from "@mui/material/Autocomplete";
 import { ActionMenuButton } from "@/features/player-action/ActionMenu";
 import { generatePlayerActions } from "@/features/player-action/actions";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
@@ -75,6 +77,15 @@ const TeamViewPage = () => {
     };
   }, [teams]);
 
+  // Get all players for the search field
+  const allPlayers = useMemo(() => {
+    if (!teams) return [];
+    return extractPlayers(teams).map((player) => ({
+      player_id: player.player_id,
+      name: player.name,
+    }));
+  }, [teams]);
+
   // Get all squads from both teams
   const allSquads = useMemo(() => {
     const squads = {
@@ -102,6 +113,30 @@ const TeamViewPage = () => {
     });
 
     return squads;
+  }, [alliesTeam, axisTeam, lobbyTeam]);
+
+  // Map player_id to location {team, squad}
+  const playerLocations = useMemo(() => {
+    const locations = new Map();
+    const processTeam = (teamData, teamName) => {
+      if (teamData && teamData.squads) {
+        teamData.squads.forEach(squad => {
+          if (squad.players) {
+            squad.players.forEach(player => {
+              locations.set(player.player_id, { team: teamName, squad: squad.name });
+            });
+          }
+        });
+        // Handle commander
+        if (teamData.commander) {
+          locations.set(teamData.commander.player_id, { team: teamName, squad: "command" });
+        }
+      }
+    };
+    processTeam(alliesTeam, "allies");
+    processTeam(axisTeam, "axis");
+    processTeam(lobbyTeam, "lobby");
+    return locations;
   }, [alliesTeam, axisTeam, lobbyTeam]);
 
   const handleToggleSquad = (team, squadName) => {
@@ -207,7 +242,6 @@ const TeamViewPage = () => {
   };
 
   const handleSelectAll = () => {
-    const allPlayers = extractPlayers(teams);
     const allPlayersMap = new Map(
       allPlayers.map((p) => [
         p.player_id,
@@ -279,8 +313,53 @@ const TeamViewPage = () => {
             "& > *": { height: "100%" },
             width: "100%",
             px: 2,
+            alignItems: "center",
           }}
         >
+          <Autocomplete
+            multiple
+            id="player-search"
+            options={allPlayers}
+            getOptionLabel={(option) => option.name}
+            value={Array.from(selectedPlayers.values())}
+            onChange={(event, newValue) => {
+              const newSelectedPlayers = new Map(
+                newValue.map((player) => [
+                  player.player_id,
+                  { player_id: player.player_id, name: player.name },
+                ])
+              );
+              setSelectedPlayers(newSelectedPlayers);
+
+              // Expand squads for newly selected players
+              const prevValues = Array.from(selectedPlayers.values());
+              const addedPlayers = newValue.filter(
+                (p) => !prevValues.some((pv) => pv.player_id === p.player_id)
+              );
+              addedPlayers.forEach((player) => {
+                const loc = playerLocations.get(player.player_id);
+                if (loc && loc.squad !== "command") {
+                  setExpandedSquads((prev) => ({
+                    ...prev,
+                    [loc.team]: {
+                      ...prev[loc.team],
+                      [loc.squad]: true,
+                    },
+                  }));
+                }
+              });
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                variant="outlined"
+                label="Search players"
+                placeholder="Select players"
+                size="small"
+              />
+            )}
+            sx={{ minWidth: 300, mr: 2 }}
+          />
           <ActionMenuButton
             actions={generatePlayerActions({
               multiAction: true,
