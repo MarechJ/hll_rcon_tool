@@ -10,6 +10,22 @@ from rcon.discord import send_to_discord_audit
 logger = getLogger(__name__)
 
 
+def _convert_player_id_to_string(data: dict[Any, Any] | Any) -> dict[Any, Any] | Any:
+    """
+    Convert player_id fields from int to str to prevent PostgreSQL type mismatch errors.
+
+    JSON parsing automatically converts numeric strings to integers, but player_id must remain a string
+    because it's stored as VARCHAR in the database.
+    """
+    if not isinstance(data, dict):
+        return data
+
+    if "player_id" in data and not isinstance(data["player_id"], str):
+        data["player_id"] = str(data["player_id"])
+
+    return data
+
+
 def _get_data(request: HttpRequest) -> dict[Any, Any] | Any:
     if request.method == "GET":
         parsed_get = {}
@@ -33,7 +49,9 @@ def _get_data(request: HttpRequest) -> dict[Any, Any] | Any:
         # Don't silently swallow JSON parsing errors
         # login_required decorator will return a reasonable API response on failure
         # endpoints that don't require login should not be accepting POST requests
-        return json.loads(request.body)
+        data = json.loads(request.body)
+        # Convert player_id from int to str if needed (JSON parsing converts numeric strings to int)
+        return _convert_player_id_to_string(data)
 
 
 def allow_csv(endpoint):
