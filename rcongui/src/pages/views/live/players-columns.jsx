@@ -192,7 +192,7 @@ export const columns = [
     header: SortableHeader("KPM", "Kills/Min"),
     accessorFn: (row) => {
       const kills = row.kills;
-      const playtime = row.profile.current_playtime_seconds;
+      const playtime = row.map_playtime_seconds;
       if (kills === 0 || playtime === 0) return 0;
       return Number((kills / playtime * 60));
     },
