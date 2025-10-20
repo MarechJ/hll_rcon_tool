@@ -300,19 +300,7 @@ class ServerCtl:
         return self.exchange("GetServerInformation", 2, {"Name": "session", "Value": ""}).content_dict["serverName"]
 
     def get_map(self) -> str:
-        # TODO: Currently returns pretty name instead of map name, f.e. "CARENTAN" instead of "carentan_warfare"
-        session = self.exchange("GetServerInformation", 2, {"Name": "session", "Value": ""}).content_dict
-        layer = next(
-            (
-                l for l in LAYERS.values()
-                if l.map.name == session["mapName"]
-                   and l.game_mode == GameMode(session["gameMode"].lower())
-            ),
-            None,
-        )
-        if not layer:
-            layer = LAYERS[UNKNOWN_MAP_NAME]
-        return layer.id
+        return self.get_gamestate()["current_map"]["id"]
 
     def get_maps(self) -> list[str]:
         details = self.exchange("GetClientReferenceData", 2, "AddMapToRotation")
@@ -604,29 +592,29 @@ class ServerCtl:
         seconds_remaining = int(time_remaining.total_seconds())
         raw_time_remaining = f"{seconds_remaining // 3600}:{(seconds_remaining // 60) % 60:02}:{seconds_remaining % 60:02}"
 
+        game_mode = GameMode(s["gameMode"].lower())
+        current_map = next(
+            (
+                l for l in LAYERS.values()
+                if l.map.name == s["mapName"]
+                   and l.game_mode == game_mode
+            ),
+            None,
+        )
+        if not current_map:
+            current_map = LAYERS[UNKNOWN_MAP_NAME]
+
         # TODO: next_map is not included in session, map_name is pretty name instead of ID
         return GameStateType(
             next_map=LAYERS[UNKNOWN_MAP_NAME].model_dump(),
             axis_score=s["axisScore"],
             allied_score=s["alliedScore"],
-            current_map=LayerType(
-                id=s["mapName"],
-                map=next(
-                    (m for m in MAPS.values() if m.name == s["mapName"]),
-                    MAPS[UNKNOWN_MAP_NAME]
-                ).model_dump(),
-                game_mode=s["gameMode"].lower(),
-                attackers=None,
-                environment=Environment.DAY,
-                pretty_name=s["mapName"].capitalize(),
-                image_name="",
-                image_url="",
-            ),
+            current_map=current_map,
             raw_time_remaining=raw_time_remaining,
             time_remaining=time_remaining,
             num_axis_players=s["axisPlayerCount"],
             num_allied_players=s["alliedPlayerCount"],
-            game_mode=GameMode(s["gameMode"].lower()),
+            game_mode=game_mode,
             match_time=s["matchTime"],
             queue_count=s["queueCount"],
             max_queue_count=s["maxQueueCount"],
