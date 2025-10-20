@@ -1,14 +1,12 @@
 import json
 import logging
-import os
 import random
 import re
 import time
-from concurrent.futures import Future, ThreadPoolExecutor, as_completed
-from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 from functools import cached_property
 from itertools import chain
-from time import sleep
 from typing import Any, Iterable, List, Literal, Optional, Sequence, overload
 
 from dateutil import parser
@@ -374,7 +372,7 @@ class Rcon(ServerCtl):
         return super().get_admin_groups()
 
     def get_logs(
-            self, since_min_ago: str | int, filter_: str = "", by: str = ""
+            self, since_min_ago: int, filter_: str = "", by: str = ""
     ) -> list[str]:
         """Returns raw text logs from the game server with no parsing performed
 

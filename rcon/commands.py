@@ -393,14 +393,14 @@ class ServerCtl:
 
     def get_logs(
             self,
-            since_min_ago: str | int,
+            since_min_ago: int,
             filter_: str = "",
             conn: HLLConnection | None = None,
     ) -> list[str]:
         return [
             entry["message"]
             for entry in self.exchange("GetAdminLog", 2, {
-                "LogBackTrackTime": since_min_ago,
+                "LogBackTrackTime": since_min_ago * 60,
                 "Filters": filter_
             }, conn=conn).content_dict["entries"]
         ]
