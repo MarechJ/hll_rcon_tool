@@ -29,5 +29,5 @@ git+https://github.com/cemathey/django-directory@f51ee1e8dc50edf453fee4a0d9631c0
 pre-commit
 humanize==4.14.0
 httpx==0.28.1
-psutil==7.0.0
+psutil==7.1.1
 hllrcon>=0.2.0
