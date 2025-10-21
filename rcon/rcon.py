@@ -231,7 +231,7 @@ class Rcon(ServerCtl):
 
     # TODO
     # When returns value from the cache it is always {}
-    # @ttl_cache(ttl=5)
+    @ttl_cache(ttl=5)
     def get_players(self) -> list[GetPlayersType]:
         player_ids = {
             player_id: {NAME: name, PLAYER_ID: player_id}
