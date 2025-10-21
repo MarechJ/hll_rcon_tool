@@ -318,6 +318,7 @@ def expose_api_endpoint(
                 forward_results=others,
                 version=TAG_VERSION,
             ),
+            status=400 if error is not None else 200,
         )
 
         # Handle all the special cases of forwarding commands here so we don't
