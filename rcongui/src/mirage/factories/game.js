@@ -5,7 +5,7 @@ export const createInitialState = () => {
   const state = {
     axis: generateTeam(),
     allies: generateTeam(),
-    none: generateNullTeam()
+    unassigned: generateNullTeam()
   };
 
   // Ensure at least one squad has no leader
