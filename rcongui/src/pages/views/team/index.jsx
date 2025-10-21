@@ -24,6 +24,7 @@ import PlaylistRemoveIcon from "@mui/icons-material/PlaylistRemove";
 import UnfoldLessDoubleIcon from "@mui/icons-material/UnfoldLessDouble";
 import UnfoldMoreDoubleIcon from "@mui/icons-material/UnfoldMoreDouble";
 import StickyContainer from "@/components/shared/StickyContainer";
+import DisbandSquadDialog from "@/features/player-action/DisbandSquad";
 
 const TeamViewPage = () => {
   const { data: teams, isFetching } = useQuery({
@@ -318,6 +319,7 @@ const TeamViewPage = () => {
               </IconButton>
             </span>
           </Tooltip>
+          <DisbandSquadDialog />
           <Box sx={{ flexGrow: 1 }} />
           <Tooltip title="Expand All">
             <span>
