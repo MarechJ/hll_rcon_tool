@@ -115,29 +115,27 @@ const TeamViewPage = () => {
     return squads;
   }, [alliesTeam, axisTeam, lobbyTeam]);
 
-  // Map player_id to location {team, squad}
-  const playerLocations = useMemo(() => {
-    const locations = new Map();
-    const processTeam = (teamData, teamName) => {
-      if (teamData && teamData.squads) {
-        teamData.squads.forEach(squad => {
-          if (squad.players) {
-            squad.players.forEach(player => {
-              locations.set(player.player_id, { team: teamName, squad: squad.name });
-            });
-          }
-        });
-        // Handle commander
-        if (teamData.commander) {
-          locations.set(teamData.commander.player_id, { team: teamName, squad: "command" });
+const playerAssignments = useMemo(() => {
+  const assignments = new Map();
+  const processTeam = (teamData, teamName) => {
+    if (teamData && teamData.squads) {
+      teamData.squads.forEach(squad => {
+        if (squad.players) {
+          squad.players.forEach(player => {
+            assignments.set(player.player_id, { team: teamName, squad: squad.name });
+          });
         }
+      });
+      if (teamData.commander) {
+        assignments.set(teamData.commander.player_id, { team: teamName, squad: "command" });
       }
-    };
-    processTeam(alliesTeam, "allies");
-    processTeam(axisTeam, "axis");
-    processTeam(lobbyTeam, "lobby");
-    return locations;
-  }, [alliesTeam, axisTeam, lobbyTeam]);
+    }
+  };
+  processTeam(alliesTeam, "allies");
+  processTeam(axisTeam, "axis");
+  processTeam(lobbyTeam, "lobby");
+  return assignments;
+}, [alliesTeam, axisTeam, lobbyTeam]);
 
   const handleToggleSquad = (team, squadName) => {
     setExpandedSquads((prev) => ({
