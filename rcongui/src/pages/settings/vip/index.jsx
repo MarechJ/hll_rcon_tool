@@ -447,6 +447,15 @@ const VipPageContent = () => {
     setFormFields((prev) => ({ ...prev, forward: newMode === "multi" }));
   };
 
+  const handleOnPlayerSelect = (selectedPlayer) => {
+    setSearchPlayer((prev) => ({
+      ...prev,
+      ...selectedPlayer,
+      name: selectedPlayer.names[0]?.name ?? "",
+      player_id: selectedPlayer.player_id ?? prev.player_id,
+    }));
+  };
+
   return (
     <Stack direction={{ xs: "column", lg: "row" }} spacing={1} sx={{ mt: 2 }}>
       <Stack spacing={1} sx={{ width: { xs: "100%", lg: "400px" } }}>
@@ -493,10 +502,7 @@ const VipPageContent = () => {
         </Stack>
         <Stack spacing={2} sx={{ bgcolor: "background.paper", p: 2 }}>
           <Typography variant="h6">Search Player</Typography>
-          <PlayerSearchField
-            player={searchPlayer}
-            setPlayer={setSearchPlayer}
-          />
+          <PlayerSearchField onSelect={handleOnPlayerSelect} disableAddBtn={true} direction={"column"} />
         </Stack>
         <Stack spacing={2} sx={{ bgcolor: "background.paper", p: 2 }}>
           <Typography variant="h6">Add VIP</Typography>

@@ -1,53 +1,67 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { debounce } from "lodash";
-import { cmd, handle_http_errors, showResponse } from "@/utils/fetchUtils";
+import { cmd } from "@/utils/fetchUtils";
 import Typography from "@mui/material/Typography";
-import { 
-  Avatar, 
-  Box, 
-  ClickAwayListener, 
-  Paper, 
-  Popper, 
+import {
+  Avatar,
+  Box,
+  ClickAwayListener,
+  Paper,
+  Popper,
   TextField,
-  Tabs,
-  Tab
+  Stack,
+  Tooltip,
+  IconButton,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
+import { AddCircleOutline } from "@mui/icons-material";
 
 const SuggestionsList = styled(Paper)(({ theme }) => ({
   maxHeight: 300,
-  overflow: 'auto',
+  overflow: "auto",
   marginTop: theme.spacing(1),
 }));
 
 const SuggestionItem = styled(Box)(({ theme }) => ({
   padding: theme.spacing(1),
-  display: 'flex',
-  alignItems: 'center',
-  cursor: 'pointer',
-  '&:hover': {
+  display: "flex",
+  alignItems: "center",
+  cursor: "pointer",
+  "&:hover": {
     backgroundColor: theme.palette.action.hover,
   },
 }));
 
-export default function PlayerSearchField({ player, setPlayer }) {
+export default function PlayerSearchField({
+  onSelect,
+  disableAddBtn = false,
+  ...props
+}) {
   const [suggestions, setSuggestions] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [inputValue, setInputValue] = useState("");
-  const [searchMode, setSearchMode] = useState("name"); // "name" or "id"
-  const inputRef = useRef(null);
-  const nameRef = useRef(inputValue);
+  const [nameInputValue, setNameInputValue] = useState("");
+  const [idInputValue, setIdInputValue] = useState("");
+
+  const nameInputRef = useRef(null);
+  const idInputRef = useRef(null);
+  const nameRef = useRef(nameInputValue);
+  const idRef = useRef(idInputValue);
 
   useEffect(() => {
     debouncedFetchSuggestions();
-    nameRef.current = inputValue;
-  }, [inputValue]);
+    nameRef.current = nameInputValue;
+  }, [nameInputValue]);
 
-  const fetchSuggestions = async() => {
+  useEffect(() => {
+    debouncedFetchSuggestions();
+    idRef.current = idInputValue;
+  }, [idInputValue]);
+
+  const fetchSuggestions = async () => {
     setSuggestions([]);
 
-    if (!nameRef.current) {
+    if (!nameRef.current && !idRef.current) {
       setIsOpen(false);
       return;
     }
@@ -56,9 +70,10 @@ export default function PlayerSearchField({ player, setPlayer }) {
       payload: {
         page_size: 15,
         page: 1,
-        [searchMode === "name" ? "player_name" : "player_id"]: nameRef.current,
+        player_name: nameRef.current,
+        player_id: idRef.current,
         ignore_accent: true,
-      }
+      },
     };
 
     const response = await cmd.GET_PLAYERS_RECORDS(params);
@@ -71,23 +86,24 @@ export default function PlayerSearchField({ player, setPlayer }) {
 
   const debouncedFetchSuggestions = useMemo(
     () => debounce(fetchSuggestions, 600),
-    [searchMode] // Add searchMode as dependency
+    []
   );
 
   const handleInputChange = (event) => {
     const value = event.target.value;
-    setInputValue(value);
-    setAnchorEl(inputRef.current);
+    if (event.target.name === "hll_player_name") {
+      setNameInputValue(value);
+      setAnchorEl(nameInputRef.current);
+    } else {
+      setIdInputValue(value);
+      setAnchorEl(idInputRef.current);
+    }
   };
 
   const handlePlayerSelect = (selectedPlayer) => {
-    setPlayer((prev) => ({
-      ...prev,
-      ...selectedPlayer,
-      name: selectedPlayer.names[0]?.name ?? "",
-      player_id: selectedPlayer.player_id ?? prev.player_id,
-    }));
-    setInputValue("");
+    onSelect(selectedPlayer);
+    setNameInputValue("");
+    setIdInputValue("");
     setIsOpen(false);
   };
 
@@ -95,34 +111,47 @@ export default function PlayerSearchField({ player, setPlayer }) {
     setIsOpen(false);
   };
 
-  const handleTabChange = (_, newValue) => {
-    setSearchMode(newValue);
-    setInputValue("");
-    setSuggestions([]);
-    setIsOpen(false);
-  };
-
   return (
     <ClickAwayListener onClickAway={handleClickAway}>
-      <Box>
-        <Tabs
-          value={searchMode}
-          onChange={handleTabChange}
-          sx={{ mb: 2 }}
-        >
-          <Tab value="name" label="Search by Name" />
-          <Tab value="id" label="Search by ID" />
-        </Tabs>
-        
+      <Stack spacing={1} direction={"row"} alignItems={"center"} {...props}>
         <TextField
-          ref={inputRef}
+          ref={nameInputRef}
           fullWidth
-          label={searchMode === "name" ? "Name" : "Player ID"}
-          value={inputValue}
+          label={"Name"}
+          value={nameInputValue}
+          name="hll_player_name"
           onChange={handleInputChange}
           type={"search"}
-          placeholder={searchMode === "id" ? "Enter player ID" : "Enter player name"}
+          placeholder={"Enter player name"}
         />
+        <TextField
+          ref={idInputRef}
+          fullWidth
+          label={"Player ID"}
+          value={idInputValue}
+          name="hll_player_id"
+          onChange={handleInputChange}
+          type={"search"}
+          placeholder={"Enter player ID"}
+        />
+        {!disableAddBtn && (
+          <Tooltip title="Create">
+            <span>
+              <IconButton
+                color="primary"
+                onClick={() =>
+                  handlePlayerSelect({
+                    player_id: idInputValue,
+                    name: nameInputValue,
+                  })
+                }
+                disabled={!nameInputValue || !idInputValue}
+              >
+                <AddCircleOutline />
+              </IconButton>
+            </span>
+          </Tooltip>
+        )}
         <Popper
           open={isOpen && suggestions.length > 0}
           anchorEl={anchorEl}
@@ -148,7 +177,7 @@ export default function PlayerSearchField({ player, setPlayer }) {
             ))}
           </SuggestionsList>
         </Popper>
-      </Box>
+      </Stack>
     </ClickAwayListener>
   );
-} 
+}
