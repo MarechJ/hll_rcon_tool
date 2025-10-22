@@ -434,7 +434,6 @@ export const TeamSection = ({
                 <PlayerStats player={team} />
               </TeamHeaderRow>
 
-              {/* --- UNASSIGNED Spieler jetzt ganz oben --- */}
               {getUnassignedSquad(unassignedPlayers)}
 
               {commander ? (
