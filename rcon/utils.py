@@ -409,6 +409,10 @@ def default_player_info_dict(player) -> GetDetailedPlayer:
         "defense": 0,
         "support": 0,
         "level": 0,
+        "platform": "",
+        "eos_id": "",
+        "world_position": {},
+        "clan_tag": "",
     }
 
 

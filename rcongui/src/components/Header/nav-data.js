@@ -133,7 +133,7 @@ export const navMenus = [
     links: [
       {
         name: "General",
-        to: "/settings",
+        to: "/settings/general",
         icon: <SettingsIcon />,
       },
       {
