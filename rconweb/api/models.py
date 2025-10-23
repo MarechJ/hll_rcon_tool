@@ -44,6 +44,8 @@ class RconUser(User):
     class Meta:
         default_permissions = ()
         permissions = (
+            ("can_disband_squad", "Can disband a squad"),
+            ("can_remove_player_from_squad", "Can remove player from a squad"),
             ("can_set_warmup_timer", "Can change the match warmup timer"),
             ("can_set_match_timer", "Can change the match timer"),
             ("can_remove_match_timer", "Can remove the custom match timer"),

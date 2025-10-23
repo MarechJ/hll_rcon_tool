@@ -20,7 +20,7 @@ export const generateTeam = () => {
       baker: generateSquad("baker", "infantry"),
       charlie: generateSquad("charlie", "armor"),
       dog: generateSquad("dog", "recon"),
-      null: generateSquad("null"),
+      unassigned: generateSquad("unassigned"),
     },
     commander: faker.datatype.boolean() ? generatePlayer("command", "infantry") : null,
     combat: 0,
@@ -68,12 +68,12 @@ export const generateTeam = () => {
   return state;
 };
 
-// Generate a special null team
+// Generate a special unassigned team
 export const generateNullTeam = () => {
 
   return {
     squads: {
-      null: generateSquad('null')
+      unassigned: generateSquad('unassigned')
     },
     combat: 0,
     offense: 0,

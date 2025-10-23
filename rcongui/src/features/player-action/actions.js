@@ -14,6 +14,7 @@ import HowToRegIcon from "@mui/icons-material/HowToReg";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import GroupRemoveIcon from '@mui/icons-material/GroupRemove';
 import { cmd, execute } from "@/utils/fetchUtils";
 import { MessageFormFields } from "@/features/player-action/forms/MessageFormFields";
 import { PunishFormFields } from "@/features/player-action/forms/PunishFormFields";
@@ -246,6 +247,15 @@ export const addConsoleAdminAction = {
   ],
 };
 
+export const removeFromSquadAction = {
+  name: "Remove from a squad",
+  description: "Removes a player from his current squad.",
+  component: PunishFormFields,
+  icon: <GroupRemoveIcon />,
+  execute: executeAction("remove_player_from_squad"),
+  permission: ["can_remove_player_from_squad"],
+};
+
 /**
  * Generate player actions based on the given parameters.
  * @param {Object} params - The parameters for generating player actions.
@@ -292,6 +302,7 @@ export const generatePlayerActions = (
     messageAction,
     switchAction,
     switchOnDeathAction,
+    removeFromSquadAction,
     punishAction,
     kickAction,
   ];
