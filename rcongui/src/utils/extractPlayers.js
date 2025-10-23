@@ -28,11 +28,6 @@ export const extractPlayers = (game) => {
   return players;
 };
 
-const getKpm = (kills, time_seconds) => {
-  if (kills === 0 || time_seconds === 0) return 0;
-  return Number((kills / time_seconds * 60));
-};
-
 const getAvg = (arr) => {
   return arr.reduce((sum, value) => sum + value, 0) / arr.length;
 };
@@ -47,35 +42,18 @@ const getMedian = (arr) => {
 
 const extendPlayer = (player) => {
   const profile = normalizePlayerProfile(player.profile);
-  // const kpm = getKpm(player.kills, profile.current_playtime_seconds);
   return {
     ...player,
     profile,
-    // kpm,
   };
 };
 
-// TODO
-// The current_playtime_seconds can be the time of the player's session,
-// so it's not a good metric to use for KPM.
-export const extractTeamState = (aTeam, name) => {
+export const extractTeamState = (aTeam, name, searchTerm = "") => {
   const team = aTeam ?? {};
-  const teamHasCommander = "commander" in team && team.commander;
-
-  const totals = [
-    "combat",
-    "offense",
-    "defense",
-    "support",
-    "kills",
-    "deaths",
-    "count",
-  ];
   const teamLevels = [];
-  // const teamKpm = [];
   const out = {};
   out["name"] = name ?? "unknown";
-  out["commander"] = teamHasCommander ? extendPlayer(team.commander) : null;
+  out["commander"] = null;
   out["armor"] = 0;
   out["infantry"] = 0;
   out["recon"] = 0;
@@ -85,14 +63,32 @@ export const extractTeamState = (aTeam, name) => {
   out["players_in_lobby"] = [];
   out["squads"] = [];
   out["vips"] = 0;
-  // out["kpm"] = 0;
-
-  if (teamHasCommander && team.commander.is_vip) {
-    out["vips"]++;
+  out["count"] = 0;
+  const totals = ["combat", "offense", "defense", "support", "kills", "deaths"];
+  for (const total of totals) {
+    out[total] = 0;
   }
 
-  for (const total of totals) {
-    out[total] = team[total] || 0;
+  const commander =
+    "commander" in team && team.commander ? extendPlayer(team.commander) : null;
+  if (
+    commander &&
+    (commander.name.includes(searchTerm) ||
+      commander.player_id.includes(searchTerm))
+  ) {
+    out["commander"] = commander;
+  }
+
+  if (out["commander"]) {
+    if (
+      commander.name.includes(searchTerm) ||
+      commander.player_id.includes(searchTerm)
+    ) {
+      out["count"]++;
+      if (commander.is_vip) {
+        out["vips"]++;
+      }
+    }
   }
 
   const squads = team["squads"];
@@ -101,51 +97,58 @@ export const extractTeamState = (aTeam, name) => {
     const squad = squads[squadKey];
 
     const squadLevels = [];
-    // const squadKpm = [];
 
-    const squadPlayers = squad.players.map(extendPlayer);
+    const squadPlayers = squad.players
+      .map(extendPlayer)
+      .filter(
+        (player) =>
+          player.name.includes(searchTerm) ||
+          player.player_id.includes(searchTerm)
+      );
 
-    squadPlayers.forEach((player) => {
-      squadLevels.push(player.level);
-      // squadKpm.push(player.kpm);
-      teamLevels.push(player.level);
-      // teamKpm.push(player.kpm);
-      switch (player.role) {
-        case "sniper":
-        case "spotter":
-          out["recon"]++;
-          break;
-        case "tankcommander":
-        case "crewman":
-          out["armor"]++;
-          break;
-        default:
-          out["infantry"]++;
-          break;
+    if (squadPlayers.length > 0) {
+      squadPlayers.forEach((player) => {
+        for (const total of totals) {
+          out[total] += player[total] || 0;
+        }
+        out["count"]++;
+        squadLevels.push(player.level);
+        teamLevels.push(player.level);
+        switch (player.role) {
+          case "sniper":
+          case "spotter":
+            out["recon"]++;
+            break;
+          case "tankcommander":
+          case "crewman":
+            out["armor"]++;
+            break;
+          default:
+            out["infantry"]++;
+            break;
+        }
+        if (player.is_vip) {
+          out["vips"]++;
+        }
+      });
+
+      out["squads"].push({
+        ...squad,
+        name: squadKey,
+        players: squadPlayers,
+        level: getAvg(squadLevels),
+      });
+
+      // If the squad has no leader, it's a no SL squad
+      if (squadKey !== "null" && squad.has_leader === false) {
+        out["no_sl_squads"].push(squadKey);
       }
-      if (player.is_vip) {
-        out["vips"]++;
-      }
-    });
-
-    out["squads"].push({
-      ...squad,
-      name: squadKey,
-      players: squadPlayers,
-      // kpm: getAvg(squadKpm),
-      level: getAvg(squadLevels),
-    });
-
-    // If the squad has no leader, it's a no SL squad
-    if (squadKey !== "null" && squad.has_leader === false) {
-      out["no_sl_squads"].push(squadKey);
     }
   }
 
   if (team.count) {
     out["avg_level"] = getAvg(teamLevels);
     out["med_level"] = getMedian(teamLevels);
-    // out["kpm"] = getAvg(teamKpm);
   }
 
   return out;
