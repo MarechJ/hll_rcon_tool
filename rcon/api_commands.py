@@ -2002,23 +2002,14 @@ class RconAPI(Rcon):
 
     def disband_squad_by_name(self, team_name: str, squad_name: str, reason: str):
         team_name, squad_name = team_name.lower(), squad_name.lower()
-        if team_name == "allies":
-            team_index = 2
-        elif team_name == "axis":
-            team_index = 1
-        else:
+
+        if team_name != "allies" and team_name != "axis":
             raise HLLCommandFailedError("Invalid team_name argument. It must be either 'axis' or 'allies'.")
+        if squad_name == "" or squad_name == "unassigned":
+            raise HLLCommandFailedError("Invalid squad_name argument. It cannot be an empty value or 'unassigned'.")
+
         online_players = self.get_detailed_players()["players"]
-        # TODO use once disband squad command is fixed
-        # any_squad_player = next(
-        #     (
-        #         online_players[id]
-        #         for id in online_players
-        #         if online_players[id]["team"] == team_name
-        #         and online_players[id]["unit_name"] == squad_name
-        #     ),
-        #     None,
-        # )
+
         squad_players = list(
                 online_players[id]
                 for id in online_players
@@ -2026,22 +2017,14 @@ class RconAPI(Rcon):
                 and online_players[id]["unit_name"] == squad_name
             )
 
-        # if not any_squad_player:
-        #     raise HLLCommandFailedError(f"Squad {squad_name} was not found in team {team_name}. It might have been disbanded already.")
         if not squad_players:
             raise HLLCommandFailedError(f"Squad {squad_name} was not found in team {team_name}. It might have been disbanded already.")
-
-        # squad_index = any_squad_player["unit_id"]
-
-        # logger.debug("squad_index=%d, team_index=%d" % (squad_index, team_index))
-
-        # if squad_index is None:
-        #     raise HLLCommandFailedError(f"Invalid squad index for squad {squad_name} in team {team_name}")
-
-
-        # super().disband_squad(team_index, squad_index, reason)
         
         for player in squad_players:
             super().remove_player_from_squad(player["player_id"], reason)
 
-        return f"Successfully disbaned {squad_name} squad in team {team_name}"
+        return {
+            "team_name": team_name,
+            "squad_name": squad_name,
+            "msg": f"Successfully disbaned {squad_name} squad in team {team_name}"
+        }
