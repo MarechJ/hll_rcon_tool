@@ -2,12 +2,11 @@ import { useState, useMemo } from "react";
 import { extractPlayers, extractTeamState } from "@/utils/extractPlayers";
 import {
   Box,
-  Button,
   Stack,
   LinearProgress,
-  Typography,
   IconButton,
   Tooltip,
+  Divider,
 } from "@mui/material";
 import { ActionMenuButton } from "@/features/player-action/ActionMenu";
 import { generatePlayerActions } from "@/features/player-action/actions";
@@ -25,6 +24,7 @@ import UnfoldLessDoubleIcon from "@mui/icons-material/UnfoldLessDouble";
 import UnfoldMoreDoubleIcon from "@mui/icons-material/UnfoldMoreDouble";
 import StickyContainer from "@/components/shared/StickyContainer";
 import DisbandSquadDialog from "@/features/player-action/DisbandSquad";
+import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 
 const TeamViewPage = () => {
   const { data: teams, isFetching } = useQuery({
@@ -67,14 +67,16 @@ const TeamViewPage = () => {
     axis: { [UNASSIGNED]: true },
     lobby: {},
   });
+  const [searchTerm, setSearchTerm] = useState("")
 
+  
   const { axisTeam, alliesTeam, lobbyTeam } = useMemo(() => {
     return {
-      axisTeam: extractTeamState(teams?.axis, "axis"),
-      alliesTeam: extractTeamState(teams?.allies, "allies"),
-      lobbyTeam: extractTeamState(teams?.[UNASSIGNED], "lobby"),
+      axisTeam: extractTeamState(teams?.axis, "axis", searchTerm),
+      alliesTeam: extractTeamState(teams?.allies, "allies", searchTerm),
+      lobbyTeam: extractTeamState(teams?.[UNASSIGNED], "lobby", searchTerm),
     };
-  }, [teams]);
+  }, [teams, searchTerm]);
 
   // Get all squads from both teams
   const allSquads = useMemo(() => {
@@ -208,7 +210,11 @@ const TeamViewPage = () => {
   };
 
   const handleSelectAll = () => {
-    const allPlayers = extractPlayers(teams);
+    const allPlayers = extractPlayers({
+      axis: axisTeam,
+      allies: alliesTeam,
+      [UNASSIGNED]: lobbyTeam,
+    });
     const allPlayersMap = new Map(
       allPlayers.map((p) => [
         p.player_id,
@@ -305,6 +311,12 @@ const TeamViewPage = () => {
               </IconButton>
             )}
           />
+          <Divider flexItem orientation="vertical" sx={{ mx: 1 }} />
+          <DebouncedSearchInput
+            placeholder={"Search player"}
+            initialValue={searchTerm}
+            onChange={setSearchTerm}
+          />
           <Tooltip title="Select All">
             <span>
               <IconButton aria-label="Select All" onClick={handleSelectAll}>
@@ -319,6 +331,7 @@ const TeamViewPage = () => {
               </IconButton>
             </span>
           </Tooltip>
+          <Divider flexItem orientation="vertical" sx={{ mx: 1 }} />
           <DisbandSquadDialog />
           <Box sx={{ flexGrow: 1 }} />
           <Tooltip title="Expand All">
