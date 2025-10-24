@@ -427,7 +427,7 @@ def parse_raw_player_info(raw: dict[str, Any], player) -> GetDetailedPlayer:
     faction = hllrcon.data.Faction.by_id(raw["team"])
     role = hllrcon.data.Role.by_id(raw["role"])
 
-    data["team"] = faction.team.name.lower() if faction else None
+    data["team"] = faction.team.name.lower() if faction else "none"
     data["role"] = role.name.lower() if role else None
     data["loadout"] = raw["loadout"].lower()
     data["level"] = int(raw["level"])
