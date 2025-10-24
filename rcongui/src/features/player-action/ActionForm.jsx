@@ -13,15 +13,19 @@ const ACTION_STATUS = {
 
 const initRecipients = (recipients) =>
   recipients.map((recipient) => {
-    recipient.name = recipient?.name ?? recipient?.profile.names[0]?.name;
-    let removedClanName = recipient.name.replace(/^\[([^\]]*)\]/, '').trim(); // remove `[clantags]`
+    if ("profile" in recipient) {
+      recipient.name = recipient?.name ?? recipient?.profile.names[0]?.name;
+    } else {
+      recipient.name = recipient?.name ?? recipient?.names[0]?.name;
+    }
+    let removedClanName = recipient.name.replace(/^\[([^\]]*)\]/, "").trim(); // remove `[clantags]`
     let shortedName = removedClanName.substring(0, 8);
-    let label = removedClanName.length > 6 ? shortedName + '...' : shortedName;
-    return ({
+    let label = removedClanName.length > 6 ? shortedName + "..." : shortedName;
+    return {
       recipient: recipient,
-      status: recipient.status ?? ACTION_STATUS.default,
+      status: recipient?.status ?? ACTION_STATUS.default,
       label,
-    })
+    };
   });
 
 export const ActionForm = ({

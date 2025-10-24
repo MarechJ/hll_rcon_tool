@@ -2,12 +2,11 @@ import { useState, useMemo } from "react";
 import { extractPlayers, extractTeamState } from "@/utils/extractPlayers";
 import {
   Box,
-  Button,
   Stack,
   LinearProgress,
-  Typography,
   IconButton,
   Tooltip,
+  Divider,
 } from "@mui/material";
 import { ActionMenuButton } from "@/features/player-action/ActionMenu";
 import { generatePlayerActions } from "@/features/player-action/actions";
@@ -25,6 +24,7 @@ import UnfoldLessDoubleIcon from "@mui/icons-material/UnfoldLessDouble";
 import UnfoldMoreDoubleIcon from "@mui/icons-material/UnfoldMoreDouble";
 import StickyContainer from "@/components/shared/StickyContainer";
 import DisbandSquadDialog from "@/features/player-action/DisbandSquad";
+import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 
 const TeamViewPage = () => {
   const { data: teams, isFetching } = useQuery({
@@ -62,19 +62,23 @@ const TeamViewPage = () => {
   }, [gameState, teams]);
 
   const [selectedPlayers, setSelectedPlayers] = useState(new Map());
-  const [expandedSquads, setExpandedSquads] = useState({
-    allies: { [UNASSIGNED]: true },
-    axis: { [UNASSIGNED]: true },
+  const [collapsedSquads, setCollapsedSquads] = useState({
+    allies: {},
+    axis: {},
     lobby: {},
+  });
+  const [searchTerm, setSearchTerm] = useState("");
+  const anySquadCollapsed = Object.keys(collapsedSquads).some((team) => {
+    return Object.values(collapsedSquads[team]).some(Boolean);
   });
 
   const { axisTeam, alliesTeam, lobbyTeam } = useMemo(() => {
     return {
-      axisTeam: extractTeamState(teams?.axis, "axis"),
-      alliesTeam: extractTeamState(teams?.allies, "allies"),
-      lobbyTeam: extractTeamState(teams?.[UNASSIGNED], "lobby"),
+      axisTeam: extractTeamState(teams?.axis, "axis", searchTerm),
+      alliesTeam: extractTeamState(teams?.allies, "allies", searchTerm),
+      lobbyTeam: extractTeamState(teams?.[UNASSIGNED], "lobby", searchTerm),
     };
-  }, [teams]);
+  }, [teams, searchTerm]);
 
   // Get all squads from both teams
   const allSquads = useMemo(() => {
@@ -106,7 +110,7 @@ const TeamViewPage = () => {
   }, [alliesTeam, axisTeam, lobbyTeam]);
 
   const handleToggleSquad = (team, squadName) => {
-    setExpandedSquads((prev) => ({
+    setCollapsedSquads((prev) => ({
       ...prev,
       [team]: {
         ...prev[team],
@@ -119,40 +123,40 @@ const TeamViewPage = () => {
     const newState = { allies: {}, axis: {}, lobby: {} };
     Object.entries(allSquads).forEach(([team, squads]) => {
       squads.forEach((squadName) => {
-        newState[team][squadName] = true;
+        newState[team][squadName] = false;
       });
-      newState[team][UNASSIGNED] = true;
+      newState[team][UNASSIGNED] = false;
     });
-    setExpandedSquads(newState);
+    setCollapsedSquads(newState);
   };
 
   const handleCollapseAll = () => {
     const newState = { allies: {}, axis: {}, lobby: {} };
     Object.entries(allSquads).forEach(([team, squads]) => {
       squads.forEach((squadName) => {
-        newState[team][squadName] = false;
+        newState[team][squadName] = true;
       });
-      newState[team][UNASSIGNED] = false;
+      newState[team][UNASSIGNED] = true;
     });
-    setExpandedSquads(newState);
+    setCollapsedSquads(newState);
   };
 
   const handleTeamExpandAll = (team) => {
     const teamSquads = allSquads[team];
-    setExpandedSquads((prev) => ({
+    setCollapsedSquads((prev) => ({
       ...prev,
       [team]: Object.fromEntries(
-        [...Array.from(teamSquads), UNASSIGNED].map((name) => [name, true])
+        [...Array.from(teamSquads), UNASSIGNED].map((name) => [name, false])
       ),
     }));
   };
 
   const handleTeamCollapseAll = (team) => {
     const teamSquads = allSquads[team];
-    setExpandedSquads((prev) => ({
+    setCollapsedSquads((prev) => ({
       ...prev,
       [team]: Object.fromEntries(
-        [...Array.from(teamSquads), UNASSIGNED].map((name) => [name, false])
+        [...Array.from(teamSquads), UNASSIGNED].map((name) => [name, true])
       ),
     }));
   };
@@ -208,7 +212,11 @@ const TeamViewPage = () => {
   };
 
   const handleSelectAll = () => {
-    const allPlayers = extractPlayers(teams);
+    const allPlayers = extractPlayers({
+      axis: axisTeam,
+      allies: alliesTeam,
+      [UNASSIGNED]: lobbyTeam,
+    });
     const allPlayersMap = new Map(
       allPlayers.map((p) => [
         p.player_id,
@@ -232,7 +240,7 @@ const TeamViewPage = () => {
         onTogglePlayer={handleTogglePlayer}
         onToggleSquad={handleToggleSquadSelection}
         onToggleAll={handleToggleTeam}
-        expandedSquads={expandedSquads[name]}
+        collapsedSquads={collapsedSquads[name]}
         onToggleExpand={(squadName) => handleToggleSquad(name, squadName)}
         onTeamExpand={() => handleTeamExpandAll(name)}
         onTeamCollapse={() => handleTeamCollapseAll(name)}
@@ -282,6 +290,12 @@ const TeamViewPage = () => {
             px: 2,
           }}
         >
+          <DebouncedSearchInput
+            placeholder={"Search player"}
+            initialValue={searchTerm}
+            onChange={setSearchTerm}
+          />
+          <Divider flexItem orientation="vertical" sx={{ mx: 1 }} />
           <ActionMenuButton
             actions={generatePlayerActions({
               multiAction: true,
@@ -289,21 +303,7 @@ const TeamViewPage = () => {
             })}
             recipients={Array.from(selectedPlayers.values())}
             disabled={!selectedPlayers.size}
-            renderButton={(props) => (
-              <IconButton
-                disabled={!selectedPlayers.size}
-                aria-label="Apply Actions"
-                {...props}
-              >
-                <MoreHorizIcon />
-                <Box
-                  component={"span"}
-                  sx={{ display: { xs: "none", lg: "span" } }}
-                >
-                  Apply Actions
-                </Box>
-              </IconButton>
-            )}
+            orientation="horizontal"
           />
           <Tooltip title="Select All">
             <span>
@@ -319,22 +319,29 @@ const TeamViewPage = () => {
               </IconButton>
             </span>
           </Tooltip>
+          <Divider flexItem orientation="vertical" sx={{ mx: 1 }} />
           <DisbandSquadDialog />
           <Box sx={{ flexGrow: 1 }} />
-          <Tooltip title="Expand All">
-            <span>
-              <IconButton aria-label="Expand All" onClick={handleExpandAll}>
-                <UnfoldMoreDoubleIcon />
-              </IconButton>
-            </span>
-          </Tooltip>
-          <Tooltip title="Collapse All">
-            <span>
-              <IconButton aria-label="Collapse All" onClick={handleCollapseAll}>
-                <UnfoldLessDoubleIcon />
-              </IconButton>
-            </span>
-          </Tooltip>
+          {anySquadCollapsed ? (
+            <Tooltip title="Expand All">
+              <span>
+                <IconButton aria-label="Expand All" onClick={handleExpandAll}>
+                  <UnfoldMoreDoubleIcon />
+                </IconButton>
+              </span>
+            </Tooltip>
+          ) : (
+            <Tooltip title="Collapse All">
+              <span>
+                <IconButton
+                  aria-label="Collapse All"
+                  onClick={handleCollapseAll}
+                >
+                  <UnfoldLessDoubleIcon />
+                </IconButton>
+              </span>
+            </Tooltip>
+          )}
         </Stack>
         <Box sx={{ height: 2 }}>
           {isFetching && <LinearProgress sx={{ height: 2 }} />}
