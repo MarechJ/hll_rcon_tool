@@ -62,9 +62,9 @@ const TeamViewPage = () => {
   }, [gameState, teams]);
 
   const [selectedPlayers, setSelectedPlayers] = useState(new Map());
-  const [expandedSquads, setExpandedSquads] = useState({
-    allies: { [UNASSIGNED]: true },
-    axis: { [UNASSIGNED]: true },
+  const [collapsedSquads, setCollapsedSquads] = useState({
+    allies: {},
+    axis: {},
     lobby: {},
   });
   const [searchTerm, setSearchTerm] = useState("")
@@ -108,7 +108,7 @@ const TeamViewPage = () => {
   }, [alliesTeam, axisTeam, lobbyTeam]);
 
   const handleToggleSquad = (team, squadName) => {
-    setExpandedSquads((prev) => ({
+    setCollapsedSquads((prev) => ({
       ...prev,
       [team]: {
         ...prev[team],
@@ -121,40 +121,40 @@ const TeamViewPage = () => {
     const newState = { allies: {}, axis: {}, lobby: {} };
     Object.entries(allSquads).forEach(([team, squads]) => {
       squads.forEach((squadName) => {
-        newState[team][squadName] = true;
+        newState[team][squadName] = false;
       });
-      newState[team][UNASSIGNED] = true;
+      newState[team][UNASSIGNED] = false;
     });
-    setExpandedSquads(newState);
+    setCollapsedSquads(newState);
   };
 
   const handleCollapseAll = () => {
     const newState = { allies: {}, axis: {}, lobby: {} };
     Object.entries(allSquads).forEach(([team, squads]) => {
       squads.forEach((squadName) => {
-        newState[team][squadName] = false;
+        newState[team][squadName] = true;
       });
-      newState[team][UNASSIGNED] = false;
+      newState[team][UNASSIGNED] = true;
     });
-    setExpandedSquads(newState);
+    setCollapsedSquads(newState);
   };
 
   const handleTeamExpandAll = (team) => {
     const teamSquads = allSquads[team];
-    setExpandedSquads((prev) => ({
+    setCollapsedSquads((prev) => ({
       ...prev,
       [team]: Object.fromEntries(
-        [...Array.from(teamSquads), UNASSIGNED].map((name) => [name, true])
+        [...Array.from(teamSquads), UNASSIGNED].map((name) => [name, false])
       ),
     }));
   };
 
   const handleTeamCollapseAll = (team) => {
     const teamSquads = allSquads[team];
-    setExpandedSquads((prev) => ({
+    setCollapsedSquads((prev) => ({
       ...prev,
       [team]: Object.fromEntries(
-        [...Array.from(teamSquads), UNASSIGNED].map((name) => [name, false])
+        [...Array.from(teamSquads), UNASSIGNED].map((name) => [name, true])
       ),
     }));
   };
@@ -238,7 +238,7 @@ const TeamViewPage = () => {
         onTogglePlayer={handleTogglePlayer}
         onToggleSquad={handleToggleSquadSelection}
         onToggleAll={handleToggleTeam}
-        expandedSquads={expandedSquads[name]}
+        collapsedSquads={collapsedSquads[name]}
         onToggleExpand={(squadName) => handleToggleSquad(name, squadName)}
         onTeamExpand={() => handleTeamExpandAll(name)}
         onTeamCollapse={() => handleTeamCollapseAll(name)}

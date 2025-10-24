@@ -96,13 +96,13 @@ const PlayerRowWrapper = ({
 
 const SquadPlayers = ({
   squad,
-  expanded,
+  collapsed,
   selectedPlayers,
   onTogglePlayer,
   onProfileClick,
   displayStats = true,
 }) => (
-  <Collapse in={expanded}>
+  <Collapse in={collapsed}>
     {squad.players.map((player) => (
       <PlayerRowWrapper
         key={player.player_id}
@@ -199,7 +199,7 @@ const SquadNameInfo = ({ squad, showIcon = true }) => {
   );
 };
 
-const SquadHeaderContent = ({ squad, expandedSquads, onToggleExpand }) => {
+const SquadHeaderContent = ({ squad, collapsedSquads, onToggleExpand }) => {
   const tierColors = useTierColors();
   return (
     <Box className="squad-info">
@@ -210,7 +210,7 @@ const SquadHeaderContent = ({ squad, expandedSquads, onToggleExpand }) => {
           onToggleExpand(squad.name);
         }}
       >
-        {expandedSquads[squad.name] ? <ExpandMoreIcon /> : <ChevronRightIcon />}
+        {!collapsedSquads[squad.name] ? <ExpandMoreIcon /> : <ChevronRightIcon />}
       </IconButton>
       <SquadNameInfo squad={squad} />
       <Typography variant="caption" sx={{ ml: "auto" }}>
@@ -235,7 +235,7 @@ export const TeamSection = ({
   onTogglePlayer,
   onToggleSquad,
   onToggleAll,
-  expandedSquads,
+  collapsedSquads,
   onToggleExpand,
   onTeamExpand,
   onTeamCollapse,
@@ -322,7 +322,7 @@ export const TeamSection = ({
                 onToggleExpand(UNASSIGNED);
               }}
             >
-              {expandedSquads[UNASSIGNED] ? (
+              {!collapsedSquads[UNASSIGNED] ? (
                 <ExpandMoreIcon />
               ) : (
                 <ChevronRightIcon />
@@ -347,7 +347,7 @@ export const TeamSection = ({
         </SquadHeader>
         <SquadPlayers
           squad={{ players }}
-          expanded={expandedSquads[UNASSIGNED]}
+          collapsed={!collapsedSquads[UNASSIGNED]}
           selectedPlayers={selectedPlayers}
           onTogglePlayer={onTogglePlayer}
           onProfileClick={handleProfileClick}
@@ -363,7 +363,7 @@ export const TeamSection = ({
     return (
       <SquadPlayers
         squad={{ players }}
-        expanded={expandedSquads[UNASSIGNED]}
+        collapsed={!collapsedSquads[UNASSIGNED]}
         selectedPlayers={selectedPlayers}
         onTogglePlayer={onTogglePlayer}
         onProfileClick={handleProfileClick}
@@ -511,14 +511,14 @@ export const TeamSection = ({
                       >
                         <SquadHeaderContent
                           squad={squad}
-                          expandedSquads={expandedSquads}
+                          collapsedSquads={collapsedSquads}
                           onToggleExpand={onToggleExpand}
                         />
                         <SquadStats squad={squad} />
                       </SquadHeader>
                       <SquadPlayers
                         squad={squad}
-                        expanded={expandedSquads[squad.name]}
+                        collapsed={!collapsedSquads[squad.name]}
                         selectedPlayers={selectedPlayers}
                         onTogglePlayer={onTogglePlayer}
                         onProfileClick={handleProfileClick}
