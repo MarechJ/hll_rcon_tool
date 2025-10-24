@@ -5,7 +5,7 @@ import random
 import re
 import time
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import cached_property
 from itertools import chain
 from time import sleep
@@ -44,6 +44,7 @@ from rcon.utils import (
     ALL_ROLES,
     ALL_ROLES_KEY_INDEX_MAP,
     INDEFINITE_VIP_DATE,
+    MapsHistory,
     default_player_info_dict,
     get_server_number,
     parse_raw_player_info,
@@ -262,6 +263,12 @@ class Rcon(ServerCtl):
         return [p for p in players.values()]
 
     def get_detailed_players(self) -> GetDetailedPlayers:
+        try:
+            current_map_start = MapsHistory()[0]["start"]
+        except IndexError:
+            logger.error("No maps information available")
+            current_map_start = int(datetime.now(timezone.utc).timestamp())
+
         players = self.get_players()
         fail_count = 0
         players_by_id: dict[str, GetDetailedPlayer] = {}
@@ -270,6 +277,10 @@ class Rcon(ServerCtl):
             p["iD"]: p
             for p in super().get_all_player_info()
         }
+
+        map_time_seconds = (
+            int(datetime.now(timezone.utc).timestamp()) - current_map_start
+        )
 
         for player in players:
             player_id = player[PLAYER_ID]
@@ -285,6 +296,9 @@ class Rcon(ServerCtl):
                 player_data = default_player_info_dict(player[NAME])
 
             player_data.update(player)  # type: ignore
+            player_data["map_playtime_seconds"] = min(
+                player_data["profile"]["current_playtime_seconds"], map_time_seconds
+            )
             players_by_id[player_id] = player_data
 
         return {
