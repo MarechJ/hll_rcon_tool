@@ -422,6 +422,7 @@ const VipPageContent = () => {
       player_id: "",
       expiration: dayjs().add(5, "minutes"),
     });
+    setSearchPlayer({ name: "", player_id: "" });
     setVipIndefinitely(false);
   };
 
