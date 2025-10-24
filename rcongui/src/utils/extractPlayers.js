@@ -91,8 +91,8 @@ export const extractTeamState = (aTeam, name, searchTerm = "") => {
     "commander" in team && team.commander ? extendPlayer(team.commander) : null;
   if (
     commander &&
-    (commander.name.includes(searchTerm) ||
-      commander.player_id.includes(searchTerm))
+    (commander.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      commander.player_id.toLowerCase().includes(searchTerm.toLowerCase()))
   ) {
     out["commander"] = commander;
   }
@@ -126,8 +126,8 @@ export const extractTeamState = (aTeam, name, searchTerm = "") => {
       .map(extendPlayer)
       .filter(
         (player) =>
-          player.name.includes(searchTerm) ||
-          player.player_id.includes(searchTerm)
+          player.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          player.player_id.toLowerCase().includes(searchTerm.toLowerCase())
       );
 
     if (squadPlayers.length > 0) {
