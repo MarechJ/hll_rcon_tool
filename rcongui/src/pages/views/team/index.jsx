@@ -67,9 +67,11 @@ const TeamViewPage = () => {
     axis: {},
     lobby: {},
   });
-  const [searchTerm, setSearchTerm] = useState("")
+  const [searchTerm, setSearchTerm] = useState("");
+  const anySquadCollapsed = Object.keys(collapsedSquads).some((team) => {
+    return Object.values(collapsedSquads[team]).some(Boolean);
+  });
 
-  
   const { axisTeam, alliesTeam, lobbyTeam } = useMemo(() => {
     return {
       axisTeam: extractTeamState(teams?.axis, "axis", searchTerm),
@@ -334,20 +336,26 @@ const TeamViewPage = () => {
           <Divider flexItem orientation="vertical" sx={{ mx: 1 }} />
           <DisbandSquadDialog />
           <Box sx={{ flexGrow: 1 }} />
-          <Tooltip title="Expand All">
-            <span>
-              <IconButton aria-label="Expand All" onClick={handleExpandAll}>
-                <UnfoldMoreDoubleIcon />
-              </IconButton>
-            </span>
-          </Tooltip>
-          <Tooltip title="Collapse All">
-            <span>
-              <IconButton aria-label="Collapse All" onClick={handleCollapseAll}>
-                <UnfoldLessDoubleIcon />
-              </IconButton>
-            </span>
-          </Tooltip>
+          {anySquadCollapsed ? (
+            <Tooltip title="Expand All">
+              <span>
+                <IconButton aria-label="Expand All" onClick={handleExpandAll}>
+                  <UnfoldMoreDoubleIcon />
+                </IconButton>
+              </span>
+            </Tooltip>
+          ) : (
+            <Tooltip title="Collapse All">
+              <span>
+                <IconButton
+                  aria-label="Collapse All"
+                  onClick={handleCollapseAll}
+                >
+                  <UnfoldLessDoubleIcon />
+                </IconButton>
+              </span>
+            </Tooltip>
+          )}
         </Stack>
         <Box sx={{ height: 2 }}>
           {isFetching && <LinearProgress sx={{ height: 2 }} />}
