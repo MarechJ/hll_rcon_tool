@@ -63,6 +63,8 @@ export default function PlayerProfilePage() {
   });
   const name = profile?.name ?? profile.names[0]?.name ?? "?";
   const avatar = profile?.steaminfo?.profile?.avatar;
+  const country = profile?.country ?? profile?.steaminfo?.country
+  const level = thisOnlinePlayer?.level ?? profile?.level ?? 0
 
   const { openDialog } = useActionDialog();
 
@@ -100,6 +102,8 @@ export default function PlayerProfilePage() {
               actionList={actionList}
               avatar={avatar}
               name={name}
+              country={country}
+              level={level}
             />
             <Divider />
             <PlayerProfileStatusTags
