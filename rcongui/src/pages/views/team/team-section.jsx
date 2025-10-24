@@ -21,7 +21,7 @@ import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import useTheme from "@mui/material/styles/useTheme";
 
-export const UNASSIGNED = "null";
+export const UNASSIGNED = "unassigned";
 
 const PlayerStats = ({ player }) => (
   <>

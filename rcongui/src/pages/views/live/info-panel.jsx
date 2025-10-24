@@ -1,7 +1,9 @@
 import { extractTeamState } from "@/utils/extractPlayers";
 import { Box, Divider, Stack, Typography } from "@mui/material";
 import WarningIcon from "@mui/icons-material/Warning";
-// 
+
+const UNASSIGNED = "unassigned"
+
 const InfoPanel = ({ gameData, playersData }) => {
   const content = [];
 
@@ -26,7 +28,7 @@ const InfoPanel = ({ gameData, playersData }) => {
   const teamStates = {
     axis: gameData?.axis ? extractTeamState(gameData?.axis) : null,
     allies: gameData?.allies ? extractTeamState(gameData?.allies) : null,
-    lobby: gameData?.none ? extractTeamState(gameData?.none) : null,
+    lobby: gameData?.[UNASSIGNED] ? extractTeamState(gameData?.[UNASSIGNED]) : null,
   }
 
   for (const team in teamStates) {

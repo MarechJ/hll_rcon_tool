@@ -155,7 +155,7 @@ class NoSoloTankAutomod:
             self.logger.debug("Server below min player count : disabling")
             return punitions_to_apply
 
-        if not squad_name:
+        if squad_name == "unassigned":
             self.logger.debug(
                 "Skipping None or empty squad - (%s) %s", team, squad_name
             )
