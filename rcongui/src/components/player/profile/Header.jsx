@@ -7,9 +7,9 @@ import CopyableText from "@/components/shared/CopyableText";
 import { isSteamPlayer, getSteamProfileUrl } from "@/utils/lib";
 import CloseIcon from "@mui/icons-material/Close";
 import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
-import { ActionMenu } from "@/features/player-action/ActionMenu";
+import { ActionMenuButton } from "@/features/player-action/ActionMenu";
 
-const PlayerProfileHeader = ({ player, isOnline, onClose, handleActionClick, actionList, avatar, name }) => {
+const PlayerProfileHeader = ({ player, isOnline, onClose, actionList, avatar, name }) => {
   return (
     <ProfileHeader rowGap={1}>
       <OnlineStatusBadge
@@ -64,9 +64,9 @@ const PlayerProfileHeader = ({ player, isOnline, onClose, handleActionClick, act
           <CloseIcon />
         </IconButton>
       )}
-      <ActionMenu
-        handleActionClick={handleActionClick}
-        actionList={actionList}
+      <ActionMenuButton
+        recipients={player}
+        actions={actionList}
         sx={{
           position: "absolute",
           top: (theme) => theme.spacing(0.5),
