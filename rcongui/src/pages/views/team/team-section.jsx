@@ -210,7 +210,11 @@ const SquadHeaderContent = ({ squad, collapsedSquads, onToggleExpand }) => {
           onToggleExpand(squad.name);
         }}
       >
-        {!collapsedSquads[squad.name] ? <ExpandMoreIcon /> : <ChevronRightIcon />}
+        {!collapsedSquads[squad.name] ? (
+          <ExpandMoreIcon />
+        ) : (
+          <ChevronRightIcon />
+        )}
       </IconButton>
       <SquadNameInfo squad={squad} />
       <Typography variant="caption" sx={{ ml: "auto" }}>
@@ -372,6 +376,8 @@ export const TeamSection = ({
     );
   };
 
+  const anySquadCollapsed = Object.values(collapsedSquads).some(Boolean);
+
   return (
     <TeamBox>
       <Box
@@ -431,12 +437,15 @@ export const TeamSection = ({
           {isLobby ? `Lobby (${team.count})` : title}
         </Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <IconButton size="small" onClick={onTeamExpand}>
-            <UnfoldMoreIcon />
-          </IconButton>
-          <IconButton size="small" onClick={onTeamCollapse}>
-            <UnfoldLessIcon />
-          </IconButton>
+          {anySquadCollapsed ? (
+            <IconButton size="small" onClick={onTeamExpand}>
+              <UnfoldMoreIcon />
+            </IconButton>
+          ) : (
+            <IconButton size="small" onClick={onTeamCollapse}>
+              <UnfoldLessIcon />
+            </IconButton>
+          )}
         </Box>
       </Box>
       <ScrollContainer>
