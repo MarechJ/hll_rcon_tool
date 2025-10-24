@@ -11,9 +11,7 @@ import {
   Checkbox,
   CircularProgress,
   Divider,
-  FormControl,
   FormControlLabel,
-  FormLabel,
   IconButton,
   List,
   ListItem,
@@ -264,7 +262,6 @@ export default function DisbandSquadDialog() {
       <Tooltip title={"Disband Squad"}>
         <span>
           <IconButton
-            color="primary"
             onClick={handleDialogClickOpen}
             disabled={unitOptions.length === 0}
           >
@@ -292,6 +289,10 @@ export default function DisbandSquadDialog() {
             <Stack
               direction={"row"}
               divider={<Divider flexItem orientation="vertical" />}
+              sx={{
+                border: (theme) => `1px solid ${theme.palette.divider}`,
+                borderRadius: 2,
+              }}
             >
               {["allies", "axis"].map((team) => {
                 const teamOptions = unitOptions.filter(
@@ -301,7 +302,7 @@ export default function DisbandSquadDialog() {
                   (id) => getIdOption(id)?.team === team
                 ).length;
                 return (
-                  <Stack minWidth={"50%"} maxWidth={"50%"}>
+                  <Stack minWidth={"50%"} maxWidth={"50%"} key={team}>
                     <FormControlLabel
                       label={
                         <Typography
@@ -334,7 +335,6 @@ export default function DisbandSquadDialog() {
                       key={team}
                       sx={{
                         width: "100%",
-                        bgcolor: "background.paper",
                         position: "relative",
                         overflowY: "auto",
                         overflowX: "hidden",
@@ -391,7 +391,7 @@ export default function DisbandSquadDialog() {
                                       event.stopPropagation();
                                       handleUnitSelect(option);
                                     }}
-                                    disabled={pendingOptionStates.size}
+                                    disabled={pendingOptionStates.size > 0}
                                   />
                                 );
                                 break;
@@ -478,7 +478,6 @@ export default function DisbandSquadDialog() {
             {errors.length > 0 && (
               <ErrorBrowser errors={errors} onClose={() => setErrors([])} />
             )}
-            <Divider flexItem sx={{ mb: 2 }} />
             <ReasonField
               errors={formErrors}
               setValue={setValue}
