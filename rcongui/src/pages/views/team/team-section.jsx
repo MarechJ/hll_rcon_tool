@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
 import { getPlayerTier, useTierColors } from "@/utils/lib";
 import StarIcon from "@mui/icons-material/Star";
 import {
@@ -21,6 +20,9 @@ import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import useTheme from "@mui/material/styles/useTheme";
 import { secondsToTime } from "@/utils/extractPlayers";
+import { ActionMenuButton } from "@/features/player-action/ActionMenu";
+import { generatePlayerActions } from "@/features/player-action/actions";
+import { TextButton } from "@/components/table/styles";
 
 export const UNASSIGNED = "unassigned";
 
@@ -45,7 +47,7 @@ const roleSrc = (role, mode) =>
     ? `/icons/roles/${role}_black.png`
     : `/icons/roles/${role}.png`;
 
-const PlayerInfo = ({ player, onProfileClick }) => {
+const PlayerInfo = ({ player }) => {
   const theme = useTheme();
   const mode = theme?.palette?.mode || "light";
   return (
@@ -63,12 +65,21 @@ const PlayerInfo = ({ player, onProfileClick }) => {
           {"-"}
         </Typography>
       )}
-      <Typography
-        className="player-name"
-        onClick={(e) => onProfileClick(player, e)}
-      >
-        {player.name}
-      </Typography>
+      <span onClick={(e) => e.stopPropagation()}>
+        <ActionMenuButton
+          actions={generatePlayerActions({
+            multiAction: false,
+            onlineAction: true,
+          })}
+          withProfile
+          recipients={player}
+          renderButton={(props) => (
+            <TextButton {...props} className="player-name">
+              {player.name}
+            </TextButton>
+          )}
+        />
+      </span>
       {player.is_vip && <StarIcon sx={{ fontSize: 16 }} />}
     </Box>
   );
@@ -79,7 +90,6 @@ const PlayerRowWrapper = ({
   selected,
   isCommander,
   onToggle,
-  onProfileClick,
   displayStats = true,
 }) => (
   <PlayerRow
@@ -89,7 +99,7 @@ const PlayerRowWrapper = ({
     isCommander={isCommander}
   >
     <Box className="level">{player.level}</Box>
-    <PlayerInfo player={player} onProfileClick={onProfileClick} />
+    <PlayerInfo player={player} />
     {displayStats && <PlayerStats player={player} />}
   </PlayerRow>
 );
@@ -99,7 +109,6 @@ const SquadPlayers = ({
   collapsed,
   selectedPlayers,
   onTogglePlayer,
-  onProfileClick,
   displayStats = true,
 }) => (
   <Collapse in={collapsed}>
@@ -109,7 +118,6 @@ const SquadPlayers = ({
         player={player}
         selected={selectedPlayers.has(player.player_id)}
         onToggle={onTogglePlayer}
-        onProfileClick={onProfileClick}
         displayStats={displayStats}
       />
     ))}
@@ -245,12 +253,6 @@ export const TeamSection = ({
   onTeamCollapse,
 }) => {
   const isLobby = team.name === "lobby";
-  const { openWithId } = usePlayerSidebar();
-
-  const handleProfileClick = (player, event) => {
-    event.stopPropagation();
-    openWithId(player.player_id);
-  };
 
   const { commander, squadGroups, unassignedPlayers, allPlayers } =
     useMemo(() => {
@@ -354,7 +356,6 @@ export const TeamSection = ({
           collapsed={!collapsedSquads[UNASSIGNED]}
           selectedPlayers={selectedPlayers}
           onTogglePlayer={onTogglePlayer}
-          onProfileClick={handleProfileClick}
         />
       </Box>
     );
@@ -370,7 +371,6 @@ export const TeamSection = ({
         collapsed={!collapsedSquads[UNASSIGNED]}
         selectedPlayers={selectedPlayers}
         onTogglePlayer={onTogglePlayer}
-        onProfileClick={handleProfileClick}
         displayStats={false}
       />
     );
@@ -482,7 +482,6 @@ export const TeamSection = ({
                   player={commander}
                   selected={selectedPlayers.has(commander.player_id)}
                   onToggle={onTogglePlayer}
-                  onProfileClick={handleProfileClick}
                   isCommander={true}
                 />
               ) : team.name !== "lobby" ? (
@@ -530,7 +529,6 @@ export const TeamSection = ({
                         collapsed={!collapsedSquads[squad.name]}
                         selectedPlayers={selectedPlayers}
                         onTogglePlayer={onTogglePlayer}
-                        onProfileClick={handleProfileClick}
                       />
                     </Box>
                   ))}

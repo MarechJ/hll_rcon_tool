@@ -290,6 +290,12 @@ const TeamViewPage = () => {
             px: 2,
           }}
         >
+          <DebouncedSearchInput
+            placeholder={"Search player"}
+            initialValue={searchTerm}
+            onChange={setSearchTerm}
+          />
+          <Divider flexItem orientation="vertical" sx={{ mx: 1 }} />
           <ActionMenuButton
             actions={generatePlayerActions({
               multiAction: true,
@@ -297,27 +303,7 @@ const TeamViewPage = () => {
             })}
             recipients={Array.from(selectedPlayers.values())}
             disabled={!selectedPlayers.size}
-            renderButton={(props) => (
-              <IconButton
-                disabled={!selectedPlayers.size}
-                aria-label="Apply Actions"
-                {...props}
-              >
-                <MoreHorizIcon />
-                <Box
-                  component={"span"}
-                  sx={{ display: { xs: "none", lg: "span" } }}
-                >
-                  Apply Actions
-                </Box>
-              </IconButton>
-            )}
-          />
-          <Divider flexItem orientation="vertical" sx={{ mx: 1 }} />
-          <DebouncedSearchInput
-            placeholder={"Search player"}
-            initialValue={searchTerm}
-            onChange={setSearchTerm}
+            orientation="horizontal"
           />
           <Tooltip title="Select All">
             <span>
