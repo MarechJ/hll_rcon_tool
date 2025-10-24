@@ -147,6 +147,7 @@ export const PlayerRow = styled(
     gap: theme.spacing(1),
     minWidth: 0,
     "& .player-name": {
+      fontFamily: "Roboto",
       overflow: "hidden",
       textOverflow: "ellipsis",
       whiteSpace: "nowrap",
