@@ -20,6 +20,7 @@ import Collapse from "@mui/material/Collapse";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import useTheme from "@mui/material/styles/useTheme";
+import { secondsToTime } from "@/utils/extractPlayers";
 
 export const UNASSIGNED = "unassigned";
 
@@ -31,6 +32,11 @@ const PlayerStats = ({ player }) => (
     <Box className="stat">{player?.offense || 0}</Box>
     <Box className="stat">{player?.defense || 0}</Box>
     <Box className="stat">{player?.support || 0}</Box>
+    <Box className="stat">
+      {secondsToTime(
+        player?.time ?? player?.profile?.current_playtime_seconds ?? 0
+      )}
+    </Box>
   </>
 );
 
@@ -118,6 +124,7 @@ const SquadStats = ({ squad }) => (
     <Box className="stat">{squad.offense}</Box>
     <Box className="stat">{squad.defense}</Box>
     <Box className="stat">{squad.support}</Box>
+    <Box className="stat">∅ {secondsToTime(squad.time)}</Box>
   </Box>
 );
 
@@ -129,6 +136,7 @@ const UnassignedStats = ({ players }) => (
     <Box className="stat">{players.reduce((sum, p) => sum + p.offense, 0)}</Box>
     <Box className="stat">{players.reduce((sum, p) => sum + p.defense, 0)}</Box>
     <Box className="stat">{players.reduce((sum, p) => sum + p.support, 0)}</Box>
+    <Box className="stat"></Box>
   </Box>
 );
 
@@ -213,7 +221,7 @@ const SquadHeaderContent = ({ squad, expandedSquads, onToggleExpand }) => {
             color: tierColors[getPlayerTier(squad.level)],
           }}
         >
-          {squad.level.toFixed(0)}
+          {squad.level}
         </Box>
       </Typography>
     </Box>
@@ -444,13 +452,20 @@ export const TeamSection = ({
                 <Box>Offense</Box>
                 <Box>Defense</Box>
                 <Box>Support</Box>
+                <Box>Time</Box>
               </HeaderRow>
               <TeamHeaderRow>
-                <Box>∅ {team.avg_level.toFixed(0)}</Box>
+                <Box>∅ {team.avg_level}</Box>
                 <Box style={{ textAlign: "center" }}>
                   Total ({team.count} players)
                 </Box>
-                <PlayerStats player={team} />
+                <Box className="stat">{team?.kills || 0}</Box>
+                <Box className="stat">{team?.deaths || 0}</Box>
+                <Box className="stat">{team?.combat || 0}</Box>
+                <Box className="stat">{team?.offense || 0}</Box>
+                <Box className="stat">{team?.defense || 0}</Box>
+                <Box className="stat">{team?.support || 0}</Box>
+                <Box className="stat">∅ {secondsToTime(team?.time ?? 0)}</Box>
               </TeamHeaderRow>
 
               {commander ? (

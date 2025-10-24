@@ -29,7 +29,9 @@ export const extractPlayers = (game) => {
 };
 
 const getAvg = (arr) => {
-  return arr.reduce((sum, value) => sum + value, 0) / arr.length;
+  return Math.trunc(
+    arr.reduce((sum, value) => sum + value, 0) / arr.length
+  );
 };
 
 const getMedian = (arr) => {
@@ -38,6 +40,20 @@ const getMedian = (arr) => {
   return sorted.length % 2 !== 0
     ? sorted[mid]
     : getAvg([sorted[mid - 1], sorted[mid]]);
+};
+
+const getTimePlayed = (player) => {
+  return (
+    player?.current_playtime_seconds ??
+    player?.profile?.current_playtime_seconds ??
+    0
+  );
+};
+
+export const secondsToTime = (seconds) => {
+  const minutes = Math.floor(seconds / 60) % 60;
+  const hours = Math.floor(seconds / 3600);
+  return `${String(hours).padStart(1, 0)}:${String(minutes).padStart(2, 0)}`;
 };
 
 const extendPlayer = (player) => {
@@ -51,6 +67,7 @@ const extendPlayer = (player) => {
 export const extractTeamState = (aTeam, name, searchTerm = "") => {
   const team = aTeam ?? {};
   const teamLevels = [];
+  const teamTimes = [];
   const out = {};
   out["name"] = name ?? "unknown";
   out["commander"] = null;
@@ -64,6 +81,7 @@ export const extractTeamState = (aTeam, name, searchTerm = "") => {
   out["squads"] = [];
   out["vips"] = 0;
   out["count"] = 0;
+  out["time"] = 0;
   const totals = ["combat", "offense", "defense", "support", "kills", "deaths"];
   for (const total of totals) {
     out[total] = 0;
@@ -85,6 +103,11 @@ export const extractTeamState = (aTeam, name, searchTerm = "") => {
       commander.player_id.includes(searchTerm)
     ) {
       out["count"]++;
+      teamLevels.push(commander.level);
+      teamTimes.push(getTimePlayed(commander));
+      for (const total of totals) {
+        out[total] += commander[total] || 0;
+      }
       if (commander.is_vip) {
         out["vips"]++;
       }
@@ -97,6 +120,7 @@ export const extractTeamState = (aTeam, name, searchTerm = "") => {
     const squad = squads[squadKey];
 
     const squadLevels = [];
+    const squadTimes = [];
 
     const squadPlayers = squad.players
       .map(extendPlayer)
@@ -112,8 +136,11 @@ export const extractTeamState = (aTeam, name, searchTerm = "") => {
           out[total] += player[total] || 0;
         }
         out["count"]++;
+        out["avg_level"] += getTimePlayed(player);
         squadLevels.push(player.level);
+        squadTimes.push(getTimePlayed(player));
         teamLevels.push(player.level);
+        teamTimes.push(getTimePlayed(player));
         switch (player.role) {
           case "sniper":
           case "spotter":
@@ -137,6 +164,7 @@ export const extractTeamState = (aTeam, name, searchTerm = "") => {
         name: squadKey,
         players: squadPlayers,
         level: getAvg(squadLevels),
+        time: getAvg(squadTimes),
       });
 
       // If the squad has no leader, it's a no SL squad
@@ -146,9 +174,10 @@ export const extractTeamState = (aTeam, name, searchTerm = "") => {
     }
   }
 
-  if (team.count) {
+  if (out["count"]) {
     out["avg_level"] = getAvg(teamLevels);
     out["med_level"] = getMedian(teamLevels);
+    out["time"] = getAvg(teamTimes);
   }
 
   return out;
