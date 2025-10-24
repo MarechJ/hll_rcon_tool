@@ -11,7 +11,6 @@ import {
   IconButton,
   Skeleton,
   Typography,
-  LinearProgress,
 } from "@mui/material";
 import {
   Form,
@@ -34,6 +33,8 @@ import dayjs from "dayjs";
 import NavPagination from "@/pages/stats/games/nav-pagination";
 import { Box } from "@mui/material";
 import { useGlobalStore } from "@/stores/global-state";
+import { ActionBar } from "@/features/player-action/ActionMenu";
+import { newRecordActions } from "@/features/player-action/actions";
 
 const EmojiPicker = lazy(() => import("@emoji-mart/react"));
 
@@ -191,8 +192,10 @@ export default function PlayersRecords() {
   };
 
   return (
-    <div>
+    <Stack spacing={1} sx={{ mt: 2 }}>
+      <ActionBar actions={newRecordActions} handleActionClick={() => {}} />
       <Stack direction={{ xs: "column", lg: "row" }} spacing={1} sx={{ mt: 2 }}>
+        {/* FILTERS */}
         <Form method="GET">
           <Stack spacing={2} sx={{ width: { xs: "100%", lg: "300px" } }}>
             <TextField
@@ -421,8 +424,13 @@ export default function PlayersRecords() {
             </Button>
           </Stack>
         </Form>
-
-        <Stack component="section" id="players-section" spacing={1} sx={{ width: "100%" }}>
+        {/* MAIN CONTENT */}
+        <Stack
+          component="section"
+          id="players-section"
+          spacing={1}
+          sx={{ width: "100%" }}
+        >
           <NavPagination
             page={page}
             maxPages={total_pages}
@@ -437,6 +445,6 @@ export default function PlayersRecords() {
           />
         </Stack>
       </Stack>
-    </div>
+    </Stack>
   );
 }

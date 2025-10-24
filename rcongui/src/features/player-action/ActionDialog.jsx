@@ -10,13 +10,13 @@ import {
   Toolbar,
   Typography,
   useMediaQuery,
-  useTheme
+  useTheme,
 } from "@mui/material";
 import { ActionForm } from "./ActionForm";
 import { useActionDialog } from "@/hooks/useActionDialog";
 import CloseIcon from "@mui/icons-material/Close";
 import { ClientError } from "@/components/shared/ClientError";
-import {useEffect, useRef, useState} from "react";
+import { useEffect, useRef, useState } from "react";
 
 export const ActionDialog = () => {
   const { state, closeDialog } = useActionDialog();
@@ -76,7 +76,7 @@ export const ActionDialog = () => {
             <CloseIcon />
           </IconButton>
           <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
-            {action.name[0].toUpperCase() + action.name.substring(1)}
+            {action.name}
           </Typography>
           <Button
             variant="outlined"
@@ -92,7 +92,7 @@ export const ActionDialog = () => {
       <DialogContent dividers>
         {error && <ClientError error={error} />}
         {action.deprecated && (
-          <Alert severity="info" sx={{ mb: 1 }}>
+          <Alert severity="warning" sx={{ mb: 1 }}>
             <AlertTitle>Action deprecated</AlertTitle>
             {action.deprecationNote}
           </Alert>
@@ -103,7 +103,9 @@ export const ActionDialog = () => {
         <ActionForm actionHandlers={actionHandlers} state={state} />
       </DialogContent>
       <DialogActions>
-        <Button variant="outlined" color="secondary" onClick={handleClose}>Cancel</Button>
+        <Button variant="outlined" color="secondary" onClick={handleClose}>
+          Cancel
+        </Button>
         <Button
           variant="outlined"
           color="primary"
