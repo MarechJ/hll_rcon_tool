@@ -62,14 +62,12 @@ export const ContentWrapper = styled(Box)({
 export const gridTemplateColumns = {
   default: "35px minmax(200px, 300px) 60px repeat(6, 60px)",
   sm: "35px minmax(150px, 200px) 60px repeat(6, 60px)",
+  noScore: "35px minmax(150px, 200px) 1fr",
 };
 
-export const SquadHeader = styled(
-  Box,
-  {
-    shouldForwardProp: (prop) => prop !== "selected",
-  }
-)(({ theme, selected }) => ({
+export const SquadHeader = styled(Box, {
+  shouldForwardProp: (prop) => prop !== "selected",
+})(({ theme, selected }) => ({
   padding: theme.spacing(0.5, 1),
   backgroundColor: theme.palette.background.paper,
   borderBottom: `1px solid ${theme.palette.divider}`,
@@ -116,15 +114,15 @@ export const SquadHeader = styled(
   },
 }));
 
-export const PlayerRow = styled(
-  Box,
-  {
-    shouldForwardProp: (prop) =>
-      prop !== "isCommander" && prop !== "level" && prop !== "selected",
-  }
-)(({ theme, selected, level, isCommander }) => ({
+export const PlayerRow = styled(Box, {
+  shouldForwardProp: (prop) =>
+    prop !== "isCommander" &&
+    prop !== "level" &&
+    prop !== "selected" &&
+    prop !== "timeOnly",
+})(({ theme, selected, level, isCommander, timeOnly }) => ({
   display: "grid",
-  gridTemplateColumns: gridTemplateColumns.default,
+  gridTemplateColumns: gridTemplateColumns[!timeOnly ? "default" : "noScore"],
   padding: isCommander ? theme.spacing(2, 1) : theme.spacing(0.5, 1),
   alignItems: "center",
   borderBottom: `1px solid ${theme.palette.divider}`,
@@ -227,13 +225,9 @@ export const TeamHeaderRow = styled(Box)(({ theme }) => ({
   },
 }));
 
-export const CommanderRow = styled(
-  Box,
-  {
-    shouldForwardProp: (prop) =>
-      prop !== "selected" && prop !== "level",
-  }
-)(({ theme, selected, level }) => ({
+export const CommanderRow = styled(Box, {
+  shouldForwardProp: (prop) => prop !== "selected" && prop !== "level",
+})(({ theme, selected, level }) => ({
   display: "grid",
   gridTemplateColumns: gridTemplateColumns.default,
   padding: theme.spacing(2, 1),

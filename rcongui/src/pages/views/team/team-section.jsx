@@ -97,10 +97,18 @@ const PlayerRowWrapper = ({
     onClick={(e) => onToggle(player, e)}
     level={player.level}
     isCommander={isCommander}
+    timeOnly={!displayStats}
   >
     <Box className="level">{player.level}</Box>
     <PlayerInfo player={player} />
     {displayStats && <PlayerStats player={player} />}
+    {!displayStats && (
+      <Box className="stat">
+        {secondsToTime(
+          player?.time ?? player?.profile?.current_playtime_seconds ?? 0
+        )}
+      </Box>
+    )}
   </PlayerRow>
 );
 
@@ -144,7 +152,7 @@ const UnassignedStats = ({ players }) => (
     <Box className="stat">{players.reduce((sum, p) => sum + p.offense, 0)}</Box>
     <Box className="stat">{players.reduce((sum, p) => sum + p.defense, 0)}</Box>
     <Box className="stat">{players.reduce((sum, p) => sum + p.support, 0)}</Box>
-    <Box className="stat"></Box>
+    <Box className="stat">0:00</Box>
   </Box>
 );
 
