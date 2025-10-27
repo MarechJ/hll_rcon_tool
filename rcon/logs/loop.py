@@ -287,6 +287,7 @@ class LogLoop:
                     p_defense=0,
                     support=player["support"],
                     p_support=0,
+                    level=player["level"],
                 ),
             )
             for stat in ["combat", "offense", "defense", "support"]:
@@ -294,6 +295,8 @@ class LogLoop:
                     p["p_" + stat] = p["p_" + stat] + p[stat]
 
                 p[stat] = player[stat]
+                
+            p["level"] = player["level"]
             map_players[player_id] = p
         maps.update(0, m)
 
