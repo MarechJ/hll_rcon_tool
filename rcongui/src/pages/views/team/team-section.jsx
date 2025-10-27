@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
 import { getPlayerTier, useTierColors } from "@/utils/lib";
 import StarIcon from "@mui/icons-material/Star";
 import {
@@ -20,6 +19,10 @@ import Collapse from "@mui/material/Collapse";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import useTheme from "@mui/material/styles/useTheme";
+import { secondsToTime } from "@/utils/extractPlayers";
+import { ActionMenuButton } from "@/features/player-action/ActionMenu";
+import { generatePlayerActions } from "@/features/player-action/actions";
+import { TextButton } from "@/components/table/styles";
 
 export const UNASSIGNED = "unassigned";
 
@@ -31,6 +34,11 @@ const PlayerStats = ({ player }) => (
     <Box className="stat">{player?.offense || 0}</Box>
     <Box className="stat">{player?.defense || 0}</Box>
     <Box className="stat">{player?.support || 0}</Box>
+    <Box className="stat">
+      {secondsToTime(
+        player?.time ?? player?.profile?.current_playtime_seconds ?? 0
+      )}
+    </Box>
   </>
 );
 
@@ -39,7 +47,7 @@ const roleSrc = (role, mode) =>
     ? `/icons/roles/${role}_black.png`
     : `/icons/roles/${role}.png`;
 
-const PlayerInfo = ({ player, onProfileClick }) => {
+const PlayerInfo = ({ player }) => {
   const theme = useTheme();
   const mode = theme?.palette?.mode || "light";
   return (
@@ -57,12 +65,21 @@ const PlayerInfo = ({ player, onProfileClick }) => {
           {"-"}
         </Typography>
       )}
-      <Typography
-        className="player-name"
-        onClick={(e) => onProfileClick(player, e)}
-      >
-        {player.name}
-      </Typography>
+      <span onClick={(e) => e.stopPropagation()}>
+        <ActionMenuButton
+          actions={generatePlayerActions({
+            multiAction: false,
+            onlineAction: true,
+          })}
+          withProfile
+          recipients={player}
+          renderButton={(props) => (
+            <TextButton {...props} className="player-name">
+              {player.name}
+            </TextButton>
+          )}
+        />
+      </span>
       {player.is_vip && <StarIcon sx={{ fontSize: 16 }} />}
     </Box>
   );
@@ -73,7 +90,6 @@ const PlayerRowWrapper = ({
   selected,
   isCommander,
   onToggle,
-  onProfileClick,
   displayStats = true,
 }) => (
   <PlayerRow
@@ -81,29 +97,35 @@ const PlayerRowWrapper = ({
     onClick={(e) => onToggle(player, e)}
     level={player.level}
     isCommander={isCommander}
+    timeOnly={!displayStats}
   >
     <Box className="level">{player.level}</Box>
-    <PlayerInfo player={player} onProfileClick={onProfileClick} />
+    <PlayerInfo player={player} />
     {displayStats && <PlayerStats player={player} />}
+    {!displayStats && (
+      <Box className="stat">
+        {secondsToTime(
+          player?.time ?? player?.profile?.current_playtime_seconds ?? 0
+        )}
+      </Box>
+    )}
   </PlayerRow>
 );
 
 const SquadPlayers = ({
   squad,
-  expanded,
+  collapsed,
   selectedPlayers,
   onTogglePlayer,
-  onProfileClick,
   displayStats = true,
 }) => (
-  <Collapse in={expanded}>
+  <Collapse in={collapsed}>
     {squad.players.map((player) => (
       <PlayerRowWrapper
         key={player.player_id}
         player={player}
         selected={selectedPlayers.has(player.player_id)}
         onToggle={onTogglePlayer}
-        onProfileClick={onProfileClick}
         displayStats={displayStats}
       />
     ))}
@@ -118,6 +140,7 @@ const SquadStats = ({ squad }) => (
     <Box className="stat">{squad.offense}</Box>
     <Box className="stat">{squad.defense}</Box>
     <Box className="stat">{squad.support}</Box>
+    <Box className="stat">∅ {secondsToTime(squad.time)}</Box>
   </Box>
 );
 
@@ -129,6 +152,7 @@ const UnassignedStats = ({ players }) => (
     <Box className="stat">{players.reduce((sum, p) => sum + p.offense, 0)}</Box>
     <Box className="stat">{players.reduce((sum, p) => sum + p.defense, 0)}</Box>
     <Box className="stat">{players.reduce((sum, p) => sum + p.support, 0)}</Box>
+    <Box className="stat">0:00</Box>
   </Box>
 );
 
@@ -191,7 +215,7 @@ const SquadNameInfo = ({ squad, showIcon = true }) => {
   );
 };
 
-const SquadHeaderContent = ({ squad, expandedSquads, onToggleExpand }) => {
+const SquadHeaderContent = ({ squad, collapsedSquads, onToggleExpand }) => {
   const tierColors = useTierColors();
   return (
     <Box className="squad-info">
@@ -202,7 +226,11 @@ const SquadHeaderContent = ({ squad, expandedSquads, onToggleExpand }) => {
           onToggleExpand(squad.name);
         }}
       >
-        {expandedSquads[squad.name] ? <ExpandMoreIcon /> : <ChevronRightIcon />}
+        {!collapsedSquads[squad.name] ? (
+          <ExpandMoreIcon />
+        ) : (
+          <ChevronRightIcon />
+        )}
       </IconButton>
       <SquadNameInfo squad={squad} />
       <Typography variant="caption" sx={{ ml: "auto" }}>
@@ -213,7 +241,7 @@ const SquadHeaderContent = ({ squad, expandedSquads, onToggleExpand }) => {
             color: tierColors[getPlayerTier(squad.level)],
           }}
         >
-          {squad.level.toFixed(0)}
+          {squad.level}
         </Box>
       </Typography>
     </Box>
@@ -227,18 +255,12 @@ export const TeamSection = ({
   onTogglePlayer,
   onToggleSquad,
   onToggleAll,
-  expandedSquads,
+  collapsedSquads,
   onToggleExpand,
   onTeamExpand,
   onTeamCollapse,
 }) => {
   const isLobby = team.name === "lobby";
-  const { openWithId } = usePlayerSidebar();
-
-  const handleProfileClick = (player, event) => {
-    event.stopPropagation();
-    openWithId(player.player_id);
-  };
 
   const { commander, squadGroups, unassignedPlayers, allPlayers } =
     useMemo(() => {
@@ -314,7 +336,7 @@ export const TeamSection = ({
                 onToggleExpand(UNASSIGNED);
               }}
             >
-              {expandedSquads[UNASSIGNED] ? (
+              {!collapsedSquads[UNASSIGNED] ? (
                 <ExpandMoreIcon />
               ) : (
                 <ChevronRightIcon />
@@ -339,10 +361,9 @@ export const TeamSection = ({
         </SquadHeader>
         <SquadPlayers
           squad={{ players }}
-          expanded={expandedSquads[UNASSIGNED]}
+          collapsed={!collapsedSquads[UNASSIGNED]}
           selectedPlayers={selectedPlayers}
           onTogglePlayer={onTogglePlayer}
-          onProfileClick={handleProfileClick}
         />
       </Box>
     );
@@ -355,14 +376,15 @@ export const TeamSection = ({
     return (
       <SquadPlayers
         squad={{ players }}
-        expanded={expandedSquads[UNASSIGNED]}
+        collapsed={!collapsedSquads[UNASSIGNED]}
         selectedPlayers={selectedPlayers}
         onTogglePlayer={onTogglePlayer}
-        onProfileClick={handleProfileClick}
         displayStats={false}
       />
     );
   };
+
+  const anySquadCollapsed = Object.values(collapsedSquads).some(Boolean);
 
   return (
     <TeamBox>
@@ -423,12 +445,15 @@ export const TeamSection = ({
           {isLobby ? `Lobby (${team.count})` : title}
         </Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <IconButton size="small" onClick={onTeamExpand}>
-            <UnfoldMoreIcon />
-          </IconButton>
-          <IconButton size="small" onClick={onTeamCollapse}>
-            <UnfoldLessIcon />
-          </IconButton>
+          {anySquadCollapsed ? (
+            <IconButton size="small" onClick={onTeamExpand}>
+              <UnfoldMoreIcon />
+            </IconButton>
+          ) : (
+            <IconButton size="small" onClick={onTeamCollapse}>
+              <UnfoldLessIcon />
+            </IconButton>
+          )}
         </Box>
       </Box>
       <ScrollContainer>
@@ -444,13 +469,20 @@ export const TeamSection = ({
                 <Box>Offense</Box>
                 <Box>Defense</Box>
                 <Box>Support</Box>
+                <Box>Time</Box>
               </HeaderRow>
               <TeamHeaderRow>
-                <Box>∅ {team.avg_level.toFixed(0)}</Box>
+                <Box>∅ {team.avg_level}</Box>
                 <Box style={{ textAlign: "center" }}>
                   Total ({team.count} players)
                 </Box>
-                <PlayerStats player={team} />
+                <Box className="stat">{team?.kills || 0}</Box>
+                <Box className="stat">{team?.deaths || 0}</Box>
+                <Box className="stat">{team?.combat || 0}</Box>
+                <Box className="stat">{team?.offense || 0}</Box>
+                <Box className="stat">{team?.defense || 0}</Box>
+                <Box className="stat">{team?.support || 0}</Box>
+                <Box className="stat">∅ {secondsToTime(team?.time ?? 0)}</Box>
               </TeamHeaderRow>
 
               {commander ? (
@@ -458,7 +490,6 @@ export const TeamSection = ({
                   player={commander}
                   selected={selectedPlayers.has(commander.player_id)}
                   onToggle={onTogglePlayer}
-                  onProfileClick={handleProfileClick}
                   isCommander={true}
                 />
               ) : team.name !== "lobby" ? (
@@ -496,17 +527,16 @@ export const TeamSection = ({
                       >
                         <SquadHeaderContent
                           squad={squad}
-                          expandedSquads={expandedSquads}
+                          collapsedSquads={collapsedSquads}
                           onToggleExpand={onToggleExpand}
                         />
                         <SquadStats squad={squad} />
                       </SquadHeader>
                       <SquadPlayers
                         squad={squad}
-                        expanded={expandedSquads[squad.name]}
+                        collapsed={!collapsedSquads[squad.name]}
                         selectedPlayers={selectedPlayers}
                         onTogglePlayer={onTogglePlayer}
-                        onProfileClick={handleProfileClick}
                       />
                     </Box>
                   ))}
