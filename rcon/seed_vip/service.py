@@ -34,6 +34,7 @@ def run():
 
     to_add_vip_steam_ids: set[str] = set()
     no_reward_steam_ids: set[str] = set()
+    player_name_lookup: dict[str, str] = {}
     prev_announced_bucket: int = 0
     player_buckets = config.player_announce_thresholds
     if player_buckets:
@@ -142,9 +143,6 @@ def run():
                 reward_players(
                     config=config,
                     to_add_vip_steam_ids=to_add_vip_steam_ids,
-                    current_vips=all_vips,
-                    players_lookup=player_name_lookup,
-                    expiration_timestamps=expiration_timestamps,
                 )
 
                 # Message those who earned VIP

@@ -68,10 +68,10 @@ def is_seeded(config: SeedVIPUserConfig, gamestate: GameStateType) -> bool:
 
 
 def calc_vip_expiration_timestamp(
-    config: SeedVIPUserConfig, current_expiration: datetime | None, from_time: datetime
+    config: SeedVIPUserConfig, expiration: datetime | None, from_time: datetime
 ) -> datetime:
     """Return the players new expiration date accounting for reward/existing timestamps"""
-    if current_expiration is None:
+    if expiration is None:
         timestamp = from_time + config.reward.timeframe.as_timedelta
         return timestamp
 
@@ -79,16 +79,16 @@ def calc_vip_expiration_timestamp(
     # we have to reset their expiration time before we add on their newly
     # earned time; otherwise it is just going to add to an old date and still
     # be expired
-    if current_expiration < from_time:
+    if expiration < from_time:
         current_expiration = from_time
 
     if config.reward.cumulative:
-        return current_expiration + config.reward.timeframe.as_timedelta
+        return expiration + config.reward.timeframe.as_timedelta
     else:
         # Don't step on the old expiration if it's further in the future than the new one
         timestamp = from_time + config.reward.timeframe.as_timedelta
-        if timestamp < current_expiration:
-            return current_expiration
+        if timestamp < expiration:
+            return expiration
         else:
             return timestamp
 
@@ -160,6 +160,10 @@ def make_seed_announcement_embed(
     return embed
 
 
+def format_vip_reward_name(player_name: str, format_str):
+    return format_str.format(player_name=player_name)
+
+
 def should_announce_seeding_progress(
     player_buckets: list[int],
     total_players: int,
@@ -183,6 +187,7 @@ def message_players(
 ):
     """Message each player and include their highest VIP expiration from all their records"""
     vip_records = get_vip_status_for_player_ids(player_ids=set(player_ids))
+    messages = []
     for player_id in player_ids:
         if vip_records.get(player_id):
             formatted_message = format_player_message(
@@ -194,13 +199,17 @@ def message_players(
             )
         else:
             formatted_message = message
+        messages.append(formatted_message)
 
         if config.dry_run:
-            logger.info(f"{config.dry_run=} messaging {player_id}: {formatted_message}")
+            for player_id, formatted_message in zip(player_ids, messages):
+                logger.info(
+                    f"{config.dry_run=} messaging {player_id}: {formatted_message}"
+                )
         else:
-            rcon.message_player(
-                player_id=player_id,
-                message=formatted_message,
+            rcon.bulk_message_players(
+                player_ids=list(player_ids),
+                messages=messages,
             )
 
 
@@ -264,7 +273,7 @@ def reward_players(
                 # If the player record was created because it didn't exist; it has no expiration
                 player_record.expires_at = calc_vip_expiration_timestamp(
                     config=config,
-                    current_expiration=(
+                    expiration=(
                         timestamp if player_record_created else player_record.expires_at
                     ),
                     from_time=timestamp,
