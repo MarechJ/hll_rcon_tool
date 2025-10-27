@@ -587,6 +587,7 @@ class PlayerStats(Base):
     death_by: Mapped[dict[str, int]] = mapped_column()
     weapons: Mapped[dict[str, int]] = mapped_column()
     death_by_weapons: Mapped[dict[str, int]] = mapped_column()
+    level: Mapped[int] = mapped_column()
 
     player: Mapped[PlayerID] = relationship(
         foreign_keys=[player_id_id], back_populates="stats"
@@ -680,6 +681,7 @@ class PlayerStats(Base):
             "weapons": self.weapons,
             "death_by_weapons": self.death_by_weapons,
             "team": self.detect_team(),
+            "level": self.level,
         }
 
 
