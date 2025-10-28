@@ -48,9 +48,7 @@ const executeAction = (command) => async (payload) => {
   if (command === "add_vip") {
     if ("prefix" in payload && "suffix" in payload) {
       payload.description =
-        (payload.prefix ?? "") +
-        payload.player_name +
-        (payload.suffix ?? "");
+        (payload.prefix ?? "") + payload.player_name + (payload.suffix ?? "");
     } else {
       payload.description = payload.player_name;
     }
@@ -60,7 +58,7 @@ const executeAction = (command) => async (payload) => {
 
 // Define each action
 export const messageAction = {
-  name: "message",
+  name: "Send Message",
   description: "Show message in top right corner of game interface.",
   component: MessageFormFields,
   icon: <MessageIcon />,
@@ -69,7 +67,7 @@ export const messageAction = {
 };
 
 export const watchAction = {
-  name: "watch",
+  name: "Add Watch",
   description:
     "Send Discord message upon player connection (using webhook config).",
   component: WatchFormFields,
@@ -79,7 +77,7 @@ export const watchAction = {
 };
 
 export const removeWatchAction = {
-  name: "remove Watch",
+  name: "Remove Watch",
   description: "Remove from Watchlist.",
   component: ConfirmationOnly,
   icon: <VisibilityOffIcon color="warning" />,
@@ -88,7 +86,7 @@ export const removeWatchAction = {
 };
 
 export const vipAction = {
-  name: "vip",
+  name: "Add VIP",
   description: "Add or Update VIP.",
   component: AddVipFormFields,
   icon: <StarIcon />,
@@ -97,7 +95,7 @@ export const vipAction = {
 };
 
 export const removeVipAction = {
-  name: "Remove Vip",
+  name: "Remove VIP",
   description: "Remove VIP.",
   component: RemoveVipFormFields,
   icon: <StarBorderIcon color="warning" />,
@@ -106,7 +104,7 @@ export const removeVipAction = {
 };
 
 export const switchAction = {
-  name: "switch",
+  name: "Switch player",
   description: "Move player to opposite team.",
   component: ConfirmationOnly,
   icon: <SyncIcon />,
@@ -115,7 +113,7 @@ export const switchAction = {
 };
 
 export const switchOnDeathAction = {
-  name: "switch on death",
+  name: "Switch Player On Death",
   description: "Move player to opposite team upon death.",
   component: ConfirmationOnly,
   icon: <SyncLockIcon />,
@@ -124,7 +122,7 @@ export const switchOnDeathAction = {
 };
 
 export const punishAction = {
-  name: "punish",
+  name: "Punish player",
   description: "Kill player in-game if alive.",
   component: PunishFormFields,
   icon: <WarningIcon />,
@@ -133,7 +131,7 @@ export const punishAction = {
 };
 
 export const kickAction = {
-  name: "kick",
+  name: "Kick player",
   description: "Remove player from server.",
   component: PunishFormFields,
   icon: <SportsMartialArtsIcon />,
@@ -142,7 +140,7 @@ export const kickAction = {
 };
 
 export const tempBanAction = {
-  name: "tempBan",
+  name: "Temp Ban",
   description: "Issue immediate temporary ban to player.",
   component: TempBanFormFields,
   icon: <GavelIcon />,
@@ -154,7 +152,7 @@ export const tempBanAction = {
 };
 
 export const permaBanAction = {
-  name: "permaBan",
+  name: "Perma Ban",
   description: "Initiate immediate indefinite ban to player.",
   component: PermaBanFormFields,
   icon: <BlockIcon />,
@@ -166,7 +164,7 @@ export const permaBanAction = {
 };
 
 export const blacklistAction = {
-  name: "blacklist",
+  name: "Add Blacklist",
   description: "Add player to a blacklist.",
   component: BlacklistPlayerFormFields,
   icon: <AccountBalanceIcon />,
@@ -184,7 +182,7 @@ export const blacklistAction = {
 };
 
 export const flagAction = {
-  name: "flag",
+  name: "Add Flag",
   description: "Assign a flag to the player.",
   component: AddFlagFormFields,
   icon: <FlagIcon />,
@@ -212,7 +210,7 @@ export const unflagAction = {
 };
 
 export const commentAction = {
-  name: "comment",
+  name: "Add Comment",
   description: "Add a comment to the player profile.",
   component: AddCommentFormFields,
   icon: <AddCommentIcon />,
@@ -221,7 +219,7 @@ export const commentAction = {
 };
 
 export const clearAccountAction = {
-  name: "clear",
+  name: "Clear Bans",
   description: "Remove all bans associated with the player account.",
   component: ConfirmationOnly,
   icon: <HowToRegIcon />,
@@ -313,3 +311,13 @@ export const generatePlayerActions = (
 
   return actions;
 };
+
+export const newRecordActions = [
+  watchAction,
+  vipAction,
+  blacklistAction,
+  flagAction,
+  addConsoleAdminAction,
+  tempBanAction,
+  permaBanAction,
+];

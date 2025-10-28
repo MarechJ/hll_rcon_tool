@@ -4,12 +4,13 @@ import MenuItem from "@mui/material/MenuItem";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import {
-  Badge,
   Box,
   Divider,
   ListItemIcon,
-  Tooltip,
   Typography,
+  Card,
+  Tooltip,
+  Badge,
 } from "@mui/material";
 import { useAuth } from "@/hooks/useAuth";
 import { useActionDialog } from "@/hooks/useActionDialog";
@@ -157,6 +158,53 @@ export function ActionMenuButton({
         setAnchorEl={setAnchorEl}
       />
     </Box>
+  );
+}
+
+export function ActionBar({ actions }) {
+  const { permissions: user } = useAuth();
+  const { openDialog } = useActionDialog();
+  const filteredActionList = useMemo(
+    () => actions.filter(hasPermission(user)),
+    [actions, user]
+  );
+
+  const handleActionClick = (action) => () => {
+    openDialog(action, []);
+  };
+
+  return (
+    <Card
+      sx={{
+        display: "flex",
+        color: "text.secondary",
+        p: 0,
+        gap: 0,
+        [`& .MuiIconButton-root`]: {
+          borderRadius: 0,
+          width: 40,
+          height: 40,
+        },
+        [`& .MuiIconButton-root + .MuiIconButton-root`]: {
+          borderLeft: (theme) => `1px solid ${theme.palette.divider}`,
+        },
+      }}
+    >
+      {filteredActionList.map((action) => (
+        <Tooltip title={action.name} key={action.name}>
+          <span>
+            <IconButton
+              key={action.name}
+              size="small"
+              onClick={handleActionClick(action)}
+              sx={{ opacity: action.deprecated ? 0.5 : 1 }}
+            >
+              {action.icon}
+            </IconButton>
+          </span>
+        </Tooltip>
+      ))}
+    </Card>
   );
 }
 
