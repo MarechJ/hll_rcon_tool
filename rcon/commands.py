@@ -63,28 +63,31 @@ class ServerCtl:
         self.config = config
         self.auto_retry = auto_retry
         self.mu = threading.Lock()
-        self.conn: HLLConnection | None = None
+        self.conns: dict[int, HLLConnection] = {}
 
     @contextmanager
     def with_connection(self) -> Generator[HLLConnection, None, None]:
-        # Not sure if multithreading is still a thing we use...
-        logger.debug("Waiting to acquire lock %s", threading.get_ident())
+        # TODO: Cleanup connections from threads that no longer exist
+
+        thread_id = threading.get_ident()
+        logger.debug("Waiting to acquire lock %s", thread_id)
         if not self.mu.acquire(timeout=30):
             raise TimeoutError()
 
         try:
-            if self.conn is None:
-                self.conn = HLLConnection()
+            conn = self.conns.get(thread_id)
+            if conn is None:
+                conn = HLLConnection()
                 try:
-                    self._connect(self.conn)
+                    self._connect(conn)
                 except Exception:
-                    self.conn = None
                     raise
+                self.conns[thread_id] = conn
         finally:
             self.mu.release()
 
         try:
-            yield self.conn
+            yield conn
         except Exception as e:
             # All other errors, that might be caught (like UnicodeDecodeError) do not really qualify as an error of the
             # connection itself. Instead of reconnecting the existing connection here (conditionally), we simply discard
@@ -94,22 +97,38 @@ class ServerCtl:
             ):
                 logger.warning(
                     "Connection (%s) errored in thread %s: %s, removing",
-                    self.conn.id,
-                    threading.get_ident(),
+                    conn.id,
+                    thread_id,
                     e,
                 )
-                self.conn.close()
-                self.conn = None
+
+                if not self.mu.acquire(timeout=30):
+                    raise TimeoutError()
+
+                try:
+                    conn.close()
+                    self.conns.pop(thread_id, None)
+                finally:
+                    self.mu.release()
+
                 raise
 
             elif exception_in_chain(e, HLLBrokenConnectionError):
                 logger.warning(
                     "Connection (%s) marked as broken in thread %s, removing",
-                    self.conn.id,
-                    threading.get_ident(),
+                    conn.id,
+                    thread_id,
                 )
-                self.conn.close()
-                self.conn = None
+
+                if not self.mu.acquire(timeout=30):
+                    raise TimeoutError()
+
+                try:
+                    conn.close()
+                    self.conns.pop(thread_id, None)
+                finally:
+                    self.mu.release()
+
                 if e.__context__ is not None:
                     raise e.__context__
                 raise
@@ -281,19 +300,7 @@ class ServerCtl:
         return self.exchange("GetServerInformation", 2, {"Name": "session", "Value": ""}).content_dict["serverName"]
 
     def get_map(self) -> str:
-        # TODO: Currently returns pretty name instead of map name, f.e. "CARENTAN" instead of "carentan_warfare"
-        session = self.exchange("GetServerInformation", 2, {"Name": "session", "Value": ""}).content_dict
-        layer = next(
-            (
-                l for l in LAYERS.values()
-                if l.map.name == session["mapName"]
-                   and l.game_mode == GameMode(session["gameMode"].lower())
-            ),
-            None,
-        )
-        if not layer:
-            layer = LAYERS[UNKNOWN_MAP_NAME]
-        return layer.id
+        return self.get_gamestate()["current_map"]["id"]
 
     def get_maps(self) -> list[str]:
         details = self.exchange("GetClientReferenceData", 2, "AddMapToRotation")
@@ -374,14 +381,14 @@ class ServerCtl:
 
     def get_logs(
             self,
-            since_min_ago: str | int,
+            since_min_ago: int,
             filter_: str = "",
             conn: HLLConnection | None = None,
     ) -> list[str]:
         return [
             entry["message"]
             for entry in self.exchange("GetAdminLog", 2, {
-                "LogBackTrackTime": since_min_ago,
+                "LogBackTrackTime": since_min_ago * 60,
                 "Filters": filter_
             }, conn=conn).content_dict["entries"]
         ]
@@ -585,6 +592,18 @@ class ServerCtl:
         seconds_remaining = int(time_remaining.total_seconds())
         raw_time_remaining = f"{seconds_remaining // 3600}:{(seconds_remaining // 60) % 60:02}:{seconds_remaining % 60:02}"
 
+        game_mode = GameMode(s["gameMode"].lower())
+        current_map = next(
+            (
+                l for l in LAYERS.values()
+                if l.map.name == s["mapName"]
+                   and l.game_mode == game_mode
+            ),
+            None,
+        )
+        if not current_map:
+            current_map = LAYERS[UNKNOWN_MAP_NAME]
+
         # TODO: next_map is not included in session, map_name is pretty name instead of ID
         return GameStateType(
             next_map=LAYERS[UNKNOWN_MAP_NAME].model_dump(),
@@ -594,22 +613,10 @@ class ServerCtl:
             allied_score=s["alliedScore"],
             allied_faction=s["alliedFaction"],
             num_allied_players=s["alliedPlayerCount"],
-            current_map=LayerType(
-                id=s["mapName"],
-                map=next(
-                    (m for m in MAPS.values() if m.name == s["mapName"]),
-                    MAPS[UNKNOWN_MAP_NAME]
-                ).model_dump(),
-                game_mode=s["gameMode"].lower(),
-                attackers=None,
-                environment=Environment.DAY,
-                pretty_name=s["mapName"].capitalize(),
-                image_name="",
-                image_url="",
-            ),
+            current_map=current_map.model_dump(),
             raw_time_remaining=raw_time_remaining,
             time_remaining=time_remaining,
-            game_mode=GameMode(s["gameMode"].lower()),
+            game_mode=game_mode,
             match_time=s["matchTime"],
             queue_count=s["queueCount"],
             max_queue_count=s["maxQueueCount"],
