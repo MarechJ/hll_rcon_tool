@@ -50,6 +50,7 @@ from rcon.utils import (
 PLAYER_ID = "player_id"
 NAME = "name"
 ROLE = "role"
+UNASSIGNED = "unassigned"
 
 TEMP_BAN = "temp"
 PERMA_BAN = "perma"
@@ -225,6 +226,8 @@ class Rcon(ServerCtl):
     def run_in_pool(self, function_name: str, *args, **kwargs):
         return self.thread_pool.submit(getattr(self, function_name), *args, **kwargs)
 
+    # TODO
+    # When returns value from the cache it is always {}
     @ttl_cache(ttl=5)
     def get_players(self) -> list[GetPlayersType]:
         player_ids = {
@@ -295,15 +298,13 @@ class Rcon(ServerCtl):
         fail_count = detailed_players["fail_count"]
 
         for player in players_by_id.values():
-            player_id = player[PLAYER_ID]
-
-            teams.setdefault(player.get("team"), {}).setdefault(
-                player.get("unit_name"), {}
-            ).setdefault("players", []).append(player)
+            team_name = player.get("team") if player.get("team") is not None else UNASSIGNED
+            team = teams.setdefault(team_name, {})
+            squad = team.setdefault(player.get("unit_name"), {})
+            squad_players = squad.setdefault("players", [])
+            squad_players.append(player)
 
         for team, squads in teams.items():
-            if team is None:
-                continue
             for squad_name, squad in squads.items():
                 squad["players"] = sorted(
                     squad["players"],
@@ -327,8 +328,6 @@ class Rcon(ServerCtl):
 
         game = {}
         for team, squads in teams.items():
-            if team is None:
-                continue
             commander = [
                 squad for _, squad in squads.items() if squad["type"] == "commander"
             ]
