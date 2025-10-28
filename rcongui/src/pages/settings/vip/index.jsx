@@ -422,6 +422,7 @@ const VipPageContent = () => {
       player_id: "",
       expiration: dayjs().add(5, "minutes"),
     });
+    setSearchPlayer({ name: "", player_id: "" });
     setVipIndefinitely(false);
   };
 
@@ -445,6 +446,15 @@ const VipPageContent = () => {
   const handleOperationModeChange = (newMode) => {
     setOperationMode(newMode);
     setFormFields((prev) => ({ ...prev, forward: newMode === "multi" }));
+  };
+
+  const handleOnPlayerSelect = (selectedPlayer) => {
+    setSearchPlayer((prev) => ({
+      ...prev,
+      ...selectedPlayer,
+      name: selectedPlayer.names[0]?.name ?? "",
+      player_id: selectedPlayer.player_id ?? prev.player_id,
+    }));
   };
 
   return (
@@ -493,10 +503,7 @@ const VipPageContent = () => {
         </Stack>
         <Stack spacing={2} sx={{ bgcolor: "background.paper", p: 2 }}>
           <Typography variant="h6">Search Player</Typography>
-          <PlayerSearchField
-            player={searchPlayer}
-            setPlayer={setSearchPlayer}
-          />
+          <PlayerSearchField onSelect={handleOnPlayerSelect} disableAddBtn={true} direction={"column"} />
         </Stack>
         <Stack spacing={2} sx={{ bgcolor: "background.paper", p: 2 }}>
           <Typography variant="h6">Add VIP</Typography>
