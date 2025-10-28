@@ -23,7 +23,6 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import PlayerProfileSummary from "@/components/player/profile/Summary";
 import PlayerProfileHeader from "@/components/player/profile/Header";
 import { generatePlayerActions } from "@/features/player-action/actions";
-import { useActionDialog } from "@/hooks/useActionDialog";
 import PlayerProfileStatusTags from "@/components/player/profile/StatusTags";
 import ReceivedActions from "./[detail]/received-actions";
 import { useGlobalStore } from "@/stores/global-state";
@@ -64,12 +63,6 @@ export default function PlayerProfilePage() {
   const name = profile?.name ?? profile.names[0]?.name ?? "?";
   const avatar = profile?.steaminfo?.profile?.avatar;
 
-  const { openDialog } = useActionDialog();
-
-  const handleActionClick = (recipients) => (action) => {
-    openDialog(action, recipients);
-  };
-
   const getActiveTab = () => {
     const path = location.pathname.split("/").pop();
     let activeTab = DETAIL_LINKS.findIndex((link) => link.path === path);
@@ -83,6 +76,8 @@ export default function PlayerProfilePage() {
     navigate(DETAIL_LINKS[newValue].path, { replace: true });
   };
 
+  console.log(profile)
+
   return (
     <ProfileContainer>
       <MainContent>
@@ -91,12 +86,6 @@ export default function PlayerProfilePage() {
             <PlayerProfileHeader
               player={profile}
               isOnline={!!thisOnlinePlayer}
-              handleActionClick={handleActionClick([
-                {
-                  player_id: profile.player_id,
-                  name,
-                },
-              ])}
               actionList={actionList}
               avatar={avatar}
               name={name}
