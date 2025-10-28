@@ -609,7 +609,7 @@ class ServerCtl:
             next_map=LAYERS[UNKNOWN_MAP_NAME].model_dump(),
             axis_score=s["axisScore"],
             allied_score=s["alliedScore"],
-            current_map=current_map,
+            current_map=current_map.model_dump(),
             raw_time_remaining=raw_time_remaining,
             time_remaining=time_remaining,
             num_axis_players=s["axisPlayerCount"],
