@@ -1,6 +1,6 @@
 Click==8.3.0
 Django==4.2.25
-django-cors-headers==4.7.0
+django-cors-headers==4.9.0
 redis==6.4.0
 sqlalchemy==2.0.44
 channels==4.2.2
