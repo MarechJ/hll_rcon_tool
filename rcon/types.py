@@ -596,6 +596,23 @@ class PlayerVIPType(TypedDict):
     expiration: datetime.datetime
 
 
+class PlayerSoldierType(TypedDict):
+    name: str
+    level: int
+    platform: Optional[str]
+    clan_tag: str
+    updated: datetime.datetime
+
+
+class PlayerAccountType(TypedDict):
+    name: Optional[str]
+    discord_id: Optional[str]
+    is_member: bool
+    country: Optional[str]
+    lang: str
+    updated: datetime.datetime
+
+
 class PlayerProfileType(BasicPlayerProfileType):
     sessions: list[PlayerSessionType]
     sessions_count: int
@@ -608,6 +625,8 @@ class PlayerProfileType(BasicPlayerProfileType):
     flags: list[PlayerFlagType]
     watchlist: Optional[WatchListType]
     vips: Optional[list[PlayerVIPType]]
+    soldier: PlayerSoldierType
+    account: PlayerAccountType
 
 
 class PlayerProfileTypeEnriched(PlayerProfileType):
