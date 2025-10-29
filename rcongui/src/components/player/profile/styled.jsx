@@ -53,12 +53,9 @@ export const ProfileWrapper = styled(Box)(({ theme }) => ({
 }));
 
 export const ProfileHeader = styled(Stack)(({ theme }) => ({
-  paddingRight: theme.spacing(1),
-  paddingLeft: theme.spacing(2),
-  paddingTop: theme.spacing(2),
-  marginBottom: theme.spacing(1),
-  alignItems: "center",
-  textAlign: "center",
+  marginBottom: theme.spacing(0.5),
+  justifyContent: "center",
+  width: 330,
   position: "relative",
 }));
 

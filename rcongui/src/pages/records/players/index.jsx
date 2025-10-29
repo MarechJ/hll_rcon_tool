@@ -134,6 +134,7 @@ export default function PlayersRecords() {
   const submit = useSubmit();
   const navigation = useNavigation();
   const server = useGlobalStore((state) => state.serverState);
+  const onlinePlayers = useGlobalStore((state) => state.onlinePlayers);
   const [formFields, setFormFields] = useState({
     player_name: fields.player_name || "",
     player_id: fields.player_id || "",
@@ -151,13 +152,29 @@ export default function PlayersRecords() {
 
   const players = useMemo(() => {
     if (!server) return playersData;
-    return playersData.map((player) => ({
-      ...player,
-      is_vip:
-        player.vips &&
-        player.vips.some((vip) => vip.server_number === server.server_number),
-    }));
-  }, [playersData, server]);
+    return playersData.map((player) => {
+      const thisOnlinePlayer = onlinePlayers.find(
+        (aPlayer) => aPlayer.player_id === player.player_id
+      );
+
+      const profile = {
+        ...player,
+        is_online: false,
+        is_vip:
+          player.vips &&
+          player.vips.some((vip) => vip.server_number === server.server_number),
+      }
+
+      if (thisOnlinePlayer) {
+        profile.is_online = true
+        profile.level = thisOnlinePlayer.level || player.soldier.level
+        profile.clan_tag = thisOnlinePlayer.clan_tag || player.soldier.clan_tag
+        profile.platform = thisOnlinePlayer.platform || player.soldier.platform
+      }
+
+      return profile
+    });
+  }, [playersData, server, onlinePlayers]);
 
   const handleEmojiButtonClick = (event) => {
     setAnchorEl(event.currentTarget);
