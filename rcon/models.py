@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from typing import Any, Generator, List, Literal, Optional, Sequence, overload, TypedDict
 
 import pydantic
-from sqlalchemy import TIMESTAMP, Enum, ForeignKey, String, create_engine, text, JSON
+from sqlalchemy import TIMESTAMP, Enum, ForeignKey, String, create_engine, select, text, JSON
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -25,6 +25,7 @@ from sqlalchemy.schema import UniqueConstraint
 from rcon.maps import Team
 from rcon.types import (
     AuditLogType,
+    GetDetailedPlayer,
     MessageTemplateType,
     BlacklistRecordType,
     BlacklistRecordWithBlacklistType,
@@ -35,6 +36,7 @@ from rcon.types import (
     DBLogLineType,
     MapsType,
     PenaltyCountType,
+    PlayerAccountType,
     PlayerActionState,
     PlayerActionType,
     PlayerAtCountType,
@@ -44,6 +46,7 @@ from rcon.types import (
     PlayerOptinsType,
     PlayerProfileType,
     PlayerSessionType,
+    PlayerSoldierType,
     PlayerStatsType,
     PlayerVIPType,
     ServerCountType,
@@ -127,6 +130,8 @@ class PlayerID(Base):
         lazy="dynamic",
     )
     optins: Mapped[list["PlayerOptins"]] = relationship(back_populates="player")
+    account: Mapped["PlayerAccount"] = relationship(back_populates="player")
+    soldier: Mapped["PlayerSoldier"] = relationship(back_populates="player")
 
     @property
     def server_number(self) -> int:
@@ -201,12 +206,117 @@ class PlayerID(Base):
             "watchlist": self.watchlist.to_dict() if self.watchlist else None,
             "steaminfo": self.steaminfo.to_dict() if self.steaminfo else None,
             "vips": [v.to_dict() for v in self.vips],
+            "soldier": self.soldier.to_dict(),
+            "account": self.account.to_dict(),
         }
 
     def __str__(self) -> str:
         aka = " | ".join([n.name for n in self.names])
         return f"{self.player_id} {aka}"
 
+class PlayerSoldier(Base):
+    __tablename__ = "player_soldier"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    player_id_id: Mapped[int] = mapped_column(
+        "playersteamid_id",
+        ForeignKey("steam_id_64.id"),
+        nullable=False,
+        index=True,
+        unique=True,
+    )
+    player: Mapped["PlayerID"] = relationship(back_populates="soldier")
+    name: Mapped[str | None] = mapped_column()
+    level: Mapped[int] = mapped_column(default=0)
+    platform: Mapped[str | None] = mapped_column()
+    clan_tag: Mapped[str | None] = mapped_column()
+
+    updated: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        default=lambda: datetime.now(tz=timezone.utc),
+        onupdate=lambda: datetime.now(tz=timezone.utc)
+    )
+
+    @classmethod
+    def update(cls, player: GetDetailedPlayer):
+        logger.debug("Updating soldier %s" % player["name"])
+        with enter_session() as sess:
+            # Retrieve the PlayerID instance to get its ID for foreign key reference
+            player_id_stmt = select(PlayerID).where(PlayerID.player_id == player["player_id"])
+            player_id_record = sess.execute(player_id_stmt).scalars().one_or_none()
+            
+            if not player_id_record:
+                # Handle case where PlayerID does not exist
+                logger.exception("PlayerID not found for player_id: %s" % player['player_id'])
+                return
+            
+            player_id_fk = player_id_record.id
+            
+            # Query for existing PlayerSoldier
+            profile_stmt = (
+                select(cls)
+                .where(cls.player_id_id == player_id_fk)  # Direct filter on FK; join optional here
+            )
+            profile = sess.execute(profile_stmt).scalars().one_or_none()
+            if not profile:
+                # Create new instance
+                profile = cls(player_id_id=player_id_fk)
+                sess.add(profile)
+            
+            # Proceed with updates
+            profile.name = player["name"]
+            profile.platform = player["platform"]
+            profile.clan_tag = player["clan_tag"]
+            
+            if player["level"] > profile.level:
+                profile.level = player["level"]
+            
+            sess.commit()
+
+    def to_dict(self) -> PlayerSoldierType:
+        return {
+            "name": self.name,
+            "level": self.level,
+            "platform": self.platform,
+            "clan_tag": self.clan_tag,
+            "updated": self.updated,
+        }
+
+class PlayerAccount(Base):
+    __tablename__ = "player_account"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    player_id_id: Mapped[int] = mapped_column(
+        "playersteamid_id",
+        ForeignKey("steam_id_64.id"),
+        nullable=False,
+        index=True,
+        unique=True,
+    )
+    player: Mapped["PlayerID"] = relationship(back_populates="account")
+    name: Mapped[str | None] = mapped_column()
+    discord_id: Mapped[str | None] = mapped_column()
+    is_member: Mapped[bool] = mapped_column(default=False)
+    # ISO 3166-1 alpha-2
+    country: Mapped[str | None] = mapped_column(String(2))
+    # ISO 639-1
+    lang: Mapped[str] = mapped_column(String(2), default="en")
+    
+    updated: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        default=lambda: datetime.now(tz=timezone.utc),
+        onupdate=lambda: datetime.now(tz=timezone.utc)
+    )
+
+    def to_dict(self) -> PlayerAccountType:
+        return {
+            "name": self.name,
+            "discord_id": self.discord_id,
+            "is_member": self.is_member,
+            "country": self.country,
+            "lang": self.lang,
+            "updated": self.updated,
+        }
 
 class SteamInfo(Base):
     __tablename__ = "steam_info"
