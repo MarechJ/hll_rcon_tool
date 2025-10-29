@@ -13,11 +13,13 @@ from sqlalchemy.sql.functions import ReturnTypeFromArgs
 from rcon.commands import HLLCommandFailedError
 from rcon.models import (
     BlacklistRecord,
+    PlayerAccount,
     PlayerActionState,
     PlayerComment,
     PlayerFlag,
     PlayerID,
     PlayerName,
+    PlayerSoldier,
     PlayersAction,
     PlayerSession,
     SteamInfo,
@@ -273,9 +275,11 @@ def _save_player_id(sess, player_id: str) -> PlayerID:
     player = get_player(sess, player_id)
 
     if not player:
+        logger.info("Adding first time seen %s", player_id)
         player = PlayerID(player_id=player_id)
         sess.add(player)
-        logger.info("Adding first time seen %s", player_id)
+        sess.add(PlayerAccount(player=player))
+        sess.add(PlayerSoldier(player=player))
         sess.commit()
 
     return player
