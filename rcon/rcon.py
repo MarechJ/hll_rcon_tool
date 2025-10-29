@@ -295,7 +295,7 @@ class Rcon(ServerCtl):
             except Exception:
                 logger.error("Failed to get info for %s", player_id)
                 fail_count += 1
-                player_data = default_player_info_dict(player[NAME])
+                player_data = default_player_info_dict()
 
             player_data.update(player)  # type: ignore
             
