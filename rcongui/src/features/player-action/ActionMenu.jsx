@@ -11,6 +11,7 @@ import {
   Typography,
   Card,
   Tooltip,
+  Badge,
 } from "@mui/material";
 import { useAuth } from "@/hooks/useAuth";
 import { useActionDialog } from "@/hooks/useActionDialog";
@@ -118,6 +119,7 @@ export function ActionMenuButton({
   renderButton,
   orientation = "vertical",
   withProfile = false,
+  size="regular",
   ...props
 }) {
   const [anchorEl, setAnchorEl] = useState(null);
