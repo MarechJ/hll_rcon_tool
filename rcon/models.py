@@ -273,6 +273,56 @@ class PlayerSoldier(Base):
             
             sess.commit()
 
+    @classmethod
+    def update_missing_fields(
+        cls,
+        sess: Session,
+        player_id: str,
+        name: str | None = None,
+        level: int = 0,
+        platform: str | None = None,
+        clan_tag: str | None = None,
+    ) -> tuple[Optional["PlayerSoldier"], bool]:
+        """
+        Update NULL fields only in PlayerSoldier for the given player_id.
+        Does not overwrite any existing non-null values.
+        Returns the updated PlayerSoldier instance or None if PlayerID not found.
+        """
+        # Look up PlayerID
+        player_db = sess.execute(
+            select(PlayerID).where(PlayerID.player_id == player_id)
+        ).scalars().one_or_none()
+        if not player_db:
+            return None, False
+        
+        # Look up or create PlayerSoldier
+        soldier_db = sess.execute(
+            select(cls).where(cls.player_id_id == player_db.id)
+        ).scalars().one_or_none()
+        if not soldier_db:
+            soldier_db = cls(player_id_id=player_db.id)
+            sess.add(soldier_db)
+        
+        # Update only None fields
+        changed = False
+        if soldier_db.name is None and name is not None:
+            soldier_db.name = name
+            changed = True
+        if soldier_db.level == 0 and level is not None:
+            soldier_db.level = level
+            changed = True
+        if soldier_db.platform is None and platform is not None:
+            soldier_db.platform = platform
+            changed = True
+        if soldier_db.clan_tag is None and clan_tag is not None:
+            soldier_db.clan_tag = clan_tag
+            changed = True
+        
+        if changed:
+            sess.commit()
+        
+        return soldier_db, changed
+
     def to_dict(self) -> PlayerSoldierType:
         return {
             "name": self.name,
@@ -307,6 +357,46 @@ class PlayerAccount(Base):
         default=lambda: datetime.now(tz=timezone.utc),
         onupdate=lambda: datetime.now(tz=timezone.utc)
     )
+
+    @classmethod
+    def update_account(
+        cls,
+        sess: Session,
+        player_id: str,
+        name: str | None = None,
+        discord_id: str | None = None,
+        is_member: bool = False,
+        country: str | None = None,
+        lang: str = "en",
+    ) -> Optional["PlayerAccount"]:
+        """
+        Update all fields in PlayerAccount for the given player_id.
+        All fields can be updated, including setting them to null.
+        Returns (updated PlayerAccount instance, changed flag) or None if PlayerID not found.
+        """
+        # Look up PlayerID
+        player_db = sess.execute(
+            select(PlayerID).where(PlayerID.player_id == player_id)
+        ).scalars().one_or_none()
+        if not player_db:
+            return None
+        
+        # Look up or create PlayerAccount
+        account_db = sess.execute(
+            select(cls).where(cls.player_id_id == player_db.id)
+        ).scalars().one_or_none()
+        if not account_db:
+            account_db = cls(player_id_id=player_db.id)
+            sess.add(account_db)
+        
+        account_db.name = name
+        account_db.discord_id = discord_id
+        account_db.is_member = is_member
+        account_db.country = country.upper() if country else None
+        account_db.lang = lang.lower() if lang else "en"
+        sess.commit()
+        
+        return account_db
 
     def to_dict(self) -> PlayerAccountType:
         return {

@@ -591,10 +591,10 @@ class PlayerVIPType(TypedDict):
 
 
 class PlayerSoldierType(TypedDict):
-    name: str
+    name: Optional[str]
     level: int
     platform: Optional[str]
-    clan_tag: str
+    clan_tag: Optional[str]
     updated: datetime.datetime
 
 
