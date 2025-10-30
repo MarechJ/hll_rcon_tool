@@ -196,7 +196,7 @@ const PlayerDetails = ({ player, onClose }) => {
     multiAction: false,
     onlineAction: isOnline,
   });
-  const name = player?.name ?? profile.names[0]?.name ?? "?";
+  const name = profile?.account?.name ?? player?.name ?? profile?.soldier?.name ?? "???";
   const avatar = profile?.steaminfo?.profile?.avatar;
   const country =
     profile?.country ??

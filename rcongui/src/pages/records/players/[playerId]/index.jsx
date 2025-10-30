@@ -60,11 +60,12 @@ export default function PlayerProfilePage() {
     multiAction: false,
     onlineAction: !!thisOnlinePlayer,
   });
-  const name = profile?.name ?? profile.names[0]?.name ?? "?";
+  const name = profile?.account?.name ?? profile.names[0]?.name ?? profile?.soldier?.name ?? "???";
   const avatar = profile?.steaminfo?.profile?.avatar;
   const country = profile?.country ?? profile?.account?.country ?? profile?.steaminfo?.country
   const level = thisOnlinePlayer?.level ?? profile?.soldier?.level ?? 0
   const clanTag = thisOnlinePlayer?.clan_tag ?? profile?.soldier?.clan_tag
+  const platform = thisOnlinePlayer?.platform ?? profile?.soldier?.platform
 
   const getActiveTab = () => {
     const path = location.pathname.split("/").pop();
@@ -93,6 +94,7 @@ export default function PlayerProfilePage() {
               country={country}
               level={level}
               clanTag={clanTag}
+              platform={platform}
             />
             <Divider />
             <PlayerProfileStatusTags

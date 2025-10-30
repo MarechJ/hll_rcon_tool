@@ -6,11 +6,12 @@ import {
 } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import FortIcon from "@mui/icons-material/Fort";
-import VideogameAssetIcon from '@mui/icons-material/VideogameAsset';
+import VideogameAssetIcon from "@mui/icons-material/VideogameAsset";
 import { Box, Chip } from "@mui/material";
 import { getSteamProfileUrl } from "@/utils/lib";
+import EditSoldierButton from "./EditSoldierButton";
 
-function PlatformChip({ platform, playerId }) {
+function PlatformChip({ platform, playerId, currentSoldierData }) {
   if (platform === "steam") {
     return (
       <Chip
@@ -18,7 +19,11 @@ function PlatformChip({ platform, playerId }) {
         href={getSteamProfileUrl(playerId)}
         target="_blank"
         rel="noreferrer"
-        icon={<Box sx={{ width: 14, height: 24 }}><FontAwesomeIcon icon={faSteam} size="xs" /></Box>}
+        icon={
+          <Box sx={{ width: 14, height: 24 }}>
+            <FontAwesomeIcon icon={faSteam} size="xs" />
+          </Box>
+        }
         label="Steam"
         sx={{ "&:hover": { cursor: "pointer" } }}
       />
@@ -28,12 +33,25 @@ function PlatformChip({ platform, playerId }) {
     return <Chip icon={<FortIcon />} label="Epic" />;
   }
   if (platform === "xbl" || platform === "xsx") {
-    return <Chip icon={<Box sx={{ width: 14, height: 24 }}><FontAwesomeIcon icon={faXbox} size="xs" /></Box>} label="Xbox" />;
+    return (
+      <Chip
+        icon={
+          <Box sx={{ width: 14, height: 24 }}>
+            <FontAwesomeIcon icon={faXbox} size="xs" />
+          </Box>
+        }
+        label="Xbox"
+      />
+    );
   }
   if (platform === "psn" || platform === "ps5") {
     return (
       <Chip
-        icon={<Box sx={{ width: 14, height: 24 }}><FontAwesomeIcon icon={faPlaystation} size="xs" /></Box>}
+        icon={
+          <Box sx={{ width: 14, height: 24 }}>
+            <FontAwesomeIcon icon={faPlaystation} size="xs" />
+          </Box>
+        }
         label="PlayStation"
       />
     );
@@ -42,7 +60,7 @@ function PlatformChip({ platform, playerId }) {
     return <Chip icon={<VideogameAssetIcon />} label={platform} />;
   }
 
-  return <Chip icon={<VideogameAssetIcon />} label={"unset"} />;
+  return <EditSoldierButton Icon={VideogameAssetIcon} playerId={playerId} currentSoldierData={currentSoldierData} />;
 }
 
 export default PlatformChip;
