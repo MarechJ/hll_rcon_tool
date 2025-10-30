@@ -1,5 +1,15 @@
 import { generatePlayerActions } from "@/features/player-action/actions";
-import { Card, CardContent, Stack, Divider, Typography } from "@mui/material";
+import {
+  Card,
+  CardContent,
+  Stack,
+  Divider,
+  Typography,
+  Tooltip,
+  CardActions,
+  IconButton,
+  Box,
+} from "@mui/material";
 import StarIcon from "@mui/icons-material/Star";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import NoAccountsIcon from "@mui/icons-material/NoAccounts";
@@ -7,6 +17,7 @@ import GavelIcon from "@mui/icons-material/Gavel";
 import dayjs from "dayjs";
 import Emoji from "@/components/shared/Emoji";
 import PlayerProfileHeader from "@/components/player/profile/Header";
+import { red, yellow } from "@mui/material/colors";
 
 export default function PlayerCard({ player }) {
   const actionList = generatePlayerActions({
@@ -14,7 +25,7 @@ export default function PlayerCard({ player }) {
     onlineAction: player.is_online,
   });
 
-  const name = player.names.length > 0 ? player.names[0].name : "???";
+  const name = player?.account?.name ?? player.names?.[0]?.name ?? player?.soldier?.name ?? "???";
   const avatar = player?.steaminfo?.profile?.avatar ?? name;
   const flags = player?.flags;
   const isWatched = player?.watchlist && player?.watchlist?.is_watched;
@@ -51,16 +62,22 @@ export default function PlayerCard({ player }) {
           clanTag={clanTag}
         />
         <Stack
-          direction="row"
-          alignItems={"center"}
-          justifyContent={"center"}
+          direction={"row"}
           spacing={1}
-          sx={{ height: 30 }}
+          sx={{
+            justifyContent: "start",
+            height: 30,
+            alignItems: "center",
+            pt: 1,
+            px: 1,
+          }}
         >
-          {flags?.map(({ flag }) => (
-            <Typography key={flag} variant="body" color="text.secondary">
-              <Emoji emoji={flag} size={18} />
-            </Typography>
+          {flags?.map(({ flag, comment, modified }) => (
+            <Tooltip title={comment} key={flag}>
+              <span>
+                <Emoji emoji={flag} size={16} />
+              </span>
+            </Tooltip>
           ))}
         </Stack>
         <Stack
@@ -140,28 +157,42 @@ export default function PlayerCard({ player }) {
             </Typography>
           </Typography>
         </Stack>
-        <Stack
-          direction="row"
-          alignItems={"center"}
-          justifyContent={"center"}
-          divider={<Divider orientation="vertical" flexItem />}
-          spacing={2}
-          sx={{ p: 1 }}
-        >
-          {<StarIcon sx={{ fontSize: 24, opacity: !isVip ? 0.1 : 1 }} />}
-          {
-            <VisibilityIcon
-              sx={{ fontSize: 24, opacity: !isWatched ? 0.1 : 1 }}
-            />
-          }
-          {
-            <NoAccountsIcon
-              sx={{ fontSize: 24, opacity: !isBlacklisted ? 0.1 : 1 }}
-            />
-          }
-          {<GavelIcon sx={{ fontSize: 24, opacity: !isBanned ? 0.1 : 1 }} />}
-        </Stack>
       </CardContent>
+      <CardActions disableSpacing>
+        <IconButton aria-label="add to favorites">
+          <StarIcon
+            sx={{
+              fontSize: 18,
+              opacity: !isVip ? 0.35 : 1,
+              color: isVip && yellow["700"],
+            }}
+          />
+        </IconButton>
+        <IconButton aria-label="share">
+          <VisibilityIcon
+            sx={{ fontSize: 18, opacity: !isWatched ? 0.35 : 1 }}
+          />
+        </IconButton>
+        <IconButton aria-label="share">
+          <NoAccountsIcon
+            sx={{
+              fontSize: 18,
+              opacity: !isBlacklisted ? 0.35 : 1,
+              color: isBlacklisted && red["500"],
+            }}
+          />
+        </IconButton>
+        <IconButton aria-label="share">
+          <GavelIcon
+            sx={{
+              fontSize: 18,
+              opacity: !isBanned ? 0.35 : 1,
+              color: isBanned && red["500"],
+            }}
+          />
+        </IconButton>
+        <Box sx={{ flexGrow: 1 }} />
+      </CardActions>
     </Card>
   );
 }

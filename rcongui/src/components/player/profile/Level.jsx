@@ -2,17 +2,11 @@ import { levelToRank, toSnakeCase } from "@/utils/lib";
 import { Avatar, Chip } from "@mui/material";
 import MilitaryTechIcon from '@mui/icons-material/MilitaryTech';
 import React from "react";
+import EditSoldierButton from "./EditSoldierButton";
 
-function LevelChip({ level }) {
+function LevelChip({ level, playerId, currentSoldierData }) {
   if (!level) {
-    return (
-      <Chip
-        icon={<MilitaryTechIcon />}
-        label={"unset"}
-        variant="outlined"
-        size="small"
-      />
-    );
+    return <EditSoldierButton Icon={MilitaryTechIcon} playerId={playerId} currentSoldierData={currentSoldierData} />
   }
   return (
     <Chip
