@@ -11,6 +11,10 @@ export const usePlayersTableStore = create(
     (set) => ({
       columnVisibility: {
         player_id: false,
+        combat: false,
+        offense: false,
+        defense: false,
+        support: false,
       },
       expandedView: false,
       fontSize: "small",
