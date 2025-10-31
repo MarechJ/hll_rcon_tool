@@ -205,6 +205,38 @@ export const columns = [
     },
   },
   {
+    id: "combat",
+    header: SortableHeader("CE", "Combat Effectiveness"),
+    accessorKey: "combat",
+    cell: ({ row }) => {
+      return <>{row.original.combat}</>;
+    },
+  },
+  {
+    id: "offense",
+    header: SortableHeader("OE", "Offensive Effectiveness"),
+    accessorKey: "offense",
+    cell: ({ row }) => {
+      return <>{row.original.offense}</>;
+    },
+  },
+  {
+    id: "defense",
+    header: SortableHeader("DE", "Defensive Effectiveness"),
+    accessorKey: "defense",
+    cell: ({ row }) => {
+      return <>{row.original.defense}</>;
+    },
+  },
+  {
+    id: "support",
+    header: SortableHeader("SE", "Support Effectiveness"),
+    accessorKey: "support",
+    cell: ({ row }) => {
+      return <>{row.original.support}</>;
+    },
+  },
+  {
     id: "actions",
     header: <span title="Actions">🛠️</span>,
     accessorKey: "actions",
