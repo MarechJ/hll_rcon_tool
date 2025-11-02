@@ -104,11 +104,17 @@ export const loader = async ({ request }) => {
     last_seen_till,
   };
 
-  // In the background, this command is POST request therefore the payload and not params
   const playersRecords = await cmd.GET_PLAYERS_RECORDS({
     payload: Object.fromEntries(
       Object.entries(fields).filter(
-        ([_, value]) => value !== "" && value !== null
+        ([key, value]) => {
+          // Always include page and page_size
+          if (key === 'page' || key === 'page_size') return true;
+          // Filter out empty strings, null, undefined, and empty arrays
+          if (value === "" || value === null || value === undefined) return false;
+          if (Array.isArray(value) && value.length === 0) return false;
+          return true;
+        }
       )
     ),
   });
