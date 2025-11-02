@@ -292,10 +292,28 @@ class Rcon(ServerCtl):
 
     @ttl_cache(ttl=2, cache_falsy=False)
     def get_team_view(self):
+        from rcon.player_stats import get_cached_live_game_stats
+        
         teams = {}
         detailed_players = self.get_detailed_players()
         players_by_id = detailed_players["players"]
         fail_count = detailed_players["fail_count"]
+
+        # Enrich player kills from cached live game stats (since game server returns kills=0)
+        live_stats = get_cached_live_game_stats()
+        live_stats_by_player_id = {}
+        if live_stats and live_stats.get("stats"):
+            live_stats_by_player_id = {
+                stat["player_id"]: stat
+                for stat in live_stats["stats"]
+            }
+            # Override kills with values from live stats if available
+            for player_id, player in players_by_id.items():
+                if player_id in live_stats_by_player_id:
+                    stat = live_stats_by_player_id[player_id]
+                    live_kills = stat.get("kills")
+                    if live_kills is not None:
+                        player["kills"] = live_kills  # type: ignore
 
         for player in players_by_id.values():
             team_name = player.get("team") if player.get("team") is not None else UNASSIGNED
