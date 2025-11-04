@@ -1,9 +1,11 @@
 import logging
+import os
 from functools import wraps
 
 from django.contrib.auth.decorators import (
     permission_required as django_permission_required,
 )
+from django.http import JsonResponse
 from django.views.decorators.http import (
     require_http_methods as django_require_http_methods,
 )
@@ -91,6 +93,75 @@ def require_content_type(content_type_list: list[str] = None):
                         ",".join(content_type_list),
                     )
                 )
+            return func(request, *args, **kwargs)
+
+        return inner
+
+    return decorator
+
+
+def require_server_access():
+    """
+    Decorator that checks if the user has permission to access the current server.
+
+    This decorator verifies that:
+    1. The user is authenticated
+    2. If the user has server-specific permissions configured, they must have
+       permission for the current server number
+    3. Superusers always have access to all servers
+
+    Returns a 403 Forbidden response if the user doesn't have access.
+    """
+    def decorator(func):
+        @wraps(func)
+        def inner(request, *args, **kwargs):
+            # Allow unauthenticated requests to pass through
+            # (they will be handled by @login_required or other auth decorators)
+            if not request.user or not request.user.is_authenticated:
+                return func(request, *args, **kwargs)
+
+            # Superusers always have access
+            if request.user.is_superuser:
+                return func(request, *args, **kwargs)
+
+            # Get the current server number from environment
+            try:
+                current_server_number = int(os.getenv("SERVER_NUMBER", "1"))
+            except (ValueError, TypeError):
+                logger.error("Invalid SERVER_NUMBER environment variable")
+                current_server_number = 1
+
+            # Import here to avoid circular imports
+            from .models import UserServerPermission
+
+            # Check if user has any server-specific permissions configured
+            user_permissions = UserServerPermission.objects.filter(user=request.user)
+
+            if user_permissions.exists():
+                # User has specific server permissions configured
+                # Check if they have permission for this server
+                allowed_server_numbers = set(
+                    perm.server_number for perm in user_permissions
+                )
+
+                if current_server_number not in allowed_server_numbers:
+                    logger.warning(
+                        f"User {request.user.username} attempted to access server {current_server_number} "
+                        f"but only has permission for servers: {allowed_server_numbers}"
+                    )
+                    return JsonResponse(
+                        {
+                            "result": None,
+                            "command": func.__name__,
+                            "failed": True,
+                            "error": f"You do not have permission to access server {current_server_number}. "
+                                   f"Contact an administrator if you believe this is an error.",
+                        },
+                        status=403,
+                    )
+
+            # User has no specific permissions configured (can access all servers)
+            # or has permission for this server
             return func(request, *args, **kwargs)
 
         return inner

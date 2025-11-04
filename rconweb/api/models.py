@@ -480,8 +480,14 @@ class RconUser(User):
 class UserServerPermission(models.Model):
     """
     Defines which servers a user can view in the multi-server panel.
-    If a user has no entries, they can only see their current server.
-    If a user has entries, they can see their current server + the servers listed here.
+
+    Behavior:
+    - If a user has NO entries: they can see ALL servers (default behavior)
+    - If a user has entries: they can ONLY see the servers listed here (restricted access)
+    - Superusers always see all servers regardless of entries
+
+    This allows you to restrict specific users to certain servers while leaving
+    others with full access by default.
     """
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="server_permissions")
     server_number = models.IntegerField(help_text="Server number that the user can view")

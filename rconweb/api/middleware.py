@@ -1,0 +1,108 @@
+import logging
+import os
+
+from django.http import JsonResponse
+
+logger = logging.getLogger("rconweb")
+
+
+class ServerAccessMiddleware:
+    """
+    Middleware that checks if the user has permission to access the current server.
+    
+    This middleware verifies that:
+    1. The user is authenticated
+    2. If the user has server-specific permissions configured, they must have
+       permission for the current server number
+    3. Superusers always have access to all servers
+    
+    Returns a 403 Forbidden response if the user doesn't have access.
+    """
+    
+    # Paths that should be excluded from server access checks
+    EXCLUDED_PATHS = [
+        '/admin/',  # Django admin should always be accessible
+        '/api/login',  # Login endpoint
+        '/api/logout',  # Logout endpoint
+        '/api/is_logged_in',  # Check login status
+        '/api/get_version',  # Public version info
+        '/api/get_public_info',  # Public server info
+        '/static/',  # Static files
+    ]
+    
+    def __init__(self, get_response):
+        self.get_response = get_response
+        
+    def __call__(self, request):
+        # Check if this path should be excluded from server access checks
+        if self._should_exclude_path(request.path):
+            return self.get_response(request)
+        
+        # Only check for authenticated users
+        if not request.user or not request.user.is_authenticated:
+            return self.get_response(request)
+        
+        # Superusers always have access
+        if request.user.is_superuser:
+            return self.get_response(request)
+        
+        # Get the current server number from environment
+        try:
+            current_server_number = int(os.getenv("SERVER_NUMBER", "1"))
+        except (ValueError, TypeError):
+            logger.error("Invalid SERVER_NUMBER environment variable")
+            current_server_number = 1
+        
+        # Import here to avoid circular imports
+        from .models import UserServerPermission
+        
+        # Check if user has any server-specific permissions configured
+        user_permissions = UserServerPermission.objects.filter(user=request.user)
+        
+        if user_permissions.exists():
+            # User has specific server permissions configured
+            # Check if they have permission for this server
+            allowed_server_numbers = set(
+                perm.server_number for perm in user_permissions
+            )
+            
+            if current_server_number not in allowed_server_numbers:
+                logger.warning(
+                    f"User {request.user.username} attempted to access server {current_server_number} "
+                    f"via {request.path} but only has permission for servers: {allowed_server_numbers}"
+                )
+                
+                # Return JSON response for API calls
+                if request.path.startswith('/api/'):
+                    return JsonResponse(
+                        {
+                            "result": None,
+                            "command": request.path,
+                            "failed": True,
+                            "error": f"Access denied: You do not have permission to access server {current_server_number}. "
+                                   f"You only have access to servers: {sorted(allowed_server_numbers)}. "
+                                   f"Contact an administrator if you believe this is an error.",
+                        },
+                        status=403,
+                    )
+                else:
+                    # Return HTML response for non-API calls
+                    from django.http import HttpResponseForbidden
+                    return HttpResponseForbidden(
+                        f"<h1>Access Denied</h1>"
+                        f"<p>You do not have permission to access server {current_server_number}.</p>"
+                        f"<p>You only have access to servers: {sorted(allowed_server_numbers)}.</p>"
+                        f"<p>Contact an administrator if you believe this is an error.</p>"
+                    )
+        
+        # User has no specific permissions configured (can access all servers)
+        # or has permission for this server
+        return self.get_response(request)
+    
+    def _should_exclude_path(self, path):
+        """Check if the path should be excluded from server access checks."""
+        for excluded_path in self.EXCLUDED_PATHS:
+            if path.startswith(excluded_path):
+                return True
+        return False
+

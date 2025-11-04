@@ -34,13 +34,15 @@ def get_server_list(request):
         # Get server permissions for this user
         user_permissions = UserServerPermission.objects.filter(user=request.user)
         if user_permissions.exists():
+            # User has specific server permissions configured
+            # Only show the servers they have permission for
             allowed_server_numbers = set(
                 perm.server_number for perm in user_permissions
             )
         else:
-            # If user has no specific server permissions, return empty list
-            # This means they can only see their current server
-            return api_response([], failed=False, command="server_list")
+            # User has no specific server permissions configured
+            # Default behavior: allow access to all servers
+            allowed_server_numbers = None
 
     api_key = ApiKey()
     keys = api_key.get_all_keys()

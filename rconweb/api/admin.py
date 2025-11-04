@@ -53,7 +53,7 @@ class DjangoAPIKeyInline(admin.StackedInline):
 class UserServerPermissionInline(admin.TabularInline):
     model = UserServerPermission
     can_delete = True
-    verbose_name_plural = "Server Permissions (which servers this user can view)"
+    verbose_name_plural = "Server Permissions (Leave EMPTY to allow ALL servers, add entries to RESTRICT access)"
     extra = 1
     readonly_fields = ["created"]
     fields = ["server_number", "created"]
