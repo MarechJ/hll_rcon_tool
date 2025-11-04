@@ -74,14 +74,21 @@ class ServerAccessMiddleware:
                 
                 # Return JSON response for API calls
                 if request.path.startswith('/api/'):
+                    error_message = (
+                        f"You do not have permission to access server {current_server_number}. "
+                        f"You only have access to servers: {sorted(allowed_server_numbers)}. "
+                        f"Contact an administrator if you believe this is an error."
+                    )
                     return JsonResponse(
                         {
                             "result": None,
-                            "command": request.path,
+                            "command": request.path.replace('/api/', ''),
                             "failed": True,
-                            "error": f"Access denied: You do not have permission to access server {current_server_number}. "
-                                   f"You only have access to servers: {sorted(allowed_server_numbers)}. "
-                                   f"Contact an administrator if you believe this is an error.",
+                            "error": error_message,
+                            "text": error_message,  # For frontend error display
+                            "message": error_message,  # Alternative field
+                            "server_number": current_server_number,
+                            "allowed_servers": sorted(allowed_server_numbers),
                         },
                         status=403,
                     )

@@ -56,11 +56,9 @@ export default function SelectContent() {
 
   const servers = thisServer ? [thisServer, ...otherServers] : null;
 
-  // Hide the server selector if there's only one server (no other servers available)
-  // This happens when the user doesn't have the can_view_other_crcon_servers permission
-  if (servers && servers.length === 1) {
-    return null;
-  }
+  // If there's only one server, disable the selector but still show it
+  // This happens when the user doesn't have permission to view other servers
+  const hasOnlyOneServer = servers && servers.length === 1;
 
   return (
     <Select
@@ -71,6 +69,7 @@ export default function SelectContent() {
       displayEmpty
       inputProps={{ "aria-label": "Select server" }}
       fullWidth
+      disabled={hasOnlyOneServer}
       MenuProps={{
         PaperProps: {
           sx: {
