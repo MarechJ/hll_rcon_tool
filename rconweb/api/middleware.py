@@ -27,6 +27,8 @@ class ServerAccessMiddleware:
         '/api/is_logged_in',  # Check login status
         '/api/get_version',  # Public version info
         '/api/get_public_info',  # Public server info
+        '/api/get_server_list',  # Server list - needed to redirect users to allowed servers
+        '/api/get_own_user_permissions',  # User permissions - needed for auth flow
         '/static/',  # Static files
     ]
     
