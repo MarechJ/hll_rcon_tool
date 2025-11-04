@@ -74,6 +74,46 @@ export const AuthProvider = ({ children }) => {
 
   // Show permission error if user is authenticated but doesn't have server access
   if (permissionError) {
+    const handleGoToHome = async () => {
+      try {
+        // Fetch the list of servers the user has access to
+        const serverListResponse = await cmd.GET_GAME_SERVER_LIST();
+
+        if (serverListResponse && serverListResponse.length > 0) {
+          // Get the first server the user has access to
+          const firstServer = serverListResponse[0];
+
+          // Redirect to that server's URL
+          if (firstServer.link) {
+            window.location.href = firstServer.link;
+          } else {
+            // Fallback to home if no link is available
+            window.location.href = "/";
+          }
+        } else {
+          // If no servers available, just go to root
+          window.location.href = "/";
+        }
+      } catch (error) {
+        console.error("Error fetching server list:", error);
+        // Fallback to home on error
+        window.location.href = "/";
+      }
+    };
+
+    const handleSwitchAccount = async () => {
+      try {
+        // Logout the current user
+        await cmd.LOGOUT();
+        // Redirect to login page
+        navigate("/login");
+      } catch (error) {
+        console.error("Error logging out:", error);
+        // Force redirect to login even if logout fails
+        navigate("/login");
+      }
+    };
+
     return (
       <Box
         sx={{
@@ -98,19 +138,13 @@ export const AuthProvider = ({ children }) => {
         <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
           <Button
             variant="contained"
-            onClick={() => {
-              setPermissionError(null);
-              window.location.href = "/";
-            }}
+            onClick={handleGoToHome}
           >
             Go to Home
           </Button>
           <Button
             variant="outlined"
-            onClick={() => {
-              setPermissionError(null);
-              navigate("/login");
-            }}
+            onClick={handleSwitchAccount}
           >
             Switch Account
           </Button>
