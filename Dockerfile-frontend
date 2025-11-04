@@ -10,7 +10,7 @@ COPY rcongui/ .
 RUN npm ci
 ENV REACT_APP_API_URL=/api/
 COPY .git/ .git/
-RUN git describe --tags > /code/tag_version && rm -rf .git
+RUN git describe --tags > /code/tag_version 2>/dev/null || echo "dev-build" > /code/tag_version && rm -rf .git
 RUN npx browserslist@latest --update-db
 RUN npm run build
 RUN mv /code/dist /www

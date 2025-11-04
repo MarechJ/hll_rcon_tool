@@ -11,15 +11,37 @@ from rcon.utils import ApiKey
 
 from .auth import AUTHORIZATION, api_response, login_required
 from .decorators import permission_required, require_http_methods
+from .models import UserServerPermission
 
 logger = logging.getLogger("rcon")
 
 
 @login_required()
-@permission_required("api.can_view_other_crcon_servers", raise_exception=True)
 @csrf_exempt
 @require_http_methods(["GET"])
 def get_server_list(request):
+    # Check if user has permission to view other servers
+    if not request.user.has_perm("api.can_view_other_crcon_servers"):
+        # Return empty list if user doesn't have permission
+        # This allows the frontend to show only the current server
+        return api_response([], failed=False, command="server_list")
+
+    # Get the list of server numbers this user is allowed to view
+    # If the user is a superuser, they can see all servers
+    if request.user.is_superuser:
+        allowed_server_numbers = None  # None means all servers
+    else:
+        # Get server permissions for this user
+        user_permissions = UserServerPermission.objects.filter(user=request.user)
+        if user_permissions.exists():
+            allowed_server_numbers = set(
+                perm.server_number for perm in user_permissions
+            )
+        else:
+            # If user has no specific server permissions, return empty list
+            # This means they can only see their current server
+            return api_response([], failed=False, command="server_list")
+
     api_key = ApiKey()
     keys = api_key.get_all_keys()
     my_key = api_key.get_key()
@@ -41,7 +63,16 @@ def get_server_list(request):
                 headers=headers,
             )
             if res.ok:
-                names.append(res.json()["result"])
+                server_info = res.json()["result"]
+                server_number = server_info.get("server_number")
+
+                # Filter servers based on user permissions
+                if allowed_server_numbers is None or server_number in allowed_server_numbers:
+                    names.append(server_info)
+                else:
+                    logger.debug(
+                        f"User {request.user.username} does not have permission to view server {server_number}"
+                    )
         except requests.exceptions.RequestException:
             logger.warning(f"Unable to connect with {url}")
 

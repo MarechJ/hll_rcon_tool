@@ -56,6 +56,12 @@ export default function SelectContent() {
 
   const servers = thisServer ? [thisServer, ...otherServers] : null;
 
+  // Hide the server selector if there's only one server (no other servers available)
+  // This happens when the user doesn't have the can_view_other_crcon_servers permission
+  if (servers && servers.length === 1) {
+    return null;
+  }
+
   return (
     <Select
       labelId="server-select"
