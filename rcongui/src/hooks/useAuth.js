@@ -33,16 +33,16 @@ export const AuthProvider = ({ children }) => {
     retry: 1,
   });
 
-  // Step 2: Fetch permissions, only if authentication is successful
+  // Step 2: Check server access first (this will return 403 if no access)
   const {
-    data: permissions,
-    isLoading: isPermissionsLoading,
-    isError: isPermissionsError,
-    error: permissionsErrorObj,
+    data: serverAccess,
+    isLoading: isServerAccessLoading,
+    isError: isServerAccessError,
+    error: serverAccessError,
   } = useQuery({
-    queryKey: ["user", "permissions"],
-    queryFn: cmd.GET_PERMISSIONS,
-    enabled: isAuthSuccess && user?.authenticated, // Fetch only if authenticated
+    queryKey: ["user", "server-access"],
+    queryFn: cmd.GET_CRCON_SERVER_CONNECTION,
+    enabled: isAuthSuccess && user?.authenticated,
     refetchOnWindowFocus: false,
     retry: (failureCount, error) => {
       // Don't retry on 403 errors (permission denied)
@@ -53,7 +53,29 @@ export const AuthProvider = ({ children }) => {
     },
   });
 
+  // Step 3: Fetch permissions, only if server access is successful
+  const {
+    data: permissions,
+    isLoading: isPermissionsLoading,
+    isError: isPermissionsError,
+    error: permissionsErrorObj,
+  } = useQuery({
+    queryKey: ["user", "permissions"],
+    queryFn: cmd.GET_PERMISSIONS,
+    enabled: isAuthSuccess && user?.authenticated && !isServerAccessError, // Only fetch if server access is OK
+    refetchOnWindowFocus: false,
+    retry: 1,
+  });
+
   useEffect(() => {
+    // Check if it's a server access error (403)
+    if (isServerAccessError && serverAccessError) {
+      if (serverAccessError.status === 403 || serverAccessError.name === "PermissionError") {
+        setPermissionError(serverAccessError);
+        return; // Don't redirect to login for permission errors
+      }
+    }
+
     // Check if it's a permission error (403)
     if (isPermissionsError && permissionsErrorObj) {
       if (permissionsErrorObj.status === 403 || permissionsErrorObj.name === "PermissionError") {
@@ -67,10 +89,10 @@ export const AuthProvider = ({ children }) => {
       const from = encodeURIComponent(location.pathname + location.search);
       navigate(`/login?from=${from}`);
     }
-  }, [isAuthError, isPermissionsError, permissionsErrorObj, navigate, location]);
+  }, [isAuthError, isServerAccessError, serverAccessError, isPermissionsError, permissionsErrorObj, navigate, location]);
 
   // Handle loading state
-  const isLoading = isAuthLoading || isPermissionsLoading;
+  const isLoading = isAuthLoading || isServerAccessLoading || isPermissionsLoading;
 
   // Show permission error if user is authenticated but doesn't have server access
   if (permissionError) {

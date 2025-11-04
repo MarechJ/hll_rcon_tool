@@ -27,9 +27,14 @@ class ServerAccessMiddleware:
         '/api/is_logged_in',  # Check login status
         '/api/get_version',  # Public version info
         '/api/get_public_info',  # Public server info
+        '/static/',  # Static files
+    ]
+
+    # Paths that are allowed even without server access
+    # These are needed for the error page to function properly
+    ALLOWED_WITHOUT_SERVER_ACCESS = [
         '/api/get_server_list',  # Server list - needed to redirect users to allowed servers
         '/api/get_own_user_permissions',  # User permissions - needed for auth flow
-        '/static/',  # Static files
     ]
     
     def __init__(self, get_response):
@@ -60,20 +65,25 @@ class ServerAccessMiddleware:
         
         # Check if user has any server-specific permissions configured
         user_permissions = UserServerPermission.objects.filter(user=request.user)
-        
+
         if user_permissions.exists():
             # User has specific server permissions configured
             # Check if they have permission for this server
             allowed_server_numbers = set(
                 perm.server_number for perm in user_permissions
             )
-            
+
             if current_server_number not in allowed_server_numbers:
+                # Check if this is an allowed path even without server access
+                if self._is_allowed_without_server_access(request.path):
+                    # Allow the request to proceed, but the endpoint itself will filter results
+                    return self.get_response(request)
+
                 logger.warning(
                     f"User {request.user.username} attempted to access server {current_server_number} "
                     f"via {request.path} but only has permission for servers: {allowed_server_numbers}"
                 )
-                
+
                 # Return JSON response for API calls
                 if request.path.startswith('/api/'):
                     error_message = (
@@ -112,6 +122,13 @@ class ServerAccessMiddleware:
         """Check if the path should be excluded from server access checks."""
         for excluded_path in self.EXCLUDED_PATHS:
             if path.startswith(excluded_path):
+                return True
+        return False
+
+    def _is_allowed_without_server_access(self, path):
+        """Check if the path is allowed even without server access."""
+        for allowed_path in self.ALLOWED_WITHOUT_SERVER_ACCESS:
+            if path.startswith(allowed_path):
                 return True
         return False
 
