@@ -118,6 +118,7 @@ export function ActionMenuButton({
   renderButton,
   orientation = "vertical",
   withProfile = false,
+  size="regular",
   ...props
 }) {
   const [anchorEl, setAnchorEl] = useState(null);

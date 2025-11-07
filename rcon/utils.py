@@ -391,9 +391,9 @@ def dict_differences(old: dict[Any, Any], new: dict[Any, Any]) -> dict[Any, Any]
     return diff
 
 
-def default_player_info_dict(player) -> GetDetailedPlayer:
+def default_player_info_dict() -> GetDetailedPlayer:
     return {
-        "name": player,
+        "name": "",
         "player_id": "",
         "profile": None,
         "is_vip": False,
@@ -419,9 +419,10 @@ def default_player_info_dict(player) -> GetDetailedPlayer:
 def parse_raw_player_info(raw: dict[str, Any], player) -> GetDetailedPlayer:
     """Parse the result of the playerinfo command from the game server"""
 
-    data = default_player_info_dict(player)
+    data = default_player_info_dict()
 
     # Remap keys and parse values
+    data[NAME] = raw[NAME]
     data[PLAYER_ID] = raw["iD"]
 
     faction = hllrcon.data.Faction.by_id(raw["team"])

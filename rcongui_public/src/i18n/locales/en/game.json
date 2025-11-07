@@ -48,7 +48,8 @@
         "deathsPerMinute": "DPM",
         "general":  "General",
         "advanced": "Advanced",
-        "ingame": "Ingame"
+        "ingame": "Ingame",
+        "level": "Level"
     },
     "weaponType": {
       "sniper": "Sniper",

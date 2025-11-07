@@ -205,6 +205,7 @@ class BaseStats:
                 "offense": 0,
                 "defense": 0,
                 "support": 0,
+                "level": 0,
             }
 
             streaks = Streaks()
@@ -607,6 +608,7 @@ def current_game_stats():
         stat["offense"] = map_stat["offense"] + map_stat["p_offense"]
         stat["defense"] = map_stat["defense"] + map_stat["p_defense"]
         stat["support"] = map_stat["support"] + map_stat["p_support"]
+        stat["level"] = map_stat["level"]
     return stats
 
 
