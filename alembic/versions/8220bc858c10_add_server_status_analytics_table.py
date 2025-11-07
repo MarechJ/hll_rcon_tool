@@ -1,7 +1,7 @@
 """Add server status analytics table
 
 Revision ID: 8220bc858c10
-Revises: 78098bd1bbb0
+Revises: 0ac19ea4739e
 Create Date: 2025-08-27 17:24:28.738114
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '8220bc858c10'
-down_revision = '78098bd1bbb0'
+down_revision = '0ac19ea4739e'
 branch_labels = None
 depends_on = None
 
