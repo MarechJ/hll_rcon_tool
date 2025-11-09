@@ -20,10 +20,6 @@ logger = logging.getLogger("rcon")
 @csrf_exempt
 @require_http_methods(["GET"])
 def get_server_list(request):
-    # Check if user has permission to view other servers
-    if not request.user.has_perm("api.can_view_other_crcon_servers"):
-        return api_response([], failed=False, command="server_list")
-
     if request.user.is_superuser:
         allowed_server_numbers = None
     else:

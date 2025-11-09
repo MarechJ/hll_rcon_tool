@@ -41,6 +41,10 @@ def check_server_permissions(user):
     """
     Check if user has permission to access the current server.
 
+    If user has UserServerPermission records, they can only access those servers.
+    If user has no UserServerPermission records, they can access all servers (backward compatible).
+    Superusers always have access to all servers.
+
     Raises PermissionDenied if user doesn't have access.
     """
     if user.is_superuser:
@@ -54,24 +58,20 @@ def check_server_permissions(user):
         logger.error("Invalid SERVER_NUMBER environment variable")
         current_server_number = 1
 
-    # Only check server permissions if user has can_view_other_crcon_servers permission
-    if user.has_perm("api.can_view_other_crcon_servers"):
-        # User can view other servers, check if they have specific restrictions
-        user_permissions = UserServerPermission.objects.filter(user=user)
+    user_permissions = UserServerPermission.objects.filter(user=user)
 
-        if user_permissions.exists():
-            # User has specific server permissions configured
-            allowed_server_numbers = set(perm.server_number for perm in user_permissions)
+    if user_permissions.exists():
+        allowed_server_numbers = set(perm.server_number for perm in user_permissions)
 
-            if current_server_number not in allowed_server_numbers:
-                logger.warning(
-                    f"User {user.username} attempted to access server {current_server_number} "
-                    f"but only has permission for servers: {allowed_server_numbers}"
-                )
-                raise PermissionDenied(
-                    f"You do not have permission to access server {current_server_number}. "
-                    f"You only have access to servers: {sorted(allowed_server_numbers)}."
-                )
+        if current_server_number not in allowed_server_numbers:
+            logger.warning(
+                f"User {user.username} attempted to access server {current_server_number} "
+                f"but only has permission for servers: {allowed_server_numbers}"
+            )
+            raise PermissionDenied(
+                f"You do not have permission to access server {current_server_number}. "
+                f"You only have access to servers: {sorted(allowed_server_numbers)}."
+            )
 
 
 def update_mods(sender, instance, **kwargs):
