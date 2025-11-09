@@ -47,7 +47,10 @@ def check_server_permissions(user):
 
     Raises PermissionDenied if user doesn't have access.
     """
+    logger.info(f"[SERVER_ACCESS] Checking server permissions for user: {user.username}")
+
     if user.is_superuser:
+        logger.info(f"[SERVER_ACCESS] User {user.username} is superuser - access granted")
         return
 
     from .models import UserServerPermission
@@ -58,20 +61,28 @@ def check_server_permissions(user):
         logger.error("Invalid SERVER_NUMBER environment variable")
         current_server_number = 1
 
+    logger.info(f"[SERVER_ACCESS] Current server number: {current_server_number}")
+
     user_permissions = UserServerPermission.objects.filter(user=user)
+    logger.info(f"[SERVER_ACCESS] User {user.username} has {user_permissions.count()} permission records")
 
     if user_permissions.exists():
         allowed_server_numbers = set(perm.server_number for perm in user_permissions)
+        logger.info(f"[SERVER_ACCESS] User {user.username} allowed servers: {allowed_server_numbers}")
 
         if current_server_number not in allowed_server_numbers:
             logger.warning(
-                f"User {user.username} attempted to access server {current_server_number} "
+                f"[SERVER_ACCESS] User {user.username} attempted to access server {current_server_number} "
                 f"but only has permission for servers: {allowed_server_numbers}"
             )
             raise PermissionDenied(
                 f"You do not have permission to access server {current_server_number}. "
                 f"You only have access to servers: {sorted(allowed_server_numbers)}."
             )
+        else:
+            logger.info(f"[SERVER_ACCESS] User {user.username} has access to server {current_server_number}")
+    else:
+        logger.info(f"[SERVER_ACCESS] User {user.username} has no permission records - access granted to all servers")
 
 
 def update_mods(sender, instance, **kwargs):
