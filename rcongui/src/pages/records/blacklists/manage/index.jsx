@@ -44,7 +44,7 @@ const BlacklistLists = () => {
   }
 
   function loadServers() {
-    return get("get_server_list")
+    return get("get_server_list?include_current=true")
       .then((response) => showResponse(response, "get_server_list", false))
       .then((data) => {
         if (data?.result) {

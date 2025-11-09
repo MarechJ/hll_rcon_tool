@@ -60,10 +60,20 @@ const globalQueries = [
     queryFn: async () => {
       let result;
       try {
-        result = await cmd.GET_GAME_SERVER_LIST()
-        useGlobalStore.setState((state) => ({ servers: result }));
+        result = await cmd.GET_GAME_SERVER_LIST({ params: { include_current: 'true' } })
+
+        const currentServer = result.find(server => server.current === true) || null;
+        const otherServers = result.filter(server => server.current !== true);
+
+        useGlobalStore.setState((state) => ({
+          serverState: currentServer,
+          servers: otherServers
+        }));
       } catch (error) {
-        useGlobalStore.setState((state) => ({ servers: [] }));
+        useGlobalStore.setState((state) => ({
+          serverState: null,
+          servers: []
+        }));
       }
       return result
     },

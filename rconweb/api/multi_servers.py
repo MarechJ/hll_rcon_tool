@@ -36,7 +36,36 @@ def _get_allowed_server_numbers(user):
 @csrf_exempt
 @require_http_methods(["GET"])
 def get_server_list(request):
+    """
+    Get list of servers the user has permission to access.
+
+    Query Parameters:
+        include_current (str): 'true' to include the current server in the list.
+                              Default: 'false' (backward compatible)
+
+    Response with include_current=false (default):
+        {
+            "result": [
+                {"name": "Server 2", "port": "8020", "server_number": 2},
+                {"name": "Server 3", "port": "8030", "server_number": 3}
+            ],
+            "command": "server_list",
+            "failed": false
+        }
+
+    Response with include_current=true:
+        {
+            "result": [
+                {"name": "Server 1", "port": "8010", "server_number": 1, "current": true},
+                {"name": "Server 2", "port": "8020", "server_number": 2, "current": false},
+                {"name": "Server 3", "port": "8030", "server_number": 3, "current": false}
+            ],
+            "command": "server_list",
+            "failed": false
+        }
+    """
     allowed_server_numbers = _get_allowed_server_numbers(request.user)
+    include_current = request.GET.get('include_current', 'false').lower() == 'true'
 
     api_key = ApiKey()
     keys = api_key.get_all_keys()
@@ -48,6 +77,37 @@ def get_server_list(request):
     headers = {"AUTHORIZATION": auth_header} if auth_header else {}
     server_list = []
 
+    # Add current server if requested
+    if include_current:
+        try:
+            from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
+            from rcon.utils import get_server_number
+
+            config = RconServerSettingsUserConfig.load_from_db()
+            current_server_number = int(get_server_number())
+
+            # Check if user has permission to view current server
+            if allowed_server_numbers is None or current_server_number in allowed_server_numbers:
+                current_server = {
+                    "name": config.short_name,
+                    "port": os.getenv("RCONWEB_PORT"),
+                    "link": str(config.server_url) if config.server_url else None,
+                    "server_number": current_server_number,
+                    "current": True,
+                }
+                server_list.append(current_server)
+                logger.debug(
+                    f"Added current server {current_server_number} to list for user {request.user.username}"
+                )
+            else:
+                logger.debug(
+                    f"User {request.user.username} does not have permission to view "
+                    f"current server {current_server_number}"
+                )
+        except Exception as e:
+            logger.error(f"Failed to get current server info: {e}")
+
+    # Add other servers
     for host, key in keys.items():
         if key == my_key:
             continue
@@ -72,9 +132,18 @@ def get_server_list(request):
                 )
                 continue
 
+            # Add 'current' flag if include_current is enabled
+            if include_current:
+                info["result"]["current"] = False
+
             server_list.append(info["result"])
         except Exception as e:
             logger.warning("Unable to connect with %s: %s", host, e)
+
+    logger.info(
+        f"Returning {len(server_list)} server(s) for user {request.user.username} "
+        f"(include_current={include_current})"
+    )
 
     return api_response(server_list, failed=False, command="server_list")
 
