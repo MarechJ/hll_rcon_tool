@@ -31,15 +31,10 @@ const refetchInterval = 30 * 1000;
 const globalQueries = [
   queryOptions({
     queryKey: [{ queryIdentifier: "get_status" }],
-    queryFn: async () => {
-      let result;
-      try {
-        result = await cmd.GET_GAME_SERVER_STATUS()
-        useGlobalStore.setState((state) => ({ status: result }));
-      } catch (error) {
-        useGlobalStore.setState((state) => ({ status: null }));
-      }
-      return result
+    queryFn: cmd.GET_GAME_SERVER_STATUS,
+    select: (data) => {
+      useGlobalStore.setState({ status: data });
+      return data;
     },
     retry: 1,
   }),
@@ -47,7 +42,7 @@ const globalQueries = [
     queryKey: [{ queryIdentifier: "get_gamestate" }],
     queryFn: cmd.GET_GAME_STATE,
     select: (data) => {
-      useGlobalStore.setState((state) => ({ gameState: data }));
+      useGlobalStore.setState({ gameState: data });
       return data;
     },
   }),
@@ -55,15 +50,26 @@ const globalQueries = [
     queryKey: [{ queryIdentifier: "get_server_list" }],
     queryFn: cmd.GET_GAME_SERVER_LIST,
     select: (data) => {
-      useGlobalStore.setState((state) => ({ servers: data }));
-      return data;
+     if (!data || !Array.isArray(data)) {
+        return { currentServer: null, otherServers: [] };
+      }
+
+      const currentServer = data.find(server => server.current === true) || null;
+      const otherServers = data.filter(server => server.current !== true);
+
+      useGlobalStore.setState({
+        serverState: currentServer,
+        servers: otherServers
+      });
+
+      return { currentServer, otherServers, allServers: data };
     },
   }),
   queryOptions({
     queryKey: [{ queryIdentifier: "get_ingame_mods" }],
     queryFn: cmd.GET_INGAME_MODS,
     select: (data) => {
-      useGlobalStore.setState((state) => ({ onlineIngameMods: data }));
+      useGlobalStore.setState({ onlineIngameMods: data });
       return data;
     },
   }),
@@ -71,7 +77,7 @@ const globalQueries = [
     queryKey: [{ queryIdentifier: "get_online_mods" }],
     queryFn: cmd.GET_CRCON_MODS,
     select: (data) => {
-      useGlobalStore.setState((state) => ({ onlineCrconMods: data }));
+      useGlobalStore.setState({ onlineCrconMods: data });
       return data;
     },
   }),
@@ -79,29 +85,23 @@ const globalQueries = [
 ];
 
 export const GlobalState = () => {
-  const { data, isSuccess: isCrconConnected } = useQuery({
+  const { isSuccess: isCrconConnected } = useQuery({
     queryKey: [{ queryIdentifier: "get_connection_info" }],
     queryFn: cmd.GET_CRCON_SERVER_CONNECTION,
     refetchInterval,
     retry: 1,
   });
 
-  useEffect(() => {
-    if (isCrconConnected) {
-      useGlobalStore.setState({ serverState: data });
-    } else {
-      useGlobalStore.setState({ serverState: null });
-    }
-  }, [isCrconConnected]);
-
   useQueries({
-    queries: globalQueries.map((query) => queryOptions({
-      staleTime,
-      refetchInterval,
-      enabled: isCrconConnected,
-      ...query,
-    })),
+    queries: globalQueries.map((query) =>
+      queryOptions({
+        staleTime,
+        refetchInterval,
+        enabled: isCrconConnected,
+        ...query,
+      })
+    ),
   });
 
   return null;
-}; 
+};

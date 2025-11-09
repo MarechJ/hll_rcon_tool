@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 from copy import deepcopy
 from typing import Any
 
@@ -7,7 +8,9 @@ import requests
 from django.http import QueryDict
 from django.views.decorators.csrf import csrf_exempt
 
-from rcon.utils import ApiKey
+from rcon.api_commands import RconAPI
+from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
+from rcon.utils import ApiKey, get_server_number
 
 from .auth import AUTHORIZATION, api_response, login_required
 from .decorators import permission_required, require_http_methods
@@ -17,10 +20,6 @@ logger = logging.getLogger("rcon")
 
 
 def _get_allowed_server_numbers(user):
-    """
-    Get set of server numbers the user has permission to access.
-    Returns None if user can access all servers.
-    """
     if user.is_superuser:
         return None
 
@@ -33,57 +32,124 @@ def _get_allowed_server_numbers(user):
         return None
 
 
+def _get_current_server_info():
+    try:
+        config = RconServerSettingsUserConfig.load_from_db()
+        rcon_api = RconAPI()
+        current_server_number = int(get_server_number())
+
+        return {
+            "name": rcon_api.get_name(),
+            "port": os.getenv("RCONWEB_PORT"),
+            "link": str(config.server_url) if config.server_url else config.server_url,
+            "server_number": current_server_number,
+            "current": True,
+        }
+    except (ValueError, TypeError) as e:
+        logger.error(f"Invalid server configuration: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"Failed to get current server info: {e}")
+        return None
+
+
+def _fetch_remote_server_info(host, sessionid, auth_header, timeout=5):
+    url = f"http://{host}/api/get_connection_info"
+    cookies = {"sessionid": sessionid} if sessionid else {}
+    headers = {"AUTHORIZATION": auth_header} if auth_header else {}
+
+    try:
+        response = requests.get(url, timeout=timeout, cookies=cookies, headers=headers)
+
+        if not response.ok:
+            logger.warning(f"Failed to fetch server info from {host}: HTTP {response.status_code}")
+            return None
+
+        data = response.json()
+        server_info = data.get("result")
+
+        if not server_info:
+            logger.warning(f"No server info in response from {host}")
+            return None
+
+        if "server_number" not in server_info:
+            logger.warning(f"Missing server_number in response from {host}")
+            return None
+
+        return server_info
+
+    except requests.exceptions.Timeout:
+        logger.warning(f"Timeout while connecting to {host}")
+        return None
+    except requests.exceptions.ConnectionError:
+        logger.warning(f"Connection error while connecting to {host}")
+        return None
+    except requests.exceptions.RequestException as e:
+        logger.warning(f"Request failed for {host}: {e}")
+        return None
+    except (ValueError, KeyError) as e:
+        logger.error(f"Invalid response format from {host}: {e}")
+        return None
+
+
+def _has_server_permission(server_number, allowed_server_numbers):
+    return allowed_server_numbers is None or server_number in allowed_server_numbers
+
+
 @login_required()
 @csrf_exempt
 @require_http_methods(["GET"])
 def get_server_list(request):
-    """
-    Get list of other servers (excluding current server).
-    Legacy endpoint - kept for backward compatibility.
-
-    If user has UserServerPermission records, only return those servers.
-    If user has no UserServerPermission records, return all servers (backward compatible).
-    Superusers always see all servers.
-    """
     allowed_server_numbers = _get_allowed_server_numbers(request.user)
 
     api_key = ApiKey()
     keys = api_key.get_all_keys()
     my_key = api_key.get_key()
 
-    auth_header: str | None = request.headers.get(AUTHORIZATION)
-    headers = {"AUTHORIZATION": auth_header} if auth_header else {}
+    sessionid = request.COOKIES.get("sessionid")
+    auth_header = request.headers.get(AUTHORIZATION)
 
-    logger.debug(keys)
-    names = []
+    logger.debug(f"Fetching server list for user {request.user.username}")
 
-    # Add other servers (excluding current)
+    server_list = []
+
+    current_server = _get_current_server_info()
+    if current_server:
+        current_server_number = current_server["server_number"]
+
+        if _has_server_permission(current_server_number, allowed_server_numbers):
+            server_list.append(current_server)
+        else:
+            logger.debug(
+                f"User {request.user.username} does not have permission to view "
+                f"current server {current_server_number}"
+            )
+
     for host, key in keys.items():
         if key == my_key:
             continue
-        url = f"http://{host}/api/get_connection_info"
-        try:
-            res = requests.get(
-                url,
-                timeout=5,
-                cookies=dict(sessionid=request.COOKIES.get("sessionid")),
-                headers=headers,
+
+        server_info = _fetch_remote_server_info(host, sessionid, auth_header)
+
+        if not server_info:
+            continue
+
+        server_number = server_info["server_number"]
+
+        if _has_server_permission(server_number, allowed_server_numbers):
+            server_info["current"] = False
+            server_list.append(server_info)
+        else:
+            logger.debug(
+                f"User {request.user.username} does not have permission to view "
+                f"server {server_number}"
             )
-            if res.ok:
-                server_info = res.json()["result"]
-                server_number = server_info.get("server_number")
 
-                # Filter servers based on user permissions
-                if allowed_server_numbers is None or server_number in allowed_server_numbers:
-                    names.append(server_info)
-                else:
-                    logger.debug(
-                        f"User {request.user.username} does not have permission to view server {server_number}"
-                    )
-        except requests.exceptions.RequestException:
-            logger.warning(f"Unable to connect with {url}")
+    logger.info(
+        f"Returning {len(server_list)} server(s) for user {request.user.username}"
+    )
 
-    return api_response(names, failed=False, command="server_list")
+    return api_response(server_list, failed=False, command="server_list")
 
 
 def forward_request(request):

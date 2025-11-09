@@ -1,3 +1,4 @@
+import { useMemo, useCallback } from "react";
 import MuiAvatar from "@mui/material/Avatar";
 import MuiListItemAvatar from "@mui/material/ListItemAvatar";
 import MenuItem from "@mui/material/MenuItem";
@@ -22,50 +23,79 @@ const ListItemAvatar = styled(MuiListItemAvatar)({
   marginRight: 12,
 });
 
+/**
+ * Builds a URL for navigating to a different server while preserving current path/query/hash
+ */
+function buildServerUrl(selectedServer, currentLocation) {
+  let newUrl;
+
+  if (selectedServer.link) {
+    // Server has explicit link - use it as base
+    newUrl = new URL(selectedServer.link);
+    newUrl.pathname = currentLocation.pathname;
+    newUrl.search = currentLocation.search;
+    newUrl.hash = currentLocation.hash;
+  } else {
+    // No explicit link - replace port in current URL
+    const portRegex = /:(\d+)/gm;
+    const urlWithNewPort = currentLocation.href.replace(portRegex, `:${selectedServer.port}`);
+    newUrl = new URL(urlWithNewPort);
+  }
+
+  return newUrl;
+}
+
+/**
+ * SelectContent - Server selection dropdown component
+ *
+ * Displays all servers the user has access to and allows switching between them.
+ * The current server is marked and the dropdown is disabled if only one server is available.
+ */
 export default function SelectContent() {
   const thisServer = useGlobalStore((state) => state.serverState);
   const otherServers = useGlobalStore((state) => state.servers);
   const navigate = useNavigate();
 
-  const handleChange = (servers) => (event) => {
+  // Memoize combined server list to avoid recalculation on every render
+  const servers = useMemo(() => {
+    return thisServer ? [thisServer, ...otherServers] : null;
+  }, [thisServer, otherServers]);
+
+  // Memoize handler to avoid recreation on every render
+  const handleChange = useCallback((event) => {
+    if (!servers) return;
+
     const serverNumber = Number(event.target.value);
     const selectedServer = servers.find(
       (server) => server.server_number === serverNumber
     );
+
     if (!selectedServer) {
       return;
     }
 
-    let newUrl;
-    if (selectedServer.link) {
-      newUrl = new URL(selectedServer.link);
-      newUrl.pathname = window.location.pathname;
-      newUrl.search = window.location.search;
-      newUrl.hash = window.location.hash;
-    } else {
-      const regex = /:(\d+)/gm;
-      newUrl = new URL(window.location.href.replace(regex, `:${selectedServer.port}`));
-    }
+    const newUrl = buildServerUrl(selectedServer, window.location);
 
+    // Same origin - use React Router for SPA navigation
     if (newUrl.origin === window.location.origin) {
       navigate(newUrl.pathname + newUrl.search + newUrl.hash, { replace: true });
     } else {
+      // Different origin - full page reload required
       window.location.replace(newUrl.href);
     }
-  };
+  }, [servers, navigate]);
 
-  const servers = thisServer ? [thisServer, ...otherServers] : null;
-
-  // If there's only one server, disable the selector but still show it
-  // This happens when the user doesn't have permission to view other servers
-  const hasOnlyOneServer = servers && servers.length === 1;
+  // Disable selector if user only has access to one server
+  const hasOnlyOneServer = useMemo(() => {
+    return servers && servers.length === 1;
+  }, [servers]);
 
   return (
     <Select
       labelId="server-select"
       id="server-simple-select"
       value={thisServer?.server_number ?? ""}
-      onChange={handleChange(servers)}
+      onChange={handleChange}
       displayEmpty
       inputProps={{ "aria-label": "Select server" }}
       fullWidth
