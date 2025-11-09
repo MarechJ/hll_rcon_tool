@@ -94,6 +94,7 @@ endpoints: list[tuple[str, Callable]] = [
     ("get_services", services.get_services),
     ("do_service", services.do_service),
     ("get_server_list", multi_servers.get_server_list),
+    ("get_user_servers", multi_servers.get_user_servers),
     ("upload_vips", vips.upload_vips),
     ("upload_vips_result", vips.upload_vips_result),
     ("download_vips", vips.download_vips),
