@@ -46,16 +46,17 @@ async function requestFactory({
     const res = await fetch(req);
     return await handleFetchResponse(req, res, cmd);
   } catch (error) {
-    console.log("[FETCH] Caught error in requestFactory:", error);
-    console.log("[FETCH] Error name:", error?.name);
-    console.log("[FETCH] Error is PermissionError?", error?.name === "PermissionError");
-    console.log("[FETCH] throwRouteError:", throwRouteError);
+    // Don't transform our custom errors (AuthError, PermissionError, etc.)
+    // These need to be preserved for React Query error handling
+    const isCustomError = error instanceof AuthError ||
+                         error instanceof PermissionError ||
+                         error instanceof CRCONServerDownError ||
+                         error instanceof APIError ||
+                         error instanceof NotJSONResponseError;
 
-    if (throwRouteError) {
-      console.log("[FETCH] Throwing json() error");
+    if (throwRouteError && !isCustomError) {
       throw json(error, { status: error.status, statusText: error.message || error.text });
     }
-    console.log("[FETCH] Re-throwing original error");
     throw error;
   }
 }
@@ -78,17 +79,13 @@ async function handleFetchResponse(req, res, cmd) {
   }
 
   if (!res.ok) {
-    console.log("[FETCH] Response not OK:", res.status, cmd);
     if (isText) {
       error = data
     }
     switch (res.status) {
       case 401:
-        console.log("[FETCH] Throwing AuthError");
         throw new AuthError("You are not authenticated.", cmd);
       case 403:
-        console.log("[FETCH] Throwing PermissionError for cmd:", cmd);
-        console.log("[FETCH] Error data:", error);
         throw new PermissionError(error || "You are not authorized.", cmd);
       case 504:
         throw new CRCONServerDownError("There was a problem connecting to your CRCON server.");
