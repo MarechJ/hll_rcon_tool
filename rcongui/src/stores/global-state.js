@@ -118,17 +118,22 @@ export const GlobalState = () => {
 
   console.log('[DEBUG] isCrconConnected:', isCrconConnected);
   console.log('[DEBUG] Current store state:', useGlobalStore.getState());
+  console.log('[DEBUG] Number of globalQueries:', globalQueries.length);
 
-  useQueries({
-    queries: globalQueries.map((query) =>
-      queryOptions({
+  const queries = useQueries({
+    queries: globalQueries.map((query) => {
+      const mappedQuery = queryOptions({
         staleTime,
         refetchInterval,
         enabled: isCrconConnected,
         ...query,
-      })
-    ),
+      });
+      console.log('[DEBUG] Mapped query:', mappedQuery.queryKey);
+      return mappedQuery;
+    }),
   });
+
+  console.log('[DEBUG] useQueries results:', queries);
 
   return null;
 };
