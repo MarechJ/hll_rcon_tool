@@ -2,8 +2,9 @@ import { createContext, useContext, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings";
-import { AuthError, cmd } from "@/utils/fetchUtils";
+import { AuthError, cmd, PermissionError } from "@/utils/fetchUtils";
 import { useQuery } from "@tanstack/react-query";
+import ServerAccessDenied from "@/components/shared/ServerAccessDenied";
 
 const AuthContext = createContext();
 
@@ -47,16 +48,20 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     // Only redirect to login for authentication errors (401)
-    if (isAuthError) {
+    if (isAuthError && authError?.name === "AuthError") {
       const from = encodeURIComponent(location.pathname + location.search);
       navigate(`/login?from=${from}`);
     }
-  }, [isAuthError, navigate, location]);
+  }, [isAuthError, authError, navigate, location]);
 
   // Handle loading state
   const isLoading = isAuthLoading || isPermissionsLoading;
 
-  if (isLoading || isAuthError) {
+  if (isPermissionsError && permissionsErrorObj?.name === "PermissionError") {
+    return <ServerAccessDenied errorMessage={permissionsErrorObj?.message} />;
+  }
+
+  if (isLoading || (isAuthError && authError?.name === "AuthError")) {
     return (
       <Box
         sx={{
