@@ -2,6 +2,7 @@ import csv
 import datetime
 import json
 import logging
+import os
 from dataclasses import asdict, dataclass
 from functools import wraps
 from typing import Any, Sequence
@@ -34,6 +35,50 @@ logger = logging.getLogger("rconweb")
 HTTP_AUTHORIZATION_HEADER = "HTTP_AUTHORIZATION"
 AUTHORIZATION = "AUTHORIZATION"
 BEARER = ("BEARER", "BEARER:")
+
+
+def check_server_permissions(user):
+    """
+    Check if user has permission to access the current server.
+
+    Raises PermissionDenied if user doesn't have access.
+
+    Permission Logic:
+    - Superusers: Always have access to all servers
+    - Users WITHOUT 'can_view_other_crcon_servers': Can only access current server
+    - Users WITH 'can_view_other_crcon_servers':
+      - WITHOUT UserServerPermission records: Can access all servers (default)
+      - WITH UserServerPermission records: Can only access listed servers (restricted)
+    """
+    if user.is_superuser:
+        return
+
+    from .models import UserServerPermission
+
+    try:
+        current_server_number = int(os.getenv("SERVER_NUMBER", "1"))
+    except (ValueError, TypeError):
+        logger.error("Invalid SERVER_NUMBER environment variable")
+        current_server_number = 1
+
+    # Only check server permissions if user has can_view_other_crcon_servers permission
+    if user.has_perm("api.can_view_other_crcon_servers"):
+        # User can view other servers, check if they have specific restrictions
+        user_permissions = UserServerPermission.objects.filter(user=user)
+
+        if user_permissions.exists():
+            # User has specific server permissions configured
+            allowed_server_numbers = set(perm.server_number for perm in user_permissions)
+
+            if current_server_number not in allowed_server_numbers:
+                logger.warning(
+                    f"User {user.username} attempted to access server {current_server_number} "
+                    f"but only has permission for servers: {allowed_server_numbers}"
+                )
+                raise PermissionDenied(
+                    f"You do not have permission to access server {current_server_number}. "
+                    f"You only have access to servers: {sorted(allowed_server_numbers)}."
+                )
 
 
 def update_mods(sender, instance, **kwargs):
@@ -291,7 +336,7 @@ def check_api_key(request):
 
 def login_required():
     """Flag this endpoint as one that requires the user
-    to be logged in.
+    to be logged in and have access to the current server.
     """
 
     def decorator(func):
@@ -309,11 +354,14 @@ def login_required():
                 )
 
             try:
+                # Check server access permissions
+                check_server_permissions(request.user)
+
                 return func(request, *args, **kwargs)
             except PermissionDenied as e:
                 return api_response(
                     command=request.path,
-                    error="You do not have the required permissions to use this",
+                    error=str(e) if str(e) else "You do not have the required permissions to use this",
                     failed=True,
                     status_code=403,
                 )

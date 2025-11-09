@@ -20,14 +20,22 @@ logger = logging.getLogger("rcon")
 @csrf_exempt
 @require_http_methods(["GET"])
 def get_server_list(request):
+    """
+    Returns a list of all game servers the user has permission to access.
+
+    Permission logic:
+    - Users WITHOUT can_view_other_crcon_servers: See no other servers (empty list)
+    - Superusers: See all servers
+    - Users WITH can_view_other_crcon_servers:
+      - Without UserServerPermission records: See all servers (default)
+      - With UserServerPermission records: See only those specific servers (restricted)
+    """
     # Check if user has permission to view other servers
     if not request.user.has_perm("api.can_view_other_crcon_servers"):
-        # Return empty list if user doesn't have permission
-        # This allows the frontend to show only the current server
+        # Return empty list if user doesn't have permission to view other servers
         return api_response([], failed=False, command="server_list")
 
     # Get the list of server numbers this user is allowed to view
-    # If the user is a superuser, they can see all servers
     if request.user.is_superuser:
         allowed_server_numbers = None  # None means all servers
     else:
