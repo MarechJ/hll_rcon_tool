@@ -35,10 +35,8 @@ const globalQueries = [
       let result;
       try {
         result = await cmd.GET_GAME_SERVER_STATUS()
-        console.log('[GlobalState] get_status result:', result);
         useGlobalStore.setState({ status: result });
       } catch (error) {
-        console.error('[GlobalState] get_status error:', error);
         useGlobalStore.setState({ status: null });
       }
       return result
@@ -50,10 +48,8 @@ const globalQueries = [
       let result;
       try {
         result = await cmd.GET_GAME_STATE()
-        console.log('[GlobalState] get_gamestate result:', result);
         useGlobalStore.setState({ gameState: result });
       } catch (error) {
-        console.error('[GlobalState] get_gamestate error:', error);
         useGlobalStore.setState({ gameState: null });
       }
       return result
@@ -113,8 +109,6 @@ export const GlobalState = () => {
     refetchInterval,
     retry: 1,
   });
-
-  console.log('[GlobalState] isCrconConnected:', isCrconConnected);
 
   useQueries({
     queries: globalQueries.map((query) =>
