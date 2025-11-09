@@ -35,9 +35,9 @@ const globalQueries = [
       let result;
       try {
         result = await cmd.GET_GAME_SERVER_STATUS()
-        useGlobalStore.setState((state) => ({ status: result }));
+        useGlobalStore.setState({ status: result });
       } catch (error) {
-        useGlobalStore.setState((state) => ({ status: null }));
+        useGlobalStore.setState({ status: null });
       }
       return result
     },
@@ -48,9 +48,9 @@ const globalQueries = [
       let result;
       try {
         result = await cmd.GET_GAME_STATE()
-        useGlobalStore.setState((state) => ({ gameState: result }));
+        useGlobalStore.setState({ gameState: result });
       } catch (error) {
-        useGlobalStore.setState((state) => ({ gameState: null }));
+        useGlobalStore.setState({ gameState: null });
       }
       return result
     },
@@ -65,15 +65,15 @@ const globalQueries = [
         const currentServer = result.find(server => server.current === true) || null;
         const otherServers = result.filter(server => server.current !== true);
 
-        useGlobalStore.setState((state) => ({
+        useGlobalStore.setState({
           serverState: currentServer,
           servers: otherServers
-        }));
+        });
       } catch (error) {
-        useGlobalStore.setState((state) => ({
+        useGlobalStore.setState({
           serverState: null,
           servers: []
-        }));
+        });
       }
       return result
     },
