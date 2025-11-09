@@ -40,7 +40,19 @@ export const AuthProvider = ({ children }) => {
     error: permissionsErrorObj,
   } = useQuery({
     queryKey: ["user", "permissions"],
-    queryFn: cmd.GET_PERMISSIONS,
+    queryFn: async () => {
+      console.log("[AUTH] Fetching permissions...");
+      try {
+        const result = await cmd.GET_PERMISSIONS();
+        console.log("[AUTH] Permissions fetched successfully:", result);
+        return result;
+      } catch (error) {
+        console.error("[AUTH] Error fetching permissions:", error);
+        console.error("[AUTH] Error name:", error?.name);
+        console.error("[AUTH] Error message:", error?.message);
+        throw error;
+      }
+    },
     enabled: isAuthSuccess && user?.authenticated,
     refetchOnWindowFocus: false,
     retry: 1,
@@ -57,7 +69,13 @@ export const AuthProvider = ({ children }) => {
   // Handle loading state
   const isLoading = isAuthLoading || isPermissionsLoading;
 
+  // Log permission error state
+  console.log("[AUTH] isPermissionsError:", isPermissionsError);
+  console.log("[AUTH] permissionsErrorObj:", permissionsErrorObj);
+  console.log("[AUTH] permissionsErrorObj?.name:", permissionsErrorObj?.name);
+
   if (isPermissionsError && permissionsErrorObj?.name === "PermissionError") {
+    console.log("[AUTH] Showing ServerAccessDenied component");
     return <ServerAccessDenied errorMessage={permissionsErrorObj?.message} />;
   }
 
