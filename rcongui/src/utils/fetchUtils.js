@@ -71,21 +71,25 @@ async function handleFetchResponse(req, res, cmd) {
   }
 
   if (!res.ok) {
+    console.log("[FETCH] Response not OK:", res.status, cmd);
     if (isText) {
       error = data
     }
     switch (res.status) {
       case 401:
+        console.log("[FETCH] Throwing AuthError");
         throw new AuthError("You are not authenticated.", cmd);
       case 403:
-        throw new PermissionError("You are not authorized.", cmd);
+        console.log("[FETCH] Throwing PermissionError for cmd:", cmd);
+        console.log("[FETCH] Error data:", error);
+        throw new PermissionError(error || "You are not authorized.", cmd);
       case 504:
         throw new CRCONServerDownError("There was a problem connecting to your CRCON server.");
       default:
         throw new APIError(error, cmd, res.status);
     }
   }
-  
+
   return data;
 }
 
