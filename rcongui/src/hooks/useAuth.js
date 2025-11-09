@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }) => {
   } = useQuery({
     queryKey: ["user", "permissions"],
     queryFn: cmd.GET_PERMISSIONS,
-    enabled: isAuthSuccess && user?.authenticated, // Fetch only if authenticated
+    enabled: isAuthSuccess && user?.authenticated,
     refetchOnWindowFocus: false,
     retry: 1,
   });

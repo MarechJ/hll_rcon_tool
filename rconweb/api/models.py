@@ -478,35 +478,6 @@ class RconUser(User):
 
 
 class UserServerPermission(models.Model):
-    """
-    Defines which servers a user can view and access in multi-server deployments.
-
-    This model works in conjunction with the 'can_view_other_crcon_servers' permission.
-
-    Permission Logic:
-    1. Users WITHOUT 'can_view_other_crcon_servers' permission:
-       - Cannot see other servers in the server list (empty list)
-       - Can only access the current server they're logged into
-
-    2. Users WITH 'can_view_other_crcon_servers' permission:
-       - WITHOUT UserServerPermission records: Can see and access ALL servers (default)
-       - WITH UserServerPermission records: Can ONLY see and access the listed servers (restricted)
-
-    3. Superusers:
-       - Always see and access all servers regardless of permissions
-
-    Example Usage:
-    - User has 'can_view_other_crcon_servers' but NO UserServerPermission records:
-      → Sees all servers (1, 2, 3, 4, ...)
-
-    - User has 'can_view_other_crcon_servers' AND UserServerPermission for servers [2, 3]:
-      → Sees only servers 2 and 3
-      → Attempting to access server 1 returns 403 Forbidden
-
-    - User does NOT have 'can_view_other_crcon_servers':
-      → Sees no other servers in the list
-      → Can only access the current server
-    """
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="server_permissions")
     server_number = models.IntegerField(help_text="Server number that the user can view")
     created = models.DateTimeField(auto_now_add=True)

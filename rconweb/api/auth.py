@@ -42,13 +42,6 @@ def check_server_permissions(user):
     Check if user has permission to access the current server.
 
     Raises PermissionDenied if user doesn't have access.
-
-    Permission Logic:
-    - Superusers: Always have access to all servers
-    - Users WITHOUT 'can_view_other_crcon_servers': Can only access current server
-    - Users WITH 'can_view_other_crcon_servers':
-      - WITHOUT UserServerPermission records: Can access all servers (default)
-      - WITH UserServerPermission records: Can only access listed servers (restricted)
     """
     if user.is_superuser:
         return
