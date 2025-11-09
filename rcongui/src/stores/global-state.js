@@ -114,6 +114,8 @@ export const GlobalState = () => {
     retry: 1,
   });
 
+  console.log('[GlobalState] isCrconConnected:', isCrconConnected);
+
   useQueries({
     queries: globalQueries.map((query) =>
       queryOptions({
