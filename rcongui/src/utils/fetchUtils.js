@@ -136,6 +136,7 @@ export const cmd = {
   GET_CRCON_SERVER_CONNECTION: (params) => requestFactory({ method: "GET", cmd: "get_connection_info", ...params }),
   GET_GAME_MODE: (params) => requestFactory({ method: "GET", cmd: "get_game_mode", ...params }),
   GET_GAME_SERVER_LIST: (params) => requestFactory({ method: "GET", cmd: "get_server_list", ...params }),
+  GET_ACCESSIBLE_SERVERS: (params) => requestFactory({ method: "GET", cmd: "get_accessible_servers", ...params }),
   GET_GAME_SERVER_STATUS: (params) => requestFactory({ method: "GET", cmd: "get_status", ...params }),
   GET_GAME_STATE: (params) => requestFactory({ method: "GET", cmd: "get_gamestate", ...params }),
   // Yes, it is POST request, but it is not a POST command => it's not mutating the server state

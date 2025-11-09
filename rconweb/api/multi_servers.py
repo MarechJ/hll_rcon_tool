@@ -32,6 +32,91 @@ def _get_allowed_server_numbers(user):
         return None
 
 
+@csrf_exempt
+@require_http_methods(["GET"])
+def get_accessible_servers(request):
+    """
+    Get list of servers the user has permission to access.
+    This endpoint does NOT check if the user has access to the current server.
+    It's used for the "Access Denied" page to show available servers.
+
+    Returns:
+        {
+            "result": [
+                {"name": "Server 2", "port": "8020", "server_number": 2, "link": "http://..."},
+                {"name": "Server 3", "port": "8030", "server_number": 3, "link": "http://..."}
+            ],
+            "command": "get_accessible_servers",
+            "failed": false
+        }
+    """
+    # Check if user is authenticated (but don't check server permissions)
+    if not request.user.is_authenticated:
+        return api_response(
+            command="get_accessible_servers",
+            error="You must be logged in to use this",
+            failed=True,
+            status_code=401,
+        )
+
+    allowed_server_numbers = _get_allowed_server_numbers(request.user)
+
+    api_key = ApiKey()
+    keys = api_key.get_all_keys()
+    my_key = api_key.get_key()
+
+    sessionid: str | None = request.COOKIES.get("sessionid")
+    auth_header: str | None = request.headers.get(AUTHORIZATION)
+    cookies = {"sessionid": sessionid} if sessionid else {}
+    headers = {"AUTHORIZATION": auth_header} if auth_header else {}
+
+    server_list = []
+
+    # Get current server info
+    try:
+        config = RconServerSettingsUserConfig.load_from_db()
+        current_server_number = int(get_server_number())
+
+        # Check if user has permission to view current server
+        if allowed_server_numbers is None or current_server_number in allowed_server_numbers:
+            current_server = {
+                "name": config.short_name,
+                "port": os.getenv("RCONWEB_PORT"),
+                "link": str(config.server_url) if config.server_url else None,
+                "server_number": current_server_number,
+            }
+            server_list.append(current_server)
+    except Exception as e:
+        logger.error(f"Failed to get current server info: {e}")
+
+    # Get other servers
+    for host, key in keys.items():
+        if key == my_key:
+            continue
+
+        try:
+            info_res = requests.get(
+                f"http://{host}/api/get_connection_info",
+                cookies=cookies,
+                headers=headers,
+                timeout=2,
+            )
+            info = info_res.json()
+
+            # Get server_number from response
+            server_number = info["result"].get("server_number")
+
+            # Check if user has permission to view this server
+            if allowed_server_numbers is not None and server_number not in allowed_server_numbers:
+                continue
+
+            server_list.append(info["result"])
+        except Exception as e:
+            logger.warning("Unable to connect with %s: %s", host, e)
+
+    return api_response(server_list, failed=False, command="get_accessible_servers")
+
+
 @login_required()
 @csrf_exempt
 @require_http_methods(["GET"])
