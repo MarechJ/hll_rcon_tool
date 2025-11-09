@@ -32,11 +32,14 @@ const globalQueries = [
   queryOptions({
     queryKey: [{ queryIdentifier: "get_status" }],
     queryFn: async () => {
+      console.log('[DEBUG] Fetching get_status...');
       let result;
       try {
         result = await cmd.GET_GAME_SERVER_STATUS()
+        console.log('[DEBUG] get_status result:', result);
         useGlobalStore.setState({ status: result });
       } catch (error) {
+        console.error('[DEBUG] get_status error:', error);
         useGlobalStore.setState({ status: null });
       }
       return result
@@ -45,11 +48,14 @@ const globalQueries = [
   queryOptions({
     queryKey: [{ queryIdentifier: "get_gamestate" }],
     queryFn: async () => {
+      console.log('[DEBUG] Fetching get_gamestate...');
       let result;
       try {
         result = await cmd.GET_GAME_STATE()
+        console.log('[DEBUG] get_gamestate result:', result);
         useGlobalStore.setState({ gameState: result });
       } catch (error) {
+        console.error('[DEBUG] get_gamestate error:', error);
         useGlobalStore.setState({ gameState: null });
       }
       return result
@@ -109,6 +115,9 @@ export const GlobalState = () => {
     refetchInterval,
     retry: 1,
   });
+
+  console.log('[DEBUG] isCrconConnected:', isCrconConnected);
+  console.log('[DEBUG] Current store state:', useGlobalStore.getState());
 
   useQueries({
     queries: globalQueries.map((query) =>
