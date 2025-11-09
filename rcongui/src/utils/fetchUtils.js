@@ -46,9 +46,16 @@ async function requestFactory({
     const res = await fetch(req);
     return await handleFetchResponse(req, res, cmd);
   } catch (error) {
+    console.log("[FETCH] Caught error in requestFactory:", error);
+    console.log("[FETCH] Error name:", error?.name);
+    console.log("[FETCH] Error is PermissionError?", error?.name === "PermissionError");
+    console.log("[FETCH] throwRouteError:", throwRouteError);
+
     if (throwRouteError) {
+      console.log("[FETCH] Throwing json() error");
       throw json(error, { status: error.status, statusText: error.message || error.text });
     }
+    console.log("[FETCH] Re-throwing original error");
     throw error;
   }
 }
