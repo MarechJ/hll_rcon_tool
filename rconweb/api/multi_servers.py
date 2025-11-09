@@ -32,70 +32,6 @@ def _get_allowed_server_numbers(user):
         return None
 
 
-def _get_current_server_info():
-    try:
-        config = RconServerSettingsUserConfig.load_from_db()
-        rcon_api = RconAPI()
-        current_server_number = int(get_server_number())
-
-        return {
-            "name": rcon_api.get_name(),
-            "port": os.getenv("RCONWEB_PORT"),
-            "link": str(config.server_url) if config.server_url else config.server_url,
-            "server_number": current_server_number,
-            "current": True,
-        }
-    except (ValueError, TypeError) as e:
-        logger.error(f"Invalid server configuration: {e}")
-        return None
-    except Exception as e:
-        logger.error(f"Failed to get current server info: {e}")
-        return None
-
-
-def _fetch_remote_server_info(host, sessionid, auth_header, timeout=5):
-    url = f"http://{host}/api/get_connection_info"
-    cookies = {"sessionid": sessionid} if sessionid else {}
-    headers = {"AUTHORIZATION": auth_header} if auth_header else {}
-
-    try:
-        response = requests.get(url, timeout=timeout, cookies=cookies, headers=headers)
-
-        if not response.ok:
-            logger.warning(f"Failed to fetch server info from {host}: HTTP {response.status_code}")
-            return None
-
-        data = response.json()
-        server_info = data.get("result")
-
-        if not server_info:
-            logger.warning(f"No server info in response from {host}")
-            return None
-
-        if "server_number" not in server_info:
-            logger.warning(f"Missing server_number in response from {host}")
-            return None
-
-        return server_info
-
-    except requests.exceptions.Timeout:
-        logger.warning(f"Timeout while connecting to {host}")
-        return None
-    except requests.exceptions.ConnectionError:
-        logger.warning(f"Connection error while connecting to {host}")
-        return None
-    except requests.exceptions.RequestException as e:
-        logger.warning(f"Request failed for {host}: {e}")
-        return None
-    except (ValueError, KeyError) as e:
-        logger.error(f"Invalid response format from {host}: {e}")
-        return None
-
-
-def _has_server_permission(server_number, allowed_server_numbers):
-    return allowed_server_numbers is None or server_number in allowed_server_numbers
-
-
 @login_required()
 @csrf_exempt
 @require_http_methods(["GET"])
@@ -106,48 +42,39 @@ def get_server_list(request):
     keys = api_key.get_all_keys()
     my_key = api_key.get_key()
 
-    sessionid = request.COOKIES.get("sessionid")
-    auth_header = request.headers.get(AUTHORIZATION)
-
-    logger.debug(f"Fetching server list for user {request.user.username}")
-
+    sessionid: str | None = request.COOKIES.get("sessionid")
+    auth_header: str | None = request.headers.get(AUTHORIZATION)
+    cookies = {"sessionid": sessionid} if sessionid else {}
+    headers = {"AUTHORIZATION": auth_header} if auth_header else {}
     server_list = []
-
-    current_server = _get_current_server_info()
-    if current_server:
-        current_server_number = current_server["server_number"]
-
-        if _has_server_permission(current_server_number, allowed_server_numbers):
-            server_list.append(current_server)
-        else:
-            logger.debug(
-                f"User {request.user.username} does not have permission to view "
-                f"current server {current_server_number}"
-            )
 
     for host, key in keys.items():
         if key == my_key:
             continue
 
-        server_info = _fetch_remote_server_info(host, sessionid, auth_header)
-
-        if not server_info:
-            continue
-
-        server_number = server_info["server_number"]
-
-        if _has_server_permission(server_number, allowed_server_numbers):
-            server_info["current"] = False
-            server_list.append(server_info)
-        else:
-            logger.debug(
-                f"User {request.user.username} does not have permission to view "
-                f"server {server_number}"
+        try:
+            info_res = requests.get(
+                f"http://{host}/api/get_connection_info",
+                cookies=cookies,
+                headers=headers,
+                timeout=2,
             )
+            info = info_res.json()
 
-    logger.info(
-        f"Returning {len(server_list)} server(s) for user {request.user.username}"
-    )
+            # Get server_number from response
+            server_number = info["result"].get("server_number")
+
+            # Check if user has permission to view this server
+            if allowed_server_numbers is not None and server_number not in allowed_server_numbers:
+                logger.debug(
+                    f"User {request.user.username} does not have permission to view "
+                    f"server {server_number}"
+                )
+                continue
+
+            server_list.append(info["result"])
+        except Exception as e:
+            logger.warning("Unable to connect with %s: %s", host, e)
 
     return api_response(server_list, failed=False, command="server_list")
 

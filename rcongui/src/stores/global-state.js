@@ -31,38 +31,41 @@ const refetchInterval = 30 * 1000;
 const globalQueries = [
   queryOptions({
     queryKey: [{ queryIdentifier: "get_status" }],
-    queryFn: cmd.GET_GAME_SERVER_STATUS,
-    select: (data) => {
-      useGlobalStore.setState({ status: data });
-      return data;
+    queryFn: async () => {
+      let result;
+      try {
+        result = await cmd.GET_GAME_SERVER_STATUS()
+        useGlobalStore.setState((state) => ({ status: result }));
+      } catch (error) {
+        useGlobalStore.setState((state) => ({ status: null }));
+      }
+      return result
     },
-    retry: 1,
   }),
   queryOptions({
     queryKey: [{ queryIdentifier: "get_gamestate" }],
-    queryFn: cmd.GET_GAME_STATE,
-    select: (data) => {
-      useGlobalStore.setState({ gameState: data });
-      return data;
+    queryFn: async () => {
+      let result;
+      try {
+        result = await cmd.GET_GAME_STATE()
+        useGlobalStore.setState((state) => ({ gameState: result }));
+      } catch (error) {
+        useGlobalStore.setState((state) => ({ gameState: null }));
+      }
+      return result
     },
   }),
   queryOptions({
     queryKey: [{ queryIdentifier: "get_server_list" }],
-    queryFn: cmd.GET_GAME_SERVER_LIST,
-    select: (data) => {
-     if (!data || !Array.isArray(data)) {
-        return { currentServer: null, otherServers: [] };
+    queryFn: async () => {
+      let result;
+      try {
+        result = await cmd.GET_GAME_SERVER_LIST()
+        useGlobalStore.setState((state) => ({ servers: result }));
+      } catch (error) {
+        useGlobalStore.setState((state) => ({ servers: [] }));
       }
-
-      const currentServer = data.find(server => server.current === true) || null;
-      const otherServers = data.filter(server => server.current !== true);
-
-      useGlobalStore.setState({
-        serverState: currentServer,
-        servers: otherServers
-      });
-
-      return { currentServer, otherServers, allServers: data };
+      return result
     },
   }),
   queryOptions({

@@ -19,24 +19,16 @@ import BlacklistListCreateDialog, {
   BlacklistListCreateButton,
 } from "@/components/Blacklist/BlacklistListCreateDialog";
 import { Link } from "react-router-dom";
-import { Fragment, useEffect, useState } from "react";
-import { useServerList } from "@/hooks/useServerList";
+import {Fragment, useEffect, useState} from "react";
 
 const BlacklistLists = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [blacklists, setBlacklists] = useState([]);
+  const [servers, setServers] = useState({});
   const [selectedBlacklist, setSelectedBlacklist] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editDialogInitialValues, setEditDialogInitialValues] = useState();
-
-  // Use custom hook to fetch server list with automatic caching and refetching
-  const { data: serverData } = useServerList({
-    refetchInterval: 60 * 1000, // Refetch every minute
-    staleTime: 30 * 1000, // Consider data stale after 30 seconds
-  });
-
-  // Extract serverMap for easy server_number -> name lookup
-  const servers = serverData?.serverMap || {};
+  const [editDialogInitialValues, setEditDialogInitialValues] =
+    useState();
 
   function handleCloseDeleteDialog() {
     setSelectedBlacklist(null);
@@ -49,6 +41,22 @@ const BlacklistLists = () => {
   function handleBlacklistDelete() {
     deleteBlacklist(selectedBlacklist);
     handleCloseDeleteDialog();
+  }
+
+  function loadServers() {
+    return get("get_server_list")
+      .then((response) => showResponse(response, "get_server_list", false))
+      .then((data) => {
+        if (data?.result) {
+          setServers(
+            data.result.reduce((acc, server) => {
+              acc[server.server_number] = server.name;
+              return acc;
+            }, {})
+          );
+        }
+      })
+      .catch(handle_http_errors);
   }
 
   function loadBlacklists() {
@@ -113,7 +121,9 @@ const BlacklistLists = () => {
 
   useEffect(() => {
     setIsLoading(true);
-    loadBlacklists().finally(() => setIsLoading(false));
+    loadServers()
+      .then(loadBlacklists)
+      .finally(() => setIsLoading(false));
   }, []);
 
   return (
