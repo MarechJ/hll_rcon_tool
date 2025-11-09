@@ -4,9 +4,7 @@ import { queryOptions, useQueries, useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { create } from "zustand";
 
-// Create the Zustand store
 export const useGlobalStore = create((set) => ({
-  // State
   serverState: null,
   status: null,
   servers: [],
@@ -14,7 +12,6 @@ export const useGlobalStore = create((set) => ({
   onlineIngameMods: [],
   onlineCrconMods: [],
   onlinePlayers: [],
-  // Actions to update state
   updateStatus: (data) => set(() => ({ status: data })),
   updateServerState: (data) => set(() => ({ serverState: data })),
   updateServers: (data) => set(() => ({ servers: data })),
@@ -27,7 +24,6 @@ export const useGlobalStore = create((set) => ({
 const staleTime = 15 * 1000;
 const refetchInterval = 30 * 1000;
 
-// Define your global queries with onSuccess callbacks
 const globalQueries = [
   queryOptions({
     queryKey: [{ queryIdentifier: "get_status" }],

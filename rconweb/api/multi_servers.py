@@ -25,32 +25,14 @@ def _get_allowed_server_numbers(user):
 
     user_permissions = UserServerPermission.objects.filter(user=user)
     if user_permissions.exists():
-        # User has specific server permissions - restrict to those servers only
         return set(perm.server_number for perm in user_permissions)
     else:
-        # User has no permission records - can view all servers (backward compatible)
         return None
 
 
 @csrf_exempt
 @require_http_methods(["GET"])
 def get_accessible_servers(request):
-    """
-    Get list of servers the user has permission to access.
-    This endpoint does NOT check if the user has access to the current server.
-    It's used for the "Access Denied" page to show available servers.
-
-    Returns:
-        {
-            "result": [
-                {"name": "Server 2", "port": "8020", "server_number": 2, "link": "http://..."},
-                {"name": "Server 3", "port": "8030", "server_number": 3, "link": "http://..."}
-            ],
-            "command": "get_accessible_servers",
-            "failed": false
-        }
-    """
-    # Check if user is authenticated (but don't check server permissions)
     if not request.user.is_authenticated:
         return api_response(
             command="get_accessible_servers",
@@ -72,12 +54,10 @@ def get_accessible_servers(request):
 
     server_list = []
 
-    # Get current server info
     try:
         config = RconServerSettingsUserConfig.load_from_db()
         current_server_number = int(get_server_number())
 
-        # Check if user has permission to view current server
         if allowed_server_numbers is None or current_server_number in allowed_server_numbers:
             current_server = {
                 "name": config.short_name,
@@ -89,7 +69,6 @@ def get_accessible_servers(request):
     except Exception as e:
         logger.error(f"Failed to get current server info: {e}")
 
-    # Get other servers
     for host, key in keys.items():
         if key == my_key:
             continue
@@ -103,10 +82,8 @@ def get_accessible_servers(request):
             )
             info = info_res.json()
 
-            # Get server_number from response
             server_number = info["result"].get("server_number")
 
-            # Check if user has permission to view this server
             if allowed_server_numbers is not None and server_number not in allowed_server_numbers:
                 continue
 
@@ -162,7 +139,6 @@ def get_server_list(request):
     headers = {"AUTHORIZATION": auth_header} if auth_header else {}
     server_list = []
 
-    # Add current server if requested
     if include_current:
         try:
             from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
@@ -171,7 +147,6 @@ def get_server_list(request):
             config = RconServerSettingsUserConfig.load_from_db()
             current_server_number = int(get_server_number())
 
-            # Check if user has permission to view current server
             if allowed_server_numbers is None or current_server_number in allowed_server_numbers:
                 current_server = {
                     "name": config.short_name,
@@ -192,7 +167,6 @@ def get_server_list(request):
         except Exception as e:
             logger.error(f"Failed to get current server info: {e}")
 
-    # Add other servers
     for host, key in keys.items():
         if key == my_key:
             continue
@@ -206,10 +180,8 @@ def get_server_list(request):
             )
             info = info_res.json()
 
-            # Get server_number from response
             server_number = info["result"].get("server_number")
 
-            # Check if user has permission to view this server
             if allowed_server_numbers is not None and server_number not in allowed_server_numbers:
                 logger.debug(
                     f"User {request.user.username} does not have permission to view "
@@ -217,7 +189,6 @@ def get_server_list(request):
                 )
                 continue
 
-            # Add 'current' flag if include_current is enabled
             if include_current:
                 info["result"]["current"] = False
 
@@ -270,7 +241,6 @@ def forward_request(request):
 
             server_number = info_res.json()["result"].get("server_number")
 
-            # Check if user has permission to forward to this server
             if allowed_server_numbers is not None and server_number not in allowed_server_numbers:
                 logger.debug(
                     f"User {request.user.username} does not have permission to forward to server {server_number}"
@@ -296,7 +266,6 @@ def forward_request(request):
                 cookies=cookies,
                 headers=headers,
             )
-            # Automatically retry HttpResponseNotAllowed errors as GET requests
             if res.status_code == 405:
                 res = requests.get(
                     url,
@@ -375,7 +344,6 @@ def forward_command(
 
                 server_number = info_res.json()["result"].get("server_number")
 
-                # Check if user has permission to forward to this server
                 if server_number not in allowed_server_numbers:
                     logger.debug(
                         f"User {user.username} does not have permission to forward to server {server_number}"

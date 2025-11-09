@@ -40,14 +40,11 @@ async function requestFactory({
       : payload;
   }
 
-  // Create a Request object
   const req = new Request(url.toString(), requestOptions);
   try {
     const res = await fetch(req);
     return await handleFetchResponse(req, res, cmd);
   } catch (error) {
-    // Don't transform our custom errors (AuthError, PermissionError, etc.)
-    // These need to be preserved for React Query error handling
     const isCustomError = error instanceof AuthError ||
                          error instanceof PermissionError ||
                          error instanceof CRCONServerDownError ||
