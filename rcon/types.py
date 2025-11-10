@@ -620,6 +620,9 @@ class GetDetailedPlayer(TypedDict):
     role: Optional[str]
     kills: int
     deaths: int
+    team_kills: int
+    vehicle_kills: int
+    vehicles_destroyed: int
     combat: int
     offense: int
     defense: int
