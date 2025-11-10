@@ -23,20 +23,15 @@ const ListItemAvatar = styled(MuiListItemAvatar)({
   marginRight: 12,
 });
 
-/**
- * Builds a URL for navigating to a different server while preserving current path/query/hash
- */
 function buildServerUrl(selectedServer, currentLocation) {
   let newUrl;
 
   if (selectedServer.link) {
-    // Server has explicit link - use it as base
     newUrl = new URL(selectedServer.link);
     newUrl.pathname = currentLocation.pathname;
     newUrl.search = currentLocation.search;
     newUrl.hash = currentLocation.hash;
   } else {
-    // No explicit link - replace port in current URL
     const portRegex = /:(\d+)/gm;
     const urlWithNewPort = currentLocation.href.replace(portRegex, `:${selectedServer.port}`);
     newUrl = new URL(urlWithNewPort);
