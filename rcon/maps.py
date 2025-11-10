@@ -17,7 +17,7 @@ RE_LAYER_NAME_LARGE = re.compile(
     r"^(?P<tag>[A-Z]{3,5})_L_(?P<year>\d{4})_(?P<game_mode>\w+?)(?P<attackers>US|GER|Ger|COM|USSR|RUS|GB|CW|Brit|British)?(?:_(?P<environment>\w+))?$"
 )
 RE_LEGACY_LAYER_NAME = re.compile(
-    r"^(?P<name>[a-z0-9]+)_(?:(?P<offensive>off(?:ensive)?)_?(?P<attackers>[a-zA-Z]+)|(?P<game_mode>[a-z]+)(?:_V2)?)(?:_(?P<environment>[a-z]+))?$"
+    r"^(?P<name>[a-zA-Z0-9]+)_(?:(?P<offensive>off(?:ensive)?)_?(?P<attackers>[a-zA-Z]+)|(?P<game_mode>[a-zA-Z]+)(?:_V2)?)(?:_(?P<environment>[a-zA-Z]+))?$"
 )
 
 UNKNOWN_MODE = "unknown"
@@ -447,6 +447,16 @@ MAPS = {
             pretty_name="Tobruk",
             shortname="Tobruk",
             allies=Faction(name=FactionName.GB.value, team=Team.ALLIES),
+            axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
+            orientation=Orientation.HORIZONTAL,
+        ),
+        Map(
+            id="smolensk",
+            name="SMOLENSK",
+            tag="SMO",
+            pretty_name="Smolensk",
+            shortname="Smolensk",
+            allies=Faction(name=FactionName.RUS.value, team=Team.ALLIES),
             axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
             orientation=Orientation.HORIZONTAL,
         ),
@@ -1290,6 +1300,32 @@ LAYERS = {
             map=MAPS["tobruk"],
             game_mode=GameMode.SKIRMISH,
             environment=Environment.DAWN,
+        ),
+        Layer(
+            id="smolensk_warfare_day",
+            map=MAPS["smolensk"],
+            game_mode=GameMode.WARFARE,
+            environment=Environment.DAY,
+        ),
+        Layer(
+            id="smolensk_warfare_night",
+            map=MAPS["smolensk"],
+            game_mode=GameMode.WARFARE,
+            environment=Environment.NIGHT,
+        ),
+        Layer(
+            id="smolensk_offensiveGer_Day",
+            map=MAPS["smolensk"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.AXIS,
+            environment=Environment.DAY,
+        ),
+        Layer(
+            id="smolensk_offensiveRus_dusk",
+            map=MAPS["smolensk"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.ALLIES,
+            environment=Environment.DUSK,
         ),
     )
 }
