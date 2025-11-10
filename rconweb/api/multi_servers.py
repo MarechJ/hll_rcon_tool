@@ -8,12 +8,11 @@ import requests
 from django.http import QueryDict
 from django.views.decorators.csrf import csrf_exempt
 
-from rcon.api_commands import RconAPI
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.utils import ApiKey, get_server_number
 
 from .auth import AUTHORIZATION, api_response, login_required
-from .decorators import permission_required, require_http_methods
+from .decorators import require_http_methods
 from .models import UserServerPermission
 
 logger = logging.getLogger("rcon")
@@ -98,34 +97,6 @@ def get_accessible_servers(request):
 @csrf_exempt
 @require_http_methods(["GET"])
 def get_server_list(request):
-    """
-    Get list of servers the user has permission to access.
-
-    Query Parameters:
-        include_current (str): 'true' to include the current server in the list.
-                              Default: 'false' (backward compatible)
-
-    Response with include_current=false (default):
-        {
-            "result": [
-                {"name": "Server 2", "port": "8020", "server_number": 2},
-                {"name": "Server 3", "port": "8030", "server_number": 3}
-            ],
-            "command": "server_list",
-            "failed": false
-        }
-
-    Response with include_current=true:
-        {
-            "result": [
-                {"name": "Server 1", "port": "8010", "server_number": 1, "current": true},
-                {"name": "Server 2", "port": "8020", "server_number": 2, "current": false},
-                {"name": "Server 3", "port": "8030", "server_number": 3, "current": false}
-            ],
-            "command": "server_list",
-            "failed": false
-        }
-    """
     allowed_server_numbers = _get_allowed_server_numbers(request.user)
     include_current = request.GET.get('include_current', 'false').lower() == 'true'
 
@@ -205,11 +176,6 @@ def get_server_list(request):
 
 
 def forward_request(request):
-    """
-    Forward request to other servers.
-    Only forwards to servers the user has permission to access.
-    """
-    # Get user's allowed servers
     allowed_server_numbers = _get_allowed_server_numbers(request.user)
 
     api_key = ApiKey()
@@ -226,7 +192,6 @@ def forward_request(request):
         if key == my_key:
             continue
         try:
-            # First, get server info to check permissions
             info_url = f"http://{host}/api/get_connection_info"
             info_res = requests.get(
                 info_url,
@@ -297,11 +262,6 @@ def forward_command(
     json: dict[str, Any] | QueryDict | None = None,
     user=None,
 ):
-    """
-    Forward command to other servers.
-    Only forwards to servers the user has permission to access.
-    """
-    # Get user's allowed servers if user is provided
     allowed_server_numbers = _get_allowed_server_numbers(user) if user else None
 
     server_api_key = ApiKey()
@@ -327,9 +287,7 @@ def forward_command(
         if key == my_key:
             continue
         try:
-            # Check permissions if user is provided
             if user and allowed_server_numbers is not None:
-                # Get server info to check permissions
                 info_url = f"http://{host}/api/get_connection_info"
                 info_res = requests.get(
                     info_url,
@@ -361,7 +319,6 @@ def forward_command(
                 cookies=cookies,
                 headers=headers,
             )
-            # Automatically retry HttpResponseNotAllowed errors as GET requests
             if res.status_code == 405:
                 res = requests.get(
                     url,

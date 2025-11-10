@@ -45,23 +45,15 @@ function buildServerUrl(selectedServer, currentLocation) {
   return newUrl;
 }
 
-/**
- * SelectContent - Server selection dropdown component
- *
- * Displays all servers the user has access to and allows switching between them.
- * The current server is marked and the dropdown is disabled if only one server is available.
- */
 export default function SelectContent() {
   const thisServer = useGlobalStore((state) => state.serverState);
   const otherServers = useGlobalStore((state) => state.servers);
   const navigate = useNavigate();
 
-  // Memoize combined server list to avoid recalculation on every render
   const servers = useMemo(() => {
     return thisServer ? [thisServer, ...otherServers] : null;
   }, [thisServer, otherServers]);
 
-  // Memoize handler to avoid recreation on every render
   const handleChange = useCallback((event) => {
     if (!servers) return;
 
@@ -76,16 +68,13 @@ export default function SelectContent() {
 
     const newUrl = buildServerUrl(selectedServer, window.location);
 
-    // Same origin - use React Router for SPA navigation
     if (newUrl.origin === window.location.origin) {
       navigate(newUrl.pathname + newUrl.search + newUrl.hash, { replace: true });
     } else {
-      // Different origin - full page reload required
       window.location.replace(newUrl.href);
     }
   }, [servers, navigate]);
 
-  // Disable selector if user only has access to one server
   const hasOnlyOneServer = useMemo(() => {
     return servers && servers.length === 1;
   }, [servers]);
