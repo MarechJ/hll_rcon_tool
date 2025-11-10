@@ -967,9 +967,8 @@ class Rcon(ServerCtl):
         return super().get_votekick_enabled()
 
     @ttl_cache(ttl=60 * 10)
-    def get_votekick_thresholds(self) -> list[tuple[int, int]]:
-        pairs = super().get_votekick_thresholds()
-        return [(int(pair[0]), int(pair[1])) for pair in zip(pairs[0::2], pairs[1::2])]
+    def get_votekick_thresholds(self) -> list[list[int]]:
+        return super().get_votekick_thresholds()
 
     def set_autobalance_enabled(self, value: bool) -> bool:
         with invalidates(self.get_autobalance_enabled):

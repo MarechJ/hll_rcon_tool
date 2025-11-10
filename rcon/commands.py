@@ -335,20 +335,17 @@ class ServerCtl:
         return self.exchange("GetPermanentBans", 2).content_dict["banList"]
 
     def get_team_switch_cooldown(self) -> int:
-        # TODO: Not available right now
-        return 0
+        return self.exchange("GetTeamSwitchCooldown", 2).content_dict["teamSwitchTimer"]
 
     def get_autobalance_threshold(self) -> int:
-        # TODO: Not available right now
-        return 0
+        return self.exchange("GetAutoBalanceThreshold", 2).content_dict["autoBalanceThreshold"]
 
     def get_votekick_enabled(self) -> bool:
-        # TODO: Not available right now
-        return False
+        return self.exchange("GetVoteKickEnabled", 2).content_dict["enable"]
 
-    def get_votekick_thresholds(self) -> list[int]:
-        # TODO: Not available right now
-        return []
+    def get_votekick_thresholds(self) -> list[list[int]]:
+        thresholds = self.exchange("GetVoteKickThreshold", 2).content_dict["voteThresholdList"]
+        return [[int(x["playerCount"]), int(x["voteThreshold"])] for x in thresholds]
 
     def get_map_rotation(self) -> list[str]:
         return [x["iD"] for x in self.exchange("GetServerInformation", 2, {"Name": "maprotation", "Value": ""}).content_dict["mAPS"]]
@@ -366,18 +363,16 @@ class ServerCtl:
         )
 
     def get_vip_ids(self) -> list[VipId]:
-        # TODO: Update once VIP comments become obtainable again
         return [
-            VipId(player_id=id, name=id)
-            for id in self.exchange("GetServerInformation", 2, {"Name": "vipplayers", "Value": ""}).content_dict["vipPlayerIds"]
+            VipId(player_id=vip["iD"], name=vip["comment"])
+            for vip in self.exchange("GetServerInformation", 2, {"Name": "vipplayers", "Value": ""}).content_dict["vipPlayers"]
         ]
 
     def get_admin_groups(self) -> list[str]:
         return self.exchange("GetAdminGroups", 2).content_dict["groupNames"]
 
     def get_autobalance_enabled(self) -> bool:
-        # TODO: Not available right now
-        return False
+        return self.exchange("GetAutoBalanceEnabled", 2).content_dict["enable"]
 
     def get_logs(
             self,
@@ -394,12 +389,10 @@ class ServerCtl:
         ]
 
     def get_idle_autokick_time(self) -> int:
-        # TODO: Not available right now
-        return 0
+        return self.exchange("GetKickIdleTime", 2).content_dict["idleTimeoutMinutes"]
 
     def get_max_ping_autokick(self) -> int:
-        # TODO: Not available right now
-        return 0
+        return self.exchange("GetHighPingThreshold", 2).content_dict["highPingThresholdMs"]
 
     def get_queue_length(self) -> int:
         # TODO: Verify if this value is updated instantly or after the current session ends or any async time
