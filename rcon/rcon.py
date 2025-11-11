@@ -1015,7 +1015,6 @@ class Rcon(ServerCtl):
             return super().ban_profanities(",".join(profanities))
 
     def punish(self, player_id: str, reason: str, by: str, player_name: str | None = None) -> bool:
-        super().message_player(player_id, "PUNISHED BY THE ADMINISTRATOR\n\n" + reason)
         res = super().punish(player_id, reason)
         safe_save_player_action(
             player_id=player_id,
