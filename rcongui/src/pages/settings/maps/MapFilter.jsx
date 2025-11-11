@@ -1,13 +1,8 @@
 import {
-  Box,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Stack,
   Checkbox,
-  ListItemText,
-  OutlinedInput,
+  FormControlLabel,
+  Typography,
 } from "@mui/material";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import { useState, useEffect, useMemo } from "react";
@@ -44,12 +39,14 @@ const MenuProps = {
  */
 export const MapFilter = ({ maps, onFilterChange }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedModes, setSelectedModes] = useState([]);
-  const [selectedWeathers, setSelectedWeathers] = useState([]);
+  const [selectedModes, setSelectedModes] = useState(["warfare"]);
+  const [selectedWeathers, setSelectedWeathers] = useState(["day"]);
 
   // Compute unique modes and weathers for dropdowns
   const allModes = useMemo(() => {
-    return Array.from(new Set(maps.map((map) => unifiedGamemodeName(map.game_mode)))).sort();
+    return Array.from(
+      new Set(maps.map((map) => unifiedGamemodeName(map.game_mode)))
+    ).sort();
   }, [maps]);
 
   const allWeather = useMemo(() => {
@@ -59,9 +56,15 @@ export const MapFilter = ({ maps, onFilterChange }) => {
   // Compute filtered maps based on filter criteria
   const filteredMaps = useMemo(() => {
     return maps.filter((mapLayer) => {
-      const matchesSearch = mapLayer.map.pretty_name.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesModes = !selectedModes.length || selectedModes.includes(unifiedGamemodeName(mapLayer.game_mode));
-      const matchesWeather = !selectedWeathers.length || selectedWeathers.includes(mapLayer.environment);
+      const matchesSearch = mapLayer.map.pretty_name
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      const matchesModes =
+        !selectedModes.length ||
+        selectedModes.includes(unifiedGamemodeName(mapLayer.game_mode));
+      const matchesWeather =
+        !selectedWeathers.length ||
+        selectedWeathers.includes(mapLayer.environment);
       return matchesSearch && matchesModes && matchesWeather;
     });
   }, [maps, searchTerm, selectedModes, selectedWeathers]);
@@ -71,13 +74,37 @@ export const MapFilter = ({ maps, onFilterChange }) => {
     onFilterChange(filteredMaps);
   }, [filteredMaps, onFilterChange]);
 
+  const handleModeChange = (mode) => {
+    setSelectedModes((prev) =>
+      prev.includes(mode) ? prev.filter((m) => m !== mode) : [...prev, mode]
+    );
+  };
+
+  const handleWeatherChange = (weather) => {
+    setSelectedWeathers((prev) =>
+      prev.includes(weather)
+        ? prev.filter((w) => w !== weather)
+        : [...prev, weather]
+    );
+  };
+
   return (
     <Stack
       alignItems={"center"}
       flexWrap={"wrap"}
       gap={1}
       direction={"row"}
-      sx={{ py: 1, gap: 1 }}
+      sx={{ 
+        py: 1, 
+        gap: 1,
+        // Card-like styles
+        borderRadius: 1,
+        boxShadow: 1,
+        border: '1px solid',
+        borderColor: 'divider',
+        p: 2,
+        mb: 2
+      }}
     >
       <DebouncedSearchInput
         size="small"
@@ -85,48 +112,64 @@ export const MapFilter = ({ maps, onFilterChange }) => {
         onChange={setSearchTerm}
       />
 
-      <Stack direction={"row"} sx={{ gap: 1, mb: 2, width: "100%" }}>
-        <FormControl size="small" sx={{ width: { xs: "100%", md: "50%" } }}>
-          <InputLabel id={"game-mode"}>Game Mode</InputLabel>
-          <Select
-            labelId={"game-mode"}
-            value={selectedModes}
-            onChange={(e) => setSelectedModes(e.target.value)}
-            multiple
-            renderValue={(selected) => selected.join(", ")}
-            input={<OutlinedInput label="Game Mode" />}
-            MenuProps={MenuProps}
-            SelectDisplayProps={{ style: { display: "block", textTransform: "uppercase" } }}
+      <Stack direction={"column"} sx={{ width: "100%", px: 1 }}>
+        <Stack direction={"row"} gap={1} alignItems={"center"}>
+          <Typography
+            variant="subtitle2"
+            fontSize={10}
+            sx={{ textTransform: "uppercase", width: 70 }}
           >
+            Game Mode
+          </Typography>
+          <Stack direction={"row"} flexWrap={"wrap"}>
             {allModes.map((mode) => (
-              <MenuItem key={mode} value={mode}>
-                <Checkbox checked={selectedModes.includes(mode)} />
-                <ListItemText primary={unifiedGamemodeName(mode)} />
-              </MenuItem>
+              <FormControlLabel
+                key={mode}
+                control={
+                  <Checkbox
+                    checked={selectedModes.includes(mode)}
+                    onChange={() => handleModeChange(mode)}
+                    size="small"
+                    sx={{
+                      "& .MuiSvgIcon-root": { fontSize: 14 },
+                    }}
+                  />
+                }
+                label={unifiedGamemodeName(mode)}
+                sx={{ textTransform: "uppercase", '& .MuiFormControlLabel-label': { fontSize: 10 } }}
+              />
             ))}
-          </Select>
-        </FormControl>
+          </Stack>
+        </Stack>
 
-        <FormControl size="small" sx={{ width: { xs: "100%", md: "50%" } }}>
-          <InputLabel id={"game-weather"}>Weather</InputLabel>
-          <Select
-            labelId={"game-weather"}
-            value={selectedWeathers}
-            onChange={(e) => setSelectedWeathers(e.target.value)}
-            multiple
-            renderValue={(selected) => selected.join(", ")}
-            input={<OutlinedInput label="Weather" />}
-            MenuProps={MenuProps}
-            SelectDisplayProps={{ style: { display: "block", textTransform: "uppercase" } }}
+        <Stack direction={"row"} gap={1} alignItems={"center"}>
+          <Typography
+            variant="subtitle2"
+            fontSize={10}
+            sx={{ textTransform: "uppercase", width: 70 }}
           >
+            Weather
+          </Typography>
+          <Stack direction={"row"} flexWrap={"wrap"}>
             {allWeather.map((weather) => (
-              <MenuItem key={weather} value={weather}>
-                <Checkbox checked={selectedWeathers.includes(weather)} />
-                <ListItemText primary={weather} />
-              </MenuItem>
+              <FormControlLabel
+                key={weather}
+                control={
+                  <Checkbox
+                    checked={selectedWeathers.includes(weather)}
+                    onChange={() => handleWeatherChange(weather)}
+                    size="small"
+                    sx={{
+                      "& .MuiSvgIcon-root": { fontSize: 14 },
+                    }}
+                  />
+                }
+                label={weather}
+                sx={{ textTransform: "uppercase", '& .MuiFormControlLabel-label': { fontSize: 10 } }}
+              />
             ))}
-          </Select>
-        </FormControl>
+          </Stack>
+        </Stack>
       </Stack>
     </Stack>
   );

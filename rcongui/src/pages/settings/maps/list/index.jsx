@@ -8,6 +8,9 @@ import {
   DialogActions,
   Button,
   Box,
+  Stack,
+  styled,
+  Typography,
 } from "@mui/material";
 import { MapList } from "../MapList";
 import { MapChangeListItem } from "../MapListItem";
@@ -18,6 +21,27 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { mapsManagerMutationOptions, mapsManagerQueryKeys } from "../queries";
 import { toast } from "react-toastify";
 import { MapFilter } from "../MapFilter";
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
+
+const MapListContainer = styled(Box)(({ theme }) => ({
+  width: "100%",
+  [theme.breakpoints.up("md")]: {
+    width: "50%",
+  },
+}));
+
+const ActionsContainer = styled(Box)(({ theme }) => ({
+  width: "100%",
+  paddingTop: theme.spacing(1),
+  paddingBottom: theme.spacing(1),
+  borderBottom: `1px solid ${theme.palette.divider}`,
+  [theme.breakpoints.up("md")]: {
+    padding: theme.spacing(1),
+    width: "50%",
+    borderLeft: `1px solid ${theme.palette.divider}`,
+    borderBottom: "none",
+},
+}));
 
 const MapListPage = () => {
   const { maps } = useRouteLoaderData("maps");
@@ -25,6 +49,7 @@ const MapListPage = () => {
   const [mapToConfirm, setMapToConfirm] = useState(null);
   const [filteredMapOptions, setFilteredMapOptions] = useState(maps);
   const serverState = useGlobalStore((state) => state.serverState);
+  const gameState = useGlobalStore((state) => state.gameState);
   const queryClient = useQueryClient();
 
   const { mutate: changeMap } = useMutation({
@@ -70,25 +95,41 @@ const MapListPage = () => {
 
   return (
     <>
-      <Box
-        sx={{
-          height: "fit-content",
-          py: 2,
-          maxWidth: theme => theme.breakpoints.values.md,
-        }}
-      >
-        <MapFilter maps={maps} onFilterChange={handleFilterChange} />
-        <MapList
-          maps={filteredMapOptions}
-          renderItem={(mapLayer) => (
-            <MapChangeListItem
-              mapLayer={mapLayer}
-              key={mapLayer.id}
-              onClick={handleChangeMapClick}
-            />
+      <Stack direction={{ xs: "column-reverse", md: "row" }} spacing={1}>
+        <MapListContainer>
+          <MapFilter maps={maps} onFilterChange={handleFilterChange} />
+          <MapList
+            maps={filteredMapOptions}
+            renderItem={(mapLayer) => (
+              <MapChangeListItem
+                mapLayer={mapLayer}
+                key={mapLayer.id}
+                onClick={handleChangeMapClick}
+              />
+            )}
+          />
+        </MapListContainer>
+        <ActionsContainer>
+          {gameState && (
+            <>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>Current map</Typography>
+              <MapChangeListItem
+                mapLayer={gameState.current_map}
+                key={gameState.current_map.id}
+                onClick={handleChangeMapClick}
+                icon={<RestartAltIcon />}
+                title={"Restart the current map"}
+              />
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>Next map</Typography>
+              <MapChangeListItem
+                mapLayer={gameState.next_map}
+                key={gameState.next_map.id}
+                onClick={handleChangeMapClick}
+              />
+            </>
           )}
-        />
-      </Box>
+        </ActionsContainer>
+      </Stack>
       {/* Confirmation Dialog */}
       <Dialog
         open={confirmDialogOpen}
