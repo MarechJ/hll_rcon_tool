@@ -48,7 +48,7 @@ function pointColumns(completed: boolean): ColumnDef<Player | PlayerWithStatus>[
         const { t } = useTranslation('game')
         return (
           <Header
-            src={'/roles/infantry.png'}
+            src={'/icons/roles/infantry.png'}
             desc={t('playersTable.kills')}
             className={"text-right"}
             onClick={() => {
@@ -92,7 +92,7 @@ function pointColumns(completed: boolean): ColumnDef<Player | PlayerWithStatus>[
         const { t } = useTranslation('game')
         return (
           <Header
-            src={'/roles/medic.png'}
+            src={'/icons/roles/medic.png'}
             desc={t('playersTable.deaths')}
             className={"text-right"}
             onClick={() => {
@@ -208,7 +208,7 @@ function pointColumns(completed: boolean): ColumnDef<Player | PlayerWithStatus>[
         const { t } = useTranslation('game')
         return (
           <Header
-            src={'/roles/score_combat.png'}
+            src={'/icons/roles/score_combat.png'}
             desc={t('playersTable.combat')}
             className={"text-right"}
             onClick={() => {
@@ -227,7 +227,7 @@ function pointColumns(completed: boolean): ColumnDef<Player | PlayerWithStatus>[
         const { t } = useTranslation('game')
         return (
           <Header
-            src={'/roles/score_offensive.png'}
+            src={'/icons/roles/score_offensive.png'}
             desc={t('playersTable.offense')}
             className={"text-right"}
             onClick={() => {
@@ -246,7 +246,7 @@ function pointColumns(completed: boolean): ColumnDef<Player | PlayerWithStatus>[
         const { t } = useTranslation('game')
         return (
           <Header
-            src={'/roles/score_defensive.png'}
+            src={'/icons/roles/score_defensive.png'}
             desc={t('playersTable.defense')}
             className={"text-right"}
             onClick={() => {
@@ -265,7 +265,7 @@ function pointColumns(completed: boolean): ColumnDef<Player | PlayerWithStatus>[
         const { t } = useTranslation('game')
         return (
           <Header
-            src={'/roles/score_support.png'}
+            src={'/icons/roles/score_support.png'}
             desc={t('playersTable.support')}
             className={"text-right"}
             onClick={() => {

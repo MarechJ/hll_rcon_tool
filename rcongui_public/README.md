@@ -48,7 +48,13 @@ You don't necessarily need to change anything here.
 
 If you don't have your own server, you should be able to use the URL of any other CRCON managed HLL server e.g. `stats.hll-community.com`
 
-5. Start the development server:
+5. Import assets(images, favicon, ...)
+
+```bash
+npm run copy-assets
+```
+
+6. Start the development server:
 
 ```bash
 npm run dev

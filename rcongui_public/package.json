@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "scripts": {
     "prepare": "husky install",
+    "copy-assets": "mkdir -p public && cp -r ../assets/rcongui/* public/ && cp -r ../assets/images/* public/",
     "dev": "vite",
     "build": "npm run typecheck && vite build",
     "preview": "vite build && vite preview --mode development --port 3000",
