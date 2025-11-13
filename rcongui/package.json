@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "prepare": "",
+    "copy-assets": "mkdir -p public && cp -r ../assets/rcongui/* public/ && cp -r ../assets/images/* public/",
     "start": "vite",
     "dev": "vite dev",
     "dev:fake": "vite dev --mode fake",
