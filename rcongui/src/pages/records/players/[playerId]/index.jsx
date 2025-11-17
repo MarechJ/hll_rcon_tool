@@ -126,6 +126,7 @@ export default function PlayerProfilePage() {
               )}
               names={profile.names}
               watchlist={profile.watchlist}
+              eosId={profile.eos_id}
             />
           </CardContent>
         </SummaryCard>

@@ -324,6 +324,7 @@ class PlayerSessionType(TypedDict):
 class BasicPlayerProfileType(TypedDict):
     id: int
     player_id: str
+    eos_id: str | None
     created: datetime.datetime
     names: list[PlayerNameType]
     steaminfo: Optional[SteamInfoType]

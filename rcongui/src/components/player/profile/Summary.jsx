@@ -11,6 +11,7 @@ import {
   import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
   import PersonIcon from "@mui/icons-material/Person";
   import FlagIcon from "@mui/icons-material/Flag";
+  import EmergencyIcon from '@mui/icons-material/Emergency';
   import FlagList from "./FlagList";
   import WatchlistList from "./WatchlistList";
   import VipList from "./VipList";
@@ -25,6 +26,7 @@ const PlayerProfileSummary = ({
   totalPlaytime,
   names,
   watchlist,
+  eosId
 }) => {
   return (
     <Stack spacing={3}>
@@ -100,6 +102,18 @@ const PlayerProfileSummary = ({
             />
           ))}
         </Box>
+      </Box>
+
+      <Divider />
+
+      <Box component="section">
+        <Typography
+          variant="h6"
+          sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1 }}
+        >
+          <EmergencyIcon /> EOS ID
+        </Typography>
+        <Typography>{eosId || "Unknown"}</Typography>
       </Box>
     </Stack>
   );

@@ -103,15 +103,16 @@ def _get_set_player(
     sess: Session,
     player_id: str,
     player_name: str | None = None,
+    player_eos_id: str | None = None,
     timestamp: float | None = None,
 ):
-    player = get_player(sess, player_id)
-    if player is None:
-        player = _save_player_id(sess, player_id)
+    player = _save_player_id(sess, player_id)
     if player_name:
         _save_player_alias(
             sess, player, player_name, timestamp or datetime.datetime.now().timestamp()
         )
+    if player_eos_id:
+        _save_player_eos_id(sess, player, player_eos_id)
 
     return player
 
@@ -303,13 +304,34 @@ def _save_player_alias(sess, player: PlayerID, player_name: str, timestamp=None)
 
     return name
 
+def _save_player_eos_id(sess, player: PlayerID, player_eos_id: str) -> None:
+    if player.eos_id == player_eos_id:
+        return
+    
+    if player.eos_id is not None and player.eos_id != player_eos_id:
+        logger.warning(
+            "Overwriting existing EOS ID for player %s. Old EOS ID: %s, New EOS ID: %s",
+            player.player_id, player.eos_id, player_eos_id
+        )
+    
+    player.eos_id = player_eos_id
+    sess.commit()
 
-def save_player(player_name: str, player_id: str, timestamp: int | None = None) -> None:
+
+def save_player(
+    player_name: str,
+    player_id: str,
+    player_eos_id: str | None = None,
+    timestamp: int | None = None,
+) -> None:
     """Create a PlayerID record if non existent and save the player name alias"""
     with enter_session() as sess:
-        player = _save_player_id(sess, player_id)
-        _save_player_alias(
-            sess, player, player_name, timestamp or datetime.datetime.now().timestamp()
+        _get_set_player(
+            sess,
+            player_id,
+            player_name=player_name,
+            player_eos_id=player_eos_id,
+            timestamp=timestamp,
         )
 
 

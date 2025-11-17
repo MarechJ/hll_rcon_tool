@@ -512,9 +512,19 @@ def handle_on_connect(
             struct_log,
         )
         return
+    
+    # Fetch EOS ID
+    try:
+        player_info = rcon.get_detailed_player_info(player_id)
+        player_eos_id = player_info["eos_id"]
+    except Exception:
+        logger.exception("Unable to fetch EOS ID of player %s", player_id)
+        player_eos_id = None
+
     save_player(
         struct_log["player_name_1"],
         player_id,
+        player_eos_id=player_eos_id,
         timestamp=int(struct_log["timestamp_ms"]) / 1000,
     )
 

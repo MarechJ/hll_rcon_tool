@@ -100,6 +100,9 @@ class PlayerID(Base):
     player_id: Mapped[str] = mapped_column(
         "steam_id_64", nullable=False, index=True, unique=True
     )
+    # EOS ID can be null for older entries.
+    # Not including a unique constraint is intentional; You never know what quirks there may be
+    eos_id: Mapped[str | None] = mapped_column(nullable=True, index=True)
     created: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     names: Mapped[list["PlayerName"]] = relationship(
         back_populates="player",
