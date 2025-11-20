@@ -301,6 +301,7 @@ const PlayerDetails = ({ player, onClose }) => {
             )}
             names={profile.names}
             watchlist={profile.watchlist}
+            eosId={profile.soldier.eos_id}
           />
         </TabPanel>
         {isOnline && (

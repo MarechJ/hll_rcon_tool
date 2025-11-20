@@ -518,8 +518,11 @@ def handle_on_connect(
         timestamp=int(struct_log["timestamp_ms"]) / 1000,
     )
 
-    if (player := rcon.get_detailed_player_info(player_id)):
-        PlayerSoldier.update(player)
+    try:
+        if (player := rcon.get_detailed_player_info(player_id)):
+            PlayerSoldier.update(player)
+    except Exception:
+        logger.exception("Unable to update soldier info for %s", player_id)
 
     blacklisted = ban_if_blacklisted(rcon, player_id, struct_log["player_name_1"])
     if blacklisted:
