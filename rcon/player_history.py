@@ -308,6 +308,8 @@ def _save_player_eos_id(sess, player: PlayerID, player_eos_id: str) -> None:
     if player.eos_id == player_eos_id:
         return
     
+    logger.info("Setting EOS ID of player %s to %s", player.player_id, player_eos_id)
+    
     if player.eos_id is not None and player.eos_id != player_eos_id:
         logger.warning(
             "Overwriting existing EOS ID for player %s. Old EOS ID: %s, New EOS ID: %s",

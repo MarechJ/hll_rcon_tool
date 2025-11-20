@@ -188,6 +188,7 @@ class PlayerID(Base):
         return {
             "id": self.id,
             PLAYER_ID: self.player_id,
+            "eos_id": self.eos_id,
             "created": self.created,
             "names": [name.to_dict() for name in self.names],
             "sessions": [session.to_dict() for session in self.sessions][
