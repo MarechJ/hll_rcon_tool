@@ -2032,7 +2032,7 @@ class RconAPI(Rcon):
         return {
             "team_name": team_name,
             "squad_name": squad_name,
-            "msg": f"Successfully disbaned {squad_name} squad in team {team_name}",
+            "msg": f"Successfully disbanded {squad_name} squad in team {team_name}",
         }
 
     def edit_player_soldier(
