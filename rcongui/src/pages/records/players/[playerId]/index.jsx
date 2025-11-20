@@ -123,6 +123,7 @@ export default function PlayerProfilePage() {
               )}
               names={profile.names}
               watchlist={profile.watchlist}
+              eosId={profile.soldier.eos_id}
             />
           </CardContent>
         </SummaryCard>

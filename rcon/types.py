@@ -597,6 +597,7 @@ class PlayerVIPType(TypedDict):
 
 
 class PlayerSoldierType(TypedDict):
+    eos_id: Optional[str]
     name: Optional[str]
     level: int
     platform: Optional[str]
