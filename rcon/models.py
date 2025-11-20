@@ -226,6 +226,7 @@ class PlayerSoldier(Base):
         unique=True,
     )
     player: Mapped["PlayerID"] = relationship(back_populates="soldier")
+    eos_id: Mapped[str | None] = mapped_column()
     name: Mapped[str | None] = mapped_column()
     level: Mapped[int] = mapped_column(default=0)
     platform: Mapped[str | None] = mapped_column()
@@ -264,6 +265,7 @@ class PlayerSoldier(Base):
                 sess.add(profile)
             
             # Proceed with updates
+            profile.eos_id = player["eos_id"]
             profile.name = player["name"]
             profile.platform = player["platform"]
             profile.clan_tag = player["clan_tag"]
@@ -278,6 +280,7 @@ class PlayerSoldier(Base):
         cls,
         sess: Session,
         player_id: str,
+        eos_id: str | None = None,
         name: str | None = None,
         level: int = 0,
         platform: str | None = None,
@@ -305,6 +308,9 @@ class PlayerSoldier(Base):
         
         # Update only None fields
         changed = False
+        if soldier_db.eos_id is None and eos_id is not None:
+            soldier_db.eos_id = eos_id
+            changed = True
         if soldier_db.name is None and name is not None:
             soldier_db.name = name
             changed = True
@@ -325,6 +331,7 @@ class PlayerSoldier(Base):
 
     def to_dict(self) -> PlayerSoldierType:
         return {
+            "eos_id": self.eos_id,
             "name": self.name,
             "level": self.level,
             "platform": self.platform,
