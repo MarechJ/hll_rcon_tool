@@ -1060,7 +1060,10 @@ class BlacklistCommandHandler:
 
             # Check whether the old or new record had or has priority
             elif new_record.id == old_record["id"] or (
-                SERVER_NUMBER in old_record["blacklist"]["servers"]
+                (
+                    old_record["blacklist"]["servers"] is None
+                    or SERVER_NUMBER in old_record["blacklist"]["servers"]
+                )
                 and _is_higher_priority_record(
                     old_record["created_at"],
                     old_record["expires_at"],
