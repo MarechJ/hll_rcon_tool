@@ -223,6 +223,7 @@ class LogLoop:
         self.red = get_redis_client()
         self.duplicate_guard_key = "unique_logs"
         self.log_history = self.get_log_history_list()
+        self.running = True  # 用于优雅停止
 
         logger.info("Registered hooks: %s", HOOKS)
 
@@ -230,37 +231,45 @@ class LogLoop:
     def get_log_history_list() -> FixedLenList[StructuredLogLineWithMetaData]:
         return FixedLenList(key=LogLoop.log_history_key, max_len=100_000)
 
-    def run(self, loop_frequency_secs=2, cleanup_frequency_minutes=10):
-        since_min = 180
+    def run(self, loop_frequency_secs=2, cleanup_frequency_minutes=10, batch_size=120):
+        # 初始化时获取更长时间的日志，后续使用短间隔
+        self._run_initial_collection()
+
         self.cleanup()
         last_cleanup_time = datetime.datetime.now()
 
-        while True:
-            load_generic_hooks()
-            logs: ParsedLogsType = self.rcon.get_structured_logs(
-                since_min_ago=since_min
-            )
-            since_min = 5
-            for log in reversed(logs["logs"]):
-                line = self.record_line(log)
-                if line:
-                    self.process_hooks(line)
-            if (
-                    datetime.datetime.now() - last_cleanup_time
-            ).total_seconds() >= cleanup_frequency_minutes * 60:
-                self.cleanup()
-                last_cleanup_time = datetime.datetime.now()
+        while self.running:
+            try:
+                # 使用长连接进行批量采集
+                self._run_batch_collection(batch_size, loop_frequency_secs)
 
-            dp = self.rcon.get_detailed_players()
-            if dp["fail_count"] > 0:
-                logger.warning(
-                    "Could not fetch all player stats. "
-                    + str(dp["fail_count"])
-                    + " players failed."
-                )
-            self.record_player_stats(dp["players"])
+                # 检查是否需要清理
+                if (
+                        datetime.datetime.now() - last_cleanup_time
+                ).total_seconds() >= cleanup_frequency_minutes * 60:
+                    self.cleanup()
+                    last_cleanup_time = datetime.datetime.now()
 
-            time.sleep(loop_frequency_secs)
+                # 获取玩家统计（保持现有逻辑）
+                dp = self.rcon.get_detailed_players()
+                if dp["fail_count"] > 0:
+                    logger.warning(
+                        "Could not fetch all player stats. "
+                        + str(dp["fail_count"])
+                        + " players failed."
+                    )
+                self.record_player_stats(dp["players"])
+
+                # 批次间隔
+                time.sleep(1)
+
+            except KeyboardInterrupt:
+                logger.info("收到停止信号，优雅退出")
+                self.running = False
+                break
+            except Exception as e:
+                logger.exception("日志循环出现异常，将在1秒后重试: %s", e)
+                time.sleep(1)
 
     def record_player_stats(self, players: dict[str, GetDetailedPlayer]):
         maps = MapsHistory()
@@ -365,3 +374,60 @@ class LogLoop:
             time.time() - started_total,
             f"{log['action']}{log['message']}",
             )
+
+    def _run_initial_collection(self):
+        """初始启动时获取较长时间的日志"""
+        try:
+            load_generic_hooks()
+            since_min = 180
+            logs: ParsedLogsType = self.rcon.get_structured_logs(
+                since_min_ago=since_min
+            )
+            logger.info("初始采集获取到 %d 条日志", len(logs["logs"]))
+            for log in reversed(logs["logs"]):
+                line = self.record_line(log)
+                if line:
+                    self.process_hooks(line)
+        except Exception as e:
+            logger.exception("初始日志采集失败: %s", e)
+
+    def _run_batch_collection(self, batch_size: int, interval_secs: int):
+        """使用长连接进行批量日志采集"""
+        logger.debug("开始批量采集，批次大小: %d，间隔: %d秒", batch_size, interval_secs)
+
+        try:
+            with self.rcon.with_connection() as conn:
+                for i in range(batch_size):
+                    if not self.running:
+                        logger.info("收到停止信号，退出批量采集")
+                        break
+
+                    try:
+                        # 加载动态hooks
+                        if i == 0:  # 只在批次开始时加载一次
+                            load_generic_hooks()
+
+                        # 获取最近2秒的日志
+                        logs: ParsedLogsType = self.rcon.get_structured_logs_with_seconds_conn(
+                            since_sec_ago=2,
+                            conn=conn
+                        )
+
+                        # 处理日志（现有逻辑）
+                        for log in reversed(logs["logs"]):
+                            line = self.record_line(log)
+                            if line:
+                                self.process_hooks(line)
+
+                        if i < batch_size - 1:  # 最后一次不需要sleep
+                            time.sleep(interval_secs)
+
+                    except Exception as e:
+                        logger.warning("批量采集第 %d 次失败: %s", i + 1, e)
+                        # 单次失败不中断整个批次，继续下一次
+                        continue
+
+        except Exception as e:
+            logger.exception("批量采集连接失败: %s", e)
+            # 连接失败时，稍作等待后由外层重试
+            time.sleep(2)

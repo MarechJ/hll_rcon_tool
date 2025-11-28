@@ -393,6 +393,21 @@ class ServerCtl:
             }, conn=conn).content_dict["entries"]
         ]
 
+    def get_logs_seconds(
+            self,
+            since_sec_ago: int,
+            filter_: str = "",
+            conn: HLLConnection | None = None,
+    ) -> list[str]:
+        """Get logs by seconds (instead of minutes) for high-frequency polling"""
+        return [
+            entry["message"]
+            for entry in self.exchange("GetAdminLog", 2, {
+                "LogBackTrackTime": since_sec_ago,  # Using seconds directly
+                "Filters": filter_
+            }, conn=conn).content_dict["entries"]
+        ]
+
     def get_idle_autokick_time(self) -> int:
         # TODO: Not available right now
         return 0
