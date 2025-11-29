@@ -380,7 +380,7 @@ class LogLoop:
         """Get logs from a longer time period on initial startup"""
         try:
             load_generic_hooks()
-            since_min = 180
+            since_min = 10
             logs: ParsedLogsType = self.rcon.get_structured_logs(
                 since_min_ago=since_min
             )
