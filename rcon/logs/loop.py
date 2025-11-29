@@ -439,9 +439,6 @@ class LogLoop:
                             if line:
                                 self.process_hooks(line)
 
-                        if i < batch_size - 1:  # No need to sleep on the last iteration
-                            time.sleep(interval_secs)
-
                     except Exception as e:
                         logger.warning("Batch collection iteration %d failed: %s", i + 1, e)
                         # Single failure does not interrupt the entire batch, continue to next
