@@ -223,7 +223,7 @@ class LogLoop:
         self.red = get_redis_client()
         self.duplicate_guard_key = "unique_logs"
         self.log_history = self.get_log_history_list()
-        self.running = True  # 用于优雅停止
+        self.running = True  # Used for graceful shutdown
 
         logger.info("Registered hooks: %s", HOOKS)
 
@@ -232,7 +232,7 @@ class LogLoop:
         return FixedLenList(key=LogLoop.log_history_key, max_len=100_000)
 
     def run(self, loop_frequency_secs=2, cleanup_frequency_minutes=10, batch_size=120):
-        # 初始化时获取更长时间的日志，后续使用短间隔
+        # Initialize by getting logs from a longer time period, then use shorter intervals
         self._run_initial_collection()
 
         self.cleanup()
@@ -240,17 +240,17 @@ class LogLoop:
 
         while self.running:
             try:
-                # 使用长连接进行批量采集
+                # Use long connection for batch collection
                 self._run_batch_collection(batch_size, loop_frequency_secs)
 
-                # 检查是否需要清理
+                # Check if cleanup is needed
                 if (
                         datetime.datetime.now() - last_cleanup_time
                 ).total_seconds() >= cleanup_frequency_minutes * 60:
                     self.cleanup()
                     last_cleanup_time = datetime.datetime.now()
 
-                # 获取玩家统计（保持现有逻辑）
+                # Get player stats (keep existing logic)
                 dp = self.rcon.get_detailed_players()
                 if dp["fail_count"] > 0:
                     logger.warning(
@@ -260,15 +260,15 @@ class LogLoop:
                     )
                 self.record_player_stats(dp["players"])
 
-                # 批次间隔
+                # Batch interval
                 time.sleep(1)
 
             except KeyboardInterrupt:
-                logger.info("收到停止信号，优雅退出")
+                logger.info("Received stop signal, shutting down gracefully")
                 self.running = False
                 break
             except Exception as e:
-                logger.exception("日志循环出现异常，将在1秒后重试: %s", e)
+                logger.exception("Log loop encountered an exception, will retry in 1 second: %s", e)
                 time.sleep(1)
 
     def record_player_stats(self, players: dict[str, GetDetailedPlayer]):
@@ -335,8 +335,9 @@ class LogLoop:
                 logger.exception("Invalid key %s", k)
                 continue
             t = datetime.datetime.fromtimestamp(int(ts) / 1000)
-            if (datetime.datetime.now() - t).total_seconds() > 280 * 60:
-                logger.debug("Older than 180min, removing: %s", k)
+            # Increase deduplication record retention time to 24 hours (1440 minutes) to fix kill statistics accuracy issue
+            if (datetime.datetime.now() - t).total_seconds() > 1440 * 60:
+                logger.debug("Older than 24 hours, removing: %s", k)
                 self.red.srem(self.duplicate_guard_key, k)
         logger.info("Cleanup done")
 
@@ -376,58 +377,77 @@ class LogLoop:
             )
 
     def _run_initial_collection(self):
-        """初始启动时获取较长时间的日志"""
+        """Get logs from a longer time period on initial startup"""
         try:
             load_generic_hooks()
             since_min = 180
             logs: ParsedLogsType = self.rcon.get_structured_logs(
                 since_min_ago=since_min
             )
-            logger.info("初始采集获取到 %d 条日志", len(logs["logs"]))
+            logger.info("Initial collection retrieved %d logs", len(logs["logs"]))
             for log in reversed(logs["logs"]):
                 line = self.record_line(log)
                 if line:
                     self.process_hooks(line)
         except Exception as e:
-            logger.exception("初始日志采集失败: %s", e)
+            logger.exception("Initial log collection failed: %s", e)
 
     def _run_batch_collection(self, batch_size: int, interval_secs: int):
-        """使用长连接进行批量日志采集"""
-        logger.debug("开始批量采集，批次大小: %d，间隔: %d秒", batch_size, interval_secs)
+        """Use long connection for batch log collection"""
+        logger.debug("Starting batch collection, batch size: %d, interval: %d seconds", batch_size, interval_secs)
 
         try:
             with self.rcon.with_connection() as conn:
+                last_iteration_start = None
+
                 for i in range(batch_size):
                     if not self.running:
-                        logger.info("收到停止信号，退出批量采集")
+                        logger.info("Received stop signal, exiting batch collection")
                         break
 
                     try:
-                        # 加载动态hooks
-                        if i == 0:  # 只在批次开始时加载一次
+                        # Load dynamic hooks
+                        if i == 0:  # Only load once at the beginning of the batch
                             load_generic_hooks()
 
-                        # 获取最近2秒的日志
+                        # Calculate the time window for log retrieval
+                        current_time = time.time()
+                        if last_iteration_start is not None:
+                            elapsed_seconds = int(current_time - last_iteration_start)
+                            # If less than 10 seconds, get 10 seconds of logs
+                            # If more than 10 seconds, get elapsed + 10 seconds of logs
+                            if elapsed_seconds < 10:
+                                log_window_seconds = 10
+                            else:
+                                log_window_seconds = elapsed_seconds + 10
+                            logger.debug("Elapsed time: %d seconds, fetching logs for %d seconds", elapsed_seconds, log_window_seconds)
+                        else:
+                            # First iteration, use default window
+                            log_window_seconds = 10
+
+                        last_iteration_start = current_time
+
+                        # Get logs from the calculated time window
                         logs: ParsedLogsType = self.rcon.get_structured_logs_with_seconds_conn(
-                            since_sec_ago=2,
+                            since_sec_ago=log_window_seconds,
                             conn=conn
                         )
 
-                        # 处理日志（现有逻辑）
+                        # Process logs (existing logic)
                         for log in reversed(logs["logs"]):
                             line = self.record_line(log)
                             if line:
                                 self.process_hooks(line)
 
-                        if i < batch_size - 1:  # 最后一次不需要sleep
+                        if i < batch_size - 1:  # No need to sleep on the last iteration
                             time.sleep(interval_secs)
 
                     except Exception as e:
-                        logger.warning("批量采集第 %d 次失败: %s", i + 1, e)
-                        # 单次失败不中断整个批次，继续下一次
+                        logger.warning("Batch collection iteration %d failed: %s", i + 1, e)
+                        # Single failure does not interrupt the entire batch, continue to next
                         continue
 
         except Exception as e:
-            logger.exception("批量采集连接失败: %s", e)
-            # 连接失败时，稍作等待后由外层重试
+            logger.exception("Batch collection connection failed: %s", e)
+            # Wait briefly before outer retry on connection failure
             time.sleep(2)
