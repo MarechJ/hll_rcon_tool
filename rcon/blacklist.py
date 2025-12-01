@@ -398,10 +398,14 @@ def synchronize_ban(
         return
 
     # Check whether the player is online (and grab their name)
-    player_name = next(
-        (p_name for p_name, p_id in rcon.get_player_ids() if p_id == player_id), None
-    )
-    is_online = player_name is not None
+    try:
+        player_info = rcon.get_detailed_player_info(player_id=player_id)
+    except HLLCommandFailedError:
+        player_name = None
+        is_online = False
+    else:
+        player_name = player_info["name"]
+        is_online = True
 
     if (
         new_record.blacklist.sync != BlacklistSyncMethod.BAN_IMMEDIATELY
