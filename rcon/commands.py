@@ -317,7 +317,7 @@ class ServerCtl:
         # TODO: Updated function signatures
         return self.exchange("GetServerInformation", 2, {"Name": "players", "Value": ""}).content_dict["players"]
 
-    def get_player_info(self, player_id: str, can_fail=True) -> dict[str, Any] | None:
+    def get_player_info(self, player_id: str) -> dict[str, Any] | None:
         # TODO: Updated function signatures
         return self.exchange("GetServerInformation", 2, {"Name": "player", "Value": player_id}).content_dict
 

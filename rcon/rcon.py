@@ -11,6 +11,7 @@ from typing import Any, Iterable, List, Literal, Optional, Sequence, overload
 
 from dateutil import parser
 
+from rcon.connection import HLLCommandError
 import rcon.steam_utils
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import HLLCommandFailedError, ServerCtl, VipId
@@ -429,13 +430,16 @@ class Rcon(ServerCtl):
     @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
     def get_player_info(self, player_id: str, can_fail=False):
         try:
-            player = super().get_player_info(player_id, can_fail=can_fail)
-            if not player:
+            try:
+                player = super().get_player_info(player_id)
+            except HLLCommandError:
                 return {}
 
             profile = rcon.steam_utils.get_steam_profile(steam_id_64=player_id)
 
         except (HLLCommandFailedError, ValueError):
+            # TODO: What's going on here? Why do we have the `can_fail` arg even?
+
             # Making that debug instead of exception as it's way to spammy
             logger.exception("Can't get player info for %s", player_id)
             # logger.exception("Can't get player info for %s", player)
@@ -458,9 +462,10 @@ class Rcon(ServerCtl):
 
     @ttl_cache(ttl=2, cache_falsy=False)
     def get_detailed_player_info(self, player_id: str, player: GetPlayersType | None = None) -> GetDetailedPlayer:
-        raw = super().get_player_info(player_id, can_fail=False)
-        if not raw:
-            raise HLLCommandFailedError("Got bad data")
+        try:
+            raw = super().get_player_info(player_id)
+        except HLLCommandError:
+            raise HLLCommandFailedError("Player is not online")
         return self._get_detailed_player_info(player_id, raw, player)
 
     def _get_detailed_player_info(self, player_id: str, raw: dict[str, Any],
