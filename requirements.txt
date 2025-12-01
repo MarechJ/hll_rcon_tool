@@ -30,4 +30,4 @@ pre-commit
 humanize==4.14.0
 httpx==0.28.1
 psutil==7.1.1
-hllrcon>=0.2.0
+hllrcon>=0.3.1

@@ -1308,16 +1308,43 @@ LAYERS = {
             environment=Environment.DAY,
         ),
         Layer(
+            id="smolensk_warfare_dusk",
+            map=MAPS["smolensk"],
+            game_mode=GameMode.WARFARE,
+            environment=Environment.DUSK,
+        ),
+        Layer(
             id="smolensk_warfare_night",
             map=MAPS["smolensk"],
             game_mode=GameMode.WARFARE,
             environment=Environment.NIGHT,
         ),
         Layer(
-            id="smolensk_offensiveGer_Day",
+            id="smolensk_offensiveGer_day",
             map=MAPS["smolensk"],
             game_mode=GameMode.OFFENSIVE,
             attackers=Team.AXIS,
+            environment=Environment.DAY,
+        ),
+        Layer(
+            id="smolensk_offensiveGer_dusk",
+            map=MAPS["smolensk"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.AXIS,
+            environment=Environment.DUSK,
+        ),
+        Layer(
+            id="smolensk_offensiveGer_night",
+            map=MAPS["smolensk"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.AXIS,
+            environment=Environment.NIGHT,
+        ),
+        Layer(
+            id="smolensk_offensiveRus_day",
+            map=MAPS["smolensk"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.ALLIES,
             environment=Environment.DAY,
         ),
         Layer(
@@ -1326,6 +1353,31 @@ LAYERS = {
             game_mode=GameMode.OFFENSIVE,
             attackers=Team.ALLIES,
             environment=Environment.DUSK,
+        ),
+        Layer(
+            id="smolensk_offensiveRus_night",
+            map=MAPS["smolensk"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.ALLIES,
+            environment=Environment.NIGHT,
+        ),
+        Layer(
+            id="smolensk_skirmish_day",
+            map=MAPS["smolensk"],
+            game_mode=GameMode.SKIRMISH,
+            environment=Environment.DAY,
+        ),
+        Layer(
+            id="smolensk_skirmish_dusk",
+            map=MAPS["smolensk"],
+            game_mode=GameMode.SKIRMISH,
+            environment=Environment.DUSK,
+        ),
+        Layer(
+            id="smolensk_skirmish_night",
+            map=MAPS["smolensk"],
+            game_mode=GameMode.SKIRMISH,
+            environment=Environment.NIGHT,
         ),
     )
 }

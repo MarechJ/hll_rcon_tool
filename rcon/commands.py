@@ -562,6 +562,10 @@ class ServerCtl:
     @_escape_params
     def message_player(self, player_id: str, message: str) -> bool:
         return self.exchange_success("MessagePlayer", 2, {"Message": message, "PlayerId": player_id})
+
+    @_escape_params
+    def message_all_players(self, message: str) -> bool:
+        return self.exchange_success("MessageAllPlayers", 2, {"Message": message})
     
     @_escape_params
     def bulk_message_players(self, player_ids: list[str], messages: list[str]) -> bool:
