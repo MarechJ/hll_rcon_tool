@@ -26,6 +26,7 @@ from rcon.types import (
     GetDetailedPlayer,
     GetDetailedPlayers,
     GetPlayersType,
+    MapSequenceResponse,
     ParsedLogsType,
     PlayerActionState,
     ServerInfoType,
@@ -1103,8 +1104,9 @@ class Rcon(ServerCtl):
         return maps
 
     @ttl_cache(60 * 5)
-    def get_map_sequence(self) -> list[Layer]:
-        l = super().get_map_sequence()
+    def get_map_sequence(self) -> MapSequenceResponse:
+        s = super().get_map_sequence()
+        l = s["maps"]
 
         maps: list[Layer] = []
         for map_ in l:
@@ -1112,7 +1114,8 @@ class Rcon(ServerCtl):
                 raise HLLCommandFailedError("Server returned wrong data")
 
             maps.append(parse_layer(map_))
-        return maps
+        s["maps"] = maps
+        return s
 
     def add_map_to_rotation(
             self,

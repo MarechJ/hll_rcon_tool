@@ -8,7 +8,7 @@ from typing import Generator, Literal, Sequence, Any, List
 
 from rcon.connection import HLLCommandError, HLLConnection, Handle, Response
 from rcon.maps import LAYERS, MAPS, UNKNOWN_MAP_NAME, Environment, GameMode, LayerType
-from rcon.types import ServerInfoType, SlotsType, VipId, GameStateType, AdminType
+from rcon.types import MapSequenceResponse, ServerInfoType, SlotsType, VipId, GameStateType, AdminType
 from rcon.utils import exception_in_chain
 
 logger = logging.getLogger(__name__)
@@ -350,9 +350,13 @@ class ServerCtl:
     def get_map_rotation(self) -> list[str]:
         return [x["iD"] for x in self.exchange("GetServerInformation", 2, {"Name": "maprotation", "Value": ""}).content_dict["mAPS"]]
 
-    def get_map_sequence(self) -> list[str]:
-        # Map[iD] returns '/Game/Maps/driel_offensive_ger'
-        return [x["iD"].split("/")[-1] for x in self.exchange("GetServerInformation", 2, {"Name": "mapsequence", "Value": ""}).content_dict["mAPS"]]
+    def get_map_sequence(self) -> MapSequenceResponse:
+        data = self.exchange("GetServerInformation", 2, {"Name": "mapsequence", "Value": ""}).content_dict
+        return {
+            # Map[iD] can be in format as '/Game/Maps/driel_offensive_ger'
+            "maps": [x["iD"].split("/")[-1] for x in data["mAPS"]],
+            "current_index": data["currentIndex"]
+        }
 
     def get_slots(self) -> SlotsType:
         resp = self.exchange("GetServerInformation", 2, {"Name": "session", "Value": ""}).content_dict
@@ -389,7 +393,7 @@ class ServerCtl:
         ]
 
     def get_idle_autokick_time(self) -> int:
-        return self.exchange("GetKickIdleTime", 2).content_dict["idleTimeoutMinutes"]
+        return self.exchange("GetKickIdleDuration", 2).content_dict["idleTimeoutMinutes"]
 
     def get_max_ping_autokick(self) -> int:
         return self.exchange("GetHighPingThreshold", 2).content_dict["highPingThresholdMs"]
@@ -584,26 +588,29 @@ class ServerCtl:
 
     def get_gamestate(self) -> GameStateType:
         s = self.exchange("GetServerInformation", 2, {"Name": "session", "Value": ""}).content_dict
+        map_sequence = self.get_map_sequence()
 
         time_remaining = timedelta(seconds=int(s["remainingMatchTime"]))
         seconds_remaining = int(time_remaining.total_seconds())
         raw_time_remaining = f"{seconds_remaining // 3600}:{(seconds_remaining // 60) % 60:02}:{seconds_remaining % 60:02}"
 
         game_mode = GameMode(s["gameMode"].lower())
-        current_map = next(
-            (
-                l for l in LAYERS.values()
-                if l.map.name == s["mapName"]
-                   and l.game_mode == game_mode
-            ),
-            None,
-        )
-        if not current_map:
+
+        try:
+            current_map = LAYERS[s["mapId"].lower()]
+        except Exception:
             current_map = LAYERS[UNKNOWN_MAP_NAME]
 
-        # TODO: next_map is not included in session, map_name is pretty name instead of ID
+        try:
+            next_map_index = map_sequence["current_index"] + 1
+            if (next_map_index >= len(map_sequence["maps"])):
+                next_map_index = 0
+            next_map = LAYERS[map_sequence["maps"][next_map_index]]
+        except Exception:
+            next_map = LAYERS[UNKNOWN_MAP_NAME]
+
         return GameStateType(
-            next_map=LAYERS[UNKNOWN_MAP_NAME].model_dump(),
+            next_map=next_map.model_dump(),
             axis_score=s["axisScore"],
             axis_faction=s["axisFaction"],
             num_axis_players=s["axisPlayerCount"],

@@ -879,3 +879,7 @@ class AllMessageTemplateTypes(TypedDict):
     MESSAGE: list[MessageTemplateType]
     REASON: list[MessageTemplateType]
     WELCOME: list[MessageTemplateType]
+
+class MapSequenceResponse(TypedDict):
+    maps: list[str]
+    current_index: int
