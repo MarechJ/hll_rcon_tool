@@ -131,6 +131,8 @@ BRITISH_WEAPONS = {
     'HULL BESA 7.92mm [Churchill Mk.VII]': WeaponType.Armor,
     'QF 25 POUNDER [Bishop]': WeaponType.SPA,
     'Bishop': WeaponType.SPA,
+    'COAXIAL BESA 7.92mm [Sherman SPA 105mm]': WeaponType.SPA,
+    'HULL BESA 7.92mm [Sherman SPA 105mm]': WeaponType.SPA,
 }
 
 US_WEAPONS = {
@@ -182,8 +184,7 @@ US_WEAPONS = {
     'Sherman SPA 105mm': WeaponType.SPA,
     'OQF 57MM [Sherman SPA 105mm]': WeaponType.SPA,
     'COAXIAL M1919 [Sherman SPA 105mm]': WeaponType.SPA,
-    'COAXIAL BESA 7.92mm [Sherman SPA 105mm]': WeaponType.SPA,
-    'HULL BESA 7.92mm [Sherman SPA 105mm]': WeaponType.SPA,
+    'HULL M1919 [Sherman SPA 105mm]': WeaponType.SPA,
 }
 
 AXIS_WEAPONS = {
