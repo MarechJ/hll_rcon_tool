@@ -61,8 +61,8 @@ SOVIET_WEAPONS = {
     'HULL DT [IS-1]': WeaponType.Armor,
     'M2 Browning [M3 Half-track]': WeaponType.Armor,
     '152MM M-10T [KV-2]': WeaponType.SPA,
-    'HULL DT [KV-2]': WeaponType.SPA,
-    'KV-2': WeaponType.SPA,
+    'HULL DT [KV-2]': WeaponType.Armor,
+    'KV-2': WeaponType.Armor,
 }
 
 BRITISH_WEAPONS = {
@@ -130,7 +130,7 @@ BRITISH_WEAPONS = {
     'COAXIAL BESA 7.92mm [Churchill Mk.VII]': WeaponType.Armor,
     'HULL BESA 7.92mm [Churchill Mk.VII]': WeaponType.Armor,
     'QF 25 POUNDER [Bishop]': WeaponType.SPA,
-    'Bishop': WeaponType.SPA,
+    'Bishop': WeaponType.Armor,
     'COAXIAL BESA 7.92mm [Sherman SPA 105mm]': WeaponType.Armor,
     'HULL BESA 7.92mm [Sherman SPA 105mm]': WeaponType.Armor,
 }
@@ -181,7 +181,7 @@ US_WEAPONS = {
     'COAXIAL M1919 [Sherman M4A3E2(76)]': WeaponType.Armor,
     'HULL M1919 [Sherman M4A3E2(76)]': WeaponType.Armor,
     'M2 Browning [M3 Half-track]': WeaponType.Armor,
-    'Sherman SPA 105mm': WeaponType.SPA,
+    'Sherman SPA 105mm': WeaponType.Armor,
     'OQF 57MM [Sherman SPA 105mm]': WeaponType.SPA,
     'COAXIAL M1919 [Sherman SPA 105mm]': WeaponType.Armor,
     'HULL M1919 [Sherman SPA 105mm]': WeaponType.Armor,
@@ -234,9 +234,9 @@ AXIS_WEAPONS = {
     'COAXIAL MG34 [Sd.Kfz.181 Tiger 1]': WeaponType.Armor,
     'HULL MG34 [Sd.Kfz.181 Tiger 1]': WeaponType.Armor,
     'MG 42 [Sd.Kfz 251 Half-track]': WeaponType.Armor,
-    'Strumpanzer IV Brummbar': WeaponType.SPA,
+    'Strumpanzer IV Brummbar': WeaponType.Armor,
     'OQF 57MM [Strumpanzer IV Brummbar]': WeaponType.SPA,
-    '7.5CM KwK 37 [Sd.Kfz.161 Panzer IV]': WeaponType.Armor,
+    '7.5CM KwK 37 [Sd.Kfz.161 Panzer IV]': WeaponType.SPA,
 }
 
 ALL_WEAPONS = {

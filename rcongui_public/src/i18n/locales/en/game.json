@@ -63,7 +63,7 @@
       "armor": "Armor",
       "commander": "Commander",
       "artillery": "Artillery",
-      "spa": "Self-propelled artillery"
+      "self_propelled_artillery": "Self-propelled artillery"
     },
     "matchTable": {
         "match": "Match",
