@@ -1997,27 +1997,107 @@ class RconAPI(Rcon):
         team_name, squad_name = team_name.lower(), squad_name.lower()
 
         if team_name != "allies" and team_name != "axis":
-            raise HLLCommandFailedError("Invalid team_name argument. It must be either 'axis' or 'allies'.")
+            raise HLLCommandFailedError(
+                "Invalid team_name argument. It must be either 'axis' or 'allies'."
+            )
         if squad_name == "" or squad_name == "unassigned":
-            raise HLLCommandFailedError("Invalid squad_name argument. It cannot be an empty value or 'unassigned'.")
+            raise HLLCommandFailedError(
+                "Invalid squad_name argument. It cannot be an empty value or 'unassigned'."
+            )
 
         online_players = self.get_detailed_players()["players"]
 
         squad_players = list(
-                online_players[id]
-                for id in online_players
-                if online_players[id]["team"] == team_name
-                and online_players[id]["unit_name"] == squad_name
-            )
+            online_players[id]
+            for id in online_players
+            if online_players[id]["team"] == team_name
+            and online_players[id]["unit_name"] == squad_name
+        )
 
         if not squad_players:
-            raise HLLCommandFailedError(f"Squad {squad_name} was not found in team {team_name}. It might have been disbanded already.")
-        
+            raise HLLCommandFailedError(
+                f"Squad {squad_name} was not found in team {team_name}. It might have been disbanded already."
+            )
+
         for player in squad_players:
             super().remove_player_from_squad(player["player_id"], reason)
 
         return {
             "team_name": team_name,
             "squad_name": squad_name,
-            "msg": f"Successfully disbaned {squad_name} squad in team {team_name}"
+            "msg": f"Successfully disbanded {squad_name} squad in team {team_name}",
         }
+
+    def edit_player_soldier(
+        self,
+        player_id: str,
+        name: str | None = None,
+        level: int = 0,
+        platform: str | None = None,
+        clan_tag: str | None = None,
+    ):
+        """
+        Update NULL fields only in PlayerSoldier for the given player_id.
+        Does not overwrite any existing non-null values.
+        Returns the updated soldier as dict or None if not found.
+        """
+        from rcon.models import enter_session, PlayerSoldier
+
+        with enter_session() as sess:
+            soldier_db, changed = PlayerSoldier.update_missing_fields(
+                sess,
+                player_id,
+                name=name,
+                level=level,
+                platform=platform,
+                clan_tag=clan_tag,
+            )
+            if not soldier_db:
+                return HLLCommandFailedError(
+                    f"Player {player_id} was not found. The soldier could not be updated."
+                )
+            if not changed:
+                return {
+                    "soldier": soldier_db.to_dict(),
+                    "msg": "Success!\nSome fields have not been saved as only null values are allowed to be modified.",
+                }
+            return {
+                "soldier": soldier_db.to_dict(),
+                "msg": "Successfully updated soldier details.",
+            }
+
+    def edit_player_account(
+        self,
+        player_id: str,
+        name: str | None = None,
+        discord_id: str | None = None,
+        is_member: bool = False,
+        country: str | None = None,
+        lang: str = "en",
+    ):
+        """
+        Update PlayerAccount fields for the given player_id.
+        All fields can be updated, including setting them to null.
+        Returns dict with account data and success message.
+        """
+        from rcon.models import enter_session, PlayerAccount
+
+        with enter_session() as sess:
+            account_db = PlayerAccount.update_account(
+                sess,
+                player_id,
+                name=name,
+                discord_id=discord_id,
+                is_member=is_member,
+                country=country,
+                lang=lang,
+            )
+            if not account_db:
+                return HLLCommandFailedError(
+                    f"Player {player_id} was not found. The account could not be updated."
+                )
+            
+            return {
+                "account": account_db.to_dict(),
+                "msg": "Successfully updated account details.",
+            }

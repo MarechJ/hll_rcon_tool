@@ -463,6 +463,7 @@ class PlayerStat(TypedDict):
     p_defense: int
     support: int
     p_support: int
+    level: int
 
 
 class CachedLiveGameStats(TypedDict):
@@ -592,6 +593,24 @@ class PlayerVIPType(TypedDict):
     expiration: datetime.datetime
 
 
+class PlayerSoldierType(TypedDict):
+    eos_id: Optional[str]
+    name: Optional[str]
+    level: int
+    platform: Optional[str]
+    clan_tag: Optional[str]
+    updated: datetime.datetime
+
+
+class PlayerAccountType(TypedDict):
+    name: Optional[str]
+    discord_id: Optional[str]
+    is_member: bool
+    country: Optional[str]
+    lang: str
+    updated: datetime.datetime
+
+
 class PlayerProfileType(BasicPlayerProfileType):
     sessions: list[PlayerSessionType]
     sessions_count: int
@@ -604,6 +623,8 @@ class PlayerProfileType(BasicPlayerProfileType):
     flags: list[PlayerFlagType]
     watchlist: Optional[WatchListType]
     vips: Optional[list[PlayerVIPType]]
+    soldier: PlayerSoldierType
+    account: PlayerAccountType
 
 
 class PlayerProfileTypeEnriched(PlayerProfileType):

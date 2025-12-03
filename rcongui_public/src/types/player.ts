@@ -115,6 +115,7 @@ export interface PlayerBase {
   weapons: Record<Weapon, number>
   death_by_weapons: Record<Weapon, number> | null
   team: PlayerTeamAssociation
+  level: number
 }
 
 export interface PlayerTeamAssociation {

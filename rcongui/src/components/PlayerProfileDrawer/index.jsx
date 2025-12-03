@@ -24,7 +24,7 @@ import { TabContext, TabPanel } from "@mui/lab";
 import dayjs from "dayjs";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { useActionDialog } from "@/hooks/useActionDialog";
+import CloseIcon from "@mui/icons-material/Close";
 import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
 import { generatePlayerActions } from "@/features/player-action/actions";
 import { ClientError } from "../shared/ClientError";
@@ -38,6 +38,7 @@ import {
 import PlayerProfileHeader from "../player/profile/Header";
 import PlayerProfileSummary from "../player/profile/Summary";
 import PlayerProfileStatusTags from "../player/profile/StatusTags";
+import { ActionMenuButton } from "@/features/player-action/ActionMenu";
 
 const Penalties = ({ punish, kick, tempBan, parmaBan }) => (
   <dl>
@@ -195,19 +196,52 @@ const PlayerDetails = ({ player, onClose }) => {
     multiAction: false,
     onlineAction: isOnline,
   });
-  const name = player?.name ?? profile.names[0]?.name ?? "?";
+  const name = profile?.account?.name ?? player?.name ?? profile?.soldier?.name ?? "???";
   const avatar = profile?.steaminfo?.profile?.avatar;
+  const country =
+    profile?.country ??
+    profile?.account?.country ??
+    profile?.steaminfo?.country;
+  const level = player?.level ?? player?.profile?.soldier?.level;
+  const platform = player?.platform ?? player?.profile?.soldier?.platform;
+  const clanTag = player?.clan_tag ?? player?.profile?.soldier?.clan_tag;
 
   return (
     <ProfileWrapper component={"article"}>
-      <PlayerProfileHeader
-        player={player}
-        isOnline={isOnline}
-        onClose={onClose}
-        actionList={actionList}
-        avatar={avatar}
-        name={name}
+      <Box sx={{ paddingTop: 2, paddingLeft: 8 }}>
+        <PlayerProfileHeader
+          player={player}
+          isOnline={isOnline}
+          avatar={avatar}
+          name={name}
+          country={country}
+          level={level}
+          platform={platform}
+          clanTag={clanTag}
+        />
+      </Box>
+      <ActionMenuButton
+        recipients={player}
+        actions={actionList}
+        sx={{
+          position: "absolute",
+          top: (theme) => theme.spacing(0.5),
+          left: (theme) => theme.spacing(0.5),
+        }}
       />
+      {onClose && (
+        <IconButton
+          sx={{
+            position: "absolute",
+            top: (theme) => theme.spacing(1),
+            right: (theme) => theme.spacing(0.5),
+          }}
+          size="small"
+          onClick={onClose}
+        >
+          <CloseIcon />
+        </IconButton>
+      )}
       <Divider />
       <PlayerProfileStatusTags
         isVip={isVip}
@@ -267,6 +301,7 @@ const PlayerDetails = ({ player, onClose }) => {
             )}
             names={profile.names}
             watchlist={profile.watchlist}
+            eosId={profile.soldier.eos_id}
           />
         </TabPanel>
         {isOnline && (

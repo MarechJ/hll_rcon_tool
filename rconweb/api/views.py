@@ -395,6 +395,8 @@ def run_raw_command(request):
 
 
 ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
+    rcon_api.edit_player_soldier: "api.can_edit_player_soldier",
+    rcon_api.edit_player_account: "api.can_edit_player_account",
     rcon_api.disband_squad: "api.can_disband_squad",
     rcon_api.disband_squad_by_name: "api.can_disband_squad",
     rcon_api.remove_player_from_squad: "api.can_remove_player_from_squad",
@@ -682,6 +684,8 @@ DEPRECATED_ENDPOINTS = (
 )
 
 RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
+    rcon_api.edit_player_account: ["POST"],
+    rcon_api.edit_player_soldier: ["POST"],
     rcon_api.disband_squad: ["POST"],
     rcon_api.disband_squad_by_name: ["POST"],
     rcon_api.remove_player_from_squad: ["POST"],
