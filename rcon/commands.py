@@ -605,7 +605,7 @@ class ServerCtl:
             next_map_index = map_sequence["current_index"] + 1
             if (next_map_index >= len(map_sequence["maps"])):
                 next_map_index = 0
-            next_map = LAYERS[map_sequence["maps"][next_map_index]]
+            next_map = map_sequence["maps"][next_map_index]
         except Exception:
             next_map = LAYERS[UNKNOWN_MAP_NAME]
 
