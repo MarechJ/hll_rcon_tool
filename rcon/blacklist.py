@@ -398,10 +398,14 @@ def synchronize_ban(
         return
 
     # Check whether the player is online (and grab their name)
-    player_name = next(
-        (p_name for p_name, p_id in rcon.get_player_ids() if p_id == player_id), None
-    )
-    is_online = player_name is not None
+    try:
+        player_info = rcon.get_detailed_player_info(player_id=player_id)
+    except HLLCommandFailedError:
+        player_name = None
+        is_online = False
+    else:
+        player_name = player_info["name"]
+        is_online = True
 
     if (
         new_record.blacklist.sync != BlacklistSyncMethod.BAN_IMMEDIATELY
@@ -1060,7 +1064,10 @@ class BlacklistCommandHandler:
 
             # Check whether the old or new record had or has priority
             elif new_record.id == old_record["id"] or (
-                SERVER_NUMBER in old_record["blacklist"]["servers"]
+                (
+                    old_record["blacklist"]["servers"] is None
+                    or SERVER_NUMBER in old_record["blacklist"]["servers"]
+                )
                 and _is_higher_priority_record(
                     old_record["created_at"],
                     old_record["expires_at"],
