@@ -31,7 +31,8 @@ export const WeaponTypeBar = memo(({ totalKills, killsByType }: WeaponTypeBarPro
     [SimpleWeaponType.Explosive]: { color: colors.amber[600], order: 3, t: t("weaponType.explosive") },
     [SimpleWeaponType.Armor]: { color: colors.cyan[400], order: 4, t: t("weaponType.armor") },
     [SimpleWeaponType.Artillery]: { color: colors.fuchsia[600], order: 5, t: t("weaponType.artillery") },
-    [SimpleWeaponType.Commander]: { color: colors.amber[300], order: 6, t: t("weaponType.commander") },
+    [SimpleWeaponType.SPA]: { color: colors.fuchsia[400], order: 6, t: t("weaponType.spa") },
+    [SimpleWeaponType.Commander]: { color: colors.amber[300], order: 7, t: t("weaponType.commander") },
   };
 
   const killsBySimpleStatus = new Map<SimpleWeaponType, number>;
