@@ -11,6 +11,7 @@ import { MapDetailsCard } from "./MapDetailsCard";
 import { useState } from "react";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import CloseIcon from "@mui/icons-material/Close";
+import { PlayerDrawerLink } from "@/components/shared/PlayerDrawerLink";
 
 function MapListItemBase({ mapLayer, renderActions, sx, ...props }) {
   return (
@@ -87,7 +88,7 @@ export function MapBuilderListItem({ mapLayer, onClick }) {
   );
 }
 
-export function MapVotemapListItem({ mapLayer, voters }) {
+export function MapVotemapListItem({ mapLayer, voters, votesCount }) {
   const [anchorEl, setAnchorEl] = useState(null);
 
   const handleClick = (event) => {
@@ -111,7 +112,7 @@ export function MapVotemapListItem({ mapLayer, voters }) {
           direction={"row"}
           spacing={2}
         >
-          <Box sx={{}}>{`Votes: ${voters.length}`}</Box>
+          <Box sx={{}}>{`Votes: ${votesCount}`}</Box>
           <Button aria-describedby={id} onClick={handleClick}>
             Show
           </Button>
@@ -132,7 +133,7 @@ export function MapVotemapListItem({ mapLayer, voters }) {
             <Box>
               {voters.map((voter, i) => (
                 <Box sx={{ py: 1, px: 2 }} key={voter + i}>
-                  {voter}
+                  <PlayerDrawerLink playerId={voter.player_id}>{voter.player_name}: {voter.count}</PlayerDrawerLink>
                 </Box>
               ))}
             </Box>

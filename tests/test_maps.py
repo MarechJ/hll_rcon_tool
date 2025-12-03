@@ -12,9 +12,11 @@ from rcon.maps import (
     GameMode,
     Layer,
     Team,
+    get_opposite_side,
     is_server_loading_map,
     numbered_maps,
     parse_layer,
+    _parse_legacy_layer,
 )
 
 logger = getLogger(__name__)
@@ -145,6 +147,41 @@ def test_numbered_maps(maps, expected):
 )
 def test_parse_layer(layer_name, expected):
     assert parse_layer(layer_name=layer_name) == expected
+
+@pytest.mark.parametrize(
+    "layer_name, expected",
+    [
+        (
+            "elalamein_offensive_CW",
+            Layer(
+                id="elalamein_offensive_CW",
+                map=MAPS["elalamein"],
+                game_mode=GameMode.OFFENSIVE,
+                attackers=Team.ALLIES,
+            ),
+        ),
+        (
+            "hill400_offensive_US",
+            Layer(
+                id="hill400_offensive_US",
+                map=MAPS["hill400"],
+                game_mode=GameMode.OFFENSIVE,
+                attackers=Team.ALLIES,
+            ),
+        ),
+        (
+            "hill400_offensive_us",
+            Layer(
+                id="hill400_offensive_us",
+                map=MAPS["hill400"],
+                game_mode=GameMode.OFFENSIVE,
+                attackers=Team.ALLIES,
+            ),
+        ),
+    ],
+)
+def test_parse_legacy_layer(layer_name, expected):
+    assert _parse_legacy_layer(layer_name) == expected
 
 
 @pytest.mark.parametrize(
