@@ -40,15 +40,17 @@ export function MapListBuilder({
   exclusive = false,
   actions,
 }) {
-  const [mapSelection, setMapSelection] = useState(selectedMaps.map(withSelectionId));
-  
+  const [mapSelection, setMapSelection] = useState(
+    selectedMaps.map(withSelectionId)
+  );
+
   const mapOptions = useMemo(() => {
     if (!exclusive) return allMaps;
     const selectedIds = new Set(mapSelection.map((m) => m.id));
     const exclusiveOptions = allMaps.filter((m) => !selectedIds.has(m.id));
     return exclusiveOptions;
   }, [exclusive, allMaps, mapSelection]);
-  
+
   const [filteredMapOptions, setFilteredMapOptions] = useState(mapOptions);
 
   const theme = useTheme();
@@ -138,11 +140,7 @@ export function MapListBuilder({
         {isMapListVisible && (
           <Grid size={{ xs: 12, md: 6 }}>
             <Box sx={{ mb: 3 }}>
-              <Box
-                sx={{
-                  pb: 2,
-                }}
-              >
+              <Box>
                 <MapFilter
                   maps={mapOptions}
                   onFilterChange={handleFilterChange}
