@@ -40,7 +40,7 @@ const MenuProps = {
 export const MapFilter = ({ maps, onFilterChange }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedModes, setSelectedModes] = useState(["warfare"]);
-  const [selectedWeathers, setSelectedWeathers] = useState(["day"]);
+  const [selectedWeathers, setSelectedWeathers] = useState([]);
 
   // Compute unique modes and weathers for dropdowns
   const allModes = useMemo(() => {
