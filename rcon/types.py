@@ -883,3 +883,7 @@ class AllMessageTemplateTypes(TypedDict):
 class MapSequenceResponse(TypedDict):
     maps: list[str]
     current_index: int
+
+class GetMapSequence(TypedDict):
+    maps: list[Layer]
+    current_index: int
