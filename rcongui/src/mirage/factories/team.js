@@ -20,6 +20,7 @@ export const generateTeam = () => {
       baker: generateSquad("baker", "infantry"),
       charlie: generateSquad("charlie", "armor"),
       dog: generateSquad("dog", "recon"),
+      echo: generateSquad("echo", "artillery"),
       unassigned: generateSquad("unassigned"),
     },
     commander: faker.datatype.boolean() ? generatePlayer("command", "infantry") : null,

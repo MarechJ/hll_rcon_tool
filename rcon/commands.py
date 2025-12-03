@@ -8,7 +8,7 @@ from typing import Generator, Literal, Sequence, Any, List
 
 from rcon.connection import HLLCommandError, HLLConnection, Handle, Response
 from rcon.maps import LAYERS, MAPS, UNKNOWN_MAP_NAME, Environment, GameMode, LayerType
-from rcon.types import ServerInfoType, SlotsType, VipId, GameStateType, AdminType
+from rcon.types import MapSequenceResponse, ServerInfoType, SlotsType, VipId, GameStateType, AdminType
 from rcon.utils import exception_in_chain
 
 logger = logging.getLogger(__name__)
@@ -335,27 +335,28 @@ class ServerCtl:
         return self.exchange("GetPermanentBans", 2).content_dict["banList"]
 
     def get_team_switch_cooldown(self) -> int:
-        # TODO: Not available right now
-        return 0
+        return self.exchange("GetTeamSwitchCooldown", 2).content_dict["teamSwitchTimer"]
 
     def get_autobalance_threshold(self) -> int:
-        # TODO: Not available right now
-        return 0
+        return self.exchange("GetAutoBalanceThreshold", 2).content_dict["autoBalanceThreshold"]
 
     def get_votekick_enabled(self) -> bool:
-        # TODO: Not available right now
-        return False
+        return self.exchange("GetVoteKickEnabled", 2).content_dict["enable"]
 
-    def get_votekick_thresholds(self) -> list[int]:
-        # TODO: Not available right now
-        return []
+    def get_votekick_thresholds(self) -> list[list[int]]:
+        thresholds = self.exchange("GetVoteKickThreshold", 2).content_dict["voteThresholdList"]
+        return [[int(x["playerCount"]), int(x["voteThreshold"])] for x in thresholds]
 
     def get_map_rotation(self) -> list[str]:
         return [x["iD"] for x in self.exchange("GetServerInformation", 2, {"Name": "maprotation", "Value": ""}).content_dict["mAPS"]]
 
-    def get_map_sequence(self) -> list[str]:
-        # Map[iD] returns '/Game/Maps/driel_offensive_ger'
-        return [x["iD"].split("/")[-1] for x in self.exchange("GetServerInformation", 2, {"Name": "mapsequence", "Value": ""}).content_dict["mAPS"]]
+    def get_map_sequence(self) -> MapSequenceResponse:
+        data = self.exchange("GetServerInformation", 2, {"Name": "mapsequence", "Value": ""}).content_dict
+        return {
+            # Map[iD] can be in format as '/Game/Maps/driel_offensive_ger'
+            "maps": [x["iD"].split("/")[-1] for x in data["mAPS"]],
+            "current_index": data["currentIndex"]
+        }
 
     def get_slots(self) -> SlotsType:
         resp = self.exchange("GetServerInformation", 2, {"Name": "session", "Value": ""}).content_dict
@@ -366,18 +367,16 @@ class ServerCtl:
         )
 
     def get_vip_ids(self) -> list[VipId]:
-        # TODO: Update once VIP comments become obtainable again
         return [
-            VipId(player_id=id, name=id)
-            for id in self.exchange("GetServerInformation", 2, {"Name": "vipplayers", "Value": ""}).content_dict["vipPlayerIds"]
+            VipId(player_id=vip["iD"], name=vip["comment"])
+            for vip in self.exchange("GetServerInformation", 2, {"Name": "vipplayers", "Value": ""}).content_dict["vipPlayers"]
         ]
 
     def get_admin_groups(self) -> list[str]:
         return self.exchange("GetAdminGroups", 2).content_dict["groupNames"]
 
     def get_autobalance_enabled(self) -> bool:
-        # TODO: Not available right now
-        return False
+        return self.exchange("GetAutoBalanceEnabled", 2).content_dict["enable"]
 
     def get_logs(
             self,
@@ -394,12 +393,10 @@ class ServerCtl:
         ]
 
     def get_idle_autokick_time(self) -> int:
-        # TODO: Not available right now
-        return 0
+        return self.exchange("GetKickIdleDuration", 2).content_dict["idleTimeoutMinutes"]
 
     def get_max_ping_autokick(self) -> int:
-        # TODO: Not available right now
-        return 0
+        return self.exchange("GetHighPingThreshold", 2).content_dict["highPingThresholdMs"]
 
     def get_queue_length(self) -> int:
         # TODO: Verify if this value is updated instantly or after the current session ends or any async time
@@ -569,6 +566,10 @@ class ServerCtl:
     @_escape_params
     def message_player(self, player_id: str, message: str) -> bool:
         return self.exchange_success("MessagePlayer", 2, {"Message": message, "PlayerId": player_id})
+
+    @_escape_params
+    def message_all_players(self, message: str) -> bool:
+        return self.exchange_success("MessageAllPlayers", 2, {"Message": message})
     
     @_escape_params
     def bulk_message_players(self, player_ids: list[str], messages: list[str]) -> bool:
@@ -587,26 +588,29 @@ class ServerCtl:
 
     def get_gamestate(self) -> GameStateType:
         s = self.exchange("GetServerInformation", 2, {"Name": "session", "Value": ""}).content_dict
+        map_sequence = self.get_map_sequence()
 
         time_remaining = timedelta(seconds=int(s["remainingMatchTime"]))
         seconds_remaining = int(time_remaining.total_seconds())
         raw_time_remaining = f"{seconds_remaining // 3600}:{(seconds_remaining // 60) % 60:02}:{seconds_remaining % 60:02}"
 
         game_mode = GameMode(s["gameMode"].lower())
-        current_map = next(
-            (
-                l for l in LAYERS.values()
-                if l.map.name == s["mapName"]
-                   and l.game_mode == game_mode
-            ),
-            None,
-        )
-        if not current_map:
+
+        try:
+            current_map = LAYERS[s["mapId"].lower()]
+        except Exception:
             current_map = LAYERS[UNKNOWN_MAP_NAME]
 
-        # TODO: next_map is not included in session, map_name is pretty name instead of ID
+        try:
+            next_map_index = map_sequence["current_index"] + 1
+            if (next_map_index >= len(map_sequence["maps"])):
+                next_map_index = 0
+            next_map = map_sequence["maps"][next_map_index]
+        except Exception:
+            next_map = LAYERS[UNKNOWN_MAP_NAME]
+
         return GameStateType(
-            next_map=LAYERS[UNKNOWN_MAP_NAME].model_dump(),
+            next_map=next_map.model_dump(),
             axis_score=s["axisScore"],
             axis_faction=s["axisFaction"],
             num_axis_players=s["axisPlayerCount"],
