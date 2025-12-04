@@ -36,7 +36,7 @@ def get_live_scoreboard(request):
     except Exception as e:
         logger.exception("Unable to produce live stats")
         result = {}
-        error = ""[[[[[[[[]]]]]]]]
+        error = ""
         failed = True
 
     return api_response(
