@@ -24,6 +24,7 @@ from rcon.audit import heartbeat, set_registered_mods
 from rcon.cache_utils import ttl_cache, invalidates
 from rcon.types import DjangoGroup, DjangoPermission, DjangoUserPermissions
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
+from rcon.utils import get_server_number
 from rconweb.settings import SECRET_KEY, TAG_VERSION
 
 
@@ -38,26 +39,12 @@ BEARER = ("BEARER", "BEARER:")
 
 
 def check_server_permissions(user):
-    """
-    Check if user has permission to access the current server.
-
-    If user has UserServerPermission records, they can only access those servers.
-    If user has no UserServerPermission records, they can access all servers (backward compatible).
-    Superusers always have access to all servers.
-
-    Raises PermissionDenied if user doesn't have access.
-    """
     if user.is_superuser:
         return
 
     from .models import UserServerPermission
 
-    try:
-        current_server_number = int(os.getenv("SERVER_NUMBER", "1"))
-    except (ValueError, TypeError):
-        logger.error("Invalid SERVER_NUMBER environment variable")
-        current_server_number = 1
-
+    current_server_number = int(get_server_number())
     user_permissions = UserServerPermission.objects.filter(user=user)
 
     if user_permissions.exists():

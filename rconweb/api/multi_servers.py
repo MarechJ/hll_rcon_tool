@@ -93,8 +93,8 @@ def get_accessible_servers(request):
     return api_response(server_list, failed=False, command="get_accessible_servers")
 
 
-@login_required()
 @csrf_exempt
+@login_required()
 @require_http_methods(["GET"])
 def get_server_list(request):
     allowed_server_numbers = _get_allowed_server_numbers(request.user)
@@ -112,9 +112,6 @@ def get_server_list(request):
 
     if include_current:
         try:
-            from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
-            from rcon.utils import get_server_number
-
             config = RconServerSettingsUserConfig.load_from_db()
             current_server_number = int(get_server_number())
 
@@ -127,14 +124,6 @@ def get_server_list(request):
                     "current": True,
                 }
                 server_list.append(current_server)
-                logger.debug(
-                    f"Added current server {current_server_number} to list for user {request.user.username}"
-                )
-            else:
-                logger.debug(
-                    f"User {request.user.username} does not have permission to view "
-                    f"current server {current_server_number}"
-                )
         except Exception as e:
             logger.error(f"Failed to get current server info: {e}")
 
@@ -154,10 +143,6 @@ def get_server_list(request):
             server_number = info["result"].get("server_number")
 
             if allowed_server_numbers is not None and server_number not in allowed_server_numbers:
-                logger.debug(
-                    f"User {request.user.username} does not have permission to view "
-                    f"server {server_number}"
-                )
                 continue
 
             if include_current:
@@ -166,11 +151,6 @@ def get_server_list(request):
             server_list.append(info["result"])
         except Exception as e:
             logger.warning("Unable to connect with %s: %s", host, e)
-
-    logger.info(
-        f"Returning {len(server_list)} server(s) for user {request.user.username} "
-        f"(include_current={include_current})"
-    )
 
     return api_response(server_list, failed=False, command="server_list")
 
@@ -207,9 +187,6 @@ def forward_request(request):
             server_number = info_res.json()["result"].get("server_number")
 
             if allowed_server_numbers is not None and server_number not in allowed_server_numbers:
-                logger.debug(
-                    f"User {request.user.username} does not have permission to forward to server {server_number}"
-                )
                 continue
 
             url = f"http://{host}{request.path}"
@@ -303,9 +280,6 @@ def forward_command(
                 server_number = info_res.json()["result"].get("server_number")
 
                 if server_number not in allowed_server_numbers:
-                    logger.debug(
-                        f"User {user.username} does not have permission to forward to server {server_number}"
-                    )
                     continue
 
             url = f"http://{host}{path}"

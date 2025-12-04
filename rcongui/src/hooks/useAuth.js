@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }) => {
       }
       return aUser;
     },
-    refetchOnWindowFocus: false, // Disable refetching on window focus
+    refetchOnWindowFocus: false,
     retry: 1,
   });
 
@@ -84,5 +84,4 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Custom hook to use the AuthContext
 export const useAuth = () => useContext(AuthContext);
