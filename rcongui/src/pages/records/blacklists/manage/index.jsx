@@ -44,35 +44,19 @@ const BlacklistLists = () => {
   }
 
   function loadServers() {
-    return Promise.all([
-      get("get_connection_info")
-        .then((response) =>
-          showResponse(response, "get_connection_info", false)
-        )
-        .then((data) => {
-          if (data.result) {
-            setServers((prevState) => ({
-              ...prevState,
-              [data.result.server_number]: data.result.name,
-            }));
-          }
-        })
-        .catch(handle_http_errors),
-      get("get_server_list")
-        .then((response) => showResponse(response, "get_server_list", false))
-        .then((data) => {
-          if (data?.result) {
-            setServers((prevState) => ({
-              ...prevState,
-              ...data.result.reduce((acc, server) => {
-                acc[server.server_number] = server.name;
-                return acc;
-              }, {}),
-            }));
-          }
-        })
-        .catch(handle_http_errors),
-    ]);
+    return get("get_server_list?include_current=true")
+      .then((response) => showResponse(response, "get_server_list", false))
+      .then((data) => {
+        if (data?.result) {
+          setServers(
+            data.result.reduce((acc, server) => {
+              acc[server.server_number] = server.name;
+              return acc;
+            }, {})
+          );
+        }
+      })
+      .catch(handle_http_errors);
   }
 
   function loadBlacklists() {

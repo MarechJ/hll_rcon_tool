@@ -1,9 +1,11 @@
 import logging
+import os
 from functools import wraps
 
 from django.contrib.auth.decorators import (
     permission_required as django_permission_required,
 )
+from django.http import JsonResponse
 from django.views.decorators.http import (
     require_http_methods as django_require_http_methods,
 )
@@ -96,3 +98,6 @@ def require_content_type(content_type_list: list[str] = None):
         return inner
 
     return decorator
+
+
+
