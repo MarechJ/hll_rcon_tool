@@ -1,14 +1,12 @@
 import json
 import logging
-import os
 import random
 import re
 import time
-from concurrent.futures import Future, ThreadPoolExecutor, as_completed
-from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 from functools import cached_property
 from itertools import chain
-from time import sleep
 from typing import Any, Iterable, List, Literal, Optional, Sequence, overload
 
 import rcon.steam_utils
@@ -30,6 +28,7 @@ from rcon.types import (
     GameStateType,
     GetDetailedPlayer,
     GetDetailedPlayers,
+    GetMapSequence,
     GetPlayersType,
     ParsedLogsType,
     PlayerActionState,
@@ -57,6 +56,7 @@ from rcon.win_store_utils import is_windows_store_id
 PLAYER_ID = "player_id"
 NAME = "name"
 ROLE = "role"
+UNASSIGNED = "unassigned"
 
 TEMP_BAN = "temp"
 PERMA_BAN = "perma"
@@ -92,7 +92,6 @@ LOG_ACTIONS = [
     "MESSAGE",
 ]
 logger = logging.getLogger(__name__)
-
 
 CTL: Optional["Rcon"] = None
 
@@ -231,6 +230,8 @@ class Rcon(ServerCtl):
     def run_in_pool(self, function_name: str, *args, **kwargs):
         return self.thread_pool.submit(getattr(self, function_name), *args, **kwargs)
 
+    # TODO
+    # When returns value from the cache it is always {}
     @ttl_cache(ttl=5)
     def get_players(self) -> list[GetPlayersType]:
         player_ids = {
@@ -300,15 +301,15 @@ class Rcon(ServerCtl):
         fail_count = detailed_players["fail_count"]
 
         for player in players_by_id.values():
-            player_id = player[PLAYER_ID]
-
-            teams.setdefault(player.get("team"), {}).setdefault(
-                player.get("unit_name"), {}
-            ).setdefault("players", []).append(player)
+            team_name = (
+                player.get("team") if player.get("team") is not None else UNASSIGNED
+            )
+            team = teams.setdefault(team_name, {})
+            squad = team.setdefault(player.get("unit_name"), {})
+            squad_players = squad.setdefault("players", [])
+            squad_players.append(player)
 
         for team, squads in teams.items():
-            if team is None:
-                continue
             for squad_name, squad in squads.items():
                 squad["players"] = sorted(
                     squad["players"],
@@ -332,8 +333,6 @@ class Rcon(ServerCtl):
 
         game = {}
         for team, squads in teams.items():
-            if team is None:
-                continue
             commander = [
                 squad for _, squad in squads.items() if squad["type"] == "commander"
             ]
@@ -377,7 +376,7 @@ class Rcon(ServerCtl):
         return super().get_admin_groups()
 
     def get_logs(
-        self, since_min_ago: str | int, filter_: str = "", by: str = ""
+        self, since_min_ago: int, filter_: str = "", by: str = ""
     ) -> list[str]:
         """Returns raw text logs from the game server with no parsing performed
 
@@ -392,6 +391,7 @@ class Rcon(ServerCtl):
     def get_player_ids(
         self, as_dict: Literal[False] = False
     ) -> list[tuple[str, str]]: ...
+
     @overload
     def get_player_ids(self, as_dict: Literal[True] = False) -> dict[str, str]: ...
 
@@ -412,7 +412,7 @@ class Rcon(ServerCtl):
 
     def _guess_squad_type(
         self, squad
-    ) -> Literal["armor", "recon", "commander", "infantry"]:
+    ) -> Literal["armor", "recon", "commander", "infantry", "artillery"]:
         for player in squad.get("players", []):
             if player.get("role") in ["tankcommander", "crewman"]:
                 return "armor"
@@ -420,12 +420,23 @@ class Rcon(ServerCtl):
                 return "recon"
             if player.get("role") in ["armycommander"]:
                 return "commander"
+            if player.get("role") in [
+                "artilleryobserver",
+                "artilleryengineer",
+                "artillerysupport",
+            ]:
+                return "artillery"
 
         return "infantry"
 
     def _has_leader(self, squad) -> bool:
         for players in squad.get("players", []):
-            if players.get("role") in ["tankcommander", "officer", "spotter"]:
+            if players.get("role") in [
+                "tankcommander",
+                "officer",
+                "spotter",
+                "artilleryobserver",
+            ]:
                 return True
         return False
 
@@ -916,9 +927,8 @@ class Rcon(ServerCtl):
         return super().get_votekick_enabled()
 
     @ttl_cache(ttl=60 * 10)
-    def get_votekick_thresholds(self) -> list[tuple[int, int]]:
-        pairs = super().get_votekick_thresholds()
-        return [(int(pair[0]), int(pair[1])) for pair in zip(pairs[0::2], pairs[1::2])]
+    def get_votekick_thresholds(self) -> list[list[int]]:
+        return super().get_votekick_thresholds()
 
     def set_autobalance_enabled(self, value: bool) -> bool:
         with invalidates(self.get_autobalance_enabled):
@@ -1053,8 +1063,9 @@ class Rcon(ServerCtl):
         return maps
 
     @ttl_cache(60 * 5)
-    def get_map_sequence(self) -> list[Layer]:
-        l = super().get_map_sequence()
+    def get_map_sequence(self) -> GetMapSequence:
+        s = super().get_map_sequence()
+        l = s["maps"]
 
         maps: list[Layer] = []
         for map_ in l:
@@ -1062,7 +1073,8 @@ class Rcon(ServerCtl):
                 raise HLLCommandFailedError("Server returned wrong data")
 
             maps.append(parse_layer(map_))
-        return maps
+        s["maps"] = maps
+        return s
 
     def add_map_to_rotation(
         self,

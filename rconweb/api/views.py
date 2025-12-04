@@ -319,6 +319,7 @@ def expose_api_endpoint(
                 forward_results=others,
                 version=TAG_VERSION,
             ),
+            status=400 if error is not None else 200,
         )
 
         # Handle all the special cases of forwarding commands here so we don't
@@ -395,6 +396,9 @@ def run_raw_command(request):
 
 
 ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
+    rcon_api.disband_squad: "api.can_disband_squad",
+    rcon_api.disband_squad_by_name: "api.can_disband_squad",
+    rcon_api.remove_player_from_squad: "api.can_remove_player_from_squad",
     rcon_api.set_warmup_timer: "api.can_set_warmup_timer",
     rcon_api.set_match_timer: "api.can_set_match_timer",
     rcon_api.remove_match_timer: "api.can_remove_match_timer",
@@ -707,6 +711,9 @@ DEPRECATED_ENDPOINTS = (
 )
 
 RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
+    rcon_api.disband_squad: ["POST"],
+    rcon_api.disband_squad_by_name: ["POST"],
+    rcon_api.remove_player_from_squad: ["POST"],
     rcon_api.set_warmup_timer: ["POST"],
     rcon_api.set_match_timer: ["POST"],
     rcon_api.remove_match_timer: ["POST"],

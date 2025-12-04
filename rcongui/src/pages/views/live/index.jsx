@@ -25,8 +25,10 @@ import TableChartIcon from '@mui/icons-material/TableChart';
 import ScoreboardIcon from '@mui/icons-material/Scoreboard';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
+import DisbandSquadDialog from "@/features/player-action/DisbandSquad";
 
 const interval = 15 * 1000; // 15 seconds
+const UNASSIGNED = "unassigned"
 
 export const loader = async () => {
   const response = await cmd.GET_LIVE_LOGS({
@@ -112,9 +114,9 @@ const Live = () => {
           ...extractTeamState(teamData?.axis ?? {}),
           ...(teamData?.axis ?? {}),
         },
-        none: {
-          ...extractTeamState(teamData?.none ?? {}),
-          ...(teamData?.none ?? {}),
+        [UNASSIGNED]: {
+          ...extractTeamState(teamData?.[UNASSIGNED] ?? {}),
+          ...(teamData?.[UNASSIGNED] ?? {}),
         },
       };
     }
@@ -280,6 +282,9 @@ const Live = () => {
           </ToggleButtonGroup>
           </Stack>
           <InfoPanel gameData={gameData} playersData={playersData} />
+          <Stack direction="row" alignItems="center" spacing={1}>
+              <DisbandSquadDialog />
+          </Stack>
         </Grid>
 
         {visibleElements.includes('header') && (

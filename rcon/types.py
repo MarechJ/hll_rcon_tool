@@ -679,6 +679,9 @@ class GetDetailedPlayer(TypedDict):
     role: Optional[str]
     kills: int
     deaths: int
+    team_kills: int
+    vehicle_kills: int
+    vehicles_destroyed: int
     combat: int
     offense: int
     defense: int
@@ -745,6 +748,8 @@ class GameStateType(TypedDict):
     num_axis_players: int
     allied_score: int
     axis_score: int
+    allied_faction: int
+    axis_faction: int
     raw_time_remaining: str
     time_remaining: datetime.timedelta
     current_map: "LayerType"
@@ -936,3 +941,13 @@ class AllMessageTemplateTypes(TypedDict):
     MESSAGE: list[MessageTemplateType]
     REASON: list[MessageTemplateType]
     WELCOME: list[MessageTemplateType]
+
+
+class MapSequenceResponse(TypedDict):
+    maps: list[str]
+    current_index: int
+
+
+class GetMapSequence(TypedDict):
+    maps: list[Layer]
+    current_index: int

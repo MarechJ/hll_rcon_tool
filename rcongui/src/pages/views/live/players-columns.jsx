@@ -100,13 +100,15 @@ export const columns = [
       return (
         <Center>
           <Square>
-            <img
-              src={`/icons/teams/${teamToNation(row.original.team)}.webp`}
-              width={16}
-              height={16}
-              alt={row.original.team}
-              title={row.original.team}
-            />
+            {row.original.team ? (
+              <img
+                src={`/icons/teams/${teamToNation(row.original.team)}.webp`}
+                width={16}
+                height={16}
+                alt={row.original.team}
+                title={row.original.team}
+              />
+            ) : "-"}
           </Square>
         </Center>
       );
@@ -125,7 +127,9 @@ export const columns = [
       return (
         <Center>
           <Square>
-            {row.original.unit_name?.charAt(0)?.toUpperCase() ?? "-"}
+            {row.original.unit_name !== "unassigned"
+              ? row.original.unit_name?.charAt(0)?.toUpperCase()
+              : "-"}
           </Square>
         </Center>
       );
@@ -245,6 +249,14 @@ export const columns = [
           <FontAwesomeIcon icon={faSteam} />
         </IconButton>
       ) : null;
+    },
+  },
+  {
+    id: "clan-tag",
+    header: SortableHeader("Clan","Clan Tag"),
+    accessorKey: "clan_tag",
+    cell: ({ row }) => {
+      return <>{row.original.clan_tag}</>;
     },
   },
   {

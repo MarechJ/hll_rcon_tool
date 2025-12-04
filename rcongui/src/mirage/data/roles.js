@@ -25,6 +25,14 @@ export const SQUAD_TYPES = {
       "spotter", // squad leader
       "sniper"
     ]
+  },
+  artillery: {
+    maxPlayers: 3,
+    roles: [
+      "artilleryobserver", // squad leader
+      "artilleryengineer",
+      "artillerysupport",
+    ]
   }
 };
 
@@ -33,7 +41,8 @@ export const isLeaderRole = (role) => ["officer", "tankcommander", "spotter"].in
 export const getSquadLeaderRole = (squadType) => ({
   infantry: "officer",
   armor: "tankcommander",
-  recon: "spotter"
+  recon: "spotter",
+  artillery: "artilleryobserver",
 })[squadType];
 
 export const getAvailableRoles = (squadType, isLeader) => {
@@ -43,5 +52,6 @@ export const getAvailableRoles = (squadType, isLeader) => {
     if (squadType === "infantry") return r !== "officer";
     if (squadType === "armor") return r === "crewman";
     if (squadType === "recon") return r === "sniper";
+    if (squadType === "artillery") return r !== "artilleryobserver";
   });
 }; 

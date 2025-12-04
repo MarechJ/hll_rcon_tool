@@ -391,7 +391,7 @@ const PlayerGameDetails = ({ player }) => {
         <TableBody>
           {[
             "level",
-            "unit",
+            "unit_name",
             "loadout",
             "team",
             "role",

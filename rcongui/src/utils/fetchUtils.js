@@ -66,10 +66,10 @@ async function handleFetchResponse(req, res, cmd) {
 
   if (isJSON) {
     data = await parseJsonResponse(res);
+    error = data.error;
     if (req.method === "GET") {
       data = data.result;
     }
-    error = data.error;
   } else if (isText) {
     data = await res.text();
   }
@@ -129,7 +129,7 @@ export const cmd = {
   DELETE_VIP: (params) =>
     requestFactory({ method: "POST", cmd: "remove_vip", ...params }),
   DISBAND_SQUAD: (params) =>
-    requestFactory({ method: "POST", cmd: "disband_squad", ...params }),
+    requestFactory({ method: "POST", cmd: "disband_squad_by_name", ...params }),
   EDIT_MESSAGE_TEMPLATE: (params) =>
     requestFactory({ method: "POST", cmd: "edit_message_template", ...params }),
   FLAG_PLAYER: (params) =>
@@ -293,6 +293,12 @@ export const cmd = {
     requestFactory({ method: "GET", cmd: "get_real_vip_config", ...params }),
   GET_SERVER_NAME: (params) =>
     requestFactory({ method: "GET", cmd: "get_name", ...params }),
+  GET_SERVER_NAME_CHANGE_CONFIG: (params) =>
+    requestFactory({
+      method: "GET",
+      cmd: "get_server_name_change_config",
+      ...params,
+    }),
   GET_SERVER_SETTINGS: (params) =>
     requestFactory({ method: "GET", cmd: "get_server_settings", ...params }),
   GET_SERVICES: (params) =>
@@ -409,6 +415,12 @@ export const cmd = {
     requestFactory({ method: "POST", cmd: "set_real_vip_config", ...params }),
   SET_SERVER_NAME: (params) =>
     requestFactory({ method: "POST", cmd: "set_server_name", ...params }),
+  SET_SERVER_NAME_CHANGE_CONFIG: (params) =>
+    requestFactory({
+      method: "POST",
+      cmd: "set_server_name_change_config",
+      ...params,
+    }),
   SET_TEAM_SWITCH_COOLDOWN: (params) =>
     requestFactory({
       method: "POST",

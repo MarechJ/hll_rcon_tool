@@ -8,7 +8,14 @@ from typing import Any, Generator, List, Literal, Sequence
 
 from rcon.connection import Handle, HLLCommandError, HLLConnection, Response
 from rcon.maps import LAYERS, MAPS, UNKNOWN_MAP_NAME, Environment, GameMode, LayerType
-from rcon.types import AdminType, GameStateType, ServerInfoType, SlotsType, VipIdType
+from rcon.types import (
+    AdminType,
+    GameStateType,
+    MapSequenceResponse,
+    ServerInfoType,
+    SlotsType,
+    VipIdType,
+)
 from rcon.utils import exception_in_chain
 
 logger = logging.getLogger(__name__)
@@ -63,28 +70,31 @@ class ServerCtl:
         self.config = config
         self.auto_retry = auto_retry
         self.mu = threading.Lock()
-        self.conn: HLLConnection | None = None
+        self.conns: dict[int, HLLConnection] = {}
 
     @contextmanager
     def with_connection(self) -> Generator[HLLConnection, None, None]:
-        # Not sure if multithreading is still a thing we use...
-        logger.debug("Waiting to acquire lock %s", threading.get_ident())
+        # TODO: Cleanup connections from threads that no longer exist
+
+        thread_id = threading.get_ident()
+        logger.debug("Waiting to acquire lock %s", thread_id)
         if not self.mu.acquire(timeout=30):
             raise TimeoutError()
 
         try:
-            if self.conn is None:
-                self.conn = HLLConnection()
+            conn = self.conns.get(thread_id)
+            if conn is None:
+                conn = HLLConnection()
                 try:
-                    self._connect(self.conn)
+                    self._connect(conn)
                 except Exception:
-                    self.conn = None
                     raise
+                self.conns[thread_id] = conn
         finally:
             self.mu.release()
 
         try:
-            yield self.conn
+            yield conn
         except Exception as e:
             # All other errors, that might be caught (like UnicodeDecodeError) do not really qualify as an error of the
             # connection itself. Instead of reconnecting the existing connection here (conditionally), we simply discard
@@ -94,22 +104,38 @@ class ServerCtl:
             ):
                 logger.warning(
                     "Connection (%s) errored in thread %s: %s, removing",
-                    self.conn.id,
-                    threading.get_ident(),
+                    conn.id,
+                    thread_id,
                     e,
                 )
-                self.conn.close()
-                self.conn = None
+
+                if not self.mu.acquire(timeout=30):
+                    raise TimeoutError()
+
+                try:
+                    conn.close()
+                    self.conns.pop(thread_id, None)
+                finally:
+                    self.mu.release()
+
                 raise
 
             elif exception_in_chain(e, HLLBrokenConnectionError):
                 logger.warning(
                     "Connection (%s) marked as broken in thread %s, removing",
-                    self.conn.id,
-                    threading.get_ident(),
+                    conn.id,
+                    thread_id,
                 )
-                self.conn.close()
-                self.conn = None
+
+                if not self.mu.acquire(timeout=30):
+                    raise TimeoutError()
+
+                try:
+                    conn.close()
+                    self.conns.pop(thread_id, None)
+                finally:
+                    self.mu.release()
+
                 if e.__context__ is not None:
                     raise e.__context__
                 raise
@@ -290,22 +316,7 @@ class ServerCtl:
         ).content_dict["serverName"]
 
     def get_map(self) -> str:
-        # TODO: Currently returns pretty name instead of map name, f.e. "CARENTAN" instead of "carentan_warfare"
-        session = self.exchange(
-            "GetServerInformation", 2, {"Name": "session", "Value": ""}
-        ).content_dict
-        layer = next(
-            (
-                l
-                for l in LAYERS.values()
-                if l.map.name == session["mapName"]
-                and l.game_mode == GameMode(session["gameMode"].lower())
-            ),
-            None,
-        )
-        if not layer:
-            layer = LAYERS[UNKNOWN_MAP_NAME]
-        return layer.id
+        return self.get_gamestate()["current_map"]["id"]
 
     def get_maps(self) -> list[str]:
         details = self.exchange("GetClientReferenceData", 2, "AddMapToRotation")
@@ -352,20 +363,21 @@ class ServerCtl:
         return self.exchange("GetPermanentBans", 2).content_dict["banList"]
 
     def get_team_switch_cooldown(self) -> int:
-        # TODO: Not available right now
-        return 0
+        return self.exchange("GetTeamSwitchCooldown", 2).content_dict["teamSwitchTimer"]
 
     def get_autobalance_threshold(self) -> int:
-        # TODO: Not available right now
-        return 0
+        return self.exchange("GetAutoBalanceThreshold", 2).content_dict[
+            "autoBalanceThreshold"
+        ]
 
     def get_votekick_enabled(self) -> bool:
-        # TODO: Not available right now
-        return False
+        return self.exchange("GetVoteKickEnabled", 2).content_dict["enable"]
 
-    def get_votekick_thresholds(self) -> list[int]:
-        # TODO: Not available right now
-        return []
+    def get_votekick_thresholds(self) -> list[list[int]]:
+        thresholds = self.exchange("GetVoteKickThreshold", 2).content_dict[
+            "voteThresholdList"
+        ]
+        return [[int(x["playerCount"]), int(x["voteThreshold"])] for x in thresholds]
 
     def get_map_rotation(self) -> list[str]:
         return [
@@ -375,14 +387,15 @@ class ServerCtl:
             ).content_dict["mAPS"]
         ]
 
-    def get_map_sequence(self) -> list[str]:
-        # Map[iD] returns '/Game/Maps/driel_offensive_ger'
-        return [
-            x["iD"].split("/")[-1]
-            for x in self.exchange(
-                "GetServerInformation", 2, {"Name": "mapsequence", "Value": ""}
-            ).content_dict["mAPS"]
-        ]
+    def get_map_sequence(self) -> MapSequenceResponse:
+        data = self.exchange(
+            "GetServerInformation", 2, {"Name": "mapsequence", "Value": ""}
+        ).content_dict
+        return {
+            # Map[iD] can be in format as '/Game/Maps/driel_offensive_ger'
+            "maps": [x["iD"].split("/")[-1] for x in data["mAPS"]],
+            "current_index": data["currentIndex"],
+        }
 
     def get_slots(self) -> SlotsType:
         resp = self.exchange(
@@ -395,24 +408,22 @@ class ServerCtl:
         )
 
     def get_vip_ids(self) -> list[VipIdType]:
-        # TODO: Update once VIP comments become obtainable again
         return [
-            VipIdType(player_id=id, name=id)
-            for id in self.exchange(
+            VipIdType(player_id=vip["iD"], name=vip["comment"])
+            for vip in self.exchange(
                 "GetServerInformation", 2, {"Name": "vipplayers", "Value": ""}
-            ).content_dict["vipPlayerIds"]
+            ).content_dict["vipPlayers"]
         ]
 
     def get_admin_groups(self) -> list[str]:
         return self.exchange("GetAdminGroups", 2).content_dict["groupNames"]
 
     def get_autobalance_enabled(self) -> bool:
-        # TODO: Not available right now
-        return False
+        return self.exchange("GetAutoBalanceEnabled", 2).content_dict["enable"]
 
     def get_logs(
         self,
-        since_min_ago: str | int,
+        since_min_ago: int,
         filter_: str = "",
         conn: HLLConnection | None = None,
     ) -> list[str]:
@@ -421,18 +432,20 @@ class ServerCtl:
             for entry in self.exchange(
                 "GetAdminLog",
                 2,
-                {"LogBackTrackTime": since_min_ago, "Filters": filter_},
+                {"LogBackTrackTime": since_min_ago * 60, "Filters": filter_},
                 conn=conn,
             ).content_dict["entries"]
         ]
 
     def get_idle_autokick_time(self) -> int:
-        # TODO: Not available right now
-        return 0
+        return self.exchange("GetKickIdleDuration", 2).content_dict[
+            "idleTimeoutMinutes"
+        ]
 
     def get_max_ping_autokick(self) -> int:
-        # TODO: Not available right now
-        return 0
+        return self.exchange("GetHighPingThreshold", 2).content_dict[
+            "highPingThresholdMs"
+        ]
 
     def get_queue_length(self) -> int:
         # TODO: Verify if this value is updated instantly or after the current session ends or any async time
@@ -647,6 +660,10 @@ class ServerCtl:
         )
 
     @_escape_params
+    def message_all_players(self, message: str) -> bool:
+        return self.exchange_success("MessageAllPlayers", 2, {"Message": message})
+
+    @_escape_params
     def bulk_message_players(self, player_ids: list[str], messages: list[str]) -> bool:
         if len(player_ids) != len(messages):
             raise HLLCommandFailedError(
@@ -664,34 +681,39 @@ class ServerCtl:
         s = self.exchange(
             "GetServerInformation", 2, {"Name": "session", "Value": ""}
         ).content_dict
+        map_sequence = self.get_map_sequence()
 
         time_remaining = timedelta(seconds=int(s["remainingMatchTime"]))
         seconds_remaining = int(time_remaining.total_seconds())
         raw_time_remaining = f"{seconds_remaining // 3600}:{(seconds_remaining // 60) % 60:02}:{seconds_remaining % 60:02}"
 
-        # TODO: next_map is not included in session, map_name is pretty name instead of ID
+        game_mode = GameMode(s["gameMode"].lower())
+
+        try:
+            current_map = LAYERS[s["mapId"].lower()]
+        except Exception:
+            current_map = LAYERS[UNKNOWN_MAP_NAME]
+
+        try:
+            next_map_index = map_sequence["current_index"] + 1
+            if next_map_index >= len(map_sequence["maps"]):
+                next_map_index = 0
+            next_map = map_sequence["maps"][next_map_index]
+        except Exception:
+            next_map = LAYERS[UNKNOWN_MAP_NAME]
+
         return GameStateType(
-            next_map=LAYERS[UNKNOWN_MAP_NAME].model_dump(),
+            next_map=next_map.model_dump(),
             axis_score=s["axisScore"],
+            axis_faction=s["axisFaction"],
+            num_axis_players=s["axisPlayerCount"],
             allied_score=s["alliedScore"],
-            current_map=LayerType(
-                id=s["mapName"],
-                map=next(
-                    (m for m in MAPS.values() if m.name == s["mapName"]),
-                    MAPS[UNKNOWN_MAP_NAME],
-                ).model_dump(),
-                game_mode=s["gameMode"].lower(),
-                attackers=None,
-                environment=Environment.DAY,
-                pretty_name=s["mapName"].capitalize(),
-                image_name="",
-                image_url="",
-            ),
+            allied_faction=s["alliedFaction"],
+            num_allied_players=s["alliedPlayerCount"],
+            current_map=current_map.model_dump(),
             raw_time_remaining=raw_time_remaining,
             time_remaining=time_remaining,
-            num_axis_players=s["axisPlayerCount"],
-            num_allied_players=s["alliedPlayerCount"],
-            game_mode=GameMode(s["gameMode"].lower()),
+            game_mode=game_mode,
             match_time=s["matchTime"],
             queue_count=s["queueCount"],
             max_queue_count=s["maxQueueCount"],
