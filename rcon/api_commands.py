@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from logging import getLogger
 from typing import Any, Dict, Iterable, Literal, Optional, Sequence, Type
 
-from rcon import blacklist, game_logs, maps, player_history, webhook_service
+from rcon import blacklist, game_logs, maps, player_history, vip, webhook_service
 from rcon.audit import ingame_mods, online_mods
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.commands import HLLCommandFailedError
@@ -25,6 +25,7 @@ from rcon.player_history import (
     add_flag_to_player,
     get_players_by_appearance,
     remove_flag,
+    update_player_profile,
 )
 from rcon.player_stats import TimeWindowStats
 from rcon.rcon import Rcon
@@ -44,6 +45,11 @@ from rcon.types import (
     PlayerFlagType,
     PlayerProfileTypeEnriched,
     ServerInfoType,
+    VipListRecordEditType,
+    VipListRecordType,
+    VipListSyncMethod,
+    VipListType,
+    VipListTypeWithRecordsType,
     VoteMapStatusType,
 )
 from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
@@ -55,7 +61,6 @@ from rcon.user_config.auto_mod_solo_tank import AutoModNoSoloTankUserConfig
 from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.chat_commands import ChatCommandsUserConfig
-from rcon.user_config.expired_vips import ExpiredVipsUserConfig
 from rcon.user_config.gtx_server_name import GtxServerNameChangeUserConfig
 from rcon.user_config.legacy_scorebot import ScorebotUserConfig
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
@@ -84,7 +89,7 @@ from rcon.user_config.webhooks import (
     KillsWebhooksUserConfig,
     WatchlistWebhooksUserConfig,
 )
-from rcon.utils import MISSING
+from rcon.utils import MISSING, SERVER_NUMBER, MissingType
 from rcon.vote_map import VoteMap
 from rcon.watchlist import PlayerWatch
 
@@ -1104,41 +1109,6 @@ class RconAPI(Rcon):
             reset_to_default=reset_to_default,
         )
 
-    def get_expired_vip_config(self) -> ExpiredVipsUserConfig:
-        return ExpiredVipsUserConfig.load_from_db()
-
-    def set_expired_vip_config(
-        self,
-        by: str,
-        config: dict[str, Any] | BaseUserConfig | None = None,
-        reset_to_default: bool = False,
-        **kwargs,
-    ) -> bool:
-        return self._validate_user_config(
-            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
-            by=by,
-            model=ExpiredVipsUserConfig,
-            data=config or kwargs,
-            dry_run=False,
-            reset_to_default=reset_to_default,
-        )
-
-    def validate_expired_vip_config(
-        self,
-        by: str,
-        config: dict[str, Any] | BaseUserConfig | None = None,
-        reset_to_default: bool = False,
-        **kwargs,
-    ) -> bool:
-        return self._validate_user_config(
-            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
-            by=by,
-            model=ExpiredVipsUserConfig,
-            data=config or kwargs,
-            dry_run=True,
-            reset_to_default=reset_to_default,
-        )
-
     def get_server_name_change_config(self) -> GtxServerNameChangeUserConfig:
         return GtxServerNameChangeUserConfig.load_from_db()
 
@@ -1988,6 +1958,267 @@ class RconAPI(Rcon):
         """Delete each queue of wh_type (discord, etc.) returning the number of deleted queues"""
         return webhook_service.reset_message_type(message_type=message_type)
 
+    def update_player_profile(
+        self,
+        player_id: str,
+        email: str | MissingType = MISSING,
+        discord_id: str | MissingType = MISSING,
+    ):
+        return update_player_profile(
+            player_id=player_id, email=email, discord_id=discord_id
+        )
+
+    # VIP List Endpoints
+    def get_vip_lists(
+        self, with_records: bool = False
+    ) -> list[VipListType | VipListTypeWithRecordsType]:
+        with enter_session() as sess:
+            return [
+                lst.to_dict(with_records=with_records)
+                for lst in vip.get_vip_lists(sess=sess)
+            ]
+
+    def get_vip_lists_for_server(self) -> list[VipListType]:
+        with enter_session() as sess:
+            return [
+                lst.to_dict()
+                for lst in vip.get_vip_lists_for_server(
+                    sess=sess, server_number=SERVER_NUMBER
+                )
+            ]
+
+    def get_vip_list(
+        self, vip_list_id: int, strict: bool = False, with_records: bool = False
+    ) -> VipListType | None:
+        with enter_session() as sess:
+            new_list = vip.get_vip_list(
+                sess=sess, vip_list_id=vip_list_id, strict=strict
+            )
+            return new_list.to_dict(with_records=with_records) if new_list else None
+
+    def create_vip_list(
+        self, name: str, sync: VipListSyncMethod, servers: Sequence[int] | None
+    ) -> VipListType:
+        return vip.create_vip_list(name=name, sync=sync, servers=servers)
+
+    def edit_vip_list(
+        self,
+        vip_list_id: int,
+        name: str | MissingType = MISSING,
+        sync: VipListSyncMethod | MissingType = MISSING,
+        servers: Sequence[int] | MissingType = MISSING,
+    ) -> VipListType | None:
+        return vip.edit_vip_list(
+            vip_list_id=vip_list_id, name=name, sync=sync, servers=servers
+        )
+
+    def delete_vip_list(self, vip_list_id: int) -> bool:
+        return vip.delete_vip_list(vip_list_id=vip_list_id)
+
+    def get_vip_list_record(
+        self, record_id: int, strict: bool = False
+    ) -> VipListRecordType | None:
+        with enter_session() as sess:
+            record = vip.get_vip_record(sess=sess, record_id=record_id, strict=strict)
+            return record.to_dict() if record else None
+
+    def get_player_vip_list_record(self, player_id: str, vip_list_id: int):
+        return vip.get_player_vip_list_record(
+            player_id=player_id,
+            vip_list_id=vip_list_id,
+        )
+
+    def add_vip_list_record(
+        self,
+        player_id: str,
+        vip_list_id: int,
+        description: str | None = None,
+        active: bool = True,
+        expires_at: datetime | None = None,
+        notes: str | None = None,
+        admin_name: str = "CRCON",
+    ) -> VipListRecordType | None:
+        return vip.add_record_to_vip_list(
+            player_id=player_id,
+            vip_list_id=vip_list_id,
+            description=description,
+            active=active,
+            expires_at=expires_at,
+            notes=notes,
+            admin_name=admin_name,
+        )
+
+    def edit_vip_list_record(
+        self,
+        record_id: int,
+        vip_list_id: int | MissingType = MISSING,
+        description: str | MissingType = MISSING,
+        active: bool | MissingType = MISSING,
+        expires_at: datetime | MissingType = MISSING,
+        notes: str | MissingType = MISSING,
+        admin_name: str = "CRCON",
+    ) -> VipListRecordType | None:
+        return vip.edit_vip_list_record(
+            record_id=record_id,
+            vip_list_id=vip_list_id,
+            description=description,
+            active=active,
+            expires_at=expires_at,
+            notes=notes,
+            admin_name=admin_name,
+        )
+
+    def add_or_edit_vip_list_record(
+        self,
+        player_id: str,
+        vip_list_id: int,
+        description: str | MissingType = MISSING,
+        active: bool | MissingType = MISSING,
+        expires_at: datetime | MissingType = MISSING,
+        notes: str | MissingType = MISSING,
+        admin_name: str = "CRCON",
+    ):
+        return vip.add_or_edit_vip_list_record(
+            player_id=player_id,
+            vip_list_id=vip_list_id,
+            description=description,
+            active=active,
+            expires_at=expires_at,
+            notes=notes,
+            admin_name=admin_name,
+        )
+
+    def bulk_add_vip_list_records(
+        self, records: Iterable[VipListRecordType]
+    ) -> None | defaultdict[str, set[int]]:
+        return vip.bulk_add_vip_records(records=records)
+
+    def bulk_delete_vip_list_records(self, record_ids: Iterable[int]):
+        return vip.bulk_delete_vip_records(record_ids=record_ids)
+
+    def bulk_edit_vip_list_records(
+        self, records: Iterable[VipListRecordEditType]
+    ) -> None:
+        return vip.bulk_edit_vip_records(records=records)
+
+    def delete_vip_list_record(
+        self,
+        record_id: int,
+    ) -> bool:
+        return vip.delete_vip_list_record(record_id=record_id)
+
+    def get_vip_status_for_player_ids(
+        self, player_ids: set[str]
+    ) -> dict[str, VipListRecordType]:
+        return vip.get_vip_status_for_player_ids(player_ids=player_ids)
+
+    def get_active_vip_records(self, vip_list_id: int) -> list[VipListRecordType]:
+        with enter_session() as sess:
+            return [
+                record.to_dict()
+                for record in vip.get_active_vip_records(
+                    sess=sess, vip_list_id=vip_list_id
+                )
+            ]
+
+    def get_inactive_vip_records(self, vip_list_id: int) -> list[VipListRecordType]:
+        with enter_session() as sess:
+            return [
+                record.to_dict()
+                for record in vip.get_inactive_vip_records(
+                    sess=sess, vip_list_id=vip_list_id
+                )
+            ]
+
+    def get_player_vip_records(
+        self,
+        player_id: str,
+        include_expired: bool = True,
+        include_inactive: bool = True,
+        include_other_servers=True,
+        exclude: set[int] | None = None,
+    ) -> list[VipListRecordType]:
+        with enter_session() as sess:
+            return [
+                record.to_dict()
+                for record in vip.get_player_vip_list_records(
+                    sess=sess,
+                    player_id=player_id,
+                    include_expired=include_expired,
+                    include_inactive=include_inactive,
+                    include_other_servers=include_other_servers,
+                    exclude=exclude,
+                )
+            ]
+
+    def get_vip_list_records(
+        self,
+        player_id: str | None = None,
+        # Can't use admin_name without the API introspection will set it
+        # whatever user made the API call
+        author_admin_name: str | None = None,
+        include_active: bool | None = None,
+        description_or_player_name: str | None = None,
+        notes: str | None = None,
+        vip_list_id: int | None = None,
+        exclude_expired: bool = False,
+        page_size: int = 50,
+        page: int = 1,
+    ):
+        # TODO: type this
+        with enter_session() as sess:
+            records, total_records = vip.search_vip_list_records(
+                sess=sess,
+                player_id=player_id,
+                admin_name=author_admin_name,
+                active=include_active,
+                description_or_player_name=description_or_player_name,
+                notes=notes,
+                vip_list_id=vip_list_id,
+                exclude_expired=exclude_expired,
+                page_size=page_size,
+                page=page,
+            )
+
+            return {
+                "records": [record.to_dict(with_vip_list=True) for record in records],
+                "total": total_records,
+            }
+
+    def get_all_vip_records_for_server(
+        self, server_number: int
+    ) -> list[VipListRecordType]:
+        with enter_session() as sess:
+            return [
+                record.to_dict()
+                for record in vip.get_all_records_for_server(
+                    sess=sess, server_number=server_number
+                )
+            ]
+
+    def inactivate_expired_vip_records(self) -> None:
+        return vip.inactivate_expired_records()
+
+    def extend_vip_duration(
+        self, player_id: str, vip_list_id: int, duration: timedelta | int
+    ) -> VipListRecordType | None:
+        return vip.extend_vip_duration(
+            player_id=player_id, vip_list_id=vip_list_id, duration=duration
+        )
+
+    def revoke_all_vip(self, player_id: str):
+        return vip.revoke_all_vip(player_id=player_id)
+
+    def synchronize_with_game_server(self):
+        return vip.synchronize_with_game_server(server_number=SERVER_NUMBER)
+
+    def convert_old_style_vip_records(self, records: Iterable[str], vip_list_id: int):
+        return vip.convert_old_style_vip_records(
+            records=records, vip_list_id=vip_list_id
+        )
+
+    # End VIP List Endpoints
+
     def set_match_timer(self, game_mode: str, length: int):
         super().set_match_timer(maps.GameMode[game_mode.upper()], length)
 
@@ -2004,27 +2235,33 @@ class RconAPI(Rcon):
         team_name, squad_name = team_name.lower(), squad_name.lower()
 
         if team_name != "allies" and team_name != "axis":
-            raise HLLCommandFailedError("Invalid team_name argument. It must be either 'axis' or 'allies'.")
+            raise HLLCommandFailedError(
+                "Invalid team_name argument. It must be either 'axis' or 'allies'."
+            )
         if squad_name == "" or squad_name == "unassigned":
-            raise HLLCommandFailedError("Invalid squad_name argument. It cannot be an empty value or 'unassigned'.")
+            raise HLLCommandFailedError(
+                "Invalid squad_name argument. It cannot be an empty value or 'unassigned'."
+            )
 
         online_players = self.get_detailed_players()["players"]
 
         squad_players = list(
-                online_players[id]
-                for id in online_players
-                if online_players[id]["team"] == team_name
-                and online_players[id]["unit_name"] == squad_name
-            )
+            online_players[id]
+            for id in online_players
+            if online_players[id]["team"] == team_name
+            and online_players[id]["unit_name"] == squad_name
+        )
 
         if not squad_players:
-            raise HLLCommandFailedError(f"Squad {squad_name} was not found in team {team_name}. It might have been disbanded already.")
-        
+            raise HLLCommandFailedError(
+                f"Squad {squad_name} was not found in team {team_name}. It might have been disbanded already."
+            )
+
         for player in squad_players:
             super().remove_player_from_squad(player["player_id"], reason)
 
         return {
             "team_name": team_name,
             "squad_name": squad_name,
-            "msg": f"Successfully disbaned {squad_name} squad in team {team_name}"
+            "msg": f"Successfully disbaned {squad_name} squad in team {team_name}",
         }

@@ -6,8 +6,8 @@ import traceback
 from functools import wraps
 from subprocess import PIPE, run
 from typing import Any, Callable
-import psutil
 
+import psutil
 import pydantic
 from django.http import (
     HttpRequest,
@@ -147,6 +147,7 @@ def get_public_info(request):
         failed=False,
         command="get_public_info",
     )
+
 
 @login_required()
 @csrf_exempt
@@ -410,6 +411,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.add_maps_to_votemap_whitelist: "api.can_add_maps_to_whitelist",
     rcon_api.add_message_template: "api.can_add_message_templates",
     rcon_api.add_vip: "api.can_add_vip",
+    rcon_api.bulk_add_vips: "api.can_add_vip",
     rcon_api.ban_profanities: "api.can_ban_profanities",
     rcon_api.clear_cache: "api.can_clear_crcon_cache",
     rcon_api.delete_message_template: "api.can_delete_message_templates",
@@ -430,6 +432,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.remove_perma_ban: "api.can_remove_perma_bans",
     rcon_api.remove_temp_ban: "api.can_remove_temp_bans",
     rcon_api.remove_vip: "api.can_remove_vip",
+    rcon_api.bulk_remove_vips: "api.can_remove_vip",
     rcon_api.reset_map_votemap_whitelist: "api.can_reset_map_whitelist",
     rcon_api.reset_votekick_thresholds: "api.can_reset_votekick_threshold",
     rcon_api.set_votemap_whitelist: "api.can_set_map_whitelist",
@@ -466,7 +469,6 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.get_map_sequence: "api.can_view_current_map_sequence",
     rcon_api.get_detailed_player_info: "api.can_view_detailed_player_info",
     rcon_api.get_detailed_players: "api.can_view_detailed_players",
-    rcon_api.get_expired_vip_config: "api.get_expired_vip_config",
     rcon_api.get_gamestate: "api.can_view_gamestate",
     rcon_api.get_historical_logs: "api.can_view_historical_logs",
     rcon_api.get_idle_autokick_time: "api.can_view_idle_autokick_time",
@@ -559,7 +561,6 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.set_chat_commands_config: "api.can_change_chat_commands_config",
     rcon_api.set_rcon_chat_commands_config: "api.can_change_rcon_chat_commands_config",
     rcon_api.set_chat_discord_webhooks_config: "api.can_change_chat_discord_webhooks_config",
-    rcon_api.set_expired_vip_config: "api.can_change_expired_vip_config",
     rcon_api.set_idle_autokick_time: "api.can_change_idle_autokick_time",
     rcon_api.set_kills_discord_webhooks_config: "api.can_change_kills_discord_webhooks_config",
     rcon_api.set_log_line_webhook_config: "api.can_change_log_line_discord_webhook_config",
@@ -611,7 +612,6 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.validate_chat_commands_config: "api.can_change_chat_commands_config",
     rcon_api.validate_rcon_chat_commands_config: "api.can_change_rcon_chat_commands_config",
     rcon_api.validate_chat_discord_webhooks_config: "api.can_change_chat_discord_webhooks_config",
-    rcon_api.validate_expired_vip_config: "api.can_change_expired_vip_config",
     rcon_api.validate_kills_discord_webhooks_config: "api.can_change_kills_discord_webhooks_config",
     rcon_api.validate_log_line_webhook_config: "api.can_change_log_line_discord_webhook_config",
     rcon_api.validate_name_kick_config: "api.can_change_name_kick_config",
@@ -661,6 +661,36 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.reset_webhook_queue: "api.can_change_webhook_queues",
     rcon_api.reset_webhook_queue_type: "api.can_change_webhook_queues",
     rcon_api.reset_webhook_message_type: "api.can_change_webhook_queues",
+    rcon_api.update_player_profile: "api.can_change_player_profiles",
+    rcon_api.get_vip_lists: "api.can_view_vip_lists",
+    rcon_api.get_vip_lists_for_server: "api.can_view_vip_lists",
+    rcon_api.get_vip_list: "api.can_view_vip_lists",
+    rcon_api.create_vip_list: "api.can_create_vip_lists",
+    rcon_api.edit_vip_list: "api.can_change_vip_lists",
+    rcon_api.delete_vip_list: "api.can_delete_vip_lists",
+    rcon_api.get_vip_list_record: "api.can_view_vip_lists",
+    rcon_api.add_vip_list_record: "api.can_add_vip_list_records",
+    rcon_api.edit_vip_list_record: "api.can_change_vip_list_records",
+    rcon_api.add_or_edit_vip_list_record: {
+        "api.can_add_vip_list_records",
+        "api.can_change_vip_list_records",
+    },
+    rcon_api.bulk_add_vip_list_records: "api.can_add_vip_list_records",
+    rcon_api.bulk_delete_vip_list_records: "api.can_change_vip_list_records",
+    rcon_api.bulk_edit_vip_list_records: "api.can_change_vip_list_records",
+    rcon_api.delete_vip_list_record: "api.can_delete_vip_lists_records",
+    rcon_api.get_vip_status_for_player_ids: "api.can_view_vip_lists",
+    rcon_api.get_active_vip_records: "api.can_view_vip_lists",
+    rcon_api.get_inactive_vip_records: "api.can_view_vip_lists",
+    rcon_api.get_player_vip_records: "api.can_view_vip_lists",
+    rcon_api.get_player_vip_list_record: "api.can_view_vip_lists",
+    rcon_api.get_vip_list_records: "api.can_view_vip_lists",
+    rcon_api.get_all_vip_records_for_server: "api.can_view_vip_lists",
+    rcon_api.inactivate_expired_vip_records: "api.can_change_vip_list_records",
+    rcon_api.extend_vip_duration: "api.can_change_vip_list_records",
+    rcon_api.revoke_all_vip: "api.can_change_vip_list_records",
+    rcon_api.synchronize_with_game_server: "api.can_change_vip_lists",
+    rcon_api.convert_old_style_vip_records: "api.can_change_vip_lists",
 }
 
 PREFIXES_TO_EXPOSE = [
@@ -723,7 +753,6 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.get_map_sequence: ["GET"],
     rcon_api.get_detailed_player_info: ["GET"],
     rcon_api.get_detailed_players: ["GET"],
-    rcon_api.get_expired_vip_config: ["GET"],
     rcon_api.get_gamestate: ["GET"],
     rcon_api.get_objective_rows: ["GET"],
     rcon_api.get_historical_logs: ["GET", "POST"],
@@ -823,7 +852,6 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.set_chat_commands_config: ["POST"],
     rcon_api.set_rcon_chat_commands_config: ["POST"],
     rcon_api.set_chat_discord_webhooks_config: ["POST"],
-    rcon_api.set_expired_vip_config: ["POST"],
     rcon_api.set_game_layout: ["POST"],
     rcon_api.set_idle_autokick_time: ["POST"],
     rcon_api.set_kills_discord_webhooks_config: ["POST"],
@@ -878,7 +906,6 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.validate_chat_commands_config: ["POST"],
     rcon_api.validate_rcon_chat_commands_config: ["POST"],
     rcon_api.validate_chat_discord_webhooks_config: ["POST"],
-    rcon_api.validate_expired_vip_config: ["POST"],
     rcon_api.validate_kills_discord_webhooks_config: ["POST"],
     rcon_api.validate_log_line_webhook_config: ["POST"],
     rcon_api.validate_log_stream_config: ["POST"],
@@ -919,6 +946,35 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.reset_webhook_queue: ["POST"],
     rcon_api.reset_webhook_queue_type: ["POST"],
     rcon_api.reset_webhook_message_type: ["POST"],
+    rcon_api.update_player_profile: ["POST"],
+    rcon_api.get_vip_lists: ["GET"],
+    rcon_api.get_vip_lists_for_server: ["GET"],
+    rcon_api.get_vip_list: ["GET"],
+    rcon_api.create_vip_list: ["POST"],
+    rcon_api.edit_vip_list: ["POST"],
+    rcon_api.delete_vip_list: ["POST"],
+    rcon_api.get_vip_list_record: ["GET"],
+    rcon_api.add_vip_list_record: ["POST"],
+    rcon_api.edit_vip_list_record: ["POST"],
+    rcon_api.add_or_edit_vip_list_record: ["POST"],
+    rcon_api.bulk_add_vip_list_records: ["POST"],
+    rcon_api.bulk_delete_vip_list_records: ["POST"],
+    rcon_api.bulk_edit_vip_list_records: ["POST"],
+    rcon_api.delete_vip_list_record: ["POST"],
+    rcon_api.get_vip_status_for_player_ids: ["GET"],
+    rcon_api.get_active_vip_records: ["GET"],
+    rcon_api.get_inactive_vip_records: ["GET"],
+    rcon_api.get_player_vip_records: ["GET"],
+    rcon_api.get_player_vip_list_record: ["GET"],
+    rcon_api.get_vip_list_records: ["GET"],
+    rcon_api.get_all_vip_records_for_server: ["GET"],
+    rcon_api.inactivate_expired_vip_records: ["POST"],
+    rcon_api.extend_vip_duration: ["POST"],
+    rcon_api.revoke_all_vip: ["POST"],
+    rcon_api.synchronize_with_game_server: ["POST"],
+    rcon_api.convert_old_style_vip_records: ["POST"],
+    rcon_api.bulk_add_vips: ["POST"],
+    rcon_api.bulk_remove_vips: ["POST"],
 }
 
 # Check to make sure that ENDPOINT_HTTP_METHODS and ENDPOINT_PERMISSIONS have the same endpoints
@@ -946,7 +1002,7 @@ commands = [
     ("get_connection_info", get_connection_info),
     ("get_public_info", get_public_info),
     ("run_raw_command", run_raw_command),
-    ("get_system_usage", get_system_usage)
+    ("get_system_usage", get_system_usage),
 ]
 
 if not os.getenv("HLL_MAINTENANCE_CONTAINER") and not os.getenv(

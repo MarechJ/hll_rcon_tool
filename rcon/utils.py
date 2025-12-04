@@ -30,14 +30,6 @@ class DefaultStringFormat(dict):
         return key
 
 
-INDEFINITE_VIP_DATE = datetime(
-    year=3000,
-    month=1,
-    day=1,
-    tzinfo=timezone.utc,
-)
-
-
 ALL_ROLES = (
     "armycommander",
     "officer",
@@ -286,17 +278,33 @@ class MapsHistory(FixedLenList[MapInfo]):
         ts = end_timestamp or datetime.now().timestamp()
         logger.info("Saving end of map %s at time %s", old_map, ts)
         prev = self.lpop() or MapInfo(
-            name=old_map, start=None, end=None, guessed=True, player_stats=dict(), game_layout=GameLayout
+            name=old_map,
+            start=None,
+            end=None,
+            guessed=True,
+            player_stats=dict(),
+            game_layout=GameLayout,
         )
         prev["end"] = ts
         self.lpush(prev)
         return prev
 
-    def save_new_map(self, new_map, guessed=True, start_timestamp: int = None, game_layout: GameLayout = GameLayout):
+    def save_new_map(
+        self,
+        new_map,
+        guessed=True,
+        start_timestamp: int = None,
+        game_layout: GameLayout = GameLayout,
+    ):
         ts = start_timestamp or datetime.now().timestamp()
         logger.info("Saving start of new map %s at time %s", new_map, ts)
         new = MapInfo(
-            name=new_map, start=ts, end=None, guessed=guessed, player_stats=dict(), game_layout=game_layout
+            name=new_map,
+            start=ts,
+            end=None,
+            guessed=guessed,
+            player_stats=dict(),
+            game_layout=game_layout,
         )
         self.add(new)
         return new
@@ -357,6 +365,13 @@ def get_server_number() -> str:
         raise ValueError("SERVER_NUMBER is not set")
 
     return server_number
+
+
+# Add a quick shorthand for the SERVER NUMBER but don't fail in the maintenance container
+if os.getenv("SERVER_NUMBER"):
+    SERVER_NUMBER = int(get_server_number())
+else:
+    SERVER_NUMBER = 0
 
 
 def exception_in_chain(e: BaseException, c) -> bool:
@@ -605,7 +620,7 @@ def strtobool(val) -> bool:
     if val is None:
         return False
 
-    if isinstance(val, bool):
+    if isinstance(val, bool) or val == MISSING:
         return val
 
     # sourced from https://stackoverflow.com/a/18472142 with modification
@@ -616,3 +631,9 @@ def strtobool(val) -> bool:
         return False
     else:
         raise ValueError("invalid truth value %r" % (val,))
+
+
+def get_server_number_mask():
+    """Calculate server masks for Blacklist/VIP lists"""
+    server_number = SERVER_NUMBER
+    return 1 << (server_number - 1)

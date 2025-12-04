@@ -1,7 +1,7 @@
 import datetime
 import enum
 from dataclasses import dataclass
-from typing import List, Literal, Optional, Sequence
+from typing import List, Literal, NotRequired, Optional, Sequence
 
 # # TODO: On Python 3.11.* specifically, Pydantic requires we use typing_extensions.TypedDict
 # over typing.TypedDict. Once we bump our Python image we can replace this.
@@ -240,12 +240,6 @@ class StatusType(TypedDict):
     server_number: int
 
 
-class VipIdType(TypedDict):
-    player_id: str
-    name: str
-    vip_expiration: datetime.datetime | None
-
-
 class GameServerBanType(TypedDict):
     type: str
     name: str | None
@@ -327,6 +321,8 @@ class BasicPlayerProfileType(TypedDict):
     created: datetime.datetime
     names: list[PlayerNameType]
     steaminfo: Optional[SteamInfoType]
+    email: str | None
+    discord_id: str | None
 
 
 class BlacklistSyncMethod(str, enum.Enum):
@@ -377,6 +373,71 @@ class BlacklistRecordWithBlacklistType(BlacklistRecordType):
 class BlacklistRecordWithPlayerType(BlacklistRecordWithBlacklistType):
     player: BasicPlayerProfileType
     formatted_reason: str
+
+
+class VipListSyncMethod(enum.StrEnum):
+    """Enumeration of available methods for handling unknown VIP players"""
+
+    IGNORE_UNKNOWN = "ignore_unknown"
+    """Ignore any player with VIP on the game server that is not on a VIP list.
+    Players on the list will be handled (active/inactive, expired, etc.) but
+    people may use multiple methods such as BattleMetrics to award VIP and this
+    will prevent those players from losing VIP
+    """
+
+    REMOVE_UNKNOWN = "remove_unknown"
+    """Remove any player with VIP on the game server that is not on a VIP list.
+    This prevents extraneous VIP records from littering the game server, but also
+    prevents people from using any alternate RCON to also award VIP such as BattleMetrics
+    or other custom tools; because CRCON will remove any VIP players it is not tracking
+    """
+
+
+class VipListRecordTypeNoId(TypedDict):
+    """For creating new records which won't have a database ID yet"""
+
+    vip_list_id: int
+    player_id: str
+    admin_name: str
+    is_active: bool
+    is_expired: bool
+    expires_at: datetime.datetime | None
+    description: str | None
+    notes: str | None
+
+
+class VipListRecordType(VipListRecordTypeNoId):
+    """Used once a record has been persisted to the database and has an ID"""
+
+    id: int
+    created_at: datetime.datetime
+    player: BasicPlayerProfileType
+
+
+class VipListRecordWithVipListType(VipListRecordType):
+    vip_list: "VipListType"
+
+
+class VipListRecordEditType(TypedDict):
+    """The editable fields of a VipListRecord"""
+
+    id: int
+    vip_list_id: NotRequired[int]
+    is_active: NotRequired[bool]
+    expires_at: NotRequired[datetime.datetime | None]
+    description: NotRequired[str | None]
+    notes: NotRequired[str | None]
+
+
+class VipListType(TypedDict):
+    id: int
+    name: str
+    sync: VipListSyncMethod
+    servers: list[int] | None
+
+
+class VipListTypeWithRecordsType(VipListType):
+    records: list[VipListRecordType]
 
 
 class PlayerActionType(TypedDict):
@@ -584,11 +645,6 @@ class UserConfigType(TypedDict):
     value: str
 
 
-class PlayerVIPType(TypedDict):
-    server_number: int
-    expiration: datetime.datetime
-
-
 class PlayerProfileType(BasicPlayerProfileType):
     sessions: list[PlayerSessionType]
     sessions_count: int
@@ -598,9 +654,12 @@ class PlayerProfileType(BasicPlayerProfileType):
     penalty_count: PenaltyCountType
     blacklists: list[BlacklistRecordWithBlacklistType]
     is_blacklisted: bool
+    vip_lists: list[VipListRecordWithVipListType]
+    is_vip: bool
     flags: list[PlayerFlagType]
     watchlist: Optional[WatchListType]
-    vips: Optional[list[PlayerVIPType]]
+    email: Optional[str]
+    discord_id: Optional[str]
 
 
 class PlayerProfileTypeEnriched(PlayerProfileType):
@@ -704,7 +763,6 @@ class GameStateType(TypedDict):
     server_name: str
 
 
-
 class VACGameBansConfigType(TypedDict):
     ban_on_vac_history_days: int
     max_game_ban_threshold: int
@@ -712,9 +770,13 @@ class VACGameBansConfigType(TypedDict):
     whitelist_flags: list[str]
 
 
-class VipId(TypedDict):
+class VipIdType(TypedDict):
     player_id: str
     name: str
+
+
+class VipIdWithExpirationType(VipIdType):
+    expires_at: datetime.datetime | None
 
 
 class VoteMapPlayerVoteType(TypedDict):
@@ -880,9 +942,11 @@ class AllMessageTemplateTypes(TypedDict):
     REASON: list[MessageTemplateType]
     WELCOME: list[MessageTemplateType]
 
+
 class MapSequenceResponse(TypedDict):
     maps: list[str]
     current_index: int
+
 
 class GetMapSequence(TypedDict):
     maps: list[Layer]

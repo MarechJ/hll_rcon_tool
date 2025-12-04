@@ -50,7 +50,10 @@ class RconUser(User):
             ("can_set_match_timer", "Can change the match timer"),
             ("can_remove_match_timer", "Can remove the custom match timer"),
             ("can_remove_warmup_timer", "Can remove the custom warmup timer"),
-            ("can_set_dynamic_weather_enabled", "Can enable or disable dynamic weather"),
+            (
+                "can_set_dynamic_weather_enabled",
+                "Can enable or disable dynamic weather",
+            ),
             ("can_add_admin_roles", "Can add HLL game server admin roles to players"),
             ("can_add_map_to_rotation", "Can add a map to the rotation"),
             ("can_add_map_to_whitelist", "Can add a map to the votemap whitelist"),
@@ -314,8 +317,6 @@ class RconUser(User):
                 "can_change_tk_ban_on_connect_config",
                 "Can change team kill ban on connect config",
             ),
-            ("can_view_expired_vip_config", "Can view Expired VIP config"),
-            ("can_change_expired_vip_config", "Can change Expired VIP config"),
             (
                 "can_view_server_name_change_config",
                 "Can view server name change (GSP credentials!) config",
@@ -474,4 +475,15 @@ class RconUser(User):
                 "can_change_watch_killrate_config",
                 "Can change the Watch KillRate config",
             ),
+            ("can_change_player_profiles", "Can make changes to a players profile"),
+            ("can_view_vip_lists", "Can view VIP lists and their records"),
+            ("can_create_vip_lists", "Can create VIP lists"),
+            ("can_change_vip_lists", "Can change VIP lists"),
+            ("can_delete_vip_lists", "Can delete VIP lists"),
+            ("can_add_vip_list_records", "Can add players to VIP lists"),
+            (
+                "can_change_vip_list_records",
+                "Can revoke VIP and edit VIP lists records",
+            ),
+            ("can_delete_vip_lists_records", "Can remove players from VIP lists"),
         )

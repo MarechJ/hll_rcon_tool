@@ -1,6 +1,6 @@
 import { PlayerDetailDrawer } from "@/components/PlayerProfileDrawer";
 import { cmd } from "@/utils/fetchUtils";
-import {createContext, useContext, useMemo, useState} from "react";
+import { createContext, useContext, useMemo, useState } from "react";
 import { useGlobalStore } from "@/stores/global-state";
 import dayjs from "dayjs";
 import { useQuery } from "@tanstack/react-query";
@@ -153,7 +153,7 @@ export const PlayerSidebarProvider = ({ children }) => {
     } else {
       return null;
     }
-    
+
     aPlayer.messages = messages ?? [];
     aPlayer.comments = comments ?? [];
     aPlayer.bans = bans ?? [];
@@ -161,30 +161,24 @@ export const PlayerSidebarProvider = ({ children }) => {
       aPlayer.is_banned = true;
     }
 
-    aPlayer.vip = aPlayer.profile.vips.find(
-      (v) => v.server_number === serverStatus?.server_number
-    );
-    if (aPlayer.vip && (aPlayer.vip.expiration === null || dayjs().isBefore(aPlayer.vip.expiration))) {
-      aPlayer.is_vip = true;
-    }
-
-    // If the player is VIP but doesn't have a VIP object, add one
-    // This is either a bug or a player that has been given VIP from another rcon tool
-    if (aPlayer.is_vip && aPlayer.vip === undefined) {
-      aPlayer.vip = {
-        server_number: serverStatus?.server_number,
-        expiration: null,
-        not_created_by_crcon: true,
-      };
-    }
-
+    aPlayer.is_vip = aPlayer.profile.is_vip;
     aPlayer.player_id = aPlayer.player_id ?? aPlayer.profile.player_id;
     aPlayer.name = aPlayer.name ?? aPlayer.profile.names[0]?.name;
 
     return aPlayer;
-  }, [open, playerId, onlinePlayers, serverStatus, comments, bans, profile, messages]);
+  }, [
+    open,
+    playerId,
+    onlinePlayers,
+    serverStatus,
+    comments,
+    bans,
+    profile,
+    messages,
+  ]);
 
-  const isLoading = isLoadingComments || isLoadingBans || isLoadingProfile || isLoadingMessages;
+  const isLoading =
+    isLoadingComments || isLoadingBans || isLoadingProfile || isLoadingMessages;
 
   const contextValue = useMemo(
     () => ({
@@ -199,7 +193,16 @@ export const PlayerSidebarProvider = ({ children }) => {
       profileError,
       messagesError,
     }),
-    [open, player, playerId, isLoading, commentsError, bansError, profileError, messagesError]
+    [
+      open,
+      player,
+      playerId,
+      isLoading,
+      commentsError,
+      bansError,
+      profileError,
+      messagesError,
+    ]
   );
 
   return (
