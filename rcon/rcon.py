@@ -25,6 +25,7 @@ from rcon.types import (
     GameStateType,
     GetDetailedPlayer,
     GetDetailedPlayers,
+    GetMapSequence,
     GetPlayersType,
     ParsedLogsType,
     PlayerActionState,
@@ -420,7 +421,7 @@ class Rcon(ServerCtl):
 
     def _guess_squad_type(
             self, squad
-    ) -> Literal["armor", "recon", "commander", "infantry"]:
+    ) -> Literal["armor", "recon", "commander", "infantry", "artillery"]:
         for player in squad.get("players", []):
             if player.get("role") in ["tankcommander", "crewman"]:
                 return "armor"
@@ -428,12 +429,14 @@ class Rcon(ServerCtl):
                 return "recon"
             if player.get("role") in ["armycommander"]:
                 return "commander"
+            if player.get("role") in ["artilleryobserver", "artilleryengineer", "artillerysupport"]:
+                return "artillery"
 
         return "infantry"
 
     def _has_leader(self, squad) -> bool:
         for players in squad.get("players", []):
-            if players.get("role") in ["tankcommander", "officer", "spotter"]:
+            if players.get("role") in ["tankcommander", "officer", "spotter", "artilleryobserver"]:
                 return True
         return False
 
@@ -978,9 +981,8 @@ class Rcon(ServerCtl):
         return super().get_votekick_enabled()
 
     @ttl_cache(ttl=60 * 10)
-    def get_votekick_thresholds(self) -> list[tuple[int, int]]:
-        pairs = super().get_votekick_thresholds()
-        return [(int(pair[0]), int(pair[1])) for pair in zip(pairs[0::2], pairs[1::2])]
+    def get_votekick_thresholds(self) -> list[list[int]]:
+        return super().get_votekick_thresholds()
 
     def set_autobalance_enabled(self, value: bool) -> bool:
         with invalidates(self.get_autobalance_enabled):
@@ -1115,8 +1117,9 @@ class Rcon(ServerCtl):
         return maps
 
     @ttl_cache(60 * 5)
-    def get_map_sequence(self) -> list[Layer]:
-        l = super().get_map_sequence()
+    def get_map_sequence(self) -> GetMapSequence:
+        s = super().get_map_sequence()
+        l = s["maps"]
 
         maps: list[Layer] = []
         for map_ in l:
@@ -1124,7 +1127,8 @@ class Rcon(ServerCtl):
                 raise HLLCommandFailedError("Server returned wrong data")
 
             maps.append(parse_layer(map_))
-        return maps
+        s["maps"] = maps
+        return s
 
     def add_map_to_rotation(
             self,

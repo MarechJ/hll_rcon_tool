@@ -258,7 +258,7 @@ export const TeamSection = ({
       }, {});
 
       // Define the order of squad types
-      const typeOrder = ["infantry", "armor", "recon"];
+      const typeOrder = ["infantry", "armor", "recon", "artillery"];
       const squadGroups = typeOrder.reduce((acc, type) => {
         if (grouped[type]?.length > 0) {
           acc.push({
