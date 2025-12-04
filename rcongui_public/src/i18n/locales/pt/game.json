@@ -13,6 +13,8 @@
     "players": "Jogadores",
     "allies": "Aliados",
     "axis": "Eixo",
+    "mixed": "Misto",
+    "unknown": "Desconhecido",
     "weather": {
         "day": "Dia",
         "night": "Noite",
@@ -24,7 +26,10 @@
     "playersTable": {
         "player": "Jogador",
         "team": "Equipe",
+        "awards": "Prêmios",
         "kills": "Abates",
+        "killsByCategory": "Abates por categoria",
+        "deathsByCategory": "Mortes por categoria",
         "deaths": "Mortes",
         "combat": "Combate",
         "score": "Pontuação",
@@ -37,11 +42,31 @@
         "support": "Suporte",
         "utility": "Utilidade",
         "diff": "Diferença",
-        "status": "Status"
+        "status": "Status",
+        "killsPerMinute": "APM",
+        "deathsPerMinute": "MPM",
+        "general": "Geral",
+        "advanced": "Avançado",
+        "ingame": "No jogo"
+    },
+    "weaponType": {
+        "sniper": "Atirador",
+        "infantry": "Infantaria",
+        "explosive": "Explosivo",
+        "bazooka": "Bazuca",
+        "grenade": "Granada",
+        "mine": "Mina",
+        "pak": "PAK",
+        "satchel": "Carga explosiva",
+        "machine_gun": "Metralhadora",
+        "armor": "Blindagem",
+        "commander": "Comandante",
+        "artillery": "Artilharia"
     },
     "matchTable": {
         "match": "Partida",
         "map": "Mapa",
+        "weather": "Clima",
         "mode": "Modo",
         "duration": "Duração",
         "result": "Resultado",
@@ -52,13 +77,117 @@
         "deathsByWeapon": "Mortes por arma",
         "encounters": "Encontros",
         "weapon": "Arma",
-        "count": "Quantidade"
+        "count": "Quantidade",
+        "killDiffByTeamRank": "Diferença de abates por classificação da equipe",
+        "teamRank": "Classificação da equipe",
+        "killDiff": "Diferença de abates",
+        "killsByType": "Abates por tipo",
+        "rank": "Classificação"
     },
     "score": {
         "killstreak": "Sequência de abates",
         "deathstreak": "Sequência de mortes",
         "teamkills": "Fogo amigo",
+        "deathsByTeam": "Mortes por fogo amigo",
         "k/d": "A/M"
+    },
+    "awards": {
+        "kills": {
+            "title": "",
+            "text": "{{amount}} $t(playersTable.kills)"
+        },
+        "kills_streak": {
+            "title": "Chame uma ambulância... Mas não para mim!",
+            "text": "{{amount}} abates seguidos"
+        },
+        "deaths": {
+            "title": "Avançar não importa o que aconteça",
+            "text": "{{amount}} $t(playersTable.deaths)"
+        },
+        "deaths_without_kill_streak": {
+            "title": "Ele precisa de leite",
+            "text": "sequência de mortes de {{amount}}"
+        },
+        "teamkills": {
+            "title": "Eles confiaram em você",
+            "text": "{{amount}} $t(score.teamkills)"
+        },
+        "deaths_by_tk": {
+            "title": "Problemas de confiança",
+            "text": "morreu por fogo amigo {{amount}} vezes"
+        },
+        "kill_death_ratio": {
+            "title": "Vencedor Vencedor Jantar de Frango",
+            "text": "Taxa A/M de {{amount}}"
+        },
+        "support": {
+            "title": "Mão amiga",
+            "text": "{{amount}} pontos de suprimento"
+        },
+        "zero_deaths": {
+            "title": "Sortudo",
+            "text": "não morreu nenhuma vez"
+        },
+        "zero_kills": {
+            "title": "Iniciante",
+            "text": "não matou ninguém"
+        },
+        "kd_of_one": {
+            "title": "Perfeitamente equilibrado, como todas as coisas deveriam ser",
+            "text": "Taxa A/M de 1"
+        },
+        "kills_by_type": {
+            "commander": {
+                "title": "Bombas à vista!",
+                "text": "{{amount}} abates com habilidades de comandante"
+            },
+            "bazooka": {
+                "title": "Homem Foguete",
+                "text": "{{amount}} abates com bazuca"
+            },
+            "grenade": {
+                "title": "Granada vai!",
+                "text": "{{amount}} abates com granadas"
+            },
+            "mine": {
+                "title": "Cuidado onde pisa",
+                "text": "{{amount}} abates com minas"
+            },
+            "pak": {
+                "title": "Canhão grande faz tanque explodir",
+                "text": "{{amount}} abates com PAK"
+            },
+            "satchel": {
+                "title": "Apenas 30 segundos",
+                "text": "{{amount}} abates com cargas explosivas"
+            }
+        },
+        "deaths_by_type": {
+            "machine_gun": {
+                "title": "Ímã de balas",
+                "text": "{{amount}} mortes por metralhadora"
+            },
+            "sniper": {
+                "title": "Alguém pintou um alvo nas suas costas",
+                "text": "{{amount}} mortes por atirador"
+            },
+            "artillery": {
+                "title": "Previsão: chuva pesada",
+                "text": "{{amount}} mortes por artilharia"
+            },
+            "commander": {
+                "title": "É um pássaro. É um avião.",
+                "text": "{{amount}} mortes por habilidades de comandante"
+            },
+            "mine": {
+                "title": "Procurador profissional de minas",
+                "text": "{{amount}} mortes por minas"
+            },
+            "armor": {
+                "title": "Não sobrou muito",
+                "text": "{{amount}} mortes por tanques"
+            }
+        }
     },
     "downloadTable": "Baixar tabela"
 }
