@@ -1,15 +1,14 @@
-import { ActionMenuButton } from "@/features/player-action/ActionMenu";
 import { generatePlayerActions } from "@/features/player-action/actions";
 import {
   Card,
-  CardHeader,
   CardContent,
-  Avatar,
   Stack,
   Divider,
   Typography,
+  Tooltip,
+  CardActions,
+  IconButton,
   Box,
-  Badge,
 } from "@mui/material";
 import StarIcon from "@mui/icons-material/Star";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -17,12 +16,16 @@ import NoAccountsIcon from "@mui/icons-material/NoAccounts";
 import GavelIcon from "@mui/icons-material/Gavel";
 import dayjs from "dayjs";
 import Emoji from "@/components/shared/Emoji";
-import CopyableText from "../CopyableText";
-import { Link } from "react-router-dom";
-import { CountryFlag } from "../CountryFlag";
+import PlayerProfileHeader from "@/components/player/profile/Header";
+import { red, yellow } from "@mui/material/colors";
 
 export default function PlayerCard({ player }) {
-  const name = player.names.length > 0 ? player.names[0].name : "???";
+  const actionList = generatePlayerActions({
+    multiAction: false,
+    onlineAction: player.is_online,
+  });
+
+  const name = player?.account?.name ?? player.names?.[0]?.name ?? player?.soldier?.name ?? "???";
   const avatar = player?.steaminfo?.profile?.avatar ?? name;
   const flags = player?.flags;
   const isWatched = player?.watchlist && player?.watchlist?.is_watched;
@@ -34,67 +37,47 @@ export default function PlayerCard({ player }) {
     "MMM DD, YYYY"
   );
   const lastSeen = dayjs(player.last_seen_timestamp_ms).fromNow();
-  const country = player?.steaminfo?.country;
+  const country =
+    player?.country ?? player?.account?.country ?? player?.steaminfo?.country;
   const totalPlaytime = dayjs
     .duration(player.total_playtime_seconds * 1000)
     .asHours()
     .toFixed(1);
+  const level = player?.level ?? player?.soldier?.level;
+  const platform = player?.platform ?? player?.soldier?.platform;
+  const clanTag = player?.clan_tag ?? player?.soldier?.clan_tag;
 
   return (
-    <Card sx={{ height: "100%", width: "100%" }}>
-      <CardHeader
-        avatar={
-          <Badge
-            overlap="circular"
-            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-            badgeContent={country ? <CountryFlag country={country} /> : null}
-          >
-            <Avatar src={avatar}>{name.charAt(0)}</Avatar>
-          </Badge>
-        }
-        title={
-          <Box
-            component={Link}
-            to={`/records/players/${player.player_id}`}
-            sx={{
-              fontSize: "1rem",
-              color: "text.primary",
-              fontWeight: 500,
-            }}
-          >
-            {name}
-          </Box>
-        }
-        subheader={<CopyableText text={player.player_id} />}
-        subheaderTypographyProps={{
-          fontSize: "0.7rem",
-        }}
-        titleTypographyProps={{
-          fontSize: 18,
-        }}
-        action={
-          <ActionMenuButton
-            withProfile
-            recipients={{
-              player_id: player.player_id,
-              name,
-            }}
-            actions={generatePlayerActions()}
-          />
-        }
-      />
+    <Card>
       <CardContent>
+        <PlayerProfileHeader
+          player={player}
+          isOnline={player.is_online}
+          actionList={actionList}
+          avatar={avatar}
+          name={name}
+          level={level}
+          country={country}
+          platform={platform}
+          clanTag={clanTag}
+        />
         <Stack
-          direction="row"
-          alignItems={"center"}
-          justifyContent={"center"}
+          direction={"row"}
           spacing={1}
-          sx={{ pt: 1, height: 30 }}
+          sx={{
+            justifyContent: "start",
+            height: 30,
+            alignItems: "center",
+            pt: 1,
+            px: 1,
+          }}
         >
-          {flags?.map(({ flag }) => (
-            <Typography key={flag} variant="body" color="text.secondary">
-              <Emoji emoji={flag} size={18} />
-            </Typography>
+          {flags?.map(({ flag, comment, modified }) => (
+            <Tooltip title={comment} key={flag}>
+              <span>
+                <Emoji emoji={flag} size={16} />
+              </span>
+            </Tooltip>
           ))}
         </Stack>
         <Stack
@@ -174,28 +157,42 @@ export default function PlayerCard({ player }) {
             </Typography>
           </Typography>
         </Stack>
-        <Stack
-          direction="row"
-          alignItems={"center"}
-          justifyContent={"center"}
-          divider={<Divider orientation="vertical" flexItem />}
-          spacing={2}
-          sx={{ p: 1 }}
-        >
-          {<StarIcon sx={{ fontSize: 24, opacity: !isVip ? 0.1 : 1 }} />}
-          {
-            <VisibilityIcon
-              sx={{ fontSize: 24, opacity: !isWatched ? 0.1 : 1 }}
-            />
-          }
-          {
-            <NoAccountsIcon
-              sx={{ fontSize: 24, opacity: !isBlacklisted ? 0.1 : 1 }}
-            />
-          }
-          {<GavelIcon sx={{ fontSize: 24, opacity: !isBanned ? 0.1 : 1 }} />}
-        </Stack>
       </CardContent>
+      <CardActions disableSpacing>
+        <IconButton aria-label="add to favorites">
+          <StarIcon
+            sx={{
+              fontSize: 18,
+              opacity: !isVip ? 0.35 : 1,
+              color: isVip && yellow["700"],
+            }}
+          />
+        </IconButton>
+        <IconButton aria-label="share">
+          <VisibilityIcon
+            sx={{ fontSize: 18, opacity: !isWatched ? 0.35 : 1 }}
+          />
+        </IconButton>
+        <IconButton aria-label="share">
+          <NoAccountsIcon
+            sx={{
+              fontSize: 18,
+              opacity: !isBlacklisted ? 0.35 : 1,
+              color: isBlacklisted && red["500"],
+            }}
+          />
+        </IconButton>
+        <IconButton aria-label="share">
+          <GavelIcon
+            sx={{
+              fontSize: 18,
+              opacity: !isBanned ? 0.35 : 1,
+              color: isBanned && red["500"],
+            }}
+          />
+        </IconButton>
+        <Box sx={{ flexGrow: 1 }} />
+      </CardActions>
     </Card>
   );
 }
