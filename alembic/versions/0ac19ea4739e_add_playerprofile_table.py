@@ -53,10 +53,9 @@ def upgrade():
     connection = op.get_bind()
     
     connection.execute(text("""
-        INSERT INTO player_account (playersteamid_id, name, country, is_member, lang, updated)
+        INSERT INTO player_account (playersteamid_id, country, is_member, lang, updated)
         SELECT 
             p.id as playersteamid_id,
-            pn.name as name,
             CASE 
                 WHEN si.country = 'private' THEN NULL
                 ELSE si.country
@@ -65,13 +64,6 @@ def upgrade():
             'en' as lang, 
             NOW() as updated
         FROM steam_id_64 p
-        LEFT JOIN LATERAL (
-            SELECT name 
-            FROM player_names pn 
-            WHERE pn.playersteamid_id = p.id 
-            ORDER BY pn.last_seen DESC 
-            LIMIT 1
-        ) pn ON true
         LEFT JOIN steam_info si ON si.playersteamid_id = p.id
     """))
 
