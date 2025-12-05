@@ -908,10 +908,49 @@ class AllMessageTemplateTypes(TypedDict):
     REASON: list[MessageTemplateType]
     WELCOME: list[MessageTemplateType]
 
+
 class MapSequenceResponse(TypedDict):
     maps: list[str]
     current_index: int
 
+
 class GetMapSequence(TypedDict):
     maps: list[Layer]
     current_index: int
+
+
+class ScoreDataType(TypedDict):
+    cOMBAT: int
+    offense: int
+    defense: int
+    support: int
+
+
+class StatsDataType(TypedDict):
+    teamKills: int
+    vehicleKills: int
+    vehiclesDestroyed: int
+    infantryKills: int
+    deaths: int
+
+
+class WorldPositionType(TypedDict):
+    x: float
+    y: float
+    z: float
+
+
+class PlayerInfoType(TypedDict):
+    iD: str
+    team: int
+    role: int
+    level: int
+    loadout: str
+    name: str
+    platoon: str
+    scoreData: ScoreDataType
+    stats: StatsDataType
+    platform: str
+    clanTag: str
+    eosId: str
+    worldPosition: WorldPositionType
