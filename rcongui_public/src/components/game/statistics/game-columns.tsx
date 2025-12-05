@@ -281,9 +281,21 @@ function pointColumns(completed: boolean): ColumnDef<Player | PlayerWithStatus>[
 const playerColumn = (handlePlayerClick: (id: string) => void): ColumnDef<Player | PlayerWithStatus> => ({
   id: 'player',
   accessorKey: 'player',
-  header: function NameHeader() {
+  header: function NameHeader({ column }) {
     const { t } = useTranslation('game')
-    return <div>{t('playersTable.player')}</div>
+    return (
+      <div className="text-left">
+        <Button
+          variant={'text'}
+          onClick={() => {
+            column.toggleSorting(column.getIsSorted() === 'asc')
+          }}
+          className="px-0"
+        >
+          {t('playersTable.player')}
+        </Button>
+      </div>
+    )
   },
   cell: ({ row }) => {
     const name = String(row.getValue('player'))
