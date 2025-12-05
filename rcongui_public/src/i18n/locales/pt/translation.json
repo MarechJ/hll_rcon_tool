@@ -6,6 +6,8 @@
   "open": "Abrir",
   "close": "Fechar",
   "toggle": "Alternar",
+  "search": "Buscar",
+  "noResultsFound": "Nenhum resultado encontrado.",
   "toggleTheme": "Alternar Tema",
   "get-started": "Começar",
   "made-by": "Feito por",
@@ -23,5 +25,35 @@
       "text": "Próximo",
       "label": "Ir para a próxima página"
     }
+  },
+  "time": {
+    "minuteShort": "min",
+    "weekday": "Dia da semana"
+  },
+  "streaming": {
+    "streamerView": "Visualização de Streamer",
+    "tutorial": {
+      "title": "Tutorial",
+      "introduction": "Esta é uma ferramenta para pessoas que querem fazer stream de Hell Let Loose.",
+      "stepByStep": "Aqui está um guia passo a passo para integrar o banner rolante em sua transmissão:",
+      "openOBS": "abra o OBS",
+      "createSource": "Adicionar fonte -> Navegador -> Criar",
+      "enterFollowingValues": "Digite os seguintes valores",
+      "url": "URL",
+      "width": "Largura",
+      "height": "Altura",
+      "customCSS": "CSS Personalizado (opcional)",
+      "adjustColors": "Ajuste as cores do CSS como desejar, seja com valores hexadecimais ou nomes de cores.",
+      "andSave": "e salve",
+      "crop": "Recorte pressionando a tecla ALT e arrastando as laterais da fonte",
+      "changeSettings": "Clique com o botão direito na fonte -> 'interagir' para alterar as configurações"
+    },
+    "playerCount": "Contagem de jogadores",
+    "cycleDuration": "Duração do ciclo",
+    "pauseWidth": "Largura da pausa",
+    "text": "texto",
+    "showAvatars": "Mostrar avatares",
+    "showWeapons": "Mostrar armas",
+    "hidePlayer": "Ocultar jogadores"
   }
 }
