@@ -186,6 +186,9 @@ class Roles(str, enum.Enum):
     sniper = "sniper"
     tank_commander = "tankcommander"
     crewman = "crewman"
+    artillery_observer = "artilleryobserver"
+    artillery_engineer = "artilleryengineer"
+    artillery_support = "artillerysupport"
 
 
 class InvalidRoleError(ValueError):
@@ -222,6 +225,9 @@ ROLES_TO_LABELS = {
     Roles.sniper: "Sniper",
     Roles.tank_commander: "Tank Commander",
     Roles.crewman: "Crewman",
+    Roles.artillery_observer: "Artillery Observer",
+    Roles.artillery_engineer: "Artillery Engineer",
+    Roles.artillery_support: "Artillery Support",
 }
 
 
@@ -704,7 +710,6 @@ class GameStateType(TypedDict):
     server_name: str
 
 
-
 class VACGameBansConfigType(TypedDict):
     ban_on_vac_history_days: int
     max_game_ban_threshold: int
@@ -879,6 +884,7 @@ class AllMessageTemplateTypes(TypedDict):
     MESSAGE: list[MessageTemplateType]
     REASON: list[MessageTemplateType]
     WELCOME: list[MessageTemplateType]
+
 
 class MapSequenceResponse(TypedDict):
     maps: list[str]
