@@ -2,8 +2,8 @@ import { faker } from '@faker-js/faker';
 import { getSquadLeaderRole, getAvailableRoles } from '../data/roles';
 import { generateProfile } from './profile';
 
-export const generatePlayer = (squadName, squadType, isLeader = false, serverNumber = 1) => {
-  const name = faker.internet.username();
+export const generatePlayer = (squadName, squadType, isLeader = false, serverNumber = 1, clanTag = "") => {
+  const name = clanTag + faker.internet.username();
 
   const steamId = "7656119" + faker.string.numeric(10);
   const otherId = faker.string.alphanumeric({ length: 32, casing: "lower" });

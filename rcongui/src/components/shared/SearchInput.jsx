@@ -7,7 +7,7 @@ const SearchWrapper = styled(Box)({
   display: "flex",
   alignItems: "center",
   justifyContent: "start",
-  minWidth: 250,
+  minWidth: 260,
 });
 
 const StyledInput = styled(InputBase)(({theme}) => ({
