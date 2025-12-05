@@ -501,7 +501,8 @@ def handle_on_connect(
 ):
     try:
         rcon.get_players.cache_clear()
-        rcon.get_player_info.clear_for(player=struct_log["player_id_1"])
+        rcon.get_player_info.clear_for(player_id=struct_log["player_id_1"])
+        rcon.get_detailed_player_info.clear_for(player_id=struct_log["player_id_1"])
     except Exception:
         logger.exception("Unable to clear cache for %s", player_id)
 

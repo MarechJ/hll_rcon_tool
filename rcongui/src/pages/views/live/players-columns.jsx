@@ -196,12 +196,44 @@ export const columns = [
     header: SortableHeader("KPM", "Kills/Min"),
     accessorFn: (row) => {
       const kills = row.kills;
-      const playtime = row.profile.current_playtime_seconds;
+      const playtime = row.map_playtime_seconds;
       if (kills === 0 || playtime === 0) return 0;
       return Number((kills / playtime * 60));
     },
     cell: (props) => {
       return <>{props.getValue()?.toFixed(2)}</>;
+    },
+  },
+  {
+    id: "combat",
+    header: SortableHeader("CE", "Combat Effectiveness"),
+    accessorKey: "combat",
+    cell: ({ row }) => {
+      return <>{row.original.combat}</>;
+    },
+  },
+  {
+    id: "offense",
+    header: SortableHeader("OE", "Offensive Effectiveness"),
+    accessorKey: "offense",
+    cell: ({ row }) => {
+      return <>{row.original.offense}</>;
+    },
+  },
+  {
+    id: "defense",
+    header: SortableHeader("DE", "Defensive Effectiveness"),
+    accessorKey: "defense",
+    cell: ({ row }) => {
+      return <>{row.original.defense}</>;
+    },
+  },
+  {
+    id: "support",
+    header: SortableHeader("SE", "Support Effectiveness"),
+    accessorKey: "support",
+    cell: ({ row }) => {
+      return <>{row.original.support}</>;
     },
   },
   {
