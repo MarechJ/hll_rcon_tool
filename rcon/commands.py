@@ -558,7 +558,7 @@ class ServerCtl:
 
     @_escape_params
     def add_vip(self, player_id: str, description: str) -> bool:
-        return self.exchange_success("AddVip", 2, {"PlayerId": player_id, "Description": description})
+        return self.exchange_success("AddVip", 2, {"PlayerId": player_id, "Comment": description})
 
     def remove_vip(self, player_id) -> bool:
         return self.exchange_success("RemoveVip", 2, {"PlayerId": player_id})

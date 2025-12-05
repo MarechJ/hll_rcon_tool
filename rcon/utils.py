@@ -53,6 +53,9 @@ ALL_ROLES = (
     "crewman",
     "spotter",
     "sniper",
+    "artilleryobserver",
+    "artilleryengineer",
+    "artillerysupport",
 )
 
 ALL_ROLES_KEY_INDEX_MAP = {v: i for i, v in enumerate(ALL_ROLES)}

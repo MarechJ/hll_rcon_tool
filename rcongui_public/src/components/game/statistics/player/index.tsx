@@ -5,7 +5,7 @@ import { points, scores, isSteamPlayer, getSteamProfileUrl, getXboxProfileUrl } 
 import { Button } from '@/components/ui/button'
 import { SimpleIcon } from '@/components/simple-icon'
 import { siSteam } from 'simple-icons'
-import { Gamepad2Icon} from 'lucide-react'
+import { Gamepad2Icon } from 'lucide-react'
 import { SimpleTable } from '@/components/game/statistics/simple-table'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { IconStatistic } from '../icon'
@@ -13,9 +13,8 @@ import { columns as faceoffColumns } from '../faceoff-columns'
 import { deathByColumns, killByColumns } from '../weapons-columns'
 import { mergeKillsDeaths } from '../utils'
 import { useTranslation } from 'react-i18next'
-import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from "@/components/ui/accordion";
-import {AccordionHeader} from "@radix-ui/react-accordion";
-import {useGameStatsContext} from "@/components/game/statistics/game-stats-container";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
+import { useGameStatsContext } from '@/components/game/statistics/game-stats-container'
 
 export default function PlayerGameDetail({
   player,
@@ -41,7 +40,7 @@ export default function PlayerGameDetail({
     : []
   deathsBy.sort((a, b) => b.count - a.count)
 
-  const { focusPlayerByName } = useGameStatsContext();
+  const { focusPlayerByName } = useGameStatsContext()
 
   return (
     <div className="divide-y pb-2 lg:sticky lg:top-14 border">
@@ -53,11 +52,7 @@ export default function PlayerGameDetail({
             ) : isPlayerWithStatus(player) ? (
               <Status player={player} />
             ) : null}
-            <Button
-              variant="text"
-              className="pl-0 h-0 text-xl"
-              onClick={() => focusPlayerByName(player.player)}
-            >
+            <Button variant="text" className="pl-0 h-0 text-xl" onClick={() => focusPlayerByName(player.player)}>
               {player.player}
             </Button>
           </div>
@@ -104,33 +99,21 @@ export default function PlayerGameDetail({
           </section>
           <Accordion type="single" collapsible>
             <AccordionItem value="encounters">
-              <AccordionHeader>
-                <AccordionTrigger>
-                  {t('playerStats.encounters')}
-                </AccordionTrigger>
-              </AccordionHeader>
+              <AccordionTrigger>{t('playerStats.encounters')}</AccordionTrigger>
               <AccordionContent>
-                <SimpleTable columns={faceoffColumns} data={mergeKillsDeaths(player)} initialSortedColumn="kills"/>
+                <SimpleTable columns={faceoffColumns} data={mergeKillsDeaths(player)} initialSortedColumn="kills" />
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="killsByWeapon">
-              <AccordionHeader>
-                <AccordionTrigger>
-                  {t('playerStats.killsByWeapon')}
-                </AccordionTrigger>
-              </AccordionHeader>
+              <AccordionTrigger>{t('playerStats.killsByWeapon')}</AccordionTrigger>
               <AccordionContent>
-                <SimpleTable columns={killByColumns} data={killsBy} initialSortedColumn="count"/>
+                <SimpleTable columns={killByColumns} data={killsBy} initialSortedColumn="count" />
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="deathsByWeapon">
-              <AccordionHeader>
-                <AccordionTrigger>
-                  {t('playerStats.deathsByWeapon')}
-                </AccordionTrigger>
-              </AccordionHeader>
+              <AccordionTrigger>{t('playerStats.deathsByWeapon')}</AccordionTrigger>
               <AccordionContent>
-                <SimpleTable columns={deathByColumns} data={deathsBy} initialSortedColumn="count"/>
+                <SimpleTable columns={deathByColumns} data={deathsBy} initialSortedColumn="count" />
               </AccordionContent>
             </AccordionItem>
           </Accordion>

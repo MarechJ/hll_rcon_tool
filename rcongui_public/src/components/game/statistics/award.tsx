@@ -36,7 +36,7 @@ interface AwardsProps {
 
 export const Awards = memo(({ player }: AwardsProps)=> {
   return <div className="flex row gap-3 justify-end">
-    {player.awards.map(value => <Award stat={value.type} amount={value.amount}/>)}
+    {player.awards.map(value => <Award key={value.type} stat={value.type} amount={value.amount}/>)}
   </div>
 });
 

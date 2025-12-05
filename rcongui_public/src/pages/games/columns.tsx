@@ -54,7 +54,7 @@ export const columns: ColumnDef<ScoreboardMap>[] = [
       const { t } = useTranslation('game')
       return t('matchTable.weather')
     },
-    id: 'map',
+    id: 'weather',
     accessorKey: 'map',
     cell: function MapCell({ cell }) {
       const gameMap = cell.getValue() as MapLayer
@@ -69,7 +69,7 @@ export const columns: ColumnDef<ScoreboardMap>[] = [
       const {t} = useTranslation('game')
       return t('matchTable.mode')
     },
-    id: 'map',
+    id: 'mode',
     accessorKey: 'map',
     cell: function MapCell({cell}) {
       const gameMap = cell.getValue() as MapLayer
@@ -97,6 +97,7 @@ export const columns: ColumnDef<ScoreboardMap>[] = [
       const { t } = useTranslation('translation')
       return t('time.weekday')
     },
+    id: 'weekday',
     accessorKey: 'start',
     cell: ({ cell }) => {
       const globalLocaleData = dayjs.localeData();
@@ -108,6 +109,7 @@ export const columns: ColumnDef<ScoreboardMap>[] = [
       const { t } = useTranslation('game')
       return t('matchTable.start')
     },
+    id: 'start',
     accessorKey: 'start',
     cell: ({ cell }) => dayjsLocal(cell.getValue() as string).format('L LT'),
   },
@@ -116,6 +118,7 @@ export const columns: ColumnDef<ScoreboardMap>[] = [
       const { t } = useTranslation('game')
       return t('matchTable.duration')
     },
+    id: 'duration',
     accessorKey: 'duration',
     cell: ({ row }) => getGameDuration(row.original.start, row.original.end),
   },

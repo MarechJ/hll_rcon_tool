@@ -16,7 +16,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import React, { useEffect, useMemo, useState } from 'react'
 
 import {
-  PlainSelectTrigger,
   Select,
   SelectContent,
   SelectItem,
@@ -26,11 +25,9 @@ import {
 
 import { Player, TeamEnum } from '@/types/player'
 import { useTranslation } from 'react-i18next'
-import { List } from 'lucide-react'
 import { getTeamFromAssociation } from '@/components/game/statistics/utils'
 import { TeamIndicator } from '@/components/game/statistics/team-indicator'
 import SelectBox from '@/components/ui/select-box'
-import { Checkbox } from '@/components/ui/checkbox'
 import { useGameStatsContext } from "@/components/game/statistics/game-stats-container";
 import { useStorageState } from '@/hooks/use-storage-state'
 import { DownloadButton } from "@/components/game/statistics/download-button";
