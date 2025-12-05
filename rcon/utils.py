@@ -13,7 +13,7 @@ import redis.exceptions
 
 from rcon.cache_utils import get_redis_pool
 from rcon.models import GameLayout
-from rcon.types import GetDetailedPlayer, MapInfo
+from rcon.types import GetDetailedPlayer, MapInfo, PlayerInfoType
 
 logger = logging.getLogger("rcon")
 
@@ -417,13 +417,17 @@ def default_player_info_dict() -> GetDetailedPlayer:
         "level": 0,
         "platform": "",
         "eos_id": "",
-        "world_position": {},
+        "world_position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+        },
         "clan_tag": "",
         "map_playtime_seconds": 0,
     }
 
 
-def parse_raw_player_info(raw: dict[str, Any]) -> GetDetailedPlayer:
+def parse_raw_player_info(raw: PlayerInfoType) -> GetDetailedPlayer:
     """Parse the result of the playerinfo command from the game server"""
 
     data = default_player_info_dict()

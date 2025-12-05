@@ -8,7 +8,7 @@ from typing import Generator, Literal, Sequence, Any, List
 
 from rcon.connection import HLLCommandError, HLLConnection, Handle, Response
 from rcon.maps import LAYERS, MAPS, UNKNOWN_MAP_NAME, Environment, GameMode, LayerType
-from rcon.types import MapRotationResponse, MapSequenceResponse, ServerInfoType, SlotsType, VipId, GameStateType, AdminType
+from rcon.types import MapRotationResponse, MapSequenceResponse, PlayerInfoType, ServerInfoType, SlotsType, VipId, GameStateType, AdminType
 from rcon.utils import exception_in_chain
 
 logger = logging.getLogger(__name__)
@@ -310,15 +310,12 @@ class ServerCtl:
         return parameters[0]["valueMember"].split(",")
 
     def get_player_ids(self) -> dict[str, str]:
-        # TODO: Updated function signatures
         return {x["name"]: x["iD"] for x in self.exchange("GetServerInformation", 2, {"Name": "players", "Value": ""}).content_dict["players"]}
 
-    def get_all_player_info(self) -> list[dict[str, Any]]:
-        # TODO: Updated function signatures
+    def get_all_player_info(self) -> list[PlayerInfoType]:
         return self.exchange("GetServerInformation", 2, {"Name": "players", "Value": ""}).content_dict["players"]
 
-    def get_player_info(self, player_id: str) -> dict[str, Any] | None:
-        # TODO: Updated function signatures
+    def get_player_info(self, player_id: str) -> PlayerInfoType | None:
         return self.exchange("GetServerInformation", 2, {"Name": "player", "Value": player_id}).content_dict
 
     def get_admin_ids(self) -> list[AdminType]:
