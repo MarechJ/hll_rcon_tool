@@ -41,12 +41,12 @@ export function MapListItem({ mapLayer }) {
   return <MapListItemBase mapLayer={mapLayer} />;
 }
 
-export function MapChangeListItem({ mapLayer, onClick }) {
+export function MapChangeListItem({ mapLayer, onClick, icon, title }) {
   return (
     <MapListItemBase
       mapLayer={mapLayer}
       renderActions={(mapLayer) => (
-        <Tooltip title="Set as current map">
+        <Tooltip title={title ?? "Set as current map"}>
           <span>
             <IconButton
               sx={{
@@ -60,7 +60,7 @@ export function MapChangeListItem({ mapLayer, onClick }) {
               size="small"
               onClick={() => onClick(mapLayer)}
             >
-              <PlayArrowIcon />
+              {icon ?? <PlayArrowIcon />}
             </IconButton>
           </span>
         </Tooltip>
