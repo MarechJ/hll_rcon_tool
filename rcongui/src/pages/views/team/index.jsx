@@ -24,6 +24,7 @@ import PlaylistRemoveIcon from "@mui/icons-material/PlaylistRemove";
 import UnfoldLessDoubleIcon from "@mui/icons-material/UnfoldLessDouble";
 import UnfoldMoreDoubleIcon from "@mui/icons-material/UnfoldMoreDouble";
 import StickyContainer from "@/components/shared/StickyContainer";
+import DisbandSquadDialog from "@/features/player-action/DisbandSquad";
 
 const TeamViewPage = () => {
   const { data: teams, isFetching } = useQuery({
@@ -51,9 +52,9 @@ const TeamViewPage = () => {
           ...extractTeamState(teams?.axis ?? {}),
           ...(teams?.axis ?? {}),
         },
-        none: {
-          ...extractTeamState(teams?.none ?? {}),
-          ...(teams?.none ?? {}),
+        [UNASSIGNED]: {
+          ...extractTeamState(teams?.[UNASSIGNED] ?? {}),
+          ...(teams?.[UNASSIGNED] ?? {}),
         },
       };
     }
@@ -71,7 +72,7 @@ const TeamViewPage = () => {
     return {
       axisTeam: extractTeamState(teams?.axis, "axis"),
       alliesTeam: extractTeamState(teams?.allies, "allies"),
-      lobbyTeam: extractTeamState(teams?.none, "lobby"),
+      lobbyTeam: extractTeamState(teams?.[UNASSIGNED], "lobby"),
     };
   }, [teams]);
 
@@ -318,6 +319,7 @@ const TeamViewPage = () => {
               </IconButton>
             </span>
           </Tooltip>
+          <DisbandSquadDialog />
           <Box sx={{ flexGrow: 1 }} />
           <Tooltip title="Expand All">
             <span>

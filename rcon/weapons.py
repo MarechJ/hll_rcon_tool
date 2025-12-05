@@ -15,6 +15,7 @@ class WeaponType(Enum):
     Artillery = "artillery"
     Armor = "armor"
     Commander = "commander"
+    SPA = "self_propelled_artillery"
 
 
 SOVIET_WEAPONS = {
@@ -59,6 +60,9 @@ SOVIET_WEAPONS = {
     'COAXIAL DT [IS-1]': WeaponType.Armor,
     'HULL DT [IS-1]': WeaponType.Armor,
     'M2 Browning [M3 Half-track]': WeaponType.Armor,
+    '152MM M-10T [KV-2]': WeaponType.SPA,
+    'HULL DT [KV-2]': WeaponType.SPA,
+    'KV-2': WeaponType.SPA,
 }
 
 BRITISH_WEAPONS = {
@@ -125,6 +129,10 @@ BRITISH_WEAPONS = {
     'OQF 75MM [Churchill Mk.VII]': WeaponType.Armor,
     'COAXIAL BESA 7.92mm [Churchill Mk.VII]': WeaponType.Armor,
     'HULL BESA 7.92mm [Churchill Mk.VII]': WeaponType.Armor,
+    'QF 25 POUNDER [Bishop]': WeaponType.SPA,
+    'Bishop': WeaponType.SPA,
+    'COAXIAL BESA 7.92mm [Sherman SPA 105mm]': WeaponType.SPA,
+    'HULL BESA 7.92mm [Sherman SPA 105mm]': WeaponType.SPA,
 }
 
 US_WEAPONS = {
@@ -173,6 +181,10 @@ US_WEAPONS = {
     'COAXIAL M1919 [Sherman M4A3E2(76)]': WeaponType.Armor,
     'HULL M1919 [Sherman M4A3E2(76)]': WeaponType.Armor,
     'M2 Browning [M3 Half-track]': WeaponType.Armor,
+    'Sherman SPA 105mm': WeaponType.SPA,
+    'OQF 57MM [Sherman SPA 105mm]': WeaponType.SPA,
+    'COAXIAL M1919 [Sherman SPA 105mm]': WeaponType.SPA,
+    'HULL M1919 [Sherman SPA 105mm]': WeaponType.SPA,
 }
 
 AXIS_WEAPONS = {
@@ -222,6 +234,9 @@ AXIS_WEAPONS = {
     'COAXIAL MG34 [Sd.Kfz.181 Tiger 1]': WeaponType.Armor,
     'HULL MG34 [Sd.Kfz.181 Tiger 1]': WeaponType.Armor,
     'MG 42 [Sd.Kfz 251 Half-track]': WeaponType.Armor,
+    'Strumpanzer IV Brummbar': WeaponType.SPA,
+    'OQF 57MM [Strumpanzer IV Brummbar]': WeaponType.SPA,
+    '7.5CM KwK 37 [Sd.Kfz.161 Panzer IV]': WeaponType.Armor,
 }
 
 ALL_WEAPONS = {

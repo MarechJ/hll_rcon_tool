@@ -7,21 +7,15 @@ import {
   Box,
   Divider,
   ListItemIcon,
-  Paper,
-  Stack,
-  styled,
-  Tooltip,
   Typography,
+  Card,
+  Tooltip,
 } from "@mui/material";
 import { useAuth } from "@/hooks/useAuth";
 import { useActionDialog } from "@/hooks/useActionDialog";
 import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
 import PersonIcon from "@mui/icons-material/Person";
-import {useMemo, useState} from "react";
-
-const HorizontalActionMenu = styled(Stack)(({ theme }) => ({
-  width: "fit-content",
-}));
+import { useMemo, useState } from "react";
 
 /**
  * Displays a menu of actions that the user can perform on a player.
@@ -192,7 +186,7 @@ export function ActionMenuButton({
               variant="inherit"
               sx={{ textDecoration: action.deprecated ? "line-through" : "" }}
             >
-              {action.name[0].toUpperCase() + action.name.slice(1)}
+              {action.name}
             </Typography>
           </MenuItem>
         ))}
@@ -201,6 +195,53 @@ export function ActionMenuButton({
         )}
       </Menu>
     </Box>
+  );
+}
+
+export function ActionBar({ actions }) {
+  const { permissions: user } = useAuth();
+  const { openDialog } = useActionDialog();
+  const filteredActionList = useMemo(
+    () => actions.filter(hasPermission(user)),
+    [actions, user]
+  );
+
+  const handleActionClick = (action) => () => {
+    openDialog(action, []);
+  };
+
+  return (
+    <Card
+      sx={{
+        display: "flex",
+        color: "text.secondary",
+        p: 0,
+        gap: 0,
+        [`& .MuiIconButton-root`]: {
+          borderRadius: 0,
+          width: 40,
+          height: 40,
+        },
+        [`& .MuiIconButton-root + .MuiIconButton-root`]: {
+          borderLeft: (theme) => `1px solid ${theme.palette.divider}`,
+        },
+      }}
+    >
+      {filteredActionList.map((action) => (
+        <Tooltip title={action.name} key={action.name}>
+          <span>
+            <IconButton
+              key={action.name}
+              size="small"
+              onClick={handleActionClick(action)}
+              sx={{ opacity: action.deprecated ? 0.5 : 1 }}
+            >
+              {action.icon}
+            </IconButton>
+          </span>
+        </Tooltip>
+      ))}
+    </Card>
   );
 }
 

@@ -8,6 +8,7 @@ from typing import Any, Dict, Iterable, Literal, Optional, Sequence, Type
 from rcon import blacklist, game_logs, maps, player_history, webhook_service
 from rcon.audit import ingame_mods, online_mods
 from rcon.cache_utils import RedisCached, get_redis_pool
+from rcon.commands import HLLCommandFailedError
 from rcon.discord import audit_user_config_differences
 from rcon.gtx import GTXFtp
 from rcon.message_templates import (
@@ -1990,14 +1991,40 @@ class RconAPI(Rcon):
     def set_match_timer(self, game_mode: str, length: int):
         super().set_match_timer(maps.GameMode[game_mode.upper()], length)
 
-
     def remove_match_timer(self, game_mode: str):
         super().remove_match_timer(maps.GameMode[game_mode.upper()])
-
 
     def set_warmup_timer(self, game_mode: str, length: int):
         super().set_warmup_timer(maps.GameMode[game_mode.upper()], length)
 
-
     def remove_warmup_timer(self, game_mode: str):
         super().remove_warmup_timer(maps.GameMode[game_mode.upper()])
+
+    def disband_squad_by_name(self, team_name: str, squad_name: str, reason: str):
+        team_name, squad_name = team_name.lower(), squad_name.lower()
+
+        if team_name != "allies" and team_name != "axis":
+            raise HLLCommandFailedError("Invalid team_name argument. It must be either 'axis' or 'allies'.")
+        if squad_name == "" or squad_name == "unassigned":
+            raise HLLCommandFailedError("Invalid squad_name argument. It cannot be an empty value or 'unassigned'.")
+
+        online_players = self.get_detailed_players()["players"]
+
+        squad_players = list(
+                online_players[id]
+                for id in online_players
+                if online_players[id]["team"] == team_name
+                and online_players[id]["unit_name"] == squad_name
+            )
+
+        if not squad_players:
+            raise HLLCommandFailedError(f"Squad {squad_name} was not found in team {team_name}. It might have been disbanded already.")
+        
+        for player in squad_players:
+            super().remove_player_from_squad(player["player_id"], reason)
+
+        return {
+            "team_name": team_name,
+            "squad_name": squad_name,
+            "msg": f"Successfully disbaned {squad_name} squad in team {team_name}"
+        }

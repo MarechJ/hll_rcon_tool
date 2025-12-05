@@ -100,13 +100,15 @@ export const columns = [
       return (
         <Center>
           <Square>
-            <img
-              src={`/icons/teams/${teamToNation(row.original.team)}.webp`}
-              width={16}
-              height={16}
-              alt={row.original.team}
-              title={row.original.team}
-            />
+            {row.original.team ? (
+              <img
+                src={`/icons/teams/${teamToNation(row.original.team)}.webp`}
+                width={16}
+                height={16}
+                alt={row.original.team}
+                title={row.original.team}
+              />
+            ) : "-"}
           </Square>
         </Center>
       );
@@ -125,7 +127,9 @@ export const columns = [
       return (
         <Center>
           <Square>
-            {row.original.unit_name?.charAt(0)?.toUpperCase() ?? "-"}
+            {row.original.unit_name !== "unassigned"
+              ? row.original.unit_name?.charAt(0)?.toUpperCase()
+              : "-"}
           </Square>
         </Center>
       );
@@ -198,6 +202,38 @@ export const columns = [
     },
     cell: (props) => {
       return <>{props.getValue()?.toFixed(2)}</>;
+    },
+  },
+  {
+    id: "combat",
+    header: SortableHeader("CE", "Combat Effectiveness"),
+    accessorKey: "combat",
+    cell: ({ row }) => {
+      return <>{row.original.combat}</>;
+    },
+  },
+  {
+    id: "offense",
+    header: SortableHeader("OE", "Offensive Effectiveness"),
+    accessorKey: "offense",
+    cell: ({ row }) => {
+      return <>{row.original.offense}</>;
+    },
+  },
+  {
+    id: "defense",
+    header: SortableHeader("DE", "Defensive Effectiveness"),
+    accessorKey: "defense",
+    cell: ({ row }) => {
+      return <>{row.original.defense}</>;
+    },
+  },
+  {
+    id: "support",
+    header: SortableHeader("SE", "Support Effectiveness"),
+    accessorKey: "support",
+    cell: ({ row }) => {
+      return <>{row.original.support}</>;
     },
   },
   {

@@ -1,18 +1,17 @@
 import json
 import logging
-import os
 import random
 import re
 import time
-from concurrent.futures import Future, ThreadPoolExecutor, as_completed
-from datetime import datetime, timedelta, timezone
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
 from functools import cached_property
 from itertools import chain
-from time import sleep
 from typing import Any, Iterable, List, Literal, Optional, Sequence, overload
 
 from dateutil import parser
 
+from rcon.connection import HLLCommandError
 import rcon.steam_utils
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import HLLCommandFailedError, ServerCtl, VipId
@@ -27,6 +26,7 @@ from rcon.types import (
     GameStateType,
     GetDetailedPlayer,
     GetDetailedPlayers,
+    GetMapSequence,
     GetPlayersType,
     ParsedLogsType,
     PlayerActionState,
@@ -53,6 +53,7 @@ from rcon.utils import (
 PLAYER_ID = "player_id"
 NAME = "name"
 ROLE = "role"
+UNASSIGNED = "unassigned"
 
 TEMP_BAN = "temp"
 PERMA_BAN = "perma"
@@ -228,6 +229,8 @@ class Rcon(ServerCtl):
     def run_in_pool(self, function_name: str, *args, **kwargs):
         return self.thread_pool.submit(getattr(self, function_name), *args, **kwargs)
 
+    # TODO
+    # When returns value from the cache it is always {}
     @ttl_cache(ttl=5)
     def get_players(self) -> list[GetPlayersType]:
         player_ids = {
@@ -311,15 +314,13 @@ class Rcon(ServerCtl):
         fail_count = detailed_players["fail_count"]
 
         for player in players_by_id.values():
-            player_id = player[PLAYER_ID]
-
-            teams.setdefault(player.get("team"), {}).setdefault(
-                player.get("unit_name"), {}
-            ).setdefault("players", []).append(player)
+            team_name = player.get("team") if player.get("team") is not None else UNASSIGNED
+            team = teams.setdefault(team_name, {})
+            squad = team.setdefault(player.get("unit_name"), {})
+            squad_players = squad.setdefault("players", [])
+            squad_players.append(player)
 
         for team, squads in teams.items():
-            if team is None:
-                continue
             for squad_name, squad in squads.items():
                 squad["players"] = sorted(
                     squad["players"],
@@ -343,8 +344,6 @@ class Rcon(ServerCtl):
 
         game = {}
         for team, squads in teams.items():
-            if team is None:
-                continue
             commander = [
                 squad for _, squad in squads.items() if squad["type"] == "commander"
             ]
@@ -388,7 +387,7 @@ class Rcon(ServerCtl):
         return super().get_admin_groups()
 
     def get_logs(
-            self, since_min_ago: str | int, filter_: str = "", by: str = ""
+            self, since_min_ago: int, filter_: str = "", by: str = ""
     ) -> list[str]:
         """Returns raw text logs from the game server with no parsing performed
 
@@ -426,7 +425,7 @@ class Rcon(ServerCtl):
 
     def _guess_squad_type(
             self, squad
-    ) -> Literal["armor", "recon", "commander", "infantry"]:
+    ) -> Literal["armor", "recon", "commander", "infantry", "artillery"]:
         for player in squad.get("players", []):
             if player.get("role") in ["tankcommander", "crewman"]:
                 return "armor"
@@ -434,25 +433,30 @@ class Rcon(ServerCtl):
                 return "recon"
             if player.get("role") in ["armycommander"]:
                 return "commander"
+            if player.get("role") in ["artilleryobserver", "artilleryengineer", "artillerysupport"]:
+                return "artillery"
 
         return "infantry"
 
     def _has_leader(self, squad) -> bool:
         for players in squad.get("players", []):
-            if players.get("role") in ["tankcommander", "officer", "spotter"]:
+            if players.get("role") in ["tankcommander", "officer", "spotter", "artilleryobserver"]:
                 return True
         return False
 
     @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
     def get_player_info(self, player_id: str, can_fail=False):
         try:
-            player = super().get_player_info(player_id, can_fail=can_fail)
-            if not player:
+            try:
+                player = super().get_player_info(player_id)
+            except HLLCommandError:
                 return {}
 
             profile = rcon.steam_utils.get_steam_profile(steam_id_64=player_id)
 
         except (HLLCommandFailedError, ValueError):
+            # TODO: What's going on here? Why do we have the `can_fail` arg even?
+
             # Making that debug instead of exception as it's way to spammy
             logger.exception("Can't get player info for %s", player_id)
             # logger.exception("Can't get player info for %s", player)
@@ -475,9 +479,10 @@ class Rcon(ServerCtl):
 
     @ttl_cache(ttl=2, cache_falsy=False)
     def get_detailed_player_info(self, player_id: str, player: GetPlayersType | None = None) -> GetDetailedPlayer:
-        raw = super().get_player_info(player_id, can_fail=False)
-        if not raw:
-            raise HLLCommandFailedError("Got bad data")
+        try:
+            raw = super().get_player_info(player_id)
+        except HLLCommandError:
+            raise HLLCommandFailedError("Player is not online")
         return self._get_detailed_player_info(player_id, raw, player)
 
     def _get_detailed_player_info(self, player_id: str, raw: dict[str, Any],
@@ -984,9 +989,8 @@ class Rcon(ServerCtl):
         return super().get_votekick_enabled()
 
     @ttl_cache(ttl=60 * 10)
-    def get_votekick_thresholds(self) -> list[tuple[int, int]]:
-        pairs = super().get_votekick_thresholds()
-        return [(int(pair[0]), int(pair[1])) for pair in zip(pairs[0::2], pairs[1::2])]
+    def get_votekick_thresholds(self) -> list[list[int]]:
+        return super().get_votekick_thresholds()
 
     def set_autobalance_enabled(self, value: bool) -> bool:
         with invalidates(self.get_autobalance_enabled):
@@ -1121,8 +1125,9 @@ class Rcon(ServerCtl):
         return maps
 
     @ttl_cache(60 * 5)
-    def get_map_sequence(self) -> list[Layer]:
-        l = super().get_map_sequence()
+    def get_map_sequence(self) -> GetMapSequence:
+        s = super().get_map_sequence()
+        l = s["maps"]
 
         maps: list[Layer] = []
         for map_ in l:
@@ -1130,7 +1135,8 @@ class Rcon(ServerCtl):
                 raise HLLCommandFailedError("Server returned wrong data")
 
             maps.append(parse_layer(map_))
-        return maps
+        s["maps"] = maps
+        return s
 
     def add_map_to_rotation(
             self,

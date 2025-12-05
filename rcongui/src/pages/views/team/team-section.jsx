@@ -21,7 +21,7 @@ import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import useTheme from "@mui/material/styles/useTheme";
 
-export const UNASSIGNED = "null";
+export const UNASSIGNED = "unassigned";
 
 const PlayerStats = ({ player }) => (
   <>
@@ -258,7 +258,7 @@ export const TeamSection = ({
       }, {});
 
       // Define the order of squad types
-      const typeOrder = ["infantry", "armor", "recon"];
+      const typeOrder = ["infantry", "armor", "recon", "artillery"];
       const squadGroups = typeOrder.reduce((acc, type) => {
         if (grouped[type]?.length > 0) {
           acc.push({

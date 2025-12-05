@@ -404,6 +404,9 @@ def default_player_info_dict(player) -> GetDetailedPlayer:
         "role": None,
         "kills": 0,
         "deaths": 0,
+        "team_kills": 0,
+        "vehicle_kills": 0,
+        "vehicles_destroyed": 0,
         "combat": 0,
         "offense": 0,
         "defense": 0,
@@ -424,15 +427,26 @@ def parse_raw_player_info(raw: dict[str, Any], player) -> GetDetailedPlayer:
     # Remap keys and parse values
     data[PLAYER_ID] = raw["iD"]
 
-    faction = hllrcon.data.Faction.by_id(raw["team"])
-    role = hllrcon.data.Role.by_id(raw["role"])
+    try:
+        faction = hllrcon.data.Faction.by_id(raw["team"])
+    except ValueError:
+        logger.exception("Unknown team %s", raw["team"])
+        faction = None
+    try:
+        role = hllrcon.data.Role.by_id(raw["role"])
+    except ValueError:
+        logger.exception("Unknown role %s", raw["role"])
+        role = None
 
     data["team"] = faction.team.name.lower() if faction else None
     data["role"] = role.name.lower() if role else None
     data["loadout"] = raw["loadout"].lower()
     data["level"] = int(raw["level"])
-    data["kills"] = int(raw["kills"])
-    data["deaths"] = int(raw["deaths"])
+    data["kills"] = int(raw["stats"]["infantryKills"])
+    data["deaths"] = int(raw["stats"]["deaths"])
+    data["team_kills"] = int(raw["stats"]["teamKills"])
+    data["vehicle_kills"] = int(raw["stats"]["vehicleKills"])
+    data["vehicles_destroyed"] = int(raw["stats"]["vehiclesDestroyed"])
 
     if role is hllrcon.data.Role.COMMANDER:
         data["unit_id"], data["unit_name"] = (-1, "command")
