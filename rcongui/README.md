@@ -48,7 +48,13 @@ Beware of the trailing slashes.
 - `VITE_CRCON_API_ENDPOINT`: The API endpoint of your CRCON server
 - `VITE_CRCON_SERVER_URL`: The URL of your CRCON server
 
-5. Start the development server:
+5. Import assets(images, favicon, ...)
+
+```bash
+npm run copy-assets
+```
+
+6. Start the development server:
 
 ```bash
 npm run dev

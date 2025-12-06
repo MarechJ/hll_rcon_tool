@@ -10,6 +10,8 @@ COPY rcongui/ .
 RUN npm ci
 ENV REACT_APP_API_URL=/api/
 COPY .git/ .git/
+COPY assets/images/ /code/public
+COPY assets/rcongui/ /code/public
 RUN git describe --tags > /code/tag_version && rm -rf .git
 RUN npx browserslist@latest --update-db
 RUN npm run build
@@ -18,8 +20,11 @@ RUN mv /code/dist /www
 FROM $buildImage AS publicbuild
 
 WORKDIR /code_public
+
 COPY rcongui_public/ .
 RUN npm ci
+COPY assets/images/ /code_public/public
+COPY assets/rcongui_public/ /code_public/public
 RUN npm run build
 RUN mv /code_public/dist /www_public
 
@@ -27,6 +32,7 @@ FROM nginx:mainline-alpine
 
 RUN apk add --no-cache openssl
 COPY rcongui/nginx.conf /etc/nginx/conf.d/default.conf
+
 WORKDIR /var/www
 
 RUN mkdir /var/www_public/

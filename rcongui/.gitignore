@@ -1,5 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# All public files are copied from /assets during build time
+public/
+
 # dependencies
 /node_modules
 /.pnp
