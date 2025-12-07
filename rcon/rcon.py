@@ -265,9 +265,15 @@ class Rcon(ServerCtl):
     def get_detailed_players(self) -> GetDetailedPlayers:
         try:
             current_map_start = MapsHistory()[0]["start"]
+            if not current_map_start:
+                current_map_start = datetime.now(timezone.utc).timestamp()
         except IndexError:
             logger.error("No maps information available")
-            current_map_start = int(datetime.now(timezone.utc).timestamp())
+            current_map_start = datetime.now(timezone.utc).timestamp()
+
+        map_time_seconds = (
+            int(datetime.now(timezone.utc).timestamp() - current_map_start)
+        )
 
         players = self.get_players()
         fail_count = 0
@@ -277,10 +283,6 @@ class Rcon(ServerCtl):
             p["iD"]: p
             for p in super().get_all_player_info()
         }
-
-        map_time_seconds = (
-            int(datetime.now(timezone.utc).timestamp()) - current_map_start
-        )
 
         for player in players:
             player_id = player[PLAYER_ID]
@@ -296,9 +298,14 @@ class Rcon(ServerCtl):
                 player_data = default_player_info_dict(player[NAME])
 
             player_data.update(player)  # type: ignore
-            player_data["map_playtime_seconds"] = min(
-                player_data["profile"]["current_playtime_seconds"], map_time_seconds
-            )
+            
+            if player_data["profile"]:
+                player_data["map_playtime_seconds"] = min(
+                    player_data["profile"]["current_playtime_seconds"], map_time_seconds
+                )
+            else:
+                player_data["map_playtime_seconds"] = map_time_seconds
+
             players_by_id[player_id] = player_data
 
         return {

@@ -419,6 +419,7 @@ def default_player_info_dict(player) -> GetDetailedPlayer:
         "eos_id": "",
         "world_position": {},
         "clan_tag": "",
+        "map_playtime_seconds": 0,
     }
 
 

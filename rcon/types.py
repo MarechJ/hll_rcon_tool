@@ -638,6 +638,7 @@ class GetDetailedPlayer(TypedDict):
     eos_id: str
     world_position: dict[str, float]
     clan_tag: str
+    map_playtime_seconds: int
 
 
 class GetDetailedPlayers(TypedDict):
