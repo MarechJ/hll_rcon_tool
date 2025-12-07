@@ -15,7 +15,7 @@ export const KillCategoryChart = ({stats, handlePlayerClick}: {
   const axisPlayers = stats.filter(player => player.team.side === TeamEnum.AXIS).sort((a, b) => b.kills - a.kills);
   const alliesPlayers = stats.filter(player => player.team.side === TeamEnum.ALLIES).sort((a, b) => b.kills - a.kills);
 
-  const displayedTypes = [WeaponType.Infantry, WeaponType.MachineGun, WeaponType.Artillery, WeaponType.Armor, WeaponType.Sniper, WeaponType.Commander, WeaponType.Grenade, WeaponType.Bazooka, WeaponType.Satchel, WeaponType.Mine, WeaponType.PAK]
+  const displayedTypes = [WeaponType.Infantry, WeaponType.MachineGun, WeaponType.Artillery, WeaponType.SPA, WeaponType.Armor, WeaponType.Sniper, WeaponType.Commander, WeaponType.Grenade, WeaponType.Bazooka, WeaponType.Satchel, WeaponType.Mine, WeaponType.PAK]
 
   return (
     <>
