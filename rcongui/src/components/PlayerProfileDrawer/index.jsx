@@ -180,12 +180,6 @@ const ProfileError = ({ error, onClose }) => (
 
 const PlayerDetails = ({ player, onClose }) => {
   const [openedTab, setOpenedTab] = useState("profile");
-  const { openDialog } = useActionDialog();
-
-  const handleActionClick = (recipients) => (action) => {
-    openDialog(action, recipients);
-  };
-
   const handleTabChange = (event, newValue) => {
     setOpenedTab(newValue);
   };
@@ -210,7 +204,6 @@ const PlayerDetails = ({ player, onClose }) => {
         player={player}
         isOnline={isOnline}
         onClose={onClose}
-        handleActionClick={handleActionClick([player])}
         actionList={actionList}
         avatar={avatar}
         name={name}

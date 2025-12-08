@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { generateSquad } from './squad';
+import { generateEmptySquad, generateSquad } from './squad';
 import { generatePlayer } from './player';
 
 const SPECIAL_USERNAMES = [
@@ -41,6 +41,10 @@ export const generateTeam = () => {
     specialPlayer.name = specialName;
     squadData.players.push(specialPlayer);
   });
+
+  // Generate clan squad
+  const clanTag = faker.helpers.arrayElement(["VLKㆍ", "(WTH) ", "|HTD| ", "◯ | ", "[fll.fi] "])
+  state.squads.george = generateSquad("george", "infantry", clanTag)
 
   // Calculate team totals
   Object.values(state.squads).forEach(squad => {
