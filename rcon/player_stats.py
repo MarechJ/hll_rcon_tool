@@ -150,6 +150,20 @@ class BaseStats:
     def _get_player_first_appearance(self, player):
         raise NotImplementedError("_get_player_first_appearance")
 
+    def _add_stats(self, l, stats, p, streaks):
+        actions_processors = {
+            "KILL": self._add_kill,
+            "TEAM KILL": self._add_tk,
+            "VOTE STARTED": self._add_vote_started,
+            "VOTE": self._add_vote,
+        }
+
+        action = l["action"]
+        processor = actions_processors.get(action, lambda **kargs: None)
+        processor(stats=stats, player=p, log=l)
+        self._streaks_accumulator(p, l, stats, streaks)
+        return self._compute_stats(stats)
+
     def get_stats_by_player(
         self,
         indexed_logs: dict[str, list[StructuredLogLineWithMetaData]],
@@ -162,12 +176,6 @@ class BaseStats:
         """
         stats_by_player = {}
 
-        actions_processors = {
-            "KILL": self._add_kill,
-            "TEAM KILL": self._add_tk,
-            "VOTE STARTED": self._add_vote_started,
-            "VOTE": self._add_vote,
-        }
         for p in players:
             logger.debug("Crunching stats for %s", p)
             player_logs: list[StructuredLogLineWithMetaData] = indexed_logs.get(
@@ -210,13 +218,17 @@ class BaseStats:
             streaks = Streaks()
             # player_p = p
             # import ipdb; ipdb.set_trace()
-            for l in player_logs:
-                action = l["action"]
-                processor = actions_processors.get(action, lambda **kargs: None)
-                processor(stats=stats, player=p, log=l)
-                self._streaks_accumulator(p, l, stats, streaks)
-
-            stats_by_player[p["name"]] = self._compute_stats(stats)
+            if stats_by_player.get(p[PLAYER_ID]) == None:
+                # Player with that ID does not exist yet, so calculate the stats normal
+                for l in player_logs:
+                    stats_by_player[p[PLAYER_ID]] = self._add_stats(l, stats, p, streaks)
+            else:
+                # Player DOES already exist with that ID, so search for old player and add stuff to it.
+                # This only occurs, if a player changed its nickname midgame and rejoined.
+                for l in player_logs:
+                    oldp = next((oldp for oldp in players if oldp["player_id"] == p["player_id"] and oldp["name"] != p["name"]), None)
+                    old_stats = stats_by_player[p[PLAYER_ID]]
+                    stats_by_player[p[PLAYER_ID]] = self._add_stats(l, old_stats, oldp, streaks)
 
         return stats_by_player
 
