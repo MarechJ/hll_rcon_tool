@@ -28,6 +28,7 @@ def mock_get_detailed_player(
     level=1,
     is_vip=False,
     profile=None,
+    map_playtime_seconds=0,
 ) -> GetDetailedPlayer:
     return {
         "name": name,
@@ -53,6 +54,7 @@ def mock_get_detailed_player(
         "support": support,
         "is_vip": is_vip,
         "profile": profile,
+        "map_playtime_seconds": map_playtime_seconds,
     }
 
 
