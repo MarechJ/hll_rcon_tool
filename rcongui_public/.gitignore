@@ -1,6 +1,9 @@
 # Created by https://www.toptal.com/developers/gitignore/api/macOS,node
 # Edit at https://www.toptal.com/developers/gitignore?templates=macOS,node
 
+# All public files are copied from /assets during build time
+public/
+
 ### macOS ###
 # General
 .DS_Store

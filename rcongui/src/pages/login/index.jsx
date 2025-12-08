@@ -167,7 +167,7 @@ export default function Login() {
 
   return (
     <ThemeProvider theme={createTheme(getDefaultTheme())}>
-      <HeroImage src="/hll15.webp" alt="" />
+      <HeroImage src="/login_banner.webp" alt="" />
       <Wrapper>
         <HeroImageWrapper></HeroImageWrapper>
         <MainWrapper>
