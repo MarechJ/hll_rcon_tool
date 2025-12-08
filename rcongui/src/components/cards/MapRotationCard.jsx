@@ -13,7 +13,7 @@ const MapRotationCard = () => {
   return (
     <ScrollableCard sx={{ height: "100%" }} title="Map Rotation">
       <Stack divider={<Divider sx={{ my: 0.2 }} />}>
-        {mapRotation.map((map) => (
+        {mapRotation.maps.map((map) => (
           <MapDetailsCardCompact key={map.id} mapLayer={map} />
         ))}
       </Stack>

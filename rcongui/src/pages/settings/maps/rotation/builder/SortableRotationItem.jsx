@@ -1,10 +1,10 @@
-import { Box, IconButton, Tooltip } from "@mui/material";
+import { Box, Chip, IconButton, Stack, Tooltip } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { MapDetailsCard } from "../../MapDetailsCard";
 
-function SortableRotationItem({ item, onRemove }) {
+function SortableRotationItem({ item, onRemove, isNext }) {
   const {
     attributes,
     listeners,
@@ -64,13 +64,14 @@ function SortableRotationItem({ item, onRemove }) {
         </Box>
         <MapDetailsCard mapLayer={mapLayer} />
       </Box>
-      <Box sx={{ display: "flex", gap: 1 }}>
+      <Stack direction={"row"} gap={0.25} alignItems={"center"}>
+        {isNext && <Chip color="secondary" label="Next" />}
         <Tooltip title="Remove from rotation">
           <IconButton size="small" onClick={() => onRemove(mapLayer)} color="error">
             <CloseIcon fontSize="small" />
           </IconButton>
         </Tooltip>
-      </Box>
+      </Stack>
     </Box>
   );
 }

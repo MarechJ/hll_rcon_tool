@@ -8,7 +8,7 @@ from typing import Generator, Literal, Sequence, Any, List
 
 from rcon.connection import HLLCommandError, HLLConnection, Handle, Response
 from rcon.maps import LAYERS, MAPS, UNKNOWN_MAP_NAME, Environment, GameMode, LayerType
-from rcon.types import MapSequenceResponse, ServerInfoType, SlotsType, VipId, GameStateType, AdminType
+from rcon.types import MapRotationResponse, MapSequenceResponse, ServerInfoType, SlotsType, VipId, GameStateType, AdminType
 from rcon.utils import exception_in_chain
 
 logger = logging.getLogger(__name__)
@@ -347,8 +347,12 @@ class ServerCtl:
         thresholds = self.exchange("GetVoteKickThreshold", 2).content_dict["voteThresholdList"]
         return [[int(x["playerCount"]), int(x["voteThreshold"])] for x in thresholds]
 
-    def get_map_rotation(self) -> list[str]:
-        return [x["iD"] for x in self.exchange("GetServerInformation", 2, {"Name": "maprotation", "Value": ""}).content_dict["mAPS"]]
+    def get_map_rotation(self) -> MapRotationResponse:
+        data = self.exchange("GetServerInformation", 2, {"Name": "maprotation", "Value": ""}).content_dict
+        return {
+            "maps": [x["iD"] for x in data["mAPS"]],
+            "current_index": data["currentIndex"]
+        }
 
     def get_map_sequence(self) -> MapSequenceResponse:
         data = self.exchange("GetServerInformation", 2, {"Name": "mapsequence", "Value": ""}).content_dict
@@ -481,7 +485,7 @@ class ServerCtl:
             map_name: str,
             after_map_name: str | None = None,
     ):
-        rotation = self.get_map_rotation()
+        rotation = self.get_map_rotation()["maps"]
 
         map_index = len(rotation)
         if after_map_name:
@@ -496,7 +500,7 @@ class ServerCtl:
         self.exchange("AddMapToRotation", 2, {"MapName": map_name, "Index": map_index})
 
     def remove_map_from_rotation(self, map_name: str):
-        rotation = self.get_map_rotation()
+        rotation = self.get_map_rotation()["maps"]
         try:
             map_index = rotation.index(map_name)
         except ValueError:
