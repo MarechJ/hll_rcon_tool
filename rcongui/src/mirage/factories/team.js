@@ -44,7 +44,7 @@ export const generateTeam = () => {
 
   // Generate clan squad
   const clanTag = faker.helpers.arrayElement(["VLKㆍ", "(WTH) ", "|HTD| ", "◯ | ", "[fll.fi] "])
-  state.squads.echo = generateSquad("echo", "infantry", clanTag)
+  state.squads.george = generateSquad("george", "infantry", clanTag)
 
   // Calculate team totals
   Object.values(state.squads).forEach(squad => {
