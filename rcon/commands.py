@@ -317,7 +317,7 @@ class ServerCtl:
         # TODO: Updated function signatures
         return self.exchange("GetServerInformation", 2, {"Name": "players", "Value": ""}).content_dict["players"]
 
-    def get_player_info(self, player_id: str, can_fail=True) -> dict[str, Any] | None:
+    def get_player_info(self, player_id: str) -> dict[str, Any] | None:
         # TODO: Updated function signatures
         return self.exchange("GetServerInformation", 2, {"Name": "player", "Value": player_id}).content_dict
 
@@ -573,7 +573,7 @@ class ServerCtl:
 
     @_escape_params
     def add_vip(self, player_id: str, description: str) -> bool:
-        return self.exchange_success("AddVip", 2, {"PlayerId": player_id, "Description": description})
+        return self.exchange_success("AddVip", 2, {"PlayerId": player_id, "Comment": description})
 
     def remove_vip(self, player_id) -> bool:
         return self.exchange_success("RemoveVip", 2, {"PlayerId": player_id})

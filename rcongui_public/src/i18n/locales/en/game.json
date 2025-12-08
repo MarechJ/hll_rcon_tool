@@ -62,7 +62,8 @@
       "machine_gun": "Machine Gun",
       "armor": "Armor",
       "commander": "Commander",
-      "artillery": "Artillery"
+      "artillery": "Artillery",
+      "self_propelled_artillery": "Self-propelled artillery"
     },
     "matchTable": {
         "match": "Match",

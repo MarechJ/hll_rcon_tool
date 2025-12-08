@@ -4,13 +4,14 @@ import random
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import cached_property
 from itertools import chain
 from typing import Any, Iterable, List, Literal, Optional, Sequence, overload
 
 from dateutil import parser
 
+from rcon.connection import HLLCommandError
 import rcon.steam_utils
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import HLLCommandFailedError, ServerCtl, VipId
@@ -43,6 +44,7 @@ from rcon.utils import (
     ALL_ROLES,
     ALL_ROLES_KEY_INDEX_MAP,
     INDEFINITE_VIP_DATE,
+    MapsHistory,
     default_player_info_dict,
     get_server_number,
     parse_raw_player_info,
@@ -261,6 +263,18 @@ class Rcon(ServerCtl):
         return [p for p in players.values()]
 
     def get_detailed_players(self) -> GetDetailedPlayers:
+        try:
+            current_map_start = MapsHistory()[0]["start"]
+            if not current_map_start:
+                current_map_start = datetime.now(timezone.utc).timestamp()
+        except IndexError:
+            logger.error("No maps information available")
+            current_map_start = datetime.now(timezone.utc).timestamp()
+
+        map_time_seconds = (
+            int(datetime.now(timezone.utc).timestamp() - current_map_start)
+        )
+
         players = self.get_players()
         fail_count = 0
         players_by_id: dict[str, GetDetailedPlayer] = {}
@@ -284,6 +298,14 @@ class Rcon(ServerCtl):
                 player_data = default_player_info_dict(player[NAME])
 
             player_data.update(player)  # type: ignore
+            
+            if player_data["profile"]:
+                player_data["map_playtime_seconds"] = min(
+                    player_data["profile"]["current_playtime_seconds"], map_time_seconds
+                )
+            else:
+                player_data["map_playtime_seconds"] = map_time_seconds
+
             players_by_id[player_id] = player_data
 
         return {
@@ -443,13 +465,16 @@ class Rcon(ServerCtl):
     @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
     def get_player_info(self, player_id: str, can_fail=False):
         try:
-            player = super().get_player_info(player_id, can_fail=can_fail)
-            if not player:
+            try:
+                player = super().get_player_info(player_id)
+            except HLLCommandError:
                 return {}
 
             profile = rcon.steam_utils.get_steam_profile(steam_id_64=player_id)
 
         except (HLLCommandFailedError, ValueError):
+            # TODO: What's going on here? Why do we have the `can_fail` arg even?
+
             # Making that debug instead of exception as it's way to spammy
             logger.exception("Can't get player info for %s", player_id)
             # logger.exception("Can't get player info for %s", player)
@@ -472,9 +497,10 @@ class Rcon(ServerCtl):
 
     @ttl_cache(ttl=2, cache_falsy=False)
     def get_detailed_player_info(self, player_id: str, player: GetPlayersType | None = None) -> GetDetailedPlayer:
-        raw = super().get_player_info(player_id, can_fail=False)
-        if not raw:
-            raise HLLCommandFailedError("Got bad data")
+        try:
+            raw = super().get_player_info(player_id)
+        except HLLCommandError:
+            raise HLLCommandFailedError("Player is not online")
         return self._get_detailed_player_info(player_id, raw, player)
 
     def _get_detailed_player_info(self, player_id: str, raw: dict[str, Any],
