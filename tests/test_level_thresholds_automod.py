@@ -5,7 +5,7 @@ from unittest.mock import Mock
 from rcon.automods.level_thresholds import LevelThresholdsAutomod
 from rcon.automods.models import NoLevelViolation, WatchStatus
 from rcon.user_config.auto_mod_level import AutoModLevelUserConfig, Role, Roles
-from tests.test_utils import mock_get_detailed_player
+from tests.test_player import mock_get_detailed_player
 
 state = {}
 redis_store = {}

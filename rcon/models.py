@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from typing import Any, Generator, List, Literal, Optional, Sequence, overload, TypedDict
 
 import pydantic
-from sqlalchemy import TIMESTAMP, Enum, ForeignKey, String, create_engine, text, JSON
+from sqlalchemy import TIMESTAMP, Enum, ForeignKey, String, create_engine, select, text, JSON
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -25,6 +25,7 @@ from sqlalchemy.schema import UniqueConstraint
 from rcon.maps import Team
 from rcon.types import (
     AuditLogType,
+    GetDetailedPlayer,
     MessageTemplateType,
     BlacklistRecordType,
     BlacklistRecordWithBlacklistType,
@@ -35,6 +36,7 @@ from rcon.types import (
     DBLogLineType,
     MapsType,
     PenaltyCountType,
+    PlayerAccountType,
     PlayerActionState,
     PlayerActionType,
     PlayerAtCountType,
@@ -44,6 +46,7 @@ from rcon.types import (
     PlayerOptinsType,
     PlayerProfileType,
     PlayerSessionType,
+    PlayerSoldierType,
     PlayerStatsType,
     PlayerVIPType,
     ServerCountType,
@@ -56,6 +59,7 @@ from rcon.types import (
 )
 from rcon.utils import (
     SafeStringFormat,
+    get_server_number,
     humanize_timedelta,
     mask_to_server_numbers,
     server_numbers_to_mask,
@@ -127,6 +131,8 @@ class PlayerID(Base):
         lazy="dynamic",
     )
     optins: Mapped[list["PlayerOptins"]] = relationship(back_populates="player")
+    account: Mapped["PlayerAccount"] = relationship(back_populates="player")
+    soldier: Mapped["PlayerSoldier"] = relationship(back_populates="player")
 
     @property
     def server_number(self) -> int:
@@ -181,7 +187,19 @@ class PlayerID(Base):
         return 0
 
     def to_dict(self, limit_sessions=5) -> PlayerProfileType:
+        this_server = int(get_server_number())
         blacklists = [record.to_dict() for record in self.blacklists]
+        is_blacklisted = any(
+            record["is_active"]
+            for record in [
+                b
+                for b in blacklists
+                if b["blacklist"]["servers"] is None
+                or any(server == this_server for server in b["blacklist"]["servers"])
+            ]
+        )
+        vips = [v.to_dict() for v in self.vips]
+        is_vip = any(vip["server_number"] == this_server for vip in vips)
         return {
             "id": self.id,
             PLAYER_ID: self.player_id,
@@ -196,17 +214,221 @@ class PlayerID(Base):
             "received_actions": [action.to_dict() for action in self.received_actions],
             "penalty_count": self.get_penalty_count(),
             "blacklists": blacklists,
-            "is_blacklisted": any(record["is_active"] for record in blacklists),
+            "is_blacklisted": is_blacklisted,
             "flags": [f.to_dict() for f in (self.flags or [])],
             "watchlist": self.watchlist.to_dict() if self.watchlist else None,
+            "is_watched": self.watchlist.is_watched if self.watchlist else False,
             "steaminfo": self.steaminfo.to_dict() if self.steaminfo else None,
-            "vips": [v.to_dict() for v in self.vips],
+            "vips": vips,
+            "is_vip": is_vip,
+            "soldier": self.soldier.to_dict(),
+            "account": self.account.to_dict(),
         }
 
     def __str__(self) -> str:
         aka = " | ".join([n.name for n in self.names])
         return f"{self.player_id} {aka}"
 
+class PlayerSoldier(Base):
+    __tablename__ = "player_soldier"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    player_id_id: Mapped[int] = mapped_column(
+        "playersteamid_id",
+        ForeignKey("steam_id_64.id"),
+        nullable=False,
+        index=True,
+        unique=True,
+    )
+    player: Mapped["PlayerID"] = relationship(back_populates="soldier")
+    eos_id: Mapped[str | None] = mapped_column()
+    name: Mapped[str | None] = mapped_column()
+    level: Mapped[int] = mapped_column(default=0)
+    platform: Mapped[str | None] = mapped_column()
+    clan_tag: Mapped[str | None] = mapped_column()
+
+    updated: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        default=lambda: datetime.now(tz=timezone.utc),
+        onupdate=lambda: datetime.now(tz=timezone.utc)
+    )
+
+    @classmethod
+    def update(cls, player: GetDetailedPlayer):
+        logger.debug("Updating soldier %s" % player["name"])
+        with enter_session() as sess:
+            # Retrieve the PlayerID instance to get its ID for foreign key reference
+            player_id_stmt = select(PlayerID).where(PlayerID.player_id == player["player_id"])
+            player_id_record = sess.execute(player_id_stmt).scalars().one_or_none()
+            
+            if not player_id_record:
+                # Handle case where PlayerID does not exist
+                logger.exception("PlayerID not found for player_id: %s" % player['player_id'])
+                return
+            
+            player_id_fk = player_id_record.id
+            
+            # Query for existing PlayerSoldier
+            profile_stmt = (
+                select(cls)
+                .where(cls.player_id_id == player_id_fk)  # Direct filter on FK; join optional here
+            )
+            profile = sess.execute(profile_stmt).scalars().one_or_none()
+            if not profile:
+                # Create new instance
+                profile = cls(player_id_id=player_id_fk)
+                sess.add(profile)
+            
+            # Proceed with updates
+            profile.eos_id = player["eos_id"]
+            profile.name = player["name"]
+            profile.platform = player["platform"]
+            profile.clan_tag = player["clan_tag"]
+            
+            if player["level"] > profile.level:
+                profile.level = player["level"]
+            
+            sess.commit()
+
+    @classmethod
+    def update_missing_fields(
+        cls,
+        sess: Session,
+        player_id: str,
+        eos_id: str | None = None,
+        name: str | None = None,
+        level: int = 0,
+        platform: str | None = None,
+        clan_tag: str | None = None,
+    ) -> tuple[Optional["PlayerSoldier"], bool]:
+        """
+        Update NULL fields only in PlayerSoldier for the given player_id.
+        Does not overwrite any existing non-null values.
+        Returns the updated PlayerSoldier instance or None if PlayerID not found.
+        """
+        # Look up PlayerID
+        player_db = sess.execute(
+            select(PlayerID).where(PlayerID.player_id == player_id)
+        ).scalars().one_or_none()
+        if not player_db:
+            return None, False
+        
+        # Look up or create PlayerSoldier
+        soldier_db = sess.execute(
+            select(cls).where(cls.player_id_id == player_db.id)
+        ).scalars().one_or_none()
+        if not soldier_db:
+            soldier_db = cls(player_id_id=player_db.id)
+            sess.add(soldier_db)
+        
+        # Update only None fields
+        changed = False
+        if soldier_db.eos_id is None and eos_id is not None:
+            soldier_db.eos_id = eos_id
+            changed = True
+        if soldier_db.name is None and name is not None:
+            soldier_db.name = name
+            changed = True
+        if soldier_db.level == 0 and level is not None:
+            soldier_db.level = level
+            changed = True
+        if soldier_db.platform is None and platform is not None:
+            soldier_db.platform = platform
+            changed = True
+        if soldier_db.clan_tag is None and clan_tag is not None:
+            soldier_db.clan_tag = clan_tag
+            changed = True
+        
+        if changed:
+            sess.commit()
+        
+        return soldier_db, changed
+
+    def to_dict(self) -> PlayerSoldierType:
+        return {
+            "eos_id": self.eos_id,
+            "name": self.name,
+            "level": self.level,
+            "platform": self.platform,
+            "clan_tag": self.clan_tag,
+            "updated": self.updated,
+        }
+
+class PlayerAccount(Base):
+    __tablename__ = "player_account"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    player_id_id: Mapped[int] = mapped_column(
+        "playersteamid_id",
+        ForeignKey("steam_id_64.id"),
+        nullable=False,
+        index=True,
+        unique=True,
+    )
+    player: Mapped["PlayerID"] = relationship(back_populates="account")
+    name: Mapped[str | None] = mapped_column()
+    discord_id: Mapped[str | None] = mapped_column()
+    is_member: Mapped[bool] = mapped_column(default=False)
+    # ISO 3166-1 alpha-2
+    country: Mapped[str | None] = mapped_column(String(2))
+    # ISO 639-1
+    lang: Mapped[str] = mapped_column(String(2), default="en")
+    
+    updated: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        default=lambda: datetime.now(tz=timezone.utc),
+        onupdate=lambda: datetime.now(tz=timezone.utc)
+    )
+
+    @classmethod
+    def update_account(
+        cls,
+        sess: Session,
+        player_id: str,
+        name: str | None = None,
+        discord_id: str | None = None,
+        is_member: bool = False,
+        country: str | None = None,
+        lang: str = "en",
+    ) -> Optional["PlayerAccount"]:
+        """
+        Update all fields in PlayerAccount for the given player_id.
+        All fields can be updated, including setting them to null.
+        Returns (updated PlayerAccount instance, changed flag) or None if PlayerID not found.
+        """
+        # Look up PlayerID
+        player_db = sess.execute(
+            select(PlayerID).where(PlayerID.player_id == player_id)
+        ).scalars().one_or_none()
+        if not player_db:
+            return None
+        
+        # Look up or create PlayerAccount
+        account_db = sess.execute(
+            select(cls).where(cls.player_id_id == player_db.id)
+        ).scalars().one_or_none()
+        if not account_db:
+            account_db = cls(player_id_id=player_db.id)
+            sess.add(account_db)
+        
+        account_db.name = name
+        account_db.discord_id = discord_id
+        account_db.is_member = is_member
+        account_db.country = country.upper() if country else None
+        account_db.lang = lang.lower() if lang else "en"
+        sess.commit()
+        
+        return account_db
+
+    def to_dict(self) -> PlayerAccountType:
+        return {
+            "name": self.name,
+            "discord_id": self.discord_id,
+            "is_member": self.is_member,
+            "country": self.country,
+            "lang": self.lang,
+            "updated": self.updated,
+        }
 
 class SteamInfo(Base):
     __tablename__ = "steam_info"
@@ -587,6 +809,7 @@ class PlayerStats(Base):
     death_by: Mapped[dict[str, int]] = mapped_column()
     weapons: Mapped[dict[str, int]] = mapped_column()
     death_by_weapons: Mapped[dict[str, int]] = mapped_column()
+    level: Mapped[int] = mapped_column()
 
     player: Mapped[PlayerID] = relationship(
         foreign_keys=[player_id_id], back_populates="stats"
@@ -680,6 +903,7 @@ class PlayerStats(Base):
             "weapons": self.weapons,
             "death_by_weapons": self.death_by_weapons,
             "team": self.detect_team(),
+            "level": self.level,
         }
 
 
