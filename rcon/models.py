@@ -59,6 +59,7 @@ from rcon.types import (
 )
 from rcon.utils import (
     SafeStringFormat,
+    get_server_number,
     humanize_timedelta,
     mask_to_server_numbers,
     server_numbers_to_mask,
@@ -186,7 +187,19 @@ class PlayerID(Base):
         return 0
 
     def to_dict(self, limit_sessions=5) -> PlayerProfileType:
+        this_server = int(get_server_number())
         blacklists = [record.to_dict() for record in self.blacklists]
+        is_blacklisted = any(
+            record["is_active"]
+            for record in [
+                b
+                for b in blacklists
+                if b["blacklist"]["servers"] is None
+                or any(server == this_server for server in b["blacklist"]["servers"])
+            ]
+        )
+        vips = [v.to_dict() for v in self.vips]
+        is_vip = any(vip["server_number"] == this_server for vip in vips)
         return {
             "id": self.id,
             PLAYER_ID: self.player_id,
@@ -201,11 +214,13 @@ class PlayerID(Base):
             "received_actions": [action.to_dict() for action in self.received_actions],
             "penalty_count": self.get_penalty_count(),
             "blacklists": blacklists,
-            "is_blacklisted": any(record["is_active"] for record in blacklists),
+            "is_blacklisted": is_blacklisted,
             "flags": [f.to_dict() for f in (self.flags or [])],
             "watchlist": self.watchlist.to_dict() if self.watchlist else None,
+            "is_watched": self.watchlist.is_watched if self.watchlist else False,
             "steaminfo": self.steaminfo.to_dict() if self.steaminfo else None,
-            "vips": [v.to_dict() for v in self.vips],
+            "vips": vips,
+            "is_vip": is_vip,
             "soldier": self.soldier.to_dict(),
             "account": self.account.to_dict(),
         }

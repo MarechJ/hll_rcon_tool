@@ -625,7 +625,9 @@ class PlayerProfileType(BasicPlayerProfileType):
     is_blacklisted: bool
     flags: list[PlayerFlagType]
     watchlist: Optional[WatchListType]
+    is_watched: bool
     vips: Optional[list[PlayerVIPType]]
+    is_vip: bool
     soldier: PlayerSoldierType
     account: PlayerAccountType
 
