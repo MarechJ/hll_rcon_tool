@@ -3,6 +3,8 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
+import MilitaryTechIcon from '@mui/icons-material/MilitaryTech';
+import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import {
   Badge,
   Box,
@@ -17,6 +19,8 @@ import { useActionDialog } from "@/hooks/useActionDialog";
 import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
 import PersonIcon from "@mui/icons-material/Person";
 import { useMemo, useState } from "react";
+import { useEditAccountModal } from "@/hooks/useEditAccountModal";
+import { useEditSoldierModal } from "@/hooks/useEditSoldierModal";
 
 /**
  * Displays a menu of actions that the user can perform on a player.
@@ -33,7 +37,8 @@ export function ActionMenu({
   const { openDialog } = useActionDialog();
   const { openWithId } = usePlayerSidebar();
   const open = Boolean(anchorEl);
-
+  const { openModal: openAccountModal, modal: accountModal } = useEditAccountModal(recipients.player_id, recipients.account)
+  const { openModal: openSoldierModal, modal: soldierModal } = useEditSoldierModal(recipients.player_id, recipients.soldier)
   const handleClose = () => {
     setAnchorEl(null);
   };
@@ -62,12 +67,26 @@ export function ActionMenu({
       sx={{ maxHeight: (theme) => theme.typography.pxToRem(500) }}
     >
       {withProfile && !Array.isArray(recipients) && (
-        <MenuItem onClick={handleProfileClick} dense>
-          <ListItemIcon>
-            <PersonIcon />
-          </ListItemIcon>
-          View Profile
-        </MenuItem>
+        <>
+          <MenuItem onClick={handleProfileClick} dense>
+            <ListItemIcon>
+              <PersonIcon />
+            </ListItemIcon>
+            View Profile
+          </MenuItem>
+          <MenuItem onClick={openSoldierModal} dense>
+            <ListItemIcon>
+              <MilitaryTechIcon />
+            </ListItemIcon>
+            Edit Soldier
+          </MenuItem>
+          <MenuItem onClick={openAccountModal} dense>
+            <ListItemIcon>
+              <AssignmentIndIcon />
+            </ListItemIcon>
+            Edit Account
+          </MenuItem>
+        </>
       )}
       {withProfile && !Array.isArray(recipients) && <Divider />}
       {filteredActionList.map((action) => (
@@ -76,7 +95,9 @@ export function ActionMenu({
           onClick={(event) => handleActionClick(action, event)}
           dense
         >
-          <ListItemIcon>{action.icon}</ListItemIcon>
+          <ListItemIcon>
+            <action.icon />
+          </ListItemIcon>
           <Typography
             variant="inherit"
             sx={{ textDecoration: action.deprecated ? "line-through" : "" }}
@@ -88,6 +109,8 @@ export function ActionMenu({
       {filteredActionList.length === 0 && (
         <MenuItem onClick={handleClose}>No actions available</MenuItem>
       )}
+      {accountModal}
+      {soldierModal}
     </Menu>
   );
 }
@@ -118,7 +141,7 @@ export function ActionMenuButton({
   renderButton,
   orientation = "vertical",
   withProfile = false,
-  size="regular",
+  size = "regular",
   ...props
 }) {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -162,18 +185,7 @@ export function ActionMenuButton({
   );
 }
 
-export function ActionBar({ actions }) {
-  const { permissions: user } = useAuth();
-  const { openDialog } = useActionDialog();
-  const filteredActionList = useMemo(
-    () => actions.filter(hasPermission(user)),
-    [actions, user]
-  );
-
-  const handleActionClick = (action) => () => {
-    openDialog(action, []);
-  };
-
+export function ActionBar({ actions, recipients = [] }) {
   return (
     <Card
       sx={{
@@ -191,21 +203,44 @@ export function ActionBar({ actions }) {
         },
       }}
     >
-      {filteredActionList.map((action) => (
-        <Tooltip title={action.name} key={action.name}>
-          <span>
-            <IconButton
-              key={action.name}
-              size="small"
-              onClick={handleActionClick(action)}
-              sx={{ opacity: action.deprecated ? 0.5 : 1 }}
-            >
-              {action.icon}
-            </IconButton>
-          </span>
-        </Tooltip>
+      {actions.map((action) => (
+        <ActionIconButton key={action.name} action={action} recipients={recipients} />
       ))}
     </Card>
+  );
+}
+
+export function ActionIconButton({
+  action,
+  recipients,
+  params,
+  icon,
+  label,
+  sx,
+  ...props
+}) {
+  const { permissions: user } = useAuth();
+  const { openDialog } = useActionDialog();
+
+  const handleActionClick = (action) => () => {
+    openDialog(action, recipients, params);
+  };
+
+  return (
+    <Tooltip title={label || action.name} key={action.name}>
+      <span>
+        <IconButton
+          key={action.name}
+          disabled={!hasPermission(user)}
+          size="small"
+          onClick={handleActionClick(action)}
+          sx={{ opacity: action.deprecated ? 0.5 : 1 }}
+          {...props}
+        >
+          {icon ? icon : <action.icon sx={sx} />}
+        </IconButton>
+      </span>
+    </Tooltip>
   );
 }
 
