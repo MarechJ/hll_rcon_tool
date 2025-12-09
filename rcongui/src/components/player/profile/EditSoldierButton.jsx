@@ -43,6 +43,7 @@ function EditSoldierButton({ Icon, playerId, currentSoldierData }) {
       level: currentSoldierData?.level || "",
       platform: currentSoldierData?.platform || "",
       clan_tag: currentSoldierData?.clan_tag || "",
+      eos_id: currentSoldierData?.eos_id || "",
     },
   });
 
@@ -55,6 +56,7 @@ function EditSoldierButton({ Icon, playerId, currentSoldierData }) {
         level: data.level ? parseInt(data.level, 10) : null,
         platform: data.platform || null,
         clan_tag: data.clan_tag || null,
+        eos_id: data.eos_id || null,
       };
       
       return cmd.EDIT_PLAYER_SOLDIER({
@@ -89,6 +91,7 @@ function EditSoldierButton({ Icon, playerId, currentSoldierData }) {
       level: currentSoldierData?.level || "",
       platform: currentSoldierData?.platform || "",
       clan_tag: currentSoldierData?.clan_tag || "",
+      eos_id: currentSoldierData?.eos_id || "",
     });
   };
 
@@ -110,7 +113,7 @@ function EditSoldierButton({ Icon, playerId, currentSoldierData }) {
   const isLevelDisabled = currentSoldierData?.level && currentSoldierData.level > 0;
   const isPlatformDisabled = currentSoldierData?.platform && currentSoldierData.platform.trim() !== "";
   const isClanTagDisabled = currentSoldierData.clan_tag !== null;
-
+  const isEosIdDisabled = currentSoldierData?.eos_id && currentSoldierData.eos_id.trim() !== "";
   return (
     <React.Fragment>
       <Chip
@@ -232,6 +235,18 @@ function EditSoldierButton({ Icon, playerId, currentSoldierData }) {
               }}
               helperText={
                 errors.clan_tag ? errors.clan_tag.message : isClanTagDisabled ? "This field already has a value and cannot be modified" : "The player's clan tag (max 4 characters)"
+              }
+              fullWidth
+            />
+
+            <ControlledTextInput
+              error={errors.eos_id}
+              control={control}
+              name="eos_id"
+              label="EOS ID"
+              disabled={isPending || isEosIdDisabled}
+              helperText={
+                isEosIdDisabled ? "This field already has a value and cannot be modified" : "The player's EOS ID"
               }
               fullWidth
             />

@@ -5,55 +5,64 @@ import {
   Stack,
   Divider,
   Typography,
-  Tooltip,
-  CardActions,
-  IconButton,
-  Box,
+  Checkbox,
 } from "@mui/material";
-import StarIcon from "@mui/icons-material/Star";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import NoAccountsIcon from "@mui/icons-material/NoAccounts";
-import GavelIcon from "@mui/icons-material/Gavel";
 import dayjs from "dayjs";
-import Emoji from "@/components/shared/Emoji";
 import PlayerProfileHeader from "@/components/player/profile/Header";
-import { red, yellow } from "@mui/material/colors";
+import FlagList from "@/components/player/profile/FlagList";
+import ActionList from "@/components/player/profile/ActionList";
+import ProfileActions from "@/components/player/profile/Actions";
 
-export default function PlayerCard({ player }) {
+export default function PlayerCard({
+  player: playerProfile,
+  onSelect,
+  selected,
+}) {
   const actionList = generatePlayerActions({
     multiAction: false,
-    onlineAction: player.is_online,
+    onlineAction: playerProfile.is_online,
   });
 
-  const name = player?.account?.name ?? player.names?.[0]?.name ?? player?.soldier?.name ?? "???";
-  const avatar = player?.steaminfo?.profile?.avatar ?? name;
-  const flags = player?.flags;
-  const isWatched = player?.watchlist && player?.watchlist?.is_watched;
-  const isBlacklisted = player?.is_blacklisted;
-  const isBanned = player?.is_banned;
-  const isVip = player.is_vip;
-  const penalties = player?.penalty_count;
-  const firstSeen = dayjs(player.first_seen_timestamp_ms).format(
+  const name =
+    playerProfile?.account?.name ??
+    playerProfile.names?.[0]?.name ??
+    playerProfile?.soldier?.name ??
+    "???";
+  const avatar = playerProfile?.steaminfo?.profile?.avatar ?? name;
+  const penalties = playerProfile?.penalty_count;
+  const firstSeen = dayjs(playerProfile.first_seen_timestamp_ms).format(
     "MMM DD, YYYY"
   );
-  const lastSeen = dayjs(player.last_seen_timestamp_ms).fromNow();
+  const lastSeen = dayjs(playerProfile.last_seen_timestamp_ms).fromNow();
   const country =
-    player?.country ?? player?.account?.country ?? player?.steaminfo?.country;
+    playerProfile?.country ??
+    playerProfile?.account?.country ??
+    playerProfile?.steaminfo?.country;
   const totalPlaytime = dayjs
-    .duration(player.total_playtime_seconds * 1000)
+    .duration(playerProfile.total_playtime_seconds * 1000)
     .asHours()
     .toFixed(1);
-  const level = player?.level ?? player?.soldier?.level;
-  const platform = player?.platform ?? player?.soldier?.platform;
-  const clanTag = player?.clan_tag ?? player?.soldier?.clan_tag;
+  const level = playerProfile?.level ?? playerProfile?.soldier?.level;
+  const platform = playerProfile?.platform ?? playerProfile?.soldier?.platform;
+  const clanTag = playerProfile?.clan_tag ?? playerProfile?.soldier?.clan_tag;
 
   return (
-    <Card>
+    <Card sx={{ minWidth: "370px", borderColor: (theme) => selected ? theme.palette.primary.main : "" }}>
       <CardContent>
         <PlayerProfileHeader
-          player={player}
-          isOnline={player.is_online}
-          actionList={actionList}
+          player={playerProfile}
+          isOnline={playerProfile.is_online}
+          ActionList={() => (
+            <Stack direction={"row"} spacing={0.25}>
+              <Checkbox
+                size="small"
+                checked={selected}
+                onChange={() => onSelect(playerProfile)}
+                sx={{ width: 24, height: 24 }}
+              />
+              <ProfileActions player={playerProfile} actions={actionList} />
+            </Stack>
+          )}
           avatar={avatar}
           name={name}
           level={level}
@@ -61,25 +70,8 @@ export default function PlayerCard({ player }) {
           platform={platform}
           clanTag={clanTag}
         />
-        <Stack
-          direction={"row"}
-          spacing={1}
-          sx={{
-            justifyContent: "start",
-            height: 30,
-            alignItems: "center",
-            pt: 1,
-            px: 1,
-          }}
-        >
-          {flags?.map(({ flag, comment, modified }) => (
-            <Tooltip title={comment} key={flag}>
-              <span>
-                <Emoji emoji={flag} size={16} />
-              </span>
-            </Tooltip>
-          ))}
-        </Stack>
+        <ActionList playerProfile={playerProfile} />
+        <FlagList player={playerProfile} />
         <Stack
           direction="row"
           alignItems={"center"}
@@ -158,41 +150,6 @@ export default function PlayerCard({ player }) {
           </Typography>
         </Stack>
       </CardContent>
-      <CardActions disableSpacing>
-        <IconButton aria-label="add to favorites">
-          <StarIcon
-            sx={{
-              fontSize: 18,
-              opacity: !isVip ? 0.35 : 1,
-              color: isVip && yellow["700"],
-            }}
-          />
-        </IconButton>
-        <IconButton aria-label="share">
-          <VisibilityIcon
-            sx={{ fontSize: 18, opacity: !isWatched ? 0.35 : 1 }}
-          />
-        </IconButton>
-        <IconButton aria-label="share">
-          <NoAccountsIcon
-            sx={{
-              fontSize: 18,
-              opacity: !isBlacklisted ? 0.35 : 1,
-              color: isBlacklisted && red["500"],
-            }}
-          />
-        </IconButton>
-        <IconButton aria-label="share">
-          <GavelIcon
-            sx={{
-              fontSize: 18,
-              opacity: !isBanned ? 0.35 : 1,
-              color: isBanned && red["500"],
-            }}
-          />
-        </IconButton>
-        <Box sx={{ flexGrow: 1 }} />
-      </CardActions>
     </Card>
   );
 }

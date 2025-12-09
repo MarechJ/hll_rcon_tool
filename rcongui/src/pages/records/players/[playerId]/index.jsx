@@ -26,6 +26,7 @@ import { generatePlayerActions } from "@/features/player-action/actions";
 import PlayerProfileStatusTags from "@/components/player/profile/StatusTags";
 import ReceivedActions from "./[detail]/received-actions";
 import { useGlobalStore } from "@/stores/global-state";
+import ProfileActions from "@/components/player/profile/Actions";
 
 const DETAIL_LINKS = [
   { path: "", label: "Received Actions" },
@@ -80,8 +81,6 @@ export default function PlayerProfilePage() {
     navigate(DETAIL_LINKS[newValue].path, { replace: true });
   };
 
-  console.log(profile)
-
   return (
     <ProfileContainer>
       <MainContent>
@@ -90,7 +89,9 @@ export default function PlayerProfilePage() {
             <PlayerProfileHeader
               player={profile}
               isOnline={!!thisOnlinePlayer}
-              actionList={actionList}
+              ActionList={() => (
+                <ProfileActions player={profile} actions={actionList} />
+              )}
               avatar={avatar}
               name={name}
               country={country}

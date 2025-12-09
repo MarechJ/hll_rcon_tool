@@ -189,7 +189,7 @@ const PlayerDetails = ({ player, onClose }) => {
   const isOnline = player?.is_online;
   const isVip = player?.is_vip;
   const playerVip = player?.vip;
-  const isWatched = profile?.watchlist && profile?.watchlist?.is_watched;
+  const isWatched = profile?.is_watched;
   const isBlacklisted = profile?.is_blacklisted;
   const isBanned = profile?.is_banned;
   const actionList = generatePlayerActions({
@@ -199,8 +199,8 @@ const PlayerDetails = ({ player, onClose }) => {
   const name = profile?.account?.name ?? player?.name ?? profile?.soldier?.name ?? "???";
   const avatar = profile?.steaminfo?.profile?.avatar;
   const country =
-    profile?.country ??
     profile?.account?.country ??
+    profile?.country ??
     profile?.steaminfo?.country;
   const level = player?.level ?? player?.profile?.soldier?.level;
   const platform = player?.platform ?? player?.profile?.soldier?.platform;

@@ -15,6 +15,7 @@ import {
   import FlagList from "./FlagList";
   import WatchlistList from "./WatchlistList";
   import VipList from "./VipList";
+import CopyableText from "@/components/shared/CopyableText";
 
 const PlayerProfileSummary = ({
   firstSeen,
@@ -114,7 +115,7 @@ const PlayerProfileSummary = ({
           <EmergencyIcon /> EOS ID
         </Typography>
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-          <Typography>{eosId ?? "Unknown"}</Typography>
+          <CopyableText label={eosId ?? "Unset"} text={eosId} />
         </Box>
       </Box>
     </Stack>
