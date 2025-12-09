@@ -5,12 +5,11 @@ import CopyableText from "@/components/shared/CopyableText";
 import PlatformChip from "./Platform";
 import CountryChip from "./Country";
 import LevelChip from "./Level";
-import ProfileActions from "./Actions";
 
 const PlayerProfileHeader = ({
   player,
   isOnline,
-  actionList,
+  ActionList,
   avatar,
   name,
   level,
@@ -78,9 +77,7 @@ const PlayerProfileHeader = ({
               </Box>
             </Stack>
           </Stack>
-          {actionList && (
-            <ProfileActions player={player} actions={actionList} />
-          )}
+          {ActionList && <ActionList />}
         </Stack>
         <Stack
           direction={"row"}
