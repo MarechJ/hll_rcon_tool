@@ -177,16 +177,25 @@ def get_players_by_appearance(
             query = query.filter(PlayerID.player_id.ilike("%{}%".format(player_id)))
 
         if player_name:
-            search = PlayerName.name
+            soldier_name = PlayerName.name
+            account_name = PlayerAccount.name
             if ignore_accent:
-                search = unaccent(PlayerName.name)
+                soldier_name = unaccent(PlayerName.name)
                 player_name = remove_accent(player_name)
             if not exact_name_match:
-                query = query.join(PlayerID.names).filter(
-                    search.ilike("%{}%".format(player_name))
+                query = query.join(PlayerID.names).join(PlayerID.account).filter(
+                    or_(
+                        soldier_name.ilike("%{}%".format(player_name)),
+                        account_name.isnot(None) & account_name.ilike("%{}%".format(player_name))
+                    )
                 )
             else:
-                query = query.join(PlayerID.names).filter(search == player_name)
+                query = query.join(PlayerID.names).join(PlayerID.account).filter(
+                    or_(
+                        soldier_name == player_name,
+                        account_name.isnot(None) & (account_name == player_name)
+                    )
+                )
 
         if blacklisted is True:
             query = query.filter(
@@ -213,8 +222,8 @@ def get_players_by_appearance(
             query = query.join(PlayerID.flags).filter(PlayerFlag.flag.in_(flags))
 
         if country:
-            query = query.join(PlayerID.steaminfo).filter(
-                SteamInfo.country == country.upper()
+            query = query.join(PlayerID.steaminfo).join(PlayerID.account).filter(
+                SteamInfo.country == country.upper() or PlayerAccount.country == country.upper()
             )
 
         if last_seen_from:
