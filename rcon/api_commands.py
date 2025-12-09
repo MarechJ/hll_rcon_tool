@@ -2042,6 +2042,7 @@ class RconAPI(Rcon):
         level: int = 0,
         platform: str | None = None,
         clan_tag: str | None = None,
+        eos_id: str | None = None,
     ):
         """
         Update NULL fields only in PlayerSoldier for the given player_id.
@@ -2058,6 +2059,7 @@ class RconAPI(Rcon):
                 level=level,
                 platform=platform,
                 clan_tag=clan_tag,
+                eos_id=eos_id,
             )
             if not soldier_db:
                 return HLLCommandFailedError(
