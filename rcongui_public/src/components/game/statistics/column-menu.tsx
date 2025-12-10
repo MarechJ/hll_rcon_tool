@@ -32,7 +32,7 @@ export function ColumnMenu<TData extends Player>({ table }: ColumnMenuProps<TDat
       >
         <div className="p2 flex flex-wrap flex-row gap-2 max-w-[100vw]">
           {Object.values(ColumnCategory).map(category =>
-            <div className="divide-y-2">
+            <div className="divide-y-2" key={category}>
               <div className="px-2">
                 {t(`playersTable.${category}`)}
               </div>

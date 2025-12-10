@@ -12,6 +12,7 @@ export enum WeaponType {
   Artillery = "artillery",
   Armor = "armor",
   Commander = "commander",
+  SPA = "self_propelled_artillery"
 }
 
 export enum SimpleWeaponType {
@@ -20,6 +21,7 @@ export enum SimpleWeaponType {
   Armor = "armor",
   Commander = "commander",
   Artillery = "artillery",
+  SPA = "self_propelled_artillery",
   MachineGun = "machine_gun",
   Sniper = "sniper",
 }
@@ -36,4 +38,5 @@ export const weaponTypeToSimpleWeaponType: Record<WeaponType, SimpleWeaponType> 
   [WeaponType.Artillery]: SimpleWeaponType.Artillery,
   [WeaponType.Armor]: SimpleWeaponType.Armor,
   [WeaponType.Commander]: SimpleWeaponType.Commander,
+  [WeaponType.SPA]: SimpleWeaponType.SPA,
 }

@@ -27,7 +27,7 @@ export default function GamesLayout() {
             onReset={reset}
           >
             <Suspense fallback={<div>Loading...</div>}>
-              <HorizontalGamesList games={games} key={`${games.maps[0].id}-${games.maps[games.maps.length - 1].id}`}/>
+              <HorizontalGamesList games={games} />
             </Suspense>
           </ErrorBoundary>
         )}

@@ -212,8 +212,8 @@ export const generateProfile = (playerId, playerName, isVip = false, serverNumbe
     }
   ],
   sessions_count: faker.number.int({ min: 1, max: 1000 }),
-  total_playtime_seconds: faker.number.int({ min: 0, max: 1000000 }),
-  current_playtime_seconds: faker.number.int({ min: 0, max: 150 }),
+  total_playtime_seconds: faker.number.int({ min: 0, max: 10 * 24 * 3600 }),
+  current_playtime_seconds: faker.number.int({ min: 0, max: 4 * 3600 }),
   received_actions: generateReceivedActions(),
   penalty_count: generatePenaltyCount(),
   blacklist: null,

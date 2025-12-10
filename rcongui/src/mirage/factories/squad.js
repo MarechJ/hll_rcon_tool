@@ -17,7 +17,7 @@ export const generateEmptySquad = (name, type = "infantry") => ({
 });
 
 // Generate a squad with players
-export const generateSquad = (name, type = "infantry") => {
+export const generateSquad = (name, type = "infantry", clanTag) => {
   const maxPlayers = SQUAD_TYPES[type].maxPlayers;
   const minPlayers = 1;
   const numPlayers = faker.number.int({ min: minPlayers, max: maxPlayers });
@@ -27,14 +27,14 @@ export const generateSquad = (name, type = "infantry") => {
   
   // Add leader first if squad has one
   if (hasLeader) {
-    squad.players.push(generatePlayer(name, type, true));
+    squad.players.push(generatePlayer(name, type, true, 1, clanTag));
     squad.has_leader = true;
   }
   
   // Add remaining players
   const remainingSlots = numPlayers - (hasLeader ? 1 : 0);
   for (let i = 0; i < remainingSlots; i++) {
-    squad.players.push(generatePlayer(name, type, false));
+    squad.players.push(generatePlayer(name, type, false, 1, clanTag));
   }
 
   // Calculate squad statistics

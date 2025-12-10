@@ -186,6 +186,9 @@ class Roles(str, enum.Enum):
     sniper = "sniper"
     tank_commander = "tankcommander"
     crewman = "crewman"
+    artillery_observer = "artilleryobserver"
+    artillery_engineer = "artilleryengineer"
+    artillery_support = "artillerysupport"
 
 
 class InvalidRoleError(ValueError):
@@ -222,6 +225,9 @@ ROLES_TO_LABELS = {
     Roles.sniper: "Sniper",
     Roles.tank_commander: "Tank Commander",
     Roles.crewman: "Crewman",
+    Roles.artillery_observer: "Artillery Observer",
+    Roles.artillery_engineer: "Artillery Engineer",
+    Roles.artillery_support: "Artillery Support",
 }
 
 
@@ -632,6 +638,7 @@ class GetDetailedPlayer(TypedDict):
     eos_id: str
     world_position: dict[str, float]
     clan_tag: str
+    map_playtime_seconds: int
 
 
 class GetDetailedPlayers(TypedDict):
