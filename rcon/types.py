@@ -469,6 +469,7 @@ class PlayerStat(TypedDict):
     p_defense: int
     support: int
     p_support: int
+    level: int
 
 
 class CachedLiveGameStats(TypedDict):
@@ -598,6 +599,24 @@ class PlayerVIPType(TypedDict):
     expiration: datetime.datetime
 
 
+class PlayerSoldierType(TypedDict):
+    eos_id: Optional[str]
+    name: Optional[str]
+    level: int
+    platform: Optional[str]
+    clan_tag: Optional[str]
+    updated: datetime.datetime
+
+
+class PlayerAccountType(TypedDict):
+    name: Optional[str]
+    discord_id: Optional[str]
+    is_member: bool
+    country: Optional[str]
+    lang: str
+    updated: datetime.datetime
+
+
 class PlayerProfileType(BasicPlayerProfileType):
     sessions: list[PlayerSessionType]
     sessions_count: int
@@ -609,7 +628,11 @@ class PlayerProfileType(BasicPlayerProfileType):
     is_blacklisted: bool
     flags: list[PlayerFlagType]
     watchlist: Optional[WatchListType]
+    is_watched: bool
     vips: Optional[list[PlayerVIPType]]
+    is_vip: bool
+    soldier: PlayerSoldierType
+    account: PlayerAccountType
 
 
 class PlayerProfileTypeEnriched(PlayerProfileType):
@@ -896,10 +919,49 @@ class AllMessageTemplateTypes(TypedDict):
     REASON: list[MessageTemplateType]
     WELCOME: list[MessageTemplateType]
 
+
 class MapSequenceResponse(TypedDict):
     maps: list[str]
     current_index: int
 
+
 class GetMapSequence(TypedDict):
     maps: list[Layer]
     current_index: int
+
+
+class ScoreDataType(TypedDict):
+    cOMBAT: int
+    offense: int
+    defense: int
+    support: int
+
+
+class StatsDataType(TypedDict):
+    teamKills: int
+    vehicleKills: int
+    vehiclesDestroyed: int
+    infantryKills: int
+    deaths: int
+
+
+class WorldPositionType(TypedDict):
+    x: float
+    y: float
+    z: float
+
+
+class PlayerInfoType(TypedDict):
+    iD: str
+    team: int
+    role: int
+    level: int
+    loadout: str
+    name: str
+    platoon: str
+    scoreData: ScoreDataType
+    stats: StatsDataType
+    platform: str
+    clanTag: str
+    eosId: str
+    worldPosition: WorldPositionType

@@ -11,6 +11,7 @@ const initialState = {
   action: null,
   contextData: {}, // Store additional context data (like blacklists)
   contextError: null,
+  params: {},
 };
 
 // Action types
@@ -30,6 +31,7 @@ const reducer = (state, action) => {
         action: action.payload.action,
         contextData: {}, // Reset context data
         contextError: null,
+        params: action.payload.params,
       };
 
     case SET_CONTEXT_DATA:
@@ -63,7 +65,7 @@ export const ActionDialogProvider = ({ children }) => {
    * @param {Object} action
    * @param {Object[]|Object} recipients
    */
-  const openDialog = async (action, aRecipients) => {
+  const openDialog = async (action, aRecipients = [], params = {}) => {
     let recipients;
 
     if (Array.isArray(aRecipients)) {
@@ -78,6 +80,7 @@ export const ActionDialogProvider = ({ children }) => {
       payload: {
         recipients,
         action,
+        params,
       },
     });
 

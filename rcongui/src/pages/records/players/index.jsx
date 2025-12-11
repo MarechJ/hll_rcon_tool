@@ -11,6 +11,7 @@ import {
   IconButton,
   Skeleton,
   Typography,
+  Divider,
 } from "@mui/material";
 import {
   Form,
@@ -48,20 +49,27 @@ const countryOptions = countries.getCodes().map((code) => ({
 const MemoizedPlayerCard = memo(PlayerCard);
 
 // Create a separate component for the players section
-const PlayersGrid = memo(({ players, ...props }) => {
-  return (
-    <Grid container spacing={1} {...props}>
-      {players.map((player) => (
-        <Grid
-          key={player.player_id}
-          size={{ xs: 12, sm: 6, md: 4, lg: "auto" }}
-        >
-          <MemoizedPlayerCard player={player} />
-        </Grid>
-      ))}
-    </Grid>
-  );
-});
+const PlayersGrid = memo(
+  ({ players, selected, handlePlayerSelect, ...props }) => {
+    const selectedIds = new Set(selected.map((p) => p.player_id));
+    return (
+      <Grid container spacing={1} {...props}>
+        {players.map((player) => (
+          <Grid
+            key={player.player_id}
+            size={{ xs: 12, sm: 6, md: 4, lg: "auto" }}
+          >
+            <MemoizedPlayerCard
+              player={player}
+              selected={selectedIds.has(player.player_id)}
+              onSelect={handlePlayerSelect}
+            />
+          </Grid>
+        ))}
+      </Grid>
+    );
+  }
+);
 
 export const loader = async ({ request }) => {
   const url = new URL(request.url);
@@ -134,6 +142,7 @@ export default function PlayersRecords() {
   const submit = useSubmit();
   const navigation = useNavigation();
   const server = useGlobalStore((state) => state.serverState);
+  const onlinePlayers = useGlobalStore((state) => state.onlinePlayers);
   const [formFields, setFormFields] = useState({
     player_name: fields.player_name || "",
     player_id: fields.player_id || "",
@@ -148,16 +157,33 @@ export default function PlayersRecords() {
   const [selectedEmoji, setSelectedEmoji] = useState(fields.flags);
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+  const [selectedPlayers, setSelectedPlayers] = useState([]);
 
   const players = useMemo(() => {
     if (!server) return playersData;
-    return playersData.map((player) => ({
-      ...player,
-      is_vip:
-        player.vips &&
-        player.vips.some((vip) => vip.server_number === server.server_number),
-    }));
-  }, [playersData, server]);
+    return playersData.map((player) => {
+      const thisOnlinePlayer = onlinePlayers.find(
+        (aPlayer) => aPlayer.player_id === player.player_id
+      );
+
+      const profile = {
+        ...player,
+        is_online: false,
+        is_vip:
+          player.vips &&
+          player.vips.some((vip) => vip.server_number === server.server_number),
+      };
+
+      if (thisOnlinePlayer) {
+        profile.is_online = true;
+        profile.level = thisOnlinePlayer.level || player.soldier.level;
+        profile.clan_tag = thisOnlinePlayer.clan_tag || player.soldier.clan_tag;
+        profile.platform = thisOnlinePlayer.platform || player.soldier.platform;
+      }
+
+      return profile;
+    });
+  }, [playersData, server, onlinePlayers]);
 
   const handleEmojiButtonClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -191,9 +217,32 @@ export default function PlayersRecords() {
     }));
   };
 
+  const handlePlayerSelect = (player) => {
+    if (selectedPlayers.find((p) => p.player_id === player.player_id)) {
+      setSelectedPlayers((prev) =>
+        prev.filter((p) => p.player_id !== player.player_id)
+      );
+    } else {
+      setSelectedPlayers((prev) => [...prev, player]);
+    }
+  };
+
+  const handleSelectAllPlayers = () => {
+    setSelectedPlayers((prev) => {
+      const newSelection = [...prev];
+      const selectedIds = new Set(prev.map((p) => p.player_id));
+      for (const player of players) {
+        if (!selectedIds.has(player.player_id)) {
+          newSelection.push(player);
+        }
+      }
+      return newSelection;
+    });
+  };
+
   return (
     <Stack spacing={1} sx={{ mt: 2 }}>
-      <ActionBar actions={newRecordActions} handleActionClick={() => {}} />
+      <ActionBar actions={newRecordActions} recipients={selectedPlayers} />
       <Stack direction={{ xs: "column", lg: "row" }} spacing={1} sx={{ mt: 2 }}>
         {/* FILTERS */}
         <Form method="GET">
@@ -431,12 +480,22 @@ export default function PlayersRecords() {
           spacing={1}
           sx={{ width: "100%" }}
         >
-          <NavPagination
-            page={page}
-            maxPages={total_pages}
-            disabled={navigation.state === "loading"}
+          <Stack direction={"row"} spacing={1} alignItems={"center"}>
+            <Typography>Selected: {selectedPlayers.length}</Typography>
+            <Button size="small" variant="outlined" onClick={handleSelectAllPlayers}>Select All</Button>
+            <Button size="small" variant="outlined" onClick={() => setSelectedPlayers([])}>Unselect All</Button>
+            <Divider flexItem orientation="vertical" />
+            <NavPagination
+              page={page}
+              maxPages={total_pages}
+              disabled={navigation.state === "loading"}
+            />
+          </Stack>
+          <PlayersGrid
+            players={players}
+            selected={selectedPlayers}
+            handlePlayerSelect={handlePlayerSelect}
           />
-          <PlayersGrid players={players} />
           <Box sx={{ flexGrow: 1 }} />
           <NavPagination
             page={page}

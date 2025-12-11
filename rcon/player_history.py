@@ -13,11 +13,13 @@ from sqlalchemy.sql.functions import ReturnTypeFromArgs
 from rcon.commands import HLLCommandFailedError
 from rcon.models import (
     BlacklistRecord,
+    PlayerAccount,
     PlayerActionState,
     PlayerComment,
     PlayerFlag,
     PlayerID,
     PlayerName,
+    PlayerSoldier,
     PlayersAction,
     PlayerSession,
     SteamInfo,
@@ -175,16 +177,25 @@ def get_players_by_appearance(
             query = query.filter(PlayerID.player_id.ilike("%{}%".format(player_id)))
 
         if player_name:
-            search = PlayerName.name
+            soldier_name = PlayerName.name
+            account_name = PlayerAccount.name
             if ignore_accent:
-                search = unaccent(PlayerName.name)
+                soldier_name = unaccent(PlayerName.name)
                 player_name = remove_accent(player_name)
             if not exact_name_match:
-                query = query.join(PlayerID.names).filter(
-                    search.ilike("%{}%".format(player_name))
+                query = query.join(PlayerID.names).join(PlayerID.account).filter(
+                    or_(
+                        soldier_name.ilike("%{}%".format(player_name)),
+                        account_name.isnot(None) & account_name.ilike("%{}%".format(player_name))
+                    )
                 )
             else:
-                query = query.join(PlayerID.names).filter(search == player_name)
+                query = query.join(PlayerID.names).join(PlayerID.account).filter(
+                    or_(
+                        soldier_name == player_name,
+                        account_name.isnot(None) & (account_name == player_name)
+                    )
+                )
 
         if blacklisted is True:
             query = query.filter(
@@ -211,8 +222,8 @@ def get_players_by_appearance(
             query = query.join(PlayerID.flags).filter(PlayerFlag.flag.in_(flags))
 
         if country:
-            query = query.join(PlayerID.steaminfo).filter(
-                SteamInfo.country == country.upper()
+            query = query.join(PlayerID.steaminfo).join(PlayerID.account).filter(
+                SteamInfo.country == country.upper() or PlayerAccount.country == country.upper()
             )
 
         if last_seen_from:
@@ -273,9 +284,11 @@ def _save_player_id(sess, player_id: str) -> PlayerID:
     player = get_player(sess, player_id)
 
     if not player:
+        logger.info("Adding first time seen %s", player_id)
         player = PlayerID(player_id=player_id)
         sess.add(player)
-        logger.info("Adding first time seen %s", player_id)
+        sess.add(PlayerAccount(player=player))
+        sess.add(PlayerSoldier(player=player))
         sess.commit()
 
     return player
