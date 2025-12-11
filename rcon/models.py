@@ -3,11 +3,29 @@ import os
 import re
 from collections import defaultdict
 from contextlib import contextmanager
-from datetime import datetime, timezone
-from typing import Any, Generator, List, Literal, Optional, Sequence, overload, TypedDict
+from datetime import datetime, timedelta, timezone
+from typing import (
+    Any,
+    Generator,
+    List,
+    Literal,
+    Optional,
+    Sequence,
+    overload,
+    TypedDict,
+)
 
 import pydantic
-from sqlalchemy import TIMESTAMP, Enum, ForeignKey, String, create_engine, select, text, JSON
+from sqlalchemy import (
+    TIMESTAMP,
+    Enum,
+    ForeignKey,
+    String,
+    create_engine,
+    select,
+    text,
+    JSON,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -22,8 +40,12 @@ from sqlalchemy.orm import (
 )
 from sqlalchemy.schema import UniqueConstraint
 
+from rcon.analytics.system_usage import SystemUsage
 from rcon.maps import Team
 from rcon.types import (
+    AdminUserType,
+    AnalyticsServerStatusType,
+    AnalyticsSystemUsageType,
     AuditLogType,
     GetDetailedPlayer,
     MessageTemplateType,
@@ -55,7 +77,10 @@ from rcon.types import (
     SteamPlayerSummaryType,
     StructuredLogLineWithMetaData,
     WatchListType,
-    MessageTemplateCategory, PlayerTeamAssociation, PlayerTeamConfidence, GameLayout,
+    MessageTemplateCategory,
+    PlayerTeamAssociation,
+    PlayerTeamConfidence,
+    GameLayout,
 )
 from rcon.utils import (
     SafeStringFormat,
@@ -724,16 +749,31 @@ class Maps(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    creation_time: Mapped[datetime] = mapped_column(TIMESTAMP, default=datetime.utcnow)
+    creation_time: Mapped[datetime] = mapped_column(
+        TIMESTAMP, default=lambda: datetime.now(tz=timezone.utc)
+    )
     start: Mapped[datetime] = mapped_column(nullable=False, index=True)
     end: Mapped[datetime] = mapped_column(index=True)
     server_number: Mapped[int] = mapped_column(index=True)
     map_name: Mapped[str] = mapped_column(nullable=False, index=True)
     # A dict with the result of the game mapped as Axis=int, Allied=int
     result: Mapped[dict[str, int]] = mapped_column(nullable=True)
-    game_layout: Mapped["GameLayout"] = mapped_column(JSON, nullable=False, default=GameLayout)
+    game_layout: Mapped["GameLayout"] = mapped_column(
+        JSON, nullable=False, default=GameLayout
+    )
 
     player_stats: Mapped[list["PlayerStats"]] = relationship(back_populates="map")
+
+    @classmethod
+    def get_from(
+        cls, server: int, date: datetime, with_stats: bool = False
+    ) -> list[MapsType]:
+        with enter_session() as sess:
+            stmt = (
+                select(cls).where(cls.server_number == server).where(cls.start >= date)
+            )
+            result = sess.scalars(stmt).all()
+            return [row.to_dict(with_stats) for row in result]
 
     def to_dict(self, with_stats=False) -> MapsType:
         return {
@@ -769,6 +809,7 @@ def calc_weapon_type_usage(weapons: dict[str, int]) -> dict[WeaponType, int]:
             kills_by_type[weapon_type.value] += count
 
     return dict(kills_by_type)
+
 
 class PlayerStats(Base):
     __tablename__ = "player_stats"
@@ -830,10 +871,16 @@ class PlayerStats(Base):
                     axis_count += weapon[1]
 
         if len(self.death_by_weapons) > 0:
-            for weapon in sorted(self.death_by_weapons.items(), key=get_value, reverse=True):
+            for weapon in sorted(
+                self.death_by_weapons.items(), key=get_value, reverse=True
+            ):
                 if WEAPON_SIDE_MAP.get(weapon[0]) is None:
                     continue
-                op = Team.AXIS if WEAPON_SIDE_MAP.get(weapon[0]) == Team.ALLIES else Team.ALLIES
+                op = (
+                    Team.AXIS
+                    if WEAPON_SIDE_MAP.get(weapon[0]) == Team.ALLIES
+                    else Team.ALLIES
+                )
                 if op == Team.ALLIES:
                     allies_count += weapon[1]
                 elif op == Team.AXIS:
@@ -841,7 +888,9 @@ class PlayerStats(Base):
 
         assoc: PlayerTeamAssociation
         if axis_count == 0 and allies_count == 0:
-            return PlayerTeamAssociation(side=Team.UNKNOWN, confidence=PlayerTeamConfidence.STRONG, ratio=0)
+            return PlayerTeamAssociation(
+                side=Team.UNKNOWN, confidence=PlayerTeamConfidence.STRONG, ratio=0
+            )
         elif axis_count > allies_count:
             assoc = PlayerTeamAssociation(
                 side=Team.AXIS,
@@ -860,7 +909,11 @@ class PlayerStats(Base):
                 confidence=PlayerTeamConfidence.MIXED,
                 ratio=50,
             )
-        assoc['confidence'] = PlayerTeamConfidence.STRONG if assoc['ratio'] > 85 else PlayerTeamConfidence.MIXED
+        assoc["confidence"] = (
+            PlayerTeamConfidence.STRONG
+            if assoc["ratio"] > 85
+            else PlayerTeamConfidence.MIXED
+        )
         return assoc
 
     def to_dict(self) -> PlayerStatsType:
@@ -1144,7 +1197,9 @@ class BlacklistRecord(Base):
                 else "forever"
             ),
             "expires_at": (
-                self.expires_at.strftime("%b %d %Y %H:%M") if self.expires_at else "never"
+                self.expires_at.strftime("%b %d %Y %H:%M")
+                if self.expires_at
+                else "never"
             ),
             "duration": (
                 humanize_timedelta(self.expires_at - self.created_at)
@@ -1282,3 +1337,277 @@ class MessageTemplate(Base):
             "updated_at": self.updated_at,
             "updated_by": self.updated_by,
         }
+
+
+class AnalyticsServerStatus(Base):
+    __tablename__ = "analytics_server_status"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), default=lambda: datetime.now(tz=timezone.utc)
+    )
+    server_number: Mapped[int] = mapped_column()
+    axis_count: Mapped[int] = mapped_column(default=0)
+    allies_count: Mapped[int] = mapped_column(default=0)
+    lobby_count: Mapped[int] = mapped_column(default=0)
+    vip_count: Mapped[int] = mapped_column(default=0)
+    mod_count: Mapped[int] = mapped_column(default=0)
+
+    @classmethod
+    def save(
+        cls,
+        server_number: int,
+        players: list[GetDetailedPlayer],
+        ingame_mods: list[AdminUserType],
+    ):
+        vip_count = 0
+        mod_count = 0
+        axis_count = 0
+        allies_count = 0
+        lobby_count = 0
+
+        online_mods = {mod["player_id"] for mod in ingame_mods}
+
+        for player in players:
+            if player["team"] == "axis":
+                axis_count += 1
+            elif player["team"] == "allies":
+                allies_count += 1
+            else:
+                lobby_count += 1
+
+            if player["is_vip"]:
+                vip_count += 1
+
+            if player["player_id"] in online_mods:
+                mod_count += 1
+
+        with enter_session() as sess:
+            new_record = cls(
+                server_number=server_number,
+                axis_count=axis_count,
+                allies_count=allies_count,
+                lobby_count=lobby_count,
+                vip_count=vip_count,
+                mod_count=mod_count,
+            )
+            sess.add(new_record)
+            sess.commit()
+            sess.refresh(new_record)
+            return new_record.to_dict()
+
+    @classmethod
+    def get_from(cls, server: int, date: datetime):
+        data = []
+        with enter_session() as sess:
+            stmt = (
+                select(cls)
+                .where(cls.server_number == server)
+                .where(cls.created_at >= date)
+            )
+            result = sess.scalars(stmt).all()
+            data = [row.to_dict() for row in result]
+        out = []
+        for i, log in enumerate(data):
+            log["total_count"] = (
+                log["axis_count"] + log["allies_count"] + log["lobby_count"]
+            )
+            out.append(log)
+            if i + 1 < len(data):
+                # Check for missing datapoints
+                curr = datetime.fromisoformat(data[i]["created_at"])
+                nxt = datetime.fromisoformat(data[i + 1]["created_at"])
+                diff = nxt - curr
+                if diff >= timedelta(minutes=10):
+                    # Let's check how many intervals was skipped between datapoints
+                    # and insert None for each missing
+                    missing_invervals = int((diff.total_seconds() / 60) / 5) - 1
+                    for j in range(1, missing_invervals + 1):
+                        created_at = curr + timedelta(minutes=5 * j)
+                        missing = {
+                            "id": None,
+                            "server_number": server,
+                            "created_at": created_at.isoformat(),
+                            "axis_count": None,
+                            "allies_count": None,
+                            "lobby_count": None,
+                            "vip_count": None,
+                            "mod_count": None,
+                            "total_count": None,
+                        }
+                        out.append(missing)
+        return out
+
+    @classmethod
+    def get_all_from(
+        cls,
+        from_date: datetime,
+        pivots: list[datetime] | None = None,
+        log_frequency_min: int | None = 5,
+    ):
+        data = []
+        with enter_session() as sess:
+            stmt = select(cls).where(cls.created_at >= from_date)
+            result = sess.scalars(stmt).all()
+            data = [row.to_dict() for row in result]
+
+        logs_by_server = {}
+        for log in data:
+            if (server := log["server_number"]) in logs_by_server:
+                logs_by_server[server].append(log)
+            else:
+                logs_by_server[server] = [log]
+        data = None
+
+        # Create a list of timestamps from the given date till now by 5 minute intervals
+        # The problem is that each server can log at different times and the times can diverge over time
+        # Or that some server may have missing logs
+        now = datetime.now(tz=timezone.utc)
+        log_frequency_min = log_frequency_min or 5
+        div_margin = timedelta(minutes=log_frequency_min / 2)
+        intervals = ((now - from_date).total_seconds() / 60 / log_frequency_min) - 1
+        pivots = pivots or (
+            [from_date]
+            + [
+                from_date + timedelta(minutes=5 * i)
+                for i in range(1, int(intervals + 1))
+            ]
+            + [now]
+        )
+
+        out = {k: [] for k in logs_by_server}
+        for server in logs_by_server:
+            logs = logs_by_server[server]
+            i = 0
+            for timestamp in pivots:
+                if i < len(logs):
+                    log_time = datetime.fromisoformat(logs[i]["created_at"])
+                    if (
+                        log_time >= timestamp and (log_time - timestamp) < div_margin
+                    ) or (
+                        timestamp >= log_time and (timestamp - log_time) < div_margin
+                    ):
+                        out[server].append(logs[i])
+                        out[server][-1]["created_at"] = timestamp
+                        out[server][-1]["total_count"] = (
+                            out[server][-1]["axis_count"] + out[server][-1]["allies_count"] + out[server][-1]["lobby_count"]
+                        )
+                        i += 1
+                        continue
+
+                missing = {
+                    "id": None,
+                    "server_number": server,
+                    "created_at": timestamp,
+                    "axis_count": None,
+                    "allies_count": None,
+                    "lobby_count": None,
+                    "vip_count": None,
+                    "mod_count": None,
+                    "total_count": None,
+                }
+                out[server].append(missing)
+        return out
+
+    def to_dict(self):
+        return AnalyticsServerStatusType.model_validate(self).model_dump()
+
+
+class AnalyticsSystemUsage(Base):
+    __tablename__ = "analytics_system_usage"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), default=lambda: datetime.now(tz=timezone.utc)
+    )
+    cpu_cores: Mapped[int] = mapped_column(default=0)
+    cpu_percent: Mapped[float] = mapped_column(default=0.0)
+    cpu_process_count: Mapped[int] = mapped_column(default=0)
+    ram_total: Mapped[float] = mapped_column(default=0.0)
+    ram_used: Mapped[float] = mapped_column(default=0.0)
+    ram_percent: Mapped[float] = mapped_column(default=0.0)
+    disk_total: Mapped[float] = mapped_column(default=0.0)
+    disk_used: Mapped[float] = mapped_column(default=0.0)
+    disk_percent: Mapped[float] = mapped_column(default=0.0)
+
+    @classmethod
+    def save(cls, system_usage: SystemUsage, interval_sec: int):
+        with enter_session() as sess:
+            prev_record = sess.query(cls).order_by(cls.created_at.desc()).first()
+
+            # only create a new record if the previous one was created 'interval' time ago
+            if prev_record and (
+                datetime.now(tz=timezone.utc) - prev_record.created_at
+            ) < timedelta(seconds=interval_sec * 0.9):
+                return
+
+            new_record = cls(
+                cpu_cores=system_usage["cpu_usage"]["cores"],
+                cpu_percent=system_usage["cpu_usage"]["percent"],
+                cpu_process_count=system_usage["cpu_usage"]["process_count"],
+                ram_total=system_usage["ram_usage"]["total"],
+                ram_used=system_usage["ram_usage"]["used"],
+                ram_percent=system_usage["ram_usage"]["percent"],
+                disk_total=system_usage["disk_usage"]["total"],
+                disk_used=system_usage["disk_usage"]["used"],
+                disk_percent=system_usage["disk_usage"]["percent"],
+            )
+
+            sess.add(new_record)
+            sess.commit()
+            sess.refresh(new_record)
+            return new_record.to_dict()
+
+    @classmethod
+    def get_from(cls, from_date: datetime, pivots: list[datetime] | None = None):
+        data = []
+        with enter_session() as sess:
+            stmt = select(cls).where(cls.created_at >= from_date)
+            result = sess.scalars(stmt).all()
+            data = [row.to_dict() for row in result]
+        now = datetime.now(tz=timezone.utc)
+        log_frequency_min = 5
+        div_margin = timedelta(minutes=log_frequency_min / 2)
+        intervals = ((now - from_date).total_seconds() / 60 / log_frequency_min) - 1
+        pivots = pivots or (
+            [from_date]
+            + [
+                from_date + timedelta(minutes=5 * i)
+                for i in range(1, int(intervals + 1))
+            ]
+            + [now]
+        )
+
+        out = []
+        i = 0
+        for timestamp in pivots:
+            if i < len(data):
+                log_time = datetime.fromisoformat(data[i]["created_at"])
+                if (
+                    log_time >= timestamp and (log_time - timestamp) < div_margin
+                ) or (
+                    timestamp >= log_time and (timestamp - log_time) < div_margin
+                ):
+                    out.append(data[i])
+                    out[-1]["created_at"] = timestamp
+                    i += 1
+                    continue
+
+            missing = {
+                "id": None,
+                "created_at": timestamp,
+                "cpu_cores": None,
+                "cpu_percent": None,
+                "cpu_process_count": None,
+                "ram_total": None,
+                "ram_used": None,
+                "ram_percent": None,
+                "disk_total": None,
+                "disk_used": None,
+                "disk_percent": None,
+            }
+            out.append(missing)
+        return out
+
+    def to_dict(self):
+        return AnalyticsSystemUsageType.model_validate(self).model_dump()
