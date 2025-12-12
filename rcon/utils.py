@@ -419,10 +419,10 @@ def default_player_info_dict(player) -> GetDetailedPlayer:
     }
 
 
-def parse_raw_player_info(raw: dict[str, Any], player) -> GetDetailedPlayer:
+def parse_raw_player_info(raw: dict[str, Any]) -> GetDetailedPlayer:
     """Parse the result of the playerinfo command from the game server"""
 
-    data = default_player_info_dict(player)
+    data = default_player_info_dict(raw["name"])
 
     # Remap keys and parse values
     data[PLAYER_ID] = raw["iD"]
