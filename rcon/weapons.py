@@ -182,7 +182,7 @@ US_WEAPONS = {
     'HULL M1919 [Sherman M4A3E2(76)]': WeaponType.Armor,
     'M2 Browning [M3 Half-track]': WeaponType.Armor,
     'Sherman SPA 105mm': WeaponType.Armor,
-    'OQF 57MM [Sherman SPA 105mm]': WeaponType.SPA,
+    '105MM HOWITZER [Sherman SPA 105mm]': WeaponType.SPA,
     'COAXIAL M1919 [Sherman SPA 105mm]': WeaponType.Armor,
     'HULL M1919 [Sherman SPA 105mm]': WeaponType.Armor,
 }
