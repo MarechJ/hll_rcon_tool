@@ -319,7 +319,7 @@ def build_map_rotation_embed(
     embed = DiscordEmbed()
     embed.set_url(str(config.public_scoreboard_url))
 
-    rotation: list[Layer] = rcon_api.get_map_rotation()
+    rotation: list[Layer] = rcon_api.get_map_rotation()["maps"]
     gamestate: GameStateType = rcon_api.get_gamestate()
 
     title = ""

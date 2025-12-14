@@ -894,3 +894,12 @@ class MapSequenceResponse(TypedDict):
 class GetMapSequence(TypedDict):
     maps: list[Layer]
     current_index: int
+
+class MapRotationResponse(TypedDict):
+    maps: list[str]
+    current_index: int
+
+class GetMapRotation(TypedDict):
+    maps: list[Layer]
+    current_index: int
+    next_index: int

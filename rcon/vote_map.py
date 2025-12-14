@@ -795,7 +795,7 @@ class VoteMap:
         rcon.set_map_rotation([next_map.id])
 
         # Check that it worked
-        current_rotation = rcon.get_map_rotation()
+        current_rotation = rcon.get_map_rotation()["maps"]
         if len(current_rotation) != 1 or current_rotation[0] != next_map:
             raise ValueError(
                 f"Applying the winning map {next_map=} failed: {current_rotation=}"
