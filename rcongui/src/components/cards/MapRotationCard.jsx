@@ -3,11 +3,13 @@ import { cmd } from "@/utils/fetchUtils";
 import { Divider, Stack } from "@mui/material";
 import ScrollableCard from "@/components/shared/card/ScrollableCard";
 import { MapDetailsCardCompact } from "@/pages/settings/maps/MapDetailsCard";
+import { mapsManagerQueryKeys } from "@/pages/settings/maps/queries";
 
 const MapRotationCard = () => {
-  const { data: mapRotation = [] } = useQuery({
-    queryKey: ["map-rotation"],
-    queryFn: async () => await cmd.GET_MAP_ROTATION(),
+  const { data: mapRotation } = useQuery({
+    queryKey: mapsManagerQueryKeys.mapRotation,
+    queryFn: cmd.GET_MAP_ROTATION,
+    initialData: { maps: [], current_index: 0, next_index: 0 },
   });
 
   return (
