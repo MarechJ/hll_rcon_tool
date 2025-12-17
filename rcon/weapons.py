@@ -183,6 +183,7 @@ US_WEAPONS = {
     'M2 Browning [M3 Half-track]': WeaponType.Armor,
     'Sherman SPA 105mm': WeaponType.Armor,
     '105MM HOWITZER [Sherman SPA 105mm]': WeaponType.SPA,
+    'PETARD 230MM  [Sherman SPA 105mm]': WeaponType.SPA,
     'COAXIAL M1919 [Sherman SPA 105mm]': WeaponType.Armor,
     'HULL M1919 [Sherman SPA 105mm]': WeaponType.Armor,
 }
@@ -235,6 +236,7 @@ AXIS_WEAPONS = {
     'HULL MG34 [Sd.Kfz.181 Tiger 1]': WeaponType.Armor,
     'MG 42 [Sd.Kfz 251 Half-track]': WeaponType.Armor,
     'Strumpanzer IV Brummbar': WeaponType.Armor,
+    'StuH 43 L/12 [Strumpanzer IV Brummbar]': WeaponType.SPA,
     'OQF 57MM [Strumpanzer IV Brummbar]': WeaponType.SPA,
     '7.5CM KwK 37 [Sd.Kfz.161 Panzer IV]': WeaponType.SPA,
 }
