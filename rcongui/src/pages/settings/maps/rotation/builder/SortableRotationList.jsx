@@ -30,6 +30,7 @@ export function SortableRotationList({
   onSave,
   isDisabled,
   actions,
+  params,
 }) {
   // Set up DnD sensors
   const sensors = useSensors(
@@ -173,13 +174,26 @@ export function SortableRotationList({
               items={maps.map((item) => item.selectionId)}
               strategy={verticalListSortingStrategy}
             >
-              {maps.map((item, index) => (
-                <SortableRotationItem
-                  key={item.selectionId}
-                  item={item}
-                  onRemove={onRemove}
-                />
-              ))}
+              {maps.map((item, index, tempRotation) => {
+                console.log(tempRotation, params, index)
+                let isNext = false;
+                if (tempRotation.length === 1) {
+                  isNext = true
+                } else if (params.currentMapIndex === params.nextMapIndex) {
+                  isNext = (index + 1) === params.nextMapIndex
+                } else {
+                  isNext = index === params.nextMapIndex
+                }
+
+                return (
+                  <SortableRotationItem
+                    key={item.selectionId}
+                    item={item}
+                    onRemove={onRemove}
+                    isNext={isNext}
+                  />
+                )
+              })}
             </SortableContext>
           </DndContext>
         ) : (
