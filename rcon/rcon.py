@@ -390,6 +390,17 @@ class Rcon(ServerCtl):
         raw = super().get_logs(since_min_ago)
         return self.parse_logs(raw, filter_action, filter_player)
 
+    def get_structured_logs_with_seconds_conn(
+            self,
+            since_sec_ago: int,
+            conn,
+            filter_action: str | None = None,
+            filter_player: str | None = None,
+    ) -> ParsedLogsType:
+        """Get structured logs using seconds and reusing connection for long-connection polling"""
+        raw = super().get_logs_seconds(since_sec_ago, "", conn)
+        return self.parse_logs(raw, filter_action, filter_player)
+
     def get_admin_groups(self) -> list[str]:
         # Defined here to avoid circular imports with commands.py
         return super().get_admin_groups()
