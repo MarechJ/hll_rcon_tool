@@ -291,7 +291,7 @@ class Rcon(ServerCtl):
                 continue
 
             try:
-                player_data = self._get_detailed_player_info(player_id, player_info, player)
+                player_data = self._get_detailed_player_info(player_info, player)
             except Exception:
                 logger.error("Failed to get info for %s", player_id)
                 fail_count += 1
@@ -490,11 +490,12 @@ class Rcon(ServerCtl):
             raw = super().get_player_info(player_id)
         except HLLCommandError:
             raise HLLCommandFailedError("Player is not online")
-        return self._get_detailed_player_info(player_id, raw, player)
+        return self._get_detailed_player_info(raw, player)
 
-    def _get_detailed_player_info(self, player_id: str, raw: dict[str, Any],
-                                  player: GetPlayersType | None = None) -> GetDetailedPlayer:
-        player_data = parse_raw_player_info(raw, player_id)
+    def _get_detailed_player_info(
+        self, raw: dict[str, Any], player: GetPlayersType | None = None
+    ) -> GetDetailedPlayer:
+        player_data = parse_raw_player_info(raw)
         if player is not None and 'is_vip' in player:
             player_data["is_vip"] = player.get('is_vip')
         else:
