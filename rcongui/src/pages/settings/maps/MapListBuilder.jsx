@@ -39,6 +39,7 @@ export function MapListBuilder({
   isSaving,
   exclusive = false,
   actions,
+  params = {},
 }) {
   const [mapSelection, setMapSelection] = useState(
     selectedMaps.map(withSelectionId)
@@ -192,6 +193,7 @@ export function MapListBuilder({
               isDisabled={isSaveDisabled}
               isSaving={isSaving}
               actions={actions}
+              params={params}
             />
           </Grid>
         )}
