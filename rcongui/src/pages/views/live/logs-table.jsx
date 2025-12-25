@@ -25,6 +25,7 @@ import { TableToolbar } from "@/components/table/TableToolbar";
 import TableAddons from "@/components/table/TableAddons";
 import { LogActionHighlightMenu } from "@/components/table/selection/LogActionHighlightMenu";
 import LiveLogsTable from "@/components/live-logs/LiveLogsTable";
+import { AutoModFilterMenu } from "@/components/table/selection/AutoModFilterMenu";
 
 const logActions = Object.entries(_logActions).reduce((acc, [name]) => {
   acc[name] = false;
@@ -63,6 +64,12 @@ export default function LogsTable({
 
   const [logActionOptions, setLogActionOptions] = useState(logActions);
   const [playerOptions, setPlayerOptions] = useState({});
+  const {
+    actions: queryActions = [],
+    limit: queryLimit = 500,
+    inclusive = true,
+    automodFilter = "include",
+  } = searchParams ?? {};
 
   const handleTableConfigClick = () => {
     // toggle config drawer
@@ -102,9 +109,17 @@ export default function LogsTable({
   };
 
   const handleQueryInclusiveFilterChange = (e, mode) => {
+    if (!mode) return;
     setSearchParams((prev) => ({
       ...prev,
-      inclusive_filter: mode === "inclusive",
+      inclusive: mode === "inclusive",
+    }));
+  };
+
+  const handleAutomodFilterChange = (mode) => {
+    setSearchParams((prev) => ({
+      ...prev,
+      automodFilter: mode,
     }));
   };
 
@@ -154,6 +169,10 @@ export default function LogsTable({
         <LogPlayerSelectionMenu
           actionOptions={playerOptions}
           onActionSelect={handleClientPlayerFilterChange}
+        />
+        <AutoModFilterMenu
+          value={automodFilter}
+          onSelect={handleAutomodFilterChange}
         />
         <LogActionHighlightMenu
           actionOptions={highlightedActionOptions}
@@ -215,7 +234,7 @@ export default function LogsTable({
             Filter Mode
           </Typography>
           <ToggleButtonGroup
-            value={searchParams.inclusive ? "inclusive" : "exclusive"}
+            value={inclusive ? "inclusive" : "exclusive"}
             exclusive
             onChange={handleQueryInclusiveFilterChange}
             aria-label="filter mode change"
@@ -241,11 +260,11 @@ export default function LogsTable({
             Filter Actions
           </Typography>
           <LogActionQuerySelectionMenu
-            selectedActions={searchParams.actions}
+            selectedActions={queryActions}
             onActionSelect={handleQueryActionParamSelect}
           />
           <List dense={true} disablePadding={true}>
-            {searchParams.actions.map((action, i) => (
+            {queryActions.map((action, i) => (
               <Fragment key={action}>
                 {i !== 0 && <Divider component="li" />}
                 <ListItem
@@ -266,7 +285,7 @@ export default function LogsTable({
                 </ListItem>
               </Fragment>
             ))}
-            {searchParams.actions.length === 0 && (
+            {queryActions.length === 0 && (
               <ListItem disableGutters={true}>
                 <ListItemText primary={"No Action Filters Selected"} />
               </ListItem>
@@ -282,11 +301,40 @@ export default function LogsTable({
               letterSpacing: 1.5,
             }}
           >
+            AutoMod Logs
+          </Typography>
+          <ToggleButtonGroup
+            value={automodFilter}
+            exclusive
+            onChange={(_, mode) => mode && handleAutomodFilterChange(mode)}
+            aria-label="automod filter mode"
+            fullWidth
+          >
+            <ToggleButton value="include" aria-label="include automod logs">
+              Include
+            </ToggleButton>
+            <ToggleButton value="only" aria-label="only automod logs">
+              Only AutoMod
+            </ToggleButton>
+            <ToggleButton value="exclude" aria-label="exclude automod logs">
+              Hide AutoMod
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </div>
+        <div>
+          <Typography
+            sx={{
+              mb: 1,
+              fontSize: "0.85rem",
+              textTransform: "uppercase",
+              letterSpacing: 1.5,
+            }}
+          >
             Logs Fetch Query Limit
           </Typography>
           <TextField
             fullWidth
-            defaultValue={searchParams.limit}
+            defaultValue={queryLimit}
             onBlur={handleQueryLimitInputBlur}
             placeholder="Query limit"
             type="number"

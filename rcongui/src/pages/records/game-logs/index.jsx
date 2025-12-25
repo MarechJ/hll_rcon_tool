@@ -53,6 +53,7 @@ const LogsFilter = ({ onSubmit, onChange }) => {
   const [exactPlayer, setExactPlayer] = useState(false);
   const [exactAction, setExactAction] = useState(false);
   const [order, setOrder] = useState("desc");
+  const [automodFilter, setAutomodFilter] = useState("include");
 
   return (
     (<Grid container spacing={1}>
@@ -113,6 +114,21 @@ const LogsFilter = ({ onSubmit, onChange }) => {
               />
             </Grid>
             <Grid>
+              <FormControl >
+                <InputLabel id="automod_filter_label">AutoMod logs</InputLabel>
+                <Select
+                  labelId="automod_filter_label"
+                  value={automodFilter}
+                  label="AutoMod logs"
+                  onChange={(e) => setAutomodFilter(e.target.value)}
+                >
+                  <MenuItem value={"include"}>Include all</MenuItem>
+                  <MenuItem value={"only"}>Only AutoMod</MenuItem>
+                  <MenuItem value={"exclude"}>Hide AutoMod</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid>
               <TextField
                 label="Limit"
                 type="number"
@@ -167,31 +183,33 @@ const LogsFilter = ({ onSubmit, onChange }) => {
                     playerId,
                     from,
                     till,
-                    limit,
-                    order,
-                    exactPlayer,
-                    exactAction,
-                    server
-                  );
-                }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  onSubmit(
+                  limit,
+                  order,
+                  exactPlayer,
+                  exactAction,
+                  server,
+                  automodFilter
+                );
+              }}
+              onClick={(e) => {
+                e.preventDefault();
+                onSubmit(
                     name,
                     type,
                     playerId,
                     from,
                     till,
-                    limit,
-                    order,
-                    exactPlayer,
-                    exactAction,
-                    server
-                  );
-                }}
-              >
-                load
-              </Button>
+                  limit,
+                  order,
+                  exactPlayer,
+                  exactAction,
+                  server,
+                  automodFilter
+                );
+              }}
+            >
+              load
+            </Button>
             </Grid>
           </Grid>
         </form>
@@ -217,6 +235,7 @@ class LogsHistory extends Component {
       exactPlayer: false,
       exactAction: false,
       server: null,
+      automodFilter: "include",
       myRowPerPage: window.localStorage.getItem("logs_row_per_page") || 50,
     };
 
@@ -239,6 +258,7 @@ class LogsHistory extends Component {
     exactPlayer = false,
     exactAction = false,
     server = null,
+    automodFilter = "include",
   ) {
     this.setState({
       isLoading: true,
@@ -252,6 +272,7 @@ class LogsHistory extends Component {
       exactPlayer: exactPlayer,
       exactAction: exactAction,
       server: server,
+      automodFilter: automodFilter,
     });
     postData(`${process.env.REACT_APP_API_URL}get_historical_logs`, {
       player_name: name,
@@ -264,6 +285,7 @@ class LogsHistory extends Component {
       exact_player: exactPlayer,
       exact_action: exactAction,
       server_filter: server,
+      automod_filter: automodFilter,
     })
       .then((res) => showResponse(res, "get_historical_logs", false))
       .then((res) => {

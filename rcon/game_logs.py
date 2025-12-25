@@ -87,6 +87,8 @@ HOOKS: Dict[str, list[Callable]] = {
     AllLogTypes.vote_started.value: [],
 }
 
+AUTOMOD_USERNAME_PREFIX = "AutoMod_"
+
 
 def on_kill(func):
     HOOKS[AllLogTypes.kill.value].append(func)
@@ -639,6 +641,27 @@ def is_action(action_filter, action, exact_match=False):
     return False
 
 
+def normalize_automod_filter(automod_filter: str | None) -> str:
+    if automod_filter is None:
+        return "include"
+
+    normalized = str(automod_filter).lower()
+    if normalized in {"include", "exclude", "only"}:
+        return normalized
+
+    return "include"
+
+
+def is_automod_line(line: dict) -> bool:
+    player_1 = line.get("player_name_1")
+    player_2 = line.get("player_name_2")
+
+    return any(
+        player and str(player).startswith(AUTOMOD_USERNAME_PREFIX)
+        for player in (player_1, player_2)
+    )
+
+
 def get_recent_logs(
     start: int = 0,
     end: int = 100000,
@@ -648,6 +671,7 @@ def get_recent_logs(
     exact_player_match: bool = False,
     exact_action: bool = False,
     inclusive_filter: bool = True,
+    automod_filter: str | None = None,
 ) -> ParsedLogsType:
     # The default behavior is to only show log lines with actions in `actions_filter`
     # inclusive_filter=True retains this default behavior
@@ -668,6 +692,7 @@ def get_recent_logs(
     exact_player_match = strtobool(exact_player_match)
     exact_action = strtobool(exact_action)
     inclusive_filter = strtobool(inclusive_filter)
+    automod_filter = normalize_automod_filter(automod_filter)
 
     if start != 0:
         all_logs = log_list[start : min(end, len(log_list))]
@@ -686,6 +711,11 @@ def get_recent_logs(
         if min_timestamp and line["timestamp_ms"] / 1000 < min_timestamp:
             logger.debug("Stopping log read due to old timestamp at index %s", idx)
             break
+        automod_line = is_automod_line(line)
+        if automod_filter == "only" and not automod_line:
+            continue
+        if automod_filter == "exclude" and automod_line:
+            continue
         if player_search:
             for player_name_search in player_search:
                 if is_player(
@@ -899,10 +929,12 @@ def get_historical_logs_records(
     exact_player_match: bool = False,
     exact_action: bool = True,
     server_filter: str | None = None,
+    automod_filter: str | None = None,
 ):
     limit = int(limit)
     exact_player_match = strtobool(exact_player_match)
     exact_action = strtobool(exact_action)
+    automod_filter = normalize_automod_filter(automod_filter)
 
     if isinstance(from_, str):
         from_ = parser.parse(from_)
@@ -959,6 +991,15 @@ def get_historical_logs_records(
     if server_filter:
         q = q.filter(LogLine.server == server_filter)
 
+    automod_clause = or_(
+        LogLine.player1_name.ilike(f"{AUTOMOD_USERNAME_PREFIX}%"),
+        LogLine.player2_name.ilike(f"{AUTOMOD_USERNAME_PREFIX}%"),
+    )
+    if automod_filter == "only":
+        q = q.filter(automod_clause)
+    elif automod_filter == "exclude":
+        q = q.filter(~automod_clause)
+
     if time_sort:
         q = q.order_by(
             LogLine.event_time.desc()
@@ -980,6 +1021,7 @@ def get_historical_logs(
     exact_player_match: bool = False,
     exact_action: bool = True,
     server_filter: str | None = None,
+    automod_filter: str | None = None,
 ):
     with enter_session() as sess:
         res = get_historical_logs_records(
@@ -994,6 +1036,7 @@ def get_historical_logs(
             exact_player_match,
             exact_action,
             server_filter,
+            automod_filter,
         )
 
         return [row.to_dict() for row in res]

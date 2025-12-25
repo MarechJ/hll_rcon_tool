@@ -28,6 +28,7 @@ def get_historical_logs_csv(request):
     exact_player_match = data.get("exact_player", False)
     exact_action = data.get("exact_action", True)
     server_filter = data.get("server_filter")
+    automod_filter = data.get("automod_filter")
 
     if till:
         till = parser.parse(till)
@@ -45,6 +46,7 @@ def get_historical_logs_csv(request):
         exact_player_match=exact_player_match,
         exact_action=exact_action,
         server_filter=server_filter,
+        automod_filter=automod_filter,
     )
 
     return api_csv_response(

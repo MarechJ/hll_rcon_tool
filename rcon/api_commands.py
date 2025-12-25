@@ -615,6 +615,7 @@ class RconAPI(Rcon):
         exact_player_match: bool = False,
         exact_action: bool = True,
         server_filter: str | None = None,
+        automod_filter: str | None = None,
     ):
         lines = game_logs.get_historical_logs(
             player_name=player_name,
@@ -627,6 +628,7 @@ class RconAPI(Rcon):
             exact_player_match=exact_player_match,
             exact_action=exact_action,
             server_filter=server_filter,
+            automod_filter=automod_filter,
         )
 
         return lines
@@ -636,6 +638,7 @@ class RconAPI(Rcon):
         filter_player: list[str] | str = [],
         filter_action: list[str] = [],
         inclusive_filter: bool = True,
+        automod_filter: str | None = None,
         start: int = 0,
         end: int = 10000,
         exact_player_match: bool = True,
@@ -649,6 +652,7 @@ class RconAPI(Rcon):
             exact_player_match=exact_player_match,
             exact_action=exact_action,
             inclusive_filter=inclusive_filter,
+            automod_filter=automod_filter,
         )
 
     def get_votemap_status(self) -> list[VoteMapStatusType]:

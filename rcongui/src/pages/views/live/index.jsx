@@ -21,6 +21,14 @@ import {
 import Grid from "@mui/material/Grid2";
 import storageKeys from "@/config/storageKeys";
 
+const defaultLogsSearchParams = {
+  players: [],
+  actions: [],
+  inclusive: true,
+  limit: 500,
+  automodFilter: "include",
+};
+
 const interval = 15 * 1000; // 15 seconds
 
 export const loader = async () => {
@@ -30,6 +38,7 @@ export const loader = async () => {
       filter_action: [],
       filter_player: [],
       inclusive_filter: true,
+      automod_filter: defaultLogsSearchParams.automodFilter,
     },
   });
 
@@ -62,32 +71,54 @@ const Live = () => {
   // and the browser's local storage
   const [logsSearchParams, setLogsSearchParams] = useStorageState(
     storageKeys.LIVE_LOGS_SEARCH_PARAMS,
-    {
-      players: [],
-      actions: [],
-      inclusive: true,
-      limit: 500,
-    }
+    defaultLogsSearchParams
   );
+
+  const resolvedLogsSearchParams = useMemo(
+    () => {
+      const merged = {
+        ...defaultLogsSearchParams,
+        ...logsSearchParams,
+      };
+
+      if (
+        !("inclusive" in logsSearchParams) &&
+        typeof logsSearchParams?.inclusive_filter === "boolean"
+      ) {
+        merged.inclusive = logsSearchParams.inclusive_filter;
+      }
+
+      return merged;
+    },
+    [logsSearchParams]
+  );
+
+  const updateLogsSearchParams = (updater) =>
+    setLogsSearchParams((prev) => {
+      const mergedPrev = { ...defaultLogsSearchParams, ...prev };
+      return typeof updater === "function" ? updater(mergedPrev) : updater;
+    });
 
   const {data: logsView} = useQuery({
     queryKey: [
       "logs",
       "live",
       {
-        end: logsSearchParams.limit,
-        filter_action: logsSearchParams.actions,
-        filter_player: logsSearchParams.players,
-        inclusive_filter: logsSearchParams.inclusive,
+        end: resolvedLogsSearchParams.limit,
+        filter_action: resolvedLogsSearchParams.actions,
+        filter_player: resolvedLogsSearchParams.players,
+        inclusive_filter: resolvedLogsSearchParams.inclusive,
+        automod_filter: resolvedLogsSearchParams.automodFilter,
       },
     ],
     queryFn: () =>
       cmd.GET_LIVE_LOGS({
         payload: {
-          end: logsSearchParams.limit,
-          filter_action: logsSearchParams.actions,
-          filter_player: logsSearchParams.players,
-          inclusive_filter: logsSearchParams.inclusive,
+          end: resolvedLogsSearchParams.limit,
+          filter_action: resolvedLogsSearchParams.actions,
+          filter_player: resolvedLogsSearchParams.players,
+          inclusive_filter: resolvedLogsSearchParams.inclusive,
+          automod_filter: resolvedLogsSearchParams.automodFilter,
         },
       }),
     select: (response) => response.result,
@@ -201,8 +232,8 @@ const Live = () => {
         <LogsTable
           table={logsTable}
           logsViewData={logsView}
-          searchParams={logsSearchParams}
-          setSearchParams={setLogsSearchParams}
+          searchParams={resolvedLogsSearchParams}
+          setSearchParams={updateLogsSearchParams}
         />
       </Grid>
     </Grid>
