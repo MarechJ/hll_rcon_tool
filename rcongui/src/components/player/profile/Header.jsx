@@ -5,6 +5,7 @@ import CopyableText from "@/components/shared/CopyableText";
 import PlatformChip from "./Platform";
 import CountryChip from "./Country";
 import LevelChip from "./Level";
+import LinksChip from "./Links";
 
 const PlayerProfileHeader = ({
   player,
@@ -88,6 +89,7 @@ const PlayerProfileHeader = ({
           <LevelChip level={level} playerId={playerId} currentSoldierData={currentSoldierData} />
           <PlatformChip platform={platform} playerId={playerId} currentSoldierData={currentSoldierData} />
           <CountryChip country={country} playerId={playerId} currentAccountData={currentAccountData} />
+          <LinksChip playerId={playerId} />
         </Stack>
       </Stack>
     </ProfileHeader>
