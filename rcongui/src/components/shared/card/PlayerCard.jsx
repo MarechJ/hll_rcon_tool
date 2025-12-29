@@ -47,7 +47,7 @@ export default function PlayerCard({
   const clanTag = playerProfile?.clan_tag ?? playerProfile?.soldier?.clan_tag;
 
   return (
-    <Card sx={{ minWidth: "370px", borderColor: (theme) => selected ? theme.palette.primary.main : "" }}>
+    <Card sx={{ minWidth: { md: 380 }, borderColor: (theme) => selected ? theme.palette.primary.main : "" }}>
       <CardContent>
         <PlayerProfileHeader
           player={playerProfile}
