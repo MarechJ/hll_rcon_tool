@@ -57,7 +57,7 @@ const PlayersGrid = memo(
         {players.map((player) => (
           <Grid
             key={player.player_id}
-            size={{ xs: 12, sm: 6, md: 4, lg: "auto" }}
+            size={{ xs: 12, sm: 6, md: "auto" }}
           >
             <MemoizedPlayerCard
               player={player}
