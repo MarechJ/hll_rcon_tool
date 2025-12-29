@@ -12,16 +12,40 @@ import PlayerProfileHeader from "@/components/player/profile/Header";
 import FlagList from "@/components/player/profile/FlagList";
 import ActionList from "@/components/player/profile/ActionList";
 import ProfileActions from "@/components/player/profile/Actions";
+import { useMemo, useCallback } from "react";
 
 export default function PlayerCard({
   player: playerProfile,
   onSelect,
   selected,
 }) {
-  const actionList = generatePlayerActions({
-    multiAction: false,
-    onlineAction: playerProfile.is_online,
-  });
+  const actionList = useMemo(
+    () =>
+      generatePlayerActions({
+        multiAction: false,
+        onlineAction: playerProfile.is_online,
+      }),
+    [playerProfile.is_online]
+  );
+
+  const handleSelect = useCallback(() => {
+    onSelect(playerProfile);
+  }, [onSelect, playerProfile]);
+
+  const ActionListComponent = useCallback(
+    () => (
+      <Stack direction={"row"} spacing={0.25}>
+        <Checkbox
+          size="small"
+          checked={selected}
+          onChange={handleSelect}
+          sx={{ width: 24, height: 24 }}
+        />
+        <ProfileActions player={playerProfile} actions={actionList} />
+      </Stack>
+    ),
+    [selected, handleSelect, playerProfile, actionList]
+  );
 
   const name =
     playerProfile?.account?.name ??
@@ -52,17 +76,7 @@ export default function PlayerCard({
         <PlayerProfileHeader
           player={playerProfile}
           isOnline={playerProfile.is_online}
-          ActionList={() => (
-            <Stack direction={"row"} spacing={0.25}>
-              <Checkbox
-                size="small"
-                checked={selected}
-                onChange={() => onSelect(playerProfile)}
-                sx={{ width: 24, height: 24 }}
-              />
-              <ProfileActions player={playerProfile} actions={actionList} />
-            </Stack>
-          )}
+          ActionList={ActionListComponent}
           avatar={avatar}
           name={name}
           level={level}
