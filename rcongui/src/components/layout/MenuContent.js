@@ -7,10 +7,11 @@ import Stack from "@mui/material/Stack";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { Link } from "react-router-dom";
-import { Collapse, TextField, InputAdornment } from "@mui/material";
+import { Collapse, TextField, InputAdornment, IconButton } from "@mui/material";
 import {useState} from "react";
 import { useAppStore } from "@/stores/app-state";
 import SearchIcon from "@mui/icons-material/Search";
+import CloseIcon from "@mui/icons-material/Close";
 
 const NavigationLink = ({ to, icon, text, onClick }) => {
 
@@ -116,23 +117,31 @@ export default function MenuContent({ navigationTree, isMobile }) {
         overflow: "hidden",
       }}
     >
-      <TextField
-        size="small"
-        placeholder="Search..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        sx={{ mb: 1 }}
-        slotProps={{
-          input: {
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }
-        }}
-      />
-      <List dense sx={{ overflowY: "auto" }}>
+      <Stack direction={"row"} alignItems={"start"} spacing={0.5}>
+        <TextField
+          size="small"
+          fullWidth
+          placeholder="Search..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          sx={{ mb: 1 }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }
+          }}
+        />
+        {isMobile && (
+          <IconButton size="small" onClick={toggleDrawer}>
+            <CloseIcon sx={{ fontSize: 24 }} />
+          </IconButton>
+        )}
+      </Stack>
+      <List dense sx={{ overflowY: "auto", scrollbarWidth: "none" }}>
         {filteredTree
           .filter((group) => !("name" in group))
           .map((group) =>
