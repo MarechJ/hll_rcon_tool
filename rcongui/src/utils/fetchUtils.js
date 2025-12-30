@@ -103,6 +103,7 @@ export const cmd = {
   ADD_VIP: (params) => requestFactory({ method: "POST", cmd: "add_vip", ...params }),
   AUTHENTICATE: (params) => requestFactory({ method: "POST", cmd: "login", ...params }),
   MESSAGE_PLAYER: (params) => requestFactory({ method: "POST", cmd: "message_player", ...params }),
+  MESSAGE_ALL_PLAYERS: (params) => requestFactory({ method: "POST", cmd: "message_all_players", ...params }),
   BULK_MESSAGE_PLAYERS: (params) => requestFactory({ method: "POST", cmd: "bulk_message_players", ...params }),
   CLEAR_APPLICATION_CACHE: (params) => requestFactory({ method: "POST", cmd: "clear_cache", ...params }),
   DELETE_CONSOLE_ADMIN: (params) => requestFactory({ method: "POST", cmd: "remove_admin", ...params }),

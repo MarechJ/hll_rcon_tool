@@ -26,6 +26,7 @@ import ScoreboardIcon from '@mui/icons-material/Scoreboard';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import DisbandSquadDialog from "@/features/player-action/DisbandSquad";
+import MessageAllDialog from "@/features/player-action/MessageAll";
 
 const interval = 15 * 1000; // 15 seconds
 const UNASSIGNED = "unassigned"
@@ -283,6 +284,7 @@ const Live = () => {
           </Stack>
           <InfoPanel gameData={gameData} playersData={playersData} />
           <Stack direction="row" alignItems="center" spacing={1}>
+              <MessageAllDialog />
               <DisbandSquadDialog />
           </Stack>
         </Grid>
