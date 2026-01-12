@@ -226,6 +226,16 @@ def get_players_by_appearance(
             query.order_by(func.coalesce(sub.c.last, PlayerID.created).desc())
             .limit(page_size)
             .offset((page - 1) * page_size)
+            # All relations used in PlayerID.to_dict should be loaded here to avoid lazyloading in the for loop below
+            .options(
+                selectinload(PlayerID.names),
+                selectinload(PlayerID.sessions),
+                selectinload(PlayerID.received_actions),
+                selectinload(PlayerID.blacklists),
+                selectinload(PlayerID.flags),
+                selectinload(PlayerID.watchlist),
+                selectinload(PlayerID.steaminfo),
+            )
             .all()
         )
 
@@ -249,7 +259,6 @@ def get_players_by_appearance(
             "total": total,
             "players": [
                 {
-                    # TODO the lazyloading here makes it super slow on large limit
                     **p[0].to_dict(limit_sessions=0),
                     "names_by_match": sorted(
                         (n.name for n in p[0].names), key=cmp_to_key(sort_name_match)
