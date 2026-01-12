@@ -42,7 +42,7 @@ export const ActionForm = ({ state: actionState, actionHandlers }) => {
       reason: "",
     },
   });
-  const { recipients, action } = actionState;
+  const { recipients, action, params } = actionState;
   const { submitRef, closeDialog, setLoading, setError } = actionHandlers;
   const [recipientStates, setRecipientStates] = useState(
     initRecipients(recipients)
@@ -76,6 +76,7 @@ export const ActionForm = ({ state: actionState, actionHandlers }) => {
           player_name: players[i],
           player_id: steamIds[i],
           ...data,
+          ...params,
         });
       }
       // now map payloads to requests

@@ -1,67 +1,48 @@
 import { cmd } from "@/utils/fetchUtils";
 import {
   Button,
-  TextField,
-  FormControlLabel,
-  Switch,
   Stack,
   Grid2 as Grid,
-  Chip,
-  Popover,
-  IconButton,
-  Skeleton,
   Typography,
+  Divider,
 } from "@mui/material";
 import {
-  Form,
   useLoaderData,
   useNavigation,
-  useSubmit,
 } from "react-router-dom";
-import { Autocomplete } from "@mui/material";
-import { CountryFlag } from "@/components/shared/CountryFlag";
-import { useMemo, useState, Suspense, lazy, memo } from "react";
-import countries from "country-list";
+import { useMemo, useState, memo, useCallback, useEffect } from "react";
 import PlayerCard from "@/components/shared/card/PlayerCard";
-import emojiData from "@emoji-mart/data/sets/15/twitter.json";
-import Emoji from "@/components/shared/Emoji";
-import AddReactionIcon from "@mui/icons-material/AddReaction";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
-import dayjs from "dayjs";
 import NavPagination from "@/pages/stats/games/nav-pagination";
 import { Box } from "@mui/material";
 import { useGlobalStore } from "@/stores/global-state";
 import { ActionBar } from "@/features/player-action/ActionMenu";
 import { newRecordActions } from "@/features/player-action/actions";
-
-const EmojiPicker = lazy(() => import("@emoji-mart/react"));
-
-// Get all countries for autocomplete
-const countryOptions = countries.getCodes().map((code) => ({
-  code: code.toLowerCase(),
-  name: countries.getName(code),
-}));
+import PlayerFiltersForm from "./PlayerFiltersForm";
 
 // Create a memoized version of PlayerCard
 const MemoizedPlayerCard = memo(PlayerCard);
 
 // Create a separate component for the players section
-const PlayersGrid = memo(({ players, ...props }) => {
-  return (
-    <Grid container spacing={1} {...props}>
-      {players.map((player) => (
-        <Grid
-          key={player.player_id}
-          size={{ xs: 12, sm: 6, md: 4, lg: "auto" }}
-        >
-          <MemoizedPlayerCard player={player} />
-        </Grid>
-      ))}
-    </Grid>
-  );
-});
+const PlayersGrid = memo(
+  ({ players, selectedIds, handlePlayerSelect, ...props }) => {
+    return (
+      <Grid container spacing={1} {...props}>
+        {players.map((player) => (
+          <Grid
+            key={player.player_id}
+            size={{ xs: 12, sm: 6, md: "auto" }}
+          >
+            <MemoizedPlayerCard
+              player={player}
+              selected={selectedIds.has(player.player_id)}
+              onSelect={handlePlayerSelect}
+            />
+          </Grid>
+        ))}
+      </Grid>
+    );
+  }
+);
 
 export const loader = async ({ request }) => {
   const url = new URL(request.url);
@@ -131,299 +112,126 @@ export const loader = async ({ request }) => {
 
 export default function PlayersRecords() {
   const { players: playersData, fields, total_pages, page } = useLoaderData();
-  const submit = useSubmit();
   const navigation = useNavigation();
   const server = useGlobalStore((state) => state.serverState);
-  const [formFields, setFormFields] = useState({
-    player_name: fields.player_name || "",
-    player_id: fields.player_id || "",
-    blacklisted: !!fields.blacklisted,
-    exact_name_match: !!fields.exact_name_match,
-    ignore_accent: !!fields.ignore_accent,
-    is_watched: !!fields.is_watched,
-    last_seen_from: fields.last_seen_from ? dayjs(fields.last_seen_from) : null,
-    last_seen_till: fields.last_seen_till ? dayjs(fields.last_seen_till) : null,
-  });
-  const [selectedCountry, setSelectedCountry] = useState(fields.country);
-  const [selectedEmoji, setSelectedEmoji] = useState(fields.flags);
-  const [anchorEl, setAnchorEl] = useState(null);
-  const open = Boolean(anchorEl);
+  const onlinePlayers = useGlobalStore((state) => state.onlinePlayers);
+  const [selectedPlayerIds, setSelectedPlayerIds] = useState(new Set());
+  // Cache player data by player_id to support multi-page selection
+  const [playerCache, setPlayerCache] = useState(new Map());
 
   const players = useMemo(() => {
     if (!server) return playersData;
-    return playersData.map((player) => ({
-      ...player,
-      is_vip:
-        player.vips &&
-        player.vips.some((vip) => vip.server_number === server.server_number),
-    }));
-  }, [playersData, server]);
+    return playersData.map((player) => {
+      const thisOnlinePlayer = onlinePlayers.find(
+        (aPlayer) => aPlayer.player_id === player.player_id
+      );
 
-  const handleEmojiButtonClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
+      const profile = {
+        ...player,
+        is_online: false,
+        is_vip:
+          player.vips &&
+          player.vips.some((vip) => vip.server_number === server.server_number),
+      };
 
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
+      if (thisOnlinePlayer) {
+        profile.is_online = true;
+        profile.level = thisOnlinePlayer.level || player.soldier.level;
+        profile.clan_tag = thisOnlinePlayer.clan_tag || player.soldier.clan_tag;
+        profile.platform = thisOnlinePlayer.platform || player.soldier.platform;
+      }
 
-  const handleReset = () => {
-    setFormFields({
-      player_name: "",
-      player_id: "",
-      blacklisted: false,
-      exact_name_match: false,
-      ignore_accent: false,
-      is_watched: false,
-      last_seen_from: null,
-      last_seen_till: null,
+      return profile;
     });
-    setSelectedCountry("");
-    setSelectedEmoji([]);
-    submit(null, { method: "GET" });
-  };
+  }, [playersData, server, onlinePlayers]);
 
-  const handleInputChange = (e) => {
-    const { name, value, checked } = e.target;
-    setFormFields((prev) => ({
-      ...prev,
-      [name]: e.target.type === "checkbox" ? checked : value,
-    }));
-  };
+  // Update cache with current page players
+  useEffect(() => {
+    setPlayerCache((prevCache) => {
+      const newCache = new Map(prevCache);
+      for (const player of players) {
+        newCache.set(player.player_id, player);
+      }
+      return newCache;
+    });
+  }, [players]);
+
+  const handlePlayerSelect = useCallback((player) => {
+    setSelectedPlayerIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(player.player_id)) {
+        newSet.delete(player.player_id);
+      } else {
+        newSet.add(player.player_id);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const handleSelectAllPlayers = useCallback(() => {
+    setSelectedPlayerIds((prev) => {
+      // Check if all current page players are already selected
+      const currentPageIds = new Set(players.map((p) => p.player_id));
+      const allCurrentPageSelected = players.every((p) => prev.has(p.player_id));
+      
+      if (allCurrentPageSelected && players.length > 0) {
+        // All current page players are selected, return unchanged
+        return prev;
+      }
+      
+      // Add all current page players to existing selection
+      const newSet = new Set(prev);
+      for (const player of players) {
+        newSet.add(player.player_id);
+      }
+      return newSet;
+    });
+  }, [players]);
+
+  const handleUnselectAllPlayers = () => {
+    setSelectedPlayerIds(new Set())
+  }
+
+  // Convert Set to array of player objects for ActionBar
+  // Uses cache to include players from all pages, not just current page
+  const selectedPlayers = useMemo(() => {
+    const result = [];
+    for (const playerId of selectedPlayerIds) {
+      const cachedPlayer = playerCache.get(playerId);
+      if (cachedPlayer) {
+        // Ensure the player has a name field for ActionForm
+        const playerName = 
+          cachedPlayer.name ??
+          cachedPlayer.account?.name ??
+          cachedPlayer.names?.[0]?.name ??
+          cachedPlayer.soldier?.name ??
+          playerId;
+        
+        result.push({
+          ...cachedPlayer,
+          name: playerName,
+          player_name: playerName, // Explicitly set player_name for actions
+        });
+      } else {
+        // Fallback: create minimal player object if not in cache
+        // This shouldn't happen often, but handles edge cases
+        result.push({
+          player_id: playerId,
+          player_name: playerId,
+          name: playerId,
+          names: [{ name: playerId }],
+        });
+      }
+    }
+    return result;
+  }, [selectedPlayerIds, playerCache]);
 
   return (
     <Stack spacing={1} sx={{ mt: 2 }}>
-      <ActionBar actions={newRecordActions} handleActionClick={() => {}} />
+      <ActionBar actions={newRecordActions} recipients={selectedPlayers} />
       <Stack direction={{ xs: "column", lg: "row" }} spacing={1} sx={{ mt: 2 }}>
         {/* FILTERS */}
-        <Form method="GET">
-          <Stack spacing={2} sx={{ width: { xs: "100%", lg: "300px" } }}>
-            <TextField
-              value={formFields.player_name}
-              onChange={handleInputChange}
-              label="Player Name"
-              name="player_name"
-              fullWidth
-            />
-
-            <TextField
-              value={formFields.player_id}
-              onChange={handleInputChange}
-              label="Player ID"
-              name="player_id"
-              fullWidth
-            />
-
-            <Autocomplete
-              options={countryOptions}
-              getOptionLabel={(option) => option.name}
-              value={
-                countryOptions.find((c) => c.code === selectedCountry) || null
-              }
-              onChange={(event, newValue) => {
-                setSelectedCountry(newValue?.code || "");
-              }}
-              renderOption={({ key, ...props }, option) => (
-                <li key={key} {...props}>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <CountryFlag country={option.code} />
-                    <span>{option.name}</span>
-                  </Stack>
-                </li>
-              )}
-              renderInput={({ key, ...params }) => (
-                <>
-                  <TextField key={key} {...params} label="Country" fullWidth />
-                  {/* A hacky way to submit the country code but display the country name */}
-                  <input
-                    type="hidden"
-                    name="country"
-                    value={selectedCountry ?? ""}
-                  />
-                </>
-              )}
-            />
-
-            <Stack
-              sx={{
-                width: "100%",
-                border: (theme) => `1px solid ${theme.palette.divider}`,
-                borderRadius: "4px",
-                p: 1,
-              }}
-              direction="row"
-              spacing={1}
-              alignItems="center"
-              justifyContent="space-between"
-            >
-              <Stack
-                direction="row"
-                spacing={1}
-                alignItems="center"
-                flexWrap="wrap"
-              >
-                {selectedEmoji.map((emoji) => (
-                  <Chip
-                    key={emoji.id}
-                    size={"medium"}
-                    label={<Emoji emoji={emoji} size={18} />}
-                    onDelete={() =>
-                      setSelectedEmoji(
-                        selectedEmoji.filter((e) => e.id !== emoji.id)
-                      )
-                    }
-                  />
-                ))}
-                {selectedEmoji.length === 0 && (
-                  <Typography
-                    sx={{ pl: 1 }}
-                    variant="body"
-                    color="text.secondary"
-                  >
-                    Filter by flags
-                  </Typography>
-                )}
-              </Stack>
-              <IconButton onClick={handleEmojiButtonClick}>
-                <AddReactionIcon />
-              </IconButton>
-            </Stack>
-            <Popover
-              open={open}
-              anchorEl={anchorEl}
-              onClose={handleClose}
-              anchorOrigin={{
-                vertical: "bottom",
-                horizontal: "left",
-              }}
-            >
-              <Suspense
-                fallback={
-                  <Skeleton variant="rectangular" height={400} width={300} />
-                }
-              >
-                <EmojiPicker
-                  set="twitter"
-                  data={emojiData}
-                  onEmojiSelect={(emoji) => {
-                    // Don't allow duplicates
-                    if (selectedEmoji.some((e) => e.id === emoji.id)) return;
-                    setSelectedEmoji([...selectedEmoji, emoji]);
-                  }}
-                />
-              </Suspense>
-            </Popover>
-            <input
-              type="hidden"
-              name="flags"
-              value={selectedEmoji.map((e) => e.native).join(",")}
-            />
-
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DateTimePicker
-                value={formFields.last_seen_from}
-                onChange={(newValue) =>
-                  setFormFields((prev) => ({
-                    ...prev,
-                    last_seen_from: newValue,
-                  }))
-                }
-                label="Last seen from"
-                name="last_seen_from"
-                format="MMMM DD, YYYY HH:mm"
-                ampm={false}
-                slotProps={{
-                  textField: { fullWidth: true },
-                }}
-              />
-            </LocalizationProvider>
-
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DateTimePicker
-                value={formFields.last_seen_till}
-                onChange={(newValue) =>
-                  setFormFields((prev) => ({
-                    ...prev,
-                    last_seen_till: newValue,
-                  }))
-                }
-                label="Last seen till"
-                name="last_seen_till"
-                format="MMMM DD, YYYY HH:mm"
-                ampm={false}
-                slotProps={{
-                  textField: { fullWidth: true },
-                }}
-              />
-            </LocalizationProvider>
-
-            <FormControlLabel
-              control={
-                <Switch
-                  name="blacklisted"
-                  checked={formFields.blacklisted}
-                  onChange={handleInputChange}
-                />
-              }
-              label="Blacklisted only"
-            />
-
-            <FormControlLabel
-              control={
-                <Switch
-                  name="exact_name_match"
-                  checked={formFields.exact_name_match}
-                  onChange={handleInputChange}
-                />
-              }
-              label="Exact name match"
-            />
-
-            <FormControlLabel
-              control={
-                <Switch
-                  name="ignore_accent"
-                  checked={formFields.ignore_accent}
-                  onChange={handleInputChange}
-                />
-              }
-              label="Ignore accent"
-            />
-
-            <FormControlLabel
-              control={
-                <Switch
-                  name="is_watched"
-                  checked={formFields.is_watched}
-                  onChange={handleInputChange}
-                />
-              }
-              label="Watched only"
-            />
-          </Stack>
-
-          <Stack direction="column" spacing={1} sx={{ mt: 2 }}>
-            <Button
-              variant="contained"
-              color="secondary"
-              sx={{ mt: 2 }}
-              onClick={handleReset}
-              disabled={navigation.state === "loading"}
-            >
-              Reset
-            </Button>
-
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              sx={{ mt: 2 }}
-              disabled={navigation.state === "loading"}
-            >
-              Search
-            </Button>
-          </Stack>
-        </Form>
+        <PlayerFiltersForm fields={fields} />
         {/* MAIN CONTENT */}
         <Stack
           component="section"
@@ -431,12 +239,22 @@ export default function PlayersRecords() {
           spacing={1}
           sx={{ width: "100%" }}
         >
-          <NavPagination
-            page={page}
-            maxPages={total_pages}
-            disabled={navigation.state === "loading"}
+          <Stack direction={"row"} spacing={1} alignItems={"center"}>
+            <Typography>Selected: {selectedPlayerIds.size}</Typography>
+            <Button size="small" variant="outlined" onClick={handleSelectAllPlayers}>Select All</Button>
+            <Button size="small" variant="outlined" onClick={handleUnselectAllPlayers}>Unselect All</Button>
+            <Divider flexItem orientation="vertical" />
+            <NavPagination
+              page={page}
+              maxPages={total_pages}
+              disabled={navigation.state === "loading"}
+            />
+          </Stack>
+          <PlayersGrid
+            players={players}
+            selectedIds={selectedPlayerIds}
+            handlePlayerSelect={handlePlayerSelect}
           />
-          <PlayersGrid players={players} />
           <Box sx={{ flexGrow: 1 }} />
           <NavPagination
             page={page}

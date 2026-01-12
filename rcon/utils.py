@@ -13,7 +13,7 @@ import redis.exceptions
 
 from rcon.cache_utils import get_redis_pool
 from rcon.models import GameLayout
-from rcon.types import GetDetailedPlayer, MapInfo
+from rcon.types import GetDetailedPlayer, MapInfo, PlayerInfoType
 
 logger = logging.getLogger("rcon")
 
@@ -394,9 +394,9 @@ def dict_differences(old: dict[Any, Any], new: dict[Any, Any]) -> dict[Any, Any]
     return diff
 
 
-def default_player_info_dict(player) -> GetDetailedPlayer:
+def default_player_info_dict() -> GetDetailedPlayer:
     return {
-        "name": player,
+        "name": "",
         "player_id": "",
         "profile": None,
         "is_vip": False,
@@ -417,18 +417,23 @@ def default_player_info_dict(player) -> GetDetailedPlayer:
         "level": 0,
         "platform": "",
         "eos_id": "",
-        "world_position": {},
+        "world_position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+        },
         "clan_tag": "",
         "map_playtime_seconds": 0,
     }
 
 
-def parse_raw_player_info(raw: dict[str, Any]) -> GetDetailedPlayer:
+def parse_raw_player_info(raw: PlayerInfoType) -> GetDetailedPlayer:
     """Parse the result of the playerinfo command from the game server"""
 
-    data = default_player_info_dict(raw["name"])
+    data = default_player_info_dict()
 
     # Remap keys and parse values
+    data[NAME] = raw[NAME]
     data[PLAYER_ID] = raw["iD"]
 
     try:

@@ -26,9 +26,11 @@ import { generatePlayerActions } from "@/features/player-action/actions";
 import PlayerProfileStatusTags from "@/components/player/profile/StatusTags";
 import ReceivedActions from "./[detail]/received-actions";
 import { useGlobalStore } from "@/stores/global-state";
+import ProfileActions from "@/components/player/profile/Actions";
 
 const DETAIL_LINKS = [
-  { path: "", label: "Received Actions" },
+  { path: "", label: "Profile" },
+  { path: "actions", label: "Received Actions" },
   { path: "sessions", label: "Sessions" },
   { path: "names", label: "Names" },
   { path: "comments", label: "Comments" },
@@ -60,8 +62,12 @@ export default function PlayerProfilePage() {
     multiAction: false,
     onlineAction: !!thisOnlinePlayer,
   });
-  const name = profile?.name ?? profile.names[0]?.name ?? "?";
+  const name = profile?.account?.name ?? profile.names[0]?.name ?? profile?.soldier?.name ?? "???";
   const avatar = profile?.steaminfo?.profile?.avatar;
+  const country = profile?.country ?? profile?.account?.country ?? profile?.steaminfo?.country
+  const level = thisOnlinePlayer?.level ?? profile?.soldier?.level ?? 0
+  const clanTag = thisOnlinePlayer?.clan_tag ?? profile?.soldier?.clan_tag
+  const platform = thisOnlinePlayer?.platform ?? profile?.soldier?.platform
 
   const getActiveTab = () => {
     const path = location.pathname.split("/").pop();
@@ -76,8 +82,6 @@ export default function PlayerProfilePage() {
     navigate(DETAIL_LINKS[newValue].path, { replace: true });
   };
 
-  console.log(profile)
-
   return (
     <ProfileContainer>
       <MainContent>
@@ -86,9 +90,15 @@ export default function PlayerProfilePage() {
             <PlayerProfileHeader
               player={profile}
               isOnline={!!thisOnlinePlayer}
-              actionList={actionList}
+              ActionList={() => (
+                <ProfileActions player={profile} actions={actionList} />
+              )}
               avatar={avatar}
               name={name}
+              country={country}
+              level={level}
+              clanTag={clanTag}
+              platform={platform}
             />
             <Divider />
             <PlayerProfileStatusTags
@@ -115,6 +125,7 @@ export default function PlayerProfilePage() {
               )}
               names={profile.names}
               watchlist={profile.watchlist}
+              eosId={profile.soldier.eos_id}
             />
           </CardContent>
         </SummaryCard>
@@ -132,7 +143,6 @@ export default function PlayerProfilePage() {
                   <Tab key={link.path} label={link.label} />
                 ))}
               </Tabs>
-              {getActiveTab() === 0 && <ReceivedActions />}
               <Outlet context={{ profile, submit }} />
             </CardContent>
           </DetailCard>

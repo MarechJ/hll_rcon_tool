@@ -13,8 +13,8 @@ import FlagIcon from "@mui/icons-material/Flag";
 import HowToRegIcon from "@mui/icons-material/HowToReg";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
-import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
-import GroupRemoveIcon from '@mui/icons-material/GroupRemove';
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import GroupRemoveIcon from "@mui/icons-material/GroupRemove";
 import { cmd, execute } from "@/utils/fetchUtils";
 import { MessageFormFields } from "@/features/player-action/forms/MessageFormFields";
 import { PunishFormFields } from "@/features/player-action/forms/PunishFormFields";
@@ -61,7 +61,7 @@ export const messageAction = {
   name: "Send Message",
   description: "Show message in top right corner of game interface.",
   component: MessageFormFields,
-  icon: <MessageIcon />,
+  icon: MessageIcon,
   execute: executeAction("message_player"),
   permission: ["can_message_players"],
 };
@@ -71,7 +71,7 @@ export const watchAction = {
   description:
     "Send Discord message upon player connection (using webhook config).",
   component: WatchFormFields,
-  icon: <RemoveRedEyeIcon />,
+  icon: RemoveRedEyeIcon,
   execute: executeAction("watch_player"),
   permission: ["can_add_player_watch"],
 };
@@ -80,7 +80,7 @@ export const removeWatchAction = {
   name: "Remove Watch",
   description: "Remove from Watchlist.",
   component: ConfirmationOnly,
-  icon: <VisibilityOffIcon color="warning" />,
+  icon: VisibilityOffIcon,
   execute: executeAction("unwatch_player"),
   permission: ["can_remove_player_watch"],
 };
@@ -89,7 +89,7 @@ export const vipAction = {
   name: "Add VIP",
   description: "Add or Update VIP.",
   component: AddVipFormFields,
-  icon: <StarIcon />,
+  icon: StarIcon,
   execute: executeAction("add_vip"),
   permission: ["can_add_vip"],
 };
@@ -98,7 +98,7 @@ export const removeVipAction = {
   name: "Remove VIP",
   description: "Remove VIP.",
   component: RemoveVipFormFields,
-  icon: <StarBorderIcon color="warning" />,
+  icon: StarBorderIcon,
   execute: executeAction("remove_vip"),
   permission: ["can_remove_vip"],
 };
@@ -107,7 +107,7 @@ export const switchAction = {
   name: "Switch player",
   description: "Move player to opposite team.",
   component: ConfirmationOnly,
-  icon: <SyncIcon />,
+  icon: SyncIcon,
   execute: executeAction("switch_player_now"),
   permission: ["can_switch_players_immediately"],
 };
@@ -116,7 +116,7 @@ export const switchOnDeathAction = {
   name: "Switch Player On Death",
   description: "Move player to opposite team upon death.",
   component: ConfirmationOnly,
-  icon: <SyncLockIcon />,
+  icon: SyncLockIcon,
   execute: executeAction("switch_player_on_death"),
   permission: ["can_switch_players_on_death"],
 };
@@ -125,7 +125,7 @@ export const punishAction = {
   name: "Punish player",
   description: "Kill player in-game if alive.",
   component: PunishFormFields,
-  icon: <WarningIcon />,
+  icon: WarningIcon,
   execute: executeAction("punish"),
   permission: ["can_punish_players"],
 };
@@ -134,7 +134,7 @@ export const kickAction = {
   name: "Kick player",
   description: "Remove player from server.",
   component: PunishFormFields,
-  icon: <SportsMartialArtsIcon />,
+  icon: SportsMartialArtsIcon,
   execute: executeAction("kick"),
   permission: ["can_kick_players"],
 };
@@ -143,7 +143,7 @@ export const tempBanAction = {
   name: "Temp Ban",
   description: "Issue immediate temporary ban to player.",
   component: TempBanFormFields,
-  icon: <GavelIcon />,
+  icon: GavelIcon,
   execute: executeAction("temp_ban"),
   permission: ["can_temp_ban_players"],
   deprecated: true,
@@ -151,11 +151,20 @@ export const tempBanAction = {
     "We suggest utilizing blacklists for more effective ban management.",
 };
 
+export const removeBanAction = {
+  name: "Remove bans",
+  description: "Remove all bans associated with the player account.",
+  component: ConfirmationOnly,
+  icon: GavelIcon,
+  execute: executeAction("unban"),
+  permission: ["can_remove_perma_bans"],
+};
+
 export const permaBanAction = {
   name: "Perma Ban",
   description: "Initiate immediate indefinite ban to player.",
   component: PermaBanFormFields,
-  icon: <BlockIcon />,
+  icon: BlockIcon,
   execute: executeAction("perma_ban"),
   permission: ["can_perma_ban_players"],
   deprecated: true,
@@ -167,7 +176,7 @@ export const blacklistAction = {
   name: "Add Blacklist",
   description: "Add player to a blacklist.",
   component: BlacklistPlayerFormFields,
-  icon: <AccountBalanceIcon />,
+  icon: AccountBalanceIcon,
   execute: executeAction("add_blacklist_record"),
   permission: ["can_add_blacklist_records"],
   context: [
@@ -185,16 +194,16 @@ export const flagAction = {
   name: "Add Flag",
   description: "Assign a flag to the player.",
   component: AddFlagFormFields,
-  icon: <FlagIcon />,
+  icon: FlagIcon,
   execute: executeAction("flag_player"),
   permission: ["can_flag_player"],
 };
 
-export const unflagAction = {
-  name: "Remove Flag",
+export const removeFlagsAction = {
+  name: "Remove Flags",
   description: "Remove a flag from the player.",
   component: RemoveFlagFormFields,
-  icon: <FlagIcon color="warning" />,
+  icon: FlagIcon,
   execute: executeAction("unflag_player"),
   permission: ["can_unflag_player"],
   context: [
@@ -209,11 +218,20 @@ export const unflagAction = {
   ],
 };
 
+export const removeFlagAction = {
+  name: "Remove Flag",
+  description: "Remove a flag from the player.",
+  component: ConfirmationOnly,
+  icon: FlagIcon,
+  execute: executeAction("unflag_player"),
+  permission: ["can_unflag_player"],
+};
+
 export const commentAction = {
   name: "Add Comment",
   description: "Add a comment to the player profile.",
   component: AddCommentFormFields,
-  icon: <AddCommentIcon />,
+  icon: AddCommentIcon,
   execute: executeAction("post_player_comment"),
   permission: ["can_add_player_comments"],
 };
@@ -222,7 +240,7 @@ export const clearAccountAction = {
   name: "Clear Bans",
   description: "Remove all bans associated with the player account.",
   component: ConfirmationOnly,
-  icon: <HowToRegIcon />,
+  icon: HowToRegIcon,
   execute: executeAction("unban"),
   permission: ["can_remove_perma_bans"],
 };
@@ -231,7 +249,7 @@ export const addConsoleAdminAction = {
   name: "Add Admin",
   description: "Add a console admin to the player.",
   component: AddConsoleAdminFormFields,
-  icon: <AdminPanelSettingsIcon />,
+  icon: AdminPanelSettingsIcon,
   execute: executeAction("add_admin"),
   permission: ["can_add_admin_roles"],
   context: [
@@ -249,7 +267,7 @@ export const removeFromSquadAction = {
   name: "Remove from a squad",
   description: "Removes a player from his current squad.",
   component: PunishFormFields,
-  icon: <GroupRemoveIcon />,
+  icon: GroupRemoveIcon,
   execute: executeAction("remove_player_from_squad"),
   permission: ["can_remove_player_from_squad"],
 };
@@ -291,7 +309,7 @@ export const generatePlayerActions = (
         permaBanAction,
         clearAccountAction,
         flagAction,
-        unflagAction,
+        removeFlagsAction,
         commentAction,
         addConsoleAdminAction,
       ];
@@ -321,3 +339,26 @@ export const newRecordActions = [
   tempBanAction,
   permaBanAction,
 ];
+
+export const Actions = {
+  SendMessage: messageAction,
+  AddWatch: watchAction,
+  RemoveWatch: removeWatchAction,
+  AddVIP: vipAction,
+  RemoveVIP: removeVipAction,
+  SwitchPlayer: switchAction,
+  SwitchPlayerOnDeath: switchOnDeathAction,
+  PunishPlayer: punishAction,
+  KickPlayer: kickAction,
+  TempBan: tempBanAction,
+  PermaBan: permaBanAction,
+  AddBlacklist: blacklistAction,
+  AddFlag: flagAction,
+  RemoveFlags: removeFlagsAction,
+  RemoveFlag: removeFlagAction,
+  AddComment: commentAction,
+  RemoveBan: removeBanAction,
+  ClearBans: clearAccountAction,
+  AddConsoleAdmin: addConsoleAdminAction,
+  RemoveFromSquad: removeFromSquadAction,
+};

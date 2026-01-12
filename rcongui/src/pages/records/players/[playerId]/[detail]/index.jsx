@@ -22,6 +22,7 @@ import dayjs from 'dayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import PlayerLogs from './logs';
+import ProfileDetails from './profile-details';
 
 export default function PlayerDetailView() {
   const { detail } = useParams();
@@ -185,7 +186,7 @@ export default function PlayerDetailView() {
           </div>
         );
 
-      case 'activities':
+      case 'actions':
         return (
           <div>
             <FilterSection>
@@ -308,7 +309,7 @@ export default function PlayerDetailView() {
         return <PlayerLogs />;
 
       default:
-        return null;
+        return <ProfileDetails />;
     }
   };
 

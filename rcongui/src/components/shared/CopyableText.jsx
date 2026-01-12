@@ -3,7 +3,13 @@ import React, { useState, useEffect } from "react";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 
-export default function CopyableText({ text, label, size = "1em", ...props }) {
+export default function CopyableText({
+  text,
+  label,
+  size = "1em",
+  position = "end",
+  ...props
+}) {
   const [isClipboardAvailable, setIsClipboardAvailable] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
@@ -29,6 +35,23 @@ export default function CopyableText({ text, label, size = "1em", ...props }) {
     setIsCopied(true);
   };
 
+  const icon = isClipboardAvailable ? (
+    <Tooltip title={isCopied ? "Copied!" : "Copy"}>
+      <IconButton
+        onClick={handleCopy}
+        className="copyable-text-icon-button"
+        size="small"
+        disableRipple
+      >
+        {isCopied ? (
+          <DoneAllIcon sx={{ width: "0.5em", color: "success.main" }} />
+        ) : (
+          <ContentCopyIcon sx={{ width: "0.5em" }} />
+        )}
+      </IconButton>
+    </Tooltip>
+  ) : null;
+
   return (
     <Stack
       direction="row"
@@ -49,23 +72,9 @@ export default function CopyableText({ text, label, size = "1em", ...props }) {
         },
       }}
     >
+      {position === "start" && icon}
       {label || text}
-      {isClipboardAvailable && (
-        <Tooltip title={isCopied ? "Copied!" : "Copy"}>
-          <IconButton
-            onClick={handleCopy}
-            className="copyable-text-icon-button"
-            size="small"
-            disableRipple
-          >
-            {isCopied ? (
-              <DoneAllIcon sx={{ width: "0.5em", color: "success.main" }} />
-            ) : (
-              <ContentCopyIcon sx={{ width: "0.5em" }} />
-            )}
-          </IconButton>
-        </Tooltip>
-      )}
+      {position === "end" && icon}
     </Stack>
   );
 }
