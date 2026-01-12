@@ -98,7 +98,7 @@ def mock_rcon():
     rcon.get_vip_ids.return_value = [{ "player_id": "ID_WITH_VIP" }]
     # Initialize dynamic rotation state
     rotation = SAMPLE_MAPS[:1]  # Start with one map
-    rcon.get_map_rotation.side_effect = lambda: rotation
+    rcon.get_map_rotation.side_effect = lambda: { "maps": rotation }
     rcon.current_map = SAMPLE_MAPS[0]
 
     # Mock remove_map_from_rotation
