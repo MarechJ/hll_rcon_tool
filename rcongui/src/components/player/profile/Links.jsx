@@ -12,7 +12,12 @@ const EXTERNAL_LINKS = [
     name: "HeLO-System",
     urlTemplate: (playerId) => `https://helo-system.de/statistics/players/${playerId}`,
     image: "/icons/brands/helo-system.png",
-  }
+  },
+  {
+    name: "HLLoR",
+    urlTemplate: (playerId) => `https://hellor.pro/player/${playerId}`,
+    image: "/icons/brands/hllor.webp",
+  },
   // Add more links here as needed
   // Example:
   // {
