@@ -4,7 +4,7 @@ import os
 import secrets
 from datetime import datetime, timedelta, timezone
 from itertools import islice
-from typing import Any, Generic, Iterable, TypeVar
+from typing import Any, Generic, Iterable, TypeVar, cast
 
 import hllrcon
 import orjson
@@ -264,7 +264,7 @@ class FixedLenList(Generic[T]):
             raise IndexError("Index out of bound")
         return self.deserializer(val)
 
-    def lpop(self):
+    def lpop(self) -> T | None:
         val = self.red.lpop(self.key)
         if val is None:
             return val
@@ -285,7 +285,7 @@ class MapsHistory(FixedLenList[MapInfo]):
     def __init__(self, key="maps_history", max_len=500):
         super().__init__(key, max_len)
 
-    def save_map_end(self, old_map=None, end_timestamp: int = None):
+    def save_map_end(self, old_map: str, end_timestamp: int | None = None) -> MapInfo:
         ts = end_timestamp or datetime.now().timestamp()
         logger.info("Saving end of map %s at time %s", old_map, ts)
         prev = self.lpop() or MapInfo(
@@ -295,7 +295,7 @@ class MapsHistory(FixedLenList[MapInfo]):
         self.lpush(prev)
         return prev
 
-    def save_new_map(self, new_map, guessed=True, start_timestamp: int = None, game_layout: GameLayout = GameLayout):
+    def save_new_map(self, new_map: str, guessed=True, start_timestamp: int | None = None, game_layout: GameLayout = GameLayout) -> MapInfo:
         ts = start_timestamp or datetime.now().timestamp()
         logger.info("Saving start of new map %s at time %s", new_map, ts)
         new = MapInfo(

@@ -7,6 +7,9 @@ export const padlockConfigs = [
     { name: "allow_consecutive_skirmishes", label: "Allow consecutive skirmish map" },
     { name: "allow_default_to_offensive", label: "Allow default map to be an offensive" },
     { name: "allow_default_to_skirmish", label: "Allow default map to be a skirmish" },
+    { name: "remind_on_match_start", label: "Send reminder on match start" },
+    { name: "remind_on_match_end", label: "Send reminder on match end" },
+    { name: "allow_vip_only", label: "Allow votemap to VIP players only" },
 ];
 
 export const messageFieldConfigs = [
@@ -27,6 +30,18 @@ export const messageFieldConfigs = [
         label: "Help text:",
         helperText: "This text will show to the player in case of a bad !votemap command, or if the user types !votemap help",
         rows: 10,
+    },
+    {
+        name: "player_choice_help_text",
+        label: "Help text:",
+        helperText: "This text will show to the player if the user types !votemap add or !votemap add help command. This help text is followed by a list of options.",
+        rows: 10,
+    },
+    {
+        name: "no_vote_text",
+        label: "No vote text:",
+        helperText: "This text will show in {scrolling_votemap} as winning map when no votes taken",
+        rows: 1,
     },
 ];
 
@@ -57,6 +72,12 @@ export const textFieldConfigs = [
         label: "Number of recently played maps excluded:",
         helperText: "Exclude the last N played maps from the selection. The current map is always excluded.",
         inputProps: { min: 0, max: 6, step: 1 },
+    },
+    {
+        name: "vip_vote_count",
+        label: "Vote count for VIP players:",
+        helperText: "Players with VIP have their vote counted n times.",
+        inputProps: { min: 1, max: 100, step: 1 },
     },
 ];
 

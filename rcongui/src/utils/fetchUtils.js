@@ -186,6 +186,7 @@ export const cmd = {
   RESET_VOTEMAP_STATE: (params) => requestFactory({ method: "POST", cmd: "reset_votemap_state", ...params }),
   RESET_VOTEMAP_WHITELIST: (params) => requestFactory({ method: "POST", cmd: "reset_map_votemap_whitelist", ...params }),
   RESET_VOTEKICK_THRESHOLDS: (params) => requestFactory({ method: "POST", cmd: "reset_votekick_thresholds", ...params }),
+  SEND_VOTEMAP_REMINDER: (params) => requestFactory({ method: "POST", cmd: "send_votemap_reminder", ...params }),
   SET_AUTOBALANCE_ENABLED: (params) => requestFactory({ method: "POST", cmd: "set_autobalance_enabled", ...params }),
   SET_AUTOBALANCE_THRESHOLD: (params) => requestFactory({ method: "POST", cmd: "set_autobalance_threshold", ...params }),
   SET_AUTOSETTINGS: (params) => requestFactory({ method: "POST", cmd: "set_auto_settings", ...params }),
