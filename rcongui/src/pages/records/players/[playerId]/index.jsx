@@ -29,7 +29,8 @@ import { useGlobalStore } from "@/stores/global-state";
 import ProfileActions from "@/components/player/profile/Actions";
 
 const DETAIL_LINKS = [
-  { path: "", label: "Received Actions" },
+  { path: "", label: "Profile" },
+  { path: "actions", label: "Received Actions" },
   { path: "sessions", label: "Sessions" },
   { path: "names", label: "Names" },
   { path: "comments", label: "Comments" },
@@ -142,7 +143,6 @@ export default function PlayerProfilePage() {
                   <Tab key={link.path} label={link.label} />
                 ))}
               </Tabs>
-              {getActiveTab() === 0 && <ReceivedActions />}
               <Outlet context={{ profile, submit }} />
             </CardContent>
           </DetailCard>
