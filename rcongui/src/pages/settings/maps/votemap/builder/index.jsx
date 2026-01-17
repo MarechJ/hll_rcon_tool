@@ -63,11 +63,7 @@ function VotemapBuilderPage() {
   });
 
   const whitelistMaps = useMemo(
-    () => whitelist
-      .map((mapId) => maps.find((map) => map.id === mapId))
-      // Map IDs might change over time (maps get removed, added or renamed), in this case
-      // remove the non-existing maps, instead of replacing them with undefined
-      .filter((m) => m),
+    () => whitelist.map((mapId) => maps.find((map) => map.id === mapId)),
     [whitelist]
   );
 
