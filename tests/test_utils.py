@@ -114,7 +114,7 @@ def mock_get_detailed_player(
 
 
 @pytest.mark.parametrize(
-    "raw, name, expected",
+    "raw, expected",
     [
         (
             {
@@ -123,6 +123,7 @@ def mock_get_detailed_player(
                 "role": 5,
                 "level": "16",
                 "loadout": "Standard Issue",
+                "name": "MasterShake",
                 "platoon": "JIG",
                 "scoreData": {
                     "cOMBAT": 72,
@@ -142,9 +143,8 @@ def mock_get_detailed_player(
                 "eosId": "",
                 "worldPosition": {},
             },
-            "MasterShake",
             mock_get_detailed_player(
-                name="",
+                name="MasterShake",
                 clan_tag="GH",
                 eos_id="",
                 platform="steam",
@@ -174,6 +174,7 @@ def mock_get_detailed_player(
                 "role": 0,
                 "level": "16",
                 "loadout": "Standard Issue",
+                "name": "MasterShake",
                 "platoon": "ABLE",
                 "scoreData": {
                     "cOMBAT": 72,
@@ -193,9 +194,8 @@ def mock_get_detailed_player(
                 "eosId": "",
                 "worldPosition": {},
             },
-            "MasterShake",
             mock_get_detailed_player(
-                name="",
+                name="MasterShake",
                 clan_tag="GH",
                 eos_id="",
                 platform="steam",
@@ -220,5 +220,5 @@ def mock_get_detailed_player(
         ),
     ],
 )
-def test_parse_raw_player_info(raw, name, expected):
-    assert parse_raw_player_info(raw=raw, player="") == expected
+def test_parse_raw_player_info(raw, expected):
+    assert parse_raw_player_info(raw=raw) == expected

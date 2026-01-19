@@ -57,7 +57,7 @@ function MapRotationBuilder() {
       )}
       <MapListBuilder
         maps={maps}
-        selectedMaps={currentRotation}
+        selectedMaps={currentRotation.maps}
         slots={{
           SelectedMapList: SortableRotationList,
           MapListItem: MapBuilderListItem,
@@ -65,6 +65,10 @@ function MapRotationBuilder() {
         onSave={saveRotation}
         isSaving={isRotationSaving}
         isSaveDisabled={isRotationSaving}
+        params={{
+          nextMapIndex: currentRotation.next_index,
+          currentMapIndex: currentRotation.current_index,
+        }}
       />
     </>
   );

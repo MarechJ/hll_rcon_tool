@@ -26,6 +26,7 @@ from rcon.types import (
     GameStateType,
     GetDetailedPlayer,
     GetDetailedPlayers,
+    GetMapRotation,
     GetMapSequence,
     GetPlayersType,
     ParsedLogsType,
@@ -291,7 +292,7 @@ class Rcon(ServerCtl):
                 continue
 
             try:
-                player_data = self._get_detailed_player_info(player_id, player_info, player)
+                player_data = self._get_detailed_player_info(player_info, player)
             except Exception:
                 logger.error("Failed to get info for %s", player_id)
                 fail_count += 1
@@ -490,11 +491,12 @@ class Rcon(ServerCtl):
             raw = super().get_player_info(player_id)
         except HLLCommandError:
             raise HLLCommandFailedError("Player is not online")
-        return self._get_detailed_player_info(player_id, raw, player)
+        return self._get_detailed_player_info(raw, player)
 
-    def _get_detailed_player_info(self, player_id: str, raw: dict[str, Any],
-                                  player: GetPlayersType | None = None) -> GetDetailedPlayer:
-        player_data = parse_raw_player_info(raw, player_id)
+    def _get_detailed_player_info(
+        self, raw: dict[str, Any], player: GetPlayersType | None = None
+    ) -> GetDetailedPlayer:
+        player_data = parse_raw_player_info(raw)
         if player is not None and 'is_vip' in player:
             player_data["is_vip"] = player.get('is_vip')
         else:
@@ -1120,16 +1122,27 @@ class Rcon(ServerCtl):
         return res
 
     @ttl_cache(60 * 5)
-    def get_map_rotation(self) -> list[Layer]:
-        l = super().get_map_rotation()
+    def get_map_rotation(self) -> GetMapRotation:
+        map_rotation = super().get_map_rotation()
+        map_sequence = super().get_map_sequence()
+        map_rotation_list = map_rotation["maps"]
 
         maps: list[Layer] = []
-        for map_ in l:
+        for map_ in map_rotation_list:
             if not self.map_regexp.match(map_):
                 raise HLLCommandFailedError("Server returned wrong data")
 
             maps.append(parse_layer(map_))
-        return maps
+
+        next_map_index = map_sequence["current_index"] + 1
+        if (next_map_index >= len(map_sequence["maps"])):
+            next_map_index = 0
+
+        return {
+            "maps": maps,
+            "current_index": map_sequence["current_index"],
+            "next_index": next_map_index,
+        }
 
     @ttl_cache(60 * 5)
     def get_map_sequence(self) -> GetMapSequence:
@@ -1187,7 +1200,7 @@ class Rcon(ServerCtl):
 
     def remove_map_from_rotation_at_index(self, map_index: int):
         if map_index < 0:
-            rotation = self.get_map_rotation()
+            rotation = self.get_map_rotation()["maps"]
             map_index = len(rotation) + map_index + 1
 
         with invalidates(
@@ -1208,7 +1221,7 @@ class Rcon(ServerCtl):
 
     def add_maps_to_rotation(self, map_names: list[str]):
         """Add the given maps to the rotation, returns the game server response for each map"""
-        rotation = self.get_map_rotation()
+        rotation = self.get_map_rotation()["maps"]
         results = []
         with invalidates(
                 Rcon.get_map_rotation,
@@ -1229,7 +1242,7 @@ class Rcon(ServerCtl):
         map_names = list(map_names)
         logger.info("Apply map rotation %s", map_names)
 
-        rotation = self.get_map_rotation()
+        rotation = self.get_map_rotation()["maps"]
         rotation_size = len(rotation)
 
         with invalidates(
