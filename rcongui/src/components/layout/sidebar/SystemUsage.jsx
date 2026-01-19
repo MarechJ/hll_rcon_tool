@@ -16,13 +16,14 @@ import {
 import { byUsage } from "./utils";
 
 const SystemUsage = () => {
-  const { data: system, isLoading } = useQuery({
+  const { data: system, isLoading, isError } = useQuery({
     queryKey: [{ queryIdentified: "get_system_usage" }],
     queryFn: cmd.GET_SYSTEM_USAGE,
     refetchInterval: 15 * 1000,
+    retry: false,
   });
 
-  if (isLoading)
+  if (isLoading || isError || !system)
     return (
       <ListItem
         sx={{

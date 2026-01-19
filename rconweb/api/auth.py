@@ -2,6 +2,7 @@ import csv
 import datetime
 import json
 import logging
+import os
 from dataclasses import asdict, dataclass
 from functools import wraps
 from typing import Any, Sequence
@@ -23,17 +24,41 @@ from rcon.audit import heartbeat, set_registered_mods
 from rcon.cache_utils import ttl_cache, invalidates
 from rcon.types import DjangoGroup, DjangoPermission, DjangoUserPermissions
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
+from rcon.utils import get_server_number
 from rconweb.settings import SECRET_KEY, TAG_VERSION
 
 
 from .decorators import require_content_type, require_http_methods
-from .models import DjangoAPIKey, SteamPlayer
+from .models import DjangoAPIKey, SteamPlayer, UserServerPermission
 
 logger = logging.getLogger("rconweb")
 
 HTTP_AUTHORIZATION_HEADER = "HTTP_AUTHORIZATION"
 AUTHORIZATION = "AUTHORIZATION"
 BEARER = ("BEARER", "BEARER:")
+
+
+def check_server_permissions(user):
+    if user.is_superuser:
+        return
+
+    current_server_number = int(get_server_number())
+    user_permissions = UserServerPermission.objects.filter(user=user)
+
+    if user_permissions.exists():
+        allowed_server_numbers = set(perm.server_number for perm in user_permissions)
+
+        if current_server_number not in allowed_server_numbers:
+            logger.warning(
+                "User %s attempted to access server %s but only has permission for servers: %s",
+                user.username,
+                current_server_number,
+                allowed_server_numbers,
+            )
+            raise PermissionDenied(
+                f"You do not have permission to access server {current_server_number}. "
+                f"You only have access to servers: {sorted(allowed_server_numbers)}."
+            )
 
 
 def update_mods(sender, instance, **kwargs):
@@ -291,7 +316,7 @@ def check_api_key(request):
 
 def login_required():
     """Flag this endpoint as one that requires the user
-    to be logged in.
+    to be logged in and have access to the current server.
     """
 
     def decorator(func):
@@ -309,11 +334,14 @@ def login_required():
                 )
 
             try:
+                # Check server access permissions
+                check_server_permissions(request.user)
+
                 return func(request, *args, **kwargs)
             except PermissionDenied as e:
                 return api_response(
                     command=request.path,
-                    error="You do not have the required permissions to use this",
+                    error=str(e) if str(e) else "You do not have the required permissions to use this",
                     failed=True,
                     status_code=403,
                 )
