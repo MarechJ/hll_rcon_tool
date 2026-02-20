@@ -160,7 +160,10 @@ const AccountCard = ({ profile }) => {
               <Box sx={{ color: (theme) => theme.palette.text.secondary }}>
                 Country:
               </Box>
-              <Box><CountryFlag country={account["country"]} /> {account["country"]}</Box>
+              <Box>{account["country"]
+                ? <><CountryFlag country={account["country"]} /> {account["country"]}</>
+                : "-"
+              }</Box>
             </ListItem>
             <ListItem sx={{ display: "flex", justifyContent: "space-between" }}>
               <Box sx={{ color: (theme) => theme.palette.text.secondary }}>
