@@ -85,22 +85,15 @@ export const route = {
   children: [
     {
       index: true,
-      loader: ({ request }) => {
-        const url = new URL(request.url);
-        const currentPath = url.pathname.split('/').pop();
-        // If we're coming back from an action, maintain the path
-        if (currentPath && currentPath !== 'players') {
-          return defer({ redirect: currentPath });
-        }
-        return defer({ redirect: 'sessions' });
-      },
+      path: '',
+      element: <PlayerDetailView />,
     },
     {
       path: 'sessions',
       element: <PlayerDetailView />,
     },
     {
-      path: 'activities',
+      path: 'actions',
       element: <PlayerDetailView />,
     },
     {

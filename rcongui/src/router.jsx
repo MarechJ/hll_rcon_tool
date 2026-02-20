@@ -176,6 +176,11 @@ const router = createBrowserRouter([
                         errorElement: <RouteError />,
                         children: [
                             {
+                                path: '',
+                                element: <PlayerProfileDetail />,
+                                errorElement: <RouteError />,
+                            },
+                            {
                                 path: ':detail',
                                 element: <PlayerProfileDetail />,
                                 errorElement: <RouteError />,

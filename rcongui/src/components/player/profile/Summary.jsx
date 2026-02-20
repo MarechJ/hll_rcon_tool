@@ -10,10 +10,12 @@ import {
   import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
   import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
   import PersonIcon from "@mui/icons-material/Person";
+  import EmergencyIcon from "@mui/icons-material/Emergency";
   import FlagIcon from "@mui/icons-material/Flag";
   import FlagList from "./FlagList";
   import WatchlistList from "./WatchlistList";
   import VipList from "./VipList";
+import CopyableText from "@/components/shared/CopyableText";
 
 const PlayerProfileSummary = ({
   firstSeen,
@@ -25,6 +27,7 @@ const PlayerProfileSummary = ({
   totalPlaytime,
   names,
   watchlist,
+  eosId,
 }) => {
   return (
     <Stack spacing={3}>
@@ -99,6 +102,20 @@ const PlayerProfileSummary = ({
               size="small"
             />
           ))}
+        </Box>
+      </Box>
+      
+      <Divider />
+
+      <Box component="section">
+        <Typography
+          variant="h6"
+          sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1 }}
+        >
+          <EmergencyIcon /> EOS ID
+        </Typography>
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+          <CopyableText label={eosId ?? "Unset"} text={eosId} />
         </Box>
       </Box>
     </Stack>
