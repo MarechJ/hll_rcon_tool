@@ -10,12 +10,13 @@ import threading
 import uuid
 from enum import IntEnum
 from threading import get_ident
-from typing import Any, Self, ClassVar, TypeAlias
+from typing import Any, Self, ClassVar
 
 from cachetools import TTLCache
 
 TIMEOUT_SEC = 20
-HEADER_FORMAT = "<II"
+HEADER_FORMAT = "<III"
+MAGIC_HEADER_VALUE = 0xDE450508
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +65,7 @@ class Request:
             "contentBody": (self.content if isinstance(self.content, str) else json.dumps(self.content, separators=(",", ":"))),
         }
         body = json.dumps(body, separators=(",", ":")).encode()
-        header = struct.pack(HEADER_FORMAT, self.request_id, len(body))
+        header = struct.pack(HEADER_FORMAT, MAGIC_HEADER_VALUE, self.request_id, len(body))
         return header, body
 
 
@@ -226,9 +227,12 @@ class HLLConnection:
                 header_len = struct.calcsize(HEADER_FORMAT)
                 header_bytes = self.sock.recv(header_len)
                 try:
-                    req_id, body_len = struct.unpack(HEADER_FORMAT, header_bytes)
+                    magic, req_id, body_len = struct.unpack(HEADER_FORMAT, header_bytes)
                 except struct.error:
                     raise HLLBrokenConnectionError(f"Failed to unpack response header: {header_bytes}")
+                
+                if magic != MAGIC_HEADER_VALUE:
+                    raise HLLBrokenConnectionError(f"Invalid magic value: {magic:#x} (expected {MAGIC_HEADER_VALUE:#x})")
 
                 with set_timeout(self.sock, 3):
                     raw = bytearray()
