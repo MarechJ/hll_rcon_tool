@@ -15,7 +15,7 @@ import rcon.seed_vip.service
 import rcon.user_config
 import rcon.user_config.utils
 import rcon.watch_killrate
-from rcon import auto_settings, broadcast, routines
+from rcon import auto_settings, broadcast, routines, maps
 from rcon.automods import automod
 from rcon.blacklist import BlacklistCommandHandler
 from rcon.cache_utils import RedisCached, get_redis_pool, invalidates
@@ -31,12 +31,14 @@ from rcon.user_config.auto_settings import AutoSettingsConfig
 from rcon.user_config.legacy_scorebot import ScorebotUserConfig
 from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.user_config.scoreboard import ScoreboardUserConfig, _port_legacy_scorebot_urls
+from rcon.user_config.vote_map import VoteMapUserConfig
 from rcon.user_config.webhooks import (
     BaseMentionWebhookUserConfig,
     BaseUserConfig,
     BaseWebhookUserConfig,
 )
 from rcon.utils import ApiKey
+from rcon.vote_map import VoteMap
 
 logger = logging.getLogger(__name__)
 
@@ -589,6 +591,22 @@ def convert_win_player_ids():
             f"{len(player_ids_to_merge)} old style player IDs already existed, merging them"
         )
         _merge_duplicate_player_ids(existing_ids=player_ids_to_merge)
+
+@cli.command(name="remove_orphaned_map_ids")
+def remove_orphaned_map_ids():
+    vm = VoteMap()
+    known_map_ids = [m.id for m in ctl.get_maps()]
+
+    res = set()
+    prev = vm.get_map_whitelist()
+    for m in prev:
+        if m.id in known_map_ids:
+            res.add(m)
+        else:
+            logger.info(f"Removed map {m.id} / {m.pretty_name} from VoteMap Whitelist as it does not exist in game server anymore")
+
+    if len(res) != len(prev):
+        vm.set_map_whitelist(res)
 
 
 PREFIXES_TO_EXPOSE = ["get_", "set_", "do_"]

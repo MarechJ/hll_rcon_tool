@@ -678,7 +678,6 @@ class RconAPI(Rcon):
     def get_votemap_whitelist(self) -> list[str]:
         v = VoteMap()
 
-        # TODO: update this when we return `Layer`s instead of strings
         return [str(map) for map in v.get_map_whitelist()]
 
     def add_map_to_votemap_whitelist(self, map_name: str):
@@ -703,7 +702,7 @@ class RconAPI(Rcon):
 
     def set_votemap_whitelist(self, map_names: Iterable[str]):
         v = VoteMap()
-        v.set_map_whitelist(map_names=map_names)
+        v.set_map_whitelist(map_layers=set([maps.parse_layer(m) for m in map_names]))
 
     def get_votemap_config(self) -> VoteMapUserConfig:
         return VoteMapUserConfig.load_from_db()
