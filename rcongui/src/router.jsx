@@ -194,6 +194,13 @@ const router = createBrowserRouter([
                         ]
                     },
                     {
+                        path: 'vips',
+                        handle: { crumb: () => <Link to={'/records/vips'}>Vips</Link> },
+                        loader: vipLoader,
+                        element: <VipSettings />,
+                        errorElement: <RouteError />,
+                    },
+                    {
                         path: 'blacklists',
                         handle: { crumb: () => <Link to={'/records/blacklists'}>Blacklists</Link> },
                         element: <BlacklistRecords />,
@@ -269,13 +276,6 @@ const router = createBrowserRouter([
                 element: <ServicesSettings />,
                 loader: servicesLoader,
                 action: servicesAction,
-                errorElement: <RouteError />,
-            },
-            {
-                path: 'settings/vip',
-                handle: { crumb: () => <Link to={'/settings/vip'}>Vip</Link> },
-                loader: vipLoader,
-                element: <VipSettings />,
                 errorElement: <RouteError />,
             },
             {
