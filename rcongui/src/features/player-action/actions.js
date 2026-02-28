@@ -265,7 +265,7 @@ export const addConsoleAdminAction = {
 
 export const removeFromSquadAction = {
   name: "Remove from a squad",
-  description: "Removes a player from his current squad.",
+  description: "Redeploys and moves a player from his current squad.",
   component: PunishFormFields,
   icon: GroupRemoveIcon,
   execute: executeAction("remove_player_from_squad"),

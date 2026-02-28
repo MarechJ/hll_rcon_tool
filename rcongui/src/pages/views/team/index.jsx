@@ -25,6 +25,7 @@ import UnfoldMoreDoubleIcon from "@mui/icons-material/UnfoldMoreDouble";
 import StickyContainer from "@/components/shared/StickyContainer";
 import DisbandSquadDialog from "@/features/player-action/DisbandSquad";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
+import MessageAllDialog from "@/features/player-action/MessageAll";
 
 const TeamViewPage = () => {
   const { data: teams, isFetching } = useQuery({
@@ -320,6 +321,7 @@ const TeamViewPage = () => {
             </span>
           </Tooltip>
           <Divider flexItem orientation="vertical" sx={{ mx: 1 }} />
+          <MessageAllDialog />
           <DisbandSquadDialog />
           <Box sx={{ flexGrow: 1 }} />
           {anySquadCollapsed ? (
