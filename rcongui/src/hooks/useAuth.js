@@ -2,8 +2,9 @@ import { createContext, useContext, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings";
-import { AuthError, cmd } from "@/utils/fetchUtils";
+import { AuthError, cmd, PermissionError } from "@/utils/fetchUtils";
 import { useQuery } from "@tanstack/react-query";
+import ServerAccessDenied from "@/components/shared/ServerAccessDenied";
 
 const AuthContext = createContext();
 
@@ -11,48 +12,52 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Step 1: First, fetch the authentication status
   const {
     data: user,
     isLoading: isAuthLoading,
     isError: isAuthError,
     isSuccess: isAuthSuccess,
+    error: authError,
   } = useQuery({
     queryKey: ["user", "auth"],
     queryFn: async () => {
       const aUser = await cmd.IS_AUTHENTICATED();
       if (!aUser.authenticated) {
-        throw new AuthError(); // Custom error for failed auth
+        throw new AuthError();
       }
       return aUser;
     },
-    refetchOnWindowFocus: false, // Disable refetching on window focus
+    refetchOnWindowFocus: false,
     retry: 1,
   });
 
-  // Step 2: Fetch permissions, only if authentication is successful
   const {
     data: permissions,
     isLoading: isPermissionsLoading,
     isError: isPermissionsError,
+    error: permissionsErrorObj,
   } = useQuery({
     queryKey: ["user", "permissions"],
     queryFn: cmd.GET_PERMISSIONS,
-    enabled: isAuthSuccess && user?.authenticated, // Fetch only if authenticated
+    enabled: isAuthSuccess && user?.authenticated,
     refetchOnWindowFocus: false,
+    retry: 1,
   });
 
   useEffect(() => {
-    if (isAuthError || isPermissionsError) {
+    if (isAuthError && authError?.name === "AuthError") {
       const from = encodeURIComponent(location.pathname + location.search);
       navigate(`/login?from=${from}`);
     }
-  }, [isAuthError, isPermissionsError, navigate, location]);
+  }, [isAuthError, authError, navigate, location]);
 
-  // Handle loading state
   const isLoading = isAuthLoading || isPermissionsLoading;
 
-  if (isLoading || isAuthError || isPermissionsError) {
+  if (isPermissionsError && permissionsErrorObj?.name === "PermissionError") {
+    return <ServerAccessDenied errorMessage={permissionsErrorObj?.message} />;
+  }
+
+  if (isLoading || (isAuthError && authError?.name === "AuthError")) {
     return (
       <Box
         sx={{
@@ -79,5 +84,4 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Custom hook to use the AuthContext
 export const useAuth = () => useContext(AuthContext);

@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 
 from rconweb.settings import SECRET_KEY
 
-from .models import DjangoAPIKey, SteamPlayer
+from .models import DjangoAPIKey, SteamPlayer, UserServerPermission
 
 
 # Define an inline admin descriptor for Employee model
@@ -50,9 +50,18 @@ class DjangoAPIKeyInline(admin.StackedInline):
     readonly_fields = ["date_created", "date_modified"]
 
 
+class UserServerPermissionInline(admin.TabularInline):
+    model = UserServerPermission
+    can_delete = True
+    verbose_name_plural = "Server Permissions (Leave EMPTY to allow ALL servers, add entries to RESTRICT access)"
+    extra = 1
+    readonly_fields = ["created"]
+    fields = ["server_number", "created"]
+
+
 # Define a new User admin
 class UserAdmin(BaseUserAdmin):
-    inlines = (SteamPlayerInline, DjangoAPIKeyInline)
+    inlines = (SteamPlayerInline, DjangoAPIKeyInline, UserServerPermissionInline)
     # inlines = [SteamPlayerInline]
 
 
@@ -72,3 +81,13 @@ class DjangoAPIKeyAdmin(admin.ModelAdmin):
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
 admin.site.register(DjangoAPIKey, DjangoAPIKeyAdmin)
+
+
+class UserServerPermissionAdmin(admin.ModelAdmin):
+    list_display = ("user", "server_number", "created")
+    list_filter = ("server_number", "user")
+    search_fields = ("user__username",)
+    ordering = ("user", "server_number")
+
+
+admin.site.register(UserServerPermission, UserServerPermissionAdmin)

@@ -1,3 +1,4 @@
+import { useMemo, useCallback } from "react";
 import MuiAvatar from "@mui/material/Avatar";
 import MuiListItemAvatar from "@mui/material/ListItemAvatar";
 import MenuItem from "@mui/material/MenuItem";
@@ -22,49 +23,67 @@ const ListItemAvatar = styled(MuiListItemAvatar)({
   marginRight: 12,
 });
 
+function buildServerUrl(selectedServer, currentLocation) {
+  let newUrl;
+
+  if (selectedServer.link) {
+    newUrl = new URL(selectedServer.link);
+    newUrl.pathname = currentLocation.pathname;
+    newUrl.search = currentLocation.search;
+    newUrl.hash = currentLocation.hash;
+  } else {
+    const portRegex = /:(\d+)/gm;
+    const urlWithNewPort = currentLocation.href.replace(portRegex, `:${selectedServer.port}`);
+    newUrl = new URL(urlWithNewPort);
+  }
+
+  return newUrl;
+}
+
 export default function SelectContent() {
   const thisServer = useGlobalStore((state) => state.serverState);
   const otherServers = useGlobalStore((state) => state.servers);
   const navigate = useNavigate();
 
-  const handleChange = (servers) => (event) => {
+  const servers = useMemo(() => {
+    return thisServer ? [thisServer, ...otherServers] : null;
+  }, [thisServer, otherServers]);
+
+  const handleChange = useCallback((event) => {
+    if (!servers) return;
+
     const serverNumber = Number(event.target.value);
     const selectedServer = servers.find(
       (server) => server.server_number === serverNumber
     );
+
     if (!selectedServer) {
       return;
     }
 
-    let newUrl;
-    if (selectedServer.link) {
-      newUrl = new URL(selectedServer.link);
-      newUrl.pathname = window.location.pathname;
-      newUrl.search = window.location.search;
-      newUrl.hash = window.location.hash;
-    } else {
-      const regex = /:(\d+)/gm;
-      newUrl = new URL(window.location.href.replace(regex, `:${selectedServer.port}`));
-    }
+    const newUrl = buildServerUrl(selectedServer, window.location);
 
     if (newUrl.origin === window.location.origin) {
       navigate(newUrl.pathname + newUrl.search + newUrl.hash, { replace: true });
     } else {
       window.location.replace(newUrl.href);
     }
-  };
+  }, [servers, navigate]);
 
-  const servers = thisServer ? [thisServer, ...otherServers] : null;
+  const hasOnlyOneServer = useMemo(() => {
+    return servers && servers.length === 1;
+  }, [servers]);
 
   return (
     <Select
       labelId="server-select"
       id="server-simple-select"
       value={thisServer?.server_number ?? ""}
-      onChange={handleChange(servers)}
+      onChange={handleChange}
       displayEmpty
       inputProps={{ "aria-label": "Select server" }}
       fullWidth
+      disabled={hasOnlyOneServer}
       MenuProps={{
         PaperProps: {
           sx: {

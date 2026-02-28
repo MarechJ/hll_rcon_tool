@@ -40,13 +40,18 @@ async function requestFactory({
       : payload;
   }
 
-  // Create a Request object
   const req = new Request(url.toString(), requestOptions);
   try {
     const res = await fetch(req);
     return await handleFetchResponse(req, res, cmd);
   } catch (error) {
-    if (throwRouteError) {
+    const isCustomError = error instanceof AuthError ||
+                         error instanceof PermissionError ||
+                         error instanceof CRCONServerDownError ||
+                         error instanceof APIError ||
+                         error instanceof NotJSONResponseError;
+
+    if (throwRouteError && !isCustomError) {
       throw json(error, { status: error.status, statusText: error.message || error.text });
     }
     throw error;
@@ -78,14 +83,14 @@ async function handleFetchResponse(req, res, cmd) {
       case 401:
         throw new AuthError("You are not authenticated.", cmd);
       case 403:
-        throw new PermissionError("You are not authorized.", cmd);
+        throw new PermissionError(error || "You are not authorized.", cmd);
       case 504:
         throw new CRCONServerDownError("There was a problem connecting to your CRCON server.");
       default:
         throw new APIError(error, cmd, res.status);
     }
   }
-  
+
   return data;
 }
 
@@ -130,6 +135,7 @@ export const cmd = {
   GET_CRCON_SERVER_CONNECTION: (params) => requestFactory({ method: "GET", cmd: "get_connection_info", ...params }),
   GET_GAME_MODE: (params) => requestFactory({ method: "GET", cmd: "get_game_mode", ...params }),
   GET_GAME_SERVER_LIST: (params) => requestFactory({ method: "GET", cmd: "get_server_list", ...params }),
+  GET_ACCESSIBLE_SERVERS: (params) => requestFactory({ method: "GET", cmd: "get_accessible_servers", ...params }),
   GET_GAME_SERVER_STATUS: (params) => requestFactory({ method: "GET", cmd: "get_status", ...params }),
   GET_GAME_STATE: (params) => requestFactory({ method: "GET", cmd: "get_gamestate", ...params }),
   // Yes, it is POST request, but it is not a POST command => it's not mutating the server state
