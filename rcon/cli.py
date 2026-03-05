@@ -28,9 +28,8 @@ from rcon.player_stats import live_stats_loop
 from rcon.rcon import get_rcon
 from rcon.steam_utils import enrich_db_users
 from rcon.user_config.auto_settings import AutoSettingsConfig
-from rcon.user_config.legacy_scorebot import ScorebotUserConfig
 from rcon.user_config.log_stream import LogStreamUserConfig
-from rcon.user_config.scoreboard import ScoreboardUserConfig, _port_legacy_scorebot_urls
+from rcon.user_config.scoreboard import _port_legacy_scorebot_urls
 from rcon.user_config.webhooks import (
     BaseMentionWebhookUserConfig,
     BaseUserConfig,

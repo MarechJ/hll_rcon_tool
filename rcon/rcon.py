@@ -17,6 +17,7 @@ from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import HLLCommandFailedError, ServerCtl, VipId
 from rcon.maps import UNKNOWN_MAP_NAME, Layer, is_server_loading_map, parse_layer
 from rcon.models import PlayerID, PlayerVIP, enter_session, GameLayout
+from rcon.perf_statistics import PerformanceStatistics
 from rcon.player_history import get_profiles, safe_save_player_action, save_player, get_player_profile
 from rcon.settings import SERVER_INFO
 from rcon.types import (
@@ -195,15 +196,21 @@ class Rcon(ServerCtl):
     def __init__(self, *args, pool_size: bool | None = None, **kwargs):
         config = RconConnectionSettingsUserConfig.load_from_db()
         super().__init__(
-            *args, **kwargs
+            *args, **kwargs, perf_stats=PerformanceStatistics("rcon", config.performance_statistics_enabled)
         )
         if pool_size is not None:
             self.pool_size = pool_size
         else:
             self.pool_size = config.thread_pool_size
 
+        self._config = config
         self._current_map = parse_layer(UNKNOWN_MAP_NAME)
         self._next_map = parse_layer(UNKNOWN_MAP_NAME)
+
+    def performance_stats_interval(self) -> int:
+        if self._config.performance_statistics_enabled:
+            return self._config.performance_statistics_interval_seconds
+        return 0
 
     @property
     def current_map(self) -> Layer:
