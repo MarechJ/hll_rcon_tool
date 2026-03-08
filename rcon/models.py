@@ -739,8 +739,8 @@ class Maps(Base):
         return {
             "id": self.id,
             "creation_time": self.creation_time,
-            "start": self.start,
-            "end": self.end,
+            "start": self.start.replace(tzinfo=timezone.utc),
+            "end": self.end.replace(tzinfo=timezone.utc),
             "server_number": self.server_number,
             "map_name": self.map_name,
             "result": (
