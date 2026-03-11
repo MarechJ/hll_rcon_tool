@@ -333,6 +333,7 @@ def expose_api_endpoint(
                     sessionid=request.COOKIES.get("sessionid"),
                     auth_header=request.headers.get(AUTHORIZATION),
                     json=data,
+                    user=request.user,
                 )
             except Exception as e:
                 logger.error("Unexpected error while forwarding request: %s", e)
@@ -344,6 +345,7 @@ def expose_api_endpoint(
                     sessionid=request.COOKIES.get("sessionid"),
                     auth_header=request.headers.get(AUTHORIZATION),
                     json=data,
+                    user=request.user,
                 )
             except Exception as e:
                 logger.error("Unexpected error while forwarding request: %s", e)

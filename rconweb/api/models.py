@@ -477,3 +477,20 @@ class RconUser(User):
                 "Can change the Watch KillRate config",
             ),
         )
+
+
+class UserServerPermission(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="server_permissions")
+    server_number = models.IntegerField(help_text="Server number that the user can view")
+    created = models.DateTimeField(auto_now_add=True)
+
+    default_permissions = ()
+
+    class Meta:
+        unique_together = ("user", "server_number")
+        ordering = ("server_number",)
+        verbose_name = "User Server Permission"
+        verbose_name_plural = "User Server Permissions"
+
+    def __str__(self) -> str:
+        return f"{self.user.username} - Server {self.server_number}"
