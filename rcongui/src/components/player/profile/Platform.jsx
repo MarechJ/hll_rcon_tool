@@ -1,17 +1,30 @@
 import React from "react";
-import {
-  faSteam,
-  faXbox,
-  faPlaystation,
-} from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import FortIcon from "@mui/icons-material/Fort";
 import VideogameAssetIcon from "@mui/icons-material/VideogameAsset";
 import { Box, Chip } from "@mui/material";
 import { getSteamProfileUrl } from "@/utils/lib";
 import EditSoldierButton from "./EditSoldierButton";
+import {
+  getPlatformIcon,
+  getPlatformLabel,
+} from "@/constants/platforms";
 
 function PlatformChip({ platform, playerId, currentSoldierData }) {
+  if (!platform)
+    return (
+      <EditSoldierButton
+        Icon={VideogameAssetIcon}
+        playerId={playerId}
+        currentSoldierData={currentSoldierData}
+      />
+    );
+
+  const icon = (
+    <Box sx={{ width: 14, height: 24 }}>
+      <FontAwesomeIcon icon={getPlatformIcon(platform)} size="xs" />
+    </Box>
+  );
+
   if (platform === "steam") {
     return (
       <Chip
@@ -19,48 +32,14 @@ function PlatformChip({ platform, playerId, currentSoldierData }) {
         href={getSteamProfileUrl(playerId)}
         target="_blank"
         rel="noreferrer"
-        icon={
-          <Box sx={{ width: 14, height: 24 }}>
-            <FontAwesomeIcon icon={faSteam} size="xs" />
-          </Box>
-        }
-        label="Steam"
+        icon={icon}
+        label={getPlatformLabel(platform)}
         sx={{ "&:hover": { cursor: "pointer" } }}
       />
     );
   }
-  if (platform === "epic") {
-    return <Chip icon={<FortIcon />} label="Epic" />;
-  }
-  if (platform === "xbl" || platform === "xsx") {
-    return (
-      <Chip
-        icon={
-          <Box sx={{ width: 14, height: 24 }}>
-            <FontAwesomeIcon icon={faXbox} size="xs" />
-          </Box>
-        }
-        label="Xbox"
-      />
-    );
-  }
-  if (platform === "psn" || platform === "ps5") {
-    return (
-      <Chip
-        icon={
-          <Box sx={{ width: 14, height: 24 }}>
-            <FontAwesomeIcon icon={faPlaystation} size="xs" />
-          </Box>
-        }
-        label="PlayStation"
-      />
-    );
-  }
-  if (platform) {
-    return <Chip icon={<VideogameAssetIcon />} label={platform} />;
-  }
 
-  return <EditSoldierButton Icon={VideogameAssetIcon} playerId={playerId} currentSoldierData={currentSoldierData} />;
+  return <Chip icon={icon} label={getPlatformLabel(platform)} />;
 }
 
 export default PlatformChip;
