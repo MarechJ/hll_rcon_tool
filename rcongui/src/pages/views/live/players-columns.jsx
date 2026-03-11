@@ -1,7 +1,6 @@
 import {
   Box,
   Checkbox,
-  IconButton,
   Stack,
   styled,
   Tooltip,
@@ -26,7 +25,6 @@ import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";
 import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
 import CopyableText from "@/components/shared/CopyableText";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSteam } from "@fortawesome/free-brands-svg-icons";
 import Emoji from "@/components/shared/Emoji";
 import { useThemedImages } from "@/hooks/useThemedImages";
 
@@ -109,7 +107,9 @@ export const columns = [
                 alt={row.original.faction}
                 title={row.original.faction}
               />
-            ) : "-"}
+            ) : (
+              "-"
+            )}
           </Square>
         </Center>
       );
@@ -194,7 +194,7 @@ export const columns = [
       const kills = row.kills;
       const playtime = row.map_playtime_seconds;
       if (kills === 0 || playtime === 0) return 0;
-      return Number((kills / playtime * 60));
+      return Number((kills / playtime) * 60);
     },
     cell: (props) => {
       return <>{props.getValue()?.toFixed(2)}</>;
@@ -261,27 +261,39 @@ export const columns = [
   {
     id: "platform",
     header: SortableHeader("🖥️", "Platform"),
-    accessorFn: (row) => (isSteamPlayer(row) ? "Steam" : "Xbox"),
     cell: ({ row }) => {
-      const isSteam = isSteamPlayer(row.original)
+      const platform = row.original.platform;
 
-      return isSteam ? (
-        <IconButton
-          LinkComponent={"a"}
-          size="small"
-          sx={{ fontSize: "0.75rem" }}
-          href={getSteamProfileUrl(row.original.player_id)}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <FontAwesomeIcon icon={faSteam} />
-        </IconButton>
-      ) : null;
+      if (platform === PLATFORMS.STEAM)
+        return (
+          <Box
+            component={"a"}
+            sx={{
+              width: 14,
+              height: 24,
+              textDecoration: "none",
+              color: "inherit",
+              "&:hover": { cursor: "pointer" },
+            }}
+            href={getSteamProfileUrl(row.original.player_id)}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={getPlatformLabel(platform)}
+          >
+            <FontAwesomeIcon icon={getPlatformIcon(platform)} size="sm" />
+          </Box>
+        );
+
+      return (
+        <Box sx={{ width: 14, height: 24 }} title={getPlatformLabel(platform)}>
+          <FontAwesomeIcon icon={getPlatformIcon(platform)} size="sm" />
+        </Box>
+      );
     },
   },
   {
     id: "clan-tag",
-    header: SortableHeader("Clan","Clan Tag"),
+    header: SortableHeader("Clan", "Clan Tag"),
     accessorKey: "clan_tag",
     cell: ({ row }) => {
       return <>{row.original.clan_tag}</>;
@@ -386,11 +398,13 @@ export const columns = [
       const flagsCount = 5;
       return (
         <Stack spacing={0.5} direction={"row"} alignItems={"center"}>
-          {flags.slice(0, flagsCount).map(({ flag, comment: note, modified }) => (
-            <Tooltip title={note} key={modified}>
-              <Emoji emoji={flag} size={14} />
-            </Tooltip>
-          ))}
+          {flags
+            .slice(0, flagsCount)
+            .map(({ flag, comment: note, modified }) => (
+              <Tooltip title={note} key={modified}>
+                <Emoji emoji={flag} size={14} />
+              </Tooltip>
+            ))}
           {flags.length - flagsCount > 0 ? (
             <Typography
               variant="caption"
@@ -403,7 +417,7 @@ export const columns = [
   },
   {
     id: "visits",
-    header: SortableHeader("VISITS","Number of player visits"),
+    header: SortableHeader("VISITS", "Number of player visits"),
     accessorKey: "profile.sessions_count",
     cell: ({ row }) => {
       return <>{row.original.profile.sessions_count}</>;
@@ -411,7 +425,7 @@ export const columns = [
   },
   {
     id: "time",
-    header: SortableHeader("TIME","Current Playtime"),
+    header: SortableHeader("TIME", "Current Playtime"),
     accessorKey: "profile.current_playtime_seconds",
     aggregationFn: "mean",
     cell: ({ row }) => {
