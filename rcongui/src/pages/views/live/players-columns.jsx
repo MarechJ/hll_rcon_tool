@@ -18,6 +18,7 @@ import {
   hasRecentWarnings,
   teamToNation,
   getTierColors,
+  getTeamKillColor,
 } from "@/utils/lib";
 import { SortableHeader, TextButton } from "@/components/table/styles";
 import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";
@@ -50,6 +51,15 @@ const LevelColored = styled(Box, {
   const tier = getPlayerTier(level);
   return {
     color: getTierColors(theme.palette.mode)[tier],
+  };
+});
+
+const TKColored = styled(Box, {
+  shouldForwardProp: (prop) => prop !== "teamKills",
+})(({ theme, teamKills }) => {
+  if (!teamKills) return {};
+  return {
+    color: getTeamKillColor(teamKills, theme) || "inherit",
   };
 });
 
@@ -209,6 +219,15 @@ export const columns = [
     },
   },
   {
+    id: "team_kills",
+    header: SortableHeader("TK", "Team Kills"),
+    accessorKey: "team_kills",
+    cell: (props) => {
+      const value = props.getValue()
+      return <TKColored teamKills={value} >{value}</TKColored>;
+    },
+  },
+  {
     id: "combat",
     header: SortableHeader("CE", "Combat Effectiveness"),
     accessorKey: "combat",
@@ -238,6 +257,22 @@ export const columns = [
     accessorKey: "support",
     cell: ({ row }) => {
       return <>{row.original.support}</>;
+    },
+  },
+  {
+    id: "vehicle_kills",
+    header: SortableHeader("VK", "Vehicle Kills"),
+    accessorKey: "vehicle_kills",
+    cell: ({ row }) => {
+      return <>{row.original.vehicle_kills}</>;
+    },
+  },
+  {
+    id: "vehicles_destroyed",
+    header: SortableHeader("VD", "Vehicles Destroyed"),
+    accessorKey: "vehicles_destroyed",
+    cell: ({ row }) => {
+      return <>{row.original.vehicles_destroyed}</>;
     },
   },
   {

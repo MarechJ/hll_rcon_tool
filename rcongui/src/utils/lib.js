@@ -280,3 +280,13 @@ export function useTierColors() {
   const theme = useTheme();
   return getTierColors(theme.palette.mode);
 }
+
+export const getTeamKillColor = (value, mode = "light") => {
+  if (value > 9) {
+    return mode === "dark" ? red[500] : red[700]
+  }
+  if (value > 4) {
+    return mode === "dark" ? yellow[500] : yellow[800]
+  }
+  return null
+};
