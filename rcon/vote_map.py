@@ -132,7 +132,7 @@ def _suggest_next_maps(
         exclude_last_n,
         [m.pretty_name for m in last_n_maps],
     )
-    remaining_maps = [maps.parse_layer(m) for m in allowed_maps - last_n_maps]
+    remaining_maps = [m for m in allowed_maps - last_n_maps]
     logger.info(
         "Remaining maps to suggest from: %s", [m.pretty_name for m in remaining_maps]
     )
@@ -639,9 +639,15 @@ class VoteMap:
         """Return the set of map names on the whitelist or all possible game server maps if not configured"""
         res = self.red.get(self.whitelist_key)
         if res is not None:
-            return pickle.loads(res)  # type: ignore
+            try:
+                l = pickle.loads(res)
+                # depending on the time the map was saved this is either a list of strings, a list of layers or
+                # a combination of both. Make sure we always return a list of layers
+                return set([maps.parse_layer(m) for m in l])
+            except ValueError:
+                pass
 
-        return set(maps.parse_layer(map_) for map_ in self.rcon.get_maps())
+        return set(self.rcon.get_maps())
 
     def add_map_to_whitelist(self, map_name: str):
         if map_name not in self.rcon.get_maps():
@@ -669,8 +675,9 @@ class VoteMap:
     def reset_map_whitelist(self):
         self.set_map_whitelist(self.rcon.get_maps())
 
-    def set_map_whitelist(self, map_names) -> None:
-        self.red.set(self.whitelist_key, pickle.dumps(set(map_names)))
+    def set_map_whitelist(self, map_layers: set[maps.Layer]) -> None:
+        # No need to save the whole layer information, it can be resurrected with maps.parse_layer at read time
+        self.red.set(self.whitelist_key, pickle.dumps(set([m.id for m in map_layers])))
 
     def gen_selection(self):
         config = VoteMapUserConfig.load_from_db()
