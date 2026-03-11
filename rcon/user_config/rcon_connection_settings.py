@@ -7,16 +7,16 @@ from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
 class RconConnectionSettingsType(TypedDict):
     thread_pool_size: int
-    max_open: int
-    max_idle: int
+    performance_statistics_enabled: bool
+    performance_statistics_interval_seconds: int
 
 
 class RconConnectionSettingsUserConfig(BaseUserConfig):
     # TODO: max open and threadpool seem redundant
     # TODO: been made entirely redundant since RCON V2, remove
     thread_pool_size: int = Field(ge=1, le=100, default=20)
-    max_open: int = Field(ge=1, le=100, default=20)
-    max_idle: int = Field(ge=1, le=100, default=20)
+    performance_statistics_enabled: bool = Field(default=False)
+    performance_statistics_interval_seconds: int = Field(default=30)
 
     @staticmethod
     def save_to_db(values: RconConnectionSettingsType, dry_run=False):
@@ -28,8 +28,8 @@ class RconConnectionSettingsUserConfig(BaseUserConfig):
 
         validated_conf = RconConnectionSettingsUserConfig(
             thread_pool_size=values.get("thread_pool_size"),
-            max_open=values.get("max_open"),
-            max_idle=values.get("max_idle"),
+            performance_statistics_enabled=values.get("performance_statistics_enabled"),
+            performance_statistics_interval_seconds=values.get("performance_statistics_interval_seconds"),
         )
 
         if not dry_run:

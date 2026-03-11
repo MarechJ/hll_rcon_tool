@@ -8,6 +8,7 @@ from typing import Generator, Literal, Sequence, Any, List
 
 from rcon.connection import HLLCommandError, HLLConnection, Handle, Response
 from rcon.maps import LAYERS, MAPS, UNKNOWN_MAP_NAME, Environment, GameMode, LayerType
+from rcon.perf_statistics import PerformanceStatistics
 from rcon.types import MapRotationResponse, MapSequenceResponse, PlayerInfoType, ServerInfoType, SlotsType, VipId, GameStateType, AdminType
 from rcon.utils import exception_in_chain
 
@@ -58,9 +59,10 @@ class ServerCtl:
     """
 
     def __init__(
-        self, config: ServerInfoType, auto_retry=1
+        self, config: ServerInfoType, perf_stats: PerformanceStatistics, auto_retry=1
     ) -> None:
         self.config = config
+        self.perf_stats = perf_stats
         self.auto_retry = auto_retry
         self.mu = threading.Lock()
         self.conns: dict[int, HLLConnection] = {}
@@ -83,6 +85,9 @@ class ServerCtl:
                 except Exception:
                     raise
                 self.conns[thread_id] = conn
+                self.perf_stats.increment("connection_established")
+            else:
+                self.perf_stats.increment("connection_from_pool")
         finally:
             self.mu.release()
 
@@ -108,6 +113,7 @@ class ServerCtl:
                 try:
                     conn.close()
                     self.conns.pop(thread_id, None)
+                    self.perf_stats.increment("connection_closed")
                 finally:
                     self.mu.release()
 
@@ -126,6 +132,7 @@ class ServerCtl:
                 try:
                     conn.close()
                     self.conns.pop(thread_id, None)
+                    self.perf_stats.increment("connection_closed")
                 finally:
                     self.mu.release()
 
@@ -164,7 +171,9 @@ class ServerCtl:
             logger.info("Sending command:", command, content)
         else:
             logger.debug("Sending command:", command, content)
-        
+
+        self.perf_stats.increment("send")
+        self.perf_stats.increment("send_size", len(content))
         try:
             with connection as conn:
                 return conn.send(command, version, content)
@@ -187,6 +196,7 @@ class ServerCtl:
     ) -> Response:
         try:
             response = handle.receive()
+            self.perf_stats.increment("receive_size", len(response.content))
             response.raise_for_status()
             return response
 
@@ -218,6 +228,7 @@ class ServerCtl:
     ) -> Response | None:
         try:
             response = handle.receive()
+            self.perf_stats.increment("receive_size", len(response.content))
             return response if response.is_successful() else None
 
         except (HLLCommandFailedError, UnicodeDecodeError, OSError) as e:
@@ -693,4 +704,4 @@ class ServerCtl:
 if __name__ == "__main__":
     from rcon.settings import SERVER_INFO
 
-    ctl = ServerCtl(SERVER_INFO)
+    ctl = ServerCtl(SERVER_INFO, PerformanceStatistics('rcon'))

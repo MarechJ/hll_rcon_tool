@@ -14,12 +14,27 @@ const RconConnectionNotes = `
         */
         "thread_pool_size": 6,
         
-        /* The maximum number of active connections that the CRCON will use to run any sort of command. */
-        "max_open": 20,
+        /*
+            Whether Community RCon should track performance metrics for the RCon communication, such as
+            number of opened/closed connections or send commands. The metrics will be counted for the interval
+            configured with performance_statistics_interval_seconds and reset every interval. You should only
+            enable this when you know what you're doing.
+            Changing this setting requires a restart of the supervisor and backend container.
+         */
+        "performance_statistics_enabled": false,
         
-        /* The maximum number of idle connections that the CRCON will keep before starting to close them. */
-        "max_idle": 20
+        /*
+            The interval in seconds between Community RCon dumps the performance metrics gathered. This also defined the
+            time-window in which the metrics are collected. For example:
+            If configured to 30, Community RCon will collect performance metrics for 30 seconds (such as send commands
+            to the game server) before dumping the result to the logs. After that a new time-window starts with all values
+            set back to 0.
+            Changing this setting requires a restart of the supervisor and backend container.
+            
+            This needs to be a multiple of 10 (10, 20, 30, 40, etc.) and cannot be smaller than 10.
+         */
+        "performance_statistics_interval_seconds": 30
     }
-    `
+    `;
 
 export default RconConnectionNotes
