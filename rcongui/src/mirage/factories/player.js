@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { getSquadLeaderRole, getAvailableRoles } from '../data/roles';
 import { generateProfile } from './profile';
+import { getAllPlatforms } from '@/constants/platforms';
 
 export const generatePlayer = (squadName, squadType, isLeader = false, serverNumber = 1, clanTag = "") => {
   const name = clanTag + faker.internet.username();
@@ -36,6 +37,18 @@ export const generatePlayer = (squadName, squadType, isLeader = false, serverNum
     offense: faker.number.int(0),
     defense: faker.number.int(0),
     support: faker.number.int(0),
-    level: faker.number.int({ min: 1, max: 500 })
+    vehicle_kills: faker.number.int(0),
+    vehicles_destroyed: faker.number.int(0),
+    map_playtime_seconds: faker.number.int({ min: 1, max: 10*60*60 }),
+    level: faker.number.int({ min: 1, max: 500 }),
+    eos_id: faker.string.alphanumeric(32),
+    world_position: {
+      x: faker.number.float({ min: -100_000, max: 100_000 }),
+      y: faker.number.float({ min: -100_000, max: 100_000 }),
+      z: faker.number.float({ min: -100_000, max: 100_000 }),
+    },
+    clan_tag: faker.person.suffix(),
+    platform: faker.helpers.arrayElement(getAllPlatforms().map(p => p.value)),
+    team_kills: faker.number.int({ min: 0, max: 10 }),
   };
 };
