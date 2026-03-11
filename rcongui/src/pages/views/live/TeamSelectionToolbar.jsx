@@ -4,6 +4,7 @@ import { CountrySelectionMenu } from "@/components/table/selection/CountrySelect
 import { UnitSelectionMenu } from "@/components/table/selection/UnitSelectionMenu";
 import { RoleSelectionMenu } from "@/components/table/selection/RoleSelectionMenu";
 import { RankSelectionMenu } from "@/components/table/selection/RankSelectionMenu";
+import { VisitsSelectionMenu } from "@/components/table/selection/VisitsSelectionMenu";
 import { levelToRank } from "@/utils/lib";
 import TableAddons from "@/components/table/TableAddons";
 
@@ -53,6 +54,29 @@ export const TeamSelectionToolbar = ({ table, teamData }) => {
       selectedRank.rank,
       row => levelToRank(row.original.level)
     );
+  };
+
+  const handleVisitsChange = (maxVisits) => {
+    const allRows = table.getRowModel().rows;
+
+    if (maxVisits == null) {
+      table.setRowSelection({});
+      return;
+    }
+
+    const numeric = Number(maxVisits);
+    if (Number.isNaN(numeric)) {
+      return;
+    }
+
+    table.setRowSelection(() => {
+      const selection = {};
+      allRows.forEach((row) => {
+        const visits = row.original.profile?.sessions_count ?? 0;
+        selection[row.id] = visits <= numeric;
+      });
+      return selection;
+    });
   };
 
   const countryOptions = useMemo(() => {
@@ -160,6 +184,7 @@ export const TeamSelectionToolbar = ({ table, teamData }) => {
         onRoleSelect={handleRoleSelect}
       />
       <RankSelectionMenu rankOptions={rankOptions} onRankSelect={handleRankSelect} />
+      <VisitsSelectionMenu onVisitsChange={handleVisitsChange} />
     </TableAddons>
   );
 };
