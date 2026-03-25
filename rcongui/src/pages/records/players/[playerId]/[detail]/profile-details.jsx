@@ -43,6 +43,8 @@ const SoldierCard = ({ profile }) => {
   const { openModal: editSoldier, modal: soldierEditForm } =
     useEditSoldierModal(profile.player_id, soldier);
 
+  if (!soldier) return null
+
   return (
     <>
       <Card>
@@ -120,6 +122,8 @@ const AccountCard = ({ profile }) => {
   const { account } = profile;
   const { openModal: editSoldier, modal: accountEditForm } =
     useEditAccountModal(profile.player_id, account);
+
+  if (!account) return null
 
   return (
     <>
