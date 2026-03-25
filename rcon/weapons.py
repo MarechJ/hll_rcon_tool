@@ -129,10 +129,13 @@ BRITISH_WEAPONS = {
     'OQF 75MM [Churchill Mk.VII]': WeaponType.Armor,
     'COAXIAL BESA 7.92mm [Churchill Mk.VII]': WeaponType.Armor,
     'HULL BESA 7.92mm [Churchill Mk.VII]': WeaponType.Armor,
-    'QF 25 POUNDER [Bishop]': WeaponType.SPA,
-    'Bishop': WeaponType.Armor,
-    'COAXIAL BESA 7.92mm [Sherman SPA 105mm]': WeaponType.Armor,
-    'HULL BESA 7.92mm [Sherman SPA 105mm]': WeaponType.Armor,
+    'QF 25 POUNDER [Bishop SP 25pdr]': WeaponType.SPA,
+    'Bishop SP 25pdr': WeaponType.Armor,
+    'COAXIAL BESA 7.92mm [M4A3 (105mm)]': WeaponType.Armor,
+    'HULL BESA 7.92mm [M4A3 (105mm)]': WeaponType.Armor,
+    'Churchill Mk III A.V.R.E.': WeaponType.Armor,
+    '230MM PETARD [Churchill Mk III A.V.R.E.]': WeaponType.SPA,
+    'COAXIAL BESA 7.92mm [Churchill Mk III A.V.R.E.]': WeaponType.Armor,
 }
 
 US_WEAPONS = {
@@ -181,11 +184,11 @@ US_WEAPONS = {
     'COAXIAL M1919 [Sherman M4A3E2(76)]': WeaponType.Armor,
     'HULL M1919 [Sherman M4A3E2(76)]': WeaponType.Armor,
     'M2 Browning [M3 Half-track]': WeaponType.Armor,
-    'Sherman SPA 105mm': WeaponType.Armor,
-    '105MM HOWITZER [Sherman SPA 105mm]': WeaponType.SPA,
-    'PETARD 230MM  [Sherman SPA 105mm]': WeaponType.SPA,
-    'COAXIAL M1919 [Sherman SPA 105mm]': WeaponType.Armor,
-    'HULL M1919 [Sherman SPA 105mm]': WeaponType.Armor,
+    'M4A3 (105mm)': WeaponType.Armor,
+    '105MM HOWITZER [M4A3 (105mm)]': WeaponType.SPA,
+    'PETARD 230MM  [M4A3 (105mm)]': WeaponType.SPA,
+    'COAXIAL M1919 [M4A3 (105mm)]': WeaponType.Armor,
+    'HULL M1919 [M4A3 (105mm)]': WeaponType.Armor,
 }
 
 AXIS_WEAPONS = {
@@ -235,10 +238,13 @@ AXIS_WEAPONS = {
     'COAXIAL MG34 [Sd.Kfz.181 Tiger 1]': WeaponType.Armor,
     'HULL MG34 [Sd.Kfz.181 Tiger 1]': WeaponType.Armor,
     'MG 42 [Sd.Kfz 251 Half-track]': WeaponType.Armor,
-    'Strumpanzer IV Brummbar': WeaponType.Armor,
-    'StuH 43 L/12 [Strumpanzer IV Brummbar]': WeaponType.SPA,
-    'OQF 57MM [Strumpanzer IV Brummbar]': WeaponType.SPA,
+    'Strumpanzer IV': WeaponType.Armor,
+    'StuH 43 L/12 [Strumpanzer IV]': WeaponType.SPA,
+    'OQF 57MM [Strumpanzer IV]': WeaponType.SPA,
     '7.5CM KwK 37 [Sd.Kfz.161 Panzer IV]': WeaponType.SPA,
+    'Panzer III Ausf.N': WeaponType.Armor,
+    '7.5CM KwK 37 [Panzer III Ausf.N]': WeaponType.SPA,
+    'COAXIAL MG34 [Panzer III Ausf.N]': WeaponType.Armor,
 }
 
 ALL_WEAPONS = {

@@ -418,8 +418,7 @@ class ServerCtl:
         self.exchange("ChangeMap", 2, {"MapName": map_name})
 
     def get_map_shuffle_enabled(self) -> bool:
-        # TODO: No command to get this info right now
-        return False
+        return self.exchange("GetMapShuffleEnabled", 2).content_dict["enable"]
 
     def set_map_shuffle_enabled(self, enabled: bool) -> None:
         self.exchange("SetMapShuffleEnabled", 2, {"Enable": enabled})

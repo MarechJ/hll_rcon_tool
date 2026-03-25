@@ -187,8 +187,8 @@ class Roles(str, enum.Enum):
     tank_commander = "tankcommander"
     crewman = "crewman"
     artillery_observer = "artilleryobserver"
-    artillery_engineer = "artilleryengineer"
-    artillery_support = "artillerysupport"
+    operator = "operator"
+    gunner = "gunner"
 
 
 class InvalidRoleError(ValueError):
@@ -226,8 +226,8 @@ ROLES_TO_LABELS = {
     Roles.tank_commander: "Tank Commander",
     Roles.crewman: "Crewman",
     Roles.artillery_observer: "Artillery Observer",
-    Roles.artillery_engineer: "Artillery Engineer",
-    Roles.artillery_support: "Artillery Support",
+    Roles.operator: "Operator",
+    Roles.gunner: "Gunner",
 }
 
 
