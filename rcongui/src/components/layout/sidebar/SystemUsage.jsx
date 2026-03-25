@@ -22,7 +22,7 @@ const SystemUsage = () => {
     refetchInterval: 15 * 1000,
   });
 
-  if (isLoading)
+  if (isLoading || !system || !system.cpu_usage || !system.ram_usage || !system.disk_usage)
     return (
       <ListItem
         sx={{

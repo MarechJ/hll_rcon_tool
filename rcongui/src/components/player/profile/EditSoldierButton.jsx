@@ -112,7 +112,7 @@ function EditSoldierButton({ Icon, playerId, currentSoldierData }) {
   const isNameDisabled = currentSoldierData?.name && currentSoldierData.name.trim() !== "";
   const isLevelDisabled = currentSoldierData?.level && currentSoldierData.level > 0;
   const isPlatformDisabled = currentSoldierData?.platform && currentSoldierData.platform.trim() !== "";
-  const isClanTagDisabled = currentSoldierData.clan_tag !== null;
+  const isClanTagDisabled = currentSoldierData?.clan_tag !== null;
   const isEosIdDisabled = currentSoldierData?.eos_id && currentSoldierData.eos_id.trim() !== "";
   return (
     <React.Fragment>
