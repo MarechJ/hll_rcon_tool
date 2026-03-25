@@ -57,7 +57,7 @@ class ChatCommandsType(TypedDict):
 
 
 class BaseChatCommand(BaseModel):
-    words: list[str] = Field(default_factory=list, title="Words", description="A lit of words that trigger this command. Needs to be prefixed with either one of " + ", ".join(VALID_COMMAND_PREFIXES))
+    words: list[str] = Field(default_factory=list, title="Words", description="A list of words that trigger this command. Needs to be prefixed with either one of " + ", ".join(VALID_COMMAND_PREFIXES))
     description: str = Field(default="", title="Description", description="An optional description that is shown to the player when one of the describe words is used.")
 
     @cached_property
