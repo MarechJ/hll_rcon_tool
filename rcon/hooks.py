@@ -328,16 +328,12 @@ def handle_new_match_start(rcon: Rcon, struct_log):
         vm = VoteMap()
         if vm.enabled:
             logger.info("MATCH START: Restarting votemap")
-            vm_status = vm.get_status()
-            votemap_result=f"""
-            ### Vote map result
-            Winner map: {vm_status["next_map"]}
-            Total votes: {sum([d["votes_count"] for d in vm_status["results"]])}
-            {"\n".join([f"1. {d["map"].pretty_name} [{d["votes_count"]} votes]" for d in vm_status['results']])}
-            """
+            vm.record_result()
             send_to_discord_audit(
                 command_name="on_match_start",
-                message=votemap_result,
+                message=vm.get_result_message(),
+                md_escape_message=False,
+                flatten=False,
             )
             vm.restart()
             vm.send_reminder(force=vm.config.remind_on_match_start)
