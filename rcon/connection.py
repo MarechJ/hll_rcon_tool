@@ -1,6 +1,5 @@
 import array
 import base64
-from contextlib import contextmanager
 import itertools
 import json
 import logging
@@ -8,25 +7,31 @@ import socket
 import struct
 import threading
 import uuid
+from contextlib import contextmanager
 from enum import IntEnum
 from threading import get_ident
-from typing import Any, Self, ClassVar, TypeAlias
+from typing import Any, ClassVar, Self
 
 from cachetools import TTLCache
 
 TIMEOUT_SEC = 20
-HEADER_FORMAT = "<II"
+HEADER_FORMAT = "<III"
+MAGIC_HEADER_VALUE = 0xDE450508
 
 logger = logging.getLogger(__name__)
+
 
 class HLLServerError(Exception):
     """Raised when the server failed to execute a command or responded unexpectedly"""
 
+
 class HLLBrokenConnectionError(HLLServerError):
     """Raised when the connection has broken and needs to be re-established"""
 
+
 class HLLCommandFailedError(HLLServerError):
     """Raised when a command failed"""
+
 
 class HLLCommandError(HLLServerError):
     def __init__(self, status_code: int, *args: object) -> None:
@@ -43,16 +48,24 @@ class HLLCommandError(HLLServerError):
 class Request:
     __request_id_counter: ClassVar["itertools.count[int]"] = itertools.count(start=1)
 
-    def __init__(self, command: str, version: int, auth_token: str | None, content: dict[str, Any] | str = "") -> None:
+    def __init__(
+        self,
+        command: str,
+        version: int,
+        auth_token: str | None,
+        content: dict[str, Any] | str = "",
+    ) -> None:
         self.name = command
         self.version = version
         self.auth_token = auth_token
         self.content = content
         self.request_id = next(self.__request_id_counter)
-    
+
     def __str__(self) -> str:
-        return f"Request #{self.request_id} ({self.name}, {self.version}, {self.content})"
-    
+        return (
+            f"Request #{self.request_id} ({self.name}, {self.version}, {self.content})"
+        )
+
     def __repr__(self) -> str:
         return "<" + self.__str__() + ">"
 
@@ -61,10 +74,16 @@ class Request:
             "authToken": self.auth_token or "",
             "version": self.version,
             "name": self.name,
-            "contentBody": (self.content if isinstance(self.content, str) else json.dumps(self.content, separators=(",", ":"))),
+            "contentBody": (
+                self.content
+                if isinstance(self.content, str)
+                else json.dumps(self.content, separators=(",", ":"))
+            ),
         }
         body = json.dumps(body, separators=(",", ":")).encode()
-        header = struct.pack(HEADER_FORMAT, self.request_id, len(body))
+        header = struct.pack(
+            HEADER_FORMAT, MAGIC_HEADER_VALUE, self.request_id, len(body)
+        )
         return header, body
 
 
@@ -83,25 +102,26 @@ class ResponseStatus(IntEnum):
 
 
 class Handle:
-    def __init__(self, conn: 'HLLConnection', request: 'Request') -> None:
+    def __init__(self, conn: "HLLConnection", request: "Request") -> None:
         self.conn = conn
         self.request = request
         self._response: Response | None = None
-    
-    def receive(self) -> 'Response':
+
+    def receive(self) -> "Response":
         if self._response is None:
             self._response = self.conn.receive(self.request.request_id)
         return self._response
 
+
 class Response:
     def __init__(
-            self,
-            request_id: int,
-            command: str,
-            version: int,
-            status_code: ResponseStatus,
-            status_message: str,
-            content: str,
+        self,
+        request_id: int,
+        command: str,
+        version: int,
+        status_code: ResponseStatus,
+        status_message: str,
+        content: str,
     ) -> None:
         self.request_id = request_id
         self.name = command
@@ -189,7 +209,9 @@ class HLLConnection:
         server_hello.raise_for_status()
 
         if not isinstance(server_hello.content, str):
-            raise HLLBrokenConnectionError("ServerConnect response content is not a string")
+            raise HLLBrokenConnectionError(
+                "ServerConnect response content is not a string"
+            )
         self.xorkey = base64.b64decode(server_hello.content)
 
         auth_token_resp = self.exchange("Login", 2, password)
@@ -204,7 +226,9 @@ class HLLConnection:
             logger.debug("Unable to send socket shutdown")
         self.sock.close()
 
-    def send(self, command: str, version: int, body: dict[str, Any] | str = "") -> Handle:
+    def send(
+        self, command: str, version: int, body: dict[str, Any] | str = ""
+    ) -> Handle:
         request = Request(
             command=command,
             version=version,
@@ -226,9 +250,16 @@ class HLLConnection:
                 header_len = struct.calcsize(HEADER_FORMAT)
                 header_bytes = self.sock.recv(header_len)
                 try:
-                    req_id, body_len = struct.unpack(HEADER_FORMAT, header_bytes)
+                    magic, req_id, body_len = struct.unpack(HEADER_FORMAT, header_bytes)
                 except struct.error:
-                    raise HLLBrokenConnectionError(f"Failed to unpack response header: {header_bytes}")
+                    raise HLLBrokenConnectionError(
+                        f"Failed to unpack response header: {header_bytes}"
+                    )
+
+                if magic != MAGIC_HEADER_VALUE:
+                    raise HLLBrokenConnectionError(
+                        f"Invalid magic value: {magic:#x} (expected {MAGIC_HEADER_VALUE:#x})"
+                    )
 
                 with set_timeout(self.sock, 3):
                     raw = bytearray()
