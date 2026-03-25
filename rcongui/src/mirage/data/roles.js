@@ -30,8 +30,8 @@ export const SQUAD_TYPES = {
     maxPlayers: 3,
     roles: [
       "artilleryobserver", // squad leader
-      "artilleryengineer",
-      "artillerysupport",
+      "operator",
+      "gunner",
     ]
   }
 };

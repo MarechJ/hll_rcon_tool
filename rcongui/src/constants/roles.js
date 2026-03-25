@@ -14,8 +14,8 @@ export const ROLES = {
   TANK_COMMANDER: "tankcommander",
   CREWMAN: "crewman",
   ARTILLERY_OBSERVER: "artilleryobserver",
-  ARTILLERY_ENGINEER: "artilleryengineer",
-  ARTILLERY_SUPPORT: "artillerysupport",
+  OPERATOR: "operator",
+  GUNNER: "gunner",
 };
 
 export const ROLES_TO_LABELS = {
@@ -34,8 +34,8 @@ export const ROLES_TO_LABELS = {
   [ROLES.TANK_COMMANDER]: "Tank Commander",
   [ROLES.CREWMAN]: "Crewman",
   [ROLES.ARTILLERY_OBSERVER]: "Artillery Observer",
-  [ROLES.ARTILLERY_ENGINEER]: "Artillery Engineer",
-  [ROLES.ARTILLERY_SUPPORT]: "Artillery Support",
+  [ROLES.OPERATOR]: "Operator",
+  [ROLES.GUNNER]: "Gunner",
 };
 
 
@@ -55,8 +55,8 @@ export const getAllRoles = () => [
   { value: ROLES.SPOTTER, label: ROLES_TO_LABELS[ROLES.SPOTTER] },
   { value: ROLES.SNIPER, label: ROLES_TO_LABELS[ROLES.SNIPER] },
   { value: ROLES.ARTILLERY_OBSERVER, label: ROLES_TO_LABELS[ROLES.ARTILLERY_OBSERVER] },
-  { value: ROLES.ARTILLERY_ENGINEER, label: ROLES_TO_LABELS[ROLES.ARTILLERY_ENGINEER] },
-  { value: ROLES.ARTILLERY_SUPPORT, label: ROLES_TO_LABELS[ROLES.ARTILLERY_SUPPORT] },
+  { value: ROLES.OPERATOR, label: ROLES_TO_LABELS[ROLES.OPERATOR] },
+  { value: ROLES.GUNNER, label: ROLES_TO_LABELS[ROLES.GUNNER] },
 ];
 
 export const getRoleLabel = (roleValue) => {

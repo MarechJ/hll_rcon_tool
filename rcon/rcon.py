@@ -442,7 +442,7 @@ class Rcon(ServerCtl):
                 return "recon"
             if player.get("role") in ["armycommander"]:
                 return "commander"
-            if player.get("role") in ["artilleryobserver", "artilleryengineer", "artillerysupport"]:
+            if player.get("role") in ["artilleryobserver", "operator", "gunner"]:
                 return "artillery"
 
         return "infantry"
