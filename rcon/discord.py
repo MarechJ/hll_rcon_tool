@@ -120,6 +120,7 @@ def send_to_discord_audit(
     webhookurls: list[HttpUrl | None] | None = None,
     md_escape_message: bool = True,
     md_escape_author: bool = True,
+    flatten: bool = True,
 ):
     by = by or "CRCON"
     config = None
@@ -131,8 +132,9 @@ def send_to_discord_audit(
     server_config = RconServerSettingsUserConfig.load_from_db()
 
     # Flatten messages with newlines
-    message = message.replace("\n", " ")
-    logger.info("Audit: [%s] %s, %s", by, command_name, message)
+    if flatten:
+        message = message.replace("\n", " ")
+    logger.info("Audit: [%s] %s, %s", by, command_name, message.replace("\n", " "))
     if not webhookurls:
         logger.debug("No webhooks set for audit log")
         return

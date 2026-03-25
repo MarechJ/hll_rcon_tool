@@ -39,7 +39,7 @@ from rcon.user_config.vote_map import (
     DefaultMethods,
     VoteMapUserConfig,
 )
-from rcon.utils import MapsHistory
+from rcon.utils import FixedLenList, MapsHistory
 
 logger = logging.getLogger(__name__)
 
@@ -405,6 +405,12 @@ class VoteMap:
             return
         self.set_selection(selection[1:])
 
+    def get_results(self):
+        return self._state.get_results()
+
+    def record_result(self):
+        self._state.add_result(self.get_status())
+
     #########################
     #                       #
     #       BEHAVIOUR       #
@@ -441,6 +447,16 @@ class VoteMap:
         if time_since_last_reminder > reminder_frequency:
             return True
         return False
+
+    def get_result_message(self, status: VoteMapStatus | None = None) -> str:
+        if not status:
+            status = self.get_status()
+        return f"""
+        ### Vote map result
+        Winner map: `{status["next_map"]}`
+        Total votes: `{sum([d["votes_count"] for d in status["results"]])}`
+        {"\n".join([f"1. {d["map"].pretty_name} [{d["votes_count"]} votes]" for d in status['results']])}
+        """
 
     def _get_optin_players(self) -> List[Tuple[str, str]]:
         online_players = self._rcon.get_player_ids()
@@ -1374,10 +1390,12 @@ class VotemapState:
     VOTES = "votemap:votes"
     PLAYER_CHOICE = "votemap:player-choice"
     NEXT_MAP = "votemap:next-map"
+    RESULT_HISTORY = "votemap:result-history"
 
     def __init__(self) -> None:
         self.version = 0.2
         self.client = get_redis_client()
+        self.results = self.get_results()
         if self.get_version() != self.version:
             self.delete_last_reminder_time()
             self.delete_next_map()
@@ -1517,6 +1535,15 @@ class VotemapState:
 
     def delete_next_map(self):
         self.client.delete(self.NEXT_MAP)
+
+    ###
+    # RESULT HISTORY
+    ###
+    def get_results(self):
+        return FixedLenList[VoteMapStatus](self.RESULT_HISTORY)
+
+    def add_result(self, status: VoteMapStatus):
+        self.results.add(status)
 
 
 class VoteMapException(Exception):
