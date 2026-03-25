@@ -32,6 +32,8 @@ const GameDetailLayout = ({ game }: { game: ScoreboardMapStats }) => {
       allies: game.result?.allied,
       axis: game.result?.axis,
     },
+    capFlips: game?.cap_flips,
+    matchTime: game?.match_time,
   }
 
   return (
@@ -40,9 +42,9 @@ const GameDetailLayout = ({ game }: { game: ScoreboardMapStats }) => {
         <title>{`${t('gameDetail')} - ${dayjs(game.start).format('L')} - ${game.map.map.pretty_name}`}</title>
       </Helmet>
       <div className="flex flex-col-reverse lg:flex-row divide-y lg:divide-y-0">
-        <div className="w-full">
+        <div className="w-full space-y-2">
           <GameOverview {...gameOverviewProps}/>
-          <ToggleGroup type="single" value={pathname} variant="outline" className="p-4">
+          <ToggleGroup type="single" value={pathname} variant="outline" className="justify-start h-12">
             <ToggleGroupItem value={`/games/${game.id}`} asChild>
               <Link to={`/games/${game.id}`}>
                 <TableIcon size={20}/>

@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import {PlayerBase} from "@/types/player";
+import {Player, PlayerBase} from "@/types/player";
 import {PlayerBaseWithAwards} from "@/pages/games/[id]";
 import {ScoreboardMapStats} from "@/types/api";
 
@@ -9,7 +9,7 @@ export function getGameDuration(start: string, end: string) {
   return duration.format('H:mm:ss');
 }
 
-function isMostlyInfantry( player: PlayerBase ) {
+function isMostlyInfantry( player: Player ) {
   const nonInfantryKills = (player.kills_by_type.armor ?? 0) + (player.kills_by_type.commander ?? 0) + (player.kills_by_type.artillery ?? 0);
   return nonInfantryKills / player.kills < 0.25 && nonInfantryKills <= 5;
 }
@@ -106,8 +106,8 @@ const infOnlyStats = [
 /**
  *  For each stat calc the max value and the playerIds which have this max value
  */
-const calcMaxStatsValues = (stats: PlayerBase[]) => {
-  const result: Partial<Record<keyof PlayerBase, {amount: number, playerIds: string[]}>> = {};
+const calcMaxStatsValues = (stats: Player[]) => {
+  const result: Partial<Record<keyof Player, {amount: number, playerIds: string[]}>> = {};
 
   stats.forEach((player) => {
     Object.entries(player).forEach(([key, value]) => {

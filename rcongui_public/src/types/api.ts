@@ -1,9 +1,16 @@
 import { MapLayer } from './mapLayer'
-import { Player } from './player'
+import { LivePlayer, Player } from './player'
 
 type UNIX_Timestamp = number
 type ISO_8601_Timestamp = string
 type TIME_SECONDS = number
+
+
+export interface MatchScore {
+  allied_score: number
+  axis_score: number
+  ts: number
+}
 
 export type ScoreboardMap = {
   id: number
@@ -21,6 +28,8 @@ export type ScoreboardMap = {
   },
   player_stats: [],
   server_number: number
+  match_time: number
+  cap_flips: MatchScore[]
 }
 
 // TODO
@@ -82,7 +91,7 @@ export type PublicInfo = {
 export type LiveGameStats = {
   refresh_interval_sec: number
   snapshot_timestamp: UNIX_Timestamp
-  stats: Player[]
+  stats: LivePlayer[]
 }
 
 export type ScoreboardMaps = {

@@ -1,4 +1,4 @@
-import { Player, PlayerWithStatus } from '@/types/player'
+import { Player } from '@/types/player'
 import { isPlayerWithStatus } from '@/components/game/statistics/player/utils'
 import { Status } from '@/components/game/statistics/player-status'
 import { points, scores, isSteamPlayer, getSteamProfileUrl, getXboxProfileUrl } from './utils'
@@ -20,7 +20,7 @@ export default function PlayerGameDetail({
   player,
   isMobile,
 }: {
-  player: Player | PlayerWithStatus
+  player: Player
   isMobile?: boolean
 }) {
   const { t } = useTranslation('game')

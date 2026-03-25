@@ -1,3 +1,4 @@
+import { MatchScore } from './api'
 import {Weapon, WeaponType} from './weapon'
 
 type Team = {
@@ -69,6 +70,14 @@ export interface ServerFinalStats {
   forwards_results?: null
 }
 
+
+export interface PlayerUnit {
+  t: number
+  s: number
+  r: number
+  ts: number
+}
+
 export interface Result {
   id: number
   creation_time: string
@@ -77,6 +86,8 @@ export interface Result {
   server_number: number
   map_name: string
   player_stats?: Player[] | null
+  match_time: number
+  cap_flips: MatchScore[]
 }
 
 // Base player interface with common properties
@@ -116,6 +127,11 @@ export interface PlayerBase {
   death_by_weapons: Record<Weapon, number> | null
   team: PlayerTeamAssociation
   level: number
+  kills_and_assists: number
+  deaths_and_redeploys: number
+  vehicle_kills: number
+  vehicles_destroyed: number
+  units: PlayerUnit[]
 }
 
 export interface PlayerTeamAssociation {
@@ -130,13 +146,22 @@ export enum TeamEnum {
   UNKNOWN = 'unknown',
 }
 
-// Live player interface with online status
-export interface LivePlayer extends PlayerBase {
-  is_online: boolean
+export enum FactionEnum {
+  CW = 'cw',
+  GB = 'gb',
+  GER = 'ger',
+  RUS = 'rus',
+  US = 'us',
 }
 
-export type Player = PlayerBase
-export type PlayerWithStatus = LivePlayer
+// Live player interface with online status
+export interface LivePlayer extends Omit<PlayerBase, "team" | "units"> {
+  is_online: boolean
+  faction: FactionEnum | null
+  team: string | null
+}
+
+export type Player = PlayerBase | LivePlayer
 
 export interface Steaminfo {
   id: number

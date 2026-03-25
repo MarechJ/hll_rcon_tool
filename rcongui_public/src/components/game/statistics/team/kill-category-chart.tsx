@@ -1,19 +1,25 @@
 import React from "react";
 import {ResponsiveContainer, Tooltip, TooltipProps, Treemap} from "recharts";
-import {getColorForTeam} from "@/components/game/statistics/utils";
-import {Player, PlayerBase, PlayerWithStatus, TeamEnum} from "@/types/player";
+import {getColorForTeam, getTeamFromAssociation} from "@/components/game/statistics/utils";
+import {Player, PlayerBase, TeamEnum} from "@/types/player";
 import {WeaponType} from "@/types/weapon";
 import {useTranslation} from "react-i18next";
 import {NameType, ValueType} from "recharts/types/component/DefaultTooltipContent";
 import {TreemapNode} from "recharts/types/util/types";
 
 export const KillCategoryChart = ({stats, handlePlayerClick}: {
-  stats: Player[] | PlayerWithStatus[]
+  stats: Player[] 
   handlePlayerClick: (id: string) => void
 }) => {
 
-  const axisPlayers = stats.filter(player => player.team.side === TeamEnum.AXIS).sort((a, b) => b.kills - a.kills);
-  const alliesPlayers = stats.filter(player => player.team.side === TeamEnum.ALLIES).sort((a, b) => b.kills - a.kills);
+  // `player.team` can be `string | PlayerTeamAssociation | null` depending on which endpoint produced it.
+  // Normalize via `getTeamFromAssociation()` so we can safely compare.
+  const axisPlayers = stats
+    .filter((player) => getTeamFromAssociation(player.team) === TeamEnum.AXIS)
+    .sort((a, b) => b.kills - a.kills);
+  const alliesPlayers = stats
+    .filter((player) => getTeamFromAssociation(player.team) === TeamEnum.ALLIES)
+    .sort((a, b) => b.kills - a.kills);
 
   const displayedTypes = [WeaponType.Infantry, WeaponType.MachineGun, WeaponType.Artillery, WeaponType.SPA, WeaponType.Armor, WeaponType.Sniper, WeaponType.Commander, WeaponType.Grenade, WeaponType.Bazooka, WeaponType.Satchel, WeaponType.Mine, WeaponType.PAK]
 
@@ -27,8 +33,8 @@ export const KillCategoryChart = ({stats, handlePlayerClick}: {
 
 
 const KillTreemapChart = ({axisPlayers, alliesPlayers, type, handlePlayerClick }: {
-  axisPlayers: PlayerBase[],
-  alliesPlayers: PlayerBase[],
+  axisPlayers: Player[],
+  alliesPlayers: Player[],
   type: WeaponType,
   handlePlayerClick: (id: string) => void,
 }) => {

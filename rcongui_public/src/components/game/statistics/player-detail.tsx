@@ -1,4 +1,4 @@
-import { Player, PlayerWithStatus } from '@/types/player'
+import { Player } from '@/types/player'
 import {
   Drawer,
   DrawerClose,
@@ -34,7 +34,7 @@ export function MobilePlayerGameDetail({
 }: {
   open: boolean
   setOpen: (open: boolean) => void
-  player: Player | PlayerWithStatus
+  player: Player
 }) {
   const { t } = useTranslation('translation')
 

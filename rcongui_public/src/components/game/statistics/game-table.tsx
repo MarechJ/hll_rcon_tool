@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
-import { Player, TeamEnum } from '@/types/player'
+import { LivePlayer, Player, TeamEnum } from '@/types/player'
 import { useTranslation } from 'react-i18next'
 import { getTeamFromAssociation } from '@/components/game/statistics/utils'
 import { TeamIndicator } from '@/components/game/statistics/team-indicator'
@@ -39,7 +39,7 @@ interface DataTableProps<TData, TValue> {
   tableId: string
 }
 
-export function DataTable<TData extends Player, TValue>({ columns, data, tableId }: DataTableProps<TData, TValue>) {
+export function DataTable<TData extends Player | LivePlayer, TValue>({ columns, data, tableId }: DataTableProps<TData, TValue>) {
   const [playerFilter, setPlayerFilter] = useState<string[]>([])
 
   useEffect(() => {
@@ -76,6 +76,8 @@ export function DataTable<TData extends Player, TValue>({ columns, data, tableId
     ['defense']: false,
     ['offense']: false,
     ['support']: false,
+    ['vehicles_destroyed']: false,
+    ['vehicle_kills']: false,
   })
 
   const table = useReactTable({

@@ -49,7 +49,11 @@
         "general":  "General",
         "advanced": "Advanced",
         "ingame": "Ingame",
-        "level": "Level"
+        "level": "Level",
+        "vehicle_kills": "Vehicle Kills",
+        "vehicles_destroyed": "Vehicles Destroyed",
+        "deathsAndRedeploys": "Deaths Redeploys",
+        "killsAndAssists": "Kills Assists"
     },
     "weaponType": {
       "sniper": "Sniper",
