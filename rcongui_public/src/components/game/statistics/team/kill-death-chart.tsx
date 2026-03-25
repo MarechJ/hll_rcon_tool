@@ -1,4 +1,4 @@
-import {Player, PlayerWithStatus} from '@/types/player'
+import {Player} from '@/types/player'
 import React from 'react'
 import {Cell, ComposedChart, Label, ReferenceLine, ResponsiveContainer, Scatter, XAxis, YAxis} from 'recharts'
 import {generateTicks, getColorForTeam, getTeamFromAssociation} from '@/components/game/statistics/utils'
@@ -6,7 +6,7 @@ import {useTranslation} from 'react-i18next'
 import colors from 'tailwindcss/colors'
 
 export function KillDeathChart({stats, handlePlayerClick}: {
-  stats: Player[] | PlayerWithStatus[]
+  stats: Player[] 
   handlePlayerClick: (id: string) => void
 }) {
 

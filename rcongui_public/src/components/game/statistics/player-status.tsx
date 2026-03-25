@@ -1,9 +1,9 @@
 import React from 'react'
-import { PlayerWithStatus } from '@/types/player'
 import { cn } from '@/lib/utils'
+import { LivePlayer } from '@/types/player'
 
 type StatusProps = {
-  player: PlayerWithStatus
+  player: LivePlayer
 } & React.HTMLAttributes<HTMLSpanElement>
 
 export function Status({ player, ...props }: StatusProps) {

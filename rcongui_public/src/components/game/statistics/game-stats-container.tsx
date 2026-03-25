@@ -1,13 +1,13 @@
 import React, {useState, useMemo, createContext, useContext} from 'react'
 import useMediaQuery from '@/hooks/use-media-query'
-import { Player, PlayerWithStatus } from '@/types/player'
+import { Player } from '@/types/player'
 import PlayerGameDetail from '@/components/game/statistics/player'
 import { MobilePlayerGameDetail, NoPlayerGameDetail } from '@/components/game/statistics/player-detail'
 
 interface GameStatsProps {
   game: {
     id: string;
-    player_stats: Player[] | PlayerWithStatus[];
+    player_stats: Player[];
   };
   children: (props: {
     handlePlayerClick: (playerId: string) => void;

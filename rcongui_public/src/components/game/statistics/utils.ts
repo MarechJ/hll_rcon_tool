@@ -31,11 +31,19 @@ export function getColorForTeam(team: TeamEnum | undefined): string {
   return teamColors[team];
 }
 
-export function getTeamFromAssociation(team: PlayerTeamAssociation | undefined): TeamEnum {
-  if (team === undefined) {
+export function getTeamFromAssociation(team?: PlayerTeamAssociation | string | null): TeamEnum {
+  if (team === undefined || team === null) {
     return TeamEnum.UNKNOWN;
   }
-  return team.confidence === 'strong' ? team.side : TeamEnum.MIXED;
+  if (typeof team === "string") {
+    if (team === "axis") return TeamEnum.AXIS;
+    if (team === "allies") return TeamEnum.ALLIES;
+    return TeamEnum.UNKNOWN;
+  }
+  if (typeof team === "object" && "confidence" in team) {
+    return team.confidence === 'strong' ? team.side : TeamEnum.MIXED;
+  }
+  return TeamEnum.UNKNOWN
 }
 
 export const generateTicks = (max: number, interval: number, negative?: boolean) => {

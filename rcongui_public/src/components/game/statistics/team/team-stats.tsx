@@ -1,4 +1,4 @@
-import {Player, PlayerWithStatus} from "@/types/player";
+import {Player} from "@/types/player";
 import React from "react";
 import {KillDeathChart} from "@/components/game/statistics/team/kill-death-chart";
 import {useTranslation} from "react-i18next";
@@ -6,7 +6,7 @@ import {RankCompareChart} from "@/components/game/statistics/team/rank-compare-c
 import {KillCategoryChart} from "@/components/game/statistics/team/kill-category-chart";
 
 export function TeamStats({stats, handlePlayerClick}: {
-  stats: Player[] | PlayerWithStatus[]
+  stats: Player[] 
   handlePlayerClick: (id: string) => void
 }) {
 

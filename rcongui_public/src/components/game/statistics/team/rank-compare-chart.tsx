@@ -1,20 +1,26 @@
-import {Player, PlayerWithStatus, TeamEnum} from '@/types/player'
+import {Player, TeamEnum} from '@/types/player'
 import React from 'react'
 import {Bar, BarChart, Cell, ReferenceLine, ResponsiveContainer, Tooltip, TooltipProps, XAxis, YAxis} from 'recharts'
-import {generateTicks, getColorForTeam} from '@/components/game/statistics/utils'
+import {generateTicks, getColorForTeam, getTeamFromAssociation} from '@/components/game/statistics/utils'
 import {useTranslation} from 'react-i18next'
 import colors from "tailwindcss/colors";
 import {NameType, ValueType} from "recharts/types/component/DefaultTooltipContent";
 import {TeamIndicator} from "@/components/game/statistics/team-indicator";
 
 export function RankCompareChart({stats}: {
-  stats: Player[] | PlayerWithStatus[]
+  stats: Player[] 
 }) {
 
   const {t} = useTranslation("game");
 
-  const axisPlayers = stats.filter(player => player.team.side === TeamEnum.AXIS).sort((a, b) => b.kills - a.kills);
-  const alliesPlayers = stats.filter(player => player.team.side === TeamEnum.ALLIES).sort((a, b) => b.kills - a.kills);
+  // `player.team` can be `string | PlayerTeamAssociation | null` depending on which endpoint produced it.
+  // Normalize via `getTeamFromAssociation()` so we can safely compare.
+  const axisPlayers = stats
+    .filter((player) => getTeamFromAssociation(player.team) === TeamEnum.AXIS)
+    .sort((a, b) => b.kills - a.kills);
+  const alliesPlayers = stats
+    .filter((player) => getTeamFromAssociation(player.team) === TeamEnum.ALLIES)
+    .sort((a, b) => b.kills - a.kills);
 
   const data = axisPlayers.map((axisPlayer, index) => ({rank: index + 1, kills: alliesPlayers[index] ? axisPlayer.kills - alliesPlayers[index].kills : null, axisPlayer: axisPlayer, alliesPlayer: alliesPlayers[index]}));
 

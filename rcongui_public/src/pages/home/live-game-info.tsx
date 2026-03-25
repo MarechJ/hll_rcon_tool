@@ -37,7 +37,7 @@ export default function LiveGameInfo({ game }: { game: PublicInfo }) {
               score={{ axis: game.score.axis, allies: game.score.allied }}
               time={remainingTime}
             />
-            <ToggleGroup type="single" variant="outline" className="p-4">
+            <ToggleGroup type="single" variant="outline" className="justify-start h-12">
               <ToggleGroupItem value={`/`} asChild>
                 <Link to={`/`}>
                   <TableIcon size={20}/>

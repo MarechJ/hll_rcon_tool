@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 import LiveGameInfo from './live-game-info'
 import { Spinner } from '@/components/spinner'
 import { QueryErrorResetBoundary, useSuspenseQueries, useSuspenseQuery } from '@tanstack/react-query'
-import { PlayerWithStatus } from '@/types/player'
+import { LivePlayer } from '@/types/player'
 import { liveSessionStatsOptions } from '@/lib/queries/live-session-stats'
 import { liveGameStatsOptions } from '@/lib/queries/live-game-stats'
 import React from "react";
@@ -17,7 +17,7 @@ import {PublicInfo} from "@/types/api";
 dayjs.extend(duration)
 
 export interface LiveStats {
-  data: PlayerWithStatus[],
+  data: LivePlayer[],
   pending: boolean,
 }
 
@@ -81,7 +81,7 @@ function GameLiveLayout({liveStats, game, isLoading, isError}: GameLiveLayoutPro
 export default function Page() {
   const { data: game, isLoading, isError } = useSuspenseQuery(publicInfoQueryOptions);
 
-  const liveStats: { data: PlayerWithStatus[]; pending: boolean } = useSuspenseQueries({
+  const liveStats: { data: LivePlayer[]; pending: boolean } = useSuspenseQueries({
     queries: [liveGameStatsOptions, liveSessionStatsOptions],
     combine: (results) => {
       const allPlayers = results[0].data?.stats ?? []
