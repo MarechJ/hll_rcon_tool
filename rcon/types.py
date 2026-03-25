@@ -8,6 +8,7 @@ from typing import List, Literal, Optional, Sequence
 from typing_extensions import TypedDict
 
 from rcon.maps import GameMode, Layer, LayerType, Team
+from rcon.weapons import WeaponType
 
 
 class WindowsStoreIdActionType(str, enum.Enum):
@@ -423,14 +424,23 @@ class PlayerTeamAssociation(TypedDict):
     ratio: float
 
 
-class PlayerStatsType(TypedDict):
+class UnitHistoryEntry(TypedDict):
+    ts: int          # timestamp in seconds
+    t: int           # team int value
+    s: int           # squad int value
+    r: int           # role int value
+
+    
+class PlayerStatsType(TypedDict, total=False):
     id: int
     player_id: str
+    map_id: int
     player: Optional[str]
     steaminfo: Optional[SteamInfoType]
-    map_id: int
     kills: Optional[int]
     kills_streak: Optional[int]
+    kills_by_type: Optional[dict[WeaponType, int]]
+    deaths_by_type: Optional[dict[WeaponType, int]]
     deaths: Optional[int]
     deaths_without_kill_streak: Optional[int]
     teamkills: Optional[int]
@@ -441,6 +451,7 @@ class PlayerStatsType(TypedDict):
     nb_voted_yes: Optional[int]
     nb_voted_no: Optional[int]
     time_seconds: Optional[int]
+    last_spawn: Optional[int]
     kills_per_minute: Optional[float]
     deaths_per_minute: Optional[float]
     kill_death_ratio: Optional[float]
@@ -455,6 +466,12 @@ class PlayerStatsType(TypedDict):
     weapons: Optional[dict]
     death_by_weapons: Optional[dict]
     team: Optional[PlayerTeamAssociation]
+    units: Optional[list[UnitHistoryEntry]]
+    level: Optional[int]
+    vehicles_destroyed: Optional[int]
+    vehicle_kills: Optional[int]
+    kills_and_assists: Optional[int]
+    deaths_and_redeploys: Optional[int]
 
 
 class PlayerStat(TypedDict):
@@ -466,8 +483,19 @@ class PlayerStat(TypedDict):
     p_defense: int
     support: int
     p_support: int
+    vehicle_kills: int
+    p_vehicle_kills: int
+    vehicles_destroyed: int
+    p_vehicles_destroyed: int
     level: int
-
+    p_kills_and_assists: int
+    kills_and_assists: int
+    p_deaths_and_redeploys: int
+    deaths_and_redeploys: int
+    units: Optional[list[UnitHistoryEntry]]
+    p_unit: UnitHistoryEntry
+    p_coord: 'WorldPositionType'
+    has_spawned: bool
 
 class CachedLiveGameStats(TypedDict):
     snapshot_timestamp: datetime.datetime
@@ -479,6 +507,14 @@ class GameLayout(TypedDict):
     requested: Sequence[str | int | None]
     set: list[str]
 
+class MapScore(TypedDict):
+    ts: int
+    allied_score: int
+    axis_score: int
+
+class MapResult(TypedDict):
+    axis: int
+    allied: int
 
 class MapInfo(TypedDict):
     name: str
@@ -487,6 +523,8 @@ class MapInfo(TypedDict):
     guessed: bool
     player_stats: dict[str, PlayerStat]
     game_layout: GameLayout
+    cap_flips: list[MapScore]
+    match_time: int
 
 
 class MapInfoISODates(TypedDict):
@@ -504,9 +542,10 @@ class MapsType(TypedDict):
     end: Optional[datetime.datetime]
     server_number: Optional[int]
     map_name: str
-    result: Optional[dict[str, int]]
+    result: Optional[MapResult]
     game_layout: GameLayout
     player_stats: List[PlayerStatsType]
+    cap_flips: list[MapScore]
 
 
 class PlayerCommentType(TypedDict):
