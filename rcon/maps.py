@@ -184,6 +184,7 @@ class Map(pydantic.BaseModel):
             warnings: bool = True,
         ) -> MapType: ...
 
+
 class Layer(pydantic.BaseModel):
     id: str
     map: Map
@@ -873,11 +874,18 @@ LAYERS = {
             game_mode=GameMode.SKIRMISH,
             environment=Environment.OVERCAST,
         ),
+        # Deprecated since U19.1
         Layer(
             id="remagen_warfare",
             map=MAPS["remagen"],
             game_mode=GameMode.WARFARE,
         ),
+        Layer(
+            id="REM_L_1945_Warfare",
+            map=MAPS["remagen"],
+            game_mode=GameMode.WARFARE,
+        ),
+        # Deprecated since U19.1
         Layer(
             id="remagen_warfare_night",
             map=MAPS["remagen"],
@@ -885,16 +893,48 @@ LAYERS = {
             environment=Environment.NIGHT,
         ),
         Layer(
+            id="REM_L_1945_WarfareNight",
+            map=MAPS["remagen"],
+            game_mode=GameMode.WARFARE,
+            environment=Environment.NIGHT,
+        ),
+        # Deprecated since U19.1
+        Layer(
             id="remagen_offensive_us",
             map=MAPS["remagen"],
             game_mode=GameMode.OFFENSIVE,
             attackers=Team.ALLIES,
         ),
         Layer(
+            id="REM_L_1945_OffensiveUS",
+            map=MAPS["remagen"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.ALLIES,
+        ),
+        # Deprecated since U19.1
+        Layer(
             id="remagen_offensive_ger",
             map=MAPS["remagen"],
             game_mode=GameMode.OFFENSIVE,
             attackers=Team.AXIS,
+        ),
+        Layer(
+            id="REM_L_1945_OffensiveGER",
+            map=MAPS["remagen"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.AXIS,
+        ),
+        Layer(
+            id="REM_S_1945_P_Skirmish_Day",
+            map=MAPS["remagen"],
+            game_mode=GameMode.SKIRMISH,
+            environment=Environment.DAY,
+        ),
+        Layer(
+            id="REM_S_1945_P_Skirmish_Night",
+            map=MAPS["remagen"],
+            game_mode=GameMode.SKIRMISH,
+            environment=Environment.NIGHT,
         ),
         Layer(
             id="kharkov_warfare",
@@ -1519,7 +1559,9 @@ def categorize_maps(maps: Iterable[Layer]) -> dict[GameMode, list[Layer]]:
             map_ for map_ in maps if map_.game_mode == GameMode.OFFENSIVE
         ],
         GameMode.WARFARE: [map_ for map_ in maps if map_.game_mode == GameMode.WARFARE],
-        GameMode.SKIRMISH: [map_ for map_ in maps if map_.game_mode == GameMode.SKIRMISH],
+        GameMode.SKIRMISH: [
+            map_ for map_ in maps if map_.game_mode == GameMode.SKIRMISH
+        ],
     }
 
     return categories

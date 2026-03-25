@@ -30,11 +30,11 @@ const RconConnectionNotes = `
             to the game server) before dumping the result to the logs. After that a new time-window starts with all values
             set back to 0.
             Changing this setting requires a restart of the supervisor and backend container.
-            
+
             This needs to be a multiple of 10 (10, 20, 30, 40, etc.) and cannot be smaller than 10.
          */
         "performance_statistics_interval_seconds": 30
     }
     `;
 
-export default RconConnectionNotes
+export default RconConnectionNotes;
