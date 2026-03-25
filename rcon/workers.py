@@ -7,6 +7,7 @@ from typing import Set
 
 from rq import Queue
 from rq.job import Job, Retry
+from rq_scheduler import Scheduler
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
@@ -24,6 +25,11 @@ logger = logging.getLogger("rcon")
 def get_queue(redis_client=None):
     red = get_redis_client()
     return Queue(connection=red, default_timeout=60 * 20)
+
+
+def get_scheduler(redis_client=None):
+    red = get_redis_client()
+    return Scheduler(connection=red)
 
 
 def broadcast(msg):
