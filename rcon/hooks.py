@@ -283,12 +283,15 @@ def reset_watch_killrate_cooldown(rcon: Rcon, struct_log: StructuredLogLineWithM
 def handle_new_match_start(rcon: Rcon, struct_log):
     try:
         logger.info("New match started recording map %s", struct_log)
-        with invalidates(Rcon.get_map, Rcon.get_next_map):
+        with invalidates(Rcon.get_map, Rcon.get_next_map, Rcon.get_gamestate):
             try:
                 # Don't use the current_map property and clear the cache to pull the new map name
-                current_map = rcon.get_map()
+                gamestate = rcon.get_gamestate()
+                current_map = parse_layer(gamestate["current_map"]["id"])
+                match_time = gamestate["match_time"]
             except HLLCommandFailedError:
                 current_map = parse_layer(UNKNOWN_MAP_NAME)
+                match_time = 0
                 logger.error(
                     "Unable to get current map, falling back to recording map as %s",
                     UNKNOWN_MAP_NAME,
@@ -324,11 +327,16 @@ def handle_new_match_start(rcon: Rcon, struct_log):
                     end_timestamp=int(struct_log["timestamp_ms"] / 1000),
                 )
 
-        game_layout = GameLayout
+        game_layout: GameLayout = {"requested": [], "set": []}
         try:
             red = get_redis_client()
             raw = red.getdel('GAME_LAYOUT')
-            game_layout = json.loads(raw) if raw is not None else {}
+            loaded = json.loads(raw) if raw is not None else {}
+            if isinstance(loaded, dict):
+                game_layout = {
+                    "requested": loaded.get("requested", []),
+                    "set": loaded.get("set", []),
+                }
         except Exception as e:
             logger.error("Could not fetch Game Layout", e)
             pass
@@ -337,6 +345,7 @@ def handle_new_match_start(rcon: Rcon, struct_log):
             guessed=guessed,
             start_timestamp=int(struct_log["timestamp_ms"] / 1000),
             game_layout=game_layout,
+            match_time=match_time,
         )
     except:
         raise
@@ -370,6 +379,7 @@ def record_map_end(rcon: Rcon, struct_log):
     if (datetime.utcnow() - log_time).total_seconds() < 60:
         # then we use the current map to be more accurate
         if current_map.map.name.lower() in log_map_name.lower():
+            logger.info(f"Recording map end: {current_map}")
             maps_history.save_map_end(
                 str(current_map), end_timestamp=int(struct_log["timestamp_ms"] / 1000)
             )

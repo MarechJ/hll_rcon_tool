@@ -26,6 +26,8 @@ from rcon.maps import Team
 from rcon.types import (
     AuditLogType,
     GetDetailedPlayer,
+    MapResult,
+    MapScore,
     MessageTemplateType,
     BlacklistRecordType,
     BlacklistRecordWithBlacklistType,
@@ -49,6 +51,7 @@ from rcon.types import (
     PlayerSoldierType,
     PlayerStatsType,
     PlayerVIPType,
+    UnitHistoryEntry,
     ServerCountType,
     SteamBansType,
     SteamInfoType,
@@ -732,6 +735,8 @@ class Maps(Base):
     # A dict with the result of the game mapped as Axis=int, Allied=int
     result: Mapped[dict[str, int]] = mapped_column(nullable=True)
     game_layout: Mapped["GameLayout"] = mapped_column(JSON, nullable=False, default=GameLayout)
+    cap_flips: Mapped[list[MapScore]] = mapped_column(JSON, nullable=False, default=[])
+    match_time: Mapped[int] = mapped_column(default=0)
 
     player_stats: Mapped[list["PlayerStats"]] = relationship(back_populates="map")
 
@@ -745,13 +750,15 @@ class Maps(Base):
             "map_name": self.map_name,
             "result": (
                 {
-                    "axis": self.result.get("Axis"),
-                    "allied": self.result.get("Allied"),
+                    "axis": self.result.get("Axis", 0),
+                    "allied": self.result.get("Allied", 0),
                 }
                 if self.result is not None and self.result.get("Allied") is not None
                 else None
             ),
             "game_layout": self.game_layout,
+            "cap_flips": self.cap_flips,
+            "match_time": self.match_time,
             "player_stats": (
                 []
                 if not with_stats or not self.player_stats
@@ -805,11 +812,16 @@ class PlayerStats(Base):
     offense: Mapped[int] = mapped_column()
     defense: Mapped[int] = mapped_column()
     support: Mapped[int] = mapped_column()
+    vehicle_kills: Mapped[int] = mapped_column()
+    vehicles_destroyed: Mapped[int] = mapped_column()
     most_killed: Mapped[dict[str, int]] = mapped_column()
     death_by: Mapped[dict[str, int]] = mapped_column()
     weapons: Mapped[dict[str, int]] = mapped_column()
     death_by_weapons: Mapped[dict[str, int]] = mapped_column()
     level: Mapped[int] = mapped_column()
+    kills_and_assists: Mapped[int] = mapped_column()
+    deaths_and_redeploys: Mapped[int] = mapped_column()
+    units: Mapped[list[UnitHistoryEntry]] = mapped_column(JSON)
 
     player: Mapped[PlayerID] = relationship(
         foreign_keys=[player_id_id], back_populates="stats"
@@ -864,7 +876,6 @@ class PlayerStats(Base):
         return assoc
 
     def to_dict(self) -> PlayerStatsType:
-        # TODO: Fix typing
         return {
             "id": self.id,
             PLAYER_ID: self.player.player_id,
@@ -898,12 +909,17 @@ class PlayerStats(Base):
             "offense": self.offense,
             "defense": self.defense,
             "support": self.support,
+            "vehicle_kills": self.vehicle_kills,
+            "vehicles_destroyed": self.vehicles_destroyed,
             "most_killed": self.most_killed,
             "death_by": self.death_by,
             "weapons": self.weapons,
             "death_by_weapons": self.death_by_weapons,
             "team": self.detect_team(),
             "level": self.level,
+            "kills_and_assists": self.kills_and_assists,
+            "deaths_and_redeploys": self.deaths_and_redeploys,
+            "units": self.units,
         }
 
 

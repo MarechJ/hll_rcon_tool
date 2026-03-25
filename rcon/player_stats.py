@@ -5,22 +5,30 @@ import pickle
 import re
 import time
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, Mapping, TypeAlias
+
+from hllrcon.data.teams import Team
 
 from rcon.cache_utils import get_redis_client
 from rcon.game_logs import get_historical_logs_records, get_recent_logs
+from rcon.maps import parse_layer
 from rcon.models import enter_session
 from rcon.player_history import _get_profiles, get_player_profile_by_player_ids
 from rcon.rcon import get_rcon
 from rcon.types import (
     STAT_DISPLAY_LOOKUP,
+    AllLogTypes,
     CachedLiveGameStats,
+    GetPlayersType,
+    MapInfo,
+    PlayerProfileType,
+    PlayerStat,
     PlayerStatsEnum,
     PlayerStatsType,
     StructuredLogLineWithMetaData,
 )
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
-from rcon.utils import MapsHistory
+from rcon.utils import MapsHistory, get_default_player_stats
 
 logger = logging.getLogger(__name__)
 
@@ -34,33 +42,123 @@ class Streaks:
     teamkills: int = 0
     deaths_by_tk: int = 0
 
+StatsUpdateHandler: TypeAlias = Callable[
+    [PlayerStatsType, GetPlayersType, StructuredLogLineWithMetaData], None
+]
 
 class BaseStats:
+    _stat_handlers: dict[str, StatsUpdateHandler] = {}
+
     def __init__(self):
         self.rcon = get_rcon()
         self.voted_yes_regex = re.compile(".*PV_Favour.*")
         self.voted_no_regex = re.compile(".*PV_Against.*")
+        self.team_switch_regex = re.compile(r"\((Axis|Allies|None) > (Axis|Allies|None)\)")
         self.red = get_redis_client()
+        self._stat_handlers = {
+            AllLogTypes.kill: self._add_kill_handler,
+            AllLogTypes.team_kill: self._add_tk_handler,
+            AllLogTypes.vote_started: self._add_vote_started_handler,
+            AllLogTypes.vote: self._add_vote_handler,
+        }
 
-    def _is_player_death(self, player, log):
-        return player["name"] == log["player_name_2"]
+    # The main function
+    def get_stats_by_player(
+        self,
+        indexed_logs: dict[str, list[StructuredLogLineWithMetaData]],
+        players: list[GetPlayersType],
+        profiles_by_id: dict[str, PlayerProfileType],
+    ):
+        stats_by_player: dict[str, PlayerStatsType] = {}
 
-    def _is_player_kill(self, player, log):
-        return player["name"] == log["player_name_1"]
+        for player in players:
+            logger.debug("Crunching stats for %s", player)
 
-    def _add_kd(self, attacker_key, victim_key, stats, player, log):
-        if self._is_player_kill(player, log):
-            stats[attacker_key] += 1
-        elif self._is_player_death(player, log):
-            stats[victim_key] += 1
-        else:
-            logger.warning(
-                "Log line does not belong to player '%s' line: '%s'",
-                player["name"],
-                log["raw"],
+            profile = profiles_by_id.get(player.get(PLAYER_ID))
+
+            # Initialise stats and populate them with values based on player's profile and session
+            player_stats = PlayerStatsType(get_default_player_stats())
+            player_stats.update(
+                player=player["name"],
+                player_id=player["player_id"],
+                steaminfo=profile.steaminfo.to_dict() if profile and profile.steaminfo else None,
+                last_spawn=self._get_player_first_appearance(player),
+                time_seconds=int(self._get_player_session_time(player)),
             )
 
-    def _add_kill(self, stats, player, log: StructuredLogLineWithMetaData):
+            # Update stats based on game logs
+            player_logs = indexed_logs.get(player["name"], [])
+            streaks = Streaks()
+            for log in player_logs:
+                self._process_log(player_stats, player, log)                
+                self._calc_streaks(player_stats, player, log, streaks)
+                self._calc_computed_stats(player_stats)
+
+            stats_by_player[player["name"]] = player_stats
+
+        return stats_by_player
+
+    # STATS PROCESSORS
+    def _process_log(
+        self,
+        stats: PlayerStatsType,
+        player: GetPlayersType,
+        log: StructuredLogLineWithMetaData,
+    ) -> None:
+        log_type = log.get("action") or log.get("type")
+        handler = self._stat_handlers.get(log_type)
+        if handler is not None:
+            handler(stats, player, log)
+
+    def _calc_computed_stats(self, stats: PlayerStatsType) -> None:
+        stats.update(
+            kills_per_minute=round(stats["kills"] / max(stats["time_seconds"] / 60, 1), 2),
+            deaths_per_minute=round(stats["deaths"] / max(stats["time_seconds"] / 60, 1), 2),
+            kill_death_ratio=round(stats["kills"] / max(stats["deaths"], 1), 2)
+        )
+
+    def _calc_streaks(
+        self,
+        stats: PlayerStatsType,
+        player: GetPlayersType,
+        log: StructuredLogLineWithMetaData,
+        streaks: Streaks,
+        ) -> None:
+        action = log["action"]
+
+        log_time = datetime.datetime.fromtimestamp(log["timestamp_ms"] / 1000)
+        if action == AllLogTypes.kill:
+            if self._is_player_kill(player, log):
+                streaks.kill += 1
+                streaks.death = 0
+                streaks.teamkills = 0
+            elif self._is_player_death(player, log):
+                streaks.kill = 0
+                streaks.deaths_by_tk = 0
+                streaks.death += 1
+                self._process_death_time(log_time, stats)
+        if action == AllLogTypes.team_kill:
+            if self._is_player_kill(player, log):
+                streaks.teamkills += 1
+            if self._is_player_death(player, log):
+                streaks.deaths_by_tk += 1
+                self._process_death_time(log_time, stats)
+        if action == AllLogTypes.connected:
+            stats["last_spawn"] = log_time
+        if action == AllLogTypes.disconnected:
+            self._process_death_time(log_time, stats, save_spawn=False)
+
+        stats["kills_streak"] = max(streaks.kill, stats["kills_streak"])
+        stats["deaths_without_kill_streak"] = max(
+            streaks.death, stats["deaths_without_kill_streak"]
+        )
+        stats["teamkills_streak"] = max(streaks.teamkills, stats["teamkills_streak"])
+        stats["deaths_by_tk_streak"] = max(
+            streaks.deaths_by_tk, stats["deaths_by_tk_streak"]
+        )
+
+    # LOG HANDLERS
+    def _add_kill_handler(self, stats: PlayerStatsType, player: GetPlayersType, log: StructuredLogLineWithMetaData):
         self._add_kd("kills", "deaths", stats, player, log)
         if self._is_player_kill(player, log):
             stats["weapons"][log["weapon"]] = stats["weapons"].get(log["weapon"], 0) + 1
@@ -75,10 +173,10 @@ class BaseStats:
                 stats["death_by"].get(log["player_name_1"], 0) + 1
             )
 
-    def _add_tk(self, stats, player, log):
+    def _add_tk_handler(self, stats: PlayerStatsType, player: GetPlayersType, log: StructuredLogLineWithMetaData):
         self._add_kd("teamkills", "deaths_by_tk", stats, player, log)
 
-    def _add_vote(self, stats, player, log):
+    def _add_vote_handler(self, stats: PlayerStatsType, player: GetPlayersType, log: StructuredLogLineWithMetaData):
         if self.voted_no_regex.match(log["raw"]):
             stats["nb_voted_no"] += 1
         elif self.voted_yes_regex.match(log["raw"]):
@@ -89,8 +187,15 @@ class BaseStats:
                 log["raw"],
             )
 
-    def _add_vote_started(self, stats, player, log):
+    def _add_vote_started_handler(self, stats: PlayerStatsType, player: GetPlayersType, log: StructuredLogLineWithMetaData):
         stats["nb_vote_started"] += 1
+
+    # HELPERS
+    def _is_player_death(self, player: GetPlayersType, log: StructuredLogLineWithMetaData):
+        return player["name"] == log["player_name_2"]
+
+    def _is_player_kill(self, player: GetPlayersType, log: StructuredLogLineWithMetaData):
+        return player["name"] == log["player_name_1"]
 
     def _process_death_time(self, log_time, stats, save_spawn=True):
         if not isinstance(stats["last_spawn"], datetime.datetime):
@@ -110,129 +215,24 @@ class BaseStats:
         if save_spawn:
             stats["last_spawn"] = log_time
 
-    def _streaks_accumulator(self, player, log, stats, streaks):
-        action = log["action"]
+    def _add_kd(self, attacker_key, victim_key, stats, player, log: StructuredLogLineWithMetaData):
+        if self._is_player_kill(player, log):
+            stats[attacker_key] += 1
+        elif self._is_player_death(player, log):
+            stats[victim_key] += 1
+        else:
+            logger.warning(
+                "Log line does not belong to player '%s' line: '%s'",
+                player["name"],
+                log["raw"],
+            )
 
-        log_time = datetime.datetime.fromtimestamp(log["timestamp_ms"] / 1000)
-        if action == "KILL":
-            if self._is_player_kill(player, log):
-                streaks.kill += 1
-                streaks.death = 0
-                streaks.teamkills = 0
-            elif self._is_player_death(player, log):
-                streaks.kill = 0
-                streaks.deaths_by_tk = 0
-                streaks.death += 1
-                self._process_death_time(log_time, stats)
-        if action == "TEAM KILL":
-            if self._is_player_kill(player, log):
-                streaks.teamkills += 1
-            if self._is_player_death(player, log):
-                streaks.deaths_by_tk += 1
-                self._process_death_time(log_time, stats)
-        if action == "CONNECTED":
-            stats["last_spawn"] = log_time
-        if action == "DISCONNECTED":
-            self._process_death_time(log_time, stats, save_spawn=False)
-
-        stats["kills_streak"] = max(streaks.kill, stats["kills_streak"])
-        stats["deaths_without_kill_streak"] = max(
-            streaks.death, stats["deaths_without_kill_streak"]
-        )
-        stats["teamkills_streak"] = max(streaks.teamkills, stats["teamkills_streak"])
-        stats["deaths_by_tk_streak"] = max(
-            streaks.deaths_by_tk, stats["deaths_by_tk_streak"]
-        )
-
+    # ABSTRACT METHODS
     def _get_player_session_time(self, player):
         raise NotImplementedError("_get_player_session_time")
 
     def _get_player_first_appearance(self, player):
         raise NotImplementedError("_get_player_first_appearance")
-
-    def get_stats_by_player(
-        self,
-        indexed_logs: dict[str, list[StructuredLogLineWithMetaData]],
-        players,
-        profiles_by_id,
-    ):
-        """
-        players is expected to be a list of dict, such as:
-        [{"player_id": ..., "name": ...}, ...]
-        """
-        stats_by_player = {}
-
-        actions_processors = {
-            "KILL": self._add_kill,
-            "TEAM KILL": self._add_tk,
-            "VOTE STARTED": self._add_vote_started,
-            "VOTE": self._add_vote,
-        }
-        for p in players:
-            logger.debug("Crunching stats for %s", p)
-            player_logs: list[StructuredLogLineWithMetaData] = indexed_logs.get(
-                p["name"], []
-            )
-            profile = profiles_by_id.get(p.get(PLAYER_ID))
-            stats = {
-                "player": p["name"],
-                PLAYER_ID: p.get(PLAYER_ID),
-                "steaminfo": (
-                    profile.steaminfo.to_dict()
-                    if profile and profile.steaminfo
-                    else None
-                ),
-                "kills": 0,
-                "kills_streak": 0,
-                "deaths": 0,
-                "death_by_weapons": {},
-                "deaths_without_kill_streak": 0,
-                "teamkills": 0,
-                "teamkills_streak": 0,
-                "deaths_by_tk": 0,
-                "deaths_by_tk_streak": 0,
-                "nb_vote_started": 0,
-                "nb_voted_yes": 0,
-                "nb_voted_no": 0,
-                "longest_life_secs": 0,
-                "shortest_life_secs": 9999,
-                "last_spawn": self._get_player_first_appearance(p),
-                "time_seconds": self._get_player_session_time(p),
-                "weapons": {},
-                "death_by": {},
-                "most_killed": {},
-                "combat": 0,
-                "offense": 0,
-                "defense": 0,
-                "support": 0,
-                "level": 0,
-            }
-
-            streaks = Streaks()
-            # player_p = p
-            # import ipdb; ipdb.set_trace()
-            for l in player_logs:
-                action = l["action"]
-                processor = actions_processors.get(action, lambda **kargs: None)
-                processor(stats=stats, player=p, log=l)
-                self._streaks_accumulator(p, l, stats, streaks)
-
-            stats_by_player[p["name"]] = self._compute_stats(stats)
-
-        return stats_by_player
-
-    def _compute_stats(self, stats):
-        new_stats = dict(**stats)
-        new_stats["kills_per_minute"] = round(
-            stats["kills"] / max(stats["time_seconds"] / 60, 1), 2
-        )
-        new_stats["deaths_per_minute"] = round(
-            stats["deaths"] / max(stats["time_seconds"] / 60, 1), 2
-        )
-        new_stats["kill_death_ratio"] = round(
-            stats["kills"] / max(stats["deaths"], 1), 2
-        )
-        return new_stats
 
 
 class LiveStats(BaseStats):
@@ -257,16 +257,7 @@ class LiveStats(BaseStats):
 
         return player_sessions[0].get("start")
 
-    def _is_log_from_current_session(self, now, player, log):
-        if player["name"] == "Dr.WeeD":
-            logger.debug(
-                "%s %s %s %s",
-                log["timestamp_ms"],
-                (now.timestamp() - self._get_player_session_time(player)) * 1000,
-                log["timestamp_ms"]
-                >= (now.timestamp() - self._get_player_session_time(player)) * 1000,
-                log["raw"],
-            )
+    def _is_log_from_current_session(self, now, player, log: StructuredLogLineWithMetaData):
         return (
             log["timestamp_ms"]
             >= (now.timestamp() - self._get_player_session_time(player)) * 1000
@@ -292,7 +283,7 @@ class LiveStats(BaseStats):
         return logs_indexed
 
     def get_current_players_stats(self):
-        players = self.rcon.get_players()
+        players: list[GetPlayersType]  = self.rcon.get_players()
         if not players:
             logger.debug("No players")
             return {}
@@ -327,7 +318,20 @@ class LiveStats(BaseStats):
                 now, indexed_players, list(reversed(logs["logs"]))
             )
 
-            return self.get_stats_by_player(indexed_logs, players, profiles_by_id)
+            stats = self.get_stats_by_player(indexed_logs, players, profiles_by_id)
+
+            # Enrich the log-derived stats with the richer per-unit stats stored on the current map.
+            # This mirrors the behavior of `current_game_stats()`.
+            try:
+                current_map = MapsHistory()[0]
+            except IndexError:
+                logger.error("No maps information available")
+                return stats
+
+            _apply_current_map_player_stats(
+                stats=stats, current_map=current_map
+            )
+            return stats
 
     def set_live_stats(self):
         snapshot_ts = datetime.datetime.now().timestamp()
@@ -354,12 +358,12 @@ class TimeWindowStats(BaseStats):
         )
 
     def _set_start_end_times(
-        self, player, players_times, log, from_, offset_warmup_time_seconds=180
+        self, player, players_times, log: StructuredLogLineWithMetaData, from_, offset_warmup_time_seconds=180
     ):
         if not player:
             return
         # A CONNECT means the begining of a session for the player
-        if log["action"] == "CONNECTED":
+        if log["action"] == AllLogTypes.connected:
             try:
                 event_time = datetime.datetime.fromisoformat(log.get("event_time"))
             except (TypeError, ValueError):
@@ -372,12 +376,12 @@ class TimeWindowStats(BaseStats):
         # if the player is not already in the times record we add the start of the stats window as his session start time
         # we didn't see a CONNECTED before, so it means that the player was here before the current window.
         # For those we add the game warmup time to have a more accurate kill / min
-        elif player not in players_times and log["action"] != "DISCONNECTED":
+        elif player not in players_times and log["action"] != AllLogTypes.disconnected:
             players_times.setdefault(player, {"start": [], "end": []})["start"].append(
                 from_ + datetime.timedelta(seconds=offset_warmup_time_seconds)
             )
         # if the player was already in the time record and we see a disconnect we log it as the end of his session
-        if player in players_times and log["action"] == "DISCONNECTED":
+        if player in players_times and log["action"] == AllLogTypes.disconnected:
             try:
                 event_time = datetime.datetime.fromisoformat(log.get("event_time"))
             except (TypeError, ValueError):
@@ -578,7 +582,7 @@ def live_stats_loop():
                     pickle.dumps(
                         dict(
                             snapshot_timestamp=snapshot_ts,
-                            stats=list(stats.values()),
+                            stats=list[PlayerStatsType](stats.values()),
                             refresh_interval_sec=live_game_sleep_seconds,
                         )
                     ),
@@ -597,19 +601,73 @@ def current_game_stats():
         return {}
 
     stats = TimeWindowStats().get_players_stats_from_time(current_map["start"])
-    for name in stats:
-        stat = stats.setdefault(name)
-        player_stats = current_map.get("player_stats", dict())
-        map_stat = player_stats.get(stat[PLAYER_ID], None)
-        if map_stat is None:
-            logger.info("No stats for: " + stat[PLAYER_ID])
-            continue
-        stat["combat"] = map_stat["combat"] + map_stat["p_combat"]
-        stat["offense"] = map_stat["offense"] + map_stat["p_offense"]
-        stat["defense"] = map_stat["defense"] + map_stat["p_defense"]
-        stat["support"] = map_stat["support"] + map_stat["p_support"]
-        stat["level"] = map_stat["level"]
+    _apply_current_map_player_stats(
+        stats=stats, current_map=current_map
+    )
     return stats
+
+
+def _apply_current_map_player_stats(
+    stats: Mapping[str, PlayerStatsType],
+    current_map: MapInfo,
+) -> None:
+    """Override/augment stats using the richer per-unit values stored on map history.
+
+    `player_stats` is `MapsHistory()[0]["player_stats"]` and keys are player IDs.
+    """
+    player_stats = current_map.get("player_stats", dict())
+    map_layer = parse_layer(current_map["name"])
+
+    for stat in stats.values():
+        player_id = stat.get(PLAYER_ID)
+        if not player_id:
+            continue
+
+        map_stat = player_stats.get(player_id, None)
+        if map_stat is None:
+            logger.info("No stats for: " + str(player_id))
+            continue
+
+        team_name = None
+        faction_name = None
+        unit = map_stat.get("p_unit", None)
+        if unit:
+            try:
+                team = Team.by_id(unit["t"])
+                team_name = team.name.lower()
+                if team == Team.ALLIES:
+                    faction_name = map_layer.map.allies.name.lower()
+                elif team == Team.AXIS:
+                    faction_name = map_layer.map.axis.name.lower()
+            except ValueError:
+                pass
+
+        # Combat stats
+        stat["combat"] = map_stat.get("combat", 0) + map_stat.get("p_combat", 0)
+        stat["offense"] = map_stat.get("offense", 0) + map_stat.get("p_offense", 0)
+        stat["defense"] = map_stat.get("defense", 0) + map_stat.get("p_defense", 0)
+        stat["support"] = map_stat.get("support", 0) + map_stat.get("p_support", 0)
+
+        # Vehicles
+        stat["vehicle_kills"] = (
+            map_stat.get("vehicle_kills", 0) + map_stat.get("p_vehicle_kills", 0)
+        )
+        stat["vehicles_destroyed"] = (
+            map_stat.get("vehicles_destroyed", 0)
+            + map_stat.get("p_vehicles_destroyed", 0)
+        )
+
+        # Misc
+        stat["kills_and_assists"] = map_stat.get("kills_and_assists", 0) + map_stat.get("p_kills_and_assists", 0)
+        stat["deaths_and_redeploys"] = map_stat.get("deaths_and_redeploys", 0) + map_stat.get("p_deaths_and_redeploys", 0)
+        stat["level"] = map_stat.get("level", 0)
+        stat["team"] = team_name
+        stat["faction"] = faction_name
+
+        # Del unused attributes
+        del stat["id"]
+        del stat["map_id"]
+        del stat["units"]
 
 
 def get_cached_live_game_stats() -> CachedLiveGameStats:
