@@ -325,10 +325,11 @@ def handle_new_match_start(rcon: Rcon, struct_log):
     except:
         raise
     finally:
+        prev_map = MapsHistory()[1]
         vm = VoteMap()
         if vm.enabled:
             logger.info("MATCH START: Restarting votemap")
-            vm.record_result()
+            vm.record_result(prev_map)
             send_to_discord_audit(
                 command_name="on_match_start",
                 message=vm.get_result_message(),
@@ -338,7 +339,7 @@ def handle_new_match_start(rcon: Rcon, struct_log):
             vm.restart()
             vm.send_reminder(force=vm.config.remind_on_match_start)
         try:
-            record_stats_worker(MapsHistory()[1])
+            record_stats_worker(prev_map)
         except Exception as e:
             logger.exception("Unexpected error while running stats worker\n%s", e)
 
