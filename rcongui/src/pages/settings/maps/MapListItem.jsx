@@ -5,12 +5,15 @@ import {
   Tooltip,
   Popover,
   Stack,
+  Typography,
+  Divider,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { MapDetailsCard } from "./MapDetailsCard";
 import { useState } from "react";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import CloseIcon from "@mui/icons-material/Close";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import { PlayerDrawerLink } from "@/components/shared/PlayerDrawerLink";
 
 function MapListItemBase({ mapLayer, renderActions, sx, ...props }) {
@@ -31,9 +34,7 @@ function MapListItemBase({ mapLayer, renderActions, sx, ...props }) {
       {...props}
     >
       <MapDetailsCard mapLayer={mapLayer} />
-      {renderActions && (
-        <Box sx={{ display: "flex", gap: 1 }}>{renderActions(mapLayer)}</Box>
-      )}
+      {renderActions && <>{renderActions(mapLayer)}</>}
     </Box>
   );
 }
@@ -88,7 +89,7 @@ export function MapBuilderListItem({ mapLayer, onClick }) {
   );
 }
 
-export function MapVotemapListItem({ mapLayer, voters, votesCount }) {
+export function MapVotemapListItem({ mapLayer, voters, votesCount, onClick }) {
   const [anchorEl, setAnchorEl] = useState(null);
 
   const handleClick = (event) => {
@@ -105,17 +106,39 @@ export function MapVotemapListItem({ mapLayer, voters, votesCount }) {
   return (
     <MapListItemBase
       mapLayer={mapLayer}
-      renderActions={() => (
+      renderActions={(mapLayer) => (
         <Stack
-          sx={{ px: 1 }}
-          alignItems={"center"}
           direction={"row"}
-          spacing={2}
+          justifyContent={"center"}
+          alignItems={"center"}
         >
-          <Box sx={{}}>{`Votes: ${votesCount}`}</Box>
-          <Button aria-describedby={id} onClick={handleClick}>
-            Show
-          </Button>
+          <Stack>
+            <Typography fontSize={"0.75rem"} color="text.secondary">Votes</Typography>
+            <Typography textAlign={"center"} fontWeight={500}>
+              {votesCount}
+            </Typography>
+          </Stack>
+
+          <Divider flexItem orientation="vertical" sx={{ px: 0.5, mx: 0.5 }} />
+
+          <Tooltip title="Show voters">
+            <IconButton
+              aria-describedby={id}
+              size="small"
+              onClick={handleClick}
+            >
+              <VisibilityIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Remove from selection">
+            <IconButton
+              size="small"
+              color="error"
+              onClick={() => onClick(mapLayer)}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Tooltip>
           <Popover
             id={id}
             open={open}
@@ -133,12 +156,30 @@ export function MapVotemapListItem({ mapLayer, voters, votesCount }) {
             <Box>
               {voters.map((voter, i) => (
                 <Box sx={{ py: 1, px: 2 }} key={voter + i}>
-                  <PlayerDrawerLink playerId={voter.player_id}>{voter.player_name}: {voter.count}</PlayerDrawerLink>
+                  <PlayerDrawerLink playerId={voter.player_id}>
+                    {voter.player_name}: {voter.count}
+                  </PlayerDrawerLink>
                 </Box>
               ))}
             </Box>
           </Popover>
         </Stack>
+      )}
+    />
+  );
+}
+
+export function MapVotemapResultListItem({ mapLayer, votesCount }) {
+  return (
+    <MapListItemBase
+      mapLayer={mapLayer}
+      renderActions={() => (
+        <Stack>
+        <Typography fontSize={"0.75rem"} color="text.secondary">Votes</Typography>
+        <Typography textAlign={"center"} fontWeight={500}>
+          {votesCount}
+        </Typography>
+      </Stack>
       )}
     />
   );
