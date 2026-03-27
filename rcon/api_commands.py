@@ -654,6 +654,26 @@ class RconAPI(Rcon):
         v = VoteMap()
         return v.get_status(sort_by_vote=False)
 
+    def get_votemap_results(self):
+        v = VoteMap()
+        return [x for x in v.get_results()]
+
+    def remove_map_from_votemap(self, map_name: str):
+        v = VoteMap()
+        v.remove_map_from_selection(maps.parse_layer(map_name))
+
+    def add_map_to_votemap(self, map_name: str):
+        v = VoteMap()
+        v.add_map_to_selection(maps.parse_layer(map_name))
+
+    def set_votemap_winner(self, map_name: str):
+        v = VoteMap()
+        v.guarantee_next_map(maps.parse_layer(map_name))
+
+    def add_votemap_vote(self, player_id: str, player_name: str, map_name: str, vote_count: int | None = None):
+        v = VoteMap()
+        v.add_vote(maps.parse_layer(map_name), player_id, player_name, vote_count)
+
     def send_votemap_reminder(self):
         v = VoteMap()
         result = v.send_reminder(force=True)
