@@ -5,7 +5,7 @@ import logging
 import pickle
 import random
 import re
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from functools import partial
 from typing import Any, Dict, List, Optional, Set, Tuple, cast
 from collections.abc import Iterable, Callable
@@ -16,6 +16,7 @@ from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 
 from rcon import maps
 from rcon.cache_utils import get_redis_client, ttl_cache
+from rcon.connection import HLLCommandError
 from rcon.maps import (
     Environment,
     GameMode,
@@ -27,8 +28,11 @@ from rcon.models import PlayerID, PlayerOptins, enter_session
 from rcon.player_history import get_player
 from rcon.rcon import HLLCommandFailedError, Rcon, get_rcon
 from rcon.types import (
+    MapInfo,
     PlayerProfileType,
     StructuredLogLineWithMetaData,
+    VoteMapHistory,
+    VoteMapHistoryResult,
     VoteMapStatus,
     VoteMapVote,
     VoteMapMapResult,
@@ -297,21 +301,101 @@ class VoteMap:
             raise SelectionLimitExceeded(
                 f"Cannot change votemap selection. Max selection limit {self.SELECTION_LIMIT} would be exceeded."
             )
-        sorted_map_selection = sort_maps_by_gamemode(list(set(maps)))
+        # if has player choice exclude the first item from being sorted
+        maps = list(maps)
+        if self.get_player_choice():
+            sorted_map_selection = [maps[0]] + sort_maps_by_gamemode(maps[1:])
+        else:
+            sorted_map_selection = sort_maps_by_gamemode(maps)
+
         self._state.set_selection(sorted_map_selection)
 
     @validate_maps
-    def add_map_to_selection(self, map: Layer):
+    def add_map_to_selection(self, map: Layer, index: int | None = None):
         selection = self.get_selection()
         if len(selection) >= self.SELECTION_LIMIT:
             raise SelectionLimitExceeded(
-                f"Cannot add {map=} to votemap selection. Max selection limit {self.SELECTION_LIMIT} would be exceeded."
+                f"Cannot add map {map.pretty_name} to votemap selection. Max selection limit {self.SELECTION_LIMIT} would be exceeded."
             )
         if map in selection:
-            raise Exception(f"Map {map=} is already in the selection.")
+            raise VoteMapException(f"Map {map.pretty_name} is already in the selection.")
 
-        new_selection = selection + [map]
-        self.set_selection(new_selection)
+        if index is not None:
+            selection.insert(index, map)
+        else:
+            selection.append(map)
+
+        self.set_selection(selection)
+
+    @validate_maps
+    def remove_map_from_selection(self, map: Layer):
+        selection = self.get_selection()
+        position = -1
+        for idx, m in enumerate(selection):
+            if m.id == map.id:
+                position = idx
+                break
+        if position == -1:
+            raise Exception(f"Map {map.pretty_name} is not in the selection.")
+
+        if self.get_player_choice() and position == 0:
+            self.delete_player_choice()
+        else:
+            self._state.remove_map_from_selection(map)
+        self._delete_votes_by_map(map)
+
+    def _delete_vote(self, player_id: str):
+        self._state.delete_vote(player_id)
+        try:
+            self._rcon.message_player(
+                player_id,
+                "VOTEMAP\n\nYour vote has been removed.",
+            )
+        except (HLLCommandFailedError, HLLCommandError):
+            logger.info(
+                "Unable to message %s. The player may not be on the server.", player_id
+            )
+
+    def _delete_votes_by_map(self, map: Layer):
+        votes_to_delete = [v for v in self.get_votes() if v["map_id"] == map.id]
+        for vote in votes_to_delete:
+            self._delete_vote(vote["player_id"])
+
+    @validate_maps
+    def guarantee_next_map(self, map: Layer):
+        if map not in self.get_selection():
+            self.add_map_to_selection(map)
+        self._state.add_vote(
+            player_id="42", player_name="TheAdministrator", map=map, vote_count=999
+        )
+
+    @validate_maps
+    def add_vote(
+        self,
+        map: Layer,
+        player_id: str,
+        player_name: str,
+        vote_count: int | None = None,
+    ):
+
+        if map not in self.get_selection():
+            raise Exception(
+                f"Map {map.pretty_name} is not in the selection. Vote could not be counted."
+            )
+
+        if vote_count is None:
+            try:
+                # get vote count based on vip or flags
+                vote_count = self._get_vote_count(self._get_player(player_id))
+            except:
+                # if player not found or any other issue default to 1
+                vote_count = 1
+        elif vote_count < 1:
+            raise Exception("Number of votes must be 1 or greater.")
+
+        self._state.add_vote(
+            player_id=player_id, player_name=player_name, map=map, vote_count=vote_count
+        )
 
     def get_new_selection(self) -> list[Layer]:
         config = self.config
@@ -353,6 +437,7 @@ class VoteMap:
                 results=[],
                 last_reminder=None,
                 next_map=None,
+                player_choice=None,
             )
 
         votes = self.get_votes()
@@ -390,6 +475,7 @@ class VoteMap:
             "results": results,
             "last_reminder": self.get_last_reminder_time(),
             "next_map": next_map,
+            "player_choice": self.get_player_choice(),
         }
 
     def get_player_choice(self) -> Dict[str, str] | None:
@@ -408,8 +494,9 @@ class VoteMap:
     def get_results(self):
         return self._state.get_results()
 
-    def record_result(self):
-        self._state.add_result(self.get_status())
+    def record_result(self, map_info: MapInfo):
+        ts = int(map_info["end"] or datetime.now().timestamp())
+        self._state.add_result(self.get_status(), map_info["name"], ts)
 
     #########################
     #                       #
@@ -572,7 +659,8 @@ class VoteMap:
         player_id = struct_log["player_id_1"]
         if not player_id:
             logger.error("Player id could not parsed from log.")
-            rcon.message_player(player_id=player_id, message="Invalid vote.")
+            if player_id is not None:
+                rcon.message_player(player_id=player_id, message="Invalid vote.")
             return False
 
         cmd_handler = VoteMapCommandHandler(self, self._rcon, config)
@@ -606,12 +694,29 @@ class VoteMap:
 
         return perm
 
+    def _get_vote_count(self, player: PlayerProfileType) -> int:
+        # Check for player's flags and vip status
+        # Pick the one with the highest vote_count
+        is_player_vip = any(
+            vip["player_id"] == player["player_id"] for vip in self._rcon.get_vip_ids()
+        )
+        player_flags = list(
+            map(lambda flag_record: flag_record["flag"], player["flags"])
+        )
+        vote_counts = []
+        if is_player_vip:
+            vote_counts.append(self.config.vip_vote_count)
+        for flag in self.config.vote_flags:
+            if flag.flag in player_flags:
+                vote_counts.append(flag.vote_count)
+        vote_count = max(vote_counts, default=1)
+        return vote_count
+
     def register_vote(
         self,
         player: PlayerProfileType,
         timestamp: int,
         entry: int,
-        count: int | None = None,
     ):
         """
         Checks whether the player exists, the vote is not too old and
@@ -628,27 +733,7 @@ class VoteMap:
                 "NOT ALLOWED!\n\nYou are not allowed to use this command on this server."
             )
 
-        # Vote count is 1 by default
-        vote_count = 1
-        # If user calls this function directly with count param set use that
-        if count is not None:
-            vote_count = count
-        # Check for player's flags and vip status
-        # Pick the one with the highest vote_count
-        else:
-            is_player_vip = any(
-                vip["player_id"] == player_id for vip in self._rcon.get_vip_ids()
-            )
-            player_flags = list(
-                map(lambda flag_record: flag_record["flag"], player["flags"])
-            )
-            vote_counts = []
-            if is_player_vip:
-                vote_counts.append(self.config.vip_vote_count)
-            for flag in self.config.vote_flags:
-                if flag.flag in player_flags:
-                    vote_counts.append(flag.vote_count)
-            vote_count = max(vote_counts, default=vote_count)
+        vote_count = self._get_vote_count(player)
 
         selection = self.get_selection()
         # The selection in-game text starts from index 1 as index 0 is reserved for player's choice
@@ -722,18 +807,13 @@ class VoteMap:
         if self.get_player_choice():
             raise VoteMapException("Players' map choice was already selected.")
 
-        selection = self.get_selection()
-        if map_choice in selection:
-            raise VoteMapException(
-                f"{map_choice.pretty_name} is already in the selection. Pick another map."
-            )
+        # Player choice is always at index 0
+        self.add_map_to_selection(map_choice, 0)
 
         player_name = player["names"][0]["name"]
         player_id = player["player_id"]
 
         self._state.set_player_choice(player_id, player_name)
-        # Access state's method directly to prevent sorting by game mode
-        self._state.set_selection([map_choice] + selection)
 
     def get_vote_overview(self) -> list[tuple[Layer, int]]:
         counter = self.get_selection_counter()
@@ -1056,6 +1136,13 @@ class VoteMapCommandHandler:
 
     def execute(self, log: StructuredLogLineWithMetaData, player_id: str):
         """Returns `True` if handled as expected, `False` otherwise."""
+
+        if int((datetime.now() - timedelta(minutes=3)).timestamp()) > (
+            log["timestamp_ms"] // 1000
+        ):
+            logger.info("Log entry is more than 3 minutes old - no execution")
+            return False
+
         message = (log.get("sub_content") or "").strip()
 
         try:
@@ -1395,7 +1482,7 @@ class VotemapState:
     def __init__(self) -> None:
         self.version = 0.2
         self.client = get_redis_client()
-        self.results = self.get_results()
+        self.results = FixedLenList[list[VoteMapHistory]](self.RESULT_HISTORY)
         if self.get_version() != self.version:
             self.delete_last_reminder_time()
             self.delete_next_map()
@@ -1540,17 +1627,35 @@ class VotemapState:
     # RESULT HISTORY
     ###
     def get_results(self):
-        return FixedLenList[VoteMapStatus](self.RESULT_HISTORY)
+        history = FixedLenList[list[VoteMapHistory]](self.RESULT_HISTORY)
+        return [
+            {
+                "map": maps.parse_layer(x["map_id"]),
+                "ts": x["ts"],
+                "results": [
+                    {
+                        "map": maps.parse_layer(r["map_id"]),
+                        "votes_count": r["votes_count"],
+                    }
+                    for r in x["results"]
+                ],
+            }
+            for x in history
+        ]
 
-    def add_result(self, status: VoteMapStatus):
-        self.results.add(status)
+    def add_result(self, status: VoteMapStatus, map_id: str, ts: int):
+        results = [
+            VoteMapHistoryResult(map_id=str(res["map"]), votes_count=res["votes_count"])
+            for res in status["results"]
+        ]
+        self.results.add(VoteMapHistory(map_id=map_id, ts=ts, results=results))
 
 
 class VoteMapException(Exception):
     pass
 
 
-class SelectionLimitExceeded(Exception):
+class SelectionLimitExceeded(VoteMapException):
     pass
 
 

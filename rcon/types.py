@@ -765,12 +765,25 @@ class VoteMapMapResult(TypedDict):
     voters: list[VoteMapVoter]
     votes_count: int
 
+class VoteMapPlayerChoice(TypedDict):
+    player_name: str
+    player_id: str
+
 class VoteMapStatus(TypedDict):
     enabled: bool
     results: list[VoteMapMapResult]
-    next_map: str | None
-    last_reminder: datetime.datetime | None
+    next_map: Optional[str]
+    last_reminder: Optional[datetime.datetime]
+    player_choice: Optional[VoteMapPlayerChoice]
 
+class VoteMapHistoryResult(TypedDict):
+    map_id: str
+    votes_count: int
+
+class VoteMapHistory(TypedDict):
+    ts: int
+    map_id: str
+    results: list[VoteMapHistoryResult]
 
 # Have to inherit from str to allow for JSON serialization w/ pydantic
 class AllLogTypes(str, enum.Enum):
