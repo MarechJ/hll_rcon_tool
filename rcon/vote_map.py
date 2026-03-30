@@ -74,6 +74,7 @@ class ActionOutcome(Enum):
     SUCCESS = "success"
     DISABLED = "disabled"
     ON_COOLDOWN = "on_cooldown"
+    PAUSED = "paused"
     INVALID_CONFIG = "invalid_config"
 
 
@@ -231,6 +232,20 @@ class VoteMap:
     def enabled(self):
         return self.config.enabled
 
+    @property
+    def paused(self):
+        return self.get_admin_next_map() is not None
+
+    @validate_maps
+    def set_admin_next_map(self, map: Layer):
+        self._state.set_admin_next_map(map)
+
+    def reset_admin_next_map(self):
+        self._state.delete_admin_next_map()
+
+    def get_admin_next_map(self) -> Layer | None:
+        return self._state.get_admin_next_map()
+
     def get_next_map(self) -> Layer | None:
         return self._state.get_next_map()
 
@@ -349,7 +364,7 @@ class VoteMap:
         try:
             self._rcon.message_player(
                 player_id,
-                "VOTEMAP\n\nYour vote has been removed.",
+                "VOTE MAP\n\nYour vote has been removed.",
             )
         except (HLLCommandFailedError, HLLCommandError):
             logger.info(
@@ -363,11 +378,8 @@ class VoteMap:
 
     @validate_maps
     def guarantee_next_map(self, map: Layer):
-        if map not in self.get_selection():
-            self.add_map_to_selection(map)
-        self._state.add_vote(
-            player_id="42", player_name="TheAdministrator", map=map, vote_count=999
-        )
+        self.set_admin_next_map(map)
+        self.apply_results()
 
     @validate_maps
     def add_vote(
@@ -434,6 +446,7 @@ class VoteMap:
         if not self.config.enabled:
             return VoteMapStatus(
                 enabled=False,
+                paused=False,
                 results=[],
                 last_reminder=None,
                 next_map=None,
@@ -472,6 +485,7 @@ class VoteMap:
             next_map = next_map.pretty_name
         return {
             "enabled": True,
+            "paused": self.paused,
             "results": results,
             "last_reminder": self.get_last_reminder_time(),
             "next_map": next_map,
@@ -508,6 +522,7 @@ class VoteMap:
         self.reset_votes()
         self.reset_selection()
         self.reset_next_map()
+        self.reset_admin_next_map()
         self.delete_player_choice()
 
     def restart(self):
@@ -515,6 +530,11 @@ class VoteMap:
         if self.enabled:
             self.rebuild_selection()
             self.apply_results()
+
+    def get_paused_message(self):
+        if not (map := self.get_admin_next_map()):
+            raise VoteMapException("The admin next map was not set")
+        return f"VOTE MAP PAUSED (for this round)\n\nNext map: {map.pretty_name}"
 
     def is_time_for_reminder(self) -> bool:
         reminder_frequency = self.config.reminder_frequency_minutes * 60
@@ -601,6 +621,13 @@ class VoteMap:
                 message="Cooldown not elapsed and reminder not forced.",
             )
 
+        if self.paused and not force:
+            return ActionResult(
+                ok=False,
+                outcome=ActionOutcome.PAUSED,
+                message="Votemap is paused as admin set the next map and reminder not forced.",
+            )
+
         if "{map_selection}" not in instructions:
             logger.error(
                 "Votemap is not configured properly, %s is not present in the instruction text.",
@@ -619,13 +646,17 @@ class VoteMap:
             )
         )
 
-        map_selection = self.format_map_vote(
-            selection=self.get_selection(),
-            votes=self.get_votes(),
-            format_type="by_mod_vertical_all",
-            player_choice=self.get_player_choice(),
-        )
-        reminder_message = instructions.format(map_selection=map_selection)
+        if self.paused:
+            reminder_message = self.get_paused_message()
+        else:
+            map_selection = self.format_map_vote(
+                selection=self.get_selection(),
+                votes=self.get_votes(),
+                format_type="by_mod_vertical_all",
+                player_choice=self.get_player_choice(),
+            )
+            reminder_message = instructions.format(map_selection=map_selection)
+            
 
         for name, player_id in players_to_remind:
             try:
@@ -725,6 +756,9 @@ class VoteMap:
         with the `count` number of votes.\n
         This also allows voting for players outside the server.\n
         """
+        if self.paused:
+            raise VoteMapException(self.get_paused_message())
+
         player_name = player["names"][0]["name"]
         player_id = player["player_id"]
 
@@ -796,6 +830,9 @@ class VoteMap:
 
     @validate_maps
     def register_player_choice(self, map_choice: Layer, player: PlayerProfileType):
+
+        if self.paused:
+            raise VoteMapException(self.get_paused_message())
 
         if not (
             self._get_player_permissions(player) & VotemapPermissions.REGISTER_CHOICE
@@ -1032,6 +1069,8 @@ class VoteMap:
         return selection
 
     def generate_next_map(self) -> Layer:
+        if admin_next_map := self.get_admin_next_map():
+            return admin_next_map
         most_voted_map = self.get_most_voted_map()
         if not most_voted_map:
             next_map = self._get_default_next_map()
@@ -1137,9 +1176,7 @@ class VoteMapCommandHandler:
     def execute(self, log: StructuredLogLineWithMetaData, player_id: str):
         """Returns `True` if handled as expected, `False` otherwise."""
 
-        if int((datetime.now() - timedelta(minutes=3)).timestamp()) > (
-            log["timestamp_ms"] // 1000
-        ):
+        if (datetime.now() - timedelta(minutes=3)) > log["event_time"]:
             logger.info("Log entry is more than 3 minutes old - no execution")
             return False
 
@@ -1331,6 +1368,13 @@ class VoteMapCommandHandler:
     def handle_show_selection(self, player_id: str):
         logger.info("Showing vote selection to %s", player_id)
 
+        if self.votemap.paused:
+            self.rcon.message_player(
+                player_id=player_id,
+                message=self.votemap.get_paused_message(),
+            )
+            return
+
         overview = self.votemap.format_map_vote(
             selection=self.votemap.get_selection(),
             votes=self.votemap.get_votes(),
@@ -1475,6 +1519,7 @@ class VotemapState:
     MAP_WHITELIST = "votemap:whitelist"
     MAP_SELECTION = "votemap:selection"
     VOTES = "votemap:votes"
+    ADMIN_NEXT_MAP = "votemap:admin-next-map"
     PLAYER_CHOICE = "votemap:player-choice"
     NEXT_MAP = "votemap:next-map"
     RESULT_HISTORY = "votemap:result-history"
@@ -1486,6 +1531,7 @@ class VotemapState:
         if self.get_version() != self.version:
             self.delete_last_reminder_time()
             self.delete_next_map()
+            self.delete_admin_next_map()
             self.delete_player_choice()
             self.delete_selection()
             self.delete_votes()
@@ -1520,6 +1566,27 @@ class VotemapState:
 
     def delete_player_choice(self):
         self.client.delete(self.PLAYER_CHOICE)
+
+    ###
+    # ADMIN NEXT MAP
+    # When the admin wants to guarantee the next map
+    # That practically pauses the map voting
+    ###
+    def get_admin_next_map(self) -> Layer | None:
+        raw = cast(bytes | None, self.client.hget(self.ADMIN_NEXT_MAP, "map_name"))
+        if not raw:
+            return None
+        return maps.parse_layer(raw.decode())
+
+    def set_admin_next_map(self, map: Layer):
+        self.client.hset(
+            self.ADMIN_NEXT_MAP,
+            key="map_name",
+            value=map.id,
+        )
+
+    def delete_admin_next_map(self):
+        self.client.delete(self.ADMIN_NEXT_MAP)
 
     ###
     # LAST REMINDER TIME
