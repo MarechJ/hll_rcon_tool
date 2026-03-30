@@ -7,8 +7,8 @@ import Stack from "@mui/material/Stack";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { Link } from "react-router-dom";
-import { Collapse, TextField, InputAdornment, IconButton } from "@mui/material";
-import {useState} from "react";
+import { Collapse, TextField, InputAdornment, IconButton, Box } from "@mui/material";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAppStore } from "@/stores/app-state";
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
@@ -52,6 +52,37 @@ export default function MenuContent({ navigationTree, isMobile }) {
   const toggleDrawer = useAppStore((state) => state.toggleDrawer);
   const [searchTerm, setSearchTerm] = useState("");
   const [groupOpenState, setGroupOpenState] = useState({});
+  const searchInputRef = useRef(null);
+
+  const isApplePlatform = useMemo(() => {
+    if (typeof navigator === "undefined") return false;
+    const ua = navigator.userAgent || "";
+    const uaPlatform = navigator.userAgentData?.platform || "";
+    return /mac|iphone|ipad|ipod/i.test(uaPlatform) || /Mac OS X|Macintosh|iPhone|iPad|iPod/i.test(ua);
+  }, []);
+
+  const keyHintLabel = isApplePlatform ? "⌘K" : "Ctrl+K";
+
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      const key = (e.key || "").toLowerCase();
+      if (key !== "k") return;
+
+      const comboPressed = isApplePlatform ? e.metaKey : e.ctrlKey;
+      if (!comboPressed) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const el = searchInputRef.current;
+      if (!el) return;
+      el.focus();
+      if (typeof el.select === "function") el.select();
+    };
+
+    window.addEventListener("keydown", onKeyDown, { capture: true });
+    return () => window.removeEventListener("keydown", onKeyDown, { capture: true });
+  }, [isApplePlatform]);
 
   const toggleGroup = (groupName) => {
     setGroupOpenState((prev) => ({ ...prev, [groupName]: !prev[groupName] }));
@@ -125,6 +156,8 @@ export default function MenuContent({ navigationTree, isMobile }) {
           size="small"
           fullWidth
           placeholder="Search..."
+          name="crcon-search"
+          inputRef={searchInputRef}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           sx={{ mb: 1 }}
@@ -133,6 +166,40 @@ export default function MenuContent({ navigationTree, isMobile }) {
               startAdornment: (
                 <InputAdornment position="start">
                   <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Box
+                    aria-hidden
+                    onMouseDown={(e) => {
+                      // Keep focus in the input when clicking the hint.
+                      e.preventDefault();
+                      searchInputRef.current?.focus?.();
+                    }}
+                    sx={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 0.75,
+                      px: 0.75,
+                      py: 0.25,
+                      borderRadius: 1,
+                      border: "1px solid",
+                      borderColor: "divider",
+                      bgcolor: (theme) => theme.palette.background.paper,
+                      color: "text.secondary",
+                      fontSize: 12,
+                      lineHeight: 1,
+                      fontFamily:
+                        'ui-monospace, SFMono-Regular, SF Mono, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                      letterSpacing: 0.2,
+                      userSelect: "none",
+                      boxShadow: (theme) =>
+                        `inset 0 1px 0 ${theme.palette.action.hover}, inset 0 -1px 0 ${theme.palette.action.selected}`,
+                    }}
+                  >
+                    {keyHintLabel}
+                  </Box>
                 </InputAdornment>
               ),
             }
