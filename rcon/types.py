@@ -771,6 +771,7 @@ class VoteMapPlayerChoice(TypedDict):
 
 class VoteMapStatus(TypedDict):
     enabled: bool
+    paused: bool
     results: list[VoteMapMapResult]
     next_map: Optional[str]
     last_reminder: Optional[datetime.datetime]

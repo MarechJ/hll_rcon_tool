@@ -24,7 +24,7 @@ import PowerIcon from "@mui/icons-material/Power";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 import AnnouncementIcon from "@mui/icons-material/Announcement";
 import AddIcon from "@mui/icons-material/Add";
-import StarIcon from '@mui/icons-material/Star';
+import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
 import { useLoaderData } from "react-router-dom";
 import { toast } from "react-toastify";
 import dayjs from "dayjs";
@@ -291,7 +291,7 @@ function VotemapStatusPage() {
       </MapListContainer>
       <ActionsContainer>
         <Typography variant="subtitle2" component={"div"}>
-          Status: {votemapStatus.enabled ? `🟢 ENABLED` : `🔴 DISABLED`}
+          Status: {votemapStatus.enabled ? `🟢 ENABLED` : `🔴 DISABLED`} {votemapStatus.paused && "(💤 Paused for this round)" }
         </Typography>
         <Typography variant="subtitle2" component={"div"}>
           Next map:{" "}
@@ -410,17 +410,18 @@ function VotemapStatusPage() {
                 isAddingMapToVotemap ? (
                   <CircularProgress size={20} />
                 ) : (
-                  <StarIcon />
+                  <PauseCircleOutlineIcon />
                 )
               }
               variant="contained"
+              color="warning"
               sx={{ minWidth: 120 }}
               size="small"
             >
-              Set
+              Pause
             </Button>
             <Typography variant="caption">
-              a map to be the next map by adding 999 votes.
+              the votemap by selecting the next map.
             </Typography>
           </Stack>
           <MapAutocomplete
