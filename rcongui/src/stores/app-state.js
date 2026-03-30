@@ -14,6 +14,15 @@ export const useAppStore = create(
       toggleWidthMode: () => set({ widthMode: get().widthMode === "xl" ? false : "xl" }),
       openDrawer: true,
       toggleDrawer: () => set({ openDrawer: !get().openDrawer }),
+      // Persist which navigation groups are expanded.
+      groupOpenState: {},
+      toggleMenuGroupOpen: (groupName) =>
+        set((state) => ({
+          groupOpenState: {
+            ...state.groupOpenState,
+            [groupName]: !state.groupOpenState?.[groupName],
+          },
+        })),
     }),
     {
       name: withPrefix("app"),
