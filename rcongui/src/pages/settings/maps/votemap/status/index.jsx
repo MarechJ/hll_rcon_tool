@@ -24,12 +24,13 @@ import PowerIcon from "@mui/icons-material/Power";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 import AnnouncementIcon from "@mui/icons-material/Announcement";
 import AddIcon from "@mui/icons-material/Add";
-import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
+import PauseCircleOutlineIcon from "@mui/icons-material/PauseCircleOutline";
 import { useLoaderData } from "react-router-dom";
 import { toast } from "react-toastify";
 import dayjs from "dayjs";
 import { useState } from "react";
 import MapAutocomplete from "@/components/shared/MapAutocomplete";
+import { cmd } from "@/utils/fetchUtils";
 
 const MapListContainer = styled(Box)(({ theme }) => ({
   width: "100%",
@@ -79,7 +80,16 @@ function VotemapStatusPage() {
   const [selectedMap, setSelectedMap] = useState(null);
 
   const { mutate: toggleVotemap, isPending: isToggling } = useMutation({
-    ...mapsManagerMutationOptions.setVotemapConfig,
+    mutationFn: async () => {
+      const config = await cmd.GET_VOTEMAP_CONFIG();
+      return cmd.SET_VOTEMAP_CONFIG({
+        payload: {
+          ...config,
+          enabled: !config.enabled,
+        },
+        throwRouteError: false,
+      });
+    },
     onSuccess: (response) => {
       const enabled = response.arguments.enabled;
       queryClient.invalidateQueries([
@@ -177,7 +187,7 @@ function VotemapStatusPage() {
       },
     });
 
-    const { mutate: setVotemapWinner, isPending: isSettingVotemapWinner } =
+  const { mutate: setVotemapWinner, isPending: isSettingVotemapWinner } =
     useMutation({
       ...mapsManagerMutationOptions.setVotemapWinner,
       onSuccess: (response) => {
@@ -200,10 +210,7 @@ function VotemapStatusPage() {
     });
 
   const handleVotemapToggle = () => {
-    toggleVotemap({
-      ...config,
-      enabled: !votemapStatus.enabled,
-    });
+    toggleVotemap();
   };
 
   return (
@@ -291,7 +298,8 @@ function VotemapStatusPage() {
       </MapListContainer>
       <ActionsContainer>
         <Typography variant="subtitle2" component={"div"}>
-          Status: {votemapStatus.enabled ? `🟢 ENABLED` : `🔴 DISABLED`} {votemapStatus.paused && "(💤 Paused for this round)" }
+          Status: {votemapStatus.enabled ? `🟢 ENABLED` : `🔴 DISABLED`}{" "}
+          {votemapStatus.paused && "(💤 Paused for this round)"}
         </Typography>
         <Typography variant="subtitle2" component={"div"}>
           Next map:{" "}
