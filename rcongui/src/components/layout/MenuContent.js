@@ -25,21 +25,17 @@ const NavigationLink = ({ to, icon, text, onClick }) => {
   );
 };
 
-const Group = ({ groupName, icon, level = 1, children }) => {
-  const [open, setOpen] = useState(true);
-
-  const handleClick = () => {
-    setOpen(!open);
-  };
+const Group = ({ groupName, icon, level = 1, open, forceOpen = false, onToggle, children }) => {
+  const isOpen = forceOpen || open;
 
   return (
     <ListItem key={groupName} disablePadding sx={{ display: "block" }}>
-      <ListItemButton onClick={handleClick}>
+      <ListItemButton onClick={onToggle}>
         {icon && <ListItemIcon>{icon}</ListItemIcon>}
         <ListItemText primary={groupName} />
-        {open ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+        {isOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
       </ListItemButton>
-      <Collapse in={open} timeout={"auto"} unmountOnExit>
+      <Collapse in={isOpen} timeout={"auto"} unmountOnExit>
         <List
           dense
           sx={{ "& .MuiListItemButton-root": { pl: 2 * level } }}
@@ -55,6 +51,13 @@ const Group = ({ groupName, icon, level = 1, children }) => {
 export default function MenuContent({ navigationTree, isMobile }) {
   const toggleDrawer = useAppStore((state) => state.toggleDrawer);
   const [searchTerm, setSearchTerm] = useState("");
+  const [groupOpenState, setGroupOpenState] = useState({});
+
+  const toggleGroup = (groupName) => {
+    setGroupOpenState((prev) => ({ ...prev, [groupName]: !prev[groupName] }));
+  };
+
+  const isGroupOpen = (groupName) => !!groupOpenState[groupName];
 
   const handleLinkClick = () => {
     if (isMobile) {
@@ -159,7 +162,14 @@ export default function MenuContent({ navigationTree, isMobile }) {
         {filteredTree
           .filter((group) => "name" in group)
           .map((group) => (
-            <Group key={group.name} groupName={group.name} icon={group.icon}>
+            <Group
+              key={group.name}
+              groupName={group.name}
+              icon={group.icon}
+              open={isGroupOpen(group.name)}
+              forceOpen={!!searchTerm.trim()}
+              onToggle={() => toggleGroup(group.name)}
+            >
               {group.links.map((link) => (
                 <NavigationLink
                   key={link.to}
