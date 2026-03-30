@@ -50,8 +50,9 @@ const Group = ({ groupName, icon, level = 1, open, forceOpen = false, onToggle, 
 
 export default function MenuContent({ navigationTree, isMobile }) {
   const toggleDrawer = useAppStore((state) => state.toggleDrawer);
+  const groupOpenState = useAppStore((state) => state.groupOpenState);
+  const toggleMenuGroupOpen = useAppStore((state) => state.toggleMenuGroupOpen);
   const [searchTerm, setSearchTerm] = useState("");
-  const [groupOpenState, setGroupOpenState] = useState({});
   const searchInputRef = useRef(null);
 
   const isApplePlatform = useMemo(() => {
@@ -85,7 +86,7 @@ export default function MenuContent({ navigationTree, isMobile }) {
   }, [isApplePlatform]);
 
   const toggleGroup = (groupName) => {
-    setGroupOpenState((prev) => ({ ...prev, [groupName]: !prev[groupName] }));
+    toggleMenuGroupOpen(groupName);
   };
 
   const isGroupOpen = (groupName) => !!groupOpenState[groupName];
