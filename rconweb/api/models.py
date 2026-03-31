@@ -476,4 +476,14 @@ class RconUser(User):
                 "can_change_watch_killrate_config",
                 "Can change the Watch KillRate config",
             ),
+            ("can_view_vip_lists", "Can view VIP lists and their records"),
+            ("can_create_vip_lists", "Can create VIP lists"),
+            ("can_change_vip_lists", "Can change VIP lists"),
+            ("can_delete_vip_lists", "Can delete VIP lists"),
+            ("can_add_vip_list_records", "Can add players to VIP lists"),
+            (
+                "can_change_vip_list_records",
+                "Can revoke VIP and edit VIP lists records",
+            ),
+            ("can_delete_vip_lists_records", "Can remove players from VIP lists"),
         )
