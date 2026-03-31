@@ -28,10 +28,6 @@ export const permissions = [
     description: "Can view messages sent to players",
   },
   {
-    permission: "can_change_expired_vip_config",
-    description: "Can change Expired VIP config",
-  },
-  {
     permission: "can_change_server_name",
     description: "Can change the server name",
   },
@@ -108,10 +104,6 @@ export const permissions = [
   {
     permission: "change_contenttype",
     description: "Can change content type",
-  },
-  {
-    permission: "can_view_expired_vip_config",
-    description: "Can view Expired VIP config",
   },
   {
     permission: "can_view_auto_settings",
@@ -835,5 +827,33 @@ export const permissions = [
   {
     permission: "can_change_watch_killrate_config",
     description: "Can change the Watch KillRate config",
+  },
+  {
+    permission: "can_change_vip_list_records",
+    description: "Can revoke VIP and edit VIP lists records",
+  },
+  {
+    permission: "can_add_vip_list_records",
+    description: "Can add players to VIP lists",
+  },
+  {
+    permission: "can_change_vip_lists",
+    description: "Can change VIP lists",
+  },
+  {
+    permission: "can_delete_vip_lists",
+    description: "Can delete VIP lists",
+  },
+  {
+    permission: "can_view_vip_lists",
+    description: "Can view VIP lists and their records",
+  },
+  {
+    permission: "can_create_vip_lists",
+    description: "Can create VIP lists",
+  },
+  {
+    permission: "can_delete_vip_lists_records",
+    description: "Can remove players from VIP lists",
   },
 ];
