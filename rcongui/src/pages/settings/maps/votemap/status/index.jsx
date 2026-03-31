@@ -5,12 +5,16 @@ import {
   mapsManagerQueryOptions,
 } from "../../queries";
 import { MapList } from "../../MapList";
-import { MapVotemapListItem } from "../../MapListItem";
+import {
+  MapVotemapListItem,
+  MapVotemapResultListItem,
+} from "../../MapListItem";
 import {
   Box,
   Button,
   CircularProgress,
   Divider,
+  Pagination,
   Stack,
   styled,
   Typography,
@@ -18,8 +22,15 @@ import {
 import PowerOffIcon from "@mui/icons-material/PowerOff";
 import PowerIcon from "@mui/icons-material/Power";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
+import AnnouncementIcon from "@mui/icons-material/Announcement";
+import AddIcon from "@mui/icons-material/Add";
+import PauseCircleOutlineIcon from "@mui/icons-material/PauseCircleOutline";
 import { useLoaderData } from "react-router-dom";
 import { toast } from "react-toastify";
+import dayjs from "dayjs";
+import { useState } from "react";
+import MapAutocomplete from "@/components/shared/MapAutocomplete";
+import { cmd } from "@/utils/fetchUtils";
 
 const MapListContainer = styled(Box)(({ theme }) => ({
   width: "100%",
@@ -41,24 +52,44 @@ function VotemapStatusPage() {
   const loaderData = useLoaderData();
   const queryClient = useQueryClient();
 
-  const { data: mapListStatus } = useQuery({
+  const { data: maps } = useQuery({
+    ...mapsManagerQueryOptions.maps(),
+    initialData: [],
+  });
+
+  const { data: votemapStatus } = useQuery({
     ...mapsManagerQueryOptions.votemapStatus(),
-    initialData: loaderData.mapListStatus,
+    initialData: loaderData.votemapStatus,
     refetchInterval: 15_000,
     staleTime: 5_000,
     refetchOnMount: false,
   });
 
-  const { data: config } = useQuery({
-    ...mapsManagerQueryOptions.voteMapConfig(),
-    initialData: loaderData.config,
-    refetchInterval: 15_000,
+  const { data: votemapResults } = useQuery({
+    ...mapsManagerQueryOptions.votemapResults(),
+    initialData: loaderData.votemapResults,
+    refetchInterval: 60_000,
     staleTime: 5_000,
     refetchOnMount: false,
   });
+
+  const [resultHistoryPage, setResultHistoryPage] = useState(1);
+  const handleResultHistoryPageChange = (event, value) => {
+    setResultHistoryPage(value);
+  };
+  const [selectedMap, setSelectedMap] = useState(null);
 
   const { mutate: toggleVotemap, isPending: isToggling } = useMutation({
-    ...mapsManagerMutationOptions.setVotemapConfig,
+    mutationFn: async () => {
+      const config = await cmd.GET_VOTEMAP_CONFIG();
+      return cmd.SET_VOTEMAP_CONFIG({
+        payload: {
+          ...config,
+          enabled: !config.enabled,
+        },
+        throwRouteError: false,
+      });
+    },
     onSuccess: (response) => {
       const enabled = response.arguments.enabled;
       queryClient.invalidateQueries([
@@ -95,36 +126,189 @@ function VotemapStatusPage() {
     },
   });
 
-  const handleVotemapToggle = () => {
-    toggleVotemap({
-      ...config,
-      enabled: !config.enabled,
+  const { mutate: sendReminder, isPending: isSendingReminder } = useMutation({
+    ...mapsManagerMutationOptions.sendVotemapReminder,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: mapsManagerQueryKeys.votemapStatus,
+      });
+      toast.success(`Votemap reminder has been sent.`);
+    },
+    onError: (error) => {
+      toast.error(
+        <div>
+          <span>{error.name}</span>
+          <p>{error.message}</p>
+        </div>
+      );
+    },
+  });
+
+  const { mutate: removeMapFromVotemap } = useMutation({
+    ...mapsManagerMutationOptions.removeMapFromVotemap,
+    onSuccess: (response) => {
+      const mapName = response.arguments.map_name;
+      queryClient.invalidateQueries({
+        queryKey: mapsManagerQueryKeys.votemapStatus,
+      });
+      toast.success(
+        `Map ${mapName} was successfully removed from the current selection.`
+      );
+    },
+    onError: (error) => {
+      toast.error(
+        <div>
+          <span>{error.name}</span>
+          <p>{error.message}</p>
+        </div>
+      );
+    },
+  });
+
+  const { mutate: addMapToVotemap, isPending: isAddingMapToVotemap } =
+    useMutation({
+      ...mapsManagerMutationOptions.addMapToVotemap,
+      onSuccess: (response) => {
+        const mapName = response.arguments.map_name;
+        queryClient.invalidateQueries({
+          queryKey: mapsManagerQueryKeys.votemapStatus,
+        });
+        toast.success(
+          `Map ${mapName} was successfully added to the current selection.`
+        );
+      },
+      onError: (error) => {
+        toast.error(
+          <div>
+            <span>{error.name}</span>
+            <p>{error.message}</p>
+          </div>
+        );
+      },
     });
+
+  const { mutate: setVotemapWinner, isPending: isSettingVotemapWinner } =
+    useMutation({
+      ...mapsManagerMutationOptions.setVotemapWinner,
+      onSuccess: (response) => {
+        const mapName = response.arguments.map_name;
+        queryClient.invalidateQueries({
+          queryKey: mapsManagerQueryKeys.votemapStatus,
+        });
+        toast.success(
+          `Map ${mapName} was successfully boosted with many votes.`
+        );
+      },
+      onError: (error) => {
+        toast.error(
+          <div>
+            <span>{error.name}</span>
+            <p>{error.message}</p>
+          </div>
+        );
+      },
+    });
+
+  const handleVotemapToggle = () => {
+    toggleVotemap();
   };
 
   return (
     <Stack direction={{ xs: "column-reverse", md: "row" }} spacing={1}>
       <MapListContainer>
+        <Typography variant="h6">Current Selection</Typography>
         <MapList
-          maps={mapListStatus.map((s) => s.map)}
+          maps={votemapStatus.results.map((s) => s.map)}
+          emptyListMessage={
+            votemapStatus.enabled
+              ? "There are no maps in the selection. Your configuration may be too restrictive."
+              : "Votemap is disabled."
+          }
           sort={false}
-          renderItem={(mapLayer, index) => (
-            <MapVotemapListItem
-              key={mapLayer.id}
-              mapLayer={mapLayer}
-              voters={mapListStatus[index].voters}
-            />
-          )}
+          renderItem={(mapLayer, index) => {
+            return votemapStatus.player_choice && index === 0 ? (
+              <Box sx={{ py: 2 }}>
+                <Typography variant="subtitle2">
+                  {votemapStatus.player_choice.player_name}'s choice
+                </Typography>
+                <MapVotemapListItem
+                  key={mapLayer.id}
+                  mapLayer={mapLayer}
+                  voters={votemapStatus.results[index].voters}
+                  votesCount={votemapStatus.results[index].votes_count}
+                  onClick={removeMapFromVotemap}
+                  isPlayerChoice={votemapStatus.player_choice}
+                />
+              </Box>
+            ) : (
+              <MapVotemapListItem
+                key={mapLayer.id}
+                mapLayer={mapLayer}
+                voters={votemapStatus.results[index].voters}
+                votesCount={votemapStatus.results[index].votes_count}
+                onClick={removeMapFromVotemap}
+                isPlayerChoice={votemapStatus.player_choice}
+              />
+            );
+          }}
         />
+        <Divider flexItem orientation="horizontal" sx={{ my: 1 }} />
+        <Stack spacing={1}>
+          <Typography variant="h6">History</Typography>
+          {votemapResults.length > 0 ? (
+            <>
+              <Pagination
+                size="small"
+                count={votemapResults.length}
+                page={resultHistoryPage}
+                onChange={handleResultHistoryPageChange}
+              />
+              <Typography>
+                Result recorded{" "}
+                {dayjs
+                  .unix(votemapResults[resultHistoryPage - 1].ts)
+                  .format("lll")}{" "}
+                with {votemapResults[resultHistoryPage - 1].map.pretty_name} on
+                the server.
+              </Typography>
+              <MapList
+                maps={votemapResults[resultHistoryPage - 1].results.map(
+                  (s) => s.map
+                )}
+                emptyListMessage={
+                  "There were no map options or the votemap was disabled"
+                }
+                sort={false}
+                renderItem={(mapLayer, index) => (
+                  <MapVotemapResultListItem
+                    key={mapLayer.id}
+                    mapLayer={mapLayer}
+                    votesCount={
+                      votemapResults[resultHistoryPage - 1].results[index]
+                        .votes_count
+                    }
+                  />
+                )}
+              />
+            </>
+          ) : (
+            <Typography>No historical data recorded yet.</Typography>
+          )}
+        </Stack>
       </MapListContainer>
       <ActionsContainer>
         <Typography variant="subtitle2" component={"div"}>
-          Status: {config.enabled ? `🟢 ENABLED` : `🔴 DISABLED`}
+          Status: {votemapStatus.enabled ? `🟢 ENABLED` : `🔴 DISABLED`}{" "}
+          {votemapStatus.paused && "(💤 Paused for this round)"}
         </Typography>
         <Typography variant="subtitle2" component={"div"}>
           Next map:{" "}
-          {config.enabled
-            ? mapListStatus[0]?.map?.pretty_name ?? "Unknown"
+          {votemapStatus.enabled ? votemapStatus.next_map ?? "TBD" : "N/A"}
+        </Typography>
+        <Typography variant="subtitle2" component={"div"}>
+          Last vote reminder:{" "}
+          {votemapStatus.last_reminder
+            ? dayjs(votemapStatus.last_reminder).fromNow()
             : "N/A"}
         </Typography>
         <Divider orientation="horizontal" sx={{ my: 1 }} />
@@ -134,7 +318,7 @@ function VotemapStatusPage() {
             startIcon={
               isToggling ? (
                 <CircularProgress size={20} />
-              ) : config.enabled ? (
+              ) : votemapStatus.enabled ? (
                 <PowerOffIcon />
               ) : (
                 <PowerIcon />
@@ -142,14 +326,14 @@ function VotemapStatusPage() {
             }
             variant="contained"
             disabled={isToggling}
-            color={config.enabled ? "error" : "success"}
+            color={votemapStatus.enabled ? "error" : "success"}
             sx={{ minWidth: 120 }}
             size="small"
           >
-            {config.enabled ? "Disable" : "Enable"}
+            {votemapStatus.enabled ? "Disable" : "Enable"}
           </Button>
           <Typography variant="caption">
-            {config.enabled
+            {votemapStatus.enabled
               ? "votemap and decide the maps based on map rotation"
               : "votemap and decide maps dynamically on vote count or other conditions"}
           </Typography>
@@ -158,7 +342,7 @@ function VotemapStatusPage() {
         <Stack direction="row" spacing={1} alignItems={"center"}>
           <Button
             onClick={resetVotemap}
-            disabled={isReseting}
+            disabled={isReseting || !votemapStatus.enabled}
             startIcon={
               isReseting ? <CircularProgress size={20} /> : <AutorenewIcon />
             }
@@ -173,6 +357,88 @@ function VotemapStatusPage() {
             the current vote counts and generate new map pool
           </Typography>
         </Stack>
+        <Divider flexItem orientation="horizontal" sx={{ my: 1 }} />
+        <Stack direction="row" spacing={1} alignItems={"center"}>
+          <Button
+            onClick={sendReminder}
+            disabled={isSendingReminder || !votemapStatus.enabled}
+            startIcon={
+              isSendingReminder ? (
+                <CircularProgress size={20} />
+              ) : (
+                <AnnouncementIcon />
+              )
+            }
+            variant="contained"
+            sx={{ minWidth: 120 }}
+            size="small"
+          >
+            Remind
+          </Button>
+          <Typography variant="caption">
+            players to vote by sending all players in-game message.
+          </Typography>
+        </Stack>
+        <Divider flexItem orientation="horizontal" sx={{ my: 2 }} />
+        <Stack spacing={2}>
+          <Stack direction="row" spacing={1} alignItems={"center"}>
+            <Button
+              onClick={() => {
+                addMapToVotemap(selectedMap);
+              }}
+              disabled={
+                !selectedMap || isAddingMapToVotemap || !votemapStatus.enabled
+              }
+              startIcon={
+                isAddingMapToVotemap ? (
+                  <CircularProgress size={20} />
+                ) : (
+                  <AddIcon />
+                )
+              }
+              variant="contained"
+              sx={{ minWidth: 120 }}
+              size="small"
+            >
+              Add
+            </Button>
+            <Typography variant="caption">
+              new map to the current selection.
+            </Typography>
+          </Stack>
+          <Stack direction="row" spacing={1} alignItems={"center"}>
+            <Button
+              onClick={() => {
+                setVotemapWinner(selectedMap);
+              }}
+              disabled={
+                !selectedMap || isSettingVotemapWinner || !votemapStatus.enabled
+              }
+              startIcon={
+                isAddingMapToVotemap ? (
+                  <CircularProgress size={20} />
+                ) : (
+                  <PauseCircleOutlineIcon />
+                )
+              }
+              variant="contained"
+              color="warning"
+              sx={{ minWidth: 120 }}
+              size="small"
+            >
+              Pause
+            </Button>
+            <Typography variant="caption">
+              the votemap by selecting the next map.
+            </Typography>
+          </Stack>
+          <MapAutocomplete
+            options={maps}
+            selected={selectedMap}
+            onSelect={(newMapId) => setSelectedMap(newMapId)}
+          />
+        </Stack>
+        <Divider flexItem orientation="horizontal" sx={{ my: 2 }} />
       </ActionsContainer>
     </Stack>
   );

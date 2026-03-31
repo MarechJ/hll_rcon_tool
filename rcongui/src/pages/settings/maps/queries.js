@@ -11,6 +11,7 @@ export const mapsManagerQueryKeys = {
   votemapStatus: [{ queryIdentifier: "get_votemap_status" }],
   voteMapConfig: [{ queryIdentifier: "get_votemap_config" }],
   votemapWhitelist: [{ queryIdentifier: "get_votemap_whitelist" }],
+  votemapResults: [{ queryIdentifier: "get_votemap_results" }],
   objectives: [{ queryIdentifier: "get_objective_rows" }],
 };
 
@@ -53,7 +54,22 @@ export const mapsManagerQueryOptions = {
   votemapStatus: () =>
     queryOptions({
       queryKey: mapsManagerQueryKeys.votemapStatus,
-      queryFn: cmd.GET_VOTEMAP_STATUS,
+      queryFn: async () => {
+        const updated = new Date()
+        const res = await cmd.GET_VOTEMAP_STATUS()
+        return {
+          ...res,
+          updated,
+        }
+      },
+    }),
+
+  votemapResults: () =>
+    queryOptions({
+      queryKey: mapsManagerQueryKeys.votemapResults,
+      queryFn: async () => {
+        return await cmd.GET_VOTEMAP_RESULTS()
+      },
     }),
 
   // Get current votemap configuration
@@ -135,6 +151,37 @@ export const mapsManagerMutationOptions = {
 
   setWhitelist: {
     mutationFn: (whitelist) =>
-      cmd.SET_VOTEMAP_WHITELIST({ payload: { map_names: whitelist }, throwRouteError: false }),
+      cmd.SET_VOTEMAP_WHITELIST({
+        payload: { map_names: whitelist },
+        throwRouteError: false,
+      }),
+  },
+
+  sendVotemapReminder: {
+    mutationFn: () => cmd.SEND_VOTEMAP_REMINDER({ throwRouteError: false }),
+  },
+  
+  addMapToVotemap: {
+    mutationFn: (map_name) =>
+      cmd.ADD_MAP_TO_VOTEMAP({
+        payload: { map_name },
+        throwRouteError: false,
+      }),
+  },
+
+  setVotemapWinner: {
+    mutationFn: (map_name) =>
+      cmd.SET_VOTEMAP_WINNER({
+        payload: { map_name },
+        throwRouteError: false,
+      }),
+  },
+
+  removeMapFromVotemap: {
+    mutationFn: (mapLayer) =>
+      cmd.REMOVE_MAP_FROM_VOTEMAP({
+        payload: { map_name: mapLayer.id },
+        throwRouteError: false,
+      }),
   },
 };
