@@ -30,14 +30,6 @@ class DefaultStringFormat(dict):
         return key
 
 
-INDEFINITE_VIP_DATE = datetime(
-    year=3000,
-    month=1,
-    day=1,
-    tzinfo=timezone.utc,
-)
-
-
 ALL_ROLES = (
     "armycommander",
     "officer",
@@ -362,6 +354,13 @@ def get_server_number() -> str:
     return server_number
 
 
+# Add a quick shorthand for the SERVER NUMBER but don't fail in the maintenance container
+if os.getenv("SERVER_NUMBER"):
+    SERVER_NUMBER = int(get_server_number())
+else:
+    SERVER_NUMBER = 0
+
+
 def exception_in_chain(e: BaseException, c) -> bool:
     if isinstance(e, c):
         return True
@@ -614,7 +613,7 @@ def strtobool(val) -> bool:
     if val is None:
         return False
 
-    if isinstance(val, bool):
+    if isinstance(val, bool) or val == MISSING:
         return val
 
     # sourced from https://stackoverflow.com/a/18472142 with modification
@@ -625,3 +624,9 @@ def strtobool(val) -> bool:
         return False
     else:
         raise ValueError("invalid truth value %r" % (val,))
+
+
+def get_server_number_mask():
+    """Calculate server masks for Blacklist/VIP lists"""
+    server_number = SERVER_NUMBER
+    return 1 << (server_number - 1)

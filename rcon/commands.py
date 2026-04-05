@@ -9,7 +9,7 @@ from typing import Generator, Literal, Sequence, Any, List
 from rcon.connection import HLLCommandError, HLLConnection, Handle, Response
 from rcon.maps import LAYERS, MAPS, UNKNOWN_MAP_NAME, Environment, GameMode, LayerType
 from rcon.perf_statistics import PerformanceStatistics
-from rcon.types import MapRotationResponse, MapSequenceResponse, PlayerInfoType, ServerInfoType, SlotsType, VipId, GameStateType, AdminType
+from rcon.types import MapRotationResponse, MapSequenceResponse, PlayerInfoType, ServerInfoType, SlotsType, VipIdType, GameStateType, AdminType
 from rcon.utils import exception_in_chain
 
 logger = logging.getLogger(__name__)
@@ -378,9 +378,9 @@ class ServerCtl:
             max_players=resp["maxPlayerCount"],
         )
 
-    def get_vip_ids(self) -> list[VipId]:
+    def get_vip_ids(self) -> list[VipIdType]:
         return [
-            VipId(player_id=vip["iD"], name=vip["comment"])
+            VipIdType(player_id=vip["iD"], name=vip["comment"])
             for vip in self.exchange("GetServerInformation", 2, {"Name": "vipplayers", "Value": ""}).content_dict["vipPlayers"]
         ]
 

@@ -139,12 +139,8 @@ def run():
 
                 # Add or update VIP in CRCON using full VIP map
                 reward_players(
-                    rcon=rcon_api,
                     config=config,
                     to_add_vip_steam_ids=to_add_vip_steam_ids,
-                    current_vips=all_vips,
-                    players_lookup=player_name_lookup,
-                    expiration_timestamps=expiration_timestamps,
                 )
 
                 # Message those who earned VIP
@@ -152,8 +148,7 @@ def run():
                     rcon=rcon_api,
                     config=config,
                     message=config.player_messages.reward_player_message,
-                    steam_ids=to_add_vip_steam_ids,
-                    expiration_timestamps=expiration_timestamps,
+                    player_ids=to_add_vip_steam_ids,
                 )
 
                 # Message those who did not earn
@@ -161,8 +156,7 @@ def run():
                     rcon=rcon_api,
                     config=config,
                     message=config.player_messages.reward_player_message_no_vip,
-                    steam_ids=no_reward_steam_ids,
-                    expiration_timestamps=None,
+                    player_ids=no_reward_steam_ids,
                 )
 
                 # Post seeding complete Discord message
