@@ -17,6 +17,8 @@ services:
       - common
   postgres:
     image: ${POSTGRES_IMAGE}
+    # Increases the default 100 to 300
+    command: postgres -c max_connections=300
     environment:
       # If a password is not defined this container will fail to create
       POSTGRES_PASSWORD: ${HLL_DB_PASSWORD}
