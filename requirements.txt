@@ -5,7 +5,7 @@ redis==7.4.0
 sqlalchemy==2.0.45
 channels==4.3.2
 channels-redis==4.3.0
-orjson==3.11.7
+orjson==3.11.8
 simplejson==3.20.2
 psycopg2-binary
 sentry-sdk[django]==2.57.0
