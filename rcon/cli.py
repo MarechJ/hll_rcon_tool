@@ -15,7 +15,7 @@ import rcon.seed_vip.service
 import rcon.user_config
 import rcon.user_config.utils
 import rcon.watch_killrate
-from rcon import auto_settings, broadcast, maps, routines
+from rcon import auto_settings, broadcast, routines
 from rcon.automods import automod
 from rcon.blacklist import BlacklistCommandHandler
 from rcon.cache_utils import RedisCached, get_redis_pool, invalidates
@@ -30,7 +30,6 @@ from rcon.steam_utils import enrich_db_users
 from rcon.user_config.auto_settings import AutoSettingsConfig
 from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.user_config.scoreboard import _port_legacy_scorebot_urls
-from rcon.user_config.vote_map import VoteMapUserConfig
 from rcon.user_config.webhooks import (
     BaseMentionWebhookUserConfig,
     BaseUserConfig,
