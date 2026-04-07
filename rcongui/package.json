@@ -81,7 +81,7 @@
     "@vitejs/plugin-react": "^4.5.2",
     "miragejs": "^0.1.48",
     "prettier": "^2.8.8",
-    "vite": "^6.4.1"
+    "vite": "^6.4.2"
   },
   "browserslist": {
     "production": [
