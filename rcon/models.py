@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from typing import Any, Generator, List, Literal, Optional, Sequence, overload
 
 import pydantic
-from sqlalchemy import TIMESTAMP, Enum, ForeignKey, String, create_engine, select, text, JSON
+from sqlalchemy import TIMESTAMP, Enum, ForeignKey, String, create_engine, select, text, JSON, Engine, NullPool, Pool
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -71,7 +71,7 @@ logger = logging.getLogger(__name__)
 
 PLAYER_ID = "player_id"
 
-_ENGINE = None
+_ENGINE: Engine | None = None
 
 
 def _connection_name() -> str:
@@ -109,7 +109,11 @@ def get_engine():
         logger.error(msg)
         raise ValueError(msg)
 
-    _ENGINE = create_engine(url, echo=False, connect_args={"application_name":_connection_name()})
+    pool: type[Pool] | None = None
+    if os.getenv("HLL_DB_DISABLE_CONNECTION_POOL") is not None:
+        pool = NullPool
+
+    _ENGINE = create_engine(url, poolclass=pool, echo=False, connect_args={"application_name":_connection_name()})
     return _ENGINE
 
 
