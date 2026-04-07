@@ -47,7 +47,8 @@
         "deathsPerMinute": "MPM",
         "general": "Geral",
         "advanced": "Avançado",
-        "ingame": "No jogo"
+        "ingame": "No jogo",
+        "level": "Nível"
     },
     "weaponType": {
         "sniper": "Atirador",
@@ -61,7 +62,8 @@
         "machine_gun": "Metralhadora",
         "armor": "Blindagem",
         "commander": "Comandante",
-        "artillery": "Artilharia"
+        "artillery": "Artilharia",
+        "self_propelled_artillery": "Artilharia autopropulsada"
     },
     "matchTable": {
         "match": "Partida",
