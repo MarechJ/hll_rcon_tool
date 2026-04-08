@@ -1,5 +1,5 @@
 Click==8.3.2
-Django==4.2.29
+Django==4.2.30
 django-cors-headers==4.9.0
 redis==7.4.0
 sqlalchemy==2.0.45
