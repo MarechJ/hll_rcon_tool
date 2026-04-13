@@ -2,7 +2,7 @@ Click==8.3.2
 Django==4.2.30
 django-cors-headers==4.9.0
 redis==7.4.0
-sqlalchemy==2.0.45
+sqlalchemy==2.0.49
 channels==4.3.2
 channels-redis==4.3.0
 orjson==3.11.8
