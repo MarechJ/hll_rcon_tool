@@ -248,6 +248,9 @@ DATABASES = {
         "HOST": db_info["HOST"],
         "PORT": db_info["PORT"],
         "NAME": db_info["NAME"],
+        "OPTIONS": {
+            "application_name": (os.getenv("SERVER_NUMBER") or "") + "Django",
+        }
     }
 }
 
