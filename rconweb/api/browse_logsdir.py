@@ -41,7 +41,7 @@ def list_logs(request, path=''):
         # Sort: directories first, then alphabetical
         items.sort(key=lambda x: (not x['is_dir'], x['name'].lower()))
 
-        html = "<html><head><title>CRCON logs - {path}</title><style>"
+        html = f"<html><head><title>CRCON logs - {path}</title><style>"
         html += "pre { margin: 0; padding: 2px; }"
         html += "a { text-decoration: none; }"
         html += ".l { display: inline-block; text-decoration: none; color: inherit; }"
