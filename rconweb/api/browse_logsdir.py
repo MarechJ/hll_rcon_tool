@@ -48,7 +48,7 @@ def list_logs(request, path=''):
         html += ".l:hover { background-color: #f0f0f0; }"
         html += "</style></head><body>"
         html += f"<h1>Index of /api/logs/{path}</h1><hr><pre>"
-        html += f"<b>{'Name':<55} {'Size':<12} {'Last Modified':<25}</b><hr>"
+        html += f"<b>{'Name':<55} {'Size':>12} {'Last Modified':>21}</b><hr>"
 
         if path:
             html += f"<span class='l'><a href='..'>../</a></span>\n"
@@ -58,7 +58,7 @@ def list_logs(request, path=''):
             name = item['name'] + suffix
             date = item['mtime'].strftime('%Y-%m-%d %H:%M:%S')
             size = f"{item['size'] / 1024:.1f} KB" if not item['is_dir'] else "-"
-            html += f"<span class='l'><a href='{name}'>{name:<55}</a> {size:<12} {date:<25}</span>\n"
+            html += f"<span class='l'><a href='{name}'>{name:<55}</a> {size:>12} {date:>21}</span>\n"
 
         html += "</pre><hr></body></html>"
         return HttpResponse(html)
