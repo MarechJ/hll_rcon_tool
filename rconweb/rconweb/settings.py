@@ -194,12 +194,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",
     "api",
-    "directory",
 ]
-
-DIRECTORY_DIRECTORY = os.getenv("LOGGING_PATH", "./logs")
-DIRECTORY_ACCESS_FUNCTION = "api.auth.staff_required"
-DIRECTORY_ACCESS_MODE = "custom"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
