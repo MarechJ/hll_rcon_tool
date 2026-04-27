@@ -2,6 +2,8 @@ import functools
 import logging
 import os
 import pickle
+import time
+import uuid
 from contextlib import contextmanager
 from typing import Callable
 
@@ -70,6 +72,11 @@ class RedisCached:
             return self.key_prefix.encode() + b"__" + params
         return f"{self.key_prefix}__{params}"
 
+    def lock_key(self, key):
+        if isinstance(key, bytes):
+            return b"lock_" + key
+        return f"lock_{key}"
+
     @property
     def __name__(self):
         return self.function.__name__
@@ -78,13 +85,33 @@ class RedisCached:
     def __wrapped__(self):
         return self.function
 
+    def _release_lock(self, lock_key, lock_token):
+        try:
+            with self.red.pipeline() as pipe:
+                pipe.watch(lock_key)
+                current_token = pipe.get(lock_key)
+                if current_token in (lock_token, lock_token.encode()):
+                    pipe.multi()
+                    pipe.delete(lock_key)
+                    pipe.execute()
+                else:
+                    pipe.unwatch()
+        except redis.exceptions.RedisError:
+            logger.exception("Unable to release cache refresh lock")
+
     def __call__(self, *args, **kwargs):
         val = None
         key = self.key(*args, **kwargs)
+        lock_key = self.lock_key(key)
+        lock_token = str(uuid.uuid4())
+        lock_acquired = False
+        cache_available = True
+        refresh_without_lock = False
         func = self.function
         try:
             val = self.red.get(key)
         except redis.exceptions.RedisError as e:
+            cache_available = False
             logger.exception("Unable to use cache: %s", e)
             if self.function_cache_unavailable:
                 func = self.function_cache_unavailable
@@ -94,18 +121,50 @@ class RedisCached:
             # logger.debug("Cache HIT for %s", self.key(*args, **kwargs))
             return self.deserializer(val)
 
-        # logger.debug("Cache MISS for %s", self.key(*args, **kwargs))
-        val = func(*args, **kwargs)
+        if not cache_available:
+            return func(*args, **kwargs)
 
-        if not val and not self.cache_falsy:
-            logger.debug("Caching falsy result is disabled for %s", self.__name__)
-            return val
+        # logger.debug("Cache MISS for %s", self.key(*args, **kwargs))
+        try:
+            lock_acquired = bool(
+                self.red.set(
+                    lock_key,
+                    lock_token,
+                    nx=True,
+                    ex=max(1, min(30, self.ttl_seconds)),
+                )
+            )
+        except redis.exceptions.RedisError:
+            logger.exception("Unable to acquire cache refresh lock")
+            refresh_without_lock = True
+
+        if not lock_acquired and not refresh_without_lock:
+            deadline = time.monotonic() + max(0.25, min(5, self.ttl_seconds))
+            while time.monotonic() < deadline:
+                time.sleep(0.05)
+                try:
+                    val = self.red.get(key)
+                except redis.exceptions.RedisError:
+                    logger.exception("Unable to use cache while waiting for refresh")
+                    break
+                if val is not None:
+                    return self.deserializer(val)
 
         try:
-            self.red.setex(key, self.ttl_seconds, self.serializer(val))
-            # logger.debug("Cache SET for %s", self.key(*args, **kwargs))
-        except redis.exceptions.RedisError:
-            logger.exception("Unable to set cache")
+            val = func(*args, **kwargs)
+
+            if not val and not self.cache_falsy:
+                logger.debug("Caching falsy result is disabled for %s", self.__name__)
+                return val
+
+            try:
+                self.red.setex(key, self.ttl_seconds, self.serializer(val))
+                # logger.debug("Cache SET for %s", self.key(*args, **kwargs))
+            except redis.exceptions.RedisError:
+                logger.exception("Unable to set cache")
+        finally:
+            if lock_acquired:
+                self._release_lock(lock_key, lock_token)
 
         return val
 

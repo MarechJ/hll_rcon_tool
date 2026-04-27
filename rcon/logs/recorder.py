@@ -5,6 +5,7 @@ import time
 from typing import Callable, Iterable
 
 from sqlalchemy import desc
+from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -50,6 +51,9 @@ class LogRecorder:
                 players.setdefault(log["player_id_1"], None)
             if log["player_id_2"] is not None:
                 players.setdefault(log["player_id_2"], None)
+        if not players:
+            return players
+
         player_ids = sess.query(PlayerID).filter(PlayerID.player_id.in_(list(players.keys())))
         for pid in player_ids:
             players[pid.player_id] = pid
@@ -57,37 +61,51 @@ class LogRecorder:
         return players
 
     def _save_logs(self, sess, to_store: list[StructuredLogLineWithMetaData]):
+        if not to_store:
+            return
+
         players = self._collect_player_ids(sess, to_store)
+        rows = []
 
         for log in to_store:
-            try:
-                player_1: PlayerID | None = None
-                player_2: PlayerID | None = None
-                if log["player_id_1"]:
-                    player_1 = players[log["player_id_1"]]
-                if log["player_id_2"]:
-                    player_2 = players[log["player_id_2"]]
-                sess.add(
-                    LogLine(
-                        version=log["version"],
-                        event_time=datetime.datetime.fromtimestamp(
-                            log["timestamp_ms"] // 1000
-                        ),
-                        type=log["action"],
-                        player1_name=log["player_name_1"],
-                        player2_name=log["player_name_2"],
-                        player_1=player_1,
-                        player_2=player_2,
-                        raw=log["raw"],
-                        content=log["message"],
-                        server=os.getenv("SERVER_NUMBER"),
-                        weapon=log["weapon"],
-                    )
+            player_1: PlayerID | None = None
+            player_2: PlayerID | None = None
+            if log["player_id_1"]:
+                player_1 = players[log["player_id_1"]]
+            if log["player_id_2"]:
+                player_2 = players[log["player_id_2"]]
+
+            rows.append(
+                {
+                    "version": log["version"],
+                    "event_time": datetime.datetime.fromtimestamp(
+                        log["timestamp_ms"] // 1000
+                    ),
+                    "type": log["action"],
+                    "player1_name": log["player_name_1"],
+                    "player2_name": log["player_name_2"],
+                    "player1_player_id": player_1.id if player_1 else None,
+                    "player2_player_id": player_2.id if player_2 else None,
+                    "raw": log["raw"],
+                    "content": log["message"],
+                    "server": os.getenv("SERVER_NUMBER"),
+                    "weapon": log["weapon"],
+                }
+            )
+
+        try:
+            if sess.get_bind().dialect.name == "postgresql":
+                statement = postgresql_insert(LogLine).values(rows)
+                statement = statement.on_conflict_do_nothing(
+                    constraint="unique_log_line",
                 )
-                sess.commit()
-            except IntegrityError:
-                sess.rollback()
-                logger.exception("Unable to recorder %s", log)
+                sess.execute(statement)
+            else:
+                sess.add_all(LogLine(**row) for row in rows)
+                sess.flush()
+        except IntegrityError:
+            sess.rollback()
+            logger.exception("Unable to record log batch")
 
     def run(self, run_immediately=False, one_off=False):
         last_run = datetime.datetime.now()
