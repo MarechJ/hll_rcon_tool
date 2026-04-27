@@ -1,4 +1,4 @@
-Click==8.3.2
+Click==8.3.3
 Django==4.2.30
 django-cors-headers==4.9.0
 redis==7.4.0
