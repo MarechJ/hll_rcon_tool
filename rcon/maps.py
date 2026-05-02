@@ -14,7 +14,7 @@ RE_LAYER_NAME_SMALL = re.compile(
     r"^(?P<tag>[A-Z]{3,5})_S_(?P<year>\d{4})_(?:(?P<environment>\w+)_)?P_(?P<game_mode>\w+)$"
 )
 RE_LAYER_NAME_LARGE = re.compile(
-    r"^(?P<tag>[A-Z]{3,5})_L_(?P<year>\d{4})_(?P<game_mode>\w+?)(?P<attackers>US|GER|Ger|COM|USSR|RUS|GB|CW|Brit|British|CAN)?(?:_(?P<environment>\w+))?$"
+    r"^(?P<tag>[A-Z]{3,5})_L_(?P<year>\d{4})_(?P<game_mode>\w+?)(?P<attackers>US|GER|Ger|COM|USSR|RUS|GB|CW|Brit|British|can)?(?:_(?P<environment>\w+))?$"
 )
 RE_LEGACY_LAYER_NAME = re.compile(
     r"^(?P<name>[a-zA-Z0-9]+)_(?:(?P<offensive>off(?:ensive)?)_?(?P<attackers>[a-zA-Z]+)|(?P<game_mode>[a-zA-Z]+)(?:_V2)?)(?:_(?P<environment>[a-zA-Z]+))?$"
@@ -108,7 +108,6 @@ class Environment(str, Enum):
     NIGHT = "night"
     OVERCAST = "overcast"
     RAIN = "rain"
-    MORNING = "morning"
 
 
 class FactionName(Enum):
@@ -117,7 +116,7 @@ class FactionName(Enum):
     GER = "ger"
     RUS = "rus"
     US = "us"
-    CA = "ca"
+    CAN = "can"
 
 
 class Faction(pydantic.BaseModel):
@@ -466,10 +465,10 @@ MAPS = {
         Map(
             id="junobeach",
             name="JUNO BEACH",
-            tag="JNO",
+            tag="JUN",
             pretty_name="Juno Beach",
             shortname="Juno",
-            allies=Faction(name=FactionName.CA.value, team=Team.ALLIES),
+            allies=Faction(name=FactionName.CAN.value, team=Team.ALLIES),
             axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
             orientation=Orientation.VERTICAL,
         ),
@@ -1441,7 +1440,7 @@ LAYERS = {
             id="junobeach_skirmish_morning",
             map=MAPS["junobeach"],
             game_mode=GameMode.SKIRMISH,
-            environment=Environment.MORNING,
+            environment=Environment.DAWN,
         ),
         Layer(
             id="junobeach_skirmish_night",
@@ -1459,7 +1458,7 @@ LAYERS = {
             id="junobeach_warfare_morning",
             map=MAPS["junobeach"],
             game_mode=GameMode.WARFARE,
-            environment=Environment.MORNING,
+            environment=Environment.DAWN,
         ),
         Layer(
             id="junobeach_warfare_night",
@@ -1478,7 +1477,7 @@ LAYERS = {
             id="junobeach_offensivecan_morning",
             map=MAPS["junobeach"],
             game_mode=GameMode.OFFENSIVE,
-            environment=Environment.MORNING,
+            environment=Environment.DAWN,
             attackers=Team.ALLIES,
         ),
         Layer(
@@ -1499,7 +1498,7 @@ LAYERS = {
             id="junobeach_offensiveger_morning",
             map=MAPS["junobeach"],
             game_mode=GameMode.OFFENSIVE,
-            environment=Environment.MORNING,
+            environment=Environment.DAWN,
             attackers=Team.AXIS,
         ),
         Layer(

@@ -193,16 +193,9 @@ US_WEAPONS = {
 
 # Preliminary based on experimental branch
 CA_WEAPONS = {
-    'Lee-Enfield Pattern 1914': WeaponType.Infantry,
     'Rifle No.4 Mk I': WeaponType.Infantry,
-    'Rifle No.5 Mk I': WeaponType.Infantry,
-    'Lee-Enfield Pattern 1914 Sniper': WeaponType.Sniper,
-    'Sten Gun': WeaponType.Infantry,
     'Lanchester': WeaponType.Infantry,
     'Bren Gun': WeaponType.Infantry,
-    'Lewis Gun': WeaponType.Infantry,
-    'Webley MK VI': WeaponType.Infantry,
-    'Boys Anti-tank Rifle': WeaponType.Infantry,
     'PIAT': WeaponType.Bazooka,
     'Mills Bomb': WeaponType.Grenade,
     'No.77': WeaponType.Grenade,
@@ -214,7 +207,6 @@ CA_WEAPONS = {
     'Satchel': WeaponType.Satchel,
     'FLAMETHROWER': WeaponType.Infantry,
     'SMLE No.1 Mk III': WeaponType.Infantry,
-    'M1928A1 THOMPSON': WeaponType.Infantry,
     'Rifle No.4 Mk I Sniper': WeaponType.Sniper,
     'Canadian Sten Mk.II': WeaponType.Infantry,
     'FN-Inglis No 2 MK I': WeaponType.Infantry,
