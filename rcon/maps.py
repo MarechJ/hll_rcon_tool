@@ -14,7 +14,7 @@ RE_LAYER_NAME_SMALL = re.compile(
     r"^(?P<tag>[A-Z]{3,5})_S_(?P<year>\d{4})_(?:(?P<environment>\w+)_)?P_(?P<game_mode>\w+)$"
 )
 RE_LAYER_NAME_LARGE = re.compile(
-    r"^(?P<tag>[A-Z]{3,5})_L_(?P<year>\d{4})_(?P<game_mode>\w+?)(?P<attackers>US|GER|Ger|COM|USSR|RUS|GB|CW|Brit|British)?(?:_(?P<environment>\w+))?$"
+    r"^(?P<tag>[A-Z]{3,5})_L_(?P<year>\d{4})_(?P<game_mode>\w+?)(?P<attackers>US|GER|Ger|COM|USSR|RUS|GB|CW|Brit|British|can)?(?:_(?P<environment>\w+))?$"
 )
 RE_LEGACY_LAYER_NAME = re.compile(
     r"^(?P<name>[a-zA-Z0-9]+)_(?:(?P<offensive>off(?:ensive)?)_?(?P<attackers>[a-zA-Z]+)|(?P<game_mode>[a-zA-Z]+)(?:_V2)?)(?:_(?P<environment>[a-zA-Z]+))?$"
@@ -116,6 +116,7 @@ class FactionName(Enum):
     GER = "ger"
     RUS = "rus"
     US = "us"
+    CAN = "can"
 
 
 class Faction(pydantic.BaseModel):
@@ -460,6 +461,16 @@ MAPS = {
             allies=Faction(name=FactionName.RUS.value, team=Team.ALLIES),
             axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
             orientation=Orientation.HORIZONTAL,
+        ),
+        Map(
+            id="junobeach",
+            name="JUNO BEACH",
+            tag="JUN",
+            pretty_name="Juno Beach",
+            shortname="Juno",
+            allies=Faction(name=FactionName.CAN.value, team=Team.ALLIES),
+            axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
+            orientation=Orientation.VERTICAL,
         ),
     )
 }
@@ -1418,6 +1429,84 @@ LAYERS = {
             map=MAPS["smolensk"],
             game_mode=GameMode.SKIRMISH,
             environment=Environment.NIGHT,
+        ),
+        Layer(
+            id="junobeach_skirmish_day",
+            map=MAPS["junobeach"],
+            game_mode=GameMode.SKIRMISH,
+            environment=Environment.DAY,
+        ),
+        Layer(
+            id="junobeach_skirmish_morning",
+            map=MAPS["junobeach"],
+            game_mode=GameMode.SKIRMISH,
+            environment=Environment.DAWN,
+        ),
+        Layer(
+            id="junobeach_skirmish_night",
+            map=MAPS["junobeach"],
+            game_mode=GameMode.SKIRMISH,
+            environment=Environment.NIGHT,
+        ),
+        Layer(
+            id="junobeach_warfare_day",
+            map=MAPS["junobeach"],
+            game_mode=GameMode.WARFARE,
+            environment=Environment.DAY,
+        ),
+        Layer(
+            id="junobeach_warfare_morning",
+            map=MAPS["junobeach"],
+            game_mode=GameMode.WARFARE,
+            environment=Environment.DAWN,
+        ),
+        Layer(
+            id="junobeach_warfare_night",
+            map=MAPS["junobeach"],
+            game_mode=GameMode.WARFARE,
+            environment=Environment.NIGHT,
+        ),
+        Layer(
+            id="junobeach_offensivecan_day",
+            map=MAPS["junobeach"],
+            game_mode=GameMode.OFFENSIVE,
+            environment=Environment.DAY,
+            attackers=Team.ALLIES,
+        ),
+        Layer(
+            id="junobeach_offensivecan_morning",
+            map=MAPS["junobeach"],
+            game_mode=GameMode.OFFENSIVE,
+            environment=Environment.DAWN,
+            attackers=Team.ALLIES,
+        ),
+        Layer(
+            id="junobeach_offensivecan_night",
+            map=MAPS["junobeach"],
+            game_mode=GameMode.OFFENSIVE,
+            environment=Environment.NIGHT,
+            attackers=Team.ALLIES,
+        ),
+        Layer(
+            id="junobeach_offensiveger_day",
+            map=MAPS["junobeach"],
+            game_mode=GameMode.OFFENSIVE,
+            environment=Environment.DAY,
+            attackers=Team.AXIS,
+        ),
+        Layer(
+            id="junobeach_offensiveger_morning",
+            map=MAPS["junobeach"],
+            game_mode=GameMode.OFFENSIVE,
+            environment=Environment.DAWN,
+            attackers=Team.AXIS,
+        ),
+        Layer(
+            id="junobeach_offensiveger_night",
+            map=MAPS["junobeach"],
+            game_mode=GameMode.OFFENSIVE,
+            environment=Environment.NIGHT,
+            attackers=Team.AXIS,
         ),
     )
 }

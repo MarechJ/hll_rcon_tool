@@ -146,7 +146,7 @@ US_WEAPONS = {
     'M1918A2 BAR': WeaponType.Infantry,
     'M97 TRENCH GUN': WeaponType.Infantry,
     'BROWNING M1919': WeaponType.MachineGun,
-    'M1919 SPRINGFIELD': WeaponType.Infantry,
+    'M1919 SPRINGFIELD': WeaponType.Sniper,
     'M1903 SPRINGFIELD': WeaponType.Sniper,
     'COLT M1911': WeaponType.Infantry,
     'M2 FLAMETHROWER': WeaponType.Infantry,
@@ -189,6 +189,28 @@ US_WEAPONS = {
     'PETARD 230MM  [M4A3 (105mm)]': WeaponType.SPA,
     'COAXIAL M1919 [M4A3 (105mm)]': WeaponType.Armor,
     'HULL M1919 [M4A3 (105mm)]': WeaponType.Armor,
+}
+
+# Preliminary based on experimental branch
+CA_WEAPONS = {
+    'Rifle No.4 Mk I': WeaponType.Infantry,
+    'Lanchester': WeaponType.Infantry,
+    'Bren Gun': WeaponType.Infantry,
+    'PIAT': WeaponType.Bazooka,
+    'Mills Bomb': WeaponType.Grenade,
+    'No.77': WeaponType.Grenade,
+    'A.T. Mine G.S. Mk V': WeaponType.Mine,
+    'A.P. Shrapnel Mine Mk II': WeaponType.Mine,
+    'Fairbairn–Sykes': WeaponType.Infantry,
+    'No.2 Mk 5 Flare Pistol': WeaponType.Infantry,
+    'Ordnance QF 6-pounder': WeaponType.PAK,
+    'Satchel': WeaponType.Satchel,
+    'FLAMETHROWER': WeaponType.Infantry,
+    'SMLE No.1 Mk III': WeaponType.Infantry,
+    'Rifle No.4 Mk I Sniper': WeaponType.Sniper,
+    'Canadian Sten Mk.II': WeaponType.Infantry,
+    'FN-Inglis No 2 MK I': WeaponType.Infantry,
+    'Enfield No.2 Mk I': WeaponType.Infantry,
 }
 
 AXIS_WEAPONS = {
@@ -251,6 +273,7 @@ ALL_WEAPONS = {
     **US_WEAPONS,
     **SOVIET_WEAPONS,
     **BRITISH_WEAPONS,
+    **CA_WEAPONS,
     **AXIS_WEAPONS,
     'BOMBING RUN': WeaponType.Commander,
     'STRAFING RUN': WeaponType.Commander,
