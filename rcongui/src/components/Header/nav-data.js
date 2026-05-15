@@ -305,11 +305,6 @@ export const navMenus = [
         icon: <TimerOffIcon />,
       },
       {
-        name: "GTX Server Name Change",
-        to: "/settings/others/gtx-server",
-        icon: <DriveFileRenameOutlineIcon />,
-      },
-      {
         name: "Log Stream",
         to: "/settings/others/log-stream",
         icon: <StreamIcon />,
