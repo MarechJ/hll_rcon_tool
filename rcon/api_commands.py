@@ -10,7 +10,6 @@ from rcon.audit import ingame_mods, online_mods
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.commands import HLLCommandFailedError
 from rcon.discord import audit_user_config_differences
-from rcon.gtx import GTXFtp
 from rcon.message_templates import (
     add_message_template,
     delete_message_template,
@@ -20,7 +19,7 @@ from rcon.message_templates import (
     get_message_template_categories,
     get_message_templates,
 )
-from rcon.models import MessageTemplate, enter_session
+from rcon.models import enter_session
 from rcon.player_history import (
     add_flag_to_player,
     get_players_by_appearance,
@@ -56,7 +55,6 @@ from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.chat_commands import ChatCommandsUserConfig
 from rcon.user_config.expired_vips import ExpiredVipsUserConfig
-from rcon.user_config.gtx_server_name import GtxServerNameChangeUserConfig
 from rcon.user_config.legacy_scorebot import ScorebotUserConfig
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
 from rcon.user_config.log_stream import LogStreamUserConfig
@@ -535,15 +533,6 @@ class RconAPI(Rcon):
             flag_id=flag_id, player_id=player_id, flag=flag
         )
         return removed_flag
-
-    def set_server_name(self, name: str):
-        # TODO: server name won't change until map change
-        # but the cache also needs to be cleared, but can't
-        # immediately clear or it will just refresh but we
-        # can use a timer or clear the cache on match start
-
-        gtx = GTXFtp.from_config()
-        gtx.change_server_name(new_name=name)
 
     @staticmethod
     def toggle_player_watch(
@@ -1133,41 +1122,6 @@ class RconAPI(Rcon):
             command_name=inspect.currentframe().f_code.co_name,  # type: ignore
             by=by,
             model=ExpiredVipsUserConfig,
-            data=config or kwargs,
-            dry_run=True,
-            reset_to_default=reset_to_default,
-        )
-
-    def get_server_name_change_config(self) -> GtxServerNameChangeUserConfig:
-        return GtxServerNameChangeUserConfig.load_from_db()
-
-    def set_server_name_change_config(
-        self,
-        by: str,
-        config: dict[str, Any] | BaseUserConfig | None = None,
-        reset_to_default: bool = False,
-        **kwargs,
-    ) -> bool:
-        return self._validate_user_config(
-            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
-            by=by,
-            model=GtxServerNameChangeUserConfig,
-            data=config or kwargs,
-            dry_run=False,
-            reset_to_default=reset_to_default,
-        )
-
-    def validate_server_name_change_config(
-        self,
-        by: str,
-        config: dict[str, Any] | BaseUserConfig | None = None,
-        reset_to_default: bool = False,
-        **kwargs,
-    ) -> bool:
-        return self._validate_user_config(
-            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
-            by=by,
-            model=GtxServerNameChangeUserConfig,
             data=config or kwargs,
             dry_run=True,
             reset_to_default=reset_to_default,
