@@ -319,14 +319,6 @@ class RconUser(User):
             ("can_view_expired_vip_config", "Can view Expired VIP config"),
             ("can_change_expired_vip_config", "Can change Expired VIP config"),
             (
-                "can_view_server_name_change_config",
-                "Can view server name change (GSP credentials!) config",
-            ),
-            (
-                "can_change_server_name_change_config",
-                "Can change server name change (GSP credentials!) config",
-            ),
-            (
                 "can_view_log_line_discord_webhook_config",
                 "Can view log webhook (messages for log events) config",
             ),

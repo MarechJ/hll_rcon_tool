@@ -136,10 +136,6 @@ endpoints: list[tuple[str, Callable]] = [
     ),
     ("describe_expired_vip_config", user_settings.describe_expired_vip_config),
     (
-        "describe_server_name_change_config",
-        user_settings.describe_server_name_change_config,
-    ),
-    (
         "describe_log_line_webhook_config",
         user_settings.describe_log_line_webhook_config,
     ),
