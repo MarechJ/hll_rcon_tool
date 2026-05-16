@@ -12,7 +12,6 @@ from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.chat_commands import ChatCommandsUserConfig
 from rcon.user_config.expired_vips import ExpiredVipsUserConfig
-from rcon.user_config.gtx_server_name import GtxServerNameChangeUserConfig
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
 from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.user_config.name_kicks import NameKickUserConfig
@@ -63,7 +62,6 @@ def seed_default_config():
             RConChatCommandsUserConfig.seed_db(sess)
             ChatWebhooksUserConfig.seed_db(sess)
             ExpiredVipsUserConfig.seed_db(sess)
-            GtxServerNameChangeUserConfig.seed_db(sess)
             KillsWebhooksUserConfig.seed_db(sess)
             LogLineWebhookUserConfig.seed_db(sess)
             LogStreamUserConfig.seed_db(sess)
