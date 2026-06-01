@@ -721,6 +721,11 @@ class GameStateType(TypedDict):
     axis_score: int
     allied_faction: int
     axis_faction: int
+    allied_faction_id: int
+    axis_faction_id: int
+    allied_morale: int
+    axis_morale: int
+    initial_morale: int
     raw_time_remaining: str
     time_remaining: datetime.timedelta
     current_map: "LayerType"
@@ -958,6 +963,7 @@ class PlayerInfoType(TypedDict):
     loadout: str
     name: str
     platoon: str
+    platoonIndex: int
     scoreData: ScoreDataType
     stats: StatsDataType
     platform: str
