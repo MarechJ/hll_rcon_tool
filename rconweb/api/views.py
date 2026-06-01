@@ -96,6 +96,7 @@ def get_public_info(request):
     config = RconServerSettingsUserConfig.load_from_db()
     gamestate = rcon_api.get_gamestate()
     slots = rcon_api.get_slots()
+    server_config = rcon_api.get_server_config()
     current_players = slots["current_players"]
     max_players = slots["max_players"]
 
@@ -140,6 +141,7 @@ def get_public_info(request):
         "time_remaining": gamestate["time_remaining"].total_seconds(),
         "vote_status": vote_status,
         "name": name,
+        "config": server_config,
     }
 
     return api_response(
