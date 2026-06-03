@@ -848,6 +848,12 @@ class PublicInfoNameType(TypedDict):
     public_stats_port: int | None
     public_stats_port_https: int | None
 
+class ServerConfigType(TypedDict):
+    build_number: str
+    build_revision: str
+    password_protected: bool
+    server_name: str
+    supported_platforms: list[str]
 
 class PublicInfoType(TypedDict):
     """TypedDict for rcon.views.get_public_info"""
@@ -861,6 +867,7 @@ class PublicInfoType(TypedDict):
     time_remaining: float
     vote_status: list[VoteMapStatusType]
     name: PublicInfoNameType
+    config: ServerConfigType
 
 
 class SlotsType(TypedDict):

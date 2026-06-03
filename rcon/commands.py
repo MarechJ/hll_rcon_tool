@@ -9,7 +9,7 @@ from typing import Generator, Literal, Sequence, Any, List
 from rcon.connection import HLLCommandError, HLLConnection, Handle, Response
 from rcon.maps import LAYERS, MAPS, UNKNOWN_MAP_NAME, Environment, GameMode, LayerType
 from rcon.perf_statistics import PerformanceStatistics
-from rcon.types import MapRotationResponse, MapSequenceResponse, PlayerInfoType, ServerInfoType, SlotsType, VipId, GameStateType, AdminType
+from rcon.types import MapRotationResponse, MapSequenceResponse, PlayerInfoType, ServerConfigType, ServerInfoType, SlotsType, VipId, GameStateType, AdminType
 from rcon.utils import exception_in_chain
 
 logger = logging.getLogger(__name__)
@@ -702,6 +702,16 @@ class ServerCtl:
 
     def set_dynamic_weather_enabled(self, map_name: str, enabled: bool):
         self.exchange("SetDynamicWeatherEnabled", 2, {"MapId": map_name, "Enable": enabled})
+
+    def get_server_config(self) -> ServerConfigType:
+        cfg = self.exchange("GetServerInformation", 2, {"Name": "serverconfig", "Value": ""}).content_dict
+        return {
+            "build_number": cfg["buildNumber"],
+            "build_revision": cfg["buildRevision"],
+            "password_protected": cfg["passwordProtected"],
+            "server_name": cfg["serverName"],
+            "supported_platforms": cfg["supportedPlatforms"]
+        }
 
 
 
