@@ -646,6 +646,7 @@ class GetDetailedPlayer(TypedDict):
     unit_name: Optional[str]
     loadout: Optional[str]
     team: Optional[str]
+    faction: Optional[str]
     role: Optional[str]
     kills: int
     deaths: int
