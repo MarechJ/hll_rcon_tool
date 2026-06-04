@@ -1,15 +1,10 @@
-import useTheme from "@mui/material/styles/useTheme";
+import { useThemedImages } from "@/hooks/useThemedImages";
 
 export const RoleIcon = ({ role, ...props }) => {
-  const theme = useTheme();
-  const mode = theme?.palette?.mode || "light";
-  const src =
-    mode === "light"
-      ? `/icons/roles/${role.toLowerCase()}_black.png`
-      : `/icons/roles/${role.toLowerCase()}.png`;
+  const themedImg = useThemedImages();
   return (
     <img
-      src={src}
+      src={themedImg.getRoleIconSrc(role)}
       width={16}
       height={16}
       alt={role}

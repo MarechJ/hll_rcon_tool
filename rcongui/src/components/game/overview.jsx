@@ -1,5 +1,6 @@
 import { Box, Typography, styled } from '@mui/material'
 import { ArrowsContainer, OffensiveArrows, WarfareArrows } from './shapes'
+import { useThemedImages } from '@/hooks/useThemedImages'
 
 // sx={{ display: 'flex', justifyContent: 'start', width: { xs: 24, sm: 32, lg: 40 }, height: { xs: 24, sm: 32, lg: 40 } }}
 const TeamImageWrapper = styled(Box)(({ theme }) => ({
@@ -71,7 +72,7 @@ export default function GameOverview({
   alliesCount,
   score,
 }) {
-
+  const themedImg = useThemedImages()
   const displayArrows = () => {
     if (score.allies === undefined || score.axis === undefined) return null
 
@@ -93,7 +94,7 @@ export default function GameOverview({
       <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', px: { lg: 2 } }}>
         <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', flexBasis: '100%' }}>
           <TeamImageWrapper>
-            <TeamImage src={`/icons/teams/${allies.name}.webp`} alt={allies.team} />
+            <TeamImage src={themedImg.getFactionIconSrc(allies.name)} alt={allies.team} />
           </TeamImageWrapper>
           <Box sx={{ display: 'flex', flexDirection: 'column', textAlign: 'right', flexGrow: 1 }}>
             <Typography variant="h6" sx={{ fontSize: { lg: '1rem' }, fontWeight: 'bold', textTransform: 'uppercase' }}>
@@ -137,7 +138,7 @@ export default function GameOverview({
             </Box>
           </Box>
           <TeamImageWrapper>
-            <TeamImage src={`/icons/teams/${axis.name}.webp`} alt={axis.team} />
+            <TeamImage src={themedImg.getFactionIconSrc(axis.name)} alt={axis.team} />
           </TeamImageWrapper>
         </Box>
       </Box>
