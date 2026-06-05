@@ -18,7 +18,7 @@ import rcon.watch_killrate
 from rcon import auto_settings, broadcast, routines
 from rcon.automods import automod
 from rcon.blacklist import BlacklistCommandHandler
-from rcon.cache_utils import RedisCached, get_redis_pool, invalidates
+from rcon.cache_utils import RedisCached, get_redis_client, get_redis_pool, invalidates
 from rcon.discord_chat import get_handler
 from rcon.logs.loop import LogLoop, load_generic_hooks
 from rcon.logs.recorder import LogRecorder
@@ -608,6 +608,14 @@ def remove_orphaned_map_ids():
 
     if len(res) != len(prev):
         vm.set_map_whitelist(res)
+
+
+@cli.command(name="clear_maps_cache")
+def clear_maps_cache():
+    ctl = get_rcon()
+    ctl.get_maps.cache_clear()
+    ctl.get_map_rotation.cache_clear()
+    ctl.get_map_sequence.cache_clear()
 
 
 PREFIXES_TO_EXPOSE = ["get_", "set_", "do_"]
