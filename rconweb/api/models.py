@@ -477,4 +477,8 @@ class RconUser(User):
                 "can_change_watch_killrate_config",
                 "Can change the Watch KillRate config",
             ),
+            ("can_remove_map_from_votemap", "Can remove map from current votemap selection"),
+            ("can_add_map_to_votemap", "Can add map to current votemap selection"),
+            ("can_set_votemap_winner", "Can guarantee next map with votemap enabled"),
+            ("can_add_votemap_vote", "Can manually add vote"),
         )
