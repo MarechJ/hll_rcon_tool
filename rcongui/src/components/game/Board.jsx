@@ -1,7 +1,7 @@
 import { Typography, Divider, Stack, Box } from "@mui/material";
 import { styled } from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import { useGlobalStore } from "@/stores/global-state";
+import { useThemedImages } from "@/hooks/useThemedImages";
 
 const StyledStack = styled(Stack)(({ theme }) => ({
   padding: 0,
@@ -34,6 +34,7 @@ const SmallText = styled(Typography)(({ theme }) => ({
  * @returns {JSX.Element} The rendered Board component.
  */
 export const Board = ({ data, ...props }) => {
+  const themedImg = useThemedImages()
   return (
     <StyledStack>
       <SmallText textAlign={"center"} fontWeight={"bold"}>
@@ -60,7 +61,7 @@ export const Board = ({ data, ...props }) => {
             height={24}
             component={"img"}
             alt="Allies"
-            src={`/icons/teams/${data.current_map.map.allies.name}.webp`}
+            src={themedImg.getFactionIconSrc(data.current_map.map.allies.name)}
           />
         </Grid>
         <Grid container sx={{ textAlign: "center" }} size={4}>
@@ -87,7 +88,7 @@ export const Board = ({ data, ...props }) => {
             height={24}
             component={"img"}
             alt="Axis"
-            src={`/icons/teams/${data.current_map.map.axis.name}.webp`}
+            src={themedImg.getFactionIconSrc(data.current_map.map.axis.name)}
           />
         </Grid>
       </Grid>

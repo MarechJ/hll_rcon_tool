@@ -18,11 +18,11 @@ import PersonOffIcon from "@mui/icons-material/PersonOff";
 import Collapse from "@mui/material/Collapse";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
-import useTheme from "@mui/material/styles/useTheme";
 import { secondsToTime } from "@/utils/extractPlayers";
 import { ActionMenuButton } from "@/features/player-action/ActionMenu";
 import { generatePlayerActions } from "@/features/player-action/actions";
 import { TextButton } from "@/components/table/styles";
+import { useThemedImages } from "@/hooks/useThemedImages";
 
 export const UNASSIGNED = "unassigned";
 
@@ -42,19 +42,13 @@ const PlayerStats = ({ player }) => (
   </>
 );
 
-const roleSrc = (role, mode) =>
-  mode === "light"
-    ? `/icons/roles/${role}_black.png`
-    : `/icons/roles/${role}.png`;
-
 const PlayerInfo = ({ player }) => {
-  const theme = useTheme();
-  const mode = theme?.palette?.mode || "light";
+  const themedImg = useThemedImages();
   return (
     <Box className="player-info">
       {player.role ? (
         <img
-          src={roleSrc(player.role, mode)}
+          src={themedImg.getRoleIconSrc(player.role)}
           alt={player.role}
           width={16}
           height={16}
@@ -176,13 +170,12 @@ const SquadGroupHeader = ({ type }) => (
 );
 
 const SquadNameInfo = ({ squad, showIcon = true }) => {
-  const theme = useTheme();
-  const mode = theme?.palette?.mode || "light";
+  const themedImg = useThemedImages();
   return (
     <Box className="squad-name-container">
       {showIcon && squad.type && (
         <img
-          src={roleSrc(squad.type, mode)}
+          src={themedImg.getRoleIconSrc(squad.type)}
           alt={squad.type}
           width={16}
           height={16}

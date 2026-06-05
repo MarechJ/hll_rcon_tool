@@ -18,8 +18,8 @@ import {
   getSteamProfileUrl,
   hasRecentWarnings,
   isSteamPlayer,
-  teamToNation,
   getTierColors,
+  getColoredFactionIconSrc,
 } from "@/utils/lib";
 import { SortableHeader, TextButton } from "@/components/table/styles";
 import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";
@@ -28,7 +28,7 @@ import CopyableText from "@/components/shared/CopyableText";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSteam } from "@fortawesome/free-brands-svg-icons";
 import Emoji from "@/components/shared/Emoji";
-import useTheme from "@mui/material/styles/useTheme";
+import { useThemedImages } from "@/hooks/useThemedImages";
 
 export const Square = styled(Box)(({ theme }) => ({
   display: "flex",
@@ -97,16 +97,17 @@ export const columns = [
     id: "team",
     header: SortableHeader("T", "Team"),
     cell: ({ row }) => {
+      const themedImg = useThemedImages()
       return (
         <Center>
           <Square>
-            {row.original.team ? (
+            {row.original.faction ? (
               <img
-                src={`/icons/teams/${teamToNation(row.original.team)}.webp`}
+                src={getColoredFactionIconSrc(row.original.faction)}
                 width={16}
                 height={16}
-                alt={row.original.team}
-                title={row.original.team}
+                alt={row.original.faction}
+                title={row.original.faction}
               />
             ) : "-"}
           </Square>
@@ -143,17 +144,12 @@ export const columns = [
     header: SortableHeader("R", "Role"),
     accessorKey: "role",
     cell: ({ row }) => {
-      const theme = useTheme();
-      const mode = theme?.palette?.mode || "light";
-      const src =
-        mode === "light"
-          ? `/icons/roles/${row.original.role}_black.png`
-          : `/icons/roles/${row.original.role}.png`;
+      const themedImg = useThemedImages();
       return (
         <Center>
           <Square>
             <img
-              src={src}
+              src={themedImg.getRoleIconSrc(row.original.role)}
               width={16}
               height={16}
               alt={row.original.role}

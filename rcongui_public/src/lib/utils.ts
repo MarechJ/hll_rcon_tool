@@ -25,3 +25,6 @@ export const dayjsLocal = (date: string) => {
   const tz = dayjs.tz.guess();
   return dayjs.utc(date).tz(tz);
 };
+
+export const getLightTeamIconSrc = (team: string) => `/icons/teams/${team}.webp`
+export const getDarkTeamIconSrc = (team: string) => `/icons/teams/${team}_dark.webp`

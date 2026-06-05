@@ -404,6 +404,7 @@ def default_player_info_dict() -> GetDetailedPlayer:
         "unit_name": None,
         "loadout": None,
         "team": None,
+        "faction": None,
         "role": None,
         "kills": 0,
         "deaths": 0,
@@ -447,6 +448,7 @@ def parse_raw_player_info(raw: PlayerInfoType) -> GetDetailedPlayer:
         logger.exception("Unknown role %s", raw["role"])
         role = None
 
+    data["faction"] = faction.short_name.lower() if faction else None
     data["team"] = faction.team.name.lower() if faction else None
     data["role"] = role.name.lower() if role else None
     data["loadout"] = raw["loadout"].lower()

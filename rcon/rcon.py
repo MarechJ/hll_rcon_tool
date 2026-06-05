@@ -52,6 +52,7 @@ from rcon.utils import (
     get_server_number,
     parse_raw_player_info,
 )
+from hllrcon import Faction
 
 PLAYER_ID = "player_id"
 NAME = "name"

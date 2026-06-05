@@ -8,14 +8,14 @@ import dayjs from "dayjs";
 import { ActionMenuButton } from "@/features/player-action/ActionMenu";
 import { generatePlayerActions } from "@/features/player-action/actions";
 import {
+  getColoredFactionIconSrc,
   getPlayerTier,
-  teamToNation,
   getTierColors,
 } from "@/utils/lib";
 import { SortableHeader } from "@/components/table/styles";
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import useTheme from "@mui/material/styles/useTheme";
+import { useThemedImages } from "@/hooks/useThemedImages";
 
 export const Square = styled(Box)(({ theme }) => ({
   display: "flex",
@@ -86,13 +86,15 @@ export const columns = [
       return (
         <Center>
           <Square>
-            <img
-              src={`/icons/teams/${teamToNation(row.original.team)}.webp`}
-              width={16}
-              height={16}
-              alt={row.original.team}
-              title={row.original.team}
-            />
+            {row.original.faction ? (
+              <img
+                src={getColoredFactionIconSrc(row.original.faction)}
+                width={16}
+                height={16}
+                alt={row.original.faction}
+                title={row.original.faction}
+              />
+            ) : <span>{"-"}</span>}
           </Square>
         </Center>
       );
@@ -127,22 +129,14 @@ export const columns = [
     header: SortableHeader("R","Role"),
     accessorKey: "role",
     cell: ({ row }) => {
-      const theme = useTheme();
-      const mode = theme?.palette?.mode || "light";
+      const themedImg = useThemedImages();
       const iconKey = row.original.type ?? row.original.role;
-      const src = row.getCanExpand()
-        ? mode === "light"
-          ? `/icons/roles/${iconKey}_black.png`
-          : `/icons/roles/${iconKey}.png`
-        : mode === "light"
-          ? `/icons/roles/${row.original.role}_black.png`
-          : `/icons/roles/${row.original.role}.png`;
 
       return row.team !== "neutral" ? (
         <Center>
           <Square>
             <img
-              src={src}
+              src={themedImg.getRoleIconSrc(iconKey)}
               width={16}
               height={16}
               alt={iconKey}

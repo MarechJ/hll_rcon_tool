@@ -280,3 +280,5 @@ export function useTierColors() {
   const theme = useTheme();
   return getTierColors(theme.palette.mode);
 }
+
+export const getColoredFactionIconSrc = (team) => `/icons/teams/${team}_colored.webp`

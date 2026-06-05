@@ -32,12 +32,15 @@ import ErrorIcon from "@mui/icons-material/Error";
 import CheckIcon from "@mui/icons-material/Check";
 import ErrorBrowser from "@/components/shared/ErrorBrowser";
 import debug from "@/utils/debug";
+import { useThemedImages } from "@/hooks/useThemedImages";
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const logger = debug("DISBAND SQUAD DIALOG");
 
 // Disband Squad Dialog with react-hook-form integration
 export default function DisbandSquadDialog() {
+  const themedImg = useThemedImages()
+  const theme = useTheme()
   const UNASSIGNED = "unassigned";
   const [PENDING, ERROR, SUCCESS] = [0, 1, 2];
   const [dialogOpen, setDialogOpen] = React.useState(false);
@@ -46,15 +49,8 @@ export default function DisbandSquadDialog() {
     new Map()
   );
   const [errors, setErrors] = React.useState([]);
-  const theme = useTheme();
-  const mode = theme?.palette?.mode || "light";
   const fullScreen = useMediaQuery(theme.breakpoints.down("md"));
   const queryClient = useQueryClient();
-
-  const roleSrc = (role, mode) =>
-    mode === "light"
-      ? `/icons/roles/${role}_black.png`
-      : `/icons/roles/${role}.png`;
 
   const { data: teamData, refetch: refetchTeamData } = useQuery({
     ...teamsLiveQueryOptions,
@@ -419,15 +415,12 @@ export default function DisbandSquadDialog() {
                                     }}
                                   >
                                     <img
-                                      src={`/icons/teams/${
-                                        option.faction ??
-                                        (option.team === "axis" ? "ger" : "us")
-                                      }.webp`}
+                                      src={themedImg}
                                       width={16}
                                       height={16}
                                     />
                                     <img
-                                      src={roleSrc(option.type, mode)}
+                                      src={themedImg.getRoleIconSrc(option.type)}
                                       width={16}
                                       height={16}
                                     />
