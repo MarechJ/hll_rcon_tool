@@ -2,6 +2,7 @@ export const padlockConfigs = [
     { name: "allow_opt_out", label: "Allow user to opt-out of vote map reminders by typing !votemap never" },
     { name: "consider_offensive_same_map", label: "Consider offensive maps as being the same when excluding:" },
     { name: "consider_skirmishes_as_same_map", label: "Consider skirmish maps as being the same when excluding:" },
+    { name: "consider_environment_as_same_map", label: "Consider maps with different environment(day, ...) as being the same when excluding:" },
     { name: "allow_consecutive_offensives", label: "Allow consecutive offensive map" },
     { name: "allow_consecutive_offensives_opposite_sides", label: "Allow consecutive offensive where a team would play defense twice in a row. E.g off_ger followed by off_us" },
     { name: "allow_consecutive_skirmishes", label: "Allow consecutive skirmish map" },

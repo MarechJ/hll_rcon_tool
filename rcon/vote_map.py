@@ -4,6 +4,8 @@ import functools
 import logging
 import pickle
 import random
+from rcon.maps import Layer, get_all_layers_by_map
+from rcon.maps import Layer
 import re
 from datetime import UTC, datetime, timedelta
 from functools import partial
@@ -973,21 +975,26 @@ class VoteMap:
         num_skirmish_control_options: int,
         consider_offensive_same_map: bool,
         consider_skirmishes_as_same_map: bool,
+        consider_environment_as_same_map: bool,
         allow_consecutive_offensives: bool,
         allow_consecutive_offensives_opposite_sides: bool,
         allow_consecutive_skirmishes: bool,
         **kwargs,
     ) -> list[maps.Layer]:
+        maps_to_exclude = set[maps.Layer]()
         if number_last_played_to_exclude > 0:
-            last_n_maps = set(m for m in maps_history[:number_last_played_to_exclude])
-        else:
-            last_n_maps: set[maps.Layer] = set()
+            last_n_maps = set[Layer](m for m in maps_history[:number_last_played_to_exclude])
+            if consider_environment_as_same_map:
+                for layer in last_n_maps:
+                    maps_to_exclude.update(get_all_layers_by_map(layer.map, layer.game_mode))
+            else:
+                maps_to_exclude = last_n_maps
         logger.info(
             "Excluding last %s played maps: %s",
             number_last_played_to_exclude,
-            [m.pretty_name for m in last_n_maps],
+            [m.pretty_name for m in maps_to_exclude],
         )
-        remaining_maps = [maps.parse_layer(m) for m in (allowed_maps - last_n_maps)]
+        remaining_maps = [maps.parse_layer(m) for m in (allowed_maps - maps_to_exclude)]
         logger.info(
             "Remaining maps to suggest from: %s",
             [m.pretty_name for m in remaining_maps],
@@ -997,7 +1004,7 @@ class VoteMap:
 
         if consider_offensive_same_map or consider_skirmishes_as_same_map:
             # use the id `carentan`, `hill400` etc. to get the base map regardless of game type
-            map_ids = set(m.map for m in last_n_maps)
+            map_ids = set(m.map for m in maps_to_exclude)
             logger.info(
                 "Considering offensive/skirmish mode as same map, excluding %s", map_ids
             )
