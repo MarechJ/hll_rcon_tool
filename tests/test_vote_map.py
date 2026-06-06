@@ -492,7 +492,8 @@ def test_ensure_selection_when_no_maps_to_select_from(votemap):
 def test_exclude_last_maps_considers_same_mode_different_environment(
     redis_client, mock_rcon
 ):
-    """Excluding last 2 maps also excludes same map/mode with different environment."""
+    """Excluding last 2 maps also excludes same maps with the same game 
+    mode with different environment."""
     history = [
         {"name": HUR_WARFARE_DAY.id, "start": 1, "end": None},
         {"name": CAR_WARFARE_DAY.id, "start": 0, "end": 1},
@@ -507,6 +508,7 @@ def test_exclude_last_maps_considers_same_mode_different_environment(
             consider_environment_as_same_map=consider_environment_as_same_map,
             consider_offensive_same_map=False,
             consider_skirmishes_as_same_map=False,
+            allow_consecutive_offensives_opposite_sides=True,
             num_warfare_options=10,
             num_offensive_options=10,
             num_skirmish_control_options=10,
@@ -534,6 +536,60 @@ def test_exclude_last_maps_considers_same_mode_different_environment(
     assert CAR_WARFARE_NIGHT.id in without_env_ids
     assert HUR_WARFARE_DAY.id not in without_env_ids
     assert UTAH_WARFARE_DAY.id in without_env_ids
+
+
+def test_dont_allow_same_map_per_mode_with_different_environment(
+    redis_client, mock_rcon
+):
+    """When new votemap selection is created and allow_multiple_maps_with_same_environment
+    is disabled there should never be multiple maps of the same gamemode in the selection"""
+    history = [
+        {"name": CAR_SKIRMISH_DAY.id, "start": 1, "end": None},
+    ]
+    mock_rcon.current_map = HUR_WARFARE_DAY
+    allowed_maps = list(set(SAMPLE_MAPS) | {UTAH_WARFARE_DAY})
+
+    def make_votemap(allow_multiple_maps_with_same_environment: bool) -> VoteMap:
+        config_loader = lambda: VoteMapUserConfig(
+            enabled=True,
+            number_last_played_to_exclude=1,
+            consider_environment_as_same_map=False,
+            allow_consecutive_offensives_opposite_sides=True,
+            allow_multiple_maps_with_same_environment=allow_multiple_maps_with_same_environment,
+            consider_offensive_same_map=False,
+            consider_skirmishes_as_same_map=False,
+            num_warfare_options=10,
+            num_offensive_options=10,
+            num_skirmish_control_options=10,
+        )
+        with patch("rcon.vote_map.get_redis_client", return_value=redis_client):
+            votemap = VoteMap(
+                rcon=mock_rcon,
+                config_loader=config_loader,
+                maps_history=history,
+            )
+        votemap.set_map_whitelist(allowed_maps)
+        return votemap
+
+    with_env_ids = {m.id for m in make_votemap(False).get_new_selection()}
+
+    assert CAR_SKIRMISH_DAY.id not in with_env_ids
+    if CAR_SKIRMISH_DUSK.id in with_env_ids:
+        assert CAR_SKIRMISH_RAIN.id not in with_env_ids
+    if CAR_SKIRMISH_RAIN.id in with_env_ids:
+        assert CAR_SKIRMISH_DUSK.id not in with_env_ids
+    if CAR_WARFARE_DAY.id in with_env_ids:
+        assert CAR_WARFARE_NIGHT.id not in with_env_ids
+    if CAR_WARFARE_NIGHT.id in with_env_ids:
+        assert CAR_WARFARE_DAY.id not in with_env_ids
+
+    without_env_ids = {m.id for m in make_votemap(True).get_new_selection()}
+
+    assert CAR_SKIRMISH_DAY.id not in with_env_ids
+    assert CAR_WARFARE_DAY.id in without_env_ids
+    assert CAR_WARFARE_NIGHT.id in without_env_ids
+    assert CAR_SKIRMISH_RAIN.id in without_env_ids
+    assert CAR_SKIRMISH_DUSK.id in without_env_ids
 
 
 def test_no_cmd_handling_while_disabled(votemap_disabled):

@@ -14,6 +14,7 @@ class VoteMapType(TypedDict):
     consider_offensive_same_map: bool
     consider_skirmishes_as_same_map: bool
     consider_environment_as_same_map: bool
+    allow_multiple_maps_with_same_environment: bool
     allow_consecutive_offensives: bool
     allow_consecutive_offensives_opposite_sides: bool
     allow_default_to_offensive: bool
@@ -105,6 +106,7 @@ class VoteMapUserConfig(BaseUserConfig):
     consider_offensive_same_map: bool = Field(default=True)
     consider_skirmishes_as_same_map: bool = Field(default=True)
     consider_environment_as_same_map: bool = Field(default=False)
+    allow_multiple_maps_with_same_environment: bool = Field(default=False)
     allow_consecutive_offensives: bool = Field(default=True)
     allow_consecutive_offensives_opposite_sides: bool = Field(default=False)
     allow_default_to_offensive: bool = Field(default=False)
@@ -148,6 +150,7 @@ class VoteMapUserConfig(BaseUserConfig):
                 "consider_skirmishes_as_same_map"
             ),
             consider_environment_as_same_map=values.get("consider_environment_as_same_map"),
+            allow_multiple_maps_with_same_environment=values.get("allow_multiple_maps_with_same_environment"),
             allow_consecutive_offensives=values.get("allow_consecutive_offensives"),
             allow_consecutive_offensives_opposite_sides=values.get(
                 "allow_consecutive_offensives_opposite_sides"

@@ -1672,11 +1672,11 @@ def safe_get_map_name(map_name: str, pretty: bool = True) -> str:
 def is_server_loading_map(map_name: str) -> bool:
     return "untitled" in map_name.lower()
 
-def get_all_layers_by_map(map: Map, game_mode: Optional[GameMode] = None) -> set[Layer]:
+def get_all_layers_by_map(map: Map, game_mode: Optional[GameMode] = None, team: Optional[Team] = None) -> set[Layer]:
     if game_mode:
         return {
             layer
             for layer in LAYERS.values()
-            if layer.map == map and layer.game_mode == game_mode
+            if layer.map == map and layer.game_mode == game_mode and layer.attackers == team
         }
     return {layer for layer in LAYERS.values() if layer.map == map}
