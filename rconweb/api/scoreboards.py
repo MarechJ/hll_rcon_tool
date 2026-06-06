@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 
 from django.views.decorators.csrf import csrf_exempt
+from django_ratelimit.decorators import ratelimit
 
 from rcon.maps import parse_layer
 from rcon.models import Maps, enter_session
@@ -18,6 +19,7 @@ logger = logging.getLogger("rconweb")
 
 
 @csrf_exempt
+@ratelimit(key='ip', rate='60/m')
 @stats_login_required
 @require_http_methods(["GET"])
 def get_live_scoreboard(request):
@@ -45,6 +47,7 @@ def get_live_scoreboard(request):
 
 
 @csrf_exempt
+@ratelimit(key='ip', rate='60/m')
 @stats_login_required
 @require_http_methods(["GET"])
 def get_scoreboard_maps(request):
@@ -92,6 +95,7 @@ def get_scoreboard_maps(request):
 
 
 @csrf_exempt
+@ratelimit(key='ip', rate='60/m')
 @stats_login_required
 @require_http_methods(["GET"])
 def get_map_scoreboard(request):
@@ -124,6 +128,7 @@ def get_map_scoreboard(request):
 
 
 @csrf_exempt
+@ratelimit(key='ip', rate='60/m')
 @stats_login_required
 @require_http_methods(["GET"])
 def get_live_game_stats(request):
@@ -145,6 +150,7 @@ def get_live_game_stats(request):
 
 
 @csrf_exempt
+@ratelimit(key='ip', rate='10/m')
 @stats_login_required
 @require_http_methods(["GET"])
 def get_map_history(request):
@@ -169,6 +175,7 @@ def get_map_history(request):
 
 
 @csrf_exempt
+@ratelimit(key='ip', rate='10/m')
 @stats_login_required
 @require_http_methods(["GET"])
 def get_previous_map(request):
