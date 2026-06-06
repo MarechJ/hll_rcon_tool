@@ -131,49 +131,15 @@ class VoteMapUserConfig(BaseUserConfig):
     @staticmethod
     def save_to_db(values: VoteMapType, dry_run=False):
         key_check(
-            VoteMapType.__required_keys__, VoteMapType.__optional_keys__, values.keys()
+                VoteMapType.__required_keys__, 
+                VoteMapType.__optional_keys__, 
+                values.keys()
         )
 
-        # model_fields = VoteMapUserConfig.model_fields.keys()
-        # filtered_values = {k: v for k, v in values.items() if k in model_fields}
-        # validated_conf = VoteMapUserConfig(**filtered_values) # type: ignore
-
-        validated_conf = VoteMapUserConfig(
-            enabled=values.get("enabled"),
-            default_method=values.get("default_method"),
-            num_warfare_options=values.get("num_warfare_options"),
-            num_offensive_options=values.get("num_offensive_options"),
-            num_skirmish_control_options=values.get("num_skirmish_control_options"),
-            number_last_played_to_exclude=values.get("number_last_played_to_exclude"),
-            consider_offensive_same_map=values.get("consider_offensive_same_map"),
-            consider_skirmishes_as_same_map=values.get(
-                "consider_skirmishes_as_same_map"
-            ),
-            consider_environment_as_same_map=values.get("consider_environment_as_same_map"),
-            allow_multiple_maps_with_same_environment=values.get("allow_multiple_maps_with_same_environment"),
-            allow_consecutive_offensives=values.get("allow_consecutive_offensives"),
-            allow_consecutive_offensives_opposite_sides=values.get(
-                "allow_consecutive_offensives_opposite_sides"
-            ),
-            allow_default_to_offensive=values.get("allow_default_to_offensive"),
-            allow_consecutive_skirmishes=values.get("allow_consecutive_skirmishes"),
-            allow_default_to_skirmish=values.get("allow_default_to_skirmish"),
-            instruction_text=values.get("instruction_text"),
-            thank_you_text=values.get("thank_you_text"),
-            no_vote_text=values.get("no_vote_text"),
-            reminder_frequency_minutes=values.get("reminder_frequency_minutes"),
-            allow_opt_out=values.get("allow_opt_out"),
-            help_text=values.get("help_text"),
-            vote_flags=values.get("vote_flags"),
-            vote_ban_flags=values.get("vote_ban_flags"),
-            player_choice_flags=values.get("player_choice_flags"),
-            player_choice_help_text=values.get("player_choice_help_text"),
-            vip_vote_count=values.get("vip_vote_count"),
-            remind_on_match_start=values.get("remind_on_match_start"),
-            remind_on_match_end=values.get("remind_on_match_end"),
-            allow_vip_only=values.get("allow_vip_only"),
-            allow_flag_only=values.get("allow_flag_only"),
-        )
+        model_fields = set(VoteMapUserConfig.model_fields.keys())
+        filtered_values = {k: v for k, v in values.items() if k in model_fields}
+        
+        validated_conf = VoteMapUserConfig.model_validate(filtered_values)
 
         if not dry_run:
             set_user_config(VoteMapUserConfig.KEY(), validated_conf)

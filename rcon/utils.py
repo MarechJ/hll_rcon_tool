@@ -4,7 +4,7 @@ import os
 import secrets
 from datetime import datetime, timedelta, timezone
 from itertools import islice
-from typing import Any, Generic, Iterable, TypeVar, cast
+from typing import Any, Generic, Iterable, TypeVar
 
 import hllrcon
 import orjson
