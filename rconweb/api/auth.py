@@ -203,7 +203,6 @@ def api_csv_response(content, name, header):
 @require_content_type()
 @ratelimit(key='ip', rate='10/15m')
 def do_login(request):
-    print(request.get_host())
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
