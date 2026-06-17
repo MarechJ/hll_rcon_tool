@@ -41,8 +41,9 @@ class MockRconServerSettingsUserConfig:
 
 
 class MockAdminPingWebhooksUserConfig:
-    def __init__(self, trigger_words: list[str]) -> None:
+    def __init__(self, trigger_words: list[str], hooks: list | None = None) -> None:
         self.trigger_words = trigger_words
+        self.hooks = hooks or []
 
 
 def make_mock_stat(player: str, player_id: str, *args, **kwargs):

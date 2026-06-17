@@ -18,6 +18,7 @@ from rcon.user_config.webhooks import (
     DiscordMentionWebhook,
     DiscordWebhook,
     KillsWebhooksUserConfig,
+    TriggerWordMentionWebhook,
 )
 from rcon.webhook_service import (
     enqueue_message,
@@ -78,9 +79,16 @@ class DiscordWebhookHandler:
             server_settings or RconServerSettingsUserConfig.load_from_db()
         )
 
-        ping_trigger_webhooks = []
+        ping_trigger_webhooks: list[
+            tuple[DiscordWebhook, TriggerWordMentionWebhook]
+        ] = []
         try:
-            ping_trigger_webhooks = self._make_hook(self.admin_wh_config.hooks)
+            made_hooks = self._make_hook(self.admin_wh_config.hooks)
+            ping_trigger_webhooks = [
+                (made, config)
+                for made, config in zip(made_hooks, self.admin_wh_config.hooks)
+                if made
+            ]
         except Exception as e:
             logger.exception("Error initializing ping trigger webhooks: %s", e)
 
@@ -97,7 +105,7 @@ class DiscordWebhookHandler:
             logger.exception("Error initializing ping trigger webhooks: %s", e)
 
         # TODO: If we don't get a valid response for a webhook we should log it
-        self.ping_trigger_webhooks = [wh for wh in ping_trigger_webhooks if wh]
+        self.ping_trigger_webhooks = ping_trigger_webhooks
         self.chat_webhooks = [wh for wh in chat_webhooks if wh]
         self.kills_webhooks = [wh for wh in kills_webhooks if wh]
 
@@ -128,27 +136,35 @@ class DiscordWebhookHandler:
 
         return embed
 
-    def create_admin_ping_message(self, log) -> tuple[str, DiscordEmbed, bool]:
+    def hook_trigger_words(
+        self, hook: TriggerWordMentionWebhook
+    ) -> list[str]:
+        """The trigger words that fire this hook: the config level trigger words
+        (which apply to every hook) combined with any defined on the hook itself."""
+        return list(
+            dict.fromkeys(self.admin_wh_config.trigger_words + hook.trigger_words)
+        )
+
+    def create_admin_ping_message(
+        self, log, hook: TriggerWordMentionWebhook
+    ) -> tuple[str, DiscordEmbed, bool]:
         message = log["sub_content"]
         embed = self.create_chat_embed(log)
 
         content = ""
         triggered = False
-        if self.admin_wh_config.trigger_words:
+        trigger_words = self.hook_trigger_words(hook)
+        if trigger_words:
             msg_words = re.split(r"([^a-zA-Z!@\d])", message)
-            for trigger_word in self.admin_wh_config.trigger_words:
+            for trigger_word in trigger_words:
                 for i, msg_word in enumerate(msg_words):
                     if trigger_word == msg_word.lower():
                         triggered = True
                         msg_words[i] = f"__**{msg_words[i]}**__"
             if triggered:
                 mentions: list[str] = []
-                mentions.extend(
-                    [id_ for h in self.admin_wh_config.hooks for id_ in h.user_mentions]
-                )
-                mentions.extend(
-                    [id_ for h in self.admin_wh_config.hooks for id_ in h.role_mentions]
-                )
+                mentions.extend(hook.user_mentions)
+                mentions.extend(hook.role_mentions)
                 content = " ".join(mentions)
                 embed.description = discord.utils.escape_mentions("".join(msg_words))
 
@@ -197,7 +213,6 @@ class DiscordWebhookHandler:
 
     def send_chat_message(self, log):
         try:
-            content, admin_embed, triggered = self.create_admin_ping_message(log)
             chat_embed = self.create_chat_message(log)
 
             for wh in self.chat_webhooks:
@@ -212,19 +227,21 @@ class DiscordWebhookHandler:
                     )
                 )
 
-            if triggered:
-                for wh in self.ping_trigger_webhooks:
-                    wh.remove_embeds()
-                    wh.add_embed(admin_embed)
-                    wh.content = content
-                    enqueue_message(
-                        message=WebhookMessage(
-                            payload=wh.json,
-                            webhook_type=WebhookType.DISCORD,
-                            message_type=WebhookMessageType.ADMIN_PING,
-                            server_number=int(get_server_number()),
-                        )
+            for wh, hook in self.ping_trigger_webhooks:
+                content, admin_embed, triggered = self.create_admin_ping_message(log, hook)
+                if not triggered:
+                    continue
+                wh.remove_embeds()
+                wh.add_embed(admin_embed)
+                wh.content = content
+                enqueue_message(
+                    message=WebhookMessage(
+                        payload=wh.json,
+                        webhook_type=WebhookType.DISCORD,
+                        message_type=WebhookMessageType.ADMIN_PING,
+                        server_number=int(get_server_number()),
                     )
+                )
         except Exception as e:
             logger.exception("error enqueing chat message webhook: %s", e)
             raise
