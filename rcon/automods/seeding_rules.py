@@ -150,10 +150,9 @@ class SeedingRulesAutomod:
         """
         p: PunitionsToApply = PunitionsToApply()
 
-        if log[
-            "weapon"
-        ] in self.config.disallowed_weapons.weapons and not self._is_seeding_rule_disabled(
-            "disallowed_weapons"
+        if (
+            log["weapon"] in self.config.disallowed_weapons.weapons
+            and not self._is_seeding_rule_disabled("disallowed_weapons")
         ):
             author = AUTOMOD_USERNAME + ("-DryRun" if self.config.dry_run else "")
 
@@ -324,7 +323,6 @@ class SeedingRulesAutomod:
             return punitions_to_apply
 
         with self.watch_state(team, squad_name) as watch_status:
-
             # if squad_name is None or squad is None:
             #     raise NoSeedingViolation()
 

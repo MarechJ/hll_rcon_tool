@@ -2104,7 +2104,7 @@ class RconAPI(Rcon):
                 return HLLCommandFailedError(
                     f"Player {player_id} was not found. The account could not be updated."
                 )
-            
+
             return {
                 "account": account_db.to_dict(),
                 "msg": "Successfully updated account details.",

@@ -289,7 +289,6 @@ class LevelThresholdsAutomod:
             return punitions_to_apply
 
         with self.watch_state(team, squad_name) as watch_status:
-
             author = AUTOMOD_USERNAME + ("-DryRun" if self.config.dry_run else "")
 
             for player in squad["players"]:
@@ -332,7 +331,7 @@ class LevelThresholdsAutomod:
                         message = message.format(level=min_level)
                     except KeyError:
                         self.logger.warning(
-                            "The automod message (%s) " "contains an invalid key",
+                            "The automod message (%s) contains an invalid key",
                             message,
                         )
                     violations.append(message)
@@ -349,7 +348,7 @@ class LevelThresholdsAutomod:
                         message = message.format(level=max_level)
                     except KeyError:
                         self.logger.warning(
-                            "The automod message (%s) " "contains an invalid key",
+                            "The automod message (%s) contains an invalid key",
                             message,
                         )
                     violations.append(message)
@@ -385,7 +384,7 @@ class LevelThresholdsAutomod:
                             )
                         except KeyError:
                             self.logger.warning(
-                                "The automod message (%s) " "contains an invalid key",
+                                "The automod message (%s) contains an invalid key",
                                 message,
                             )
                         violations.append(message)

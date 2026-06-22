@@ -159,7 +159,9 @@ class StandardBroadcastMessagesUserConfig(BaseUserConfig):
             set_user_config(StandardBroadcastMessagesUserConfig.KEY(), validated_conf)
 
 
-def get_all_message_types(as_dict=False, as_json=False) -> (
+def get_all_message_types(
+    as_dict=False, as_json=False
+) -> (
     dict[str, dict[str, Any]]
     | str
     | tuple[

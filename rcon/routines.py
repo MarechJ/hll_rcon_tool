@@ -41,7 +41,7 @@ def toggle_votekick(rcon: Rcon):
 
 
 def dump_rcon_performance_stats():
-    pl = PerformanceStatistics('rcon', True)
+    pl = PerformanceStatistics("rcon", True)
     d = pl.dump()
     for k, v in d.items():
         logger.info(f"{k}: {v}")
@@ -56,7 +56,7 @@ def run():
             scheduled_time=datetime.datetime.now(datetime.UTC),
             func=dump_rcon_performance_stats,
             interval=rcon.performance_stats_interval(),
-            id='dump_performance_logs',
+            id="dump_performance_logs",
         )
 
     while True:

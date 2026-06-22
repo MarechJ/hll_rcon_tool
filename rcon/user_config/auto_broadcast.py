@@ -48,9 +48,20 @@ class RawAutoBroadCastMessage(BaseModel):
 
 
 class AutoBroadcastUserConfig(BaseUserConfig):
-    enabled: bool = Field(default=False, strict=True, title="Enable", description="Enable auto broadcasts")
-    randomize: bool = Field(default=False, strict=True, title="Randomize messages", description="Set broadcasts in random order")
-    messages: list[AutoBroadcastMessage] = Field(default_factory=list, title="Messages", description="A list of dicts with `time_sec` (length in seconds the broadcast is set for) and `message` (the broadcast message) keys")
+    enabled: bool = Field(
+        default=False, strict=True, title="Enable", description="Enable auto broadcasts"
+    )
+    randomize: bool = Field(
+        default=False,
+        strict=True,
+        title="Randomize messages",
+        description="Set broadcasts in random order",
+    )
+    messages: list[AutoBroadcastMessage] = Field(
+        default_factory=list,
+        title="Messages",
+        description="A list of dicts with `time_sec` (length in seconds the broadcast is set for) and `message` (the broadcast message) keys",
+    )
 
     @staticmethod
     def save_to_db(values: AutoBroadcastType, dry_run=False):

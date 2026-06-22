@@ -250,7 +250,7 @@ DATABASES = {
         "NAME": db_info["NAME"],
         "OPTIONS": {
             "application_name": (os.getenv("SERVER_NUMBER") or "") + "Django",
-        }
+        },
     }
 }
 

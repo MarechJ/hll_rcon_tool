@@ -1,7 +1,9 @@
-[tool.isort]
-profile = "black"
-src_paths = ["rcon", "rconweb", "tests"]
+[project]
+target-version = ['py312']
 
-[tool.black]
-target-version = ['py311']
-include = '\.pyi?$'
+[tool.ruff]
+extend-exclude = [
+    # Ignore auto-generated python files
+    'alembic/**',
+    'rconweb/api/migrations/**'
+]

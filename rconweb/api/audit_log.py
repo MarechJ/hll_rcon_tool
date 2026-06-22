@@ -75,8 +75,8 @@ def get_audit_logs_autocomplete(request):
     res = None
     try:
         with enter_session() as sess:
-            usernames = [u for u, in sess.query(AuditLog.username).distinct().all()]
-            commands = [c for c, in sess.query(AuditLog.command).distinct().all()]
+            usernames = [u for (u,) in sess.query(AuditLog.username).distinct().all()]
+            commands = [c for (c,) in sess.query(AuditLog.command).distinct().all()]
             logger.debug("Audit metadata: %s %s", usernames, commands)
     except Exception as e:
         logger.exception("Getting audit log failed")

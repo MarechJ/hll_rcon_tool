@@ -2032,6 +2032,7 @@ def test_default_config():
     config = AutoModNoLeaderUserConfig.load_from_db()
     assert config.enabled == False
 
+
 def fake_setex(k, _, v):
     redis_store[k] = v
 
@@ -2043,8 +2044,10 @@ def fake_get(k):
 def fake_exists(k):
     return redis_store.get(k, None) is not None
 
+
 def fake_delete(ks: str):
     redis_store.pop(ks, None)
+
 
 def mod_with_config(c: AutoModNoLeaderUserConfig) -> NoLeaderAutomod:
     mod = NoLeaderAutomod(c, Mock())

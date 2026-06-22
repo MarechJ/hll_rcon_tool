@@ -21,9 +21,8 @@ from django.urls import include, path
 
 from api.browse_logsdir import list_logs
 
-if (
-    not os.getenv("HLL_MAINTENANCE_CONTAINER")
-    and not os.getenv("HLL_WH_SERVICE_CONTAINER")
+if not os.getenv("HLL_MAINTENANCE_CONTAINER") and not os.getenv(
+    "HLL_WH_SERVICE_CONTAINER"
 ):
     urlpatterns = [
         path("admin/", admin.site.urls),

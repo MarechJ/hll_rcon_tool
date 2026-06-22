@@ -13,33 +13,38 @@ from .decorators import require_http_methods
 @login_required()
 @user_passes_test(lambda u: u.is_staff)
 @require_http_methods(["GET"])
-def list_logs(request, path=''):
+def list_logs(request, path=""):
     """
     Displays a raw list of folders and files in the /logs folder
     """
     root = os.getenv("LOGGING_PATH", "/logs")
 
     full_path = os.path.normpath(os.path.join(root, path))
-    if not full_path.startswith(os.path.normpath(root)) or not os.path.exists(full_path):
+    if not full_path.startswith(os.path.normpath(root)) or not os.path.exists(
+        full_path
+    ):
         raise Http404("Directory not found")
 
     if os.path.isfile(full_path):
         from django.views.static import serve
+
         return serve(request, path, document_root=root)
 
     try:
         items = []
         for entry in os.scandir(full_path):
             stats = entry.stat()
-            items.append({
-                'name': entry.name,
-                'is_dir': entry.is_dir(),
-                'size': stats.st_size,
-                'mtime': datetime.fromtimestamp(stats.st_mtime)
-            })
+            items.append(
+                {
+                    "name": entry.name,
+                    "is_dir": entry.is_dir(),
+                    "size": stats.st_size,
+                    "mtime": datetime.fromtimestamp(stats.st_mtime),
+                }
+            )
 
         # Sort: directories first, then alphabetical
-        items.sort(key=lambda x: (not x['is_dir'], x['name'].lower()))
+        items.sort(key=lambda x: (not x["is_dir"], x["name"].lower()))
 
         html = f"<html><head><title>CRCON - logs/{path}</title><style>"
         html += "pre { margin: 0; padding: 2px; }"
@@ -54,10 +59,10 @@ def list_logs(request, path=''):
             html += f"<span class='l'><a href='..'>../</a></span>\n"
 
         for item in items:
-            suffix = '/' if item['is_dir'] else ''
-            name = item['name'] + suffix
-            date = item['mtime'].strftime('%Y-%m-%d %H:%M:%S')
-            size = f"{item['size'] / 1024:.1f} KB" if not item['is_dir'] else "-"
+            suffix = "/" if item["is_dir"] else ""
+            name = item["name"] + suffix
+            date = item["mtime"].strftime("%Y-%m-%d %H:%M:%S")
+            size = f"{item['size'] / 1024:.1f} KB" if not item["is_dir"] else "-"
             html += f"<span class='l'><a href='{name}'>{name:<55}</a> {size:>12} {date:>21}</span>\n"
 
         html += "</pre><hr></body></html>"

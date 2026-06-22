@@ -20,7 +20,7 @@ from rcon.utils import get_server_number
 
 logger = getLogger(__name__)
 
-EMPTY_EMBED: Final = "\u200B"
+EMPTY_EMBED: Final = "\u200b"
 
 MAP_LEGEND = """
 Legend

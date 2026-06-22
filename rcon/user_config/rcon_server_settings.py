@@ -22,6 +22,7 @@ class WindowsStorePlayersType(TypedDict):
     audit_message_author: str
     temp_ban_length_hours: int
 
+
 class MessageEnhancementsType(TypedDict):
     enabled: bool
     message_header: str
@@ -44,9 +45,7 @@ class RconServerSettingsType(TypedDict):
     message_enhancements: MessageEnhancementsType
 
 
-def _upper_case_action(
-    v: str | None, cls: Type[WindowsStoreIdActionType]
-):
+def _upper_case_action(v: str | None, cls: Type[WindowsStoreIdActionType]):
     if v:
         return cls(v.upper())
     else:
@@ -72,10 +71,12 @@ class WindowsStorePlayer(BaseModel):
     audit_message_author: str = Field(default="CRCON")
     temp_ban_length_hours: int = Field(default=1)
 
+
 class MessageEnhancements(BaseModel):
     enabled: bool = Field(default=False)
     message_header: str = Field(default="")
     message_footer: str = Field(default="")
+
 
 class RconServerSettingsUserConfig(BaseUserConfig):
     # Use a callable to defer calling get_server_number until it's used and not on import
@@ -96,7 +97,9 @@ class RconServerSettingsUserConfig(BaseUserConfig):
     windows_store_players: WindowsStorePlayer = Field(
         default_factory=WindowsStorePlayer
     )
-    message_enhancements: MessageEnhancements = Field(default_factory=MessageEnhancements)
+    message_enhancements: MessageEnhancements = Field(
+        default_factory=MessageEnhancements
+    )
 
     @field_serializer("server_url", "discord_invite_url")
     def serialize_urls(self, url: HttpUrl, _info):

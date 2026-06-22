@@ -1,5 +1,5 @@
 """
-    Ported with some tweaks/additions from https://github.com/ElGuillermo/HLL_CRCON_Discord_watch_killrate/blob/main/hll_rcon_tool/custom_tools/watch_killrate.py
+Ported with some tweaks/additions from https://github.com/ElGuillermo/HLL_CRCON_Discord_watch_killrate/blob/main/hll_rcon_tool/custom_tools/watch_killrate.py
 """
 
 import sys
@@ -297,15 +297,13 @@ def watch_killrate(
             # For instance a killrate threshold of 2.0 and arilltery threshold of 4.0
             filtered_kpm: float = round(
                 (
-                    (
-                        sum(
-                            kill_count
-                            for weapon, kill_count in used_weapons.items()
-                            if weapon not in not_base_weapons
-                        )
-                        / playtime_secs
-                        * 60
+                    sum(
+                        kill_count
+                        for weapon, kill_count in used_weapons.items()
+                        if weapon not in not_base_weapons
                     )
+                    / playtime_secs
+                    * 60
                 ),
                 2,
             )
@@ -412,9 +410,7 @@ def watch_killrate(
                 )
 
                 try:
-                    detailed_info = api.get_detailed_player_info(
-                        player_id=player_id
-                    )
+                    detailed_info = api.get_detailed_player_info(player_id=player_id)
                     player_level: int = detailed_info["level"]
                     player_role: str = detailed_info["role"]
                     player_loadout: str = detailed_info["loadout"]

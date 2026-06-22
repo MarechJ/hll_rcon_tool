@@ -272,7 +272,9 @@ def remind_vote_map(rcon: Rcon, struct_log):
 
 
 @on_match_start
-def reset_watch_killrate_cooldown(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
+def reset_watch_killrate_cooldown(
+    rcon: Rcon, struct_log: StructuredLogLineWithMetaData
+):
     """Reset the last reported time cache for new matches"""
     from rcon.watch_killrate import reset_cache
 
@@ -327,7 +329,7 @@ def handle_new_match_start(rcon: Rcon, struct_log):
         game_layout = GameLayout
         try:
             red = get_redis_client()
-            raw = red.getdel('GAME_LAYOUT')
+            raw = red.getdel("GAME_LAYOUT")
             game_layout = json.loads(raw) if raw is not None else {}
         except Exception as e:
             logger.error("Could not fetch Game Layout", e)
@@ -520,7 +522,7 @@ def handle_on_connect(
     )
 
     try:
-        if (player := rcon.get_detailed_player_info(player_id)):
+        if player := rcon.get_detailed_player_info(player_id):
             PlayerSoldier.update(player)
     except Exception:
         logger.exception("Unable to update soldier info for %s", player_id)
@@ -665,8 +667,8 @@ def notify_camera(rcon: Rcon, struct_log):
     try:
         if hooks := get_prepared_discord_hooks(CameraWebhooksUserConfig):
             embeded = DiscordEmbed(
-                title=f'{escape_markdown(struct_log["player_name_1"])}  - {escape_markdown(struct_log["player_id_1"])}',
-                description=f'{short_name} - {struct_log["sub_content"]}',
+                title=f"{escape_markdown(struct_log['player_name_1'])}  - {escape_markdown(struct_log['player_id_1'])}",
+                description=f"{short_name} - {struct_log['sub_content']}",
                 color=242424,
             )
             for h in hooks:

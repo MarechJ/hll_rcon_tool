@@ -815,7 +815,10 @@ def get_all_queue_keys_and_lengths(
     red: redis.StrictRedis, prefix: str = PREFIX
 ) -> list[tuple[str, int]]:
     """Return each queue key and the number of elements in its queue"""
-    return [(queue_id, red.llen(queue_id)) for queue_id in get_all_queue_keys(red=red, prefix=prefix)]  # type: ignore
+    return [
+        (queue_id, red.llen(queue_id))
+        for queue_id in get_all_queue_keys(red=red, prefix=prefix)
+    ]  # type: ignore
 
 
 def get_all_queue_keys_not_empty(
@@ -823,7 +826,11 @@ def get_all_queue_keys_not_empty(
 ) -> list[str]:
     """Scan for all the queues (identified by prefix)"""
     logger.debug("Getting all queue IDs with items from %s", PREFIX)
-    populated_queues = [queue_id for queue_id in get_all_queue_keys(red=red, prefix=prefix) if red.llen(queue_id) > 0]  # type: ignore
+    populated_queues = [
+        queue_id
+        for queue_id in get_all_queue_keys(red=red, prefix=prefix)
+        if red.llen(queue_id) > 0
+    ]  # type: ignore
     populated_transient_messages = get_all_transient_message_keys(
         red=red, prefix=prefix
     )

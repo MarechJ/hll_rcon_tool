@@ -4,7 +4,6 @@ import os
 if not os.getenv("HLL_MAINTENANCE_CONTAINER") and not os.getenv(
     "HLL_WH_SERVICE_CONTAINER"
 ):
-
     # Import all the sub modules that represent a user setting
     # so that .utils.all_subclasses() can properly report subclasses
     # for exporting settings through the CLI

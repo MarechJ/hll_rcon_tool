@@ -18,7 +18,12 @@ from rcon.commands import HLLCommandFailedError, ServerCtl, VipId
 from rcon.maps import UNKNOWN_MAP_NAME, Layer, is_server_loading_map, parse_layer
 from rcon.models import PlayerID, PlayerVIP, enter_session, GameLayout
 from rcon.perf_statistics import PerformanceStatistics
-from rcon.player_history import get_profiles, safe_save_player_action, save_player, get_player_profile
+from rcon.player_history import (
+    get_profiles,
+    safe_save_player_action,
+    save_player,
+    get_player_profile,
+)
 from rcon.settings import SERVER_INFO
 from rcon.types import (
     AdminType,
@@ -197,7 +202,11 @@ class Rcon(ServerCtl):
     def __init__(self, *args, pool_size: bool | None = None, **kwargs):
         config = RconConnectionSettingsUserConfig.load_from_db()
         super().__init__(
-            *args, **kwargs, perf_stats=PerformanceStatistics("rcon", config.performance_statistics_enabled)
+            *args,
+            **kwargs,
+            perf_stats=PerformanceStatistics(
+                "rcon", config.performance_statistics_enabled
+            ),
         )
         if pool_size is not None:
             self.pool_size = pool_size
@@ -281,18 +290,15 @@ class Rcon(ServerCtl):
             logger.error("No maps information available")
             current_map_start = datetime.now(timezone.utc).timestamp()
 
-        map_time_seconds = (
-            int(datetime.now(timezone.utc).timestamp() - current_map_start)
+        map_time_seconds = int(
+            datetime.now(timezone.utc).timestamp() - current_map_start
         )
 
         players = self.get_players()
         fail_count = 0
         players_by_id: dict[str, GetDetailedPlayer] = {}
 
-        all_player_info = {
-            p["iD"]: p
-            for p in super().get_all_player_info()
-        }
+        all_player_info = {p["iD"]: p for p in super().get_all_player_info()}
 
         for player in players:
             player_id = player[PLAYER_ID]
@@ -308,7 +314,7 @@ class Rcon(ServerCtl):
                 player_data = default_player_info_dict()
 
             player_data.update(player)  # type: ignore
-            
+
             if player_data["profile"]:
                 player_data["map_playtime_seconds"] = min(
                     player_data["profile"]["current_playtime_seconds"], map_time_seconds
@@ -331,7 +337,9 @@ class Rcon(ServerCtl):
         fail_count = detailed_players["fail_count"]
 
         for player in players_by_id.values():
-            team_name = player.get("team") if player.get("team") is not None else UNASSIGNED
+            team_name = (
+                player.get("team") if player.get("team") is not None else UNASSIGNED
+            )
             team = teams.setdefault(team_name, {})
             squad = team.setdefault(player.get("unit_name"), {})
             squad_players = squad.setdefault("players", [])
@@ -391,10 +399,10 @@ class Rcon(ServerCtl):
 
     @ttl_cache(ttl=1)
     def get_structured_logs(
-            self,
-            since_min_ago: int,
-            filter_action: str | None = None,
-            filter_player: str | None = None,
+        self,
+        since_min_ago: int,
+        filter_action: str | None = None,
+        filter_player: str | None = None,
     ) -> ParsedLogsType:
         raw = super().get_logs(since_min_ago)
         return self.parse_logs(raw, filter_action, filter_player)
@@ -404,7 +412,7 @@ class Rcon(ServerCtl):
         return super().get_admin_groups()
 
     def get_logs(
-            self, since_min_ago: int, filter_: str = "", by: str = ""
+        self, since_min_ago: int, filter_: str = "", by: str = ""
     ) -> list[str]:
         """Returns raw text logs from the game server with no parsing performed
 
@@ -417,13 +425,11 @@ class Rcon(ServerCtl):
 
     @overload
     def get_player_ids(
-            self, as_dict: Literal[False] = False
-    ) -> list[tuple[str, str]]:
-        ...
+        self, as_dict: Literal[False] = False
+    ) -> list[tuple[str, str]]: ...
 
     @overload
-    def get_player_ids(self, as_dict: Literal[True] = False) -> dict[str, str]:
-        ...
+    def get_player_ids(self, as_dict: Literal[True] = False) -> dict[str, str]: ...
 
     def get_player_ids(self, as_dict=False) -> dict[str, str] | list[tuple[str, str]]:
         raw_list = super().get_player_ids()
@@ -441,7 +447,7 @@ class Rcon(ServerCtl):
         return vip_count
 
     def _guess_squad_type(
-            self, squad
+        self, squad
     ) -> Literal["armor", "recon", "commander", "infantry", "artillery"]:
         for player in squad.get("players", []):
             if player.get("role") in ["tankcommander", "crewman"]:
@@ -457,7 +463,12 @@ class Rcon(ServerCtl):
 
     def _has_leader(self, squad) -> bool:
         for players in squad.get("players", []):
-            if players.get("role") in ["tankcommander", "officer", "spotter", "artilleryobserver"]:
+            if players.get("role") in [
+                "tankcommander",
+                "officer",
+                "spotter",
+                "artilleryobserver",
+            ]:
                 return True
         return False
 
@@ -495,23 +506,27 @@ class Rcon(ServerCtl):
         }
 
     @ttl_cache(ttl=2, cache_falsy=False)
-    def get_detailed_player_info(self, player_id: str, player: GetPlayersType | None = None) -> GetDetailedPlayer:
+    def get_detailed_player_info(
+        self, player_id: str, player: GetPlayersType | None = None
+    ) -> GetDetailedPlayer:
         try:
             player_info = super().get_player_info(player_id)
         except HLLCommandError:
             raise HLLCommandFailedError("Player is not online")
         return self._get_detailed_player_info(player_info, player)
 
-    def _get_detailed_player_info(self, player_info: PlayerInfoType, player: GetPlayersType | None = None) -> GetDetailedPlayer:
+    def _get_detailed_player_info(
+        self, player_info: PlayerInfoType, player: GetPlayersType | None = None
+    ) -> GetDetailedPlayer:
         player_data = parse_raw_player_info(player_info)
-        if player is not None and 'is_vip' in player:
-            player_data["is_vip"] = player.get('is_vip')
+        if player is not None and "is_vip" in player:
+            player_data["is_vip"] = player.get("is_vip")
         else:
             vip_player_ids = set(v[PLAYER_ID] for v in super().get_vip_ids())
             player_data["is_vip"] = player_data["player_id"] in vip_player_ids
 
-        if player is not None and 'profile' in player:
-            player_data["profile"] = player.get('profile')
+        if player is not None and "profile" in player:
+            player_data["profile"] = player.get("profile")
         else:
             profile = get_player_profile(player_data["player_id"], 1)
             player_data["profile"] = profile
@@ -642,7 +657,7 @@ class Rcon(ServerCtl):
         return result
 
     def add_vip(
-            self, player_id: str, description: str, expiration: str | None = None
+        self, player_id: str, description: str, expiration: str | None = None
     ) -> bool:
         """Adds VIP status on the game server and adds or updates their PlayerVIP record."""
         with invalidates(Rcon.get_vip_ids):
@@ -727,12 +742,12 @@ class Rcon(ServerCtl):
         return True
 
     def message_player(
-            self,
-            player_id: str,
-            message: str = "",
-            by: str = "",
-            save_message: bool = False,
-            player_name: str | None = None,
+        self,
+        player_id: str,
+        message: str = "",
+        by: str = "",
+        save_message: bool = False,
+        player_name: str | None = None,
     ) -> bool:
         config = RconServerSettingsUserConfig.load_from_db()
         if config.message_enhancements.enabled:
@@ -766,9 +781,9 @@ class Rcon(ServerCtl):
         Map: foy_warfare
         Next Map: stmariedumont_warfare"""
         with invalidates(
-                Rcon.team_sizes,
-                Rcon.get_team_objective_scores,
-                Rcon.get_round_time_remaining,
+            Rcon.team_sizes,
+            Rcon.get_team_objective_scores,
+            Rcon.get_round_time_remaining,
         ):
             return super().get_gamestate()
 
@@ -822,9 +837,9 @@ class Rcon(ServerCtl):
 
     def set_map_shuffle_enabled(self, enabled: bool) -> None:
         with invalidates(
-                Rcon.get_map_sequence,
-                Rcon.get_map_shuffle_enabled,
-                Rcon.get_next_map,
+            Rcon.get_map_sequence,
+            Rcon.get_map_shuffle_enabled,
+            Rcon.get_next_map,
         ):
             return super().set_map_shuffle_enabled(enabled)
 
@@ -1016,9 +1031,7 @@ class Rcon(ServerCtl):
         with invalidates(self.get_votekick_enabled):
             return super().set_votekick_enabled(value)
 
-    def set_votekick_thresholds(
-            self, threshold_pairs: list[tuple[int, int]]
-    ):
+    def set_votekick_thresholds(self, threshold_pairs: list[tuple[int, int]]):
         with invalidates(self.get_votekick_thresholds):
             flattened = [str(val) for val in chain.from_iterable(threshold_pairs)]
             super().set_votekick_thresholds(",".join(flattened))
@@ -1051,7 +1064,9 @@ class Rcon(ServerCtl):
         with invalidates(self.get_profanities):
             return super().ban_profanities(",".join(profanities))
 
-    def punish(self, player_id: str, reason: str, by: str, player_name: str | None = None) -> bool:
+    def punish(
+        self, player_id: str, reason: str, by: str, player_name: str | None = None
+    ) -> bool:
         res = super().punish(player_id, reason)
         safe_save_player_action(
             player_id=player_id,
@@ -1082,17 +1097,15 @@ class Rcon(ServerCtl):
         return res
 
     def temp_ban(
-            self,
-            player_id: str,
-            duration_hours: int = 2,
-            reason: str = "",
-            by: str = "",
-            player_name: str | None = None,
+        self,
+        player_id: str,
+        duration_hours: int = 2,
+        reason: str = "",
+        by: str = "",
+        player_name: str | None = None,
     ) -> bool:
         with invalidates(Rcon.get_players, Rcon.get_temp_bans):
-            res = super().temp_ban(
-                player_id, duration_hours, reason, admin_name=by
-            )
+            res = super().temp_ban(player_id, duration_hours, reason, admin_name=by)
 
         safe_save_player_action(
             player_id=player_id,
@@ -1115,7 +1128,9 @@ class Rcon(ServerCtl):
 
         return False
 
-    def perma_ban(self, player_id: str, reason="", by="", player_name: str | None = None) -> bool:
+    def perma_ban(
+        self, player_id: str, reason="", by="", player_name: str | None = None
+    ) -> bool:
         with invalidates(Rcon.get_players, Rcon.get_perma_bans):
             res = super().perma_ban(player_id, reason, admin_name=by)
 
@@ -1142,7 +1157,7 @@ class Rcon(ServerCtl):
             maps.append(parse_layer(map_))
 
         next_map_index = map_sequence["current_index"] + 1
-        if (next_map_index >= len(map_sequence["maps"])):
+        if next_map_index >= len(map_sequence["maps"]):
             next_map_index = 0
 
         return {
@@ -1166,42 +1181,36 @@ class Rcon(ServerCtl):
         return s
 
     def add_map_to_rotation(
-            self,
-            map_name: str,
-            after_map_name: str | None = None,
+        self,
+        map_name: str,
+        after_map_name: str | None = None,
     ) -> None:
         with invalidates(
-                Rcon.get_map_rotation,
-                Rcon.get_map_sequence,
-                Rcon.get_next_map,
+            Rcon.get_map_rotation,
+            Rcon.get_map_sequence,
+            Rcon.get_next_map,
         ):
-            return super().add_map_to_rotation(
-                map_name, after_map_name
-            )
+            return super().add_map_to_rotation(map_name, after_map_name)
 
     def add_map_to_rotation_at_index(
-            self,
-            map_name: str,
-            map_index: int,
+        self,
+        map_name: str,
+        map_index: int,
     ) -> None:
         if map_index < 0:
             rotation = self.get_map_rotation()
             map_index = len(rotation) + map_index + 1
 
         with invalidates(
-                Rcon.get_map_rotation,
-                Rcon.get_map_sequence,
-                Rcon.get_next_map,
+            Rcon.get_map_rotation,
+            Rcon.get_map_sequence,
+            Rcon.get_next_map,
         ):
-            return super().add_map_to_rotation_at_index(
-                map_name, map_index
-            )
+            return super().add_map_to_rotation_at_index(map_name, map_index)
 
     def remove_map_from_rotation(self, map_name: str):
         with invalidates(
-                Rcon.get_map_rotation,
-                Rcon.get_map_sequence,
-                Rcon.get_next_map
+            Rcon.get_map_rotation, Rcon.get_map_sequence, Rcon.get_next_map
         ):
             return super().remove_map_from_rotation(map_name)
 
@@ -1211,17 +1220,13 @@ class Rcon(ServerCtl):
             map_index = len(rotation) + map_index + 1
 
         with invalidates(
-                Rcon.get_map_rotation,
-                Rcon.get_map_sequence,
-                Rcon.get_next_map
+            Rcon.get_map_rotation, Rcon.get_map_sequence, Rcon.get_next_map
         ):
             return super().remove_map_from_rotation_at_index(map_index)
 
     def remove_maps_from_rotation(self, map_names: list[str]):
         with invalidates(
-                Rcon.get_map_rotation,
-                Rcon.get_map_sequence,
-                Rcon.get_next_map
+            Rcon.get_map_rotation, Rcon.get_map_sequence, Rcon.get_next_map
         ):
             for map_name in map_names:
                 super().remove_map_from_rotation(map_name)
@@ -1231,14 +1236,10 @@ class Rcon(ServerCtl):
         rotation = self.get_map_rotation()["maps"]
         results = []
         with invalidates(
-                Rcon.get_map_rotation,
-                Rcon.get_map_sequence,
-                Rcon.get_next_map
+            Rcon.get_map_rotation, Rcon.get_map_sequence, Rcon.get_next_map
         ):
             for map_index, map_name in enumerate(map_names, start=len(rotation)):
-                super().add_map_to_rotation_at_index(
-                    map_name, map_index
-                )
+                super().add_map_to_rotation_at_index(map_name, map_index)
 
         return results
 
@@ -1253,9 +1254,7 @@ class Rcon(ServerCtl):
         rotation_size = len(rotation)
 
         with invalidates(
-                Rcon.get_map_rotation,
-                Rcon.get_next_map,
-                Rcon.get_map_sequence
+            Rcon.get_map_rotation, Rcon.get_next_map, Rcon.get_map_sequence
         ):
             # Do nothing if rotations are the same
             current_map_names = [map_.id for map_ in rotation]
@@ -1279,9 +1278,11 @@ class Rcon(ServerCtl):
         return super().get_objective_rows()
 
     def set_game_layout(
-            self,
-            objectives: Sequence[str | int | None],
-            random_constraints: GameLayoutRandomConstraints = GameLayoutRandomConstraints(0),
+        self,
+        objectives: Sequence[str | int | None],
+        random_constraints: GameLayoutRandomConstraints = GameLayoutRandomConstraints(
+            0
+        ),
     ):
         if len(objectives) != 5:
             raise ValueError("5 objectives must be provided")
@@ -1366,7 +1367,9 @@ class Rcon(ServerCtl):
                 )
 
         red = get_redis_client()
-        red.set('GAME_LAYOUT', json.dumps(GameLayout(requested=objectives, set=parsed_objs)))
+        red.set(
+            "GAME_LAYOUT", json.dumps(GameLayout(requested=objectives, set=parsed_objs))
+        )
         return super().set_game_layout(parsed_objs)
 
     @staticmethod
@@ -1454,8 +1457,8 @@ class Rcon(ServerCtl):
                 player = match.groups()[0]
             # VOTESYS: Player [NoodleArms] Started a vote of type (PVR_Kick_Abuse) against [buscÃ´O-sensei]. VoteID: [2]
             elif match := re.match(
-                    Rcon.vote_started_pattern,
-                    raw_line,
+                Rcon.vote_started_pattern,
+                raw_line,
             ):
                 action = "VOTE STARTED"
                 player, player2 = match.groups()
@@ -1530,9 +1533,9 @@ class Rcon(ServerCtl):
 
     @staticmethod
     def parse_logs(
-            raw_logs: list[str],
-            filter_action: str | None = None,
-            filter_player: str | None = None,
+        raw_logs: list[str],
+        filter_action: str | None = None,
+        filter_player: str | None = None,
     ) -> ParsedLogsType:
         """Parse a chunk of raw gameserver RCON logs"""
         synthetic_actions = LOG_ACTIONS
@@ -1542,7 +1545,7 @@ class Rcon(ServerCtl):
         players: set[str] = set()
 
         for raw_relative_time, raw_timestamp, raw_log_line in Rcon.split_raw_log_lines(
-                raw_logs
+            raw_logs
         ):
             time = Rcon._extract_time(raw_timestamp)
             try:

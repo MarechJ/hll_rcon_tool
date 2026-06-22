@@ -89,7 +89,10 @@ def _do_punitions(
             if method == ActionMethod.PUNISH:
                 if not aplayer.details.dry_run:
                     rcon.punish(
-                        player_name=aplayer.name, reason=aplayer.details.message, by=aplayer.details.author, player_id=aplayer.player_id
+                        player_name=aplayer.name,
+                        reason=aplayer.details.message,
+                        by=aplayer.details.author,
+                        player_id=aplayer.player_id,
                     )
                 audit(
                     discord_webhook_url=aplayer.details.discord_audit_url,
@@ -250,7 +253,9 @@ def on_connected(rcon: Rcon, _, name: str, player_id: str):
     try:
         detailed_player_info = rcon.get_detailed_player_info(player_id)
     except Exception as e:
-        logger.error(f"get_detailed_player_info threw an exception for {player_id}: {e}")
+        logger.error(
+            f"get_detailed_player_info threw an exception for {player_id}: {e}"
+        )
 
     punitions_to_apply: PunitionsToApply = PunitionsToApply()
     for mod in mods:

@@ -25,9 +25,9 @@ def is_player_kill(player, log):
 
 @on_tk
 def auto_ban_if_tks_right_after_connection(
-        rcon: Rcon,
-        log: StructuredLogLineWithMetaData,
-        config: BanTeamKillOnConnectUserConfig | None = None,
+    rcon: Rcon,
+    log: StructuredLogLineWithMetaData,
+    config: BanTeamKillOnConnectUserConfig | None = None,
 ) -> None | BlacklistRecordWithBlacklistType:
     if config is None:
         config = BanTeamKillOnConnectUserConfig.load_from_db()
@@ -70,9 +70,9 @@ def auto_ban_if_tks_right_after_connection(
             return
 
         if (
-                whitelist_players.has_at_least_n_sessions != 0
-                and player_profile["sessions_count"]
-                >= whitelist_players.has_at_least_n_sessions
+            whitelist_players.has_at_least_n_sessions != 0
+            and player_profile["sessions_count"]
+            >= whitelist_players.has_at_least_n_sessions
         ):
             logger.debug(
                 "Not checking player because he has %s sessions",
@@ -100,9 +100,9 @@ def auto_ban_if_tks_right_after_connection(
             death_counter = 0
             continue
         if (
-                log["action"] == "TEAM KILL"
-                and log["player_name_1"] == player_name
-                and last_action_is_connect
+            log["action"] == "TEAM KILL"
+            and log["player_name_1"] == player_name
+            and last_action_is_connect
         ):
             if excluded_weapons and log["weapon"].lower() in excluded_weapons:
                 logger.debug("Not counting TK as offense due to weapon exclusion")
@@ -122,7 +122,7 @@ def auto_ban_if_tks_right_after_connection(
                 )
                 if config.ban_duration.total_seconds > 0:
                     expires_at = (
-                            datetime.datetime.now() + config.ban_duration.as_timedelta
+                        datetime.datetime.now() + config.ban_duration.as_timedelta
                     )
                 else:
                     expires_at = None

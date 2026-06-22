@@ -9,7 +9,9 @@ from rcon.types import StructuredLogLineWithMetaData
 from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectWhiteList, TimeFrame
 
 
-@mock.patch("rcon.automods.tk_autoban.get_player_profile", autospec=True, return_value=None)
+@mock.patch(
+    "rcon.automods.tk_autoban.get_player_profile", autospec=True, return_value=None
+)
 @mock.patch(
     "rcon.automods.tk_autoban.BanTeamKillOnConnectUserConfig.load_from_db",
     return_value=BanTeamKillOnConnectUserConfig(
@@ -69,7 +71,9 @@ def test_ban_excluded_weapon(*args):
         rcon.perma_ban.assert_not_called()
 
 
-@mock.patch("rcon.automods.tk_autoban.get_player_profile", autospec=True, return_value=None)
+@mock.patch(
+    "rcon.automods.tk_autoban.get_player_profile", autospec=True, return_value=None
+)
 def test_ban_success(*args):
     tk_log: StructuredLogLineWithMetaData = {
         "version": 1,
@@ -129,7 +133,9 @@ def test_ban_success(*args):
         assert result
 
 
-@mock.patch("rcon.automods.tk_autoban.get_player_profile", autospec=True, return_value=None)
+@mock.patch(
+    "rcon.automods.tk_autoban.get_player_profile", autospec=True, return_value=None
+)
 def test_ban_success_temp_ban(*args):
     tk_log = {
         "version": 1,
@@ -190,7 +196,9 @@ def test_ban_success_temp_ban(*args):
         assert result and result["expires_at"]
 
 
-@mock.patch("rcon.automods.tk_autoban.get_player_profile", autospec=True, return_value=None)
+@mock.patch(
+    "rcon.automods.tk_autoban.get_player_profile", autospec=True, return_value=None
+)
 def test_ban_ignored_kill(*args):
     tk_log = {
         "version": 1,
@@ -258,7 +266,9 @@ def test_ban_ignored_kill(*args):
         rcon.perma_ban.assert_not_called()
 
 
-@mock.patch("rcon.automods.tk_autoban.get_player_profile", autospec=True, return_value=None)
+@mock.patch(
+    "rcon.automods.tk_autoban.get_player_profile", autospec=True, return_value=None
+)
 def test_ban_count_one_death(*args):
     tk_log: StructuredLogLineWithMetaData = {
         "version": 1,
@@ -331,7 +341,9 @@ def test_ban_count_one_death(*args):
         assert result
 
 
-@mock.patch("rcon.automods.tk_autoban.get_player_profile", autospec=True, return_value=None)
+@mock.patch(
+    "rcon.automods.tk_autoban.get_player_profile", autospec=True, return_value=None
+)
 def test_ban_ignored_2_death(*args):
     tk_log = {
         "version": 1,

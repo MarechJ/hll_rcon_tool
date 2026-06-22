@@ -75,7 +75,11 @@ def set_auto_settings(request):
     if do_forward == "true" or do_forward == "1":
         do_forward = True
     if not isinstance(do_forward, bool):
-        return api_response(error="forward needs to be a boolean value or empty", failed=True, status_code=400)
+        return api_response(
+            error="forward needs to be a boolean value or empty",
+            failed=True,
+            status_code=400,
+        )
 
     settings = data.get("settings")
     if not settings:

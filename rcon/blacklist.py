@@ -152,8 +152,7 @@ def get_player_blacklist_records(
         .join(BlacklistRecord.blacklist)
         .filter(
             # Record must target the given player
-            PlayerID.player_id
-            == player_id,
+            PlayerID.player_id == player_id,
         )
     )
 
@@ -1230,5 +1229,7 @@ class BlacklistCommandHandler:
         if online_player_ids:
             send_to_barricade(
                 request_type=ServerRequestType.SCAN_PLAYERS,
-                payload=ScanPlayersRequestPayload(player_ids=online_player_ids).model_dump(),
+                payload=ScanPlayersRequestPayload(
+                    player_ids=online_player_ids
+                ).model_dump(),
             )

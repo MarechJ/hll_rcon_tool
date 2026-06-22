@@ -7,6 +7,7 @@ from rcon.user_config.chat_commands import MESSAGE_VAR_RE
 
 ARG_RE = re.compile(r"\$(\d+)")
 
+
 def replace_params(ctx: dict[str, str], args: list[str], v: Any) -> Any:
     """
     Replaces arguments (from args) and message parameters (from ctx) into the provided parameter value (v).
@@ -23,14 +24,17 @@ def replace_params(ctx: dict[str, str], args: list[str], v: Any) -> Any:
     :param v:
     :return:
     """
+
     def do(value: Any, modifier: Callable[[str], str]) -> Any:
         if isinstance(value, str):
             message_vars: list[str] = MESSAGE_VAR_RE.findall(v)
-            player_id = ctx.get(MessageVariableContext.player_id.value) or ''
+            player_id = ctx.get(MessageVariableContext.player_id.value) or ""
             populated_variables = populate_message_variables(
                 vars=message_vars, player_id=player_id
             )
-            value = format_message_string(modifier(value), context=ctx, populated_variables=populated_variables)
+            value = format_message_string(
+                modifier(value), context=ctx, populated_variables=populated_variables
+            )
         elif isinstance(value, list):
             for li, lv in enumerate(value):
                 value[li] = replace_params(ctx, args, lv)
@@ -45,6 +49,7 @@ def replace_params(ctx: dict[str, str], args: list[str], v: Any) -> Any:
     for i, a in enumerate(args):
         v = do(v, lambda d: d.replace(f"${i + 1}", a))
     return v
+
 
 def max_arg_index(p: Any) -> int:
     """

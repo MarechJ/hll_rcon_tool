@@ -77,7 +77,14 @@ def temporary_welcome_in(message, seconds, restore_after_seconds):
     )
 
 
-def get_or_create_map(sess: Session, start: datetime.datetime, end: datetime.datetime, server_number: int, map_name: str, game_layout: GameLayout):
+def get_or_create_map(
+    sess: Session,
+    start: datetime.datetime,
+    end: datetime.datetime,
+    server_number: int,
+    map_name: str,
+    game_layout: GameLayout,
+):
     map_ = (
         sess.query(Maps)
         .filter(
@@ -141,7 +148,9 @@ def _record_stats(map_info: MapInfo):
             end=end,
             server_number=int(os.getenv("SERVER_NUMBER")),
             map_name=map_info["name"],
-            game_layout=map_info["game_layout"] if "game_layout" in map_info else GameLayout,
+            game_layout=map_info["game_layout"]
+            if "game_layout" in map_info
+            else GameLayout,
         )
         record_stats_from_map(sess, map_, map_info.get("player_stats", dict()))
         sess.commit()
@@ -234,7 +243,7 @@ def record_stats_from_map(
                     p_defense=0,
                     support=existing.support,
                     p_support=0,
-                    level=existing.level
+                    level=existing.level,
                 )
             map_stats: PlayerStat = ps.get(player_id, default_stat)
             player_stat = dict(

@@ -183,17 +183,26 @@ def get_players_by_appearance(
                 soldier_name = unaccent(PlayerName.name)
                 player_name = remove_accent(player_name)
             if not exact_name_match:
-                query = query.join(PlayerID.names).join(PlayerID.account).filter(
-                    or_(
-                        soldier_name.ilike("%{}%".format(player_name)),
-                        account_name.isnot(None) & account_name.ilike("%{}%".format(player_name))
+                query = (
+                    query.join(PlayerID.names)
+                    .join(PlayerID.account)
+                    .filter(
+                        or_(
+                            soldier_name.ilike("%{}%".format(player_name)),
+                            account_name.isnot(None)
+                            & account_name.ilike("%{}%".format(player_name)),
+                        )
                     )
                 )
             else:
-                query = query.join(PlayerID.names).join(PlayerID.account).filter(
-                    or_(
-                        soldier_name == player_name,
-                        account_name.isnot(None) & (account_name == player_name)
+                query = (
+                    query.join(PlayerID.names)
+                    .join(PlayerID.account)
+                    .filter(
+                        or_(
+                            soldier_name == player_name,
+                            account_name.isnot(None) & (account_name == player_name),
+                        )
                     )
                 )
 
@@ -222,8 +231,13 @@ def get_players_by_appearance(
             query = query.join(PlayerID.flags).filter(PlayerFlag.flag.in_(flags))
 
         if country:
-            query = query.join(PlayerID.steaminfo).join(PlayerID.account).filter(
-                SteamInfo.country == country.upper() or PlayerAccount.country == country.upper()
+            query = (
+                query.join(PlayerID.steaminfo)
+                .join(PlayerID.account)
+                .filter(
+                    SteamInfo.country == country.upper()
+                    or PlayerAccount.country == country.upper()
+                )
             )
 
         if last_seen_from:

@@ -740,7 +740,6 @@ class GameStateType(TypedDict):
     server_name: str
 
 
-
 class VACGameBansConfigType(TypedDict):
     ban_on_vac_history_days: int
     max_game_ban_threshold: int
@@ -849,12 +848,14 @@ class PublicInfoNameType(TypedDict):
     public_stats_port: int | None
     public_stats_port_https: int | None
 
+
 class ServerConfigType(TypedDict):
     build_number: str
     build_revision: str
     password_protected: bool
     server_name: str
     supported_platforms: list[str]
+
 
 class PublicInfoType(TypedDict):
     """TypedDict for rcon.views.get_public_info"""
@@ -933,14 +934,17 @@ class GetMapSequence(TypedDict):
     maps: list[Layer]
     current_index: int
 
+
 class MapRotationResponse(TypedDict):
     maps: list[str]
     current_index: int
+
 
 class GetMapRotation(TypedDict):
     maps: list[Layer]
     current_index: int
     next_index: int
+
 
 class ScoreDataType(TypedDict):
     cOMBAT: int

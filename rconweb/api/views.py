@@ -150,6 +150,7 @@ def get_public_info(request):
         command="get_public_info",
     )
 
+
 @login_required()
 @csrf_exempt
 @require_http_methods(["GET"])
@@ -954,7 +955,7 @@ commands = [
     ("get_connection_info", get_connection_info),
     ("get_public_info", get_public_info),
     ("run_raw_command", run_raw_command),
-    ("get_system_usage", get_system_usage)
+    ("get_system_usage", get_system_usage),
 ]
 
 if not os.getenv("HLL_MAINTENANCE_CONTAINER") and not os.getenv(

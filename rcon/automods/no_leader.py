@@ -165,7 +165,6 @@ class NoLeaderAutomod:
             return punitions_to_apply
 
         with self.watch_state(team, squad_name) as watch_status:
-
             # if squad_name is None or squad is None:
             #     raise SquadHasLeader()
 

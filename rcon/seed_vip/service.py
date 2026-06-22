@@ -90,14 +90,16 @@ def run():
                 sleep(config.poll_time_seeding)
                 continue
 
-            total_players = gamestate["num_allied_players"] + gamestate["num_axis_players"]
+            total_players = (
+                gamestate["num_allied_players"] + gamestate["num_axis_players"]
+            )
 
             player_name_lookup |= {
                 p.player_id: p.name for p in online_players.players.values()
             }
 
             logger.debug(
-                f"{is_seeding=} {len(online_players.players.keys())} online players (`get_players`), {gamestate["num_allied_players"]} allied {gamestate["num_axis_players"]} axis players (gamestate)",
+                f"{is_seeding=} {len(online_players.players.keys())} online players (`get_players`), {gamestate['num_allied_players']} allied {gamestate['num_axis_players']} axis players (gamestate)",
             )
             to_add_vip_steam_ids = collect_steam_ids(
                 config=config,

@@ -241,7 +241,6 @@ def build_header_gamestate_embed(
     for option in config.header_gamestate_embeds:
         name: str | None = None
         match option.value:
-
             case HeaderGameStateEmbedEnum.QUICK_CONNECT_URL:
                 value = config.quick_connect_url
             case HeaderGameStateEmbedEnum.BATTLEMETRICS_URL:
@@ -292,7 +291,7 @@ def build_header_gamestate_embed(
                     gamestate["allied_score"], gamestate["axis_score"]
                 )
             # Not ideal but the match statement won't let us use the constant here
-            case "\u200B":
+            case "\u200b":
                 name = ""
                 value = EMPTY_EMBED
             case _:
@@ -396,7 +395,7 @@ def build_player_stats_embed(
                 reverse=reverse_sort[PlayerStatsEnum(stat)],
             )[: config.player_stats_num_to_display]
             stats_strings = [
-                f"[#{idx+1}][{player_stat['player']}]: {player_stat[stat]}"
+                f"[#{idx + 1}][{player_stat['player']}]: {player_stat[stat]}"
                 for idx, player_stat in enumerate(stats)
             ]
             embed.add_embed_field(
@@ -493,7 +492,6 @@ def run():
                     for key in MESSAGE_KEYS:
                         last_updated_key = last_updated[url][key]
                         if key == HEADER_GAMESTATE and config.header_gamestate_enabled:
-
                             if (
                                 last_updated_key
                                 and (timestamp - last_updated_key).total_seconds()
@@ -516,7 +514,6 @@ def run():
                             )
 
                         if key == MAP_ROTATION and config.map_rotation_enabled:
-
                             if (
                                 last_updated_key
                                 and (timestamp - last_updated_key).total_seconds()
@@ -539,7 +536,6 @@ def run():
                             )
 
                         if key == PLAYER_STATS and config.player_stats_enabled:
-
                             if (
                                 last_updated_key
                                 and (timestamp - last_updated_key).total_seconds()
