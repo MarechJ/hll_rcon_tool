@@ -1,4 +1,0 @@
-ruff==0.15.18
-pytest==9.0.3
-cachetools==7.1.1
-daphne==4.2.1
