@@ -92,7 +92,7 @@
     "@types/react-helmet": "^6.1.11",
     "@typescript-eslint/eslint-plugin": "^8.17.0",
     "@typescript-eslint/parser": "^8.17.0",
-    "@vitejs/plugin-react": "^4.3.4",
+    "@vitejs/plugin-react": "^6.0.3",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.16.0",
     "eslint-config-prettier": "^9.1.0",
@@ -118,7 +118,7 @@
     "tailwindcss": "3.4.16",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.2",
-    "vite": "^6.4.2",
+    "vite": "^8.1.0",
     "vite-plugin-external": "^4.3.1",
     "vite-plugin-svgr": "^4.3.0"
   }
