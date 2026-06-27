@@ -591,93 +591,6 @@ wheels = [
 ]
 
 [[package]]
-name = "crcon"
-version = "0.0.1"
-source = { virtual = "." }
-dependencies = [
-    { name = "alembic" },
-    { name = "channels" },
-    { name = "channels-redis" },
-    { name = "click" },
-    { name = "daphne" },
-    { name = "discord-py" },
-    { name = "discord-webhook" },
-    { name = "django" },
-    { name = "django-cors-headers" },
-    { name = "ftpretty" },
-    { name = "gunicorn" },
-    { name = "hllrcon" },
-    { name = "httpx" },
-    { name = "humanize" },
-    { name = "orjson" },
-    { name = "paramiko" },
-    { name = "pre-commit" },
-    { name = "psutil" },
-    { name = "psycopg2-binary" },
-    { name = "pydantic" },
-    { name = "python-dateutil" },
-    { name = "pytz" },
-    { name = "redis" },
-    { name = "requests" },
-    { name = "rq" },
-    { name = "rq-scheduler" },
-    { name = "sentry-sdk", extra = ["django"] },
-    { name = "simplejson" },
-    { name = "sqlalchemy" },
-    { name = "steam" },
-    { name = "supervisor" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "cachetools" },
-    { name = "pytest" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "alembic", specifier = "==1.18.4" },
-    { name = "channels", specifier = "==4.3.2" },
-    { name = "channels-redis", specifier = "==4.3.0" },
-    { name = "click", specifier = "==8.3.3" },
-    { name = "daphne", specifier = ">=4.2.1" },
-    { name = "discord-py", specifier = "==2.7.1" },
-    { name = "discord-webhook", git = "https://github.com/cemathey/python-discord-webhook?rev=89ae25140b30a6747de70e5bf16bc5ba04a9b238" },
-    { name = "django", specifier = "==4.2.30" },
-    { name = "django-cors-headers", specifier = "==4.9.0" },
-    { name = "ftpretty", specifier = "==0.4.0" },
-    { name = "gunicorn", specifier = ">=26.0.0" },
-    { name = "hllrcon", specifier = ">=1.2.1.0" },
-    { name = "httpx", specifier = "==0.28.1" },
-    { name = "humanize", specifier = "==4.15.0" },
-    { name = "orjson", specifier = "==3.11.9" },
-    { name = "paramiko", specifier = "==5.0.0" },
-    { name = "pre-commit", specifier = ">=4.6.0" },
-    { name = "psutil", specifier = "==7.2.2" },
-    { name = "psycopg2-binary", specifier = ">=2.9.12" },
-    { name = "pydantic", specifier = "==2.13.4" },
-    { name = "python-dateutil", specifier = "==2.9.0.post0" },
-    { name = "pytz", specifier = ">=2026.1.post1" },
-    { name = "redis", specifier = "==7.4.0" },
-    { name = "requests", specifier = "==2.33.1" },
-    { name = "rq", specifier = "==2.8.0" },
-    { name = "rq-scheduler", specifier = "==0.14.0" },
-    { name = "sentry-sdk", extras = ["django"], specifier = "==2.59.0" },
-    { name = "simplejson", specifier = "==4.1.1" },
-    { name = "sqlalchemy", specifier = "==2.0.49" },
-    { name = "steam", specifier = "==1.4.4" },
-    { name = "supervisor", specifier = ">=4.3.0" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "cachetools", specifier = "==7.1.1" },
-    { name = "pytest", specifier = "==9.0.3" },
-    { name = "ruff", specifier = "==0.15.18" },
-]
-
-[[package]]
 name = "croniter"
 version = "6.2.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1012,6 +925,93 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/01/ee/02a2c011bdab74c6fb3c75474d40b3052059d95df7e73351460c8588d963/h11-0.16.0.tar.gz", hash = "sha256:4e35b956cf45792e4caa5885e69fba00bdbc6ffafbfa020300e549b208ee5ff1", size = 101250, upload-time = "2025-04-24T03:35:25.427Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/04/4b/29cac41a4d98d144bf5f6d33995617b185d14b22401f75ca86f384e87ff1/h11-0.16.0-py3-none-any.whl", hash = "sha256:63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86", size = 37515, upload-time = "2025-04-24T03:35:24.344Z" },
+]
+
+[[package]]
+name = "hll-rcon-tool"
+version = "0.0.1"
+source = { virtual = "." }
+dependencies = [
+    { name = "alembic" },
+    { name = "channels" },
+    { name = "channels-redis" },
+    { name = "click" },
+    { name = "daphne" },
+    { name = "discord-py" },
+    { name = "discord-webhook" },
+    { name = "django" },
+    { name = "django-cors-headers" },
+    { name = "ftpretty" },
+    { name = "gunicorn" },
+    { name = "hllrcon" },
+    { name = "httpx" },
+    { name = "humanize" },
+    { name = "orjson" },
+    { name = "paramiko" },
+    { name = "pre-commit" },
+    { name = "psutil" },
+    { name = "psycopg2-binary" },
+    { name = "pydantic" },
+    { name = "python-dateutil" },
+    { name = "pytz" },
+    { name = "redis" },
+    { name = "requests" },
+    { name = "rq" },
+    { name = "rq-scheduler" },
+    { name = "sentry-sdk", extra = ["django"] },
+    { name = "simplejson" },
+    { name = "sqlalchemy" },
+    { name = "steam" },
+    { name = "supervisor" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "cachetools" },
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "alembic", specifier = "==1.18.4" },
+    { name = "channels", specifier = "==4.3.2" },
+    { name = "channels-redis", specifier = "==4.3.0" },
+    { name = "click", specifier = "==8.3.3" },
+    { name = "daphne", specifier = ">=4.2.1" },
+    { name = "discord-py", specifier = "==2.7.1" },
+    { name = "discord-webhook", git = "https://github.com/cemathey/python-discord-webhook?rev=89ae25140b30a6747de70e5bf16bc5ba04a9b238" },
+    { name = "django", specifier = "==4.2.30" },
+    { name = "django-cors-headers", specifier = "==4.9.0" },
+    { name = "ftpretty", specifier = "==0.4.0" },
+    { name = "gunicorn", specifier = ">=26.0.0" },
+    { name = "hllrcon", specifier = ">=1.2.1.0" },
+    { name = "httpx", specifier = "==0.28.1" },
+    { name = "humanize", specifier = "==4.15.0" },
+    { name = "orjson", specifier = "==3.11.9" },
+    { name = "paramiko", specifier = "==5.0.0" },
+    { name = "pre-commit", specifier = ">=4.6.0" },
+    { name = "psutil", specifier = "==7.2.2" },
+    { name = "psycopg2-binary", specifier = ">=2.9.12" },
+    { name = "pydantic", specifier = "==2.13.4" },
+    { name = "python-dateutil", specifier = "==2.9.0.post0" },
+    { name = "pytz", specifier = ">=2026.1.post1" },
+    { name = "redis", specifier = "==7.4.0" },
+    { name = "requests", specifier = "==2.33.1" },
+    { name = "rq", specifier = "==2.8.0" },
+    { name = "rq-scheduler", specifier = "==0.14.0" },
+    { name = "sentry-sdk", extras = ["django"], specifier = "==2.59.0" },
+    { name = "simplejson", specifier = "==4.1.1" },
+    { name = "sqlalchemy", specifier = "==2.0.49" },
+    { name = "steam", specifier = "==1.4.4" },
+    { name = "supervisor", specifier = ">=4.3.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "cachetools", specifier = "==7.1.1" },
+    { name = "pytest", specifier = "==9.0.3" },
+    { name = "ruff", specifier = "==0.15.18" },
 ]
 
 [[package]]
