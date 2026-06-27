@@ -65,9 +65,9 @@ jobs:
           export HLL_DB_URL=postgresql://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}/${HLL_DB_NAME}
           export HLL_REDIS_URL=redis://${HLL_REDIS_HOST}:${HLL_REDIS_PORT}/${HLL_REDIS_DB}
           
-          PYTHONPATH=. alembic upgrade head
-          PYTHONPATH=. python ./manage.py init_db
-          PYTHONPATH=. python ./rconweb/manage.py migrate --noinput
+          PYTHONPATH=. uv run alembic upgrade head
+          PYTHONPATH=. uv run ./manage.py init_db
+          PYTHONPATH=. uv run ./rconweb/manage.py migrate --noinput
       - name: run tests
         run: |
           export HLL_DB_URL=postgresql://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}/${HLL_DB_NAME}
