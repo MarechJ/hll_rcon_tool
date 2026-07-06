@@ -30,7 +30,7 @@ class FakeRedis:
 # Fixture builders
 # --------------------------------------------------------------------------- #
 def mk_squad(
-    name, team, squad_type, players, combat=0, offense=0, defense=0, support=0
+    name, team, squad_type, players, combat=0, offense=0, defense=0, support=0, level=0
 ):
     return (
         name,
@@ -44,7 +44,13 @@ def mk_squad(
             "kills": 0,
             "deaths": 0,
             "players": [
-                {"player_id": pid, "name": pid, "team": team, "role": "rifleman"}
+                {
+                    "player_id": pid,
+                    "name": pid,
+                    "team": team,
+                    "role": "rifleman",
+                    "level": level,
+                }
                 for pid in players
             ],
         },
@@ -197,6 +203,76 @@ def test_stale_match_end_ignored():
     rcon.switch_player_now.assert_not_called()
     rcon.get_team_view.assert_not_called()
     assert fake.get(MATCH_WINNERS_KEY) is None
+
+
+# --------------------------------------------------------------------------- #
+# Average level balance
+# --------------------------------------------------------------------------- #
+def _stacked_team_view():
+    """Equal headcount, but allies are all level 400 and axis all level 10."""
+    return mk_team_view(
+        allies_squads=[
+            mk_squad("able", "allies", "infantry", ["a1", "a2", "a3"], level=400),
+            mk_squad("baker", "allies", "infantry", ["a4", "a5", "a6"], level=400),
+        ],
+        axis_squads=[
+            mk_squad("charlie", "axis", "infantry", ["x1", "x2", "x3"], level=10),
+            mk_squad("dog", "axis", "infantry", ["x4", "x5", "x6"], level=10),
+        ],
+    )
+
+
+def test_level_gap_triggers_and_swaps_without_steamroll():
+    rcon = MagicMock()
+    rcon.get_team_view.return_value = _stacked_team_view()
+    mod = TeamBalanceAutomod(
+        mk_config(
+            balance_by_level=True, level_gap_threshold=50, win_streak_threshold=3
+        ),
+        FakeRedis(),
+    )
+    # Not a fast match and no streak: only the level gap can trigger.
+    run_end(mod, rcon, duration=90, winner_score="ALLIED (5 - 0) AXIS")
+
+    switched = switched_ids(rcon)
+    moved_allies = [p for p in switched if p.startswith("a")]
+    moved_axis = [p for p in switched if p.startswith("x")]
+    # A swap moved a high-level allies squad out and a low-level axis squad in.
+    assert moved_allies and moved_axis
+    # Headcount preserved: the same number crossed each way.
+    assert len(moved_allies) == len(moved_axis)
+
+
+def test_level_balance_off_by_default_does_nothing():
+    rcon = MagicMock()
+    rcon.get_team_view.return_value = _stacked_team_view()
+    # balance_by_level defaults to False; long match, no streak -> no trigger.
+    mod = TeamBalanceAutomod(mk_config(win_streak_threshold=3), FakeRedis())
+    run_end(mod, rcon, duration=90)
+    rcon.switch_player_now.assert_not_called()
+
+
+def test_level_gap_below_threshold_no_swap():
+    rcon = MagicMock()
+    rcon.get_team_view.return_value = mk_team_view(
+        allies_squads=[
+            mk_squad("able", "allies", "infantry", ["a1", "a2", "a3"], level=60),
+            mk_squad("baker", "allies", "infantry", ["a4", "a5", "a6"], level=60),
+        ],
+        axis_squads=[
+            mk_squad("charlie", "axis", "infantry", ["x1", "x2", "x3"], level=50),
+            mk_squad("dog", "axis", "infantry", ["x4", "x5", "x6"], level=50),
+        ],
+    )
+    mod = TeamBalanceAutomod(
+        mk_config(
+            balance_by_level=True, level_gap_threshold=50, win_streak_threshold=3
+        ),
+        FakeRedis(),
+    )
+    # Gap is 10 (< 50), not a fast match, no streak -> no trigger.
+    run_end(mod, rcon, duration=90)
+    rcon.switch_player_now.assert_not_called()
 
 
 # --------------------------------------------------------------------------- #

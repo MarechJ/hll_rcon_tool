@@ -38,6 +38,10 @@ class AutoModTeamBalanceType(TypedDict):
     exclude_recon: bool
     max_players_to_switch: int
 
+    # Average level balance (optional)
+    balance_by_level: bool
+    level_gap_threshold: int
+
     switch_message: str
 
 
@@ -182,6 +186,31 @@ class AutoModTeamBalanceUserConfig(BaseUserConfig):
         description="Cap on total players moved per match (0 means no cap).",
     )
 
+    # --- Average level balance (optional) ---
+    balance_by_level: bool = Field(
+        default=False,
+        title="Balance by average level",
+        description=(
+            "Also balance teams by average player level. When enabled, a large "
+            "average-level gap (see 'Level gap threshold') triggers a rebalance on its "
+            "own at match end and steers which infantry squads are swapped, so a "
+            "heavily level-stacked team (e.g. many level 500s vs level 5s) gets evened "
+            "out. Off by default; the steamroll triggers are unaffected."
+        ),
+    )
+    level_gap_threshold: int = Field(
+        ge=0,
+        le=500,
+        default=100,
+        title="Level gap threshold",
+        description=(
+            "Average player-level difference between teams that counts as stacked. "
+            "When 'Balance by average level' is on, a gap above this value triggers "
+            "balancing and is the target the balancer tries to get under. 0 means any "
+            "nonzero gap counts."
+        ),
+    )
+
     switch_message: str = Field(
         default=SWITCH_MESSAGE,
         title="Switch message",
@@ -223,6 +252,8 @@ class AutoModTeamBalanceUserConfig(BaseUserConfig):
             weight_support=values.get("weight_support"),
             exclude_recon=values.get("exclude_recon"),
             max_players_to_switch=values.get("max_players_to_switch"),
+            balance_by_level=values.get("balance_by_level"),
+            level_gap_threshold=values.get("level_gap_threshold"),
             switch_message=values.get("switch_message"),
         )
 

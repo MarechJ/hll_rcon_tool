@@ -116,7 +116,15 @@ class TeamBalanceAutomod:
             )
             return
 
-        # 6. Steamroll gate (duration OR swap-aware streak; margin never triggers)
+        # 6. Collect + categorize squads (needed for the level gap and balancing)
+        squads = {
+            "allies": self._collect_squads(team_view, "allies"),
+            "axis": self._collect_squads(team_view, "axis"),
+        }
+
+        # 7. Trigger gate. Steamroll = short DURATION or a swap-aware win streak
+        #    (margin never triggers). When 'balance by level' is enabled, a large
+        #    average player-level gap is an additional trigger.
         is_fast = (
             duration_minutes is not None
             and duration_minutes < config.fast_match_minutes
@@ -125,26 +133,32 @@ class TeamBalanceAutomod:
         is_streak = (
             config.win_streak_threshold > 0 and streak >= config.win_streak_threshold
         )
-        if not (is_fast or is_streak):
+
+        avg_levels = self._team_average_levels(squads)
+        level_gap = abs(avg_levels["allies"] - avg_levels["axis"])
+        is_level_stacked = (
+            config.balance_by_level and level_gap > config.level_gap_threshold
+        )
+
+        if not (is_fast or is_streak or is_level_stacked):
             self.logger.info(
-                "Team balance: not a steamroll (duration=%s min, streak=%s), skipping",
+                "Team balance: no trigger (duration=%s min, streak=%s, level_gap=%.0f), "
+                "skipping",
                 round(duration_minutes, 1) if duration_minutes is not None else None,
                 streak,
+                level_gap,
             )
             return
 
         self.logger.info(
-            "Team balance: steamroll detected (fast=%s, streak=%s/%s) - evaluating",
+            "Team balance: triggered (fast=%s, streak=%s/%s, level_gap=%.0f/%s) - "
+            "evaluating",
             is_fast,
             streak,
             config.win_streak_threshold,
+            level_gap,
+            config.level_gap_threshold if config.balance_by_level else "off",
         )
-
-        # 7. Collect + categorize squads
-        squads = {
-            "allies": self._collect_squads(team_view, "allies"),
-            "axis": self._collect_squads(team_view, "axis"),
-        }
 
         cap = config.max_players_to_switch if config.max_players_to_switch > 0 else None
         moves: list[dict] = []
@@ -169,11 +183,20 @@ class TeamBalanceAutomod:
         )
         moves.extend(infantry_moves)
 
+        # 10. Pass 3 - average level balance via headcount-preserving squad swaps
+        if config.balance_by_level:
+            moved_so_far = sum(s["size"] for s in moves)
+            level_cap = None if cap is None else max(0, cap - moved_so_far)
+            level_swaps = self._select_level_swaps(
+                squads, count_allies, count_axis, moves, level_cap
+            )
+            moves.extend(level_swaps)
+
         if not moves:
             self.logger.info("Team balance: already balanced, nothing to move")
             return
 
-        # 10. Execute
+        # 11. Execute
         self._execute(rcon, moves)
 
     # ------------------------------------------------------------------ #
@@ -270,6 +293,16 @@ class TeamBalanceAutomod:
             + c.weight_support * squad.get("support", 0)
         )
 
+    @staticmethod
+    def _team_average_levels(squads: dict) -> dict:
+        """Average player level per team, from the collected (non-commander) squads."""
+        avg = {}
+        for team in ("allies", "axis"):
+            players = sum(s["size"] for s in squads[team])
+            total = sum(s["level_sum"] for s in squads[team])
+            avg[team] = total / players if players else 0.0
+        return avg
+
     def _collect_squads(self, team_view, team: str) -> list[dict]:
         squads = []
         team_data = team_view.get(team) or {}
@@ -277,7 +310,7 @@ class TeamBalanceAutomod:
             players = squad.get("players") or []
             # Keep ids and names aligned by pairing them from the same filtered set.
             kept = [
-                (p.get("player_id"), p.get("name"))
+                (p.get("player_id"), p.get("name"), int(p.get("level") or 0))
                 for p in players
                 if p.get("player_id")
             ]
@@ -290,8 +323,9 @@ class TeamBalanceAutomod:
                     "type": squad.get("type"),
                     "size": len(kept),
                     "score": self._squad_score(squad),
-                    "player_ids": [pid for pid, _ in kept],
-                    "player_names": [pname for _, pname in kept],
+                    "level_sum": sum(lvl for _, _, lvl in kept),
+                    "player_ids": [pid for pid, _, _ in kept],
+                    "player_names": [pname for _, pname, _ in kept],
                 }
             )
         return squads
@@ -514,6 +548,111 @@ class TeamBalanceAutomod:
             return improving[0][3]
 
         return []
+
+    # ------------------------------------------------------------------ #
+    # Pass 3 - average level balance (headcount-preserving swaps)
+    # ------------------------------------------------------------------ #
+    def _select_level_swaps(
+        self,
+        squads: dict,
+        count_allies: int,
+        count_axis: int,
+        prior_moves: list[dict],
+        cap_remaining: Optional[int],
+    ) -> list[dict]:
+        """Swap squads between teams to reduce the average player-level gap while
+        keeping headcount within `max_players_per_team_delta`.
+
+        A whole-squad move in one direction would unbalance the headcount when the
+        teams are the same size, so level balancing is done as SWAPS: a squad from the
+        higher average-level team is exchanged with a squad from the lower one. Only
+        movable infantry squads not already moved by the earlier passes are considered
+        (armor is balanced by its own pass).
+        """
+        delta = self.config.max_players_per_team_delta
+        threshold = self.config.level_gap_threshold
+
+        # Team headcount and level pools after the earlier passes.
+        totals = {"allies": count_allies, "axis": count_axis}
+        level_sum = {
+            t: sum(s["level_sum"] for s in squads[t]) for t in ("allies", "axis")
+        }
+        level_count = {t: sum(s["size"] for s in squads[t]) for t in ("allies", "axis")}
+        for move in prior_moves:
+            src = move["team"]
+            dst = "axis" if src == "allies" else "allies"
+            totals[src] -= move["size"]
+            totals[dst] += move["size"]
+            level_sum[src] -= move["level_sum"]
+            level_sum[dst] += move["level_sum"]
+            level_count[src] -= move["size"]
+            level_count[dst] += move["size"]
+
+        moved_ids = {pid for m in prior_moves for pid in m["player_ids"]}
+        pool = {
+            t: [
+                s
+                for s in squads[t]
+                if self._is_movable_infantry(s)
+                and not any(pid in moved_ids for pid in s["player_ids"])
+            ]
+            for t in ("allies", "axis")
+        }
+
+        def avg(team: str) -> float:
+            return level_sum[team] / level_count[team] if level_count[team] else 0.0
+
+        swaps: list[dict] = []
+        remaining = cap_remaining
+
+        # Greedy: repeatedly apply the swap that most reduces the average-level gap.
+        for _ in range(len(pool["allies"]) + len(pool["axis"]) + 1):
+            gap = abs(avg("allies") - avg("axis"))
+            if gap <= threshold:
+                break
+            high = "allies" if avg("allies") >= avg("axis") else "axis"
+            low = "axis" if high == "allies" else "allies"
+
+            best = None  # (new_gap, sq_high, sq_low)
+            for sq_h in pool[high]:
+                for sq_l in pool[low]:
+                    pair_size = sq_h["size"] + sq_l["size"]
+                    if remaining is not None and pair_size > remaining:
+                        continue
+                    new_high_total = totals[high] - sq_h["size"] + sq_l["size"]
+                    new_low_total = totals[low] - sq_l["size"] + sq_h["size"]
+                    if abs(new_high_total - new_low_total) > delta:
+                        continue
+                    high_ls = level_sum[high] - sq_h["level_sum"] + sq_l["level_sum"]
+                    low_ls = level_sum[low] - sq_l["level_sum"] + sq_h["level_sum"]
+                    high_lc = level_count[high] - sq_h["size"] + sq_l["size"]
+                    low_lc = level_count[low] - sq_l["size"] + sq_h["size"]
+                    high_avg = high_ls / high_lc if high_lc else 0.0
+                    low_avg = low_ls / low_lc if low_lc else 0.0
+                    new_gap = abs(high_avg - low_avg)
+                    if new_gap < gap - 1e-9 and (best is None or new_gap < best[0]):
+                        best = (new_gap, sq_h, sq_l)
+
+            if best is None:
+                break
+
+            _, sq_h, sq_l = best
+            totals[high] = totals[high] - sq_h["size"] + sq_l["size"]
+            totals[low] = totals[low] - sq_l["size"] + sq_h["size"]
+            level_sum[high] += sq_l["level_sum"] - sq_h["level_sum"]
+            level_sum[low] += sq_h["level_sum"] - sq_l["level_sum"]
+            level_count[high] += sq_l["size"] - sq_h["size"]
+            level_count[low] += sq_h["size"] - sq_l["size"]
+            pool[high].remove(sq_h)
+            pool[low].remove(sq_l)
+            swaps.append(sq_h)
+            swaps.append(sq_l)
+            if remaining is not None:
+                remaining -= sq_h["size"] + sq_l["size"]
+                if remaining <= 0:
+                    break
+
+        return swaps
 
     # ------------------------------------------------------------------ #
     # Execution
