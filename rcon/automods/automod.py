@@ -12,17 +12,19 @@ from rcon.automods.models import ActionMethod, PunishPlayer, PunitionsToApply
 from rcon.automods.no_leader import NoLeaderAutomod
 from rcon.automods.no_solotank import NoSoloTankAutomod
 from rcon.automods.seeding_rules import SeedingRulesAutomod
+from rcon.automods.team_balance import TeamBalanceAutomod
 from rcon.cache_utils import get_redis_client
 from rcon.commands import HLLCommandFailedError
 from rcon.discord import send_to_discord_audit
 from rcon.hooks import inject_player_ids
-from rcon.logs.loop import on_kill, on_connected
+from rcon.logs.loop import on_connected, on_kill, on_match_end
 from rcon.rcon import Rcon, get_rcon
 from rcon.types import GetDetailedPlayer, StructuredLogLineType
 from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig
 from rcon.user_config.auto_mod_solo_tank import AutoModNoSoloTankUserConfig
+from rcon.user_config.auto_mod_team_balance import AutoModTeamBalanceUserConfig
 
 logger = logging.getLogger(__name__)
 first_run_done_key = "first_run_done"
@@ -279,6 +281,16 @@ def on_connected(rcon: Rcon, _, name: str, player_id: str):
     t = Timer(20, notify_player)
     pendingTimers[player_id] = t
     t.start()
+
+
+@on_match_end
+def balance_teams_on_match_end(rcon: Rcon, struct_log):
+    """Rebalance the teams by moving whole squads after a steamroll match."""
+    config = AutoModTeamBalanceUserConfig.load_from_db()
+    if not config.enabled:
+        return
+    mod = TeamBalanceAutomod(config, get_redis_client())
+    mod.on_match_end(rcon, struct_log)
 
 
 def run():

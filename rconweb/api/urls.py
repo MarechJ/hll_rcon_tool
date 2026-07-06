@@ -127,6 +127,10 @@ endpoints: list[tuple[str, Callable]] = [
         user_settings.describe_auto_mod_solo_tank_config,
     ),
     (
+        "describe_auto_mod_team_balance_config",
+        user_settings.describe_auto_mod_team_balance_config,
+    ),
+    (
         "describe_tk_ban_on_connect_config",
         user_settings.describe_tk_ban_on_connect_config,
     ),

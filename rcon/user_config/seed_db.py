@@ -8,6 +8,7 @@ from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig
 from rcon.user_config.auto_mod_solo_tank import AutoModNoSoloTankUserConfig
+from rcon.user_config.auto_mod_team_balance import AutoModTeamBalanceUserConfig
 from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.chat_commands import ChatCommandsUserConfig
@@ -55,6 +56,7 @@ def seed_default_config():
             AutoModNoLeaderUserConfig.seed_db(sess)
             AutoModNoSoloTankUserConfig.seed_db(sess)
             AutoModSeedingUserConfig.seed_db(sess)
+            AutoModTeamBalanceUserConfig.seed_db(sess)
             AutoVoteKickUserConfig.seed_db(sess)
             BanTeamKillOnConnectUserConfig.seed_db(sess)
             CameraNotificationUserConfig.seed_db(sess)
