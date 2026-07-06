@@ -26,7 +26,11 @@ async function requestFactory({
   const requestOptions = {
     method,
     mode: "cors",
-    cache: "default",
+    // Never serve API responses from the browser HTTP cache. These endpoints
+    // return live data (e.g. get_gamestate, get_team_view); with the default
+    // cache mode, GET responses could be served stale from disk/memory cache
+    // while POST responses (logs) stayed fresh, freezing the live view.
+    cache: "no-store",
     credentials: "include",
     headers,
     redirect: "follow",
