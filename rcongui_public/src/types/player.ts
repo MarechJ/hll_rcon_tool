@@ -152,6 +152,7 @@ export enum FactionEnum {
   GER = 'ger',
   RUS = 'rus',
   US = 'us',
+  CAN = 'can',
 }
 
 // Live player interface with online status

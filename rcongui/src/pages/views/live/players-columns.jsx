@@ -27,6 +27,7 @@ import CopyableText from "@/components/shared/CopyableText";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Emoji from "@/components/shared/Emoji";
 import { useThemedImages } from "@/hooks/useThemedImages";
+import { getPlatformIcon, getPlatformLabel, PLATFORMS } from "@/constants/platforms";
 
 export const Square = styled(Box)(({ theme }) => ({
   display: "flex",
@@ -49,14 +50,15 @@ const LevelColored = styled(Box, {
   };
 });
 
-const TKColored = styled(Box, {
-  shouldForwardProp: (prop) => prop !== "teamKills",
-})(({ theme, teamKills }) => {
-  if (!teamKills) return {};
-  return {
-    color: getTeamKillColor(teamKills, theme) || "inherit",
-  };
-});
+// TODO
+// const TKColored = styled(Box, {
+//   shouldForwardProp: (prop) => prop !== "teamKills",
+// })(({ theme, teamKills }) => {
+//   if (!teamKills) return {};
+//   return {
+//     color: getTeamKillColor(teamKills, theme) || "inherit",
+//   };
+// });
 
 const Center = styled(Box)(() => ({
   display: "grid",
@@ -215,7 +217,7 @@ export const columns = [
     accessorKey: "team_kills",
     cell: (props) => {
       const value = props.getValue()
-      return <TKColored teamKills={value} >{value}</TKColored>;
+      return value
     },
   },
   {
