@@ -2,7 +2,7 @@ import json
 import logging
 import re
 import shlex
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from functools import wraps
 from typing import Final
 
@@ -376,10 +376,10 @@ def record_map_end(rcon: Rcon, struct_log):
 
     # The log event loop can receive and process old log lines sometimes
     # Check to make sure that if we're processing an old logl ine
-    if (datetime.utcnow() - log_time).total_seconds() < 60:
+    if (datetime.now(tz=UTC) - log_time).total_seconds() < 60:
         # then we use the current map to be more accurate
         if current_map.map.name.lower() in log_map_name.lower():
-            logger.info(f"Recording map end: {current_map}")
+            logger.info(f"Recording map end: {current_map} - [recent match]")
             maps_history.save_map_end(
                 str(current_map), end_timestamp=int(struct_log["timestamp_ms"] / 1000)
             )
@@ -387,7 +387,7 @@ def record_map_end(rcon: Rcon, struct_log):
 
     # If we're processing an old match
     current_map = parse_layer(UNKNOWN_MAP_NAME)
-    logger.info(f"Recording map end: {current_map}")
+    logger.info(f"Recording map end: {current_map} - [old match]")
     maps_history.save_map_end(
         str(current_map), end_timestamp=int(struct_log["timestamp_ms"] / 1000)
     )

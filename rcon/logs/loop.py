@@ -225,8 +225,8 @@ class LogLoop:
         self.duplicate_guard_key = "unique_logs"
         self.log_history = self.get_log_history_list()
         self.ACTIVE_MAP_INDEX = 0
-        self.RECORD_STATS_DELAY = 30
-        self.GET_LOGS_SINCE_MIN = 180
+        self.RECORD_STATS_DELAY = 180 # 3 minutes
+        self.GET_LOGS_SINCE_MIN = 180 # 3 minutes
         logger.info("Registered hooks: %s", HOOKS)
 
     @staticmethod
@@ -245,6 +245,8 @@ class LogLoop:
             last_cleanup_time = self.cleanup(last_cleanup_time, cleanup_frequency_minutes)
             time.sleep(loop_frequency_secs)
 
+    # TODO match)time is always full game time(initial)
+    # and so is the last cap_flip wrong
     def update_maps_history(self, prev_map_time_elapsed: int) -> int:
         dp = self.get_detailed_players()
         gs = self.rcon.get_gamestate()
@@ -261,10 +263,11 @@ class LogLoop:
         # Player's stats are leaking into the next match before the player
         # properly connects to the server / before the player's map loads
         if current_map["start"] + self.RECORD_STATS_DELAY >= now:
-            logger.info("Waiting 30s from map start, skipping saving stats")
+            logger.info("Waiting %ds from map start, skipping saving stats", self.RECORD_STATS_DELAY)
             return prev_map_time_elapsed
 
         # Once the game ends time_remaining changes to 100 (after the match score screen)
+        # TODO check how match_time is calc during offensive or overtime
         curr_map_time_elapsed = gs["match_time"] - gs["time_remaining"].seconds
         if gs["time_remaining"].seconds < 101 and now - current_map["start"] > curr_map_time_elapsed:
             curr_map_time_elapsed = now - current_map["start"]

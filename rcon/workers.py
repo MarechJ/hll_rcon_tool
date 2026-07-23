@@ -154,8 +154,8 @@ def _record_stats(map_info: MapInfo):
             end=end,
             server_number=int(os.getenv("SERVER_NUMBER")),
             map_name=map_info["name"],
-            game_layout=map_info["game_layout"] if "game_layout" in map_info else GameLayout(requested=[], set=[]),
-            cap_flips=map_info["cap_flips"],
+            game_layout=map_info.get("game_layout", GameLayout(requested=[], set=[])),
+            cap_flips=map_info.get("cap_flips", []),
             match_time=map_info["match_time"],
         )
         record_stats_from_map(sess, map_, map_info)
