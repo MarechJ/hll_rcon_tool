@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from rcon.logs.loop import LogLoop
 from rcon.models import LogLine, PlayerID, enter_session
+from rcon.player_history import _get_set_player
 from rcon.types import StructuredLogLineWithMetaData
 from rcon.utils import get_server_number
 
@@ -46,17 +47,31 @@ class LogRecorder:
 
     def _collect_player_ids(self, sess: Session, logs: list[StructuredLogLineWithMetaData]) -> dict[str, PlayerID | None]:
         players: dict[str, PlayerID | None] = {}
+        names: dict[str, str | None] = {}
         for log in logs:
             if log["player_id_1"] is not None:
                 players.setdefault(log["player_id_1"], None)
+                names.setdefault(log["player_id_1"], log["player_name_1"])
             if log["player_id_2"] is not None:
                 players.setdefault(log["player_id_2"], None)
+                names.setdefault(log["player_id_2"], log["player_name_2"])
         if not players:
             return players
 
+        # NOTE potential race condition if this player id collection runs before
+        # the player id is stored in the db
+        # or the logs did not arrive in chronological order e.g. KILL log before CONNECTED log
+        # where PlayerID is only created on CONNECTED log trigger
+        players_set = set(players.keys( ))
         player_ids = sess.query(PlayerID).filter(PlayerID.player_id.in_(list(players.keys())))
         for pid in player_ids:
             players[pid.player_id] = pid
+            players_set.remove(pid.player_id)
+        if len(players_set) != 0:
+            logger.info("[MISSING PlayerID Records] - Creating PlayerID records\nMissing: %s", players_set)
+            for player_id in players_set:
+                pid = _get_set_player(sess, player_id, names[player_id])
+                players[pid.player_id] = pid
 
         return players
 
@@ -88,7 +103,7 @@ class LogRecorder:
                     "player2_player_id": player_2.id if player_2 else None,
                     "raw": log["raw"],
                     "content": log["message"],
-                    "server": os.getenv("SERVER_NUMBER"),
+                    "server": self.server_id,
                     "weapon": log["weapon"],
                 }
             )

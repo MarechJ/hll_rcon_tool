@@ -256,8 +256,6 @@ class LogLoop:
     # - Remaining match time is 0 during overtime
     # - If attacking's team manpower is depleted before capturing the point it's game over
 
-    # TODO match)time is always full game time(initial)
-    # and so is the last cap_flip wrong
     def update_maps_history(self, prev_map_time_elapsed: int) -> int:
         dp = self.get_detailed_players()
         gs = self.rcon.get_gamestate()
@@ -328,7 +326,8 @@ class LogLoop:
         if len(cap_flips) == 0 or cap_flips[-1]["allied_score"] != gs["allied_score"] or cap_flips[-1]["axis_score"] != gs["axis_score"]:
             logger.debug("\n[MATCH SCORE] - New cap flip recorded as the score has changed")
             cap_flips.append(MapScore(allied_score=gs["allied_score"], axis_score=gs["axis_score"], ts=sec_from_start))
-        
+
+    # TODO create 'names' field and track all player's name througout the match 
     def record_player_stats(self, current_map: MapInfo, sec_from_start: int, dp: GetDetailedPlayers):
         UNASSIGNED = -111
         all_roles = {r.name.lower(): r.id for r in Role.all()}
