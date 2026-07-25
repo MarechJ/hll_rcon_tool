@@ -27,7 +27,7 @@ from rcon.logs.loop import (
     on_match_end,
     on_match_start,
 )
-from rcon.maps import UNKNOWN_MAP_NAME, parse_layer
+from rcon.maps import UNKNOWN_MAP_NAME, GameMode, parse_layer
 from rcon.message_variables import format_message_string, populate_message_variables
 from rcon.models import PlayerID, PlayerSoldier, enter_session, GameLayout
 from rcon.player_history import (
@@ -289,6 +289,9 @@ def handle_new_match_start(rcon: Rcon, struct_log):
                 gamestate = rcon.get_gamestate()
                 current_map = parse_layer(gamestate["current_map"]["id"])
                 match_time = gamestate["match_time"]
+                if current_map.game_mode == GameMode.OFFENSIVE:
+                    # HLL Server displays match time for only one objetive not the theoretical length for all 5 objectives
+                    match_time *= 5
             except HLLCommandFailedError:
                 current_map = parse_layer(UNKNOWN_MAP_NAME)
                 match_time = 0
@@ -372,7 +375,7 @@ def record_map_end(rcon: Rcon, struct_log):
 
     # Log map names are inconsistently formatted but should match the map name that each Layer has
     log_map_name = struct_log["sub_content"]
-    log_time = datetime.fromtimestamp(struct_log["timestamp_ms"] / 1000)
+    log_time = datetime.fromtimestamp(struct_log["timestamp_ms"] / 1000, tz=UTC)
 
     # The log event loop can receive and process old log lines sometimes
     # Check to make sure that if we're processing an old logl ine

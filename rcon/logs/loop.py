@@ -245,6 +245,17 @@ class LogLoop:
             last_cleanup_time = self.cleanup(last_cleanup_time, cleanup_frequency_minutes)
             time.sleep(loop_frequency_secs)
 
+    # GENERAL
+    # - Once the game ends time_remaining changes to 100 (after the match score screen) and so 100s map restart countdown begins
+    # - When the map is restarted but no players are in the server time_remaining stays at 0
+    # OFFENSIVE
+    ## General
+    # - Match time is shown as a duration for capturing a single objective not the sum of 5*(cap time per objective)
+    # - Remaining match time is therefore the remaining time to capture a single objective
+    ## Overtime
+    # - Remaining match time is 0 during overtime
+    # - If attacking's team manpower is depleted before capturing the point it's game over
+
     # TODO match)time is always full game time(initial)
     # and so is the last cap_flip wrong
     def update_maps_history(self, prev_map_time_elapsed: int) -> int:
@@ -253,40 +264,44 @@ class LogLoop:
         maps_history = MapsHistory()
 
         if len(maps_history) == 0:
-            logger.info("No map seems to be running, skipping saving stats")
+            logger.info("[MATCH UNKNOWN] No map seems to be running")
             return prev_map_time_elapsed
 
         current_map = maps_history[self.ACTIVE_MAP_INDEX]
         now = int(datetime.datetime.now().timestamp())
+        curr_map_time_elapsed = now - current_map["start"]
+        self.record_cap_flips(current_map, curr_map_time_elapsed, gs)
+        maps_history.update(self.ACTIVE_MAP_INDEX, current_map)
+
+        if current_map["start"] is not None and current_map["end"] is not None and gs["time_remaining"].seconds <= 100 and gs["time_remaining"].seconds > 0:
+            logger.debug("\n[MATCH ENDED]")
+            return int(current_map["end"] - current_map["start"])
+
+        if gs["current_map"]["id"] != current_map["name"] and gs["time_remaining"].seconds == 0:
+            logger.debug("\n[MATCH IDLE] - Map has changed but has not started yet(based on map id diff), skipping saving stats\ncurrent_map: %s\ncached_map:%s", gs["current_map"]["id"], current_map["name"])
+            return 0
+        
+        # time remaining is 0 during match overtime so that value alone is not sufficient enough
+        if gs["time_remaining"].seconds == 0 and prev_map_time_elapsed == 0:
+            logger.debug("\n[MATCH IDLE] - Map has changed but has not started yet(based on time remaining diff), skipping saving stats\ntime_remaining:%d\ncurrently_recorded_time_elapsed:%d\npreviously_recorded_time_elapsed:%d", gs["time_remaining"].seconds, curr_map_time_elapsed, prev_map_time_elapsed)
+            return 0
 
         # HLL SERVER BUG
         # Player's stats are leaking into the next match before the player
         # properly connects to the server / before the player's map loads
         if current_map["start"] + self.RECORD_STATS_DELAY >= now:
-            logger.info("Waiting %ds from map start, skipping saving stats", self.RECORD_STATS_DELAY)
-            return prev_map_time_elapsed
+            logger.debug("\n[MATCH START] - Waiting %ds from map start, skipping saving stats", self.RECORD_STATS_DELAY)
+            return 0
 
-        # Once the game ends time_remaining changes to 100 (after the match score screen)
-        # TODO check how match_time is calc during offensive or overtime
-        curr_map_time_elapsed = gs["match_time"] - gs["time_remaining"].seconds
-        if gs["time_remaining"].seconds < 101 and now - current_map["start"] > curr_map_time_elapsed:
-            curr_map_time_elapsed = now - current_map["start"]
-
-        if gs["current_map"]["id"] != current_map["name"]:
-            logger.info("Map has changed but has not started yet(based on map id diff), skipping saving stats\ncurrent_map: %s\ncached_map:%s", gs["current_map"]["id"], current_map["name"])
-            return gs["time_remaining"].seconds
-        
-        if gs["time_remaining"].seconds == 0:
-            logger.info("Map has changed but has not started yet(based on time remaining diff), skipping saving stats\ntime_remaining:%d\ncurrently_recorded_time_elapsed:%d\npreviously_recorded_time_elapsed:%d", gs["time_remaining"].seconds, curr_map_time_elapsed, prev_map_time_elapsed)
-            return gs["time_remaining"].seconds
-
+        # TODO why is this condition check here?
         if gs["allied_score"] == 2 and gs["axis_score"] == 2 and len(current_map["cap_flips"]) > 1:
-            logger.info("New score is 2:2 but there are some cap flips records already")
+            logger.debug("New score is 2:2 but there are some cap flips records already")
+            current_map["cap_flips"].clear()
             return gs["time_remaining"].seconds
 
+        logger.debug("\n[MATCH RUNNING] - Recording stats")
+        # logger.debug("\n[MATCH RUNNING]\nMatch Start: %d\nMatch Time: %d\nRemaining Match Time: %d\nTime elapsed: %d\nTime elapsed(now-start): %d\n", current_map["start"], gs["match_time"], gs["time_remaining"].seconds, prev_map_time_elapsed, now - current_map["start"])
         self.record_player_stats(current_map, curr_map_time_elapsed, dp)
-        self.record_cap_flips(current_map, curr_map_time_elapsed, gs)
-        maps_history.update(self.ACTIVE_MAP_INDEX, current_map)
         return curr_map_time_elapsed
 
     def process_logs(self):
@@ -311,6 +326,7 @@ class LogLoop:
         cap_flips = current_map.setdefault("cap_flips", [])
 
         if len(cap_flips) == 0 or cap_flips[-1]["allied_score"] != gs["allied_score"] or cap_flips[-1]["axis_score"] != gs["axis_score"]:
+            logger.debug("\n[MATCH SCORE] - New cap flip recorded as the score has changed")
             cap_flips.append(MapScore(allied_score=gs["allied_score"], axis_score=gs["axis_score"], ts=sec_from_start))
         
     def record_player_stats(self, current_map: MapInfo, sec_from_start: int, dp: GetDetailedPlayers):
