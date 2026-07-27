@@ -49,12 +49,10 @@ class LogRecorder:
         players: dict[str, PlayerID | None] = {}
         names: dict[str, str | None] = {}
         for log in logs:
-            if log["player_id_1"] is not None:
-                players.setdefault(log["player_id_1"], None)
-                names.setdefault(log["player_id_1"], log["player_name_1"])
-            if log["player_id_2"] is not None:
-                players.setdefault(log["player_id_2"], None)
-                names.setdefault(log["player_id_2"], log["player_name_2"])
+            for i in [1, 2]:
+                if log[f"player_id_{i}"] is not None:
+                    players.setdefault(log[f"player_id_{i}"], None)
+                    names.setdefault(log[f"player_id_{i}"], log[f"player_name_{i}"])
         if not players:
             return players
 
@@ -62,17 +60,16 @@ class LogRecorder:
         # the player id is stored in the db
         # or the logs did not arrive in chronological order e.g. KILL log before CONNECTED log
         # where PlayerID is only created on CONNECTED log trigger
-        players_set = set(players.keys( ))
-        player_ids = sess.query(PlayerID).filter(PlayerID.player_id.in_(list(players.keys())))
-        for pid in player_ids:
+        unique_player_ids = set(players.keys( ))
+        pid_query = sess.query(PlayerID).filter(PlayerID.player_id.in_(list(players.keys())))
+        for pid in pid_query:
             players[pid.player_id] = pid
-            players_set.remove(pid.player_id)
-        if len(players_set) != 0:
-            logger.info("[MISSING PlayerID Records] - Creating PlayerID records\nMissing: %s", players_set)
-            for player_id in players_set:
+            unique_player_ids.remove(pid.player_id)
+        if len(unique_player_ids) != 0:
+            logger.info("[MISSING PlayerID Records] - Creating PlayerID records\nMissing: %s", unique_player_ids)
+            for player_id in unique_player_ids:
                 pid = _get_set_player(sess, player_id, names[player_id])
                 players[pid.player_id] = pid
-
         return players
 
     def _save_logs(self, sess, to_store: list[StructuredLogLineWithMetaData]):
