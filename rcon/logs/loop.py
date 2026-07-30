@@ -18,7 +18,7 @@ from rcon.types import AllLogTypes, GameStateType, GetDetailedPlayers, MapInfo, 
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.webhooks import DiscordMentionWebhook
-from rcon.utils import FixedLenList, MapsHistory
+from rcon.utils import LogsHistory, MapsHistory
 
 logger = logging.getLogger(__name__)
 
@@ -217,21 +217,21 @@ def load_generic_hooks():
 
 
 class LogLoop:
-    log_history_key = "log_history"
-
     def __init__(self):
         self.rcon = get_rcon()
         self.red = get_redis_client()
         self.duplicate_guard_key = "unique_logs"
         self.log_history = self.get_log_history_list()
         self.ACTIVE_MAP_INDEX = 0
-        self.RECORD_STATS_DELAY = 180 # 3 minutes
+        self.RECORD_STATS = 30 # 0.5 minute
+        self.RECORD_PLAYER_STATS_DELAY = 120 # 2 minutes
         self.GET_LOGS_SINCE_MIN = 180 # 3 minutes
+        self.now = 0
         logger.info("Registered hooks: %s", HOOKS)
 
     @staticmethod
-    def get_log_history_list() -> FixedLenList[StructuredLogLineWithMetaData]:
-        return FixedLenList(key=LogLoop.log_history_key, max_len=100_000)
+    def get_log_history_list():
+        return LogsHistory()
 
     def run(self, loop_frequency_secs=2, cleanup_frequency_minutes=10):
         self.GET_LOGS_SINCE_MIN = 180
@@ -241,6 +241,7 @@ class LogLoop:
         while True:
             load_generic_hooks()
             self.process_logs()
+            self.now = int(datetime.datetime.now(tz=datetime.UTC).timestamp())
             prev_map_time_elapsed = self.update_maps_history(prev_map_time_elapsed)
             last_cleanup_time = self.cleanup(last_cleanup_time, cleanup_frequency_minutes)
             time.sleep(loop_frequency_secs)
@@ -260,53 +261,53 @@ class LogLoop:
         dp = self.get_detailed_players()
         gs = self.rcon.get_gamestate()
         maps_history = MapsHistory()
+        current_map = maps_history.get_current_map()
 
-        if len(maps_history) == 0:
-            logger.info("[MATCH UNKNOWN] No map seems to be running")
+        if not current_map:
+            logger.info("[MATCH UNKNOWN] No map seems to be running: %s", current_map)
+            return prev_map_time_elapsed
+        
+        map_start = current_map["start"]
+        if map_start is None:
+            logger.info("[MATCH START MISSING] Probably a very old map record: %s", current_map)
             return prev_map_time_elapsed
 
-        current_map = maps_history[self.ACTIVE_MAP_INDEX]
-        now = int(datetime.datetime.now().timestamp())
-        curr_map_time_elapsed = now - current_map["start"]
+        curr_map_time_elapsed = self.now - map_start
         self.record_cap_flips(current_map, curr_map_time_elapsed, gs)
         maps_history.update(self.ACTIVE_MAP_INDEX, current_map)
 
-        if current_map["start"] is not None and current_map["end"] is not None and gs["time_remaining"].seconds <= 100 and gs["time_remaining"].seconds > 0:
-            logger.debug("\n[MATCH ENDED]")
-            return int(current_map["end"] - current_map["start"])
+        # it should be 100 not 90 but let's leave 10s to log latest stats on match end
+        if map_start is not None and current_map["end"] is not None and gs["time_remaining"].seconds <= 90 and gs["time_remaining"].seconds > 0:
+            logger.info("\n[MATCH ENDED]")
+            return current_map["end"] - map_start
 
         if gs["current_map"]["id"] != current_map["name"] and gs["time_remaining"].seconds == 0:
-            logger.debug("\n[MATCH IDLE] - Map has changed but has not started yet(based on map id diff), skipping saving stats\ncurrent_map: %s\ncached_map:%s", gs["current_map"]["id"], current_map["name"])
+            logger.info("\n[MATCH IDLE] - Map has changed but has not started yet(based on map id diff), skipping saving stats\ncurrent_map: %s\ncached_map:%s", gs["current_map"]["id"], current_map["name"])
             return 0
         
         # time remaining is 0 during match overtime so that value alone is not sufficient enough
         if gs["time_remaining"].seconds == 0 and prev_map_time_elapsed == 0:
-            logger.debug("\n[MATCH IDLE] - Map has changed but has not started yet(based on time remaining diff), skipping saving stats\ntime_remaining:%d\ncurrently_recorded_time_elapsed:%d\npreviously_recorded_time_elapsed:%d", gs["time_remaining"].seconds, curr_map_time_elapsed, prev_map_time_elapsed)
+            logger.info("\n[MATCH IDLE] - Map has changed but has not started yet(based on time remaining diff), skipping saving stats\ntime_remaining:%d\ncurrently_recorded_time_elapsed:%d\npreviously_recorded_time_elapsed:%d", gs["time_remaining"].seconds, curr_map_time_elapsed, prev_map_time_elapsed)
             return 0
 
-        # HLL SERVER BUG
-        # Player's stats are leaking into the next match before the player
-        # properly connects to the server / before the player's map loads
-        if current_map["start"] + self.RECORD_STATS_DELAY >= now:
-            logger.debug("\n[MATCH START] - Waiting %ds from map start, skipping saving stats", self.RECORD_STATS_DELAY)
-            return 0
-
-        # TODO why is this condition check here?
         if gs["allied_score"] == 2 and gs["axis_score"] == 2 and len(current_map["cap_flips"]) > 1:
-            logger.debug("New score is 2:2 but there are some cap flips records already")
+            logger.info("New score is 2:2 but there are some cap flips records already")
             current_map["cap_flips"].clear()
             return gs["time_remaining"].seconds
 
-        logger.debug("\n[MATCH RUNNING] - Recording stats")
+        # logger.debug("\n[MATCH RUNNING] - Recording stats")
         # logger.debug("\n[MATCH RUNNING]\nMatch Start: %d\nMatch Time: %d\nRemaining Match Time: %d\nTime elapsed: %d\nTime elapsed(now-start): %d\n", current_map["start"], gs["match_time"], gs["time_remaining"].seconds, prev_map_time_elapsed, now - current_map["start"])
         self.record_player_stats(current_map, curr_map_time_elapsed, dp)
+        maps_history.update(self.ACTIVE_MAP_INDEX, current_map)
         return curr_map_time_elapsed
 
     def process_logs(self):
         logs = self.rcon.get_structured_logs(since_min_ago=self.GET_LOGS_SINCE_MIN)
         self.GET_LOGS_SINCE_MIN = 5
+        current_map = MapsHistory().get_current_map()
+        name_to_id = self._get_name_to_id(current_map) if current_map else {} 
         for log in reversed(logs["logs"]):
-            line = self.record_line(log)
+            line = self.record_line(log, name_to_id)
             if line:
                 self.process_hooks(line)
 
@@ -323,12 +324,23 @@ class LogLoop:
     def record_cap_flips(self, current_map: MapInfo, sec_from_start: int, gs: GameStateType):
         cap_flips = current_map.setdefault("cap_flips", [])
 
+        if gs["allied_score"] == 2 and gs["axis_score"] == 2 and len(cap_flips) > 0:
+            # Most likely leak from the current map
+            return
+
         if len(cap_flips) == 0 or cap_flips[-1]["allied_score"] != gs["allied_score"] or cap_flips[-1]["axis_score"] != gs["axis_score"]:
             logger.debug("\n[MATCH SCORE] - New cap flip recorded as the score has changed")
             cap_flips.append(MapScore(allied_score=gs["allied_score"], axis_score=gs["axis_score"], ts=sec_from_start))
 
-    # TODO create 'names' field and track all player's name througout the match 
     def record_player_stats(self, current_map: MapInfo, sec_from_start: int, dp: GetDetailedPlayers):
+        # skip_caching_stats = current_map["start"] + self.RECORD_STATS >= self.now
+        if current_map["start"] is None:
+            return
+        skip_caching_player_stats = current_map["start"] + self.RECORD_PLAYER_STATS_DELAY >= self.now
+
+        # if skip_caching_stats:
+        #     logger.debug("\n[MATCH START] - Waiting %ds from map start, skipping caching", self.RECORD_PLAYER_STATS_DELAY)
+
         UNASSIGNED = -111
         all_roles = {r.name.lower(): r.id for r in Role.all()}
         all_teams = {t.name.lower(): t.id for t in Team.all()}
@@ -341,16 +353,19 @@ class LogLoop:
         offline_unit = UnitHistoryEntry(ts=sec_from_start, t=UNASSIGNED, s=UNASSIGNED, r=UNASSIGNED)
         for player_id, player_stats in map_cached_stats.items():
             # When player joins both role and squad are set to 0 vals but only team is not assigned
-            if player_id not in dp["players"] and player_stats["p_unit"]["s"] != UNASSIGNED and player_stats["p_unit"]["r"] != UNASSIGNED:
+            if player_id not in dp["players"] and player_stats["status"] != "offline":
+                logger.debug("Player %s has disconnected", player_stats["names"][-1])
+                player_stats["status"] = "offline"
                 player_stats["p_unit"] = offline_unit
-                player_stats["units"].append(offline_unit)
+                player_stats["units"] = (player_stats.get("units") or []) + [offline_unit]
 
         for player_id in dp["players"]:
-            current = dp["players"].get(player_id)
+            current = dp["players"][player_id]
             cached = map_cached_stats.get(player_id)
 
             # first occurance this match
             if not cached:
+                logger.debug("Player %s has connected/been cached", current["name"])
                 map_cached_stats[player_id] = PlayerStat(
                     combat=0,
                     p_combat=0,
@@ -371,14 +386,33 @@ class LogLoop:
                     p_unit=UnitHistoryEntry(ts=sec_from_start, t=UNASSIGNED, s=UNASSIGNED, r=UNASSIGNED),
                     units=[],
                     level=current["level"],
-                    p_coord=current["world_position"],
+                    p_coord=WorldPositionType(x=current["world_position"]["x"], y=current["world_position"]["y"], z=current["world_position"]["z"]),
                     has_spawned=False,
+                    names=[current["name"]],
+                    status="online"
                 )
+                continue
+
+            # BUG: HLL SERVER 
+            # Some player's stats are leaking into the next match before the player
+            # properly connects to the server / before the player's map loads
+            if skip_caching_player_stats:
+                logger.debug("\n[MATCH START] - Waiting %ds from map start, skipping caching player stats", self.RECORD_PLAYER_STATS_DELAY)
+                # continue so some other players can be cached for the first time as well
+                # or marked as 'offline'
                 continue
             
             # first coordinates change
-            # NOTE when crcon starts mid game and player's coordinates don't change
-            if cached and not cached["has_spawned"] and ((cached["p_coord"]["x"] != current["world_position"]["x"] or cached["p_coord"]["y"] != current["world_position"]["y"] or cached["p_coord"]["z"] != current["world_position"]["z"]) or (current["role"] != 0 or current["unit_id"] != 0)):
+            # Is this still needed? Perhaps for some future use
+            # NOTE: if timestamp provided we could track 'idle' players
+            # When player connects, disconnects and connects again it's coord can differ
+            # NOTE: when crcon starts mid game and player's coordinates don't change
+            # there might be needed another check
+            if cached and not cached["has_spawned"] and cached["status"] != "offline" and \
+                ((cached["p_coord"]["x"] != current["world_position"]["x"] \
+                    or cached["p_coord"]["y"] != current["world_position"]["y"] \
+                    or cached["p_coord"]["z"] != current["world_position"]["z"])):
+                logger.debug("Player %s has spawned for the first time", current["name"])
                 cached.update(
                     combat=current["combat"],
                     offense=current["offense"],
@@ -389,13 +423,17 @@ class LogLoop:
                     kills_and_assists=current["kills"],
                     deaths_and_redeploys=current["deaths"],
                     has_spawned=True,
-                )            
+                )
+
+            if cached["status"] == "offline":
+                logger.debug("Player %s has reconnected", current["name"])
+                cached["status"] = "online"
 
             # recalc values only available during the match
             # when the current values are lower, the player reconnected
             # the previously recorded values are moved to "p" values
             # the values are eventually summed up and stored in the db
-            # note: some values are persisted across sessions so 
+            # NOTE: some values are persisted across sessions
             for v in ["combat", "offense", "defense", "support", "vehicle_kills", "vehicles_destroyed"]:
                 if current[v] < cached[v]:
                     cached["p_" + v] = cached["p_" + v] + cached[v]
@@ -409,23 +447,57 @@ class LogLoop:
                 cached["p_deaths_and_redeploys"] = cached["p_deaths_and_redeploys"] + cached["deaths_and_redeploys"]
             cached["deaths_and_redeploys"] = current["deaths"]
             
-            current_role = all_roles.get(current["role"], UNASSIGNED)
-            current_team = all_teams.get(current["team"], UNASSIGNED)
-            current_squad = current["unit_id"]
+            current_role = all_roles.get(current["role"] or "", UNASSIGNED)
+            current_team = all_teams.get(current["team"] or "", UNASSIGNED)
+            current_squad = current["unit_id"] or UNASSIGNED
 
             cached_unit = cached["p_unit"]
 
             if current_role != cached_unit["r"] or current_squad != cached_unit["s"] or current_team != cached_unit["t"]:
                 switched_unit = UnitHistoryEntry(ts=sec_from_start, t=current_team, s=current_squad, r=current_role)
                 cached["p_unit"] = switched_unit
-                cached["units"].append(switched_unit)
+                cached["units"] = (cached.get("units") or []) + [switched_unit]
+
+            if current["name"] not in cached["names"]:
+                cached["names"].append(current["name"])
 
             cached["level"] = current["level"]
-            cached["p_coord"] = current["world_position"]
+            cached["p_coord"] = WorldPositionType(x=current["world_position"]["x"], y=current["world_position"]["y"], z=current["world_position"]["z"])
             # update
             map_cached_stats[player_id] = cached
+            # logger.debug("Updated cached stats for player %s", current["name"])
 
-    def record_line(self, log: StructuredLogLineWithMetaData):
+    def _is_log_player_related(self, log: StructuredLogLineWithMetaData) -> bool:
+        return bool(log["player_id_1"] or log["player_id_2"] or log["player_name_1"] or log["player_name_2"])
+
+    def _is_log_from_map(self, log: StructuredLogLineWithMetaData | None, map: MapInfo | None) -> bool:
+        if not log or not map or not map["start"]:
+            return False
+        log_time = log.get("event_time")
+        map_start = datetime.datetime.fromtimestamp(map["start"])
+        if map["end"] is None:
+            return log_time >= map_start
+        map_end = datetime.datetime.fromtimestamp(map["end"])
+        return map_start <= log_time and log_time <= map_end
+        
+    def _get_name_to_id(self, map: MapInfo) -> dict[str, str]:
+        # if one player with name 'foo' disconnects and another player with
+        # the same name connects the online player takes preference
+        # when name collision happens
+        name_to_id: dict[str, str] = {}
+        for id, player in map["player_stats"].items():
+            for name in player["names"]:
+                existing_id = name_to_id.get(name)
+                if not existing_id:
+                    name_to_id[name] = id
+                    continue
+                # if there is another id linking to the same name
+                # and the player is online, override it
+                if existing_id != id and player["status"] == "online":
+                    name_to_id[name] = id
+        return name_to_id
+
+    def record_line(self, log: StructuredLogLineWithMetaData, name_to_id: dict[str, str] = {}):
         id_ = f"{log['timestamp_ms']}|{log['line_without_time']}"
         if not self.red.sadd(self.duplicate_guard_key, id_):
             # logger.debug("Skipping duplicate: %s", id_)
@@ -436,12 +508,39 @@ class LogLoop:
             last_line = self.log_history[0]
         except IndexError:
             last_line = None
+
         if not isinstance(last_line, dict):
-            logger.error("Can't check against last_line, invalid_format %s", last_line)
+            logger.error("Can't check against last_line, invalid_format\nLast line: %s\nCurrent log: %s", last_line, log)
         elif last_line and last_line["timestamp_ms"] > log["timestamp_ms"]:
-            logger.warning("Received old log record, ignoring")
+            logger.warning("Received old log record, ignoring\nLast line: %s\nCurrent log: %s", last_line, log)
             return None
 
+        if self._is_log_player_related(log):
+            current_map = MapsHistory().get_current_map()
+            if current_map and self._is_log_from_map(log, current_map):
+                for slot in (1, 2):
+                    player_name: str | None = log.get(f"player_name_{slot}", None)
+                    player_id: str | None = log.get(f"player_id_{slot}", None)
+
+                    if not player_id and not player_name:
+                        continue
+                    
+                    if not player_id and player_name:
+                        # Let's try to backtrack the player_id from cached player stats(redis)
+                        player_id = name_to_id.get(player_name)
+                        if player_id:
+                            logger.debug("Updated player_id: %s by player_name: %s\n%s", player_id, player_name, log["raw"])
+
+                    if not player_id:
+                        logger.info("Unable to link player %s to any player_id\n%s", player_name, log)
+                        continue
+
+                    if player_name and player_id:
+                        prev_key = name_to_id.setdefault(player_name, player_id)
+                        if prev_key != player_id:
+                            logger.warning("This log potentialy belonging to 1 or more players\nName: %s, ID: %s\n, Log: %s", player_name, prev_key, log["raw"])
+                    log[f"player_id_{slot}"] = player_id
+                    
         self.log_history.add(log)
         return log
 
