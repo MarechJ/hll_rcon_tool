@@ -451,7 +451,7 @@ class PlayerStatsType(TypedDict, total=False):
     nb_voted_yes: Optional[int]
     nb_voted_no: Optional[int]
     time_seconds: Optional[int]
-    last_spawn: Optional[int]
+    last_spawn: Optional[datetime.datetime]
     kills_per_minute: Optional[float]
     deaths_per_minute: Optional[float]
     kill_death_ratio: Optional[float]
@@ -472,6 +472,7 @@ class PlayerStatsType(TypedDict, total=False):
     vehicle_kills: Optional[int]
     kills_and_assists: Optional[int]
     deaths_and_redeploys: Optional[int]
+    names: Optional[list[str]]
 
 
 class PlayerStat(TypedDict):
@@ -496,6 +497,8 @@ class PlayerStat(TypedDict):
     p_unit: UnitHistoryEntry
     p_coord: 'WorldPositionType'
     has_spawned: bool
+    names: list[str]
+    status: Literal["offline", "online", "idle"]
 
 class CachedLiveGameStats(TypedDict):
     snapshot_timestamp: datetime.datetime
@@ -518,8 +521,8 @@ class MapResult(TypedDict):
 
 class MapInfo(TypedDict):
     name: str
-    start: float | None
-    end: float | None
+    start: int | None
+    end: int | None
     guessed: bool
     player_stats: dict[str, PlayerStat]
     game_layout: GameLayout
