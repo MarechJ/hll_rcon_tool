@@ -2,11 +2,12 @@ import datetime
 import logging
 import os
 from concurrent.futures import as_completed
-from datetime import timedelta
+from datetime import UTC, timedelta
 from typing import Any, Optional, Set
+from typing_extensions import TypeIs
 
 from rq import Queue
-from rq.job import Job, Retry
+from rq.job import Dependency, Job, Retry
 from rq_scheduler import Scheduler
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
@@ -16,8 +17,9 @@ from rcon.game_logs import get_historical_logs_records
 from rcon.models import Maps, PlayerStats, enter_session
 from rcon.player_history import get_player
 from rcon.player_stats import TimeWindowStats
-from rcon.types import MapInfo, MapScore, PlayerStat, GameLayout
-from rcon.utils import GAME_LOG_STAT_FIELDS, INDEFINITE_VIP_DATE, TEMP_FIELDS, MapsHistory, get_temp_default_stats
+from rcon.rcon import get_rcon
+from rcon.types import MapInfo, MapScore, MapsType, PlayerStat, GameLayout
+from rcon.utils import GAME_LOG_STAT_FIELDS, INDEFINITE_VIP_DATE, TEMP_FIELDS, LogsHistory, MapsHistory, get_server_number, get_temp_default_stats
 
 logger = logging.getLogger("rcon")
 
@@ -106,21 +108,76 @@ def get_or_create_map(sess: Session, start: datetime.datetime, end: datetime.dat
     sess.commit()
     return map_
 
+def backtrack_match_logs_worker(map_info: MapInfo) -> Job:
+    queue = get_queue()
+    return queue.enqueue(backtrack_match_logs, map_info, retry=Retry(max=15, interval=30))
 
-def record_stats_worker(map_info: MapInfo):
+def is_map_info(m: MapInfo | MapsType) -> TypeIs[MapInfo]:
+    return "name" in m and isinstance(m.get("name"), str)
+
+def backtrack_match_logs(map_: MapInfo):
+    '''Collects all logs emitted during a match and tries to link logs to PlayerID
+    wherever possible. Some logs e.g. SWITCH, VOTE, ... do not contain player id but
+    contain player name
+    '''
+    raw_start = map_.get("start")
+    raw_end = map_.get("end")
+
+    if not raw_start or not raw_end:
+        logger.error("Can't backtrack logs, no time info for %s", map_)
+        return
+
+    match_start = datetime.datetime.fromtimestamp(raw_start, datetime.timezone.utc)
+    match_end = datetime.datetime.fromtimestamp(raw_end, datetime.timezone.utc)
+
+    with enter_session() as sess:
+        if not _are_match_logs_available(sess, int(get_server_number()), match_start, match_end):
+            raise Exception("match logs are not yet available, skipping backtracking logs")
+    
+        # name_to_id = {name: id for id, player in map_info["player_stats"].items() for name in player["names"]}
+        # Get the logs from the database for the given match
+        db_match_logs = get_historical_logs_records(
+            sess,
+            from_=match_start,
+            till=match_end,
+            time_sort="asc",
+            server_filter=get_server_number(),
+            limit=99999999,
+        )
+
+    minutes_from_now = (datetime.datetime.now(tz=datetime.UTC) - match_start).seconds // 60
+    rcon_logs = get_rcon().get_structured_logs(since_min_ago=minutes_from_now, filter_action="KILL")
+    rcon_match_logs = [log for log in rcon_logs["logs"] if match_start <= log["event_time"] and log["event_time"] <= match_end]
+    match_redis_logs = [log for log in LogsHistory()[:10000] if match_start <= log["event_time"] and log["event_time"] <= match_end]
+    # TODO get historical logs and rcon logs, mapped them by id and compare missing ones
+    logger.info("=================LOGS BY MATCH=========================")
+    logger.info("Match start: %s | Match end: %s", match_start, match_end)
+    logger.info("Number of DB logs: %d", len(db_match_logs))
+    logger.info("Number of HLL SERVER logs: %d", len(rcon_match_logs))
+    logger.info("Number of REDIS logs: %d", len(match_redis_logs))
+    logger.info("=================LOGS BY MATCH=========================")
+        
+
+def record_stats_worker(map_info: MapInfo, depends_on: Job | None = None):
     queue = get_queue()
     # tries to record stats instantly and retries up to 5 times, e.g. when the game logs are
     # not yet saved in the database.
     # One possible expected exception occurs when the game logs are not yet dumped into the db. This retries should
     # therefore be higher than the default dump interval of logs in LogRecorder
+    # if depends_on:
+    #     dependency = Dependency(jobs=depends_on, allow_failure=True)    
+    #     queue.enqueue(record_stats, map_info, retry=Retry(max=15, interval=30), depends_on=dependency)
+    # else:
+    #     queue.enqueue(record_stats, map_info, retry=Retry(max=15, interval=30))
     queue.enqueue(record_stats, map_info, retry=Retry(max=15, interval=30))
+    queue.enqueue(backtrack_match_logs, map_info, retry=Retry(max=15, interval=30))
 
 
 def record_stats(map_info: MapInfo):
-    logger.info("Recording stats for %s", map_info)
+    logger.info("Recording stats for %s", (map_info["name"], map_info["start"], map_info["end"]))
     try:
         _record_stats(map_info)
-        logger.info("Done recording stats for %s", map_info)
+        logger.info("Done recording stats for %s", (map_info["name"], map_info["start"], map_info["end"]))
     except Exception as e:
         logger.exception("Unexpected error while recording stats for %s", map_info)
         raise e
@@ -190,7 +247,7 @@ def _build_player_stat_dict(
         **adjusted,
     }
 
-def _are_match_logs_available(session: Session, map: Maps) -> bool:
+def _are_match_logs_available(session: Session, server_number: int, start: datetime.datetime | None = None, end: datetime.datetime | None = None) -> bool:
     # A game can either be ended by a MATCH ENDED log event (when the game ended normally after a 5-0 win or the
     # match time is up) or when a new MATCH STARTED log event occurred (e.g. on a map change or objective change).
     # If both did not happen in the historical logs, assume that the LogRecorder did not yet dumped the logs into the
@@ -198,12 +255,12 @@ def _are_match_logs_available(session: Session, map: Maps) -> bool:
 
     match_ended_search = get_historical_logs_records(
         session,
-        from_=map.start,
-        till=map.end,
+        from_=start,
+        till=end,
         time_sort="asc",
         action="MATCH ENDED",
         exact_action=True,
-        server_filter=str(map.server_number),
+        server_filter=str(server_number),
         limit=1,
     )
     if len(match_ended_search) > 0:
@@ -212,12 +269,12 @@ def _are_match_logs_available(session: Session, map: Maps) -> bool:
     
     match_started_search = get_historical_logs_records(
         session,
-        from_=map.start,
-        till=map.end + datetime.timedelta(seconds=30),
+        from_=start,
+        till=end + datetime.timedelta(seconds=30),
         time_sort="asc",
         action="MATCH START",
         exact_action=True,
-        server_filter=str(map.server_number),
+        server_filter=str(server_number),
         limit=2,
     )
 
@@ -235,16 +292,16 @@ def _save_match_result(session: Session, map: Maps):
     logger.info("Saving map result: %s", map.result)
     session.add(map)
 
-def _get_game_logs_stats(session: Session, map: Maps):
+def _get_game_logs_stats(session: Session, map: Maps, cached_players: dict[str, PlayerStat] = {}):
     game_log_stats = TimeWindowStats()
     return game_log_stats.get_players_stats_at_time(
-        from_=map.start, until=map.end, server_number=str(map.server_number)
+        from_=map.start.replace(tzinfo=UTC), until=map.end.replace(tzinfo=UTC), server_number=str(map.server_number), cached_players=cached_players
     )
 
 def record_stats_from_map(
     sess: Session, map_: Maps, map_info: MapInfo | None, force: bool = False
 ) -> None:
-    if not _are_match_logs_available(sess, map_):
+    if not _are_match_logs_available(sess, map_.server_number, map_.start, map_.end):
         # An exception will automatically re-enqueue the record stats task.
         raise Exception("match logs are not yet available, skipping recording stats")
 
@@ -253,7 +310,7 @@ def record_stats_from_map(
     _save_match_result(sess, map_)
 
     seen_players: Set[str] = set()
-    for _, player_game_log_stats in _get_game_logs_stats(sess, map_).items():
+    for _, player_game_log_stats in _get_game_logs_stats(sess, map_, temp_stats).items():
         player_id = player_game_log_stats.get("player_id")
         if not player_id:
             logger.error("Stat object does not contain a player ID: %s", player_game_log_stats)
