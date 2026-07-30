@@ -1674,26 +1674,39 @@ def is_server_loading_map(map_name: str) -> bool:
 env_alternation = "|".join(re.escape(e.value) for e in Environment)
 mode_alternation = "|".join(re.escape(m.value) for m in GameMode)
 
-pattern = re.compile(
+ended_pattern = re.compile(
     rf"""
-    ^
+    MATCH\s+ENDED
+    \s+
+    `
     (?P<name>.+?)
     (?:
-        \s+
-        (?P<env>{env_alternation})
+        \s+(?P<env>{env_alternation})
     )?
+    \s+(?P<mode>{mode_alternation})
+    `
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+
+start_pattern = re.compile(
+    rf"""
+    MATCH\s+START
     \s+
-    (?P<mode>{mode_alternation})
-    $
+    (?P<name>.+?)
+    (?:
+        \s+(?P<env>{env_alternation})
+    )?
+    \s+(?P<mode>{mode_alternation})
+    (?:\s|$)
     """,
     re.IGNORECASE | re.VERBOSE,
 )
 
 def parse_map_string(s: str) -> tuple[str, Environment | None, GameMode]:
-    """Use with map string that comes from MATCH ENDED & STARTED logs"""
-    m = pattern.match(s.strip())
+    m = ended_pattern.search(s) or start_pattern.search(s)
     if not m:
-        raise ValueError(f"Could not parse: {s!r}")
+        raise ValueError(f"Could not parse map details from: {s!r}")
 
     name = m.group("name").strip()
     env_str = m.group("env")
