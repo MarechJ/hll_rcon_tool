@@ -25,7 +25,7 @@ class LogRecorder:
         if not self.server_id:
             raise ValueError("SERVER_NUMBER is not set, can't record logs")
 
-    def _get_new_logs(self, sess):
+    def _get_new_logs(self, sess: Session):
         to_store: list[StructuredLogLineWithMetaData] = []
         last_log = (
             sess.query(LogLine)
@@ -41,6 +41,7 @@ class LogRecorder:
                 logger.warning("Log is invalid, not a dict: %s", log)
                 continue
             if last_log and int(log["timestamp_ms"]) / 1000 == last_log.event_time.timestamp() and '] ' + log["line_without_time"] in last_log.raw:
+                logger.debug("This log is the same as the last saved log, skipping saving the rest of the logs\n%s", log)
                 break
             to_store.append(log)
         return to_store
@@ -90,9 +91,7 @@ class LogRecorder:
             rows.append(
                 {
                     "version": log["version"],
-                    "event_time": datetime.datetime.fromtimestamp(
-                        log["timestamp_ms"] // 1000
-                    ),
+                    "event_time": log["event_time"],
                     "type": log["action"],
                     "player1_name": log["player_name_1"],
                     "player2_name": log["player_name_2"],
