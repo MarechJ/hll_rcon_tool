@@ -2,9 +2,9 @@ import inspect
 import logging
 import os
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from itertools import islice
-from typing import Any, Generic, Iterable, Optional, TypeVar
+from typing import Any, Callable, Generic, Iterable, Iterator, Optional, TypeVar, overload
 
 import hllrcon
 import orjson
@@ -13,7 +13,8 @@ import redis.exceptions
 
 from rcon.cache_utils import get_redis_pool
 from rcon.models import GameLayout
-from rcon.types import GetDetailedPlayer, MapInfo, PlayerInfoType, PlayerStat, PlayerStatsType
+from rcon.types import GetDetailedPlayer, MapInfo, PlayerInfoType, PlayerStat, PlayerStatsType, StructuredLogLineWithMetaData
+from rcon.maps import Layer, parse_map_string, LAYERS, Environment, UNKNOWN_MAP_NAME
 
 logger = logging.getLogger("rcon")
 
@@ -234,59 +235,119 @@ class Stream(Generic[T]):
 
 class FixedLenList(Generic[T]):
     def __init__(
-        self, key, max_len=100, serializer=orjson.dumps, deserializer=orjson.loads
-    ):
+        self,
+        key: str,
+        max_len: int = 100,
+        serializer: Callable[[T], bytes | str] = orjson.dumps,
+        deserializer: Callable[[bytes | str], T] = orjson.loads,
+    ) -> None:
         self.red = redis.StrictRedis(connection_pool=get_redis_pool())
         self.max_len = max_len
         self.serializer = serializer
         self.deserializer = deserializer
         self.key = key
 
-    def add(self, obj):
+    def add(self, obj: T) -> None:
+        """Push to the left and trim to max_len."""
         self.red.lpush(self.key, self.serializer(obj))
         self.red.ltrim(self.key, 0, self.max_len - 1)
 
-    def remove(self, obj):
+    def remove(self, obj: T) -> None:
+        """Remove all occurrences of obj."""
         self.red.lrem(self.key, 0, self.serializer(obj))
 
-    def update(self, index, obj):
+    def update(self, index: int, obj: T) -> None:
+        """Replace the element at index."""
         self.red.lset(self.key, index, self.serializer(obj))
 
-    def __getitem__(self, index: slice | int) -> T:
+    def lpush(self, obj: T) -> None:
+        """Push to the left (no trimming)."""
+        self.red.lpush(self.key, self.serializer(obj))
+
+    def lpop(self) -> T | None:
+        """Pop from the left. Returns None if empty."""
+        val = self.red.lpop(self.key)
+        if val is None:
+            return None
+        return self.deserializer(val)
+
+    @overload
+    def __getitem__(self, index: int) -> T: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> list[T]: ...
+
+    def __getitem__(self, index: slice | int) -> T | list[T]:
         if isinstance(index, slice):
-            if index.step:
+            if index.step is not None:
                 raise ValueError("Step is not supported")
-            end = index.stop or -1
             start = index.start or 0
-            return [self.deserializer(o) for o in self.red.lrange(self.key, start, end)]
+            end = index.stop if index.stop is not None else -1
+            return [
+                self.deserializer(o)
+                for o in self.red.lrange(self.key, start, end)
+            ]
+
         val = self.red.lindex(self.key, index)
         if val is None:
             raise IndexError("Index out of bound")
         return self.deserializer(val)
 
-    def lpop(self):
-        val = self.red.lpop(self.key)
+    def __setitem__(self, index: int, obj: T) -> None:
+        self.update(index, obj)
+
+    def __delitem__(self, index: int) -> None:
+        val = self.red.lindex(self.key, index)
         if val is None:
-            return val
-        return self.deserializer(val)
+            raise IndexError("Index out of bound")
+        self.red.lrem(self.key, 1, val)
 
-    def lpush(self, obj):
-        self.red.lpush(self.key, self.serializer(obj))
-
-    def __iter__(self):
+    def __iter__(self) -> Iterator[T]:
         for o in self.red.lrange(self.key, 0, -1):
             yield self.deserializer(o)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.red.llen(self.key)
+
+    def __contains__(self, obj: T) -> bool:
+        # Note: this is O(N) – fine for modest max_len
+        return self.serializer(obj) in self.red.lrange(self.key, 0, -1)
+
+    def clear(self) -> None:
+        self.red.delete(self.key)
+
+def logs_deserializer(data: bytes | str) -> StructuredLogLineWithMetaData:
+    """
+    A custom deserializer that ensures conversion of datetime strings
+    to datetime.datetime objects
+    """
+    obj = orjson.loads(data)
+
+    if "event_time" in obj:
+        if isinstance(obj["event_time"], (int, float)):
+            obj["event_time"] = datetime.fromtimestamp(obj["event_time"])
+        elif isinstance(obj["event_time"], str):
+            obj["event_time"] = datetime.fromisoformat(obj["event_time"])
+
+    return obj
+
+class LogsHistory(FixedLenList[StructuredLogLineWithMetaData]):
+    def __init__(self, key: str = "logs_history", max_len: int = 100_000):
+        super().__init__(key, max_len, deserializer=logs_deserializer)
 
 
 class MapsHistory(FixedLenList[MapInfo]):
     def __init__(self, key="maps_history", max_len=500):
         super().__init__(key, max_len)
 
+    def get_current_map(self) -> MapInfo | None:
+        try:
+            return self[0]
+        except IndexError:
+            return None
+
     def save_map_end(self, old_map: str | None = None, end_timestamp: int | None = None):
-        ts = end_timestamp or datetime.now().timestamp()
+        ts = end_timestamp or int(datetime.now(tz=UTC).timestamp())
         logger.info("Saving end of map %s at time %s", old_map, ts)
         prev = self.lpop() or MapInfo(
             name=old_map,
@@ -310,7 +371,7 @@ class MapsHistory(FixedLenList[MapInfo]):
         game_layout: GameLayout | None = None,
         match_time: int = 0,
     ):
-        ts = start_timestamp or datetime.now().timestamp()
+        ts = start_timestamp or int(datetime.now(tz=UTC).timestamp())
         logger.info("Saving start of new map %s at time %s", new_map, ts)
         game_layout = game_layout or GameLayout(requested=[], set=[])
         new = MapInfo(
@@ -566,6 +627,8 @@ def get_temp_default_stats(existing: Optional[PlayerStatsType]) -> PlayerStat:
             "level": existing.level,
             "p_coord": existing.p_coord,
             "has_spawned": existing.has_spawned,
+            "names": existing.names,
+            "status": existing.status
         }
     return {
         "combat": 0,
@@ -589,6 +652,8 @@ def get_temp_default_stats(existing: Optional[PlayerStatsType]) -> PlayerStat:
         "level": 0,
         "p_coord": { "x": 0.0, "y": 0.0, "z": 0.0 },
         "has_spawned": False,
+        "names": [],
+        "status": "offline"
     }
 
 def get_default_player_stats() -> PlayerStatsType:
@@ -610,7 +675,7 @@ def get_default_player_stats() -> PlayerStatsType:
         "nb_voted_yes": 0,
         "nb_voted_no": 0,
         "time_seconds": 0,
-        "last_spawn": 0,
+        "last_spawn": None,
         "kills_per_minute": 0,
         "deaths_per_minute": 0,
         "kill_death_ratio": 0,
@@ -778,3 +843,19 @@ def strtobool(val) -> bool:
         return False
     else:
         raise ValueError("invalid truth value %r" % (val,))
+    
+
+def guess_map_from_log(log: StructuredLogLineWithMetaData) -> Layer:
+    guessed_map: Layer
+    try:
+        name, env, game_mode = parse_map_string(log["raw"])
+        maps = [l for l in LAYERS.values() if l.map.name.lower() == name.lower() and l.game_mode == game_mode]
+        # ignoring attackers for offensives
+        env_to_maps = {l.environment: l for l in maps}
+        if not env:
+            # in most cases when env not provided the env is day
+            env = Environment.DAY
+        guessed_map = env_to_maps.get(env, maps[0])
+    except:
+        guessed_map = LAYERS[UNKNOWN_MAP_NAME]
+    return guessed_map
