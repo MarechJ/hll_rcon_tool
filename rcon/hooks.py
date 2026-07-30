@@ -65,9 +65,9 @@ from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.webhooks import CameraWebhooksUserConfig
-from rcon.utils import DefaultStringFormat, MapsHistory
+from rcon.utils import DefaultStringFormat, MapsHistory, guess_map_from_log
 from rcon.vote_map import VoteMap
-from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
+from rcon.workers import backtrack_match_logs_worker, record_stats_worker, temporary_broadcast, temporary_welcome
 
 logger = logging.getLogger(__name__)
 ARG_RE = re.compile(r"\$(\d+)")
@@ -281,6 +281,7 @@ def reset_watch_killrate_cooldown(rcon: Rcon, struct_log: StructuredLogLineWithM
 
 @on_match_start
 def handle_new_match_start(rcon: Rcon, struct_log):
+    log_map = guess_map_from_log(struct_log)
     try:
         logger.info("New match started recording map %s", struct_log)
         with invalidates(Rcon.get_map, Rcon.get_next_map, Rcon.get_gamestate):
@@ -300,26 +301,24 @@ def handle_new_match_start(rcon: Rcon, struct_log):
                     UNKNOWN_MAP_NAME,
                 )
 
+        logger.info("LOG MAP: %s\nCURRENT MAP: %s", log_map, current_map)
+        logger.info("LOG TIME: %s\nNOW: %s", struct_log["event_time"].replace(tzinfo=UTC), datetime.now(tz=UTC))
         guessed = True
-        log_map_name = struct_log["sub_content"].rsplit(" ", 1)[0]
-        log_time = datetime.fromtimestamp(struct_log["timestamp_ms"] / 1000)
         # Check that the log is less than 5min old
-        if (datetime.utcnow() - log_time).total_seconds() < 5 * 60:
+        if (datetime.now(tz=UTC) - struct_log["event_time"].replace(tzinfo=UTC)).total_seconds() < 5 * 60:
             # then we use the current map to be more accurate
-            if current_map.map.name.lower() == log_map_name.lower().removesuffix(
-                " night"
-            ):
-                map_name_to_save = current_map
+            if current_map.map.name == log_map.map.name:
+                map_to_save = current_map
                 guessed = False
             else:
-                map_name_to_save = parse_layer(UNKNOWN_MAP_NAME)
+                map_to_save = log_map
                 logger.warning(
                     "Got recent match start but map doesn't match %s != %s",
-                    log_map_name,
+                    log_map.map.name,
                     current_map.map.name,
                 )
         else:
-            map_name_to_save = str(current_map)
+            map_to_save = str(current_map)
 
         # TODO added guess - check if it's already in there - set prev end if None
         maps_history = MapsHistory()
@@ -344,55 +343,58 @@ def handle_new_match_start(rcon: Rcon, struct_log):
             logger.error("Could not fetch Game Layout", e)
             pass
         maps_history.save_new_map(
-            new_map=str(map_name_to_save),
+            new_map=str(map_to_save),
             guessed=guessed,
             start_timestamp=int(struct_log["timestamp_ms"] / 1000),
             game_layout=game_layout,
             match_time=match_time,
         )
-    except:
+    except Exception as e:
+        logger.exception(e)
         raise
     finally:
         initialise_vote_map(struct_log)
         try:
+            # first_job = backtrack_match_logs_worker(MapsHistory()[1])
             record_stats_worker(MapsHistory()[1])
         except Exception:
             logger.exception("Unexpected error while running stats worker")
 
 
 @on_match_end
-def record_map_end(rcon: Rcon, struct_log):
+def record_map_end(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
     logger.info("Match ended recording map %s", struct_log)
     maps_history = MapsHistory()
-    try:
-        current_map = rcon.current_map
-    except HLLCommandFailedError:
-        current_map = parse_layer(UNKNOWN_MAP_NAME)
-        logger.error(
-            "Unable to get current map, falling back to recording map as %s",
-            current_map,
-        )
+    with invalidates(Rcon.get_map, Rcon.get_next_map, Rcon.get_gamestate):
+        try:
+            gamestate = rcon.get_gamestate()
+            current_map = parse_layer(gamestate["current_map"]["id"])
+        except HLLCommandFailedError:
+            current_map = parse_layer(UNKNOWN_MAP_NAME)
+            logger.error(
+                "Unable to get current map, falling back to recording map as %s",
+                UNKNOWN_MAP_NAME,
+            )
 
     # Log map names are inconsistently formatted but should match the map name that each Layer has
-    log_map_name = struct_log["sub_content"]
-    log_time = datetime.fromtimestamp(struct_log["timestamp_ms"] / 1000, tz=UTC)
-
+    log_map = guess_map_from_log(struct_log)
+    logger.info("LOG MAP: %s\nCURRENT MAP: %s", log_map, current_map)
+    logger.info("LOG TIME: %s\nNOW: %s", struct_log["event_time"].replace(tzinfo=UTC), datetime.now(tz=UTC))
     # The log event loop can receive and process old log lines sometimes
-    # Check to make sure that if we're processing an old logl ine
-    if (datetime.now(tz=UTC) - log_time).total_seconds() < 60:
+    # Check to make sure that if we're processing an old log line
+    if (datetime.now(tz=UTC) - struct_log["event_time"].replace(tzinfo=UTC)).total_seconds() < 60:
         # then we use the current map to be more accurate
-        if current_map.map.name.lower() in log_map_name.lower():
-            logger.info(f"Recording map end: {current_map} - [recent match]")
+        if current_map.map.name == log_map.map.name:
+            logger.info("Recording map end: %s - [recent match]", current_map)
             maps_history.save_map_end(
                 str(current_map), end_timestamp=int(struct_log["timestamp_ms"] / 1000)
             )
         return
 
     # If we're processing an old match
-    current_map = parse_layer(UNKNOWN_MAP_NAME)
-    logger.info(f"Recording map end: {current_map} - [old match]")
+    logger.info("Recording map end: %s - [old match]", log_map)
     maps_history.save_map_end(
-        str(current_map), end_timestamp=int(struct_log["timestamp_ms"] / 1000)
+        str(log_map), end_timestamp=int(struct_log["timestamp_ms"] / 1000)
     )
 
 
@@ -535,8 +537,8 @@ def handle_on_connect(
     try:
         if (player := rcon.get_detailed_player_info(player_id)):
             PlayerSoldier.update(player)
-    except Exception:
-        logger.exception("Unable to update soldier info for %s", player_id)
+    except HLLCommandFailedError as e:
+        logger.info("Unable to update soldier info for %s\n%s", player_id, str(e))
 
     blacklisted = ban_if_blacklisted(rcon, player_id, struct_log["player_name_1"])
     if blacklisted:
