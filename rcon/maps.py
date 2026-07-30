@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Any, Iterable, Literal, Sequence, Union
 
 import pydantic
 import typing_extensions
-from requests.structures import CaseInsensitiveDict
 from typing_extensions import Literal
 
 logger = getLogger(__name__)
@@ -1671,3 +1670,36 @@ def safe_get_map_name(map_name: str, pretty: bool = True) -> str:
 
 def is_server_loading_map(map_name: str) -> bool:
     return "untitled" in map_name.lower()
+
+env_alternation = "|".join(re.escape(e.value) for e in Environment)
+mode_alternation = "|".join(re.escape(m.value) for m in GameMode)
+
+pattern = re.compile(
+    rf"""
+    ^
+    (?P<name>.+?)
+    (?:
+        \s+
+        (?P<env>{env_alternation})
+    )?
+    \s+
+    (?P<mode>{mode_alternation})
+    $
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+
+def parse_map_string(s: str) -> tuple[str, Environment | None, GameMode]:
+    """Use with map string that comes from MATCH ENDED & STARTED logs"""
+    m = pattern.match(s.strip())
+    if not m:
+        raise ValueError(f"Could not parse: {s!r}")
+
+    name = m.group("name").strip()
+    env_str = m.group("env")
+    mode_str = m.group("mode")
+
+    env = Environment(env_str.lower()) if env_str is not None else None
+    mode = GameMode(mode_str.lower())
+
+    return name, env, mode
