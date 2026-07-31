@@ -12,6 +12,7 @@ from discord.utils import escape_markdown
 from hllrcon.data import Role, Team
 
 from rcon.cache_utils import get_redis_client, ttl_cache
+from rcon.connection import HLLServerError
 from rcon.discord import make_hook
 from rcon.rcon import get_rcon
 from rcon.types import AllLogTypes, GameStateType, GetDetailedPlayers, MapInfo, MapScore, UnitHistoryEntry, StructuredLogLineWithMetaData, PlayerStat, WorldPositionType
@@ -240,9 +241,15 @@ class LogLoop:
 
         while True:
             load_generic_hooks()
-            self.process_logs()
-            self.now = int(datetime.datetime.now(tz=datetime.UTC).timestamp())
-            prev_map_time_elapsed = self.update_maps_history(prev_map_time_elapsed)
+            try:
+                self.process_logs()
+                self.now = int(datetime.datetime.now(tz=datetime.UTC).timestamp())
+                prev_map_time_elapsed = self.update_maps_history(prev_map_time_elapsed)
+            except (HLLServerError, ConnectionError) as e:
+                # The server becomes unresponsive when the map is changing 
+                # which in turn restarts this service
+                # Let's log it and prevent restarting the service
+                logger.warning("Connection error: %s", str(e))
             last_cleanup_time = self.cleanup(last_cleanup_time, cleanup_frequency_minutes)
             time.sleep(loop_frequency_secs)
 
@@ -278,16 +285,16 @@ class LogLoop:
 
         # it should be 100 not 90 but let's leave 10s to log latest stats on match end
         if map_start is not None and current_map["end"] is not None and gs["time_remaining"].seconds <= 90 and gs["time_remaining"].seconds > 0:
-            logger.info("\n[MATCH ENDED]")
+            logger.info("[MATCH ENDED]")
             return current_map["end"] - map_start
 
         if gs["current_map"]["id"] != current_map["name"] and gs["time_remaining"].seconds == 0:
-            logger.info("\n[MATCH IDLE] - Map has changed but has not started yet(based on map id diff), skipping saving stats\ncurrent_map: %s\ncached_map:%s", gs["current_map"]["id"], current_map["name"])
+            logger.info("[MATCH IDLE] - Map has changed but has not started yet(based on map id diff), skipping saving stats\ncurrent_map: %s\ncached_map:%s", gs["current_map"]["id"], current_map["name"])
             return 0
         
         # time remaining is 0 during match overtime so that value alone is not sufficient enough
         if gs["time_remaining"].seconds == 0 and prev_map_time_elapsed == 0:
-            logger.info("\n[MATCH IDLE] - Map has changed but has not started yet(based on time remaining diff), skipping saving stats\ntime_remaining:%d\ncurrently_recorded_time_elapsed:%d\npreviously_recorded_time_elapsed:%d", gs["time_remaining"].seconds, curr_map_time_elapsed, prev_map_time_elapsed)
+            logger.info("[MATCH IDLE] - Map has changed but has not started yet(based on time remaining diff), skipping saving stats\ntime_remaining:%d\ncurrently_recorded_time_elapsed:%d\npreviously_recorded_time_elapsed:%d", gs["time_remaining"].seconds, curr_map_time_elapsed, prev_map_time_elapsed)
             return 0
 
         if gs["allied_score"] == 2 and gs["axis_score"] == 2 and len(current_map["cap_flips"]) > 1:
