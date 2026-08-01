@@ -1,4 +1,5 @@
 import datetime
+import hashlib
 import logging
 import os
 from concurrent.futures import as_completed
@@ -112,50 +113,78 @@ def backtrack_match_logs_worker(map_info: MapInfo) -> Job:
     queue = get_queue()
     return queue.enqueue(backtrack_match_logs, map_info, retry=Retry(max=15, interval=30))
 
-def is_map_info(m: MapInfo | MapsType) -> TypeIs[MapInfo]:
-    return "name" in m and isinstance(m.get("name"), str)
+
+def unique_id(text: str, length: int = 16) -> str:
+    """
+    Create a short, unique ID from any text (timestamp + message content).
+    """
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:length]
 
 def backtrack_match_logs(map_: MapInfo):
     '''Collects all logs emitted during a match and tries to link logs to PlayerID
     wherever possible. Some logs e.g. SWITCH, VOTE, ... do not contain player id but
     contain player name
     '''
-    raw_start = map_.get("start")
-    raw_end = map_.get("end")
+    logger.info("[WORKER] - Started backtracking logs")
+    try:
+        raw_start = map_.get("start")
+        raw_end = map_.get("end")
 
-    if not raw_start or not raw_end:
-        logger.error("Can't backtrack logs, no time info for %s", map_)
+        if not raw_start or not raw_end:
+            logger.error("Can't backtrack logs, no time info for %s", map_)
+            return
+
+        match_start = datetime.datetime.fromtimestamp(raw_start, datetime.UTC)
+        match_end = datetime.datetime.fromtimestamp(raw_end, datetime.UTC)
+
+        with enter_session() as sess:
+            if not _are_match_logs_available(sess, int(get_server_number()), match_start, match_end):
+                raise Exception("match logs are not yet available, skipping backtracking logs")
+        
+        minutes_from_now = 1 + ((datetime.datetime.now(tz=datetime.UTC) - match_start).seconds // 60)
+
+        rcon_logs = get_rcon().get_structured_logs(since_min_ago=minutes_from_now)
+        rcon_match_logs = [log for log in rcon_logs["logs"] if match_start <= log["event_time"].replace(tzinfo=datetime.UTC) and log["event_time"].replace(tzinfo=datetime.UTC) <= match_end]
+        match_redis_logs = [log for log in LogsHistory()[:10000] if match_start <= log["event_time"].replace(tzinfo=datetime.UTC) and log["event_time"].replace(tzinfo=datetime.UTC) <= match_end]
+
+        # TODO get historical logs and rcon logs, mapped them by id and compare missing ones
+        logger.info("=================LOGS BY MATCH=========================")
+        logger.info("Match start: %s | Match end: %s", match_start, match_end)
+        logger.info("HLLSERVER logs count: %d", len(rcon_match_logs))
+        
+        if len(rcon_match_logs) == 0:
+            logger.info("This match is probably too old and the HLLSERVER does not retain those logs any longer")
+            logger.info("[WORKER] - Done backtracking logs")
+            return
+
+        id_to_log = {unique_id(log["message"]): log for log in rcon_match_logs}
+        
+        logger.info("CACHE logs count: %d", len(match_redis_logs))
+        for log in match_redis_logs:
+            if not id_to_log.get(unique_id(log["message"])):
+                logger.warning("Missing log - CACHE: %s", log)
+
+        with enter_session() as sess:
+            # Get the logs from the database for the given match
+            db_match_logs = get_historical_logs_records(
+                sess,
+                from_=match_start,
+                till=match_end,
+                time_sort="asc",
+                server_filter=get_server_number(),
+                limit=99999999,
+            )
+            logger.info("DATABASE logs count: %d", len(db_match_logs))
+            for log in db_match_logs:
+                if not id_to_log.get(unique_id(log.content)):
+                    logger.warning("Missing log - DATABASE: %s", log)
+
+        logger.info("=================LOGS BY MATCH=========================")
+        logger.info("[WORKER] - Done backtracking logs")
+    except Exception as e:
+        logger.info("[WORKER] - Error while backtracking logs\n:%s", str(e))
         return
 
-    match_start = datetime.datetime.fromtimestamp(raw_start, datetime.timezone.utc)
-    match_end = datetime.datetime.fromtimestamp(raw_end, datetime.timezone.utc)
-
-    with enter_session() as sess:
-        if not _are_match_logs_available(sess, int(get_server_number()), match_start, match_end):
-            raise Exception("match logs are not yet available, skipping backtracking logs")
-    
-        # name_to_id = {name: id for id, player in map_info["player_stats"].items() for name in player["names"]}
-        # Get the logs from the database for the given match
-        db_match_logs = get_historical_logs_records(
-            sess,
-            from_=match_start,
-            till=match_end,
-            time_sort="asc",
-            server_filter=get_server_number(),
-            limit=99999999,
-        )
-
-    minutes_from_now = (datetime.datetime.now(tz=datetime.UTC) - match_start).seconds // 60
-    rcon_logs = get_rcon().get_structured_logs(since_min_ago=minutes_from_now, filter_action="KILL")
-    rcon_match_logs = [log for log in rcon_logs["logs"] if match_start <= log["event_time"] and log["event_time"] <= match_end]
-    match_redis_logs = [log for log in LogsHistory()[:10000] if match_start <= log["event_time"] and log["event_time"] <= match_end]
-    # TODO get historical logs and rcon logs, mapped them by id and compare missing ones
-    logger.info("=================LOGS BY MATCH=========================")
-    logger.info("Match start: %s | Match end: %s", match_start, match_end)
-    logger.info("Number of DB logs: %d", len(db_match_logs))
-    logger.info("Number of HLL SERVER logs: %d", len(rcon_match_logs))
-    logger.info("Number of REDIS logs: %d", len(match_redis_logs))
-    logger.info("=================LOGS BY MATCH=========================")
         
 
 def record_stats_worker(map_info: MapInfo, depends_on: Job | None = None):
@@ -289,6 +318,11 @@ def _save_match_result(session: Session, map: Maps):
     map.result = game_log_stats.map_result(
         from_=map.start, until=map.end, server_number=str(map.server_number)
     )
+    if len(map.cap_flips) > 0:
+        last_flip = map.cap_flips[-1]
+        if map.start + timedelta(seconds=last_flip.get("ts", 0)) > map.end:
+            last_flip["ts"] = (map.end - map.start).seconds
+
     logger.info("Saving map result: %s", map.result)
     session.add(map)
 
