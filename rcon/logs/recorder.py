@@ -88,6 +88,7 @@ class LogRecorder:
             if log["player_id_2"]:
                 player_2 = players[log["player_id_2"]]
 
+            logger.info("Saving log: [%d] -> %s", log["timestamp_ms"], log["raw"])
             rows.append(
                 {
                     "version": log["version"],
@@ -103,6 +104,7 @@ class LogRecorder:
                     "weapon": log["weapon"],
                 }
             )
+
 
         try:
             if sess.get_bind().dialect.name == "postgresql":
