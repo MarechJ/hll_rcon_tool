@@ -226,7 +226,8 @@ class LogLoop:
         self.ACTIVE_MAP_INDEX = 0
         self.RECORD_STATS = 30 # 0.5 minute
         self.RECORD_PLAYER_STATS_DELAY = 120 # 2 minutes
-        self.GET_LOGS_SINCE_MIN = 180 # 3 minutes
+        self.GET_LOGS_SINCE_MIN = 180 # 3 hours
+        self.CLEANUP_MIN = 180 # 3 hours
         self.now = 0
         logger.info("Registered hooks: %s", HOOKS)
 
@@ -564,8 +565,8 @@ class LogLoop:
                 logger.exception("Invalid key %s", k)
                 continue
             t = datetime.datetime.fromtimestamp(int(ts) / 1000)
-            if (datetime.datetime.now() - t).total_seconds() > 280 * 60:
-                logger.debug("Older than 180min, removing: %s", k)
+            if (datetime.datetime.now() - t).total_seconds() > self.CLEANUP_MIN * 60:
+                logger.debug("Older than %d min, removing: %s", self.CLEANUP_MIN, k)
                 self.red.srem(self.duplicate_guard_key, k)
         logger.info("Cleanup done")
         return now
