@@ -473,6 +473,7 @@ class PlayerStatsType(TypedDict, total=False):
     kills_and_assists: Optional[int]
     deaths_and_redeploys: Optional[int]
     names: Optional[list[str]]
+    status: Optional[Literal["online", "offline", "idle"]]
 
 
 class PlayerStat(TypedDict):

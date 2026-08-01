@@ -99,7 +99,21 @@ class BaseStats:
     ) -> dict[str, PlayerStatsType]:
         stats_by_player: dict[str, PlayerStatsType] = {}
 
-        for player in players:
+        # Deduplicate players by player_id so a single canonical record is computed per id.
+        unique_players_by_id: dict[str, GetPlayersType] = {}
+        # If there are players without player_id, we keep them keyed by name (legacy)
+        legacy_name_only_players: list[GetPlayersType] = []
+
+        for p in players:
+            pid = p.get(PLAYER_ID)
+            if pid:
+                # later items overwrite earlier ones: prefer the last-seen record for that id
+                unique_players_by_id[pid] = p
+            else:
+                legacy_name_only_players.append(p)
+
+        # iterate canonical players (by id) followed by any name-only players
+        for player in list(unique_players_by_id.values()) + legacy_name_only_players:
             logger.debug("Crunching stats for %s", player)
 
             profile = profiles_by_id.get(player.get(PLAYER_ID))
@@ -122,7 +136,9 @@ class BaseStats:
                 self._calc_streaks(player_stats, player, log, streaks)
                 self._calc_computed_stats(player_stats)
 
-            stats_by_player[player["name"]] = player_stats
+            # Use player_id as the mapping key so a name change does not create duplicates
+            pid_key = player.get("player_id") or player.get("name")
+            stats_by_player[pid_key] = player_stats
 
         return stats_by_player
 
@@ -266,6 +282,7 @@ class BaseStats:
 
 
 class LiveStats(BaseStats):
+    # TODO Investigate why there are warning logs once the player went offline
     def _get_player_session_time(self, player: GetPlayersType) -> int:
         if not player or not player.get("profile"):
             logger.warning("Can't use player profile")
@@ -275,6 +292,9 @@ class LiveStats(BaseStats):
 
         return player_time_sec
 
+    # TODO Investigate why there are warning logs once the player went offline
+    # when the profile is fetched there is completed session
+    # Is it because it does not fit into some range?
     def _get_player_first_appearance(self, player: GetPlayersType) -> datetime.datetime | None:
         if not player or not player.get("profile"):
             logger.warning("Can't use player profile")
@@ -367,6 +387,7 @@ class LiveStats(BaseStats):
             indexed_logs, id_to_name = self._get_indexed_logs_by_player_for_session(
                 now, id_to_player, name_to_player, list(reversed(logs["logs"]))
             )
+
             for p in players:
                 update_player_name_map(id_to_name, p.get(PLAYER_ID), p.get("name"))
 
@@ -719,6 +740,7 @@ def _apply_current_map_player_stats(
         stat["level"] = map_stat.get("level", 0)
         stat["team"] = team_name
         stat["faction"] = faction_name
+        stat["status"] = map_stat.get("status")
 
         # Del unused attributes
         del stat["id"]
