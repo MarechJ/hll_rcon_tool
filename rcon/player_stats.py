@@ -292,9 +292,6 @@ class LiveStats(BaseStats):
 
         return player_time_sec
 
-    # TODO Investigate why there are warning logs once the player went offline
-    # when the profile is fetched there is completed session
-    # Is it because it does not fit into some range?
     def _get_player_first_appearance(self, player: GetPlayersType) -> datetime.datetime | None:
         if not player or not player.get("profile"):
             logger.warning("Can't use player profile")
@@ -440,19 +437,23 @@ class TimeWindowStats(BaseStats):
         event_time = log.get("event_time").replace(tzinfo=datetime.UTC)
         # A CONNECT means the begining of a session for the player
         if log["action"] == AllLogTypes.connected:
-            players_times.setdefault(player, PlayerSessions(start=[], end=[], total=0))["start"].append(event_time)
+            return players_times.setdefault(player, PlayerSessions(start=[], end=[], total=0))["start"].append(event_time)
         # if the player is not already in the times record we add the start of the stats window as his session start time
         # we didn't see a CONNECTED before, so it means that the player was here before the current window.
         # For those we add the game warmup time to have a more accurate kill / min
-        elif player not in players_times and log["action"] != AllLogTypes.disconnected:
-            players_times.setdefault(player, PlayerSessions(start=[], end=[], total=0))["start"].append(
+        if player not in players_times and log["action"] != AllLogTypes.disconnected:
+            return players_times.setdefault(player, PlayerSessions(start=[], end=[], total=0))["start"].append(
                 from_ + datetime.timedelta(seconds=offset_warmup_time_seconds)
             )
         # if the player was already in the time record and we see a disconnect we log it as the end of his session
         if player in players_times and log["action"] == AllLogTypes.disconnected:
-            players_times.setdefault(player, PlayerSessions(start=[], end=[], total=0))["end"].append(event_time)
+            return players_times.setdefault(player, PlayerSessions(start=[], end=[], total=0))["end"].append(event_time)
         # if we had a player that disconnected but was not in the time record it means he did have any kill / death or other actions like chat, vote
         # This player won't have a session time (most likely and AFK one)
+        # NOTE: if there is no session it is throwing errors so if the player's single log
+        # for the match is DISCONNECT let's record it as 0 second session time
+        if player not in players_times and log["action"] == AllLogTypes.disconnected:
+            return players_times.setdefault(player, PlayerSessions(start=[event_time], end=[event_time], total=0))
 
     def _get_player_session_time(self, player: GetPlayersType) -> int:
         player_key = player["player_id"]
