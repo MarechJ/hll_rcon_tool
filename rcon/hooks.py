@@ -67,7 +67,7 @@ from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.webhooks import CameraWebhooksUserConfig
 from rcon.utils import DefaultStringFormat, MapsHistory, guess_map_from_log
 from rcon.vote_map import VoteMap
-from rcon.workers import backtrack_match_logs_worker, record_stats_worker, temporary_broadcast, temporary_welcome
+from rcon.workers import save_missing_match_logs_worker, record_stats_worker, temporary_broadcast, temporary_welcome
 
 logger = logging.getLogger(__name__)
 ARG_RE = re.compile(r"\$(\d+)")
@@ -301,8 +301,8 @@ def handle_new_match_start(rcon: Rcon, struct_log):
                     UNKNOWN_MAP_NAME,
                 )
 
-        logger.info("LOG MAP: %s\nCURRENT MAP: %s", log_map, current_map)
-        logger.info("LOG TIME: %s\nNOW: %s", struct_log["event_time"].replace(tzinfo=UTC), datetime.now(tz=UTC))
+        logger.debug("LOG MAP: %s\nCURRENT MAP: %s", log_map, current_map)
+        logger.debug("LOG TIME: %s\nNOW: %s", struct_log["event_time"].replace(tzinfo=UTC), datetime.now(tz=UTC))
         guessed = True
         # Check that the log is less than 5min old
         if (datetime.now(tz=UTC) - struct_log["event_time"].replace(tzinfo=UTC)).total_seconds() < 5 * 60:
@@ -355,8 +355,8 @@ def handle_new_match_start(rcon: Rcon, struct_log):
     finally:
         initialise_vote_map(struct_log)
         try:
-            # first_job = backtrack_match_logs_worker(MapsHistory()[1])
-            record_stats_worker(MapsHistory()[1])
+            first_job = save_missing_match_logs_worker(MapsHistory()[1])
+            record_stats_worker(MapsHistory()[1], first_job)
         except Exception:
             logger.exception("Unexpected error while running stats worker")
 
@@ -378,8 +378,8 @@ def record_map_end(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
 
     # Log map names are inconsistently formatted but should match the map name that each Layer has
     log_map = guess_map_from_log(struct_log)
-    logger.info("LOG MAP: %s\nCURRENT MAP: %s", log_map, current_map)
-    logger.info("LOG TIME: %s\nNOW: %s", struct_log["event_time"].replace(tzinfo=UTC), datetime.now(tz=UTC))
+    logger.debug("LOG MAP: %s\nCURRENT MAP: %s", log_map, current_map)
+    logger.debug("LOG TIME: %s\nNOW: %s", struct_log["event_time"].replace(tzinfo=UTC), datetime.now(tz=UTC))
     # The log event loop can receive and process old log lines sometimes
     # Check to make sure that if we're processing an old log line
     if (datetime.now(tz=UTC) - struct_log["event_time"].replace(tzinfo=UTC)).total_seconds() < 60:

@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from rcon.cache_utils import get_redis_client
 from rcon.game_logs import get_historical_logs_records
+from rcon.logs.recorder import LogRecorder
 from rcon.models import Maps, PlayerStats, enter_session
 from rcon.player_history import get_player
 from rcon.player_stats import TimeWindowStats
@@ -109,9 +110,9 @@ def get_or_create_map(sess: Session, start: datetime.datetime, end: datetime.dat
     sess.commit()
     return map_
 
-def backtrack_match_logs_worker(map_info: MapInfo) -> Job:
+def save_missing_match_logs_worker(map_info: MapInfo) -> Job:
     queue = get_queue()
-    return queue.enqueue(backtrack_match_logs, map_info, retry=Retry(max=15, interval=30))
+    return queue.enqueue(save_missing_match_logs, map_info, retry=Retry(max=15, interval=30))
 
 
 def unique_id(text: str, length: int = 16) -> str:
@@ -120,12 +121,9 @@ def unique_id(text: str, length: int = 16) -> str:
     """
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:length]
 
-def backtrack_match_logs(map_: MapInfo):
-    '''Collects all logs emitted during a match and tries to link logs to PlayerID
-    wherever possible. Some logs e.g. SWITCH, VOTE, ... do not contain player id but
-    contain player name
-    '''
-    logger.info("[WORKER] - Started backtracking logs")
+def save_missing_match_logs(map_: MapInfo):
+    """Attempts to fetch logs from the server for the given match and save any missing ones"""
+    logger.info("[WORKER] - Started analyzing match logs")
     try:
         raw_start = map_.get("start")
         raw_end = map_.get("end")
@@ -141,14 +139,14 @@ def backtrack_match_logs(map_: MapInfo):
             if not _are_match_logs_available(sess, int(get_server_number()), match_start, match_end):
                 raise Exception("match logs are not yet available, skipping backtracking logs")
         
+        # Adding 1 more minute to the query just to be sure no logs are missed by a few seconds
         minutes_from_now = 1 + ((datetime.datetime.now(tz=datetime.UTC) - match_start).seconds // 60)
 
         rcon_logs = get_rcon().get_structured_logs(since_min_ago=minutes_from_now)
         rcon_match_logs = [log for log in rcon_logs["logs"] if match_start <= log["event_time"].replace(tzinfo=datetime.UTC) and log["event_time"].replace(tzinfo=datetime.UTC) <= match_end]
-        match_redis_logs = [log for log in LogsHistory()[:10000] if match_start <= log["event_time"].replace(tzinfo=datetime.UTC) and log["event_time"].replace(tzinfo=datetime.UTC) <= match_end]
+        # 20_000 logs should be enough (90 min warfare full server results in approx 4000 logs)
+        match_redis_logs = [log for log in LogsHistory()[:20000] if match_start <= log["event_time"].replace(tzinfo=datetime.UTC) and log["event_time"].replace(tzinfo=datetime.UTC) <= match_end]
 
-        # TODO get historical logs and rcon logs, mapped them by id and compare missing ones
-        logger.info("=================LOGS BY MATCH=========================")
         logger.info("Match start: %s | Match end: %s", match_start, match_end)
         logger.info("HLLSERVER logs count: %d", len(rcon_match_logs))
         
@@ -156,6 +154,8 @@ def backtrack_match_logs(map_: MapInfo):
             logger.info("This match is probably too old and the HLLSERVER does not retain those logs any longer")
             logger.info("[WORKER] - Done backtracking logs")
             return
+        
+        logger.info("First log: %s, Last log: %s", rcon_match_logs[-1]["raw"], rcon_match_logs[0]["raw"])
 
         id_to_log = {unique_id(log["message"]): log for log in rcon_match_logs}
         
@@ -175,15 +175,20 @@ def backtrack_match_logs(map_: MapInfo):
                 limit=99999999,
             )
             logger.info("DATABASE logs count: %d", len(db_match_logs))
+            logs_to_store = []
             for log in db_match_logs:
                 if not id_to_log.get(unique_id(log.content)):
                     logger.warning("Missing log - DATABASE: %s", log)
+                    logs_to_store.append(log)
+            if logs_to_store:
+                recorder = LogRecorder()
+                logger.info("Saving missing logs: %d", len(logs_to_store))
+                recorder._save_logs(sess, logs_to_store)
 
-        logger.info("=================LOGS BY MATCH=========================")
-        logger.info("[WORKER] - Done backtracking logs")
+        logger.info("[WORKER] - Done analyzing match logs")
     except Exception as e:
-        logger.info("[WORKER] - Error while backtracking logs\n:%s", str(e))
-        return
+        logger.error("[WORKER] - Error while backtracking logs\n:%s", str(e))
+        raise
 
         
 
@@ -193,13 +198,11 @@ def record_stats_worker(map_info: MapInfo, depends_on: Job | None = None):
     # not yet saved in the database.
     # One possible expected exception occurs when the game logs are not yet dumped into the db. This retries should
     # therefore be higher than the default dump interval of logs in LogRecorder
-    # if depends_on:
-    #     dependency = Dependency(jobs=depends_on, allow_failure=True)    
-    #     queue.enqueue(record_stats, map_info, retry=Retry(max=15, interval=30), depends_on=dependency)
-    # else:
-    #     queue.enqueue(record_stats, map_info, retry=Retry(max=15, interval=30))
-    queue.enqueue(record_stats, map_info, retry=Retry(max=15, interval=30))
-    queue.enqueue(backtrack_match_logs, map_info, retry=Retry(max=15, interval=30))
+    if depends_on:
+        dependency = Dependency(jobs=depends_on, allow_failure=True)   
+        queue.enqueue(record_stats, map_info, retry=Retry(max=15, interval=30), depends_on=dependency)
+    else:
+        queue.enqueue(record_stats, map_info, retry=Retry(max=15, interval=30))
 
 
 def record_stats(map_info: MapInfo):
