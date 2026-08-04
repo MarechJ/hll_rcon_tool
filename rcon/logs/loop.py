@@ -193,7 +193,14 @@ def send_log_line_webhook_message(
     wh.content = content
     wh.add_embed(embed)
     wh.allowed_mentions = allowed_mentions
-    wh.execute()
+    started = time.perf_counter()
+    try:
+        wh.execute()
+    finally:
+        logger.debug(
+            "Discord log webhook completed in %.3fs",
+            time.perf_counter() - started,
+        )
 
 
 # I don't think there is a good way to cache invalidate this without
@@ -266,8 +273,10 @@ class LogLoop:
     # - If attacking's team manpower is depleted before capturing the point it's game over
 
     def update_maps_history(self, prev_map_time_elapsed: int) -> int:
+        started = time.perf_counter()
         dp = self.get_detailed_players()
         gs = self.rcon.get_gamestate()
+        logger.info("RCON map/player polling completed in %.3fs", time.perf_counter() - started)
         maps_history = MapsHistory()
         current_map = maps_history.get_current_map()
 
@@ -310,7 +319,13 @@ class LogLoop:
         return curr_map_time_elapsed
 
     def process_logs(self):
+        started = time.perf_counter()
         logs = self.rcon.get_structured_logs(since_min_ago=self.GET_LOGS_SINCE_MIN)
+        logger.info(
+            "RCON log fetch completed in %.3fs (%d logs)",
+            time.perf_counter() - started,
+            len(logs["logs"]),
+        )
         self.GET_LOGS_SINCE_MIN = 5
         current_map = MapsHistory().get_current_map()
         name_to_id = self._get_name_to_id(current_map) if current_map else {} 
@@ -320,7 +335,9 @@ class LogLoop:
                 self.process_hooks(line)
 
     def get_detailed_players(self) -> GetDetailedPlayers:
+        started = time.perf_counter()
         dp = self.rcon.get_detailed_players()
+        logger.info("RCON detailed-player fetch completed in %.3fs", time.perf_counter() - started)
         if dp["fail_count"] > 0:
             logger.warning(
                 "Could not fetch all player stats. "
