@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 last_steam_api_key_warning = datetime.datetime.now()
 
 STEAM_API_MAX_STEAM_IDS = 100
+STEAM_API_TIMEOUT_SECONDS = 10
 
 STEAM_API: WebAPI | None = None
 
@@ -32,7 +33,8 @@ def get_steam_api() -> WebAPI:
     global STEAM_API
     if STEAM_API is None:
         api_key = get_steam_api_key()
-        STEAM_API = WebAPI(key=api_key)
+        # The steam package defaults to 30 seconds; use a shorter explicit bound.
+        STEAM_API = WebAPI(key=api_key, http_timeout=STEAM_API_TIMEOUT_SECONDS)
 
     return STEAM_API
 
@@ -146,7 +148,9 @@ def fetch_steam_player_summary_mult_players(
             chunk_steam_ids = ",".join(chunk)
             try:
                 logger.info("Fetching player summaries for %s steam IDs", len(chunk))
+                started = time.perf_counter()
                 raw_result = api.ISteamUser.GetPlayerSummaries(steamids=chunk_steam_ids)
+                logger.info("Steam player summary request completed in %.3fs", time.perf_counter() - started)
                 chunk_profiles: list[SteamPlayerSummaryType] = raw_result["response"][
                     "players"
                 ]
@@ -188,9 +192,11 @@ def fetch_steam_bans_mult_players(
             for chunk in batched(player_ids, STEAM_API_MAX_STEAM_IDS):
                 chunk_steam_ids = ",".join(chunk)
                 logger.info("Fetching player bans for %s steam IDs", len(chunk))
+                started = time.perf_counter()
                 raw_result = api.ISteamUser.GetPlayerBans(  # type: ignore
                     steamids=chunk_steam_ids
                 )
+                logger.info("Steam ban request completed in %.3fs", time.perf_counter() - started)
                 chunk_bans: SteamBansType = raw_result["players"]
                 raw_bans.extend(chunk_bans)  # type: ignore
 
