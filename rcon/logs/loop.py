@@ -603,9 +603,18 @@ class LogLoop:
                 )
                 started = time.time()
                 hook(self.rcon, log)
+                duration = time.time() - started
+                if duration >= 5:
+                    logger.warning(
+                        "Slow hook %.3fs %s.%s on %s",
+                        duration,
+                        hook.__module__,
+                        hook.__name__,
+                        log["raw"],
+                    )
                 logger.debug(
                     "Ran in %.4f seconds %s.%s on %s",
-                    time.time() - started,
+                    duration,
                     hook.__module__,
                     hook.__name__,
                     log["raw"],

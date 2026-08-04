@@ -67,7 +67,14 @@ from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.webhooks import CameraWebhooksUserConfig
 from rcon.utils import DefaultStringFormat, MapsHistory, guess_map_from_log
 from rcon.vote_map import VoteMap
-from rcon.workers import save_missing_match_logs_worker, record_stats_worker, temporary_broadcast, temporary_welcome
+from rcon.workers import (
+    get_queue,
+    save_missing_match_logs_worker,
+    record_stats_worker,
+    temporary_broadcast,
+    temporary_welcome,
+    update_player_steaminfo_on_connect_worker,
+)
 
 logger = logging.getLogger(__name__)
 ARG_RE = re.compile(r"\$(\d+)")
@@ -538,7 +545,7 @@ def handle_on_connect(
         if (player := rcon.get_detailed_player_info(player_id)):
             PlayerSoldier.update(player)
     except HLLCommandFailedError as e:
-        logger.info("Unable to update soldier info for %s\n%s", player_id, str(e))
+        logger.warning("Unable to update soldier info for %s\n%s", player_id, str(e))
 
     blacklisted = ban_if_blacklisted(rcon, player_id, struct_log["player_name_1"])
     if blacklisted:
@@ -556,7 +563,7 @@ def handle_on_disconnect(rcon, struct_log, _, player_id: str):
     save_end_player_session(player_id, struct_log["timestamp_ms"] / 1000)
 
 
-# Make the steam API call before the handle_on_connect hook so it's available for ban_if_blacklisted
+# Steam enrichment is queued so a slow external API cannot block log processing.
 @on_connected(0)
 @inject_player_ids
 def update_player_steaminfo_on_connect(
@@ -569,19 +576,13 @@ def update_player_steaminfo_on_connect(
         )
         return
 
-    logger.info(
-        "Updating steam profile for player %s %s",
+    logger.info("Queueing Steam enrichment for player %s %s", struct_log["player_name_1"], player_id)
+    get_queue().enqueue(
+        update_player_steaminfo_on_connect_worker,
         struct_log["player_name_1"],
-        struct_log["player_id_1"],
+        player_id,
+        job_timeout=60,
     )
-    with enter_session() as sess:
-        player = _get_set_player(
-            sess, player_name=struct_log["player_name_1"], player_id=player_id
-        )
-
-        steam_utils.update_missing_old_steam_info_single_player(
-            sess=sess, player=player
-        )
 
 
 @on_connected()

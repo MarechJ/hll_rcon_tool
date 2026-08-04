@@ -149,8 +149,10 @@ def fetch_steam_player_summary_mult_players(
             try:
                 logger.info("Fetching player summaries for %s steam IDs", len(chunk))
                 started = time.perf_counter()
-                raw_result = api.ISteamUser.GetPlayerSummaries(steamids=chunk_steam_ids)
-                logger.info("Steam player summary request completed in %.3fs", time.perf_counter() - started)
+                try:
+                    raw_result = api.ISteamUser.GetPlayerSummaries(steamids=chunk_steam_ids)
+                finally:
+                    logger.info("Steam player summary request finished in %.3fs", time.perf_counter() - started)
                 chunk_profiles: list[SteamPlayerSummaryType] = raw_result["response"][
                     "players"
                 ]
@@ -193,10 +195,12 @@ def fetch_steam_bans_mult_players(
                 chunk_steam_ids = ",".join(chunk)
                 logger.info("Fetching player bans for %s steam IDs", len(chunk))
                 started = time.perf_counter()
-                raw_result = api.ISteamUser.GetPlayerBans(  # type: ignore
-                    steamids=chunk_steam_ids
-                )
-                logger.info("Steam ban request completed in %.3fs", time.perf_counter() - started)
+                try:
+                    raw_result = api.ISteamUser.GetPlayerBans(  # type: ignore
+                        steamids=chunk_steam_ids
+                    )
+                finally:
+                    logger.info("Steam ban request finished in %.3fs", time.perf_counter() - started)
                 chunk_bans: SteamBansType = raw_result["players"]
                 raw_bans.extend(chunk_bans)  # type: ignore
 

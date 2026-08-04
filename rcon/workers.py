@@ -26,6 +26,32 @@ from rcon.utils import GAME_LOG_STAT_FIELDS, INDEFINITE_VIP_DATE, TEMP_FIELDS, L
 logger = logging.getLogger("rcon")
 
 
+def update_player_steaminfo_on_connect_worker(player_name: str, player_id: str) -> None:
+    """Refresh Steam data outside the synchronous log-loop process."""
+    from rcon.models import enter_session
+    from rcon.player_history import _get_set_player
+    from rcon import steam_utils
+
+    started = datetime.datetime.now(datetime.UTC)
+    try:
+        with enter_session() as sess:
+            player = _get_set_player(sess, player_name=player_name, player_id=player_id)
+            steam_utils.update_missing_old_steam_info_single_player(sess=sess, player=player)
+
+        # The synchronous CONNECTED hook may have checked VAC data before the
+        # Steam refresh completed, so repeat that check with fresh data here.
+        from rcon.hooks import ban_if_has_vac_bans
+        from rcon.rcon import get_rcon
+
+        ban_if_has_vac_bans(get_rcon(), player_id, player_name)
+    finally:
+        logger.info(
+            "Steam connect enrichment completed in %.3fs for %s",
+            (datetime.datetime.now(datetime.UTC) - started).total_seconds(),
+            player_id,
+        )
+
+
 def get_queue(redis_client=None):
     red = get_redis_client()
     return Queue(connection=red, default_timeout=60 * 20)
