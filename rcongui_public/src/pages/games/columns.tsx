@@ -4,7 +4,7 @@ import {ColumnDef} from '@tanstack/react-table'
 import dayjs from 'dayjs'
 import LocalizedFormat from 'dayjs/plugin/localizedFormat'
 import {Button} from '@/components/ui/button'
-import {Link} from 'react-router'
+import {Link, useLocation} from 'react-router'
 import {getGameDuration} from './utils'
 import {ScoreboardMap} from '@/types/api'
 import {MapLayer} from '@/types/mapLayer'
@@ -18,11 +18,12 @@ export const columns: ColumnDef<ScoreboardMap>[] = [
   {
     accessorKey: 'id',
     header: 'ID',
-    cell: ({ cell }) => {
+    cell: function IdCell({ cell }) {
       const gameId = cell.getValue() as string
+      const { search } = useLocation()
       return (
         <Button asChild variant={'link'}>
-          <Link to={`/games/${gameId}`} className="w-10">
+          <Link to={{ pathname: `/games/${gameId}`, search }} className="w-10">
             {gameId}
           </Link>
         </Button>
