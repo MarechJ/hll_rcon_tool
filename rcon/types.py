@@ -912,6 +912,8 @@ class PublicInfoType(TypedDict):
     vote_status: list[VoteMapStatusType]
     name: PublicInfoNameType
     config: ServerConfigType
+    cap_flips: list[MapScore]
+    match_time: int
 
 
 class SlotsType(TypedDict):
