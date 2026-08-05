@@ -31,5 +31,5 @@ export function getXboxProfileUrl(playerName: string) {
 }
 
 export function isPlayerWithStatus(player: Player): player is LivePlayer {
-  return (player as LivePlayer).is_online !== undefined
+  return (player as LivePlayer).status !== undefined
 }

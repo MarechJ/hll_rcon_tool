@@ -5,31 +5,24 @@ import duration from 'dayjs/plugin/duration'
 import { useTranslation } from 'react-i18next'
 import LiveGameInfo from './live-game-info'
 import { Spinner } from '@/components/spinner'
-import { QueryErrorResetBoundary, useSuspenseQueries, useSuspenseQuery } from '@tanstack/react-query'
-import { LivePlayer } from '@/types/player'
-import { liveSessionStatsOptions } from '@/lib/queries/live-session-stats'
+import { QueryErrorResetBoundary, useSuspenseQuery } from '@tanstack/react-query'
 import { liveGameStatsOptions } from '@/lib/queries/live-game-stats'
 import React from "react";
 import { ErrorBoundary } from 'react-error-boundary'
 import {Outlet} from "react-router";
-import {PublicInfo} from "@/types/api";
+import {LiveGameStats, PublicInfo} from "@/types/api";
 
 dayjs.extend(duration)
 
-export interface LiveStats {
-  data: LivePlayer[],
-  pending: boolean,
-}
-
 interface GameLiveLayoutProps {
-  liveStats: LiveStats;
+  liveStats: LiveGameStats;
   game: PublicInfo,
   isLoading: boolean,
   isError: boolean,
 }
 
 export interface GameLiveOutletContext {
-  liveStats: LiveStats,
+  liveStats: LiveGameStats,
   game: PublicInfo,
 }
 
@@ -80,26 +73,7 @@ function GameLiveLayout({liveStats, game, isLoading, isError}: GameLiveLayoutPro
 
 export default function Page() {
   const { data: game, isLoading, isError } = useSuspenseQuery(publicInfoQueryOptions);
-
-  const liveStats: { data: LivePlayer[]; pending: boolean } = useSuspenseQueries({
-    queries: [liveGameStatsOptions, liveSessionStatsOptions],
-    combine: (results) => {
-      const allPlayers = results[0].data?.stats ?? []
-      const onlinePlayers = results[1].data?.stats?.map((player) => player.player_id) ?? []
-
-      const onlinePlayersSet = new Set(onlinePlayers)
-
-      const data = allPlayers?.map((player) => ({
-        ...player,
-        is_online: onlinePlayersSet.has(player.player_id),
-      }))
-
-      return {
-        data: data,
-        pending: results.some((result) => result.isPending),
-      }
-    },
-  })
+  const { data: stats } = useSuspenseQuery(liveGameStatsOptions);
 
   return (
     <QueryErrorResetBoundary>
@@ -114,7 +88,7 @@ export default function Page() {
           )}
           onReset={reset}
         >
-          <GameLiveLayout liveStats={liveStats} game={game} isLoading={isLoading} isError={isError}/>
+          <GameLiveLayout liveStats={stats} game={game} isLoading={isLoading} isError={isError}/>
         </ErrorBoundary>
       )}
     </QueryErrorResetBoundary>

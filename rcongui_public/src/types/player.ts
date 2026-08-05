@@ -121,8 +121,8 @@ export interface PlayerBase {
   offense: number
   defense: number
   support: number
-  most_killed: Record<string, number>
-  death_by: Record<string, number>
+  most_killed: Record<string, number | string>
+  death_by: Record<string, number | string>
   weapons: Record<Weapon, number>
   death_by_weapons: Record<Weapon, number> | null
   team: PlayerTeamAssociation
@@ -155,9 +155,9 @@ export enum FactionEnum {
   CAN = 'can',
 }
 
-// Live player interface with online status
+// Live player interface with status
 export interface LivePlayer extends Omit<PlayerBase, "team" | "units"> {
-  is_online: boolean
+  status: "online" | "offline" | "idle"
   faction: FactionEnum | null
   team: string | null
 }

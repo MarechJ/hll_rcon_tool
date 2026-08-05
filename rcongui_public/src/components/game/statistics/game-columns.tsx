@@ -503,8 +503,8 @@ const deathCategoryColumn = (): ColumnDef<Player> => {
 };
 
 const statusColumn: ColumnDef<Player> = {
-  id: 'is_online',
-  accessorKey: 'is_online',
+  id: 'status',
+  accessorKey: 'status',
   header: function StatusHeader() {
     const { t } = useTranslation('game')
     return <div className="sr-only w-4">{t('playersTable.status')}</div>
@@ -514,7 +514,7 @@ const statusColumn: ColumnDef<Player> = {
     if (!filterValue || filterValue === 'all') {
       return true
     }
-    const cellValue = row.getValue(columnId) ? 'online' : 'offline'
+    const cellValue = row.getValue(columnId)
     return cellValue === filterValue
   },
   cell: ({ row }) => {

@@ -47,7 +47,7 @@ export function MobilePlayerGameDetail({
           <DrawerHeader>
             <DrawerTitle>
               <div className="flex justify-center items-center gap-2 grow">
-                {isPlayerWithStatus(player) && player.is_online ? (
+                {isPlayerWithStatus(player) && player.status ? (
                   <Status player={player} className="animate-ping" />
                 ) : isPlayerWithStatus(player) ? (
                   <Status player={player} />

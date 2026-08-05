@@ -47,7 +47,7 @@ export default function PlayerGameDetail({
       {!isMobile && (
         <div className="flex justify-between items-center gap-1 px-2 h-12">
           <div className="flex justify-center items-center gap-2 grow">
-            {isPlayerWithStatus(player) && player.is_online ? (
+            {isPlayerWithStatus(player) && player.status ? (
               <Status player={player} className="animate-ping" />
             ) : isPlayerWithStatus(player) ? (
               <Status player={player} />

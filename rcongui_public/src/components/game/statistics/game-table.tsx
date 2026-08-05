@@ -117,7 +117,7 @@ export function DataTable<TData extends Player | LivePlayer, TValue>({ columns, 
 
   const { t } = useTranslation('game')
 
-  const hasIsOnline = table.getAllColumns().find((c) => c.id === 'is_online')
+  const hasStatus = table.getAllColumns().find((c) => c.id === 'status')
   const hasTeam = table.getAllColumns().find((c) => c.id === 'team')
   const teamOptions = ['axis', 'allies', 'mixed', 'unknown'] as const
   const teamCounts = useMemo(
@@ -129,8 +129,8 @@ export function DataTable<TData extends Player | LivePlayer, TValue>({ columns, 
     <div className="border w-full divide-y">
       <div className="flex flex-row justify-between items-start p-2 gap-3">
         <div className="flex flex-row items-start gap-3 flex-1">
-          {hasIsOnline && (
-            <Select onValueChange={(value) => table.getColumn('is_online')?.setFilterValue(value)}>
+          {hasStatus && (
+            <Select onValueChange={(value) => table.getColumn('status')?.setFilterValue(value)}>
               <SelectTrigger className="w-24">
                 <SelectValue placeholder={t('playersTable.status')} />
               </SelectTrigger>
