@@ -299,12 +299,12 @@ class LogLoop:
             return current_map["end"] - map_start
 
         if gs["current_map"]["id"] != current_map["name"] and gs["time_remaining"].seconds == 0:
-            logger.info("[MATCH IDLE] - Map has changed but has not started yet(based on map id diff), skipping saving stats\ncurrent_map: %s\ncached_map:%s", gs["current_map"]["id"], current_map["name"])
+            logger.info("[MATCH IDLE] - Map has changed but has not started yet(based on map id diff), skipping saving stats - current_map: %s - cached_map:%s", gs["current_map"]["id"], current_map["name"])
             return 0
         
         # time remaining is 0 during match overtime so that value alone is not sufficient enough
         if gs["time_remaining"].seconds == 0 and prev_map_time_elapsed == 0:
-            logger.info("[MATCH IDLE] - Map has changed but has not started yet(based on time remaining diff), skipping saving stats\ntime_remaining:%d\ncurrently_recorded_time_elapsed:%d\npreviously_recorded_time_elapsed:%d", gs["time_remaining"].seconds, curr_map_time_elapsed, prev_map_time_elapsed)
+            logger.info("[MATCH IDLE] - Map has changed but has not started yet(based on time remaining diff), skipping saving stats - time_remaining: %d - currently_recorded_time_elapsed: %d - previously_recorded_time_elapsed: %d", gs["time_remaining"].seconds, curr_map_time_elapsed, prev_map_time_elapsed)
             return 0
 
         if gs["allied_score"] == 2 and gs["axis_score"] == 2 and len(current_map["cap_flips"]) > 1:
@@ -354,7 +354,7 @@ class LogLoop:
             return
 
         if len(cap_flips) == 0 or cap_flips[-1]["allied_score"] != gs["allied_score"] or cap_flips[-1]["axis_score"] != gs["axis_score"]:
-            logger.debug("\n[MATCH SCORE] - New cap flip recorded as the score has changed")
+            logger.debug("[MATCH SCORE] - New cap flip recorded as the score has changed")
             cap_flips.append(MapScore(allied_score=gs["allied_score"], axis_score=gs["axis_score"], ts=sec_from_start))
 
     def record_player_stats(self, current_map: MapInfo, sec_from_start: int, dp: GetDetailedPlayers):
@@ -422,7 +422,7 @@ class LogLoop:
             # Some player's stats are leaking into the next match before the player
             # properly connects to the server / before the player's map loads
             if skip_caching_player_stats:
-                logger.debug("\n[MATCH START] - Waiting %ds from map start, skipping caching player stats", self.RECORD_PLAYER_STATS_DELAY)
+                logger.debug("[MATCH START] - Waiting %ds from map start, skipping caching player stats", self.RECORD_PLAYER_STATS_DELAY)
                 # continue so some other players can be cached for the first time as well
                 # or marked as 'offline'
                 continue
@@ -554,16 +554,16 @@ class LogLoop:
                         # Let's try to backtrack the player_id from cached player stats(redis)
                         player_id = name_to_id.get(player_name)
                         if player_id:
-                            logger.debug("Updated player_id: %s by player_name: %s\n%s", player_id, player_name, log["raw"])
+                            logger.debug("Updated player_id: %s by player_name: %s - %s", player_id, player_name, log["raw"])
 
                     if not player_id:
-                        logger.info("Unable to link player %s to any player_id\n%s", player_name, log)
+                        logger.info("Unable to link player %s to any player_id - %s", player_name, log)
                         continue
 
                     if player_name and player_id:
                         prev_key = name_to_id.setdefault(player_name, player_id)
                         if prev_key != player_id:
-                            logger.warning("This log potentialy belonging to 1 or more players\nName: %s, ID: %s\n, Log: %s", player_name, prev_key, log["raw"])
+                            logger.warning("This log potentialy belonging to 1 or more players\nName: %s, ID: %s, Log: %s", player_name, prev_key, log["raw"])
                     log[f"player_id_{slot}"] = player_id
                     
         self.log_history.add(log)
