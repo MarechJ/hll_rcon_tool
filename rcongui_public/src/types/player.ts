@@ -121,8 +121,8 @@ export interface PlayerBase {
   offense: number
   defense: number
   support: number
-  most_killed: Record<string, number | string>
-  death_by: Record<string, number | string>
+  most_killed: Record<string, number>
+  death_by: Record<string, number>
   weapons: Record<Weapon, number>
   death_by_weapons: Record<Weapon, number> | null
   team: PlayerTeamAssociation
