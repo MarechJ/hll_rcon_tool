@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@config "../../tailwind.config.js";
 
 @layer base {
   :root {
@@ -76,6 +75,12 @@
 }
 
 @layer base {
+  button,
+  [role='button'],
+  a[href] {
+    cursor: pointer;
+  }
+
   * {
     @apply border-border;
   }
