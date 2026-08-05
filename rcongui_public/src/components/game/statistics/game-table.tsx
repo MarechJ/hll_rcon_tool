@@ -56,12 +56,9 @@ export function DataTable<TData extends Player | LivePlayer, TValue>({ columns, 
         .map((name) => ({ value: name, label: name })),
     )
 
-  const [sorting, setSorting] = React.useState<SortingState>([
-    {
-      id: 'kills',
-      desc: true,
-    },
-  ])
+  const [sorting, setSorting] = React.useState<SortingState>(() =>
+    data.some((player) => 'status' in player) ? [] : [{ id: 'kills', desc: true }],
+  )
 
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 

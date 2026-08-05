@@ -21,7 +21,7 @@ export interface StreamSettings {
 export default function StreamBanner({ settings }: StreamBannerProps) {
   const { liveStats } = useOutletContext<GameLiveOutletContext>()
 
-  const displayedPlayers = liveStats.data
+  const displayedPlayers = liveStats.stats
     .filter((player) => !settings.playerFilter.includes(player.player))
     .sort((a, b) => b.kills - a.kills)
     .slice(0, settings.playerAmount)

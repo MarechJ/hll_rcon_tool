@@ -442,7 +442,7 @@ const teamColumn = (): ColumnDef<Player> => {
       const {t} = useTranslation('game')
       return <div className={"text-center"}>{t('playersTable.team')}</div>
     },
-    size: 20,
+    size: 40,
     filterFn: (row, columnId, filterValue) => {
       if (!filterValue || filterValue === 'all') {
         return true
@@ -452,9 +452,9 @@ const teamColumn = (): ColumnDef<Player> => {
     },
     cell: ({row}) => {
       const player = row.original;
-      if ("faction" in player) {
+      if ("faction" in player && "status" in player) {
         return <div className={"text-center"}>
-        <FactionIndicator faction={player.faction}/>
+        <FactionIndicator faction={player.faction} status={player.status}/>
       </div>;
       }
       return <div className={"text-center"}>
@@ -509,7 +509,7 @@ const statusColumn: ColumnDef<Player> = {
     const { t } = useTranslation('game')
     return <div className="sr-only w-4">{t('playersTable.status')}</div>
   },
-  size: 20,
+  size: 0,
   filterFn: (row, columnId, filterValue) => {
     if (!filterValue || filterValue === 'all') {
       return true
@@ -517,10 +517,7 @@ const statusColumn: ColumnDef<Player> = {
     const cellValue = row.getValue(columnId)
     return cellValue === filterValue
   },
-  cell: ({ row }) => {
-    const player = row.original
-    return isPlayerWithStatus(player) ? <Status player={player} className="block" /> : null
-  },
+  cell: ({ row }) => null,
   enableHiding: false,
 }
 

@@ -155,9 +155,15 @@ export enum FactionEnum {
   CAN = 'can',
 }
 
+export enum StatusEnum {
+  ONLINE = 'online',
+  OFFLINE = 'offline',
+  IDLE = 'idle'
+}
+
 // Live player interface with status
 export interface LivePlayer extends Omit<PlayerBase, "team" | "units"> {
-  status: "online" | "offline" | "idle"
+  status: StatusEnum | null
   faction: FactionEnum | null
   team: string | null
 }
