@@ -13,6 +13,13 @@ dayjs.extend(localizedFormat)
 
 export default function GameDetailLive() {
   const { liveStats, game } = useOutletContext<GameLiveOutletContext>()
+  const livePlayers = liveStats.stats
+    .filter((player) => player.time_seconds > 15)
+    .toSorted((a, b) => {
+      const online = (player: typeof a) => player.status === 'online' ? 0 : 1
+      const team = (player: typeof a) => player.status === 'online' && player.team ? 0 : 1
+      return online(a) - online(b) || team(a) - team(b) || b.kills - a.kills
+    })
 
   return (
     <QueryErrorResetBoundary>
@@ -29,12 +36,12 @@ export default function GameDetailLive() {
           <React.Suspense fallback={<div className="grid place-items-center w-full h-[200px]" />}>
             <GameStatsContainer game={{
               id: `live_${dayjs(game.current_map.start * 1000).format('YYYYMMDD-HHmm')}`,
-              player_stats: liveStats.stats.filter((player) => player.time_seconds > 15),
+              player_stats: livePlayers,
             }}>
               {(props) => (
                 <DataTable
                   columns={getLiveGameColumns(props.handlePlayerClick)}
-                  data={liveStats.stats.filter((player) => player.time_seconds > 15)}
+                  data={livePlayers}
                   tableId={`live_${dayjs(game.current_map.start * 1000).format('YYYYMMDD-HHmm')}`}
                 />
               )}
