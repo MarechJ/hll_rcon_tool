@@ -20,10 +20,11 @@ dayjs.extend(localizedFormat)
 const GameDetailLayout = ({ game }: { game: ScoreboardMapStats }) => {
   const { t } = useTranslation('navigation')
   const pathname = useLocation().pathname;
+  const duration = getGameDuration(game.start, game.end)
 
   const gameOverviewProps = {
     map: game.map,
-    time: getGameDuration(game.start, game.end),
+    time: duration,
     axis: game.map.map.axis,
     allies: game.map.map.allies,
     mapName: game.map.pretty_name,
@@ -34,6 +35,7 @@ const GameDetailLayout = ({ game }: { game: ScoreboardMapStats }) => {
     },
     capFlips: game?.cap_flips,
     matchTime: game?.match_time,
+    remainingTime: game.match_time ? game.match_time - duration.asSeconds() : 0
   }
 
   return (

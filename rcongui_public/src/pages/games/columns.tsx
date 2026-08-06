@@ -121,6 +121,6 @@ export const columns: ColumnDef<ScoreboardMap>[] = [
     },
     id: 'duration',
     accessorKey: 'duration',
-    cell: ({ row }) => getGameDuration(row.original.start, row.original.end),
+    cell: ({ row }) => getGameDuration(row.original.start, row.original.end).format('H:mm:ss'),
   },
 ]

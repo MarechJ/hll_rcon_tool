@@ -64,6 +64,8 @@ export type PublicInfo = {
     allied: number
     axis: number
   }
+  match_time: number
+  cap_flips: MatchScore[]
   time_remaining: TIME_SECONDS
   name: {
     name: string

@@ -4,9 +4,7 @@ import {PlayerBaseWithAwards} from "@/pages/games/[id]";
 import {ScoreboardMapStats} from "@/types/api";
 
 export function getGameDuration(start: string, end: string) {
-  const duration = dayjs.duration(dayjs(end).diff(dayjs(start)));
-
-  return duration.format('H:mm:ss');
+  return dayjs.duration(dayjs(end).diff(dayjs(start)));
 }
 
 function isMostlyInfantry( player: Player ) {
