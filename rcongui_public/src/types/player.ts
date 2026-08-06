@@ -132,6 +132,15 @@ export interface PlayerBase {
   vehicle_kills: number
   vehicles_destroyed: number
   units: PlayerUnit[]
+  encounters: KillInfo[]
+}
+
+export interface KillInfo {
+    action: "KILL" | "DEATH"
+    player_id: string
+    player_name: string
+    timestamp: number
+    weapon: string
 }
 
 export interface PlayerTeamAssociation {
@@ -162,7 +171,7 @@ export enum StatusEnum {
 }
 
 // Live player interface with status
-export interface LivePlayer extends Omit<PlayerBase, "team" | "units"> {
+export interface LivePlayer extends Omit<PlayerBase, "team" | "units" | "encounters"> {
   status: StatusEnum | null
   faction: FactionEnum | null
   team: string | null
@@ -227,9 +236,18 @@ type TeamsStats = {
   players: Player[]
 }
 
-export type Faceoff = {
-  name: string
+type FaceoffBase = {
   kills: number
   deaths: number
   diff: number
 }
+
+type FaceoffID = FaceoffBase & {
+  id: string
+}
+
+type FaceoffName = FaceoffBase & {
+  name: string
+}
+
+export type Faceoff = FaceoffID | FaceoffName

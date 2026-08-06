@@ -1,10 +1,11 @@
 import logging
 import os
-from datetime import datetime
+from datetime import UTC, datetime
 
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon.maps import parse_layer
+from rcon.api_commands import get_rcon_api
 from rcon.models import Maps, enter_session
 from rcon.player_stats import LiveStats, get_cached_live_game_stats
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
@@ -109,6 +110,49 @@ def get_map_scoreboard(request):
             else:
                 game = game.to_dict(with_stats=True)
                 game["map"] = parse_layer(game["map_name"])
+
+                logs = get_rcon_api().get_historical_logs(
+                    action="KILL",
+                    from_=game["start"],
+                    till=game["end"],
+                    limit=100000,
+                    time_sort="asc",
+                    exact_action=True,
+                    server_filter=str(game["server_number"]),
+                )
+                encounters = {
+                    stats["player_id"]: [] for stats in game["player_stats"]
+                }
+                
+                for log in logs:
+                    timestamp = int(
+                        (log["event_time"].replace(tzinfo=UTC) - game["start"].replace(tzinfo=UTC)).total_seconds()
+                    )
+                    killer_id = log["player1_id"]
+                    victim_id = log["player2_id"]
+                    if killer_id in encounters:
+                        encounters[killer_id].append(
+                            {
+                                "action": "KILL",
+                                "player_id": victim_id,
+                                "player_name": log["player2_name"],
+                                "timestamp": timestamp,
+                                "weapon": log["weapon"],
+                            }
+                        )
+                    if victim_id in encounters:
+                        encounters[victim_id].append(
+                            {
+                                "action": "DEATH",
+                                "player_id": killer_id,
+                                "player_name": log["player1_name"],
+                                "timestamp": timestamp,
+                                "weapon": log["weapon"],
+                            }
+                        )
+
+                for stats in game["player_stats"]:
+                    stats["encounters"] = encounters[stats["player_id"]]
     except Exception as e:
         game = None
         error = repr(e)

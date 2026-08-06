@@ -16,15 +16,24 @@ export const columns: ColumnDef<Faceoff>[] = [
       return t('playersTable.player')
     },
     cell: (info) => {
-      const { focusPlayerByName } = useGameStatsContext();
+      const { focusPlayerBy, players } = useGameStatsContext();
+      const faceoff = info.row.original;
+      const player = players.find(({ id, name }) =>
+        ("id" in faceoff ? id === faceoff.id : name === faceoff.name)
+      );
+      const displayName = player?.name ?? ("id" in faceoff ? faceoff.id : faceoff.name);
       return <Button
         variant="text"
         className="pl-0 h-0"
         onClick={() => {
-          focusPlayerByName(info.row.original.name)
+          if ("id" in faceoff) {
+            focusPlayerBy({ id: faceoff.id })
+          } else {
+            focusPlayerBy({ name: faceoff.name })
+          }
         }}
       >
-        {String(info.getValue())}
+        {displayName}
       </Button>
     },
   },

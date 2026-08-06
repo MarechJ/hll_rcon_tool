@@ -282,7 +282,6 @@ class BaseStats:
 
 
 class LiveStats(BaseStats):
-    # TODO Investigate why there are warning logs once the player went offline
     def _get_player_session_time(self, player: GetPlayersType) -> int:
         if not player or not player.get("profile"):
             logger.warning("Can't use player profile")

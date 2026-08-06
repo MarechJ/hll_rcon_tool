@@ -38,7 +38,7 @@ export function MobilePlayerGameDetail({
 }) {
   const { t } = useTranslation('translation')
 
-  const { focusPlayerByName } = useGameStatsContext();
+  const { focusPlayerBy } = useGameStatsContext();
 
   return (
     <Drawer open={open} onOpenChange={(open) => setOpen(open)}>
@@ -55,7 +55,7 @@ export function MobilePlayerGameDetail({
                 <Button
                   variant="text"
                   className="pl-0 h-0 text-xl"
-                  onClick={() => focusPlayerByName(player.player)}
+                  onClick={() => focusPlayerBy({ id: player.player_id})}
                 >
                   {player.player}
                 </Button>

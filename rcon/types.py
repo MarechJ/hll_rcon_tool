@@ -430,6 +430,14 @@ class UnitHistoryEntry(TypedDict):
     s: int           # squad int value
     r: int           # role int value
 
+class KillInfo(TypedDict):
+    action: Literal["KILL", "DEATH"]
+    player_id: str
+    player_name: str
+    timestamp: int
+    weapon: str
+
+PlayerEncounters = list[KillInfo]
     
 class PlayerStatsType(TypedDict, total=False):
     id: int
@@ -474,6 +482,7 @@ class PlayerStatsType(TypedDict, total=False):
     deaths_and_redeploys: Optional[int]
     names: Optional[list[str]]
     status: Optional[Literal["online", "offline", "idle"]]
+    encounters: Optional[PlayerEncounters]
 
 
 class PlayerStat(TypedDict):

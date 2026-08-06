@@ -40,7 +40,7 @@ export default function PlayerGameDetail({
     : []
   deathsBy.sort((a, b) => b.count - a.count)
 
-  const { focusPlayerByName } = useGameStatsContext()
+  const { focusPlayerBy } = useGameStatsContext()
 
   return (
     <div className="divide-y pb-2 lg:sticky lg:top-14 border">
@@ -52,7 +52,7 @@ export default function PlayerGameDetail({
             ) : isPlayerWithStatus(player) ? (
               <Status player={player} />
             ) : null}
-            <Button variant="text" className="pl-0 h-0 text-xl" onClick={() => focusPlayerByName(player.player)}>
+            <Button variant="text" className="pl-0 h-0 text-xl" onClick={() => focusPlayerBy({ id: player.player_id })}>
               {player.player}
             </Button>
           </div>

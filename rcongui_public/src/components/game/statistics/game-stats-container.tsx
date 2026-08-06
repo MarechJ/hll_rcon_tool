@@ -15,8 +15,14 @@ interface GameStatsProps {
   }) => React.ReactNode;
 }
 
+export interface GamePlayer {
+  name: string;
+  id: string;
+}
+
 interface GameStatsContextProps {
-  focusPlayerByName: (name: string) => void;
+  players: GamePlayer[];
+  focusPlayerBy: ({ name, id } : { name?: string, id?: string }) => void;
   focusedPlayerId: string | null;
   setFocusedPlayerId: React.Dispatch<React.SetStateAction<string | null>>;
 }
@@ -32,7 +38,8 @@ export function useGameStatsContext() {
       'useGameStatsContext must be used within a <GameStats />'
     );
     return {
-      focusPlayerByName: (_: string) => {},
+      focusPlayerBy: ({ name, id } : { name?: string, id?: string }) => {},
+      players: [],
       focusedPlayerId: null,
       setFocusedPlayerId: () => null,
     };
@@ -46,6 +53,10 @@ export function useGameStatsContext() {
 }
 
 export default function GameStatsContainer({ game, children }: GameStatsProps) {
+  const players = useMemo(
+    () => game.player_stats.map(({ player, player_id }) => ({ name: player, id: player_id })),
+    [game.player_stats],
+  )
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | undefined>()
   const [focusedPlayerId, setFocusedPlayerId] = useState<string | null>(null);
   const [openDrawer, setOpenDrawer] = useState<boolean>(false)
@@ -56,13 +67,21 @@ export default function GameStatsContainer({ game, children }: GameStatsProps) {
     setOpenDrawer(true)
   }
 
-  const focusPlayerByName = (name: string) => {
-    const id = game.player_stats.find(player => player.player === name)?.player_id;
-    if (id) {
+  const focusPlayerBy = ({ name, id } : { name?: string, id?: string }) => {
+    const playerId = game.player_stats.find(player => {
+      if (name !== undefined) {
+        return player.player === name
+      } else if (id !== undefined) {
+        return player.player_id === id
+      } else {
+        return false
+      }
+    })?.player_id;
+    if (playerId) {
       if (isSmallScreen) {
         setSelectedPlayerId(undefined);
       }
-      setFocusedPlayerId(id);
+      setFocusedPlayerId(playerId);
     }
   }
 
@@ -77,7 +96,7 @@ export default function GameStatsContainer({ game, children }: GameStatsProps) {
   }
 
   return (
-    <GameStatsContext.Provider value={{focusPlayerByName, focusedPlayerId, setFocusedPlayerId}}>
+    <GameStatsContext.Provider value={{players, focusPlayerBy, focusedPlayerId, setFocusedPlayerId}}>
       <section id={`game-statistics-${game.id}`}>
         <h2 className="sr-only">Game statistics</h2>
         <div className="relative flex flex-col-reverse lg:flex-row">
