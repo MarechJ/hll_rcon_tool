@@ -132,17 +132,19 @@ export default function PlayerGameDetail({
                   <SimpleTable columns={deathByColumns} data={deathsBy} initialSortedColumn="count" />
                 </AccordionContent>
               </AccordionItem>
-              <AccordionItem value="timeline">
-                <AccordionTrigger className="px-2">{t('playerStats.timeline')}</AccordionTrigger>
-                <AccordionContent>
-                  <Encounters
-                    player={player}
-                    focusPlayerBy={focusPlayerByProp ?? focusPlayerBy}
-                    players={timelinePlayers}
-                    capFlips={timelineCapFlips}
-                  />
-                </AccordionContent>
-              </AccordionItem>
+              {'encounters' in player && (
+                <AccordionItem value="timeline">
+                  <AccordionTrigger className="px-2">{t('playerStats.timeline')}</AccordionTrigger>
+                  <AccordionContent>
+                    <Encounters
+                      player={player}
+                      focusPlayerBy={focusPlayerByProp ?? focusPlayerBy}
+                      players={timelinePlayers}
+                      capFlips={timelineCapFlips}
+                    />
+                  </AccordionContent>
+                </AccordionItem>
+              )}
             </Accordion>
           </section>
         </div>
