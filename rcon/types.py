@@ -531,6 +531,7 @@ class MapResult(TypedDict):
     allied: int
 
 class MapInfo(TypedDict):
+    _schema_version: NotRequired[int]
     name: str
     start: int | None
     end: int | None

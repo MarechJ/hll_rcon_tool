@@ -14,6 +14,10 @@ then
   # LOGGING_PATH and LOGGING_FILENAME need to be passed to get it to log to the directory that is bind mounted
   SERVER_NUMBER=1 LOGGING_PATH=/logs/ LOGGING_FILENAME=startup.log python -m rcon.cli merge_duplicate_player_ids
   SERVER_NUMBER=1 LOGGING_PATH=/logs/ LOGGING_FILENAME=startup.log python -m rcon.cli convert_win_player_ids
+  # Upgrade durable Redis structures before any server-specific container starts.
+  # The command discovers every populated logical Redis database so multi-server
+  # installations are migrated in the same maintenance pass.
+  SERVER_NUMBER=1 LOGGING_PATH=/logs/ LOGGING_FILENAME=startup.log python -m rcon.cache_migrations.maps_history
   cd rconweb
   ./manage.py makemigrations --no-input
   ./manage.py migrate --noinput
@@ -76,4 +80,3 @@ fi
   export LOGGING_FILENAME=supervisor_$SERVER_NUMBER.log
   supervisord -c /config/supervisord_$SERVER_NUMBER.conf || supervisord -c /config/supervisord.conf
 fi
-
