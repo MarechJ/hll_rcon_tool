@@ -23,11 +23,12 @@ export function FactionIndicator({ faction, status, className, ...props }: Facti
         alt={faction ?? "lobby"}
       />
       <AvatarFallback></AvatarFallback>
-      {status && status == StatusEnum.ONLINE ? (
-        <AvatarBadge className="bg-green-800 dark:bg-green-600" />
-      ) : (
-        <AvatarBadge className="bg-red-800 dark:bg-red-600" />
-      )}
+      {status !== undefined &&
+        (status === StatusEnum.ONLINE ? (
+          <AvatarBadge className="bg-green-800 dark:bg-green-600" />
+        ) : (
+          <AvatarBadge className="bg-red-800 dark:bg-red-600" />
+        ))}
     </Avatar>
   )
 }

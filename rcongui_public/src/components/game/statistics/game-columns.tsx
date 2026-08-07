@@ -1,7 +1,8 @@
 'use client'
 
 import {Column, ColumnDef} from '@tanstack/react-table'
-import {Player, PlayerTeamAssociation} from '@/types/player'
+import {FactionEnum, Player, PlayerTeamAssociation, TeamEnum} from '@/types/player'
+import {MapLayer} from '@/types/mapLayer'
 import {IconHeader as Header} from './column-header'
 import {Status} from './player-status'
 import {isPlayerWithStatus} from './player/utils'
@@ -16,6 +17,7 @@ import {Awards} from "@/components/game/statistics/award";
 import {PlayerBaseWithAwards} from "@/pages/games/[id]";
 import { Level } from './level'
 import { FactionIndicator } from './faction-indicator'
+import {AvatarGroup} from '@/components/ui/avatar'
 
 const threeDigitsWidth = 40
 const fourDigitsWidth = 50
@@ -431,7 +433,7 @@ const awardColumn = (): ColumnDef<Player | PlayerBaseWithAwards | Player>  => {
   }
 };
 
-const teamColumn = (): ColumnDef<Player> => {
+const teamColumn = (mapLayer?: MapLayer): ColumnDef<Player> => {
   const { t } = useTranslation('game');
 
   return {
@@ -457,8 +459,39 @@ const teamColumn = (): ColumnDef<Player> => {
         <FactionIndicator faction={player.faction} status={player.status}/>
       </div>;
       }
+
+      const team = getTeamFromAssociation(player.team)
+      const sides: Array<TeamEnum.ALLIES | TeamEnum.AXIS> =
+        team === TeamEnum.MIXED
+          ? [TeamEnum.ALLIES, TeamEnum.AXIS]
+          : team === TeamEnum.ALLIES || team === TeamEnum.AXIS
+            ? [team]
+            : []
+
+      if (mapLayer && sides.length) {
+        return (
+          <AvatarGroup className="justify-center">
+            {sides.map((side) => (
+              <FactionIndicator
+                key={side}
+                className="bg-background"
+                faction={mapLayer.map[side].name as FactionEnum}
+              />
+            ))}
+          </AvatarGroup>
+        )
+      }
+
+      if (mapLayer) {
+        return (
+          <AvatarGroup className="justify-center">
+            <FactionIndicator className="bg-background" />
+          </AvatarGroup>
+        )
+      }
+
       return <div className={"text-center"}>
-      <TeamIndicator team={getTeamFromAssociation(player.team)}/>
+      <TeamIndicator team={team}/>
     </div>;
     },
   };
@@ -562,4 +595,5 @@ export const getLiveGameColumns = (handlePlayerClick: (id: string) => void): Col
 
 export const getCompletedGameColumns = (
   handlePlayerClick: (id: string) => void,
-): ColumnDef<Player | PlayerBaseWithAwards>[] => [teamColumn(), levelColumn(), playerColumn(handlePlayerClick), awardColumn(), ...pointColumns(true)]
+  mapLayer: MapLayer,
+): ColumnDef<Player | PlayerBaseWithAwards>[] => [teamColumn(mapLayer), levelColumn(), playerColumn(handlePlayerClick), awardColumn(), ...pointColumns(true)]

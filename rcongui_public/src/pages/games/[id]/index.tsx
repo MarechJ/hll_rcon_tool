@@ -31,7 +31,7 @@ export default function GameDetail() {
     >
       {(props) => (
         <DataTable
-          columns={getCompletedGameColumns(props.handlePlayerClick)}
+          columns={getCompletedGameColumns(props.handlePlayerClick, game.map)}
           data={playersWithAwards}
           tableId={`${game.id}_${dayjs(game.start).format('YYYYMMDD-HHmm')}`}
         />
