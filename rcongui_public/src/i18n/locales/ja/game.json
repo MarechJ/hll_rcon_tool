@@ -1,64 +1,120 @@
 {
-    "gameNotFound": "ゲーム {{ id }} が見つかりません",
-    "loading": "読み込み中...",
-    "selectPlayer": "プレイヤーを選択",
-    "searchPlayer": "プレイヤーを検索",
-    "noPlayersFound": "プレイヤーが見つかりません",
-    "onlineStatusFilter": {
-        "online": "オンライン",
-        "offline": "オフライン",
-        "all": "すべて"
-    },
+  "gameNotFound": "ゲーム {{ id }} が見つかりません",
+  "loading": "読み込み中...",
+  "selectPlayer": "プレイヤーを選択",
+  "searchPlayer": "プレイヤーを検索",
+  "noPlayersFound": "プレイヤーが見つかりません",
+  "onlineStatusFilter": {
+    "online": "オンライン",
+    "offline": "オフライン",
+    "all": "すべて"
+  },
+  "player": "プレイヤー",
+  "players": "プレイヤー",
+  "allies": "連合軍",
+  "axis": "枢軸軍",
+  "weather": {
+    "day": "昼",
+    "night": "夜",
+    "dusk": "夕暮れ",
+    "dawn": "夜明け",
+    "rain": "雨",
+    "overcast": "曇り"
+  },
+  "playersTable": {
     "player": "プレイヤー",
-    "players": "プレイヤー",
-    "allies": "連合軍",
-    "axis": "枢軸軍",
-    "weather": {
-        "day": "昼",
-        "night": "夜",
-        "dusk": "夕暮れ",
-        "dawn": "夜明け",
-        "rain": "雨",
-        "overcast": "曇り"
+    "team": "チーム",
+    "kills": "キル数",
+    "deaths": "デス数",
+    "combat": "戦闘",
+    "score": "スコア",
+    "weapon": "武器",
+    "vehicle": "車両",
+    "armor": "装甲",
+    "commander": "指揮官",
+    "offense": "攻撃",
+    "defense": "防衛",
+    "support": "支援",
+    "utility": "ユーティリティ",
+    "diff": "差分",
+    "status": "状態"
+  },
+  "matchTable": {
+    "match": "マッチ",
+    "map": "マップ",
+    "mode": "モード",
+    "duration": "時間",
+    "result": "結果",
+    "start": "開始"
+  },
+  "playerStats": {
+    "killsByWeapon": "武器別キル数",
+    "deathsByWeapon": "武器別デス数",
+    "encounters": "遭遇数",
+    "weapon": "武器",
+    "count": "回数",
+    "timeline": "タイムライン"
+  },
+  "timelineDetails": {
+    "roleTimeline": "兵科タイムライン",
+    "rolesLabel": "兵科",
+    "roleInterval": "{{role}}、{{start}}～{{end}}",
+    "encountersTimeline": "交戦タイムライン",
+    "unknownRole": "不明な兵科",
+    "kill": "キル",
+    "death": "デス",
+    "killed": "を倒した",
+    "wasKilledBy": "に倒された",
+    "withWeapon": "<weapon>{{weapon}}</weapon>を使用",
+    "playerState": {
+      "joined": "<player>{{player}}</player>が<team>{{team}}</team>として参加",
+      "disconnected": "<player>{{player}}</player>が切断",
+      "switched": "<player>{{player}}</player>が<previousTeam>{{previousTeam}}</previousTeam>から<team>{{team}}</team>へ移動",
+      "reconnected": "<player>{{player}}</player>が<team>{{team}}</team>として再接続",
+      "reconnectedAfterSwitch": "<player>{{player}}</player>がチーム移動後、<team>{{team}}</team>として再接続"
     },
-    "playersTable": {
-        "player": "プレイヤー",
-        "team": "チーム",
-        "kills": "キル数",
-        "deaths": "デス数",
-        "combat": "戦闘",
-        "score": "スコア",
-        "weapon": "武器",
-        "vehicle": "車両",
-        "armor": "装甲",
-        "commander": "指揮官",
-        "offense": "攻撃",
-        "defense": "防衛",
-        "support": "支援",
-        "utility": "ユーティリティ",
-        "diff": "差分",
-        "status": "状態"
+    "capFlip": {
+      "playerTeamCaptured": "{{player}}のチームが拠点を占領",
+      "playerTeamLost": "{{player}}のチームが拠点を失った",
+      "teamCaptured": "{{team}}が拠点を占領",
+      "score": "スコア",
+      "scoreLine": "{{allies}} {{alliedScore}} — {{axisScore}} {{axis}}"
     },
-    "matchTable": {
-        "match": "マッチ",
-        "map": "マップ",
-        "mode": "モード",
-        "duration": "時間",
-        "result": "結果",
-        "start": "開始"
+    "streak": {
+      "title": "{{player}}：{{title}}",
+      "ended": "{{player}}：{{count}}キルで連続キル終了",
+      "titles": {
+        "unstoppable": "アンストッパブル",
+        "impressive": "インプレッシブ",
+        "dominating": "ドミネーティング",
+        "killingSpree": "キリングスプリー",
+        "rampage": "ランページ"
+      }
     },
-    "playerStats": {
-        "killsByWeapon": "武器別キル数",
-        "deathsByWeapon": "武器別デス数",
-        "encounters": "遭遇数",
-        "weapon": "武器",
-        "count": "回数"
-    },
-    "score": {
-        "killstreak": "キルストリーク",
-        "deathstreak": "デスストリーク",
-        "teamkills": "チームキル",
-        "k/d": "K/D"
-    },
-    "downloadTable": "テーブルをダウンロード"
+    "roles": {
+      "rifleman": "小銃手",
+      "assault": "突撃兵",
+      "automaticrifleman": "自動小銃手",
+      "medic": "衛生兵",
+      "spotter": "観測手",
+      "support": "支援兵",
+      "heavymachinegunner": "機関銃手",
+      "antitank": "対戦車兵",
+      "engineer": "工兵",
+      "officer": "将校",
+      "sniper": "狙撃兵",
+      "crewman": "戦車兵",
+      "tankcommander": "戦車長",
+      "armycommander": "司令官",
+      "artilleryobserver": "砲兵観測手",
+      "operator": "操作員"
+    }
+  },
+  "score": {
+    "killstreak": "キルストリーク",
+    "deathstreak": "デスストリーク",
+    "teamkills": "チームキル",
+    "k/d": "K/D"
+  },
+  "downloadTable": "テーブルをダウンロード"
 }

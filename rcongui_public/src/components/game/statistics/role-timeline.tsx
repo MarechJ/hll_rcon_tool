@@ -1,4 +1,4 @@
-import { HLL_ROLES, roleIcon, roleName } from '@/constants/roles'
+import { HLL_ROLES, roleIcon } from '@/constants/roles'
 import { PlayerUnit } from '@/types/player'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { useTranslation } from 'react-i18next'
@@ -64,19 +64,16 @@ export function RoleTimeline({ units, gameDuration }: { units: PlayerUnit[]; gam
   if (!segments.length || gameDuration <= 0) return null
 
   return (
-    <section
-      className="space-y-1.5 px-3 py-2"
-      aria-label={t('playerStats.roleTimeline', { defaultValue: 'Role timeline' })}
-    >
+    <section className="space-y-1.5 px-3 py-2" aria-label={t('timelineDetails.roleTimeline')}>
       <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-        <span className="font-medium text-foreground">{t('playerStats.roleTimeline', { defaultValue: 'Roles' })}</span>
+        <span className="font-medium text-foreground">{t('timelineDetails.rolesLabel')}</span>
         <span>{formatTime(gameDuration)}</span>
       </div>
       <TooltipProvider>
         <div className="relative h-5 w-full overflow-hidden rounded-sm border border-border bg-transparent">
           {segments.map((segment, index) => {
             const icon = roleIcon(segment.role, 'black')
-            const name = roleName(segment.role) ?? t('unknown')
+            const name = t(`timelineDetails.roles.${HLL_ROLES[segment.role]}`)
             const color = SIMPLE_WEAPON_TYPE_COLORS[ROLE_WEAPON_TYPES[segment.role]]
 
             return (
@@ -89,7 +86,11 @@ export function RoleTimeline({ units, gameDuration }: { units: PlayerUnit[]; gam
                       width: `${((segment.end - segment.start) / gameDuration) * 100}%`,
                       backgroundColor: color,
                     }}
-                    aria-label={`${name}, ${formatTime(segment.start)}–${formatTime(segment.end)}`}
+                    aria-label={t('timelineDetails.roleInterval', {
+                      role: name,
+                      start: formatTime(segment.start),
+                      end: formatTime(segment.end),
+                    })}
                   >
                     {icon && <img className="size-3.5 shrink-0 object-contain" src={icon} alt="" aria-hidden="true" />}
                   </div>

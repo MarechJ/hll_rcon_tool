@@ -1,22 +1,33 @@
-import { roleIcon, roleName } from '@/constants/roles'
+import { HLL_ROLES, roleIcon } from '@/constants/roles'
 import { Marker, MarkerContent } from '@/components/ui/marker'
 import { GamePlayer } from '@/components/game/statistics/game-stats-container'
 import { MatchScore } from '@/types/api'
 import { KillInfo, Player, PlayerUnit } from '@/types/player'
-import { Fragment, type ReactNode } from 'react'
+import { Fragment } from 'react'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { Trans, useTranslation } from 'react-i18next'
 
 function formatTime(seconds: number) {
   const minutes = Math.floor(seconds / 60)
   return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
 }
 
-function streakTitle(count: number) {
-  if (count >= 50) return 'Unstoppable'
-  if (count >= 30) return 'Impressive'
-  if (count >= 20) return 'Dominating'
-  if (count >= 10) return 'Killing spree'
-  if (count >= 8) return 'Rampage'
+type StreakTitle = 'unstoppable' | 'impressive' | 'dominating' | 'killingSpree' | 'rampage'
+
+const STREAK_TRANSLATION_KEYS: Record<StreakTitle, `timelineDetails.streak.titles.${StreakTitle}`> = {
+  unstoppable: 'timelineDetails.streak.titles.unstoppable',
+  impressive: 'timelineDetails.streak.titles.impressive',
+  dominating: 'timelineDetails.streak.titles.dominating',
+  killingSpree: 'timelineDetails.streak.titles.killingSpree',
+  rampage: 'timelineDetails.streak.titles.rampage',
+}
+
+function streakTitle(count: number): StreakTitle | undefined {
+  if (count >= 50) return 'unstoppable'
+  if (count >= 30) return 'impressive'
+  if (count >= 20) return 'dominating'
+  if (count >= 10) return 'killingSpree'
+  if (count >= 8) return 'rampage'
   return undefined
 }
 
@@ -25,14 +36,16 @@ function unitAt(units: PlayerUnit[], timestamp: number) {
 }
 
 function RoleIcon({ unit }: { unit?: PlayerUnit }) {
+  const { t } = useTranslation('game')
   const icon = roleIcon(unit?.r)
   const lightModeIcon = roleIcon(unit?.r, 'black')
-  const role = roleName(unit?.r)
+  const roleKey = unit?.r === undefined ? undefined : HLL_ROLES[unit.r]
+  const role = roleKey ? t(`timelineDetails.roles.${roleKey}`) : t('timelineDetails.unknownRole')
 
   return icon && lightModeIcon ? (
     <span className="inline-flex size-4 shrink-0 items-center justify-center" title={role}>
-      <img className="size-3.5 object-contain dark:hidden" src={lightModeIcon} alt={role ?? 'Unknown role'} />
-      <img className="hidden size-3.5 object-contain dark:block" src={icon} alt={role ?? 'Unknown role'} />
+      <img className="size-3.5 object-contain dark:hidden" src={lightModeIcon} alt={role} />
+      <img className="hidden size-3.5 object-contain dark:block" src={icon} alt={role} />
     </span>
   ) : null
 }
@@ -48,6 +61,7 @@ function EncounterItem({
   targetUnit?: PlayerUnit
   focusPlayerBy?: ({ name, id }: { name?: string; id?: string }) => void
 }) {
+  const { t } = useTranslation('game')
   const isKill = encounter.action === 'KILL'
 
   return (
@@ -55,7 +69,7 @@ function EncounterItem({
       className={`grid grid-cols-[2.25rem_minmax(0,1fr)] items-start gap-x-2 border-l-2 px-2 py-1.5 text-xs leading-5 @sm/timeline:gap-x-3 @md/timeline:grid-cols-[2.25rem_minmax(0,1fr)_minmax(0,max-content)] @lg/timeline:grid-cols-[2.5rem_minmax(0,1fr)_minmax(0,max-content)] ${
         isKill ? 'border-emerald-600 bg-emerald-500/[0.06]' : 'border-red-600 bg-red-500/[0.06]'
       }`}
-      aria-label={isKill ? 'Kill' : 'Death'}
+      aria-label={t(isKill ? 'timelineDetails.kill' : 'timelineDetails.death')}
     >
       <time
         className="col-start-1 row-start-1 text-[11px] tabular-nums text-muted-foreground"
@@ -65,7 +79,7 @@ function EncounterItem({
       </time>
       <span className="col-start-2 row-start-1 flex min-w-0 flex-wrap items-center gap-x-1.5">
         <RoleIcon unit={actorUnit} />
-        <span className="sr-only">{isKill ? 'killed' : 'was killed by'}</span>
+        <span className="sr-only">{t(isKill ? 'timelineDetails.killed' : 'timelineDetails.wasKilledBy')}</span>
         {isKill ? (
           <ArrowRight className="size-3.5 shrink-0 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
         ) : (
@@ -82,7 +96,12 @@ function EncounterItem({
       </span>
       {encounter.weapon && (
         <span className="col-start-2 row-start-2 min-w-0 wrap-anywhere text-muted-foreground @md/timeline:col-start-3 @md/timeline:row-start-1 @md/timeline:w-max @md/timeline:max-w-48">
-          with <span className="font-medium text-foreground">{encounter.weapon}</span>
+          <Trans
+            t={t}
+            i18nKey="timelineDetails.withWeapon"
+            values={{ weapon: encounter.weapon }}
+            components={{ weapon: <span className="font-medium text-foreground" /> }}
+          />
         </span>
       )}
     </li>
@@ -112,10 +131,6 @@ type PlayerStateEvent =
 
 function isTeamId(team: number): team is TeamId {
   return team === 1 || team === 2
-}
-
-function teamName(team: TeamId) {
-  return team === 1 ? 'Allies' : 'Axis'
 }
 
 function playerStateEvents(units: PlayerUnit[]): PlayerStateEvent[] {
@@ -157,36 +172,19 @@ function playerStateEvents(units: PlayerUnit[]): PlayerStateEvent[] {
 }
 
 function PlayerStateMarker({ event, playerName }: { event: PlayerStateEvent; playerName: string }) {
-  let description: ReactNode
-
-  if (event.kind === 'joined') {
-    description = (
-      <>
-        joined as <span className="font-medium text-foreground">{teamName(event.team)}</span>
-      </>
-    )
-  } else if (event.kind === 'disconnected') {
-    description = 'disconnected'
-  } else if (event.kind === 'switched') {
-    description = (
-      <>
-        switched from <span className="font-medium text-foreground">{teamName(event.previousTeam)}</span> to{' '}
-        <span className="font-medium text-foreground">{teamName(event.team)}</span>
-      </>
-    )
-  } else if (event.team !== event.previousTeam) {
-    description = (
-      <>
-        reconnected as <span className="font-medium text-foreground">{teamName(event.team)}</span> after switching teams
-      </>
-    )
-  } else {
-    description = (
-      <>
-        reconnected as <span className="font-medium text-foreground">{teamName(event.team)}</span>
-      </>
-    )
-  }
+  const { t } = useTranslation('game')
+  const team = 'team' in event ? t(event.team === 1 ? 'allies' : 'axis') : undefined
+  const previousTeam = 'previousTeam' in event ? t(event.previousTeam === 1 ? 'allies' : 'axis') : undefined
+  const key =
+    event.kind === 'joined'
+      ? 'timelineDetails.playerState.joined'
+      : event.kind === 'disconnected'
+        ? 'timelineDetails.playerState.disconnected'
+        : event.kind === 'switched'
+          ? 'timelineDetails.playerState.switched'
+          : event.team !== event.previousTeam
+            ? 'timelineDetails.playerState.reconnectedAfterSwitch'
+            : 'timelineDetails.playerState.reconnected'
 
   return (
     <li className="px-2 py-1">
@@ -195,7 +193,16 @@ function PlayerStateMarker({ event, playerName }: { event: PlayerStateEvent; pla
           <time className="tabular-nums" dateTime={`PT${event.timestamp}S`}>
             {formatTime(event.timestamp)}
           </time>{' '}
-          <span className="font-semibold text-foreground">{playerName}</span> {description}
+          <Trans
+            t={t}
+            i18nKey={key}
+            values={{ player: playerName, team, previousTeam }}
+            components={{
+              player: <span className="font-semibold text-foreground" />,
+              team: <span className="font-medium text-foreground" />,
+              previousTeam: <span className="font-medium text-foreground" />,
+            }}
+          />
         </MarkerContent>
       </Marker>
     </li>
@@ -213,6 +220,7 @@ export function Encounters({
   players?: GamePlayer[]
   capFlips?: MatchScore[]
 }) {
+  const { t } = useTranslation('game')
   const encounters = 'encounters' in player && player.encounters ? player.encounters : []
   const units = 'units' in player && player.units ? player.units : []
   const stateEvents = playerStateEvents(units)
@@ -240,7 +248,7 @@ export function Encounters({
     .filter(({ capFlipIndex, timestamp }) => {
       return capFlipIndex > 0 && firstJoinedAt !== undefined && timestamp >= firstJoinedAt
     })
-  const streakStarts = new Map<number, string>()
+  const streakStarts = new Map<number, StreakTitle>()
   const streakEnds = new Map<number, number>()
 
   for (let start = 0; start < encounters.length; ) {
@@ -288,7 +296,7 @@ export function Encounters({
   return (
     <ol
       className="@container/timeline flex w-full list-none flex-col overflow-y-auto py-2 pr-1"
-      aria-label="Encounters Timeline"
+      aria-label={t('timelineDetails.encountersTimeline')}
     >
       {timeline.map((entry) => {
         if (entry.type === 'player-state') {
@@ -306,22 +314,31 @@ export function Encounters({
           const capturedTeamId = entry.capturedBy === 'allies' ? 1 : entry.capturedBy === 'axis' ? 2 : undefined
           const captureDescription = capturedTeamId
             ? playerTeam === capturedTeamId
-              ? `${player.player}'s team captured an objective`
+              ? t('timelineDetails.capFlip.playerTeamCaptured', { player: player.player })
               : isTeamId(playerTeam)
-                ? `${player.player}'s team lost an objective`
-                : `${teamName(capturedTeamId)} captured an objective`
-            : 'Score'
+                ? t('timelineDetails.capFlip.playerTeamLost', { player: player.player })
+                : t('timelineDetails.capFlip.teamCaptured', {
+                    team: t(capturedTeamId === 1 ? 'allies' : 'axis'),
+                  })
+            : t('timelineDetails.capFlip.score')
 
           return (
             <li key={`cap-flip-${entry.timestamp}-${entry.capFlipIndex}`} className="px-2 py-1">
               <Marker variant="separator" className="text-xs">
-                <MarkerContent>
-                  <time className="tabular-nums" dateTime={`PT${entry.timestamp}S`}>
-                    {formatTime(entry.timestamp)}
-                  </time>{' '}
-                  {captureDescription} ·{' '}
-                  <span className="font-medium text-foreground">
-                    Allies {entry.flip.allied_score} — {entry.flip.axis_score} Axis
+                <MarkerContent className="min-w-0 flex-1 whitespace-normal wrap-anywhere">
+                  <span className="block font-semibold text-foreground">
+                    <time className="tabular-nums" dateTime={`PT${entry.timestamp}S`}>
+                      {formatTime(entry.timestamp)}
+                    </time>{' '}
+                    {captureDescription}
+                  </span>
+                  <span className="mt-0.5 block font-medium text-foreground">
+                    {t('timelineDetails.capFlip.scoreLine', {
+                      allies: t('allies'),
+                      alliedScore: entry.flip.allied_score,
+                      axisScore: entry.flip.axis_score,
+                      axis: t('axis'),
+                    })}
                   </span>
                 </MarkerContent>
               </Marker>
@@ -343,7 +360,10 @@ export function Encounters({
               <li className="px-2 py-1">
                 <Marker variant="separator" className="text-xs text-amber-700 dark:text-amber-400">
                   <MarkerContent>
-                    <span className="font-semibold">{player.player}:</span> {title}
+                    {t('timelineDetails.streak.title', {
+                      player: player.player,
+                      title: t(STREAK_TRANSLATION_KEYS[title]),
+                    })}
                   </MarkerContent>
                 </Marker>
               </li>
@@ -352,7 +372,7 @@ export function Encounters({
               <li className="px-2 py-1">
                 <Marker variant="separator" className="text-xs text-amber-700 dark:text-amber-400">
                   <MarkerContent>
-                    <span className="font-semibold">{player.player}:</span> streak ended at {endedCount} kills
+                    {t('timelineDetails.streak.ended', { player: player.player, count: endedCount })}
                   </MarkerContent>
                 </Marker>
               </li>
