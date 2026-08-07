@@ -1,11 +1,8 @@
 import { Player } from '@/types/player'
 import { isPlayerWithStatus } from '@/components/game/statistics/player/utils'
 import { Status } from '@/components/game/statistics/player-status'
-import { points, scores, isSteamPlayer, getSteamProfileUrl, getXboxProfileUrl } from './utils'
+import { points, scores } from './utils'
 import { Button } from '@/components/ui/button'
-import { SimpleIcon } from '@/components/simple-icon'
-import { siSteam } from 'simple-icons'
-import { Gamepad2Icon } from 'lucide-react'
 import { SimpleTable } from '@/components/game/statistics/simple-table'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { IconStatistic } from '../icon'
@@ -19,6 +16,8 @@ import { GamePlayer } from '@/components/game/statistics/game-stats-container'
 import { MatchScore } from '@/types/api'
 import { Encounters } from '../encounters'
 import { RoleTimeline } from '../role-timeline'
+import { PlatformLink } from './platform-link'
+import { PlayerLinks } from './links'
 
 export default function PlayerGameDetail({
   player,
@@ -68,18 +67,9 @@ export default function PlayerGameDetail({
               {player.player}
             </Button>
           </div>
-          <div className="flex flex-row justify-center items-center">
-            <Button size={'icon'} variant={'outline'} asChild>
-              {isSteamPlayer(player) ? (
-                <a href={getSteamProfileUrl(player.player_id)} target="_blank" rel="noreferrer">
-                  <SimpleIcon icon={siSteam} size={20} className="dark:fill-current" />
-                </a>
-              ) : (
-                <a href={getXboxProfileUrl(player.player)} target="_blank" rel="noreferrer">
-                  <Gamepad2Icon />
-                </a>
-              )}
-            </Button>
+          <div className="flex flex-row justify-center items-center gap-1">
+            <PlatformLink player={player} />
+            <PlayerLinks playerId={player.player_id} />
           </div>
         </div>
       )}

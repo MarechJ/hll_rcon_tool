@@ -5,7 +5,7 @@ from typing import List, Literal, Optional, Sequence
 
 # # TODO: On Python 3.11.* specifically, Pydantic requires we use typing_extensions.TypedDict
 # over typing.TypedDict. Once we bump our Python image we can replace this.
-from typing_extensions import TypedDict
+from typing_extensions import NotRequired, TypedDict
 
 from rcon.maps import GameMode, Layer, LayerType, Team
 from rcon.weapons import WeaponType
@@ -444,6 +444,7 @@ class PlayerStatsType(TypedDict, total=False):
     player_id: str
     map_id: int
     player: Optional[str]
+    platform: Optional[str]
     steaminfo: Optional[SteamInfoType]
     kills: Optional[int]
     kills_streak: Optional[int]
@@ -725,6 +726,7 @@ class GetDetailedPlayers(TypedDict):
 class GetPlayersType(TypedDict):
     name: str
     player_id: str
+    platform: NotRequired[str | None]
     country: str | None
     steam_bans: Optional[SteamBansType]
     is_vip: bool

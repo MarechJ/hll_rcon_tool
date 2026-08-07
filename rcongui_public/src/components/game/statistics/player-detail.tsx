@@ -9,14 +9,13 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer'
 import { Button } from '@/components/ui/button'
-import { SimpleIcon } from '@/components/simple-icon'
-import { siSteam } from 'simple-icons'
 import { Status } from '@/components/game/statistics/player-status'
-import { getSteamProfileUrl, getXboxProfileUrl, isPlayerWithStatus, isSteamPlayer } from './player/utils'
-import { Gamepad2Icon } from 'lucide-react'
+import { isPlayerWithStatus } from './player/utils'
 import PlayerGameDetail from './player'
 import { useTranslation } from 'react-i18next'
 import {useGameStatsContext} from "@/components/game/statistics/game-stats-container";
+import { PlatformLink } from './player/platform-link'
+import { PlayerLinks } from './player/links'
 
 export function NoPlayerGameDetail() {
   const { t } = useTranslation('game')
@@ -62,18 +61,9 @@ export function MobilePlayerGameDetail({
               </div>
             </DrawerTitle>
             <DrawerDescription className="sr-only">Game statistics for {player.player}</DrawerDescription>
-            <div className="flex flex-row justify-center items-center">
-              <Button size={'icon'} variant={'outline'} asChild>
-                {isSteamPlayer(player) ? (
-                  <a href={getSteamProfileUrl(player.player_id)} target="_blank" rel="noreferrer">
-                    <SimpleIcon icon={siSteam} size={20} className="dark:fill-current" />
-                  </a>
-                ) : (
-                  <a href={getXboxProfileUrl(player.player)} target="_blank" rel="noreferrer">
-                    <Gamepad2Icon />
-                  </a>
-                )}
-              </Button>
+            <div className="flex flex-row justify-center items-center gap-1">
+              <PlatformLink player={player} />
+              <PlayerLinks playerId={player.player_id} />
             </div>
           </DrawerHeader>
           <div className="p-4 pb-0">

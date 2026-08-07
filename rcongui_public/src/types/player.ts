@@ -96,6 +96,7 @@ export interface PlayerBase {
   player_id: string
   steam_id_64: string
   player: string
+  platform?: string | null
   steaminfo?: Steaminfo
   map_id: number
   kills: number

@@ -661,6 +661,7 @@ def get_default_player_stats() -> PlayerStatsType:
         "id": 0,
         "player_id": "",
         "player": "",
+        "platform": None,
         "steaminfo": None,
         "map_id": 0,
         "kills": 0,

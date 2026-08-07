@@ -909,6 +909,11 @@ class PlayerStats(Base):
             "id": self.id,
             PLAYER_ID: self.player.player_id,
             "player": self.name,
+            "platform": (
+                self.player.soldier.platform
+                if self.player and self.player.soldier
+                else None
+            ),
             "steaminfo": (
                 self.player.steaminfo.to_dict()
                 if self.player and self.player.steaminfo

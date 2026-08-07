@@ -117,12 +117,14 @@ class BaseStats:
             logger.debug("Crunching stats for %s", player)
 
             profile = profiles_by_id.get(player.get(PLAYER_ID))
+            soldier = profile.soldier if profile else None
 
             # Initialise stats and populate them with values based on player's profile and session
             player_stats = PlayerStatsType(get_default_player_stats())
             player_stats.update(
                 player=player["name"],
                 player_id=player["player_id"],
+                platform=player.get("platform") or (soldier.platform if soldier else None),
                 steaminfo=profile.steaminfo.to_dict() if profile and profile.steaminfo else None,
                 last_spawn=self._get_player_first_appearance(player),
                 time_seconds=int(self._get_player_session_time(player)),
@@ -352,6 +354,11 @@ class LiveStats(BaseStats):
             return {}
 
         players = [p for p in players if p.get(PLAYER_ID)]
+        detailed_players = self.rcon.get_detailed_players()["players"]
+        for player in players:
+            details = detailed_players.get(player[PLAYER_ID])
+            if details:
+                player["platform"] = details.get("platform")
 
         with enter_session() as sess:
             id_to_PlayerID = {
