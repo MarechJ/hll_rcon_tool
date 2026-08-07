@@ -89,7 +89,8 @@
         "teamRank": "Team rank",
         "killDiff": "Kill diff",
         "killsByType": "Kills by type",
-        "rank": "Rank"
+        "rank": "Rank",
+        "timeline": "Timeline"
     },
     "score": {
         "killstreak": "Killstreak",
