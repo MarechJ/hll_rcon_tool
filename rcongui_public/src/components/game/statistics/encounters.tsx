@@ -54,11 +54,13 @@ function EncounterItem({
   encounter,
   actorUnit,
   targetUnit,
+  vehicleGroup,
   focusPlayerBy,
 }: {
   encounter: KillInfo
   actorUnit?: PlayerUnit
   targetUnit?: PlayerUnit
+  vehicleGroup?: VehicleGroupInfo
   focusPlayerBy?: ({ name, id }: { name?: string; id?: string }) => void
 }) {
   const { t } = useTranslation('game')
@@ -68,7 +70,9 @@ function EncounterItem({
     <li
       className={`grid grid-cols-[2.25rem_minmax(0,1fr)] items-start gap-x-2 border-l-2 px-2 py-1.5 text-xs leading-5 @sm/timeline:gap-x-3 @md/timeline:grid-cols-[2.25rem_minmax(0,1fr)_minmax(0,max-content)] @lg/timeline:grid-cols-[2.5rem_minmax(0,1fr)_minmax(0,max-content)] ${
         isKill ? 'border-emerald-600 bg-emerald-500/[0.06]' : 'border-red-600 bg-red-500/[0.06]'
-      }`}
+      } ${vehicleGroup ? 'border-r border-r-amber-500/50' : ''} ${
+        vehicleGroup?.position === 0 ? 'rounded-tr-sm border-t border-t-amber-500/50' : ''
+      } ${vehicleGroup && vehicleGroup.position === vehicleGroup.size - 1 ? 'rounded-br-sm border-b border-b-amber-500/50' : ''}`}
       aria-label={t(isKill ? 'timelineDetails.kill' : 'timelineDetails.death')}
     >
       <time
@@ -110,8 +114,21 @@ function EncounterItem({
 
 type CapturingTeam = 'allies' | 'axis'
 
+type VehicleGroupInfo = {
+  id: number
+  anchor: number
+  position: number
+  size: number
+}
+
 type TimelineEntry =
-  | { type: 'encounter'; encounter: KillInfo; encounterIndex: number; timestamp: number }
+  | {
+      type: 'encounter'
+      encounter: KillInfo
+      encounterIndex: number
+      vehicleGroup?: VehicleGroupInfo
+      timestamp: number
+    }
   | {
       type: 'cap-flip'
       flip: MatchScore
@@ -224,6 +241,33 @@ export function Encounters({
   const encounters = 'encounters' in player && player.encounters ? player.encounters : []
   const units = 'units' in player && player.units ? player.units : []
   const stateEvents = playerStateEvents(units)
+  const vehicleGroups = new Map<number, VehicleGroupInfo>()
+  const tankCrewKillsByTimestamp = new Map<number, number[]>()
+
+  if (player.vehicles_destroyed > 0) {
+    encounters.forEach((encounter, encounterIndex) => {
+      if (encounter.action !== 'KILL') return
+      const targetUnits = players.find(({ id }) => id === encounter.player_id)?.units ?? []
+      const targetRole = unitAt(targetUnits, encounter.timestamp)?.r
+      if (targetRole !== 11 && targetRole !== 12) return
+
+      const indices = tankCrewKillsByTimestamp.get(encounter.timestamp) ?? []
+      indices.push(encounterIndex)
+      tankCrewKillsByTimestamp.set(encounter.timestamp, indices)
+    })
+
+    Array.from(tankCrewKillsByTimestamp.entries())
+      .filter(([, encounterIndices]) => encounterIndices.length >= 2 && encounterIndices.length <= 3)
+      .sort(([a], [b]) => a - b)
+      .slice(0, player.vehicles_destroyed)
+      .forEach(([, encounterIndices], id) => {
+        const anchor = Math.min(...encounterIndices)
+        encounterIndices.forEach((encounterIndex, position) => {
+          vehicleGroups.set(encounterIndex, { id, anchor, position, size: encounterIndices.length })
+        })
+      })
+  }
+
   const firstJoinedAt = stateEvents.find((event) => event.kind === 'joined')?.timestamp
   const orderedCapFlips = [...capFlips].sort((a, b) => a.ts - b.ts)
   const capFlipEntries = orderedCapFlips
@@ -272,6 +316,7 @@ export function Encounters({
       type: 'encounter' as const,
       encounter,
       encounterIndex,
+      vehicleGroup: vehicleGroups.get(encounterIndex),
       timestamp: encounter.timestamp,
     })),
     ...capFlipEntries,
@@ -287,7 +332,11 @@ export function Encounters({
     const typeOrder = { 'player-state': 0, 'cap-flip': 1, encounter: 2 }
     const typeDifference = typeOrder[a.type] - typeOrder[b.type]
     if (typeDifference) return typeDifference
-    if (a.type === 'encounter' && b.type === 'encounter') return a.encounterIndex - b.encounterIndex
+    if (a.type === 'encounter' && b.type === 'encounter') {
+      const aOrder = a.vehicleGroup ? a.vehicleGroup.anchor + a.vehicleGroup.position / 10 : a.encounterIndex
+      const bOrder = b.vehicleGroup ? b.vehicleGroup.anchor + b.vehicleGroup.position / 10 : b.encounterIndex
+      return aOrder - bOrder
+    }
     if (a.type === 'cap-flip' && b.type === 'cap-flip') return a.capFlipIndex - b.capFlipIndex
     if (a.type === 'player-state' && b.type === 'player-state') return a.playerStateIndex - b.playerStateIndex
     return 0
@@ -351,6 +400,7 @@ export function Encounters({
         const targetUnits = players.find(({ id }) => id === encounter.player_id)?.units ?? []
         const title = streakStarts.get(encounterIndex)
         const endedCount = streakEnds.get(encounterIndex)
+        const vehicleGroup = entry.vehicleGroup
 
         return (
           <Fragment
@@ -368,6 +418,15 @@ export function Encounters({
                 </Marker>
               </li>
             )}
+            {vehicleGroup?.position === 0 && (
+              <li className="px-2 py-1">
+                <Marker variant="separator" className="text-xs text-amber-700 dark:text-amber-400">
+                  <MarkerContent className="font-semibold">
+                    {t('timelineDetails.tankDestroyed', { player: player.player })}
+                  </MarkerContent>
+                </Marker>
+              </li>
+            )}
             {endedCount && (
               <li className="px-2 py-1">
                 <Marker variant="separator" className="text-xs text-amber-700 dark:text-amber-400">
@@ -381,6 +440,7 @@ export function Encounters({
               encounter={encounter}
               actorUnit={actorUnit}
               targetUnit={unitAt(targetUnits, encounter.timestamp)}
+              vehicleGroup={vehicleGroup}
               focusPlayerBy={focusPlayerBy}
             />
           </Fragment>

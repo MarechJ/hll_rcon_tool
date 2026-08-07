@@ -103,6 +103,7 @@
     "killed": "killed",
     "wasKilledBy": "was killed by",
     "withWeapon": "with <weapon>{{weapon}}</weapon>",
+    "tankDestroyed": "{{player}} destroyed a tank",
     "playerState": {
       "joined": "<player>{{player}}</player> joined as <team>{{team}}</team>",
       "disconnected": "<player>{{player}}</player> disconnected",

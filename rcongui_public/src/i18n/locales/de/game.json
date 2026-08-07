@@ -66,6 +66,7 @@
     "killed": "tötete",
     "wasKilledBy": "wurde getötet von",
     "withWeapon": "mit <weapon>{{weapon}}</weapon>",
+    "tankDestroyed": "{{player}} zerstörte einen Panzer",
     "playerState": {
       "joined": "<player>{{player}}</player> trat als <team>{{team}}</team> bei",
       "disconnected": "<player>{{player}}</player> hat die Verbindung getrennt",

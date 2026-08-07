@@ -66,6 +66,7 @@
     "killed": "击杀了",
     "wasKilledBy": "被击杀者",
     "withWeapon": "使用 <weapon>{{weapon}}</weapon>",
+    "tankDestroyed": "{{player}}摧毁了一辆坦克",
     "playerState": {
       "joined": "<player>{{player}}</player>加入<team>{{team}}</team>",
       "disconnected": "<player>{{player}}</player>断开连接",

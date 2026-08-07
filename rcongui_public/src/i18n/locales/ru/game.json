@@ -66,6 +66,7 @@
     "killed": "убил",
     "wasKilledBy": "был убит игроком",
     "withWeapon": "из <weapon>{{weapon}}</weapon>",
+    "tankDestroyed": "{{player}} уничтожил танк",
     "playerState": {
       "joined": "<player>{{player}}</player> присоединился за <team>{{team}}</team>",
       "disconnected": "<player>{{player}}</player> отключился",
