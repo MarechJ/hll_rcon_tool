@@ -15,6 +15,7 @@ export const HLL_ROLES = [
   'armycommander',
   'artilleryobserver',
   'operator',
+  'gunner',
 ] as const
 
 export function roleIcon(role: number | undefined, variant: 'default' | 'black' = 'default'): string | undefined {

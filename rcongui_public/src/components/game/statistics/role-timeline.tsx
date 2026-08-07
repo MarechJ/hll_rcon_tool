@@ -30,6 +30,7 @@ const ROLE_WEAPON_TYPES: Record<number, SimpleWeaponType> = {
   13: SimpleWeaponType.Commander,
   14: SimpleWeaponType.Artillery,
   15: SimpleWeaponType.Artillery,
+  16: SimpleWeaponType.Artillery,
 }
 
 function formatTime(seconds: number) {

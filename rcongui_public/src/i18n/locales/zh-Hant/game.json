@@ -108,7 +108,8 @@
       "tankcommander": "戰車指揮官",
       "armycommander": "總指揮",
       "artilleryobserver": "砲兵觀察員",
-      "operator": "操作員"
+      "operator": "操作員",
+      "gunner": "砲手"
     }
   },
   "score": {

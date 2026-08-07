@@ -108,7 +108,8 @@
       "tankcommander": "전차장",
       "armycommander": "사령관",
       "artilleryobserver": "포병 관측병",
-      "operator": "운용병"
+      "operator": "운용병",
+      "gunner": "포수"
     }
   },
   "score": {

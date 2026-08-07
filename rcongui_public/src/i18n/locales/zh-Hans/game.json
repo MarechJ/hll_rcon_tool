@@ -108,7 +108,8 @@
       "tankcommander": "坦克指挥官",
       "armycommander": "总指挥",
       "artilleryobserver": "炮兵观察员",
-      "operator": "操作员"
+      "operator": "操作员",
+      "gunner": "炮手"
     }
   },
   "score": {

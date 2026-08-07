@@ -145,7 +145,8 @@
       "tankcommander": "Tank Commander",
       "armycommander": "Army Commander",
       "artilleryobserver": "Artillery Observer",
-      "operator": "Operator"
+      "operator": "Operator",
+      "gunner": "Gunner"
     }
   },
   "score": {

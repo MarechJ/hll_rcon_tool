@@ -108,7 +108,8 @@
       "tankcommander": "Velitel tanku",
       "armycommander": "Velitel armády",
       "artilleryobserver": "Dělostřelecký pozorovatel",
-      "operator": "Operátor"
+      "operator": "Operátor",
+      "gunner": "Dělostřelec"
     }
   },
   "score": {

@@ -108,7 +108,8 @@
       "tankcommander": "Comandante de tanque",
       "armycommander": "Comandante",
       "artilleryobserver": "Observador de artillería",
-      "operator": "Operador"
+      "operator": "Operador",
+      "gunner": "Artillero"
     }
   },
   "score": {

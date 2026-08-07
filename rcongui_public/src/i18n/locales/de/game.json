@@ -108,7 +108,8 @@
       "tankcommander": "Panzerkommandant",
       "armycommander": "Kommandant",
       "artilleryobserver": "Artilleriebeobachter",
-      "operator": "Bediener"
+      "operator": "Bediener",
+      "gunner": "Richtschütze"
     }
   },
   "score": {
