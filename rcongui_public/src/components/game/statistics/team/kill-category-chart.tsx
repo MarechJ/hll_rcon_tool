@@ -1,75 +1,135 @@
-import React from "react";
-import {ResponsiveContainer, Tooltip, TooltipProps, Treemap} from "recharts";
-import {getColorForTeam} from "@/components/game/statistics/utils";
-import {Player, PlayerBase, PlayerWithStatus, TeamEnum} from "@/types/player";
-import {WeaponType} from "@/types/weapon";
-import {useTranslation} from "react-i18next";
-import {NameType, ValueType} from "recharts/types/component/DefaultTooltipContent";
-import {TreemapNode} from "recharts/types/util/types";
+import React from 'react'
+import { ResponsiveContainer, Tooltip, Treemap, TreemapNode } from 'recharts'
+import { getColorForTeam, getTeamFromAssociation } from '@/components/game/statistics/utils'
+import { Player, TeamEnum } from '@/types/player'
+import { WeaponType } from '@/types/weapon'
+import { useTranslation } from 'react-i18next'
 
-export const KillCategoryChart = ({stats, handlePlayerClick}: {
-  stats: Player[] | PlayerWithStatus[]
+export const KillCategoryChart = ({
+  stats,
+  handlePlayerClick,
+}: {
+  stats: Player[]
   handlePlayerClick: (id: string) => void
 }) => {
+  // `player.team` can be `string | PlayerTeamAssociation | null` depending on which endpoint produced it.
+  // Normalize via `getTeamFromAssociation()` so we can safely compare.
+  const axisPlayers = stats
+    .filter((player) => getTeamFromAssociation(player.team) === TeamEnum.AXIS)
+    .sort((a, b) => b.kills - a.kills)
+  const alliesPlayers = stats
+    .filter((player) => getTeamFromAssociation(player.team) === TeamEnum.ALLIES)
+    .sort((a, b) => b.kills - a.kills)
 
-  const axisPlayers = stats.filter(player => player.team.side === TeamEnum.AXIS).sort((a, b) => b.kills - a.kills);
-  const alliesPlayers = stats.filter(player => player.team.side === TeamEnum.ALLIES).sort((a, b) => b.kills - a.kills);
-
-  const displayedTypes = [WeaponType.Infantry, WeaponType.MachineGun, WeaponType.Artillery, WeaponType.SPA, WeaponType.Armor, WeaponType.Sniper, WeaponType.Commander, WeaponType.Grenade, WeaponType.Bazooka, WeaponType.Satchel, WeaponType.Mine, WeaponType.PAK]
+  const displayedTypes = [
+    WeaponType.Infantry,
+    WeaponType.MachineGun,
+    WeaponType.Artillery,
+    WeaponType.SPA,
+    WeaponType.Armor,
+    WeaponType.Sniper,
+    WeaponType.Commander,
+    WeaponType.Grenade,
+    WeaponType.Bazooka,
+    WeaponType.Satchel,
+    WeaponType.Mine,
+    WeaponType.PAK,
+  ]
 
   return (
     <>
-      {displayedTypes.map(type => <KillTreemapChart key={type} axisPlayers={axisPlayers} alliesPlayers={alliesPlayers} type={type}
-                          handlePlayerClick={handlePlayerClick}/>)}
+      {displayedTypes.map((type) => (
+        <KillTreemapChart
+          key={type}
+          axisPlayers={axisPlayers}
+          alliesPlayers={alliesPlayers}
+          type={type}
+          handlePlayerClick={handlePlayerClick}
+        />
+      ))}
     </>
-  );
-};
+  )
+}
 
-
-const KillTreemapChart = ({axisPlayers, alliesPlayers, type, handlePlayerClick }: {
-  axisPlayers: PlayerBase[],
-  alliesPlayers: PlayerBase[],
-  type: WeaponType,
-  handlePlayerClick: (id: string) => void,
+const KillTreemapChart = ({
+  axisPlayers,
+  alliesPlayers,
+  type,
+  handlePlayerClick,
+}: {
+  axisPlayers: Player[]
+  alliesPlayers: Player[]
+  type: WeaponType
+  handlePlayerClick: (id: string) => void
 }) => {
-  const {t} = useTranslation("game");
+  const { t } = useTranslation('game')
 
-  const axisData = axisPlayers.map(player => ({ player: player, kills: player.kills_by_type[type] })).filter(player => player.kills).sort((a, b) => b.kills - a.kills);
-  const alliesData = alliesPlayers.map(player => ({ player: player, kills: player.kills_by_type[type] })).filter(player => player.kills).sort((a, b) => b.kills - a.kills);
+  const axisData = axisPlayers
+    .map((player) => ({ player: player, kills: player.kills_by_type[type] }))
+    .filter((player) => player.kills)
+    .sort((a, b) => b.kills - a.kills)
+  const alliesData = alliesPlayers
+    .map((player) => ({ player: player, kills: player.kills_by_type[type] }))
+    .filter((player) => player.kills)
+    .sort((a, b) => b.kills - a.kills)
 
-  const axisKills = axisData.reduce((prev, player) => prev + player.kills, 0);
-  const alliesKills = alliesData.reduce((prev, player) => prev + player.kills, 0);
-  const totalKills = axisKills + alliesKills;
+  const axisKills = axisData.reduce((prev, player) => prev + player.kills, 0)
+  const alliesKills = alliesData.reduce((prev, player) => prev + player.kills, 0)
+  const totalKills = axisKills + alliesKills
 
-  const handleClick = (node: TreemapNode)  => {
-    handlePlayerClick(node.player.player_id);
+  const handleClick = (node: TreemapNode) => {
+    handlePlayerClick((node.player as Player).player_id)
   }
 
   return (
     <div className="py-4">
       <h2 className="text-xl text-center">{t(`weaponType.${type}`)}</h2>
-      <h5 className="text-center">({alliesKills} vs {axisKills})</h5>
-      <div className={"w-full flex relative mt-2"} style={{height: `calc(100vh * ${totalKills}/5000`, minHeight: '5px'}}>
-        <div className={"absolute border w-[0] h-full left-1/2 border-purple-600 z-20 pointer-events-none"}/>
-        <ResponsiveContainer width={(alliesKills / totalKills * 99) + "%"} height="100%">
-          <Treemap width={400} height={200} data={alliesData} nameKey={"player"} dataKey={"kills"} stroke="#fff" isAnimationActive={false}
-                   fill={getColorForTeam(TeamEnum.ALLIES)} onClick={handleClick} content={<CustomizedContent mirrored/>}>
-            <Tooltip content={<CustomTooltip/>}/>
+      <h5 className="text-center">
+        ({alliesKills} vs {axisKills})
+      </h5>
+      <div
+        className={'w-full flex relative mt-2'}
+        style={{ height: `calc(100vh * ${totalKills}/5000`, minHeight: '5px' }}
+      >
+        <div className={'absolute border w-[0] h-full left-1/2 border-purple-600 z-20 pointer-events-none'} />
+        <ResponsiveContainer width={`${(alliesKills / totalKills) * 99}%`} height="100%">
+          <Treemap
+            width={400}
+            height={200}
+            data={alliesData}
+            nameKey={'player'}
+            dataKey={'kills'}
+            stroke="#fff"
+            isAnimationActive={false}
+            fill={getColorForTeam(TeamEnum.ALLIES)}
+            onClick={handleClick}
+            content={<CustomizedContent mirrored />}
+          >
+            <Tooltip content={<CustomTooltip />} />
           </Treemap>
         </ResponsiveContainer>
-        <ResponsiveContainer width={(axisKills / totalKills * 99) + "%"} height="100%">
-          <Treemap width={400} height={200} data={axisData} dataKey={"kills"} stroke="#fff" isAnimationActive={false}
-                   fill={getColorForTeam(TeamEnum.AXIS)} onClick={handleClick} content={<CustomizedContent/>}>
-            <Tooltip content={<CustomTooltip/>}/>
+        <ResponsiveContainer width={`${(axisKills / totalKills) * 99}%`} height="100%">
+          <Treemap
+            width={400}
+            height={200}
+            data={axisData}
+            dataKey={'kills'}
+            stroke="#fff"
+            isAnimationActive={false}
+            fill={getColorForTeam(TeamEnum.AXIS)}
+            onClick={handleClick}
+            content={<CustomizedContent />}
+          >
+            <Tooltip content={<CustomTooltip />} />
           </Treemap>
         </ResponsiveContainer>
       </div>
     </div>
-  );
-};
+  )
+}
 
 const CustomizedContent = ({ root, x, y, width, height, fill, index, value, mirrored }: any) => {
-  const adjustedX = mirrored ? (root.width - (x + width)) : x
+  const adjustedX = mirrored ? root.width - (x + width) : x
 
   return (
     <g>
@@ -95,22 +155,23 @@ const CustomizedContent = ({ root, x, y, width, height, fill, index, value, mirr
         </text>
       )}
     </g>
-  );
-};
+  )
+}
 
-const CustomTooltip = ({
-                         active,
-                         payload,
-                       }: TooltipProps<ValueType, NameType>) =>
-{
-  if (active && payload && payload.length) {
+type CustomTooltipProps = {
+  active?: boolean
+  payload?: Array<{ payload?: { player: Player; value?: number } }>
+}
+
+const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
+  if (active && payload && payload.length > 0) {
     return (
       <div className="bg-background border p-2">
-        <span>{payload[0].payload.player.player}: </span>
-        <span>{payload[0].payload.value}</span>
+        <span>{payload[0].payload?.player.player}: </span>
+        <span>{payload[0].payload?.value}</span>
       </div>
-    );
+    )
   }
 
-  return null;
-};
+  return null
+}

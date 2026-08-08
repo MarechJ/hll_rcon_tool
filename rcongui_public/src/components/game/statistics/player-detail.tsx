@@ -1,4 +1,4 @@
-import { Player, PlayerWithStatus } from '@/types/player'
+import { Player } from '@/types/player'
 import {
   Drawer,
   DrawerClose,
@@ -9,14 +9,13 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer'
 import { Button } from '@/components/ui/button'
-import { SimpleIcon } from '@/components/simple-icon'
-import { siSteam } from 'simple-icons'
 import { Status } from '@/components/game/statistics/player-status'
-import { getSteamProfileUrl, getXboxProfileUrl, isPlayerWithStatus, isSteamPlayer } from './player/utils'
-import { Gamepad2Icon } from 'lucide-react'
+import { isPlayerWithStatus } from './player/utils'
 import PlayerGameDetail from './player'
 import { useTranslation } from 'react-i18next'
 import {useGameStatsContext} from "@/components/game/statistics/game-stats-container";
+import { PlatformLink } from './player/platform-link'
+import { PlayerLinks } from './player/links'
 
 export function NoPlayerGameDetail() {
   const { t } = useTranslation('game')
@@ -34,11 +33,11 @@ export function MobilePlayerGameDetail({
 }: {
   open: boolean
   setOpen: (open: boolean) => void
-  player: Player | PlayerWithStatus
+  player: Player
 }) {
   const { t } = useTranslation('translation')
 
-  const { focusPlayerByName } = useGameStatsContext();
+  const { focusPlayerBy } = useGameStatsContext();
 
   return (
     <Drawer open={open} onOpenChange={(open) => setOpen(open)}>
@@ -47,7 +46,7 @@ export function MobilePlayerGameDetail({
           <DrawerHeader>
             <DrawerTitle>
               <div className="flex justify-center items-center gap-2 grow">
-                {isPlayerWithStatus(player) && player.is_online ? (
+                {isPlayerWithStatus(player) && player.status == "online" ? (
                   <Status player={player} className="animate-ping" />
                 ) : isPlayerWithStatus(player) ? (
                   <Status player={player} />
@@ -55,25 +54,16 @@ export function MobilePlayerGameDetail({
                 <Button
                   variant="text"
                   className="pl-0 h-0 text-xl"
-                  onClick={() => focusPlayerByName(player.player)}
+                  onClick={() => focusPlayerBy({ id: player.player_id})}
                 >
                   {player.player}
                 </Button>
               </div>
             </DrawerTitle>
             <DrawerDescription className="sr-only">Game statistics for {player.player}</DrawerDescription>
-            <div className="flex flex-row justify-center items-center">
-              <Button size={'icon'} variant={'outline'} asChild>
-                {isSteamPlayer(player) ? (
-                  <a href={getSteamProfileUrl(player.player_id)} target="_blank" rel="noreferrer">
-                    <SimpleIcon icon={siSteam} size={20} className="dark:fill-current" />
-                  </a>
-                ) : (
-                  <a href={getXboxProfileUrl(player.player)} target="_blank" rel="noreferrer">
-                    <Gamepad2Icon />
-                  </a>
-                )}
-              </Button>
+            <div className="flex flex-row justify-center items-center gap-1">
+              <PlatformLink player={player} />
+              <PlayerLinks playerId={player.player_id} />
             </div>
           </DrawerHeader>
           <div className="p-4 pb-0">

@@ -132,6 +132,7 @@ class RconUser(User):
             ("can_reset_votekick_threshold", "Can reset votekick thresholds"),
             ("can_reset_votemap_state", "Can reset votemap selection & votes"),
             ("can_run_raw_commands", "Can send raw commands to the HLL game server"),
+            ("can_send_votemap_reminder", "Can send votemap reminder message to all players"),
             ("can_set_map_whitelist", "Can set the votemap whitelist"),
             ("can_switch_players_immediately", "Can immediately switch players"),
             ("can_switch_players_on_death", "Can switch players on death"),
@@ -476,4 +477,8 @@ class RconUser(User):
                 "can_change_watch_killrate_config",
                 "Can change the Watch KillRate config",
             ),
+            ("can_remove_map_from_votemap", "Can remove map from current votemap selection"),
+            ("can_add_map_to_votemap", "Can add map to current votemap selection"),
+            ("can_set_votemap_winner", "Can guarantee next map with votemap enabled"),
+            ("can_add_votemap_vote", "Can manually add vote"),
         )
