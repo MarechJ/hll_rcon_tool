@@ -1,7 +1,7 @@
 import re
 from enum import Enum
 from logging import getLogger
-from typing import TYPE_CHECKING, Any, Iterable, Literal, Sequence, Union
+from typing import TYPE_CHECKING, Any, Iterable, Literal, Optional, Sequence, Union
 
 import pydantic
 import typing_extensions
@@ -1671,6 +1671,15 @@ def safe_get_map_name(map_name: str, pretty: bool = True) -> str:
 def is_server_loading_map(map_name: str) -> bool:
     return "untitled" in map_name.lower()
 
+def get_all_layers_by_map(map: Map, game_mode: Optional[GameMode] = None, team: Optional[Team] = None) -> set[Layer]:
+    if game_mode:
+        return {
+            layer
+            for layer in LAYERS.values()
+            if layer.map == map and layer.game_mode == game_mode and layer.attackers == team
+        }
+    return {layer for layer in LAYERS.values() if layer.map == map}
+    
 env_alternation = "|".join(re.escape(e.value) for e in Environment)
 mode_alternation = "|".join(re.escape(m.value) for m in GameMode)
 

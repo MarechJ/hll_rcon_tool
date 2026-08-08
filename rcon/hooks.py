@@ -81,25 +81,8 @@ ARG_RE = re.compile(r"\$(\d+)")
 
 
 @on_chat
-def count_vote(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
-    enabled = VoteMap().handle_vote_command(rcon=rcon, struct_log=struct_log)
-    if enabled and (match := re.match(r"\d\s*$", struct_log["sub_content"].strip())):
-        rcon.message_player(
-            player_id=struct_log["player_id_1"],
-            message=f"INVALID VOTE\n\nUse: !votemap {match.group()}",
-        )
-
-
-def initialise_vote_map(struct_log):
-    logger.info("New match started initializing vote map. %s", struct_log)
-    try:
-        vote_map = VoteMap()
-        vote_map.clear_votes()
-        vote_map.gen_selection()
-        vote_map.reset_last_reminder_time()
-        vote_map.apply_results()
-    except Exception as ex:
-        logger.exception("Something went wrong in vote map init", ex)
+def count_map_vote(_, struct_log: StructuredLogLineWithMetaData):
+    VoteMap().handle_vote_command(struct_log)
 
 
 @on_chat
@@ -271,11 +254,12 @@ def chat_help_command(rcon: Rcon, command: BaseChatCommand, ctx: dict[str, str])
 
 
 @on_match_end
-def remind_vote_map(rcon: Rcon, struct_log):
-    logger.info("Match ended reminding to vote map. %s", struct_log)
-    vote_map = VoteMap()
-    vote_map.apply_with_retry()
-    vote_map.vote_map_reminder(rcon, force=True)
+def remind_vote_map(_, struct_log):
+    vm = VoteMap()
+    if vm.enabled:
+        logger.info("Match ended reminding to vote map. %s", struct_log)
+        vm.apply_results()
+        vm.send_reminder(force=vm.config.remind_on_match_end)
 
 
 @on_match_start
@@ -360,10 +344,22 @@ def handle_new_match_start(rcon: Rcon, struct_log):
         logger.exception(e)
         raise
     finally:
-        initialise_vote_map(struct_log)
+        prev_map = MapsHistory()[1]
+        vm = VoteMap()
+        if vm.enabled:
+            logger.info("MATCH START: Restarting votemap")
+            vm.record_result(prev_map)
+            send_to_discord_audit(
+                command_name="on_match_start",
+                message=vm.get_result_message(),
+                md_escape_message=False,
+                flatten=False,
+            )
+            vm.restart()
+            vm.send_reminder(force=vm.config.remind_on_match_start)
         try:
-            first_job = save_missing_match_logs_worker(MapsHistory()[1])
-            record_stats_worker(MapsHistory()[1], first_job)
+            first_job = save_missing_match_logs_worker(prev_map)
+            record_stats_worker(prev_map, first_job)
         except Exception:
             logger.exception("Unexpected error while running stats worker")
 
