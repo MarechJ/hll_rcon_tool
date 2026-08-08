@@ -551,6 +551,14 @@ def _merge_duplicate_player_ids(existing_ids: set[str] | None = None):
                 {"ids": ids},
             )
             session.execute(
+                text("DELETE FROM player_soldier WHERE player_id_id = ANY(:ids)"),
+                {"ids": ids},
+            )
+            session.execute(
+                text("DELETE FROM player_account WHERE player_id_id = ANY(:ids)"),
+                {"ids": ids},
+            )
+            session.execute(
                 text("DELETE FROM steam_id_64 WHERE id = ANY(:ids)"), {"ids": ids}
             )
     logger.info(f"Duplicate player ID merge complete")
