@@ -8,7 +8,7 @@ type WeatherIconProps = {
   environment: MapEnvironment
 } & React.HTMLAttributes<HTMLDivElement>
 
-const weatherToIcon: Record<MapEnvironment, ReactElement> = {
+const weatherToIcon = {
   ["day"]: <Sun/>,
   ["night"]: <Moon/>,
   ["dusk"]: <Sunrise/>,

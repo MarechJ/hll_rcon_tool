@@ -281,4 +281,14 @@ export function useTierColors() {
   return getTierColors(theme.palette.mode);
 }
 
-export const getColoredFactionIconSrc = (team) => `/icons/teams/${team}_colored.webp`
+export const getColoredFactionIconSrc = (team) => {
+  switch (team) {
+    case 'rus':
+    case 'sov':
+      return `/icons/teams/rus_colored.webp`
+  
+    default:
+      return `/icons/teams/${team}_colored.webp`
+
+  }
+}

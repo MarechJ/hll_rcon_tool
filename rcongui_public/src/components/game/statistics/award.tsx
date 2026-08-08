@@ -100,7 +100,7 @@ type AwardIconProps = {
 
 function AwardIcon({ stat, className, style, ...props }: AwardIconProps) {
   return <div className={cn("rounded-full bg-foreground text-center items-center", className)} style={{ padding: '2.5px' }} {...props}>
-    {cloneElement(statsMap[stat as StatKey]?.icon as React.ReactElement ?? <HelpCircleIcon/>, {
+    {cloneElement(statsMap[stat as StatKey]?.icon ?? <HelpCircleIcon/>, {
       className: 'text-background size-full'
     })}
   </div>;

@@ -25,7 +25,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   children,
   defaultTheme = 'system',
   storageKey = 'ui-theme',
-}): JSX.Element => {
+}) => {
   const [theme, setThemeState] = useState<Theme>(() => {
     const savedTheme = localStorage.getItem(storageKey) as Theme | null
     return savedTheme || defaultTheme
