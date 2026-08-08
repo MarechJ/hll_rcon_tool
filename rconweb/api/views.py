@@ -87,11 +87,16 @@ def get_version(request):
 @csrf_exempt
 @require_http_methods(["GET"])
 def get_public_info(request):
-    try:
-        current_map_start = MapsHistory(max_len=1)[0]["start"]
-    except IndexError:
+    cached_cur_map = MapsHistory().get_current_map()
+    if not cached_cur_map:
         logger.error("Can't get current map time, map_recorder is probably offline")
         current_map_start = None
+        cap_flips = None
+        match_time = 0
+    else:
+        current_map_start = cached_cur_map["start"]
+        cap_flips = cached_cur_map["cap_flips"]
+        match_time = cached_cur_map["match_time"]
 
     config = RconServerSettingsUserConfig.load_from_db()
     gamestate = rcon_api.get_gamestate()
@@ -138,6 +143,8 @@ def get_public_info(request):
         "max_player_count": max_players,
         "player_count_by_team": players,
         "score": score,
+        "cap_flips": cap_flips,
+        "match_time": match_time,
         "time_remaining": gamestate["time_remaining"].total_seconds(),
         "vote_status": vote_status,
         "name": name,

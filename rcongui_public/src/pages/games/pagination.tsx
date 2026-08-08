@@ -47,26 +47,22 @@ export default function MatchPagination({ page, maxPages, ...props }: MatchPagin
       <PaginationContent>
         {page > 1 && (
           <PaginationItem>
-            <PaginationPrevious
-              to={`?page=${page - 1}`}
-              text={t('pagination.previous.text')}
-              label={t('pagination.previous.label')}
-            />
+            <PaginationPrevious href={`?page=${page - 1}`}>{t('pagination.previous.text')}</PaginationPrevious>
           </PaginationItem>
         )}
         <PaginationItem>
-          <PaginationLink isActive={page === 1} to={`?page=${1}`}>
+          <PaginationLink isActive={page === 1} href={`?page=${1}`}>
             1
           </PaginationLink>
         </PaginationItem>
         {page === 1 && 2 < maxPages && (
           <PaginationItem>
-            <PaginationLink to={`?page=${2}`}>2</PaginationLink>
+            <PaginationLink href={`?page=${2}`}>2</PaginationLink>
           </PaginationItem>
         )}
         {page > 1 && page < maxPages && (
           <PaginationItem>
-            <PaginationLink isActive={true} to={`?page=${page}`}>
+            <PaginationLink isActive={true} href={`?page=${page}`}>
               {page}
             </PaginationLink>
           </PaginationItem>
@@ -98,17 +94,13 @@ export default function MatchPagination({ page, maxPages, ...props }: MatchPagin
           </PaginationItem>
         )}
         <PaginationItem>
-          <PaginationLink isActive={page === maxPages} to={`?page=${maxPages}`}>
+          <PaginationLink isActive={page === maxPages} href={`?page=${maxPages}`}>
             {maxPages}
           </PaginationLink>
         </PaginationItem>
         {page < maxPages && (
           <PaginationItem>
-            <PaginationNext
-              to={`?page=${page + 1}`}
-              text={t('pagination.next.text')}
-              label={t('pagination.next.label')}
-            />
+            <PaginationNext href={`?page=${page + 1}`}>{t('pagination.next.text')}</PaginationNext>
           </PaginationItem>
         )}
       </PaginationContent>

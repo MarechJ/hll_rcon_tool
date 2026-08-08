@@ -5,7 +5,7 @@
     "target": "ESNext",
     "lib": ["esnext", "dom"],
     "allowJs": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "strict": true,
     "noImplicitAny": true,
     "noImplicitReturns": true,

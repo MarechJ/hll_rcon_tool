@@ -1,64 +1,122 @@
 {
-    "gameNotFound": "Partie {{ id }} non trouvée",
-    "loading": "Chargement...",
-    "selectPlayer": "Sélectionner un joueur",
-    "searchPlayer": "Rechercher un joueur",
-    "noPlayersFound": "Aucun joueur trouvé",
-    "onlineStatusFilter": {
-        "online": "En ligne",
-        "offline": "Hors ligne",
-        "all": "Tous"
-    },
+  "gameNotFound": "Partie {{ id }} non trouvée",
+  "loading": "Chargement...",
+  "selectPlayer": "Sélectionner un joueur",
+  "searchPlayer": "Rechercher un joueur",
+  "noPlayersFound": "Aucun joueur trouvé",
+  "onlineStatusFilter": {
+    "online": "En ligne",
+    "offline": "Hors ligne",
+    "all": "Tous"
+  },
+  "player": "Joueur",
+  "players": "Joueurs",
+  "allies": "Alliés",
+  "axis": "Axe",
+  "weather": {
+    "day": "Jour",
+    "night": "Nuit",
+    "dusk": "Crépuscule",
+    "dawn": "Aube",
+    "rain": "Pluie",
+    "overcast": "Couvert"
+  },
+  "playersTable": {
     "player": "Joueur",
-    "players": "Joueurs",
-    "allies": "Alliés",
-    "axis": "Axe",
-    "weather": {
-        "day": "Jour",
-        "night": "Nuit",
-        "dusk": "Crépuscule",
-        "dawn": "Aube",
-        "rain": "Pluie",
-        "overcast": "Couvert"
+    "team": "Équipe",
+    "kills": "Éliminations",
+    "deaths": "Morts",
+    "combat": "Combat",
+    "score": "Score",
+    "weapon": "Arme",
+    "vehicle": "Véhicule",
+    "armor": "Blindage",
+    "commander": "Commandant",
+    "offense": "Attaque",
+    "defense": "Défense",
+    "support": "Soutien",
+    "utility": "Utilitaire",
+    "diff": "Différence",
+    "status": "Statut"
+  },
+  "matchTable": {
+    "match": "Partie",
+    "map": "Carte",
+    "mode": "Mode",
+    "duration": "Durée",
+    "result": "Résultat",
+    "start": "Début"
+  },
+  "playerStats": {
+    "killsByWeapon": "Éliminations par arme",
+    "deathsByWeapon": "Morts par arme",
+    "encounters": "Rencontres",
+    "weapon": "Arme",
+    "count": "Nombre",
+    "timeline": "Chronologie"
+  },
+  "timelineDetails": {
+    "roleTimeline": "Chronologie des rôles",
+    "rolesLabel": "Rôles",
+    "roleInterval": "{{role}}, {{start}}–{{end}}",
+    "encountersTimeline": "Chronologie des affrontements",
+    "unknownRole": "Rôle inconnu",
+    "kill": "Élimination",
+    "death": "Mort",
+    "killed": "a éliminé",
+    "wasKilledBy": "a été éliminé par",
+    "withWeapon": "avec <weapon>{{weapon}}</weapon>",
+    "tankDestroyed": "{{player}} a détruit un char",
+    "playerState": {
+      "joined": "<player>{{player}}</player> a rejoint les <team>{{team}}</team>",
+      "disconnected": "<player>{{player}}</player> s'est déconnecté",
+      "switched": "<player>{{player}}</player> est passé de <previousTeam>{{previousTeam}}</previousTeam> à <team>{{team}}</team>",
+      "reconnected": "<player>{{player}}</player> s'est reconnecté chez les <team>{{team}}</team>",
+      "reconnectedAfterSwitch": "<player>{{player}}</player> s'est reconnecté chez les <team>{{team}}</team> après avoir changé d'équipe"
     },
-    "playersTable": {
-        "player": "Joueur",
-        "team": "Équipe",
-        "kills": "Éliminations",
-        "deaths": "Morts",
-        "combat": "Combat",
-        "score": "Score",
-        "weapon": "Arme",
-        "vehicle": "Véhicule",
-        "armor": "Blindage",
-        "commander": "Commandant",
-        "offense": "Attaque",
-        "defense": "Défense",
-        "support": "Soutien",
-        "utility": "Utilitaire",
-        "diff": "Différence",
-        "status": "Statut"
+    "capFlip": {
+      "playerTeamCaptured": "L'équipe de {{player}} a capturé un objectif",
+      "playerTeamLost": "L'équipe de {{player}} a perdu un objectif",
+      "teamCaptured": "Les {{team}} ont capturé un objectif",
+      "score": "Score",
+      "scoreLine": "{{allies}} {{alliedScore}} — {{axisScore}} {{axis}}"
     },
-    "matchTable": {
-        "match": "Partie",
-        "map": "Carte",
-        "mode": "Mode",
-        "duration": "Durée",
-        "result": "Résultat",
-        "start": "Début"
+    "streak": {
+      "title": "{{player}} : {{title}}",
+      "ended": "{{player}} : série terminée à {{count}} éliminations",
+      "titles": {
+        "unstoppable": "Inarrêtable",
+        "impressive": "Impressionnant",
+        "dominating": "Domination",
+        "killingSpree": "Série d'éliminations",
+        "rampage": "Carnage"
+      }
     },
-    "playerStats": {
-        "killsByWeapon": "Éliminations par arme",
-        "deathsByWeapon": "Morts par arme",
-        "encounters": "Rencontres",
-        "weapon": "Arme",
-        "count": "Nombre"
-    },
-    "score": {
-        "killstreak": "Série d'éliminations",
-        "deathstreak": "Série de morts",
-        "teamkills": "Tirs alliés",
-        "k/d": "R/M"
-    },
-    "downloadTable": "Télécharger le tableau"
+    "roles": {
+      "rifleman": "Fusilier",
+      "assault": "Assaut",
+      "automaticrifleman": "Fusilier automatique",
+      "medic": "Médecin",
+      "spotter": "Observateur",
+      "support": "Soutien",
+      "heavymachinegunner": "Mitrailleur",
+      "antitank": "Antichar",
+      "engineer": "Ingénieur",
+      "officer": "Officier",
+      "sniper": "Tireur d'élite",
+      "crewman": "Membre d'équipage",
+      "tankcommander": "Chef de char",
+      "armycommander": "Commandant",
+      "artilleryobserver": "Observateur d'artillerie",
+      "operator": "Opérateur",
+      "gunner": "Canonnier"
+    }
+  },
+  "score": {
+    "killstreak": "Série d'éliminations",
+    "deathstreak": "Série de morts",
+    "teamkills": "Tirs alliés",
+    "k/d": "R/M"
+  },
+  "downloadTable": "Télécharger le tableau"
 }
