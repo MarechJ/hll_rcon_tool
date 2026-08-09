@@ -428,10 +428,10 @@ class PlayerTeamAssociation(TypedDict):
 
 
 class UnitHistoryEntry(TypedDict):
-    ts: int          # timestamp in seconds
-    t: int           # team int value
-    s: int           # squad int value
-    r: int           # role int value
+    ts: int         # timestamp in seconds
+    team: int       # team int value
+    squad: int      # squad int value
+    role: int       # role int value
 
 class KillInfo(TypedDict):
     action: Literal["KILL", "DEATH"]

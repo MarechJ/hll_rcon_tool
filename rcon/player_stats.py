@@ -717,7 +717,7 @@ def _apply_current_map_player_stats(
         unit = map_stat.get("p_unit", None)
         if unit:
             try:
-                team = Team.by_id(unit["t"])
+                team = Team.by_id(unit["team"])
                 team_name = team.name.lower()
                 if team == Team.ALLIES:
                     faction_name = map_layer.map.allies.name.lower()

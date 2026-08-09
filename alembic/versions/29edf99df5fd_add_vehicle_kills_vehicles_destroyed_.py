@@ -33,7 +33,8 @@ def upgrade():
         sa.Column('deaths_and_redeploys', sa.Integer, nullable=False, server_default='0')
     )
 
-    # JSON column for unit history: list of { "ts": int, "t": int, "s": int, "r": int }
+    # JSON column for unit history:
+    # list of {"ts": int, "team": int, "squad": int, "role": int}
     op.add_column(
         'player_stats',
         sa.Column('units', sa.JSON, nullable=False, server_default='[]')

@@ -375,7 +375,12 @@ class LogLoop:
         # Compare cached player stats with live player stats
         # if player not online, append UNASSIGNED role
         # that will be eventually used to calc accurate times each role was played 
-        offline_unit = UnitHistoryEntry(ts=sec_from_start, t=UNASSIGNED, s=UNASSIGNED, r=UNASSIGNED)
+        offline_unit = UnitHistoryEntry(
+            ts=sec_from_start,
+            team=UNASSIGNED,
+            squad=UNASSIGNED,
+            role=UNASSIGNED,
+        )
         for player_id, player_stats in map_cached_stats.items():
             # When player joins both role and squad are set to 0 vals but only team is not assigned
             if player_id not in dp["players"] and player_stats["status"] != "offline":
@@ -408,7 +413,12 @@ class LogLoop:
                     p_kills_and_assists=0,
                     deaths_and_redeploys=0,
                     p_deaths_and_redeploys=0,
-                    p_unit=UnitHistoryEntry(ts=sec_from_start, t=UNASSIGNED, s=UNASSIGNED, r=UNASSIGNED),
+                    p_unit=UnitHistoryEntry(
+                        ts=sec_from_start,
+                        team=UNASSIGNED,
+                        squad=UNASSIGNED,
+                        role=UNASSIGNED,
+                    ),
                     units=[],
                     level=current["level"],
                     p_coord=WorldPositionType(x=current["world_position"]["x"], y=current["world_position"]["y"], z=current["world_position"]["z"]),
@@ -478,8 +488,17 @@ class LogLoop:
 
             cached_unit = cached["p_unit"]
 
-            if current_role != cached_unit["r"] or current_squad != cached_unit["s"] or current_team != cached_unit["t"]:
-                switched_unit = UnitHistoryEntry(ts=sec_from_start, t=current_team, s=current_squad, r=current_role)
+            if (
+                current_role != cached_unit["role"]
+                or current_squad != cached_unit["squad"]
+                or current_team != cached_unit["team"]
+            ):
+                switched_unit = UnitHistoryEntry(
+                    ts=sec_from_start,
+                    team=current_team,
+                    squad=current_squad,
+                    role=current_role,
+                )
                 cached["p_unit"] = switched_unit
                 cached["units"] = (cached.get("units") or []) + [switched_unit]
 

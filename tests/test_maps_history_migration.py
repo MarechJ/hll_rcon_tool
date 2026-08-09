@@ -57,7 +57,12 @@ def test_version_zero_map_is_normalized_to_current_schema():
     assert player["combat"] == 10
     assert player["names"] == [player_id]
     assert player["status"] == "offline"
-    assert player["p_unit"] == {"ts": 0, "t": -111, "s": -111, "r": -111}
+    assert player["p_unit"] == {
+        "ts": 0,
+        "team": -111,
+        "squad": -111,
+        "role": -111,
+    }
     assert player["units"] == []
 
 

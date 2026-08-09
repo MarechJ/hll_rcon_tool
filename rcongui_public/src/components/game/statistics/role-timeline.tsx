@@ -43,16 +43,16 @@ function roleSegments(units: PlayerUnit[], gameDuration: number): RoleSegment[] 
   const segments: RoleSegment[] = []
 
   orderedUnits.forEach((unit, index) => {
-    const isTeamLobbyDefault = unit.s === -111 && unit.r === 0
-    if (unit.t < 0 || isTeamLobbyDefault || unit.r < 0 || unit.r >= HLL_ROLES.length) return
+    const isTeamLobbyDefault = unit.squad === -111 && unit.role === 0
+    if (unit.team < 0 || isTeamLobbyDefault || unit.role < 0 || unit.role >= HLL_ROLES.length) return
 
     const start = Math.max(0, Math.min(unit.ts, gameDuration))
     const end = Math.max(start, Math.min(orderedUnits[index + 1]?.ts ?? gameDuration, gameDuration))
     if (end <= start) return
 
     const previous = segments[segments.length - 1]
-    if (previous?.role === unit.r && previous.end === start) previous.end = end
-    else segments.push({ role: unit.r, start, end })
+    if (previous?.role === unit.role && previous.end === start) previous.end = end
+    else segments.push({ role: unit.role, start, end })
   })
 
   return segments.filter((segment) => segment.end - segment.start >= MINIMUM_ROLE_DURATION_SECONDS)

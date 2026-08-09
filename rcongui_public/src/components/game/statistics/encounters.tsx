@@ -37,9 +37,9 @@ function unitAt(units: PlayerUnit[], timestamp: number) {
 
 function RoleIcon({ unit }: { unit?: PlayerUnit }) {
   const { t } = useTranslation('game')
-  const icon = roleIcon(unit?.r)
-  const lightModeIcon = roleIcon(unit?.r, 'black')
-  const roleKey = unit?.r === undefined ? undefined : HLL_ROLES[unit.r]
+  const icon = roleIcon(unit?.role)
+  const lightModeIcon = roleIcon(unit?.role, 'black')
+  const roleKey = unit?.role === undefined ? undefined : HLL_ROLES[unit.role]
   const role = roleKey ? t(`timelineDetails.roles.${roleKey}`) : t('timelineDetails.unknownRole')
 
   return icon && lightModeIcon ? (
@@ -158,7 +158,7 @@ function playerStateEvents(units: PlayerUnit[]): PlayerStateEvent[] {
   const orderedUnits = [...units].sort((a, b) => a.ts - b.ts)
 
   orderedUnits.forEach((unit) => {
-    const offline = unit.t === -111 && unit.s === -111 && unit.r === -111
+    const offline = unit.team === -111 && unit.squad === -111 && unit.role === -111
 
     if (offline) {
       if (hasJoined && !isDisconnected) events.push({ kind: 'disconnected', timestamp: unit.ts })
@@ -168,20 +168,20 @@ function playerStateEvents(units: PlayerUnit[]): PlayerStateEvent[] {
 
     // The default rifleman with no squad is a lobby placeholder. Other roles may
     // retain -111 after a deployed player is removed from their squad.
-    if (unit.s === -111 && unit.r === 0) return
+    if (unit.squad === -111 && unit.role === 0) return
 
-    if (!isTeamId(unit.t)) return
+    if (!isTeamId(unit.team)) return
 
     if (!hasJoined) {
-      events.push({ kind: 'joined', timestamp: unit.ts, team: unit.t })
+      events.push({ kind: 'joined', timestamp: unit.ts, team: unit.team })
       hasJoined = true
     } else if (isDisconnected && lastTeam) {
-      events.push({ kind: 'reconnected', timestamp: unit.ts, team: unit.t, previousTeam: lastTeam })
-    } else if (lastTeam && unit.t !== lastTeam) {
-      events.push({ kind: 'switched', timestamp: unit.ts, team: unit.t, previousTeam: lastTeam })
+      events.push({ kind: 'reconnected', timestamp: unit.ts, team: unit.team, previousTeam: lastTeam })
+    } else if (lastTeam && unit.team !== lastTeam) {
+      events.push({ kind: 'switched', timestamp: unit.ts, team: unit.team, previousTeam: lastTeam })
     }
 
-    lastTeam = unit.t
+    lastTeam = unit.team
     isDisconnected = false
   })
 
@@ -248,7 +248,7 @@ export function Encounters({
     encounters.forEach((encounter, encounterIndex) => {
       if (encounter.action !== 'KILL') return
       const targetUnits = players.find(({ id }) => id === encounter.player_id)?.units ?? []
-      const targetRole = unitAt(targetUnits, encounter.timestamp)?.r
+      const targetRole = unitAt(targetUnits, encounter.timestamp)?.role
       if (targetRole !== 11 && targetRole !== 12) return
 
       const indices = tankCrewKillsByTimestamp.get(encounter.timestamp) ?? []
@@ -359,7 +359,7 @@ export function Encounters({
         }
 
         if (entry.type === 'cap-flip') {
-          const playerTeam = unitAt(units, entry.timestamp)?.t
+          const playerTeam = unitAt(units, entry.timestamp)?.team
           const capturedTeamId = entry.capturedBy === 'allies' ? 1 : entry.capturedBy === 'axis' ? 2 : undefined
           const captureDescription = capturedTeamId
             ? playerTeam === capturedTeamId
