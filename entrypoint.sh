@@ -17,7 +17,7 @@ then
   # Upgrade durable Redis structures before any server-specific container starts.
   # The command discovers every populated logical Redis database so multi-server
   # installations are migrated in the same maintenance pass.
-  SERVER_NUMBER=1 LOGGING_PATH=/logs/ LOGGING_FILENAME=startup.log python -m rcon.cache_migrations.maps_history
+  SERVER_NUMBER=1 LOGGING_PATH=/logs/ LOGGING_FILENAME=startup.log python -m rcon.cache_migrations
   cd rconweb
   ./manage.py makemigrations --no-input
   ./manage.py migrate --noinput
