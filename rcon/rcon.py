@@ -13,7 +13,7 @@ from dateutil import parser
 
 from rcon.connection import HLLCommandError
 import rcon.steam_utils
-from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
+from rcon.cache_utils import get_redis_client, invalidates, invalidates_for, ttl_cache
 from rcon.commands import HLLCommandFailedError, ServerCtl, VipId
 from rcon.maps import UNKNOWN_MAP_NAME, Layer, is_server_loading_map, parse_layer
 from rcon.models import PlayerID, PlayerVIP, enter_session, GameLayout
@@ -765,10 +765,10 @@ class Rcon(ServerCtl):
         Remaining Time: 0:11:51
         Map: foy_warfare
         Next Map: stmariedumont_warfare"""
-        with invalidates(
-                Rcon.team_sizes,
-                Rcon.get_team_objective_scores,
-                Rcon.get_round_time_remaining,
+        with invalidates_for(
+            Rcon.team_sizes,
+            Rcon.get_team_objective_scores,
+            Rcon.get_round_time_remaining,
         ):
             return super().get_gamestate()
 
@@ -848,7 +848,7 @@ class Rcon(ServerCtl):
         return int(super().get_autobalance_threshold())
 
     def set_autobalance_threshold(self, max_diff: int) -> bool:
-        with invalidates(Rcon.get_autobalance_threshold):
+        with invalidates_for(Rcon.get_autobalance_threshold):
             return super().set_autobalance_threshold(max_diff)
 
     @ttl_cache(ttl=60 * 10)
@@ -856,7 +856,7 @@ class Rcon(ServerCtl):
         return int(super().get_idle_autokick_time())
 
     def set_idle_autokick_time(self, minutes) -> bool:
-        with invalidates(Rcon.get_idle_autokick_time):
+        with invalidates_for(Rcon.get_idle_autokick_time):
             return super().set_idle_autokick_time(minutes)
 
     @ttl_cache(ttl=60 * 10)

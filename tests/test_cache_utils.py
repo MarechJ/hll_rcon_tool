@@ -5,7 +5,7 @@ from unittest import mock
 import redis
 import redis.exceptions
 
-from rcon.cache_utils import RedisCached, ttl_cache
+from rcon.cache_utils import RedisCached, invalidates_for, ttl_cache
 
 logger = getLogger(__name__)
 
@@ -72,3 +72,14 @@ def test_mem_cache_used(monkeypatch):
     # so we can't isinstance check it
     c = ttl_cache(ttl=1)
     assert not isinstance(c, RedisCached)
+
+
+def test_invalidates_for_clears_exact_key_before_and_after():
+    cached_func = mock.Mock()
+
+    with invalidates_for(cached_func):
+        cached_func.clear_for.assert_called_once_with()
+        cached_func.cache_clear.assert_not_called()
+
+    assert cached_func.clear_for.call_count == 2
+    cached_func.cache_clear.assert_not_called()

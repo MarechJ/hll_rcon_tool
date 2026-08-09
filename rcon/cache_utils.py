@@ -314,3 +314,13 @@ def invalidates(*cached_funcs):
     yield None
     for f in cached_funcs:
         f.cache_clear()
+
+
+@contextmanager
+def invalidates_for(*cached_funcs):
+    """Invalidate the exact no-argument key for each cached function."""
+    for f in cached_funcs:
+        f.clear_for()
+    yield None
+    for f in cached_funcs:
+        f.clear_for()
