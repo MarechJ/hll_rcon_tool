@@ -72,10 +72,10 @@ export interface ServerFinalStats {
 
 
 export interface PlayerUnit {
-  t: number
-  s: number
-  r: number
   ts: number
+  team: number
+  squad: number
+  role: number
 }
 
 export interface Result {

@@ -62,9 +62,9 @@ def _migrate_player_stat_v1(player_id: str, value: Any) -> dict[str, Any]:
 
     p_unit = dict(stat.get("p_unit") or {})
     p_unit.setdefault("ts", 0)
-    p_unit.setdefault("t", -111)
-    p_unit.setdefault("s", -111)
-    p_unit.setdefault("r", -111)
+    p_unit.setdefault("team", -111)
+    p_unit.setdefault("squad", -111)
+    p_unit.setdefault("role", -111)
     stat["p_unit"] = p_unit
 
     p_coord = dict(stat.get("p_coord") or {})

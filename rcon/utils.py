@@ -648,7 +648,7 @@ def get_temp_default_stats(existing: Optional[PlayerStatsType]) -> PlayerStat:
         "deaths_and_redeploys": 0,
         "p_deaths_and_redeploys": 0,
         "units": [],
-        "p_unit": { "ts": 0, "t":-1, "s":-1, "r":-1 },
+        "p_unit": {"ts": 0, "team": -1, "squad": -1, "role": -1},
         "level": 0,
         "p_coord": { "x": 0.0, "y": 0.0, "z": 0.0 },
         "has_spawned": False,
