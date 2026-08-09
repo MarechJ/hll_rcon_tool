@@ -221,7 +221,7 @@ def mock_maps_history():
 def votemap(redis_client, mock_rcon, default_config_loader, mock_maps_history):
     """Fixture for a VoteMap instance with injected dependencies."""
     with (
-        patch("rcon.vote_map.get_redis_client", return_value=redis_client),
+        patch("rcon.vote_map.state.get_redis_client", return_value=redis_client),
         patch(
             "rcon.user_config.vote_map.VoteMapUserConfig.load_from_db",
             return_value=default_config_loader,
@@ -239,7 +239,7 @@ def votemap_disabled(
     redis_client, mock_rcon, disabled_config_loader, mock_maps_history
 ):
     """Fixture for VoteMap with disabled voting."""
-    with patch("rcon.vote_map.get_redis_client", return_value=redis_client):
+    with patch("rcon.vote_map.state.get_redis_client", return_value=redis_client):
         return VoteMap(
             rcon=mock_rcon,
             config_loader=disabled_config_loader,
@@ -251,7 +251,7 @@ def votemap_flags(
     redis_client, mock_rcon, config_loader_with_vote_flags, mock_maps_history
 ):
     """Fixture for VoteMap with disabled voting."""
-    with patch("rcon.vote_map.get_redis_client", return_value=redis_client):
+    with patch("rcon.vote_map.state.get_redis_client", return_value=redis_client):
         return VoteMap(
             rcon=mock_rcon,
             config_loader=config_loader_with_vote_flags,
@@ -347,7 +347,7 @@ def test_get_default_next_map_as_least_played_from_selection(votemap):
 def test_get_default_next_map_as_least_played_from_all(
     mock_rcon, redis_client, mock_maps_history
 ):
-    with patch("rcon.vote_map.get_redis_client", return_value=redis_client):
+    with patch("rcon.vote_map.state.get_redis_client", return_value=redis_client):
         votemap = VoteMap(
             rcon=mock_rcon,
             maps_history=mock_maps_history,
@@ -513,7 +513,7 @@ def test_exclude_last_maps_considers_same_mode_different_environment(
             num_offensive_options=10,
             num_skirmish_control_options=10,
         )
-        with patch("rcon.vote_map.get_redis_client", return_value=redis_client):
+        with patch("rcon.vote_map.state.get_redis_client", return_value=redis_client):
             votemap = VoteMap(
                 rcon=mock_rcon,
                 config_loader=config_loader,
@@ -562,7 +562,7 @@ def test_dont_allow_same_map_per_mode_with_different_environment(
             num_offensive_options=10,
             num_skirmish_control_options=10,
         )
-        with patch("rcon.vote_map.get_redis_client", return_value=redis_client):
+        with patch("rcon.vote_map.state.get_redis_client", return_value=redis_client):
             votemap = VoteMap(
                 rcon=mock_rcon,
                 config_loader=config_loader,
