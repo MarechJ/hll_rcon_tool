@@ -437,7 +437,7 @@ class KillInfo(TypedDict):
     action: Literal["KILL", "DEATH"]
     player_id: str
     player_name: str
-    timestamp: int
+    ts: int
     weapon: str
 
 PlayerEncounters = list[KillInfo]

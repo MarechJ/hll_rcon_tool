@@ -140,7 +140,7 @@ export interface KillInfo {
     action: "KILL" | "DEATH"
     player_id: string
     player_name: string
-    timestamp: number
+    ts: number
     weapon: string
 }
 

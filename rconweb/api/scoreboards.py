@@ -129,7 +129,7 @@ def get_map_scoreboard(request):
                 }
                 
                 for log in logs:
-                    timestamp = int(
+                    ts = int(
                         (log["event_time"].replace(tzinfo=UTC) - game["start"].replace(tzinfo=UTC)).total_seconds()
                     )
                     killer_id = log["player1_id"]
@@ -140,7 +140,7 @@ def get_map_scoreboard(request):
                                 "action": "KILL",
                                 "player_id": victim_id,
                                 "player_name": log["player2_name"],
-                                "timestamp": timestamp,
+                                "ts": ts,
                                 "weapon": log["weapon"],
                             }
                         )
@@ -150,7 +150,7 @@ def get_map_scoreboard(request):
                                 "action": "DEATH",
                                 "player_id": killer_id,
                                 "player_name": log["player1_name"],
-                                "timestamp": timestamp,
+                                "ts": ts,
                                 "weapon": log["weapon"],
                             }
                         )

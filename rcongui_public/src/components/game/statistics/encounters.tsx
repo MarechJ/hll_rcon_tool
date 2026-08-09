@@ -77,9 +77,9 @@ function EncounterItem({
     >
       <time
         className="col-start-1 row-start-1 text-[11px] tabular-nums text-muted-foreground"
-        dateTime={`PT${encounter.timestamp}S`}
+        dateTime={`PT${encounter.ts}S`}
       >
-        {formatTime(encounter.timestamp)}
+        {formatTime(encounter.ts)}
       </time>
       <span className="col-start-2 row-start-1 flex min-w-0 flex-wrap items-center gap-x-1.5">
         <RoleIcon unit={actorUnit} />
@@ -248,12 +248,12 @@ export function Encounters({
     encounters.forEach((encounter, encounterIndex) => {
       if (encounter.action !== 'KILL') return
       const targetUnits = players.find(({ id }) => id === encounter.player_id)?.units ?? []
-      const targetRole = unitAt(targetUnits, encounter.timestamp)?.role
+      const targetRole = unitAt(targetUnits, encounter.ts)?.role
       if (targetRole !== 11 && targetRole !== 12) return
 
-      const indices = tankCrewKillsByTimestamp.get(encounter.timestamp) ?? []
+      const indices = tankCrewKillsByTimestamp.get(encounter.ts) ?? []
       indices.push(encounterIndex)
-      tankCrewKillsByTimestamp.set(encounter.timestamp, indices)
+      tankCrewKillsByTimestamp.set(encounter.ts, indices)
     })
 
     Array.from(tankCrewKillsByTimestamp.entries())
@@ -317,7 +317,7 @@ export function Encounters({
       encounter,
       encounterIndex,
       vehicleGroup: vehicleGroups.get(encounterIndex),
-      timestamp: encounter.timestamp,
+      timestamp: encounter.ts,
     })),
     ...capFlipEntries,
     ...stateEvents.map((event, playerStateIndex) => ({
@@ -396,16 +396,14 @@ export function Encounters({
         }
 
         const { encounter, encounterIndex } = entry
-        const actorUnit = unitAt(units, encounter.timestamp)
+        const actorUnit = unitAt(units, encounter.ts)
         const targetUnits = players.find(({ id }) => id === encounter.player_id)?.units ?? []
         const title = streakStarts.get(encounterIndex)
         const endedCount = streakEnds.get(encounterIndex)
         const vehicleGroup = entry.vehicleGroup
 
         return (
-          <Fragment
-            key={`encounter-${encounter.timestamp}-${encounter.action}-${encounter.player_id}-${encounterIndex}`}
-          >
+          <Fragment key={`encounter-${encounter.ts}-${encounter.action}-${encounter.player_id}-${encounterIndex}`}>
             {title && (
               <li className="px-2 py-1">
                 <Marker variant="separator" className="text-xs text-amber-700 dark:text-amber-400">
@@ -439,7 +437,7 @@ export function Encounters({
             <EncounterItem
               encounter={encounter}
               actorUnit={actorUnit}
-              targetUnit={unitAt(targetUnits, encounter.timestamp)}
+              targetUnit={unitAt(targetUnits, encounter.ts)}
               vehicleGroup={vehicleGroup}
               focusPlayerBy={focusPlayerBy}
             />
