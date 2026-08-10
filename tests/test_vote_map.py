@@ -382,6 +382,19 @@ def test_register_vote(votemap):
     assert vote["map_id"] == selected_map.id
 
 
+def test_remove_winning_map_from_selection_reapplies_results(votemap, mock_rcon):
+    player = mock_player_profile("123456", "player_1")
+    votemap.set_selection([HUR_WARFARE_DAY, UTAH_WARFARE_DAY])
+    votemap.register_vote(player, int(datetime.now().timestamp()), 1)
+
+    assert votemap.get_next_map() == HUR_WARFARE_DAY
+
+    votemap.remove_map_from_selection(HUR_WARFARE_DAY)
+
+    assert votemap.get_next_map() == UTAH_WARFARE_DAY
+    assert mock_rcon.get_map_rotation()["maps"] == [UTAH_WARFARE_DAY]
+
+
 def test_register_vote_invalid_entry(votemap):
     player = mock_player_profile("123456", "player_1")
     selection = [HUR_WARFARE_DAY, CAR_OFF_AXIS, CAR_SKIRMISH_DAY]
