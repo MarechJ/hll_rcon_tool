@@ -27,11 +27,11 @@ export default function Streaming() {
     showWeapons: false,
   })
 
-  const playerFilterOptions = liveStats.data
+  const playerFilterOptions = liveStats.stats
     .map((player) => ({ value: player.player, label: player.player }))
     .concat(
       streamSettings.playerFilter
-        .filter((name) => !liveStats.data.some((player) => player.player === name))
+        .filter((name) => !liveStats.stats.some((player) => player.player === name))
         .map((name) => ({ value: name, label: name })),
     )
 

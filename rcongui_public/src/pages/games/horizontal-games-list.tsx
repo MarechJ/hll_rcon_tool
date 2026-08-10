@@ -10,7 +10,7 @@ import {useTranslation} from "react-i18next";
 import {useLocale} from "@/i18n/locale-provider";
 
 export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   const [gamesVisibility, setGamesVisibility] = useState<Record<number, boolean>>({});
   const gamesVisibilityRef = useRef(gamesVisibility);
   gamesVisibilityRef.current = gamesVisibility;
@@ -62,20 +62,25 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
   }, [hoverGameDate, validGames]);
 
   useEffect(() => {
-    if (scrollAreaRef.current && gameRefs.current.size > 0) {
-      const targetElement = Array.from(gameRefs.current.entries()).find(([gameId, _]) =>
-        pathname.split('/')[2] === String(gameId)
-      )?.[1];
-      if (targetElement) {
-        targetElement.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-      }
-    }
+    const viewport = scrollAreaRef.current?.querySelector<HTMLElement>('[data-slot="scroll-area-viewport"]');
+    setGamesVisibility({});
+    const targetElement = Array.from(gameRefs.current.entries()).find(([gameId]) =>
+      pathname.split('/')[2] === String(gameId)
+    )?.[1];
+
+    if (!viewport || !targetElement) return;
+
+    viewport.scrollTo({
+      left: targetElement.offsetLeft - (viewport.clientWidth - targetElement.offsetWidth) / 2,
+      behavior: 'smooth',
+    });
   }, [pathname]);
 
   /**
    *  check which games are visible/hidden to determine sticky date
    */
   useEffect(() => {
+    const viewport = scrollAreaRef.current?.querySelector<HTMLElement>('[data-slot="scroll-area-viewport"]');
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach(entry => {
@@ -88,7 +93,7 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
           }
         });
       },
-      { threshold: 0, root: scrollAreaRef.current }
+      { threshold: 0, root: viewport }
     );
 
     gameRefs.current.forEach((ref) => {
@@ -96,7 +101,7 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
     });
 
     return () => observer.disconnect();
-  }, []);
+  }, [cards]);
 
 
   const visibleGames = Object.entries(gamesVisibility).filter(([_, visible]) => visible);
@@ -121,8 +126,9 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
               <GameCard
                 game={card}
                 pathname={pathname}
-                onMouseEnter={React.useCallback(() => setHoverGameDate(card.start), [card])}
-                onMouseLeave={React.useCallback(() => setHoverGameDate(null), [])}
+                search={search}
+                onMouseEnter={() => setHoverGameDate(card.start)}
+                onMouseLeave={() => setHoverGameDate(null)}
               />
             </div>
             :
@@ -151,12 +157,12 @@ export const HorizontalGamesList = ({ games }: { games: ScoreboardMaps }) => {
 
 const GameCard = React.memo(
   (
-    { game, pathname, onMouseEnter, onMouseLeave }: { game: ScoreboardMap; pathname: string; onMouseEnter: () => void, onMouseLeave: () => void }
+    { game, pathname, search, onMouseEnter, onMouseLeave }: { game: ScoreboardMap; pathname: string; search: string; onMouseEnter: () => void, onMouseLeave: () => void }
   ) => {
     const { t } = useTranslation('translation');
     return (
       <Link
-        to={`/games/${game.id}`}
+        to={{ pathname: `/games/${game.id}`, search }}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       >
