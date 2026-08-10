@@ -1,6 +1,6 @@
+import { useThemedImages } from "@/hooks/useThemedImages";
 import { Avatar, Typography, Box } from "@mui/material";
 import { styled } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
 
 export const NumberText = styled(Typography)(() => ({
   fontSize: "0.8rem",
@@ -15,21 +15,15 @@ export const SquareIcon = styled((props) => <Avatar variant="square" {...props} 
   };
 });
 
-const metricSrc = (type, mode) =>
-  mode === "light"
-    ? `/icons/metrics/${type}_black.png`
-    : `/icons/metrics/${type}.png`;
-
 const Points = ({ value, type, direction = "left" }) => {
-  const theme = useTheme();
-  const mode = theme?.palette?.mode || "light";
+  const themedImg = useThemedImages();
   if (direction === "left") {
     return (
       <>
         <SquareIcon>
           <Box
             component={"img"}
-            src={metricSrc(type, mode)}
+            src={themedImg.getMetricIconSrc(type)}
             width={16}
             height={16}
             alt={type}
@@ -48,7 +42,7 @@ const Points = ({ value, type, direction = "left" }) => {
         <SquareIcon variant="square">
           <Box
             component={"img"}
-            src={metricSrc(type, mode)}
+            src={themedImg.getMetricIconSrc(type)}
             width={16}
             height={16}
             alt={type}

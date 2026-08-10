@@ -1,4 +1,4 @@
-import { Player, PlayerWithStatus } from '@/types/player'
+import { LivePlayer, Player } from '@/types/player'
 import {ScaleIcon, ZapIcon, SkullIcon, HeartOffIcon} from 'lucide-react'
 
 export const points = [
@@ -17,19 +17,6 @@ export const scores = [
   { key: 'teamkills', label: 'Teamkills', icon: HeartOffIcon, transKey: 'score.teamkills' },
 ] as const
 
-export function isSteamPlayer(player: Player) {
-  const { player_id: id } = player
-  return id.length === 17 && !Number.isNaN(Number(id))
-}
-
-export function getSteamProfileUrl(id: string) {
-  return `https://steamcommunity.com/profiles/${id}`
-}
-
-export function getXboxProfileUrl(playerName: string) {
-  return `https://xboxgamertag.com/search/${playerName}`
-}
-
-export function isPlayerWithStatus(player: Player | PlayerWithStatus): player is PlayerWithStatus {
-  return (player as PlayerWithStatus).is_online !== undefined
+export function isPlayerWithStatus(player: Player): player is LivePlayer {
+  return (player as LivePlayer).status !== undefined
 }

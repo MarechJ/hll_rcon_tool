@@ -4,12 +4,15 @@ import { CountrySelectionMenu } from "@/components/table/selection/CountrySelect
 import { UnitSelectionMenu } from "@/components/table/selection/UnitSelectionMenu";
 import { RoleSelectionMenu } from "@/components/table/selection/RoleSelectionMenu";
 import { RankSelectionMenu } from "@/components/table/selection/RankSelectionMenu";
+import { VisitsSelectionMenu } from "@/components/table/selection/VisitsSelectionMenu";
 import { levelToRank } from "@/utils/lib";
 import TableAddons from "@/components/table/TableAddons";
+import { useThemedImages } from "@/hooks/useThemedImages";
 
 export const TeamSelectionToolbar = ({ table, teamData }) => {
   // handleGenericSelect is a generic function that allows for the selection of a row based on a key and value.
   // It is used to select rows based on the team, unit, country, role, and rank.
+  const themedImg = useThemedImages()
   const handleGenericSelect = (key, value, rowTransform = (row) => row.original[key]) => {
     const allRows = table.getRowModel().rows;
     const matchingRows = allRows.filter(row => rowTransform(row) === value);
@@ -53,6 +56,29 @@ export const TeamSelectionToolbar = ({ table, teamData }) => {
       selectedRank.rank,
       row => levelToRank(row.original.level)
     );
+  };
+
+  const handleVisitsChange = (maxVisits) => {
+    const allRows = table.getRowModel().rows;
+
+    if (maxVisits == null) {
+      table.setRowSelection({});
+      return;
+    }
+
+    const numeric = Number(maxVisits);
+    if (Number.isNaN(numeric)) {
+      return;
+    }
+
+    table.setRowSelection(() => {
+      const selection = {};
+      allRows.forEach((row) => {
+        const visits = row.original.profile?.sessions_count ?? 0;
+        selection[row.id] = visits <= numeric;
+      });
+      return selection;
+    });
   };
 
   const countryOptions = useMemo(() => {
@@ -130,7 +156,7 @@ export const TeamSelectionToolbar = ({ table, teamData }) => {
       <Tooltip title="Select Axis">
         <Button onClick={() => handleTeamSelect("axis")}>
           <img
-            src="/icons/teams/ger.webp"
+            src={themedImg.getFactionIconSrc("ger")}
             width={16}
             height={16}
             style={{ marginRight: 1 }}
@@ -140,7 +166,7 @@ export const TeamSelectionToolbar = ({ table, teamData }) => {
       <Tooltip title="Select Allies">
         <Button onClick={() => handleTeamSelect("allies")}>
           <img
-            src="/icons/teams/us.webp"
+            src={themedImg.getFactionIconSrc("us")}
             width={16}
             height={16}
             style={{ marginRight: 1 }}
@@ -160,6 +186,7 @@ export const TeamSelectionToolbar = ({ table, teamData }) => {
         onRoleSelect={handleRoleSelect}
       />
       <RankSelectionMenu rankOptions={rankOptions} onRankSelect={handleRankSelect} />
+      <VisitsSelectionMenu onVisitsChange={handleVisitsChange} />
     </TableAddons>
   );
 };

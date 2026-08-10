@@ -18,7 +18,7 @@ import rcon.watch_killrate
 from rcon import auto_settings, broadcast, routines
 from rcon.automods import automod
 from rcon.blacklist import BlacklistCommandHandler
-from rcon.cache_utils import RedisCached, get_redis_pool, invalidates
+from rcon.cache_utils import RedisCached, get_redis_client, get_redis_pool, invalidates
 from rcon.discord_chat import get_handler
 from rcon.logs.loop import LogLoop, load_generic_hooks
 from rcon.logs.recorder import LogRecorder
@@ -29,7 +29,6 @@ from rcon.rcon import get_rcon
 from rcon.steam_utils import enrich_db_users
 from rcon.user_config.auto_settings import AutoSettingsConfig
 from rcon.user_config.log_stream import LogStreamUserConfig
-from rcon.user_config.scoreboard import _port_legacy_scorebot_urls
 from rcon.user_config.webhooks import (
     BaseMentionWebhookUserConfig,
     BaseUserConfig,
@@ -44,11 +43,6 @@ logger = logging.getLogger(__name__)
 @click.group()
 def cli():
     pass
-
-
-@cli.command(name="port_legacy_scorebot_urls")
-def port_legacy_scorebot_urls():
-    _port_legacy_scorebot_urls()
 
 
 @cli.command(name="live_stats_loop")
@@ -253,7 +247,8 @@ def process_games(start_day_offset, end_day_offset=0, force=False):
         for map_ in all_maps:
             print("Reprocessing map: ", map_.to_dict())
             try:
-                record_stats_from_map(sess, map_, dict(), force=force)
+                # TODO we could attempt to find the temporary cached stats in redis for the match 
+                record_stats_from_map(sess, map_, None, force=force)
                 sess.commit()
                 print("Done")
             except IntegrityError as e:
@@ -550,6 +545,14 @@ def _merge_duplicate_player_ids(existing_ids: set[str] | None = None):
                 {"ids": ids},
             )
             session.execute(
+                text("DELETE FROM player_soldier WHERE player_id_id = ANY(:ids)"),
+                {"ids": ids},
+            )
+            session.execute(
+                text("DELETE FROM player_account WHERE player_id_id = ANY(:ids)"),
+                {"ids": ids},
+            )
+            session.execute(
                 text("DELETE FROM steam_id_64 WHERE id = ANY(:ids)"), {"ids": ids}
             )
     logger.info(f"Duplicate player ID merge complete")
@@ -608,6 +611,14 @@ def remove_orphaned_map_ids():
 
     if len(res) != len(prev):
         vm.set_map_whitelist(res)
+
+
+@cli.command(name="clear_maps_cache")
+def clear_maps_cache():
+    ctl = get_rcon()
+    ctl.get_maps.cache_clear()
+    ctl.get_map_rotation.cache_clear()
+    ctl.get_map_sequence.cache_clear()
 
 
 PREFIXES_TO_EXPOSE = ["get_", "set_", "do_"]

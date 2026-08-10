@@ -2,7 +2,7 @@ import { List, ListItem, ListItemButton, Box } from "@mui/material";
 import { PopoverMenu } from "@/components/shared/PopoverMenu";
 import GroupIcon from "@mui/icons-material/Groups";
 import { Tooltip, Button } from "@mui/material";
-import useTheme from "@mui/material/styles/useTheme";
+import { useThemedImages } from "@/hooks/useThemedImages";
 
 /**
  * @typedef {Object} UnitOption
@@ -20,13 +20,7 @@ import useTheme from "@mui/material/styles/useTheme";
  * @returns {JSX.Element}
  */
 export const UnitSelectionMenu = ({ unitOptions, onUnitSelect }) => {
-  const theme = useTheme();
-  const mode = theme?.palette?.mode || "light";
-
-  const roleSrc = (role, mode) =>
-    mode === "light"
-      ? `/icons/roles/${role}_black.png`
-      : `/icons/roles/${role}.png`;
+  const themedImg = useThemedImages()
 
   return (
     <PopoverMenu
@@ -61,11 +55,11 @@ export const UnitSelectionMenu = ({ unitOptions, onUnitSelect }) => {
             <ListItemButton onClick={() => onUnitSelect(option)}>
               <Box sx={{ display: "flex", alignItems: "center", overflow: "hidden", px: 0, py: 0.25, gap: 1 }}>
                 <img
-                  src={`/icons/teams/${option.team === "axis" ? "ger" : "us"}.webp`}
+                  src={themedImg.getFactionIconSrc(option.team)}
                   width={16}
                   height={16}
                 />
-                <img src={roleSrc(option.type, mode)} width={16} height={16} />
+                <img src={themedImg.getRoleIconSrc(option.type)} width={16} height={16} />
                 <Box sx={{ overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
                   <Box component="span" fontWeight="bold" textTransform="uppercase">
                     {option.unit}{option.count ? ` (${option.count})` : ""}

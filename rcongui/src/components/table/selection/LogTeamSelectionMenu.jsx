@@ -7,8 +7,10 @@ import {
 } from "@mui/material";
 import { PopoverMenu } from "@/components/shared/PopoverMenu";
 import Groups2Icon from "@mui/icons-material/Groups2";
+import { useThemedImages } from "@/hooks/useThemedImages";
 
 export const LogTeamSelectionMenu = ({ selectedTeams, onTeamSelect }) => {
+  const themedImg = useThemedImages()
   const hasSelected = selectedTeams.length > 0;
 
   const handleTeamToggle = (team) => {
@@ -58,7 +60,7 @@ export const LogTeamSelectionMenu = ({ selectedTeams, onTeamSelect }) => {
           }}
         >
           <img
-            src="/icons/teams/us.webp"
+            src={themedImg.getFactionIconSrc("us")}
             width={16}
             height={16}
             alt="Allies"
@@ -77,7 +79,7 @@ export const LogTeamSelectionMenu = ({ selectedTeams, onTeamSelect }) => {
           }}
         >
           <img
-            src="/icons/teams/ger.webp"
+            src={themedImg.getFactionIconSrc("ger")}
             width={16}
             height={16}
             alt="Axis"

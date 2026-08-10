@@ -5,11 +5,13 @@ import time
 from typing import Callable, Iterable
 
 from sqlalchemy import desc
+from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from rcon.logs.loop import LogLoop
 from rcon.models import LogLine, PlayerID, enter_session
+from rcon.player_history import _get_set_player
 from rcon.types import StructuredLogLineWithMetaData
 from rcon.utils import get_server_number
 
@@ -23,7 +25,7 @@ class LogRecorder:
         if not self.server_id:
             raise ValueError("SERVER_NUMBER is not set, can't record logs")
 
-    def _get_new_logs(self, sess):
+    def _get_new_logs(self, sess: Session):
         to_store: list[StructuredLogLineWithMetaData] = []
         last_log = (
             sess.query(LogLine)
@@ -39,55 +41,84 @@ class LogRecorder:
                 logger.warning("Log is invalid, not a dict: %s", log)
                 continue
             if last_log and int(log["timestamp_ms"]) / 1000 == last_log.event_time.timestamp() and '] ' + log["line_without_time"] in last_log.raw:
+                logger.debug("This log is the same as the last saved log, skipping saving the rest of the logs\n%s", log)
                 break
             to_store.append(log)
         return to_store
 
     def _collect_player_ids(self, sess: Session, logs: list[StructuredLogLineWithMetaData]) -> dict[str, PlayerID | None]:
         players: dict[str, PlayerID | None] = {}
+        names: dict[str, str | None] = {}
         for log in logs:
-            if log["player_id_1"] is not None:
-                players.setdefault(log["player_id_1"], None)
-            if log["player_id_2"] is not None:
-                players.setdefault(log["player_id_2"], None)
-        player_ids = sess.query(PlayerID).filter(PlayerID.player_id.in_(list(players.keys())))
-        for pid in player_ids:
-            players[pid.player_id] = pid
+            for i in [1, 2]:
+                if log[f"player_id_{i}"] is not None:
+                    players.setdefault(log[f"player_id_{i}"], None)
+                    names.setdefault(log[f"player_id_{i}"], log[f"player_name_{i}"])
+        if not players:
+            return players
 
+        # NOTE potential race condition if this player id collection runs before
+        # the player id is stored in the db
+        # or the logs did not arrive in chronological order e.g. KILL log before CONNECTED log
+        # where PlayerID is only created on CONNECTED log trigger
+        unique_player_ids = set(players.keys( ))
+        pid_query = sess.query(PlayerID).filter(PlayerID.player_id.in_(list(players.keys())))
+        for pid in pid_query:
+            players[pid.player_id] = pid
+            unique_player_ids.remove(pid.player_id)
+        if len(unique_player_ids) != 0:
+            logger.info("[MISSING PlayerID Records] - Creating PlayerID records\nMissing: %s", unique_player_ids)
+            for player_id in unique_player_ids:
+                pid = _get_set_player(sess, player_id, names[player_id])
+                players[pid.player_id] = pid
         return players
 
     def _save_logs(self, sess, to_store: list[StructuredLogLineWithMetaData]):
+        if not to_store:
+            return
+
         players = self._collect_player_ids(sess, to_store)
+        rows = []
 
         for log in to_store:
-            try:
-                player_1: PlayerID | None = None
-                player_2: PlayerID | None = None
-                if log["player_id_1"]:
-                    player_1 = players[log["player_id_1"]]
-                if log["player_id_2"]:
-                    player_2 = players[log["player_id_2"]]
-                sess.add(
-                    LogLine(
-                        version=log["version"],
-                        event_time=datetime.datetime.fromtimestamp(
-                            log["timestamp_ms"] // 1000
-                        ),
-                        type=log["action"],
-                        player1_name=log["player_name_1"],
-                        player2_name=log["player_name_2"],
-                        player_1=player_1,
-                        player_2=player_2,
-                        raw=log["raw"],
-                        content=log["message"],
-                        server=os.getenv("SERVER_NUMBER"),
-                        weapon=log["weapon"],
-                    )
+            player_1: PlayerID | None = None
+            player_2: PlayerID | None = None
+            if log["player_id_1"]:
+                player_1 = players[log["player_id_1"]]
+            if log["player_id_2"]:
+                player_2 = players[log["player_id_2"]]
+
+            logger.debug("Saving log: [%d] -> %s", log["timestamp_ms"], log["raw"])
+            rows.append(
+                {
+                    "version": log["version"],
+                    "event_time": log["event_time"],
+                    "type": log["action"],
+                    "player1_name": log["player_name_1"],
+                    "player2_name": log["player_name_2"],
+                    "player1_player_id": player_1.id if player_1 else None,
+                    "player2_player_id": player_2.id if player_2 else None,
+                    "raw": log["raw"],
+                    "content": log["message"],
+                    "server": self.server_id,
+                    "weapon": log["weapon"],
+                }
+            )
+
+
+        try:
+            if sess.get_bind().dialect.name == "postgresql":
+                statement = postgresql_insert(LogLine).values(rows)
+                statement = statement.on_conflict_do_nothing(
+                    constraint="unique_log_line",
                 )
-                sess.commit()
-            except IntegrityError:
-                sess.rollback()
-                logger.exception("Unable to recorder %s", log)
+                sess.execute(statement)
+            else:
+                sess.add_all(LogLine(**row) for row in rows)
+                sess.flush()
+        except IntegrityError:
+            sess.rollback()
+            logger.exception("Unable to record log batch")
 
     def run(self, run_immediately=False, one_off=False):
         last_run = datetime.datetime.now()

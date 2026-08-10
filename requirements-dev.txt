@@ -1,5 +1,6 @@
-black==26.3.1
+black==26.5.0
 isort==8.0.1
 pytest==9.0.3
 cachetools==7.1.2
-daphne==4.2.1
+fakeredis==2.30.1
+daphne==4.2.2
