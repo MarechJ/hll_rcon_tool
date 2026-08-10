@@ -371,6 +371,7 @@ class VoteMap:
         else:
             self._state.remove_map_from_selection(map)
         self._delete_votes_by_map(map)
+        self.apply_results()
 
     def _delete_vote(self, player_id: str):
         self._state.delete_vote(player_id)
