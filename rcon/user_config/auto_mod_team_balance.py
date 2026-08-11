@@ -4,9 +4,9 @@ from pydantic import Field, HttpUrl, field_serializer
 
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
-SWITCH_MESSAGE = """You have been switched to balance the teams after a steamroll.
+SWITCH_MESSAGE = """Your squad has been selected to balance the teams after a steamroll.
 
-Your whole squad was moved together. Thanks for helping keep the match fair!"""
+You will be switched shortly if the target team has room. Thanks for helping keep the match fair!"""
 
 
 class AutoModTeamBalanceType(TypedDict):
@@ -42,6 +42,7 @@ class AutoModTeamBalanceType(TypedDict):
     balance_by_level: bool
     level_gap_threshold: int
 
+    switch_delay_seconds: int
     switch_message: str
 
 
@@ -211,10 +212,20 @@ class AutoModTeamBalanceUserConfig(BaseUserConfig):
         ),
     )
 
+    switch_delay_seconds: int = Field(
+        ge=0,
+        le=300,
+        default=20,
+        title="Switch delay seconds",
+        description=(
+            "Wait this many seconds after notifying selected players before moving "
+            "them. Set to 0 to switch immediately."
+        ),
+    )
     switch_message: str = Field(
         default=SWITCH_MESSAGE,
         title="Switch message",
-        description="Message sent to players who are switched.",
+        description="Message sent to selected players before the switch delay.",
     )
 
     @field_serializer("discord_webhook_url")
@@ -254,6 +265,7 @@ class AutoModTeamBalanceUserConfig(BaseUserConfig):
             max_players_to_switch=values.get("max_players_to_switch"),
             balance_by_level=values.get("balance_by_level"),
             level_gap_threshold=values.get("level_gap_threshold"),
+            switch_delay_seconds=values.get("switch_delay_seconds"),
             switch_message=values.get("switch_message"),
         )
 

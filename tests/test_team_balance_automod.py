@@ -2,7 +2,7 @@ import json
 import time
 from unittest.mock import MagicMock
 
-from pytest import fixture
+from pytest import fixture, raises
 
 from rcon.automods.team_balance import (
     MATCH_WINNERS_KEY,
@@ -83,6 +83,7 @@ def mk_config(**overrides):
         fast_match_minutes=30,
         balance_armor=True,
         max_armor_squad_delta=0,
+        switch_delay_seconds=0,
     )
     defaults.update(overrides)
     return AutoModTeamBalanceUserConfig(**defaults)
@@ -474,3 +475,84 @@ def test_dry_run_does_not_switch():
     run_end(mod, rcon, duration=10)
     rcon.switch_player_now.assert_not_called()
     rcon.message_player.assert_not_called()
+
+
+def test_redis_client_is_required():
+    with raises(ValueError, match="requires a Redis client"):
+        TeamBalanceAutomod(mk_config(), None)
+
+
+def test_switch_capacity_is_rechecked_before_each_squad(monkeypatch):
+    mod = TeamBalanceAutomod(mk_config(), FakeRedis())
+    rcon = MagicMock()
+    moves = [
+        {
+            "team": "allies",
+            "type": "infantry",
+            "name": "able",
+            "size": 2,
+            "player_ids": ["a1", "a2"],
+            "player_names": ["a1", "a2"],
+        }
+    ]
+    monkeypatch.setattr(
+        "rcon.automods.team_balance.get_team_count",
+        lambda _team_view, team: 50 if team == "axis" else 0,
+    )
+
+    mod._switch_players(rcon, moves, "test")
+
+    rcon.switch_player_now.assert_not_called()
+
+
+def test_level_swap_does_not_exceed_team_capacity():
+    mod = TeamBalanceAutomod(
+        mk_config(balance_by_level=True, level_gap_threshold=0), FakeRedis()
+    )
+    squads = {
+        "allies": [
+            {
+                "type": "infantry",
+                "size": 2,
+                "level_sum": 200,
+                "player_ids": ["a1", "a2"],
+            }
+        ],
+        "axis": [
+            {
+                "type": "infantry",
+                "size": 1,
+                "level_sum": 0,
+                "player_ids": ["x1"],
+            }
+        ],
+    }
+
+    swaps = mod._select_level_swaps(squads, 50, 49, [], None)
+
+    assert swaps == []
+
+
+def test_players_are_notified_before_a_delayed_switch(monkeypatch):
+    mod = TeamBalanceAutomod(mk_config(switch_delay_seconds=20), FakeRedis())
+    rcon = MagicMock()
+    moves = [
+        {
+            "team": "allies",
+            "type": "infantry",
+            "name": "able",
+            "size": 1,
+            "player_ids": ["a1"],
+            "player_names": ["a1"],
+        }
+    ]
+    timer = MagicMock()
+    monkeypatch.setattr("rcon.automods.team_balance.Timer", timer)
+
+    mod._execute(rcon, moves)
+
+    rcon.message_player.assert_called_once()
+    rcon.switch_player_now.assert_not_called()
+    timer.assert_called_once()
+    assert timer.return_value.daemon is True
+    timer.return_value.start.assert_called_once()

@@ -117,9 +117,14 @@ const TeamBalanceAutoMod = `
             "max_players_to_switch": 0,
 
             /*
-                Message sent to players who are switched.
+                Wait this many seconds after notifying selected players before moving them.
+                Set to 0 to switch immediately.
             */
-            "switch_message": "You have been switched to balance the teams after a steamroll.\\n\\nYour whole squad was moved together. Thanks for helping keep the match fair!"
+            "switch_delay_seconds": 20,
+            /*
+                Message sent to selected players before the switch delay.
+            */
+            "switch_message": "Your squad has been selected to balance the teams after a steamroll.\\n\\nYou will be switched shortly if the target team has room. Thanks for helping keep the match fair!"
         }
     `
 

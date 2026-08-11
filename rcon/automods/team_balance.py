@@ -14,6 +14,7 @@ import logging
 import re
 import time
 from itertools import combinations
+from threading import Timer
 from typing import Literal, Optional
 
 import redis
@@ -22,8 +23,6 @@ from rcon.automods.get_team_count import get_team_count
 from rcon.discord import send_to_discord_audit
 from rcon.user_config.auto_mod_team_balance import AutoModTeamBalanceUserConfig
 from rcon.utils import MapsHistory
-
-logger = logging.getLogger(__name__)
 
 AUTOMOD_USERNAME = "AutoMod_TeamBalance"
 MATCH_WINNERS_KEY = "team_balance:match_winners"
@@ -35,8 +34,9 @@ MATCH_WINNERS_MAX = 30
 MATCH_END_MAX_AGE_SECONDS = 10 * 60
 MAX_TEAM_PLAYERS = 50  # HLL per-team cap
 
-# Squad types (from Rcon._guess_squad_type) that are never moved by this automod.
-_ALWAYS_PROTECTED_TYPES = {"commander", "artillery"}
+# Squad types (from Rcon._guess_squad_type) excluded from infantry balancing.
+# Armor is excluded here because it is handled by the dedicated armor-balancing pass.
+_INFANTRY_EXCLUDED_TYPES = {"commander", "artillery", "armor"}
 
 _SCORE_RE = re.compile(r"ALLIED\s*\(\s*(\d+)\s*-\s*(\d+)\s*\)\s*AXIS", re.IGNORECASE)
 
@@ -48,27 +48,17 @@ class TeamBalanceAutomod:
     red: redis.StrictRedis
     config: AutoModTeamBalanceUserConfig
 
-    def __init__(
-        self, config: AutoModTeamBalanceUserConfig, red: redis.StrictRedis | None
-    ):
+    def __init__(self, config: AutoModTeamBalanceUserConfig, red: redis.StrictRedis):
+        if red is None:
+            raise ValueError("Team balance automod requires a Redis client")
         self.logger = logging.getLogger(__name__)
         self.red = red
         self.config = config
-
-    def enabled(self) -> bool:
-        """Global on/off switch."""
-        return self.config.enabled
 
     # ------------------------------------------------------------------ #
     # Entry point
     # ------------------------------------------------------------------ #
     def on_match_end(self, rcon, struct_log) -> None:
-        try:
-            self._on_match_end(rcon, struct_log)
-        except Exception:
-            self.logger.exception("Team balance: unexpected error on match end")
-
-    def _on_match_end(self, rcon, struct_log) -> None:
         config = self.config
 
         # Ignore stale match-end events (e.g. old logs re-read after a restart) so we
@@ -220,27 +210,23 @@ class TeamBalanceAutomod:
     def _record_and_get_winners(self, winner: Optional[str]) -> list[Optional[str]]:
         """Persist the winner (newest first) and return recent winners."""
         winners: list[Optional[str]] = []
-        if self.red is not None:
-            try:
-                raw = self.red.get(MATCH_WINNERS_KEY)
-                if raw:
-                    winners = json.loads(raw)
-                    if not isinstance(winners, list):
-                        winners = []
-            except Exception:
-                self.logger.exception("Team balance: could not read match history")
-                winners = []
+        try:
+            raw = self.red.get(MATCH_WINNERS_KEY)
+            if raw:
+                winners = json.loads(raw)
+                if not isinstance(winners, list):
+                    winners = []
+        except Exception:
+            self.logger.exception("Team balance: could not read match history")
+            winners = []
 
         winners.insert(0, winner)
         winners = winners[:MATCH_WINNERS_MAX]
 
-        if self.red is not None:
-            try:
-                self.red.setex(
-                    MATCH_WINNERS_KEY, MATCH_WINNERS_TTL, json.dumps(winners)
-                )
-            except Exception:
-                self.logger.exception("Team balance: could not save match history")
+        try:
+            self.red.setex(MATCH_WINNERS_KEY, MATCH_WINNERS_TTL, json.dumps(winners))
+        except Exception:
+            self.logger.exception("Team balance: could not save match history")
 
         return winners
 
@@ -273,10 +259,10 @@ class TeamBalanceAutomod:
         if not end_ms:
             return None
         end_s = end_ms / 1000
-        try:
-            start_s = MapsHistory()[0].get("start")
-        except Exception:
+        maps_history = MapsHistory()
+        if not maps_history:
             return None
+        start_s = maps_history[0].get("start")
         if not start_s or end_s <= start_s:
             return None
         return (end_s - start_s) / 60
@@ -332,7 +318,7 @@ class TeamBalanceAutomod:
 
     def _is_movable_infantry(self, squad: dict) -> bool:
         stype = squad.get("type")
-        if stype in _ALWAYS_PROTECTED_TYPES or stype == "armor":
+        if stype in _INFANTRY_EXCLUDED_TYPES:
             return False
         if stype == "recon" and self.config.exclude_recon:
             return False
@@ -627,6 +613,11 @@ class TeamBalanceAutomod:
                     low_ls = level_sum[low] - sq_l["level_sum"] + sq_h["level_sum"]
                     high_lc = level_count[high] - sq_h["size"] + sq_l["size"]
                     low_lc = level_count[low] - sq_l["size"] + sq_h["size"]
+                    if (
+                        new_high_total > MAX_TEAM_PLAYERS
+                        or new_low_total > MAX_TEAM_PLAYERS
+                    ):
+                        continue
                     high_avg = high_ls / high_lc if high_lc else 0.0
                     low_avg = low_ls / low_lc if low_lc else 0.0
                     new_gap = abs(high_avg - low_avg)
@@ -660,11 +651,73 @@ class TeamBalanceAutomod:
     def _execute(self, rcon, moves: list[dict]) -> None:
         dry_run = self.config.dry_run
         author = AUTOMOD_USERNAME + ("-DryRun" if dry_run else "")
+
+        if dry_run:
+            self._switch_players(rcon, moves, author, dry_run=True)
+            return
+
+        self._notify_players(rcon, moves, author)
+        delay = self.config.switch_delay_seconds
+        if delay:
+            self.logger.info(
+                "Team balance: notified selected players; switching in %s seconds", delay
+            )
+            timer = Timer(delay, self._switch_players, args=(rcon, moves, author))
+            timer.daemon = True
+            timer.start()
+            return
+
+        self._switch_players(rcon, moves, author)
+
+    def _notify_players(self, rcon, moves: list[dict], author: str) -> None:
+        if not self.config.switch_message:
+            return
+
+        for squad in moves:
+            for player_id, player_name in zip(
+                squad["player_ids"], squad["player_names"]
+            ):
+                try:
+                    rcon.message_player(
+                        player_id=player_id,
+                        message=self.config.switch_message,
+                        by=author,
+                        save_message=False,
+                    )
+                except Exception:
+                    self.logger.warning(
+                        "Team balance: could not message %s", player_name
+                    )
+
+    def _switch_players(
+        self, rcon, moves: list[dict], author: str, dry_run: bool = False
+    ) -> None:
         switched: list[str] = []
 
         for squad in moves:
             src = squad["team"]
             dst = "axis" if src == "allies" else "allies"
+
+            # The target team can fill between move selection and execution. Recheck
+            # each whole squad so this automod never knowingly pushes a team past 50.
+            if not dry_run:
+                try:
+                    target_count = get_team_count(rcon.get_team_view(), dst)
+                except Exception:
+                    self.logger.exception(
+                        "Team balance: could not recheck %s team capacity", dst
+                    )
+                    continue
+                if target_count + squad["size"] > MAX_TEAM_PLAYERS:
+                    self.logger.info(
+                        "Team balance: skipping %s squad %s; %s would exceed %s players",
+                        squad["type"],
+                        squad["name"],
+                        dst,
+                        MAX_TEAM_PLAYERS,
+                    )
+                    continue
+
             for player_id, player_name in zip(
                 squad["player_ids"], squad["player_names"]
             ):
@@ -684,18 +737,6 @@ class TeamBalanceAutomod:
                 switched.append(
                     f"{player_name} [{squad['type']} {squad['name']}] {src} -> {dst}"
                 )
-                if not dry_run and self.config.switch_message:
-                    try:
-                        rcon.message_player(
-                            player_id=player_id,
-                            message=self.config.switch_message,
-                            by=author,
-                            save_message=False,
-                        )
-                    except Exception:
-                        self.logger.warning(
-                            "Team balance: could not message %s", player_name
-                        )
 
         if not switched:
             return
