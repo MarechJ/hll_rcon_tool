@@ -960,6 +960,9 @@ class ServerConfigType(TypedDict):
     password_protected: bool
     server_name: str
     supported_platforms: list[str]
+    
+class PublicConfig(ServerConfigType):
+    game: str
 
 class PublicInfoType(TypedDict):
     """TypedDict for rcon.views.get_public_info"""
@@ -973,7 +976,7 @@ class PublicInfoType(TypedDict):
     time_remaining: float
     vote_status: VoteMapStatus
     name: PublicInfoNameType
-    config: ServerConfigType
+    config: PublicConfig
     cap_flips: list[MapScore]
     match_time: int
 
