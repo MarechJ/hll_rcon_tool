@@ -19,7 +19,7 @@ from rcon.maps import UNKNOWN_MAP_NAME, Layer, is_server_loading_map, parse_laye
 from rcon.models import PlayerID, PlayerVIP, enter_session, GameLayout
 from rcon.perf_statistics import PerformanceStatistics
 from rcon.player_history import get_profiles, safe_save_player_action, save_player, get_player_profile
-from rcon.settings import SERVER_INFO
+import rcon.settings
 from rcon.types import (
     AdminType,
     GameLayoutRandomConstraints,
@@ -33,7 +33,7 @@ from rcon.types import (
     ParsedLogsType,
     PlayerActionState,
     PlayerInfoType,
-    ServerInfoType,
+    ServerInfo,
     SlotsType,
     StatusType,
     StructuredLogLineType,
@@ -97,7 +97,7 @@ logger = logging.getLogger(__name__)
 CTL: Optional["Rcon"] = None
 
 
-def get_rcon(credentials: ServerInfoType | None = None):
+def get_rcon(credentials: ServerInfo | None = None):
     """Return a initialized Rcon connection to the game server
 
     This maintains a single initialized instance across a Python interpreter
@@ -111,7 +111,7 @@ def get_rcon(credentials: ServerInfoType | None = None):
     global CTL
 
     if credentials is None:
-        credentials = SERVER_INFO
+        credentials = rcon.settings.get_server_info()
 
     if CTL is None:
         CTL = Rcon(credentials)

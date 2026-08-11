@@ -9,7 +9,7 @@ from typing import Generator, Literal, Sequence, Any, List
 from rcon.connection import HLLCommandError, HLLConnection, Handle, Response
 from rcon.maps import LAYERS, MAPS, UNKNOWN_MAP_NAME, Environment, GameMode, LayerType
 from rcon.perf_statistics import PerformanceStatistics
-from rcon.types import MapRotationResponse, MapSequenceResponse, PlayerInfoType, ServerConfigType, ServerInfoType, SlotsType, VipId, GameStateType, AdminType
+from rcon.types import MapRotationResponse, MapSequenceResponse, PlayerInfoType, ServerConfigType, ServerInfo, SlotsType, VipId, GameStateType, AdminType
 from rcon.utils import exception_in_chain
 
 logger = logging.getLogger(__name__)
@@ -59,7 +59,7 @@ class ServerCtl:
     """
 
     def __init__(
-        self, config: ServerInfoType, perf_stats: PerformanceStatistics, auto_retry=1
+        self, config: ServerInfo, perf_stats: PerformanceStatistics, auto_retry=1
     ) -> None:
         self.config = config
         self.perf_stats = perf_stats
@@ -146,7 +146,7 @@ class ServerCtl:
     def _connect(self, conn: HLLConnection) -> None:
         try:
             conn.connect(
-                self.config["host"], int(self.config["port"]), self.config["password"]
+                self.config.host, int(self.config.port), self.config.password
             )
         except (TypeError, ValueError) as e:
             logger.exception("Invalid connection information", e)
@@ -716,6 +716,6 @@ class ServerCtl:
 
 
 if __name__ == "__main__":
-    from rcon.settings import SERVER_INFO
+    import rcon.settings
 
-    ctl = ServerCtl(SERVER_INFO, PerformanceStatistics('rcon'))
+    ctl = ServerCtl(rcon.settings.get_server_info(), PerformanceStatistics('rcon'))

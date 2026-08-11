@@ -29,7 +29,7 @@ from rcon.player_history import (
 from rcon.player_stats import TimeWindowStats
 from rcon.rcon import Rcon
 from rcon.scoreboard import ScoreboardUserConfig
-from rcon.settings import SERVER_INFO
+import rcon.settings
 from rcon.types import (
     AdminUserType,
     AllMessageTemplateTypes,
@@ -43,7 +43,7 @@ from rcon.types import (
     PlayerCommentType,
     PlayerFlagType,
     PlayerProfileTypeEnriched,
-    ServerInfoType,
+    ServerInfo,
 )
 from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
 from rcon.user_config.auto_kick import AutoVoteKickUserConfig
@@ -114,7 +114,7 @@ def parameter_aliases(alias_to_param: Dict[str, str]):
     return decorator
 
 
-def get_rcon_api(credentials: ServerInfoType | None = None) -> "RconAPI":
+def get_rcon_api(credentials: ServerInfo | None = None) -> "RconAPI":
     """Return a initialized Rcon connection to the game server
 
     This maintains a single initialized instance across a Python interpreter
@@ -128,7 +128,7 @@ def get_rcon_api(credentials: ServerInfoType | None = None) -> "RconAPI":
     global CTL
 
     if credentials is None:
-        credentials = SERVER_INFO
+        credentials = rcon.settings.get_server_info()
 
     if CTL is None:
         CTL = RconAPI(credentials)

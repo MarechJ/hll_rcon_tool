@@ -1,5 +1,6 @@
 import datetime
 import enum
+import os
 from dataclasses import dataclass
 from typing import List, Literal, Optional, Sequence
 
@@ -169,6 +170,32 @@ class ServerInfoType(TypedDict):
     host: str | None
     port: str | None
     password: str | None
+    game: str
+
+
+@dataclass
+class ServerInfo:
+    host: str | None = None
+    port: str | None = None
+    password: str | None = None
+    game: str = "hll"
+
+    @classmethod
+    def from_env(cls) -> "ServerInfo":
+        return cls(
+            host=os.getenv("HLL_HOST"),
+            port=os.getenv("HLL_PORT"),
+            password=os.getenv("HLL_PASSWORD"),
+            game=os.getenv("HLL_GAME") or "hll",
+        )
+
+    def as_dict(self) -> ServerInfoType:
+        return {
+            "host": self.host,
+            "port": self.port,
+            "password": self.password,
+            "game": self.game,
+        }
 
 
 # Have to inherit from str to allow for JSON serialization w/ pydantic
