@@ -44,13 +44,18 @@ def parse_webhook_url(url):
 
 logger = logging.getLogger(__name__)
 
+DISCORD_WEBHOOK_TIMEOUT_SECONDS = 10
+
 
 def make_hook(webhook_url) -> DiscordWebhook | None:
     webhook_id, webhook_token = parse_webhook_url(webhook_url)
     if not all([webhook_id, webhook_token]):
         return None
 
-    return DiscordWebhook(url=str(webhook_url))
+    # Keep webhook delivery from blocking the caller indefinitely.
+    return DiscordWebhook(
+        url=str(webhook_url), timeout=DISCORD_WEBHOOK_TIMEOUT_SECONDS
+    )
 
 
 def make_allowed_mentions(user_ids, role_ids):
@@ -120,6 +125,7 @@ def send_to_discord_audit(
     webhookurls: list[HttpUrl | None] | None = None,
     md_escape_message: bool = True,
     md_escape_author: bool = True,
+    flatten: bool = True,
 ):
     by = by or "CRCON"
     config = None
@@ -131,8 +137,9 @@ def send_to_discord_audit(
     server_config = RconServerSettingsUserConfig.load_from_db()
 
     # Flatten messages with newlines
-    message = message.replace("\n", " ")
-    logger.info("Audit: [%s] %s, %s", by, command_name, message)
+    if flatten:
+        message = message.replace("\n", " ")
+    logger.info("Audit: [%s] %s, %s", by, command_name, message.replace("\n", " "))
     if not webhookurls:
         logger.debug("No webhooks set for audit log")
         return

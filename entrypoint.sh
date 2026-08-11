@@ -14,6 +14,10 @@ then
   # LOGGING_PATH and LOGGING_FILENAME need to be passed to get it to log to the directory that is bind mounted
   SERVER_NUMBER=1 LOGGING_PATH=/logs/ LOGGING_FILENAME=startup.log python -m rcon.cli merge_duplicate_player_ids
   SERVER_NUMBER=1 LOGGING_PATH=/logs/ LOGGING_FILENAME=startup.log python -m rcon.cli convert_win_player_ids
+  # Upgrade durable Redis structures before any server-specific container starts.
+  # The command discovers every populated logical Redis database so multi-server
+  # installations are migrated in the same maintenance pass.
+  SERVER_NUMBER=1 LOGGING_PATH=/logs/ LOGGING_FILENAME=startup.log python -m rcon.cache_migrations
   cd rconweb
   ./manage.py makemigrations --no-input
   ./manage.py migrate --noinput
@@ -44,8 +48,6 @@ then
   fi
 
   python -m rcon.user_config.seed_db
-  # TODO: Temporarily handle converting users old scorebot URLs to the new format; remove in a few releases
-  SERVER_NUMBER=${SERVER_NUMBER} LOGGING_PATH=/logs/ LOGGING_FILENAME=api_${SERVER_NUMBER}.log python -m rcon.cli port_legacy_scorebot_urls
   SERVER_NUMBER=${SERVER_NUMBER} LOGGING_PATH=/logs/ LOGGING_FILENAME=api_${SERVER_NUMBER}.log python -m rcon.cli remove_orphaned_map_ids
   SERVER_NUMBER=${SERVER_NUMBER} LOGGING_PATH=/logs/ LOGGING_FILENAME=api_${SERVER_NUMBER}.log python -m rcon.cli clear_maps_cache
   ./manage.py register_api
@@ -76,4 +78,3 @@ fi
   export LOGGING_FILENAME=supervisor_$SERVER_NUMBER.log
   supervisord -c /config/supervisord_$SERVER_NUMBER.conf || supervisord -c /config/supervisord.conf
 fi
-

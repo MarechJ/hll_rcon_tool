@@ -3,9 +3,57 @@ import os
 import pytest
 
 os.environ["HLL_MAINTENANCE_CONTAINER"] = "1"
-from rcon.models import PlayerStats, calc_weapon_type_usage
+from rcon.models import PlayerID, PlayerSoldier, PlayerStats, calc_weapon_type_usage
+from rcon.player_stats import BaseStats
 from rcon.types import PlayerTeamAssociation, PlayerTeamConfidence
 from rcon.maps import Team
+
+
+class StaticStats(BaseStats):
+    def _get_player_session_time(self, player):
+        return 0
+
+    def _get_player_first_appearance(self, player):
+        return None
+
+
+def test_computed_stats_include_profile_platform():
+    profile = PlayerID(player_id="player-id")
+    profile.soldier = PlayerSoldier(platform="xbl")
+    stats = StaticStats.__new__(StaticStats).get_stats_by_player(
+        indexed_logs={},
+        players=[{"name": "Player", "player_id": "player-id"}],
+        profiles_by_id={"player-id": profile},
+    )
+
+    assert stats["player-id"]["platform"] == "xbl"
+
+
+def test_computed_stats_prefer_current_platform():
+    profile = PlayerID(player_id="player-id")
+    profile.soldier = PlayerSoldier(platform="xbl")
+    stats = StaticStats.__new__(StaticStats).get_stats_by_player(
+        indexed_logs={},
+        players=[
+            {
+                "name": "Player",
+                "player_id": "player-id",
+                "platform": "steam",
+            }
+        ],
+        profiles_by_id={"player-id": profile},
+    )
+
+    assert stats["player-id"]["platform"] == "steam"
+
+
+def test_persisted_stats_include_profile_platform():
+    player = PlayerID(player_id="player-id")
+    player.soldier = PlayerSoldier(platform="steam")
+    stats = PlayerStats(name="Player", weapons={}, death_by_weapons={})
+    stats.player = player
+
+    assert stats.to_dict()["platform"] == "steam"
 
 
 def test_detects_no_kills_no_deaths():

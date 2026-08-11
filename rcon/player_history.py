@@ -77,6 +77,7 @@ def get_player_profile_by_player_ids(sess, player_ids):
             selectinload(PlayerID.flags),
             selectinload(PlayerID.watchlist),
             selectinload(PlayerID.steaminfo),
+            selectinload(PlayerID.soldier),
         )
         .all()
     )
@@ -91,7 +92,12 @@ def get_player_profile_by_id(id, nb_sessions):
 
 
 def _get_profiles(sess, player_ids, nb_sessions=0):
-    return sess.query(PlayerID).filter(PlayerID.player_id.in_(player_ids)).all()
+    return (
+        sess.query(PlayerID)
+        .filter(PlayerID.player_id.in_(player_ids))
+        .options(selectinload(PlayerID.soldier))
+        .all()
+    )
 
 
 def get_profiles(player_ids, nb_sessions=1):

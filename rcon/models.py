@@ -8,19 +8,7 @@ from datetime import datetime, timezone
 from typing import Any, Generator, List, Literal, Optional, Sequence, overload
 
 import pydantic
-from sqlalchemy import (
-    TIMESTAMP,
-    Enum,
-    ForeignKey,
-    String,
-    create_engine,
-    select,
-    text,
-    JSON,
-    Engine,
-    NullPool,
-    Pool,
-)
+from sqlalchemy import TIMESTAMP, Enum, ForeignKey, String, create_engine, select, text, JSON, Engine, NullPool, Pool
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -39,6 +27,8 @@ from rcon.maps import Team
 from rcon.types import (
     AuditLogType,
     GetDetailedPlayer,
+    MapResult,
+    MapScore,
     MessageTemplateType,
     BlacklistRecordType,
     BlacklistRecordWithBlacklistType,
@@ -62,16 +52,14 @@ from rcon.types import (
     PlayerSoldierType,
     PlayerStatsType,
     PlayerVIPType,
+    UnitHistoryEntry,
     ServerCountType,
     SteamBansType,
     SteamInfoType,
     SteamPlayerSummaryType,
     StructuredLogLineWithMetaData,
     WatchListType,
-    MessageTemplateCategory,
-    PlayerTeamAssociation,
-    PlayerTeamConfidence,
-    GameLayout,
+    MessageTemplateCategory, PlayerTeamAssociation, PlayerTeamConfidence, GameLayout,
 )
 from rcon.utils import (
     SafeStringFormat,
@@ -99,7 +87,7 @@ def _connection_name() -> str:
     :return: str
     """
     args = sys.argv
-    name = "CRCon Generic"
+    name = 'CRCon Generic'
     if "manage.py" not in args[0]:
         # stuff like daphne, gunicorn (backend) etc
         name = args[0]
@@ -128,12 +116,7 @@ def get_engine():
     if os.getenv("HLL_DB_DISABLE_CONNECTION_POOL") is not None:
         pool = NullPool
 
-    _ENGINE = create_engine(
-        url,
-        poolclass=pool,
-        echo=False,
-        connect_args={"application_name": _connection_name()},
-    )
+    _ENGINE = create_engine(url, poolclass=pool, echo=False, connect_args={"application_name":_connection_name()})
     return _ENGINE
 
 
@@ -202,6 +185,7 @@ class PlayerID(Base):
     def get_penalty_count(self) -> PenaltyCountType:
         counts = defaultdict(int)
         for action in self.received_actions:
+
             try:
                 action = PlayerActionState[action.action_type]
                 counts[action] += 1
@@ -277,7 +261,6 @@ class PlayerID(Base):
         aka = " | ".join([n.name for n in self.names])
         return f"{self.player_id} {aka}"
 
-
 class PlayerSoldier(Base):
     __tablename__ = "player_soldier"
 
@@ -299,7 +282,7 @@ class PlayerSoldier(Base):
     updated: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True),
         default=lambda: datetime.now(tz=timezone.utc),
-        onupdate=lambda: datetime.now(tz=timezone.utc),
+        onupdate=lambda: datetime.now(tz=timezone.utc)
     )
 
     @classmethod
@@ -307,41 +290,36 @@ class PlayerSoldier(Base):
         logger.debug("Updating soldier %s" % player["name"])
         with enter_session() as sess:
             # Retrieve the PlayerID instance to get its ID for foreign key reference
-            player_id_stmt = select(PlayerID).where(
-                PlayerID.player_id == player["player_id"]
-            )
+            player_id_stmt = select(PlayerID).where(PlayerID.player_id == player["player_id"])
             player_id_record = sess.execute(player_id_stmt).scalars().one_or_none()
-
+            
             if not player_id_record:
                 # Handle case where PlayerID does not exist
-                logger.exception(
-                    "PlayerID not found for player_id: %s" % player["player_id"]
-                )
+                logger.exception("PlayerID not found for player_id: %s" % player['player_id'])
                 return
-
+            
             player_id_fk = player_id_record.id
-
+            
             # Query for existing PlayerSoldier
             profile_stmt = (
-                select(cls).where(
-                    cls.player_id_id == player_id_fk
-                )  # Direct filter on FK; join optional here
+                select(cls)
+                .where(cls.player_id_id == player_id_fk)  # Direct filter on FK; join optional here
             )
             profile = sess.execute(profile_stmt).scalars().one_or_none()
             if not profile:
                 # Create new instance
                 profile = cls(player_id_id=player_id_fk)
                 sess.add(profile)
-
+            
             # Proceed with updates
             profile.eos_id = player["eos_id"]
             profile.name = player["name"]
             profile.platform = player["platform"]
             profile.clan_tag = player["clan_tag"]
-
+            
             if player["level"] > profile.level:
                 profile.level = player["level"]
-
+            
             sess.commit()
 
     @classmethod
@@ -361,24 +339,20 @@ class PlayerSoldier(Base):
         Returns the updated PlayerSoldier instance or None if PlayerID not found.
         """
         # Look up PlayerID
-        player_db = (
-            sess.execute(select(PlayerID).where(PlayerID.player_id == player_id))
-            .scalars()
-            .one_or_none()
-        )
+        player_db = sess.execute(
+            select(PlayerID).where(PlayerID.player_id == player_id)
+        ).scalars().one_or_none()
         if not player_db:
             return None, False
-
+        
         # Look up or create PlayerSoldier
-        soldier_db = (
-            sess.execute(select(cls).where(cls.player_id_id == player_db.id))
-            .scalars()
-            .one_or_none()
-        )
+        soldier_db = sess.execute(
+            select(cls).where(cls.player_id_id == player_db.id)
+        ).scalars().one_or_none()
         if not soldier_db:
             soldier_db = cls(player_id_id=player_db.id)
             sess.add(soldier_db)
-
+        
         # Update only None fields
         changed = False
         if soldier_db.eos_id is None and eos_id is not None:
@@ -396,10 +370,10 @@ class PlayerSoldier(Base):
         if soldier_db.clan_tag is None and clan_tag is not None:
             soldier_db.clan_tag = clan_tag
             changed = True
-
+        
         if changed:
             sess.commit()
-
+        
         return soldier_db, changed
 
     def to_dict(self) -> PlayerSoldierType:
@@ -411,7 +385,6 @@ class PlayerSoldier(Base):
             "clan_tag": self.clan_tag,
             "updated": self.updated,
         }
-
 
 class PlayerAccount(Base):
     __tablename__ = "player_account"
@@ -432,11 +405,11 @@ class PlayerAccount(Base):
     country: Mapped[str | None] = mapped_column(String(2))
     # ISO 639-1
     lang: Mapped[str] = mapped_column(String(2), default="en")
-
+    
     updated: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True),
         default=lambda: datetime.now(tz=timezone.utc),
-        onupdate=lambda: datetime.now(tz=timezone.utc),
+        onupdate=lambda: datetime.now(tz=timezone.utc)
     )
 
     @classmethod
@@ -456,31 +429,27 @@ class PlayerAccount(Base):
         Returns (updated PlayerAccount instance, changed flag) or None if PlayerID not found.
         """
         # Look up PlayerID
-        player_db = (
-            sess.execute(select(PlayerID).where(PlayerID.player_id == player_id))
-            .scalars()
-            .one_or_none()
-        )
+        player_db = sess.execute(
+            select(PlayerID).where(PlayerID.player_id == player_id)
+        ).scalars().one_or_none()
         if not player_db:
             return None
-
+        
         # Look up or create PlayerAccount
-        account_db = (
-            sess.execute(select(cls).where(cls.player_id_id == player_db.id))
-            .scalars()
-            .one_or_none()
-        )
+        account_db = sess.execute(
+            select(cls).where(cls.player_id_id == player_db.id)
+        ).scalars().one_or_none()
         if not account_db:
             account_db = cls(player_id_id=player_db.id)
             sess.add(account_db)
-
+        
         account_db.name = name
         account_db.discord_id = discord_id
         account_db.is_member = is_member
         account_db.country = country.upper() if country else None
         account_db.lang = lang.lower() if lang else "en"
         sess.commit()
-
+        
         return account_db
 
     def to_dict(self) -> PlayerAccountType:
@@ -492,7 +461,6 @@ class PlayerAccount(Base):
             "lang": self.lang,
             "updated": self.updated,
         }
-
 
 class SteamInfo(Base):
     __tablename__ = "steam_info"
@@ -795,9 +763,9 @@ class Maps(Base):
     map_name: Mapped[str] = mapped_column(nullable=False, index=True)
     # A dict with the result of the game mapped as Axis=int, Allied=int
     result: Mapped[dict[str, int]] = mapped_column(nullable=True)
-    game_layout: Mapped["GameLayout"] = mapped_column(
-        JSON, nullable=False, default=GameLayout
-    )
+    game_layout: Mapped["GameLayout"] = mapped_column(JSON, nullable=False, default=GameLayout)
+    cap_flips: Mapped[list[MapScore]] = mapped_column(JSON, nullable=False, default=[])
+    match_time: Mapped[int] = mapped_column(default=0)
 
     player_stats: Mapped[list["PlayerStats"]] = relationship(back_populates="map")
 
@@ -811,13 +779,15 @@ class Maps(Base):
             "map_name": self.map_name,
             "result": (
                 {
-                    "axis": self.result.get("Axis"),
-                    "allied": self.result.get("Allied"),
+                    "axis": self.result.get("Axis", 0),
+                    "allied": self.result.get("Allied", 0),
                 }
                 if self.result is not None and self.result.get("Allied") is not None
                 else None
             ),
             "game_layout": self.game_layout,
+            "cap_flips": self.cap_flips,
+            "match_time": self.match_time,
             "player_stats": (
                 []
                 if not with_stats or not self.player_stats
@@ -835,7 +805,6 @@ def calc_weapon_type_usage(weapons: dict[str, int]) -> dict[WeaponType, int]:
             kills_by_type[weapon_type.value] += count
 
     return dict(kills_by_type)
-
 
 class PlayerStats(Base):
     __tablename__ = "player_stats"
@@ -872,11 +841,16 @@ class PlayerStats(Base):
     offense: Mapped[int] = mapped_column()
     defense: Mapped[int] = mapped_column()
     support: Mapped[int] = mapped_column()
+    vehicle_kills: Mapped[int] = mapped_column()
+    vehicles_destroyed: Mapped[int] = mapped_column()
     most_killed: Mapped[dict[str, int]] = mapped_column()
     death_by: Mapped[dict[str, int]] = mapped_column()
     weapons: Mapped[dict[str, int]] = mapped_column()
     death_by_weapons: Mapped[dict[str, int]] = mapped_column()
     level: Mapped[int] = mapped_column()
+    kills_and_assists: Mapped[int] = mapped_column()
+    deaths_and_redeploys: Mapped[int] = mapped_column()
+    units: Mapped[list[UnitHistoryEntry]] = mapped_column(JSON)
 
     player: Mapped[PlayerID] = relationship(
         foreign_keys=[player_id_id], back_populates="stats"
@@ -897,16 +871,10 @@ class PlayerStats(Base):
                     axis_count += weapon[1]
 
         if len(self.death_by_weapons) > 0:
-            for weapon in sorted(
-                self.death_by_weapons.items(), key=get_value, reverse=True
-            ):
+            for weapon in sorted(self.death_by_weapons.items(), key=get_value, reverse=True):
                 if WEAPON_SIDE_MAP.get(weapon[0]) is None:
                     continue
-                op = (
-                    Team.AXIS
-                    if WEAPON_SIDE_MAP.get(weapon[0]) == Team.ALLIES
-                    else Team.ALLIES
-                )
+                op = Team.AXIS if WEAPON_SIDE_MAP.get(weapon[0]) == Team.ALLIES else Team.ALLIES
                 if op == Team.ALLIES:
                     allies_count += weapon[1]
                 elif op == Team.AXIS:
@@ -914,9 +882,7 @@ class PlayerStats(Base):
 
         assoc: PlayerTeamAssociation
         if axis_count == 0 and allies_count == 0:
-            return PlayerTeamAssociation(
-                side=Team.UNKNOWN, confidence=PlayerTeamConfidence.STRONG, ratio=0
-            )
+            return PlayerTeamAssociation(side=Team.UNKNOWN, confidence=PlayerTeamConfidence.STRONG, ratio=0)
         elif axis_count > allies_count:
             assoc = PlayerTeamAssociation(
                 side=Team.AXIS,
@@ -935,19 +901,19 @@ class PlayerStats(Base):
                 confidence=PlayerTeamConfidence.MIXED,
                 ratio=50,
             )
-        assoc["confidence"] = (
-            PlayerTeamConfidence.STRONG
-            if assoc["ratio"] > 85
-            else PlayerTeamConfidence.MIXED
-        )
+        assoc['confidence'] = PlayerTeamConfidence.STRONG if assoc['ratio'] > 85 else PlayerTeamConfidence.MIXED
         return assoc
 
     def to_dict(self) -> PlayerStatsType:
-        # TODO: Fix typing
         return {
             "id": self.id,
             PLAYER_ID: self.player.player_id,
             "player": self.name,
+            "platform": (
+                self.player.soldier.platform
+                if self.player and self.player.soldier
+                else None
+            ),
             "steaminfo": (
                 self.player.steaminfo.to_dict()
                 if self.player and self.player.steaminfo
@@ -977,12 +943,17 @@ class PlayerStats(Base):
             "offense": self.offense,
             "defense": self.defense,
             "support": self.support,
+            "vehicle_kills": self.vehicle_kills,
+            "vehicles_destroyed": self.vehicles_destroyed,
             "most_killed": self.most_killed,
             "death_by": self.death_by,
             "weapons": self.weapons,
             "death_by_weapons": self.death_by_weapons,
             "team": self.detect_team(),
             "level": self.level,
+            "kills_and_assists": self.kills_and_assists,
+            "deaths_and_redeploys": self.deaths_and_redeploys,
+            "units": self.units,
         }
 
 
@@ -1223,9 +1194,7 @@ class BlacklistRecord(Base):
                 else "forever"
             ),
             "expires_at": (
-                self.expires_at.strftime("%b %d %Y %H:%M")
-                if self.expires_at
-                else "never"
+                self.expires_at.strftime("%b %d %Y %H:%M") if self.expires_at else "never"
             ),
             "duration": (
                 humanize_timedelta(self.expires_at - self.created_at)

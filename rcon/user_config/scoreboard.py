@@ -29,26 +29,6 @@ Legend
 ⬛ - Other Maps"""
 
 
-# TODO: remove this in a few releases
-def _port_legacy_scorebot_urls():
-    config = ScoreboardUserConfig.load_from_db()
-    legacy_config = ScorebotUserConfig.load_from_db()
-
-    modified = False
-    if config.public_scoreboard_url is None:
-        logger.info(f"Attempting migration of {legacy_config.base_scoreboard_url=}")
-        config.public_scoreboard_url = legacy_config.base_scoreboard_url
-        modified = True
-
-    if not config.hooks:
-        logger.info(f"Attempting migration of {legacy_config.webhook_urls=}")
-        config.hooks = [DiscordWebhook(url=url) for url in legacy_config.webhook_urls]
-        modified = True
-
-    if modified:
-        ScoreboardUserConfig.save_to_db(config.model_dump())
-
-
 class EmbedType(TypedDict):
     name: str
     value: str

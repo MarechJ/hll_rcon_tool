@@ -6,6 +6,7 @@ import traceback
 from functools import wraps
 from subprocess import PIPE, run
 from typing import Any, Callable
+from django_ratelimit.decorators import ratelimit
 import psutil
 
 import pydantic
@@ -79,6 +80,7 @@ def set_temp_msg(request, func, name):
 
 @csrf_exempt
 @require_http_methods(["GET"])
+@ratelimit(key='ip', rate='10/m')
 def get_version(request):
     res = run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE)
     return api_response(res.stdout.decode(), failed=False, command="get_version")
@@ -86,12 +88,18 @@ def get_version(request):
 
 @csrf_exempt
 @require_http_methods(["GET"])
+@ratelimit(key='ip', rate='10/m')
 def get_public_info(request):
-    try:
-        current_map_start = MapsHistory(max_len=1)[0]["start"]
-    except IndexError:
+    cached_cur_map = MapsHistory().get_current_map()
+    if not cached_cur_map:
         logger.error("Can't get current map time, map_recorder is probably offline")
         current_map_start = None
+        cap_flips = None
+        match_time = 0
+    else:
+        current_map_start = cached_cur_map["start"]
+        cap_flips = cached_cur_map["cap_flips"]
+        match_time = cached_cur_map["match_time"]
 
     config = RconServerSettingsUserConfig.load_from_db()
     gamestate = rcon_api.get_gamestate()
@@ -138,6 +146,8 @@ def get_public_info(request):
         "max_player_count": max_players,
         "player_count_by_team": players,
         "score": score,
+        "cap_flips": cap_flips,
+        "match_time": match_time,
         "time_remaining": gamestate["time_remaining"].total_seconds(),
         "vote_status": vote_status,
         "name": name,
@@ -545,11 +555,17 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.get_votekick_thresholds: "api.can_view_votekick_threshold",
     rcon_api.get_votemap_config: "api.can_view_votemap_config",
     rcon_api.get_votemap_status: "api.can_view_votemap_status",
+    rcon_api.get_votemap_results: "api.can_view_votemap_status",
+    rcon_api.remove_map_from_votemap: "api.can_remove_map_from_votemap",
+    rcon_api.add_map_to_votemap: "api.can_add_map_to_votemap",
+    rcon_api.set_votemap_winner: "api.can_set_votemap_winner",
+    rcon_api.add_votemap_vote: "api.can_add_votemap_vote",
     rcon_api.get_watchlist_discord_webhooks_config: "api.can_view_watchlist_discord_webhooks_config",
     rcon_api.get_watch_killrate_config: "api.can_view_watch_killrate_config",
     rcon_api.get_welcome_message: "api.can_view_welcome_message",
     # TODO: update this name
     rcon_api.reset_votemap_state: "api.can_reset_votemap_state",
+    rcon_api.send_votemap_reminder: "api.can_send_votemap_reminder",
     rcon_api.set_admin_pings_discord_webhooks_config: "api.can_change_admin_pings_discord_webhooks_config",
     rcon_api.set_audit_discord_webhooks_config: "api.can_change_audit_discord_webhooks_config",
     rcon_api.set_auto_broadcasts_config: "api.can_change_auto_broadcast_config",
@@ -798,6 +814,11 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.get_votekick_thresholds: ["GET"],
     rcon_api.get_votemap_config: ["GET"],
     rcon_api.get_votemap_status: ["GET"],
+    rcon_api.get_votemap_results: ["GET"],
+    rcon_api.remove_map_from_votemap: ["POST"],
+    rcon_api.add_map_to_votemap: ["POST"],
+    rcon_api.set_votemap_winner: ["POST"],
+    rcon_api.add_votemap_vote: ["POST"],
     rcon_api.get_watchlist_discord_webhooks_config: ["GET"],
     rcon_api.get_watch_killrate_config: ["GET"],
     rcon_api.get_welcome_message: ["GET"],
@@ -817,6 +838,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.reset_map_votemap_whitelist: ["POST"],
     rcon_api.reset_votekick_thresholds: ["POST"],
     rcon_api.reset_votemap_state: ["POST"],
+    rcon_api.send_votemap_reminder: ["POST"],
     rcon_api.set_admin_pings_discord_webhooks_config: ["POST"],
     rcon_api.set_audit_discord_webhooks_config: ["POST"],
     rcon_api.set_auto_broadcasts_config: ["POST"],

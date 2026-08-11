@@ -5,9 +5,10 @@ from typing import List, Literal, Optional, Sequence
 
 # # TODO: On Python 3.11.* specifically, Pydantic requires we use typing_extensions.TypedDict
 # over typing.TypedDict. Once we bump our Python image we can replace this.
-from typing_extensions import TypedDict
+from typing_extensions import NotRequired, TypedDict
 
 from rcon.maps import GameMode, Layer, LayerType, Team
+from rcon.weapons import WeaponType
 
 
 class WindowsStoreIdActionType(str, enum.Enum):
@@ -407,6 +408,9 @@ class DBLogLineType(TypedDict):
     server: str
     weapon: Optional[str]
 
+class Player(TypedDict):
+    id: str
+    name: str
 
 class PlayerTeamConfidence(enum.Enum):
     STRONG = "strong"
@@ -423,14 +427,32 @@ class PlayerTeamAssociation(TypedDict):
     ratio: float
 
 
-class PlayerStatsType(TypedDict):
+class UnitHistoryEntry(TypedDict):
+    ts: int         # timestamp in seconds
+    team: int       # team int value
+    squad: int      # squad int value
+    role: int       # role int value
+
+class KillInfo(TypedDict):
+    action: Literal["KILL", "DEATH"]
+    player_id: str
+    player_name: str
+    ts: int
+    weapon: str
+
+PlayerEncounters = list[KillInfo]
+    
+class PlayerStatsType(TypedDict, total=False):
     id: int
     player_id: str
-    player: Optional[str]
-    steaminfo: Optional[SteamInfoType]
     map_id: int
+    player: Optional[str]
+    platform: Optional[str]
+    steaminfo: Optional[SteamInfoType]
     kills: Optional[int]
     kills_streak: Optional[int]
+    kills_by_type: Optional[dict[WeaponType, int]]
+    deaths_by_type: Optional[dict[WeaponType, int]]
     deaths: Optional[int]
     deaths_without_kill_streak: Optional[int]
     teamkills: Optional[int]
@@ -441,6 +463,7 @@ class PlayerStatsType(TypedDict):
     nb_voted_yes: Optional[int]
     nb_voted_no: Optional[int]
     time_seconds: Optional[int]
+    last_spawn: Optional[datetime.datetime]
     kills_per_minute: Optional[float]
     deaths_per_minute: Optional[float]
     kill_death_ratio: Optional[float]
@@ -455,6 +478,15 @@ class PlayerStatsType(TypedDict):
     weapons: Optional[dict]
     death_by_weapons: Optional[dict]
     team: Optional[PlayerTeamAssociation]
+    units: Optional[list[UnitHistoryEntry]]
+    level: Optional[int]
+    vehicles_destroyed: Optional[int]
+    vehicle_kills: Optional[int]
+    kills_and_assists: Optional[int]
+    deaths_and_redeploys: Optional[int]
+    names: Optional[list[str]]
+    status: Optional[Literal["online", "offline", "idle"]]
+    encounters: Optional[PlayerEncounters]
 
 
 class PlayerStat(TypedDict):
@@ -466,8 +498,21 @@ class PlayerStat(TypedDict):
     p_defense: int
     support: int
     p_support: int
+    vehicle_kills: int
+    p_vehicle_kills: int
+    vehicles_destroyed: int
+    p_vehicles_destroyed: int
     level: int
-
+    p_kills_and_assists: int
+    kills_and_assists: int
+    p_deaths_and_redeploys: int
+    deaths_and_redeploys: int
+    units: Optional[list[UnitHistoryEntry]]
+    p_unit: UnitHistoryEntry
+    p_coord: 'WorldPositionType'
+    has_spawned: bool
+    names: list[str]
+    status: Literal["offline", "online", "idle"]
 
 class CachedLiveGameStats(TypedDict):
     snapshot_timestamp: datetime.datetime
@@ -479,14 +524,25 @@ class GameLayout(TypedDict):
     requested: Sequence[str | int | None]
     set: list[str]
 
+class MapScore(TypedDict):
+    ts: int
+    allied_score: int
+    axis_score: int
+
+class MapResult(TypedDict):
+    axis: int
+    allied: int
 
 class MapInfo(TypedDict):
+    _schema_version: NotRequired[int]
     name: str
-    start: float | None
-    end: float | None
+    start: int | None
+    end: int | None
     guessed: bool
     player_stats: dict[str, PlayerStat]
     game_layout: GameLayout
+    cap_flips: list[MapScore]
+    match_time: int
 
 
 class MapInfoISODates(TypedDict):
@@ -504,9 +560,10 @@ class MapsType(TypedDict):
     end: Optional[datetime.datetime]
     server_number: Optional[int]
     map_name: str
-    result: Optional[dict[str, int]]
+    result: Optional[MapResult]
     game_layout: GameLayout
     player_stats: List[PlayerStatsType]
+    cap_flips: list[MapScore]
 
 
 class PlayerCommentType(TypedDict):
@@ -673,6 +730,7 @@ class GetDetailedPlayers(TypedDict):
 class GetPlayersType(TypedDict):
     name: str
     player_id: str
+    platform: NotRequired[str | None]
     country: str | None
     steam_bans: Optional[SteamBansType]
     is_vip: bool
@@ -751,22 +809,42 @@ class VipId(TypedDict):
     player_id: str
     name: str
 
-
-class VoteMapPlayerVoteType(TypedDict):
+class VoteMapVote(TypedDict):
+    player_id: str
     player_name: str
-    map_name: str
+    map_id: str
+    vote_count: int
 
+class VoteMapVoter(TypedDict):
+    player_id: str
+    player_name: str
+    count: int
 
-class VoteMapResultType(TypedDict):
+class VoteMapMapResult(TypedDict):
     map: Layer
-    num_votes: int
+    voters: list[VoteMapVoter]
+    votes_count: int
 
+class VoteMapPlayerChoice(TypedDict):
+    player_name: str
+    player_id: str
 
-# TODO: finish this typing
-class VoteMapStatusType(TypedDict):
-    map: Layer
-    voters: dict[Layer, list[str]]
+class VoteMapStatus(TypedDict):
+    enabled: bool
+    paused: bool
+    results: list[VoteMapMapResult]
+    next_map: Optional[str]
+    last_reminder: Optional[datetime.datetime]
+    player_choice: Optional[VoteMapPlayerChoice]
 
+class VoteMapHistoryResult(TypedDict):
+    map_id: str
+    votes_count: int
+
+class VoteMapHistory(TypedDict):
+    ts: int
+    map_id: str
+    results: list[VoteMapHistoryResult]
 
 # Have to inherit from str to allow for JSON serialization w/ pydantic
 class AllLogTypes(str, enum.Enum):
@@ -867,9 +945,11 @@ class PublicInfoType(TypedDict):
     player_count_by_team: PublicInfoPlayerType
     score: PublicInfoScoreType
     time_remaining: float
-    vote_status: list[VoteMapStatusType]
+    vote_status: VoteMapStatus
     name: PublicInfoNameType
     config: ServerConfigType
+    cap_flips: list[MapScore]
+    match_time: int
 
 
 class SlotsType(TypedDict):
