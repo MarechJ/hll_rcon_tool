@@ -68,7 +68,7 @@ class StandardBroadcastMessagesUserConfig(BaseUserConfig):
 
         # This should never happen in production, but allows tests to run
         if not os.getenv("HLL_DB_URL"):
-            logger.warning(f"HLL_DB_URL not set, returning a default instance")
+            logger.warning("HLL_DB_URL not set, returning a default instance")
             return cls()
 
         # If the cache is unavailable, it will fall back to creating a default

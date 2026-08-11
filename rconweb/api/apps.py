@@ -1,7 +1,9 @@
-from django.apps import AppConfig
-from rcon.cache_utils import invalidates
-import django.db.utils
 from logging import getLogger
+
+import django.db.utils
+from django.apps import AppConfig
+
+from rcon.cache_utils import invalidates
 
 logger = getLogger(__name__)
 
@@ -24,5 +26,5 @@ class ApiConfig(AppConfig):
 
             # This doesn't happen in production; only in the test environment
             # when running github actions
-            except django.db.utils.ProgrammingError as e:
-                logger.exception(e)
+            except django.db.utils.ProgrammingError:
+                logger.exception("programming error")

@@ -1,7 +1,6 @@
-from typing import Optional, Type, TypedDict
+from typing import Annotated, TypedDict
 
 from pydantic import BaseModel, BeforeValidator, Field, HttpUrl, field_serializer
-from typing_extensions import Annotated
 
 from rcon.types import WindowsStoreIdActionType
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
@@ -45,7 +44,7 @@ class RconServerSettingsType(TypedDict):
     message_enhancements: MessageEnhancementsType
 
 
-def _upper_case_action(v: str | None, cls: Type[WindowsStoreIdActionType]):
+def _upper_case_action(v: str | None, cls: type[WindowsStoreIdActionType]):
     if v:
         return cls(v.upper())
     else:
@@ -81,8 +80,8 @@ class MessageEnhancements(BaseModel):
 class RconServerSettingsUserConfig(BaseUserConfig):
     # Use a callable to defer calling get_server_number until it's used and not on import
     short_name: str = Field(default_factory=lambda: f"MyServer{get_server_number()}")
-    server_url: Optional[HttpUrl] = Field(default=None)
-    discord_invite_url: Optional[HttpUrl] = Field(default=None)
+    server_url: HttpUrl | None = Field(default=None)
+    discord_invite_url: HttpUrl | None = Field(default=None)
 
     lock_stats_api: bool = Field(default=False)
     # unban_does_unblacklist: bool = Field(default=True)

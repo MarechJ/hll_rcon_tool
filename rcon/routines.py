@@ -4,7 +4,7 @@ import time
 
 from rcon.audit import ingame_mods, online_mods
 from rcon.perf_statistics import PerformanceStatistics
-from rcon.rcon import HLLCommandFailedError, Rcon, get_rcon
+from rcon.rcon import Rcon, get_rcon
 from rcon.user_config.auto_kick import AutoVoteKickUserConfig
 from rcon.vote_map import VoteMap
 from rcon.workers import get_scheduler

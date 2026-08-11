@@ -28,6 +28,8 @@ import redis
 
 from rcon.cache_migrations.redis_databases import (
     populated_database_numbers as _populated_database_numbers,
+)
+from rcon.cache_migrations.redis_databases import (
     redis_client_for_database as _redis_client_for_database,
 )
 from rcon.types import MapInfo

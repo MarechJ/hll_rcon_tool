@@ -4,8 +4,7 @@ import logging
 import os
 from concurrent.futures import as_completed
 from datetime import UTC, timedelta
-from typing import Any, Optional, Set
-from typing_extensions import TypeIs
+from typing import Any
 
 from rq import Queue
 from rq.job import Dependency, Job, Retry
@@ -20,17 +19,25 @@ from rcon.models import Maps, PlayerStats, enter_session
 from rcon.player_history import get_player
 from rcon.player_stats import TimeWindowStats
 from rcon.rcon import get_rcon
-from rcon.types import MapInfo, MapScore, MapsType, PlayerStat, GameLayout
-from rcon.utils import GAME_LOG_STAT_FIELDS, INDEFINITE_VIP_DATE, TEMP_FIELDS, LogsHistory, MapsHistory, get_server_number, get_temp_default_stats
+from rcon.types import GameLayout, MapInfo, MapScore, PlayerStat
+from rcon.utils import (
+    GAME_LOG_STAT_FIELDS,
+    INDEFINITE_VIP_DATE,
+    TEMP_FIELDS,
+    LogsHistory,
+    MapsHistory,
+    get_server_number,
+    get_temp_default_stats,
+)
 
 logger = logging.getLogger("rcon")
 
 
 def update_player_steaminfo_on_connect_worker(player_name: str, player_id: str) -> None:
     """Refresh Steam data outside the synchronous log-loop process."""
+    from rcon import steam_utils
     from rcon.models import enter_session
     from rcon.player_history import _get_set_player
-    from rcon import steam_utils
 
     started = datetime.datetime.now(datetime.UTC)
     try:
@@ -163,7 +170,7 @@ def save_missing_match_logs(map_: MapInfo):
 
         with enter_session() as sess:
             if not _are_match_logs_available(sess, int(get_server_number()), match_start, match_end):
-                raise Exception("match logs are not yet available, skipping backtracking logs")
+                raise ValueError("match logs are not yet available, skipping backtracking logs")
         
         # Adding 1 more minute to the query just to be sure no logs are missed by a few seconds
         minutes_from_now = 1 + ((datetime.datetime.now(tz=datetime.UTC) - match_start).seconds // 60)
@@ -236,9 +243,9 @@ def record_stats(map_info: MapInfo):
     try:
         _record_stats(map_info)
         logger.info("Done recording stats for %s", (map_info["name"], map_info["start"], map_info["end"]))
-    except Exception as e:
+    except Exception:
         logger.exception("Unexpected error while recording stats for %s", map_info)
-        raise e
+        raise
 
 def clear_stats_cache(map: Maps, map_info: MapInfo | None):
     # ensure the map result and stats were saved
@@ -260,8 +267,8 @@ def _record_stats(map_info: MapInfo):
         logger.error("Can't record stats, no time info for %s", map_info)
         return
 
-    start = datetime.datetime.fromtimestamp(raw_start, datetime.timezone.utc)
-    end = datetime.datetime.fromtimestamp(raw_end, datetime.timezone.utc)
+    start = datetime.datetime.fromtimestamp(raw_start, UTC)
+    end = datetime.datetime.fromtimestamp(raw_end, UTC)
     with enter_session() as sess:
         map_ = get_or_create_map(
             sess=sess,
@@ -355,10 +362,10 @@ def _save_match_result(session: Session, map: Maps):
     logger.info("Saving map result: %s", map.result)
     session.add(map)
 
-def _get_game_logs_stats(session: Session, map: Maps, cached_players: dict[str, PlayerStat] = {}):
+def _get_game_logs_stats(session: Session, map: Maps, cached_players: dict[str, PlayerStat] | None = None):
     game_log_stats = TimeWindowStats()
     return game_log_stats.get_players_stats_at_time(
-        from_=map.start.replace(tzinfo=UTC), until=map.end.replace(tzinfo=UTC), server_number=str(map.server_number), cached_players=cached_players
+        from_=map.start.replace(tzinfo=UTC), until=map.end.replace(tzinfo=UTC), server_number=str(map.server_number), cached_players=cached_players or {}
     )
 
 def record_stats_from_map(
@@ -366,14 +373,14 @@ def record_stats_from_map(
 ) -> None:
     if not _are_match_logs_available(sess, map_.server_number, map_.start, map_.end):
         # An exception will automatically re-enqueue the record stats task.
-        raise Exception("match logs are not yet available, skipping recording stats")
+        raise ValueError("match logs are not yet available, skipping recording stats")
 
     temp_stats = map_info.get("player_stats", {}) if map_info else {}
 
     _save_match_result(sess, map_)
 
-    seen_players: Set[str] = set()
-    for _, player_game_log_stats in _get_game_logs_stats(sess, map_, temp_stats).items():
+    seen_players: set[str] = set()
+    for player_game_log_stats in _get_game_logs_stats(sess, map_, temp_stats).values():
         player_id = player_game_log_stats.get("player_id")
         if not player_id:
             logger.error("Stat object does not contain a player ID: %s", player_game_log_stats)
@@ -391,7 +398,7 @@ def record_stats_from_map(
             continue
 
         # Check for any already recorded stats
-        existing: Optional["PlayerStats"] = (
+        existing: PlayerStats | None = (
             sess.query(PlayerStats)
             .filter(
                 PlayerStats.map_id == map_.id,
@@ -438,7 +445,7 @@ def get_job_results(job_key):
         "started_at": job.started_at,
         "ended_at": job.ended_at,
         "func_name": job.func_name,
-        "check_timestamp": datetime.datetime.now().timestamp(),
+        "check_timestamp": datetime.datetime.now(tz=UTC).timestamp(),
     }
 
 

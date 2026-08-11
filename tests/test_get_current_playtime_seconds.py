@@ -1,9 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
+
 from rcon.models import PlayerID, PlayerSession
 
 
 def test_get_current_playtime_seconds():
-    now = datetime.now()
+    now = datetime.now(tz=UTC)
 
     # Create mock sessions
     active_session = PlayerSession(

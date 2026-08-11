@@ -4,8 +4,8 @@ import os
 import pickle
 import time
 import uuid
+from collections.abc import Callable
 from contextlib import contextmanager
-from typing import Callable
 
 import redis
 import redis.exceptions
@@ -201,7 +201,7 @@ def construct_redis_url(db_number: int = 0) -> str:
     port = os.getenv("HLL_REDIS_PORT")
 
     if not host or not port:
-        raise ValueError(f"HLL_REDIS_HOST and HLL_REDIS_PORT must be set")
+        raise ValueError("HLL_REDIS_HOST and HLL_REDIS_PORT must be set")
 
     return f"redis://{host}:{port}/{db_number}"
 
@@ -270,7 +270,7 @@ def ttl_cache(
     # Allow use of in memory cache and not redis when running tests
     # but still use redis when running the development web server
     if os.getenv("DEBUG") and not pool:
-        logger.warning(f"Unable to connect to Redis, using memory cache")
+        logger.warning("Unable to connect to Redis, using memory cache")
         return cachetools_ttl_cache(*args, ttl=ttl, **kwargs)
     # the maintenance container does not use the redis cache but this method is imported
     # and it will fail if it can't connect to redis otherwise

@@ -1,8 +1,9 @@
 import logging
+from collections.abc import Mapping
 from dataclasses import field
 from datetime import datetime
 from enum import Enum, auto
-from typing import List, Mapping, Optional, TypedDict
+from typing import TypedDict
 
 from pydantic import HttpUrl
 from pydantic.dataclasses import dataclass
@@ -39,9 +40,9 @@ class OffensiveDefensiveState(TypedDict):
 class WatchStatus:
     offensive_points: Mapping[str, int] = field(default_factory=dict)
 
-    noted: Mapping[str, List[datetime]] = field(default_factory=dict)
-    warned: Mapping[str, List[datetime]] = field(default_factory=dict)
-    punished: Mapping[str, List[datetime]] = field(default_factory=dict)
+    noted: Mapping[str, list[datetime]] = field(default_factory=dict)
+    warned: Mapping[str, list[datetime]] = field(default_factory=dict)
+    punished: Mapping[str, list[datetime]] = field(default_factory=dict)
 
 
 class PunishStepState(Enum):
@@ -63,7 +64,7 @@ class ActionMethod(Enum):
 class PunishDetails:
     author: str
     message: str = ""
-    discord_audit_url: Optional[HttpUrl] = field(repr=False, default=None)
+    discord_audit_url: HttpUrl | None = field(repr=False, default=None)
     dry_run: bool = False
 
 
@@ -71,7 +72,7 @@ class PunishDetails:
 class Flag:
     id: int
     flag: str
-    comment: Optional[str]
+    comment: str | None
     modified: datetime
 
 
@@ -81,7 +82,7 @@ class PunishPlayer:
     name: str
     squad: str
     team: str
-    flags: List[Flag] = field(default_factory=list)
+    flags: list[Flag] = field(default_factory=list)
     role: str = None
     lvl: int = None
     details: PunishDetails = None
@@ -97,15 +98,15 @@ class PunishPlayer:
 class ASquad:
     team: str
     name: str
-    players: List[PunishPlayer] = field(default_factory=list)
+    players: list[PunishPlayer] = field(default_factory=list)
 
 
 @dataclass
 class PunitionsToApply:
-    warning: List[PunishPlayer] = field(default_factory=list)
-    punish: List[PunishPlayer] = field(default_factory=list)
-    kick: List[PunishPlayer] = field(default_factory=list)
-    squads_state: List[ASquad] = field(default_factory=list)
+    warning: list[PunishPlayer] = field(default_factory=list)
+    punish: list[PunishPlayer] = field(default_factory=list)
+    kick: list[PunishPlayer] = field(default_factory=list)
+    squads_state: list[ASquad] = field(default_factory=list)
 
     def add_squad_state(self, team: str, squad_name: str, squad: dict):
         try:

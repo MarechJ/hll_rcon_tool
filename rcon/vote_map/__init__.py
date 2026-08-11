@@ -7,7 +7,6 @@ loading the RCON, database, and user-configuration layers.
 from importlib import import_module
 from typing import Any
 
-
 _PUBLIC_SYMBOLS = {
     "ActionOutcome": ("rcon.vote_map.service", "ActionOutcome"),
     "ActionResult": ("rcon.vote_map.service", "ActionResult"),

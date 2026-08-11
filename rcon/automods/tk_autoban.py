@@ -9,7 +9,7 @@ from rcon.game_logs import get_recent_logs
 from rcon.logs.loop import on_tk
 from rcon.player_history import get_player_profile, player_has_flag
 from rcon.rcon import Rcon
-from rcon.types import StructuredLogLineWithMetaData, BlacklistRecordWithBlacklistType
+from rcon.types import BlacklistRecordWithBlacklistType, StructuredLogLineWithMetaData
 from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
 
 logger = logging.getLogger(__name__)

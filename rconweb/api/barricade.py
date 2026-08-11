@@ -1,6 +1,6 @@
 import asyncio
 import itertools
-from datetime import datetime
+from datetime import UTC, datetime
 from logging import getLogger
 
 import pydantic
@@ -52,7 +52,7 @@ def ban_player(player_id: str, blacklist_id: int, reason: str):
             reason=reason,
             admin_name="Barricade",
         )
-    except:
+    except: # noqa
         logger.exception("Failed to blacklist player %s", player_id)
         return None
     else:
@@ -64,7 +64,7 @@ def unban_player(record_id: int):
     try:
         remove_record_from_blacklist(record_id=record_id)
         return True
-    except:
+    except: # noqa
         logger.exception("Failed to remove blacklist record #%s", record_id)
         return False
 
@@ -90,7 +90,7 @@ def get_most_recent_session_date():
 
 
 class BarricadeConsumer(AsyncJsonWebsocketConsumer):
-    groups = [GROUP_NAME]
+    groups: list[str]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -98,8 +98,9 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
         self._waiters: dict[int, asyncio.Future] = {}
         self._processing: set[int] = set()
         self._resp_cache = TTLCache(9999, ttl=60)
-        self._last_seen_session = datetime.utcnow()
+        self._last_seen_session = datetime.now(tz=UTC)
         self._scan_players_task = None
+        self.groups = [GROUP_NAME]
 
     async def connect(self):
         logger.info("Accepted connection with Barricade client")
@@ -171,7 +172,7 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
         try:
             # Wait for response
             response: dict | None = await asyncio.wait_for(fut, timeout=10)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error("Barricade did not respond in time to request: %r", request)
             raise
         except BarricadeRequestError as e:
@@ -222,7 +223,7 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
                 response = request.response_ok(result)
 
             except pydantic.ValidationError as e:
-                logger.warn("Failed to validate payload: %s", e)
+                logger.warning("Failed to validate payload: %s", e)
                 response = request.response_error("Failed to validate payload")
             except BarricadeRequestError as e:
                 # These should indicate a client error...
@@ -270,7 +271,7 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
     async def handle_broadcast(self, event):
         try:
             return await self.send_request(event["request_type"], event["payload"])
-        except (asyncio.TimeoutError, BarricadeRequestError):
+        except (TimeoutError, BarricadeRequestError):
             # These are already logged by send_request
             pass
 

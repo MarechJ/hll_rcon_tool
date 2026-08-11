@@ -3,10 +3,10 @@ import os
 import pytest
 
 os.environ["HLL_MAINTENANCE_CONTAINER"] = "1"
+from rcon.maps import Team
 from rcon.models import PlayerID, PlayerSoldier, PlayerStats, calc_weapon_type_usage
 from rcon.player_stats import BaseStats
 from rcon.types import PlayerTeamAssociation, PlayerTeamConfidence
-from rcon.maps import Team
 
 
 class StaticStats(BaseStats):
@@ -57,7 +57,7 @@ def test_persisted_stats_include_profile_platform():
 
 
 def test_detects_no_kills_no_deaths():
-    p = PlayerStats(weapons=dict(), death_by_weapons=dict())
+    p = PlayerStats(weapons={}, death_by_weapons={})
 
     assert p.detect_team() == PlayerTeamAssociation(
         side=Team.UNKNOWN, confidence=PlayerTeamConfidence.STRONG, ratio=0
@@ -74,7 +74,7 @@ def test_detects_no_kills_no_deaths():
     ],
 )
 def test_detects_weapons(weapon, expected):
-    p = PlayerStats(weapons={weapon: 1}, death_by_weapons=dict())
+    p = PlayerStats(weapons={weapon: 1}, death_by_weapons={})
 
     assert p.detect_team() == PlayerTeamAssociation(
         side=expected, confidence=PlayerTeamConfidence.STRONG, ratio=100
@@ -91,7 +91,7 @@ def test_detects_weapons(weapon, expected):
     ],
 )
 def test_detects_death_by_weapon(death, expected):
-    p = PlayerStats(weapons=dict(), death_by_weapons={death: 1})
+    p = PlayerStats(weapons={}, death_by_weapons={death: 1})
 
     assert p.detect_team() == PlayerTeamAssociation(
         side=expected, confidence=PlayerTeamConfidence.STRONG, ratio=100
@@ -119,7 +119,7 @@ def test_multiple_sides():
 
 def test_prefer_more_kills():
     p = PlayerStats(
-        weapons={"M1A1 THOMPSON": 1, "GEWEHR 43": 2}, death_by_weapons=dict()
+        weapons={"M1A1 THOMPSON": 1, "GEWEHR 43": 2}, death_by_weapons={}
     )
 
     assert p.detect_team() == PlayerTeamAssociation(

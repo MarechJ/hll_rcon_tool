@@ -1,6 +1,6 @@
+from collections.abc import Callable
 from inspect import _empty, getdoc, signature, unwrap
 from logging import getLogger
-from typing import Callable
 
 from django.urls import path
 from django.views.decorators.csrf import csrf_exempt
@@ -43,9 +43,7 @@ def get_api_documentation(request):
 
         sig = signature(unwrap(func))
         for k, v in sig.parameters.items():
-            if k == "request":
-                continue
-            elif k == "self":
+            if k == "request" or k == "self":
                 continue
             expanded_args = {
                 "default": _get_empty(v.default),

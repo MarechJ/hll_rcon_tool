@@ -5,8 +5,8 @@ from datetime import UTC, datetime
 from django.views.decorators.csrf import csrf_exempt
 from django_ratelimit.decorators import ratelimit
 
-from rcon.maps import parse_layer
 from rcon.api_commands import get_rcon_api
+from rcon.maps import parse_layer
 from rcon.models import Maps, enter_session
 from rcon.player_stats import LiveStats, get_cached_live_game_stats
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
@@ -36,7 +36,7 @@ def get_live_scoreboard(request):
         }
         error = (None,)
         failed = False
-    except Exception as e:
+    except Exception:
         logger.exception("Unable to produce live stats")
         result = {}
         error = ""
@@ -71,16 +71,16 @@ def get_scoreboard_maps(request):
         for r in res:
             r = r.to_dict()
             maps.append(
-                dict(
-                    map=parse_layer(r["map_name"]),
-                    id=r["id"],
-                    creation_time=r["creation_time"],
-                    start=r["start"],
-                    end=r["end"],
-                    server_number=r["server_number"],
-                    player_stats=r["player_stats"],
-                    result=r["result"],
-                )
+                {
+                    "map": parse_layer(r["map_name"]),
+                    "id": r["id"],
+                    "creation_time": r["creation_time"],
+                    "start": r["start"],
+                    "end": r["end"],
+                    "server_number": r["server_number"],
+                    "player_stats": r["player_stats"],
+                    "result": r["result"],
+                }
             )
 
         return api_response(
@@ -157,7 +157,7 @@ def get_map_scoreboard(request):
 
                 for stats in game["player_stats"]:
                     stats["encounters"] = encounters[stats["player_id"]]
-    except Exception as e:
+    except Exception as e: # noqa
         game = None
         error = repr(e)
         failed = True
@@ -202,15 +202,15 @@ def get_map_history(request):
     res = MapsHistory()[:]
     if data.get("pretty"):
         res = [
-            dict(
-                name=i["name"],
-                start=(
-                    datetime.fromtimestamp(i["start"]).isoformat()
+            {
+                "name": i["name"],
+                "start": (
+                    datetime.fromtimestamp(i["start"], tz=UTC).isoformat()
                     if i["start"]
                     else None
                 ),
-                end=datetime.fromtimestamp(i["end"]).isoformat() if i["end"] else None,
-            )
+                "end": datetime.fromtimestamp(i["end"], tz=UTC).isoformat() if i["end"] else None,
+            }
             for i in res
         ]
     return api_response(
@@ -229,12 +229,12 @@ def get_previous_map(request):
         res = {
             "name": prev_map["name"],
             "start": (
-                datetime.fromtimestamp(prev_map["start"]).isoformat()
+                datetime.fromtimestamp(prev_map["start"], tz=UTC).isoformat()
                 if prev_map["start"]
                 else None
             ),
             "end": (
-                datetime.fromtimestamp(prev_map["end"]).isoformat()
+                datetime.fromtimestamp(prev_map["end"], tz=UTC).isoformat()
                 if prev_map["end"]
                 else None
             ),
@@ -244,7 +244,7 @@ def get_previous_map(request):
     except IndexError:
         return api_response(result=None, command=command_name, failed=False)
     except Exception as e:
-        logger.exception(e)
+        logger.exception(e) # noqa
         return api_response(
             result=None, command=command_name, failed=True, error=str(e)
         )

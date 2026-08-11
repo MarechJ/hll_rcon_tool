@@ -2,9 +2,14 @@ import inspect
 import logging
 import os
 import secrets
-from datetime import UTC, datetime, timedelta, timezone
+from collections.abc import Callable, Iterable, Iterator
+from datetime import UTC, datetime, timedelta
 from itertools import islice
-from typing import Any, Callable, Generic, Iterable, Iterator, Optional, TypeVar, overload
+from typing import (
+    Any,
+    TypeVar,
+    overload,
+)
 
 import hllrcon
 import orjson
@@ -12,9 +17,16 @@ import redis
 import redis.exceptions
 
 from rcon.cache_utils import get_redis_pool
+from rcon.maps import LAYERS, UNKNOWN_MAP_NAME, Environment, Layer, parse_map_string
 from rcon.models import GameLayout
-from rcon.types import GetDetailedPlayer, MapInfo, PlayerInfoType, PlayerStat, PlayerStatsType, StructuredLogLineWithMetaData
-from rcon.maps import Layer, parse_map_string, LAYERS, Environment, UNKNOWN_MAP_NAME
+from rcon.types import (
+    GetDetailedPlayer,
+    MapInfo,
+    PlayerInfoType,
+    PlayerStat,
+    PlayerStatsType,
+    StructuredLogLineWithMetaData,
+)
 
 logger = logging.getLogger("rcon")
 
@@ -35,7 +47,7 @@ INDEFINITE_VIP_DATE = datetime(
     year=3000,
     month=1,
     day=1,
-    tzinfo=timezone.utc,
+    tzinfo=UTC,
 )
 
 
@@ -89,7 +101,7 @@ class StreamNoElements(Exception):
     """Raised when a stream query returns no elements"""
 
 
-class Stream(Generic[T]):
+class Stream[T]:
     def __init__(
         self, key, serializer=orjson.dumps, deserializer=orjson.loads, maxlen=10_000
     ) -> None:
@@ -176,7 +188,6 @@ class Stream(Generic[T]):
         body: dict[bytes, bytes]
         if response:
             body = response[0][1]
-            id_: bytes
             return [
                 (id_.decode(), self._from_compatible_object(obj)) for id_, obj in body
             ]
@@ -220,20 +231,20 @@ class Stream(Generic[T]):
 
     def head(self) -> tuple[StreamID, T] | None:
         try:
-            id_, obj = list(self.range(count=1))[0]
+            id_, obj = next(iter(self.range(count=1)))
             return id_, obj
         except IndexError:
             return None
 
     def tail(self) -> tuple[StreamID, T] | None:
         try:
-            id_, obj = list(self.rev_range(count=1))[0]
+            id_, obj = next(iter(self.rev_range(count=1)))
             return id_, obj
         except IndexError:
             return None
 
 
-class FixedLenList(Generic[T]):
+class FixedLenList[T]:
     def __init__(
         self,
         key: str,
@@ -325,9 +336,9 @@ def logs_deserializer(data: bytes | str) -> StructuredLogLineWithMetaData:
 
     if "event_time" in obj:
         if isinstance(obj["event_time"], (int, float)):
-            obj["event_time"] = datetime.fromtimestamp(obj["event_time"])
+            obj["event_time"] = datetime.fromtimestamp(obj["event_time"], tz=UTC)
         elif isinstance(obj["event_time"], str):
-            obj["event_time"] = datetime.fromisoformat(obj["event_time"])
+            obj["event_time"] = datetime.fromisoformat(obj["event_time"], tz=UTC)
 
     return obj
 
@@ -354,7 +365,7 @@ class MapsHistory(FixedLenList[MapInfo]):
             start=None,
             end=None,
             guessed=True,
-            player_stats=dict(),
+            player_stats={},
             game_layout={"requested": [], "set": []},
             cap_flips=[],
             match_time=0,
@@ -379,7 +390,7 @@ class MapsHistory(FixedLenList[MapInfo]):
             start=ts,
             end=None,
             guessed=guessed,
-            player_stats=dict(),
+            player_stats={},
             game_layout=game_layout,
             cap_flips=[],
             match_time=match_time,
@@ -466,12 +477,12 @@ def dict_differences(old: dict[Any, Any], new: dict[Any, Any]) -> dict[Any, Any]
     """Compare old/new and return a dict of differences by key"""
     diff = {}
     for k, v in old.items():
-        if isinstance(old[k], dict):
-            sub_diff = dict_differences(old[k], new[k])
+        if isinstance(v, dict):
+            sub_diff = dict_differences(v, new[k])
             if sub_diff:
                 diff[k] = sub_diff
         else:
-            if old[k] != new[k]:
+            if v != new[k]:
                 diff[k] = new[k]
 
     return diff
@@ -589,7 +600,7 @@ GAME_LOG_STAT_FIELDS: list[str] = [
     "death_by_weapons",
 ]
 
-TEMP_FIELDS: dict[str, Optional[str]] = {
+TEMP_FIELDS: dict[str, str | None] = {
     "combat": "p_combat",
     "offense": "p_offense",
     "defense": "p_defense",
@@ -602,7 +613,7 @@ TEMP_FIELDS: dict[str, Optional[str]] = {
     "units": None,
 }
 
-def get_temp_default_stats(existing: Optional[PlayerStatsType]) -> PlayerStat:
+def get_temp_default_stats(existing: PlayerStatsType | None) -> PlayerStat:
     """Return temp stat defaults (p_* [shortly for prev] fields reset to 0)."""
     if existing is not None:
         return {
@@ -722,11 +733,15 @@ class SafeStringFormat(dict):
 
 
 class SingletonMeta(type):
-    _instances = {}
+    _instances: dict
+
+    def __init__(cls, name, bases, attrs):
+        cls._instances = {}
+        super().__init__(name, bases, attrs)
 
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
-            cls._instances[cls] = super(SingletonMeta, cls).__call__(*args, **kwargs)
+            cls._instances[cls] = super().__call__(*args, **kwargs)
         return cls._instances[cls]
 
 
@@ -779,7 +794,7 @@ def humanize_timedelta(td: timedelta | datetime | None) -> str:
         return "forever"
 
     if isinstance(td, datetime):
-        td = td - datetime.now(tz=timezone.utc)
+        td = td - datetime.now(tz=UTC)
 
     seconds = int(td.total_seconds())
     if seconds < 0:
@@ -796,31 +811,31 @@ def humanize_timedelta(td: timedelta | datetime | None) -> str:
 
     hours = minutes / 60
     if int(hours) <= 1:
-        return fmt.format(f"an hour")
+        return fmt.format("an hour")
     elif hours < 23.5:
         return fmt.format(f"{int(hours)} hours")
 
     days = hours / 24
     if int(days) <= 1:
-        return fmt.format(f"a day")
+        return fmt.format("a day")
     elif days < 6.9:
         return fmt.format(f"{int(days)} days")
 
     weeks = days / 7
     if int(weeks) <= 1:
-        return fmt.format(f"a week")
+        return fmt.format("a week")
     elif days < 29.9:
         return fmt.format(f"{int(weeks)} weeks")
 
     months = days / 30
     if int(months) <= 1:
-        return fmt.format(f"a month")
+        return fmt.format("a month")
     elif months < 11.95:
         return fmt.format(f"{int(months)} months")
 
     years = days / 365
     if int(years) <= 1:
-        return fmt.format(f"a year")
+        return fmt.format("a year")
     return fmt.format("{} years")
 
 
@@ -843,7 +858,7 @@ def strtobool(val) -> bool:
     elif val in ("n", "no", "f", "false", "off", "0"):
         return False
     else:
-        raise ValueError("invalid truth value %r" % (val,))
+        raise ValueError(f"invalid truth value {val}")
     
 
 def guess_map_from_log(log: StructuredLogLineWithMetaData) -> Layer:
@@ -857,6 +872,6 @@ def guess_map_from_log(log: StructuredLogLineWithMetaData) -> Layer:
             # in most cases when env not provided the env is day
             env = Environment.DAY
         guessed_map = env_to_maps.get(env, maps[0])
-    except:
+    except: # noqa
         guessed_map = LAYERS[UNKNOWN_MAP_NAME]
     return guessed_map

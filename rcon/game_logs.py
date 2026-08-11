@@ -1,7 +1,7 @@
 import datetime
 import logging
-
 import unicodedata
+
 from dateutil import parser
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
@@ -121,29 +121,18 @@ def get_recent_logs(
                         action_filter
                         and inclusive_filter
                         and is_action(action_filter, line["action"], exact_action)
-                    ):
-                        logs.append(line)
-                        break
-                    # Filter out any action in action_filter
-                    elif (
+                    ) or (
                         action_filter
                         and not inclusive_filter
                         and not is_action(action_filter, line["action"], exact_action)
-                    ):
-                        logs.append(line)
-                        break
-                    # Handle action_filter being empty
-                    elif not action_filter:
+                    ) or not action_filter:
                         logs.append(line)
                         break
         elif action_filter:
             # Filter out anything that isn't in action_filter
             if inclusive_filter and is_action(
                 action_filter, line["action"], exact_action
-            ):
-                logs.append(line)
-            # Filter out any action in action_filter
-            elif not inclusive_filter and not is_action(
+            ) or not inclusive_filter and not is_action(
                 action_filter, line["action"], exact_action
             ):
                 logs.append(line)
@@ -216,8 +205,8 @@ def get_historical_logs_records(
     if player_name and not exact_player_match:
         name_filters.extend(
             [
-                LogLine.player1_name.ilike("%{}%".format(player_name)),
-                LogLine.player2_name.ilike("%{}%".format(player_name)),
+                LogLine.player1_name.ilike(f"%{player_name}%"),
+                LogLine.player2_name.ilike(f"%{player_name}%"),
             ]
         )
     elif player_name and exact_player_match:

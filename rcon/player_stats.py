@@ -4,8 +4,9 @@ import os
 import pickle
 import re
 import time
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
-from typing import Callable, Iterable, Mapping, TypeAlias, TypedDict
+from typing import TypeAlias, TypedDict
 
 from hllrcon.data.teams import Team
 
@@ -631,8 +632,8 @@ def live_stats_loop():
     last_loop_game = datetime.datetime(year=2020, month=1, day=1)
     live_session_sleep_seconds = config.live_stats_refresh_seconds
     live_game_sleep_seconds = config.live_stats_refresh_seconds
-    logger.debug("live_session_sleep_seconds: {}".format(live_session_sleep_seconds))
-    logger.debug("live_game_sleep_seconds: {}".format(live_game_sleep_seconds))
+    logger.debug(f"live_session_sleep_seconds: {live_session_sleep_seconds}")
+    logger.debug(f"live_game_sleep_seconds: {live_game_sleep_seconds}")
     red = get_redis_client()
 
     while True:

@@ -1,9 +1,9 @@
 import logging
 import re
+from collections.abc import Iterable
 from functools import cached_property
-from typing import Iterable, TypedDict, NotRequired, Optional
+from typing import TypedDict
 
-from django.template.defaultfilters import title
 from pydantic import BaseModel, Field, field_validator
 
 from rcon.types import MessageVariable, MessageVariableContext

@@ -64,7 +64,7 @@ def test_ban_excluded_weapon(*args):
         mock.patch("rcon.automods.tk_autoban.Rcon") as rcon,
         mock.patch(
             "rcon.automods.tk_autoban.get_recent_logs", return_value={"logs": logs}
-        ) as get,
+        ),
     ):
         rcon.get_vips_ids = mock.MagicMock(return_value=[])
         auto_ban_if_tks_right_after_connection(rcon, tk_log)
@@ -78,7 +78,7 @@ def test_ban_success(*args):
     tk_log: StructuredLogLineWithMetaData = {
         "version": 1,
         "timestamp_ms": 1612695641000,
-        "event_time": datetime.datetime.fromtimestamp(1612695641),
+        "event_time": datetime.datetime.fromtimestamp(1612695641, tz=datetime.UTC),
         "action": "TEAM KILL",
         "player_name_1": "[ARC] DYDSO ★ツ",
         "player_id_1": "76561198091327692",
@@ -273,7 +273,7 @@ def test_ban_count_one_death(*args):
     tk_log: StructuredLogLineWithMetaData = {
         "version": 1,
         "timestamp_ms": 1612695641000,
-        "event_time": datetime.datetime.fromtimestamp(1612695641),
+        "event_time": datetime.datetime.fromtimestamp(1612695641, tz=datetime.UTC),
         "action": "TEAM KILL",
         "player_name_1": "[ARC] DYDSO ★ツ",
         "player_id_1": "76561198091327692",

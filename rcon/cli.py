@@ -3,12 +3,12 @@ import json
 import logging
 import sys
 from datetime import datetime, timedelta
-from typing import Any, Set, Type
+from typing import Any
 
 import click
 import pydantic
 from sqlalchemy import func as pg_func
-from sqlalchemy import select, text, update
+from sqlalchemy import select, text
 
 import rcon.expiring_vips.service
 import rcon.seed_vip.service
@@ -18,7 +18,7 @@ import rcon.watch_killrate
 from rcon import auto_settings, broadcast, routines
 from rcon.automods import automod
 from rcon.blacklist import BlacklistCommandHandler
-from rcon.cache_utils import RedisCached, get_redis_client, get_redis_pool, invalidates
+from rcon.cache_utils import RedisCached, get_redis_pool, invalidates
 from rcon.discord_chat import get_handler
 from rcon.logs.loop import LogLoop, load_generic_hooks
 from rcon.logs.recorder import LogRecorder
@@ -321,7 +321,7 @@ def get_user_setting(server: int, output: click.Path, output_server=None):
         dump[auto_settings_output_key] = auto_settings_model
 
     with open(str(output), "w") as fp:
-        fp.write((json.dumps(dump, indent=2)))
+        fp.write(json.dumps(dump, indent=2))
 
     print("Done")
 
@@ -346,7 +346,7 @@ def set_user_settings(server: int, input: click.Path, dry_run=True):
     if dry_run:
         print(f"{dry_run=} validating models only, not setting")
 
-    config_models: dict[str, Type[BaseUserConfig]] = {
+    config_models: dict[str, type[BaseUserConfig]] = {
         rcon.user_config.utils.USER_CONFIG_KEY_FORMAT.format(
             server=server, cls_name=model.__name__
         ): model
@@ -369,7 +369,7 @@ def set_user_settings(server: int, input: click.Path, dry_run=True):
             logger.error(f"{key} not an allowed key, no changes made.")
             sys.exit(-1)
 
-    parsed_models: list[tuple[Type[BaseUserConfig], BaseUserConfig]] = []
+    parsed_models: list[tuple[type[BaseUserConfig], BaseUserConfig]] = []
     model: BaseUserConfig
     for key, payload in user_settings.items():
         if key == auto_settings_key:
@@ -414,7 +414,7 @@ def reset_user_settings(server: int):
         AutoSettingsConfig().reset_settings(sess)
         sess.commit()
 
-    models: list[Type[BaseUserConfig]] = [
+    models: list[type[BaseUserConfig]] = [
         model
         for model in rcon.user_config.utils.all_subclasses(BaseUserConfig)
         if model.__name__ not in _models_to_exclude()
@@ -432,7 +432,7 @@ def reset_user_settings(server: int):
 
 
 def _merge_duplicate_player_ids(existing_ids: set[str] | None = None):
-    logger.info(f"Merging duplicate player ID records")
+    logger.info("Merging duplicate player ID records")
     players = {}
 
     with enter_session() as session:
@@ -555,7 +555,7 @@ def _merge_duplicate_player_ids(existing_ids: set[str] | None = None):
             session.execute(
                 text("DELETE FROM steam_id_64 WHERE id = ANY(:ids)"), {"ids": ids}
             )
-    logger.info(f"Duplicate player ID merge complete")
+    logger.info("Duplicate player ID merge complete")
 
 
 @cli.command(name="merge_duplicate_player_ids")
@@ -568,7 +568,7 @@ def convert_win_player_ids():
     player_ids_to_merge: set[str] = set()
     updated = 0
     with enter_session() as session:
-        logger.info(f"Converting old style windows store player IDs to new style")
+        logger.info("Converting old style windows store player IDs to new style")
         old_style_stmt = select(PlayerID).filter(PlayerID.player_id.like("%-%"))
         old_style_rows = session.execute(old_style_stmt).scalars()
 
@@ -622,7 +622,7 @@ def clear_maps_cache():
 
 
 PREFIXES_TO_EXPOSE = ["get_", "set_", "do_"]
-EXCLUDED: Set[str] = {"set_map_rotation", "connection_pool"}
+EXCLUDED: set[str] = {"set_map_rotation", "connection_pool"}
 
 # For this to work correctly with click it has to be at the top level of the module and ran on import
 ctl = get_rcon()

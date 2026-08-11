@@ -1,10 +1,10 @@
 import os
-from datetime import datetime
+from datetime import UTC, datetime
 
-from django.http import Http404, HttpResponse
-
-from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import user_passes_test
+from django.http import Http404, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+
 from .auth import login_required
 from .decorators import require_http_methods
 
@@ -39,7 +39,7 @@ def list_logs(request, path=""):
                     "name": entry.name,
                     "is_dir": entry.is_dir(),
                     "size": stats.st_size,
-                    "mtime": datetime.fromtimestamp(stats.st_mtime),
+                    "mtime": datetime.fromtimestamp(stats.st_mtime, tz=UTC),
                 }
             )
 
@@ -56,7 +56,7 @@ def list_logs(request, path=""):
         html += f"<b>{'Name':<55} {'Size':>12} {'Last Modified':>21}</b><hr>"
 
         if path:
-            html += f"<span class='l'><a href='..'>../</a></span>\n"
+            html += "<span class='l'><a href='..'>../</a></span>\n"
 
         for item in items:
             suffix = "/" if item["is_dir"] else ""
@@ -67,5 +67,5 @@ def list_logs(request, path=""):
 
         html += "</pre><hr></body></html>"
         return HttpResponse(html)
-    except Exception as e:
+    except Exception as e: # noqa
         return HttpResponse(f"Error accessing logs: {e}", status=500)

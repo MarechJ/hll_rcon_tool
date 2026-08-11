@@ -1,7 +1,6 @@
 import os
 import re
 import socket
-import colorlog
 from logging.config import dictConfig
 from subprocess import PIPE, run
 

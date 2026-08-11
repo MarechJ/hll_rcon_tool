@@ -1,6 +1,5 @@
-import re
 from logging import getLogger
-from typing import Final
+
 from rcon.steam_utils import is_steam_id_64
 
 logger = getLogger(__name__)

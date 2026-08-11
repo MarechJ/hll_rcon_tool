@@ -157,7 +157,7 @@ class AdminPingWebhooksUserConfig(BaseMentionWebhookUserConfig):
         for v in vs:
             processed_words.add(v.lower().strip())
 
-        return sorted(list(processed_words))
+        return sorted(processed_words)
 
     @staticmethod
     def save_to_db(values: AdminPingWebhookType, dry_run=False) -> None:

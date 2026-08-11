@@ -1,5 +1,6 @@
 import re
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from rcon.message_variables import format_message_string, populate_message_variables
 from rcon.types import MessageVariableContext
@@ -64,17 +65,14 @@ def max_arg_index(p: Any) -> int:
     if isinstance(p, list):
         for v in p:
             a = max_arg_index(v)
-            if a > max_count:
-                max_count = a
+            max_count = max(max_count, a)
     elif isinstance(p, str):
         for a in ARG_RE.findall(p):
-            if int(a) > max_count:
-                max_count = int(a)
+            max_count = max(max_count, int(a))
     elif isinstance(p, dict):
         for k in p:
             v = p[k]
             a = max_arg_index(v)
-            if a > max_count:
-                max_count = a
+            max_count = max(max_count, a)
 
     return max_count

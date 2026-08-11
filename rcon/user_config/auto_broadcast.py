@@ -1,5 +1,6 @@
 import re
-from typing import ClassVar, Iterable, TypedDict
+from collections.abc import Iterable
+from typing import ClassVar, TypedDict
 
 from pydantic import BaseModel, Field, field_validator
 

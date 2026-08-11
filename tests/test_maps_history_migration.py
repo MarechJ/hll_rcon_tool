@@ -17,7 +17,6 @@ from rcon.cache_migrations.maps_history import (
 )
 from rcon.types import MapInfo, PlayerStat
 
-
 LEGACY_MAP_VALUE = {
     "name": "stmariedumont_off_us",
     "start": 1786038619,

@@ -63,7 +63,7 @@ def require_http_methods(request_method_list: list[str]):
     return decorator
 
 
-def require_content_type(content_type_list: list[str] = None):
+def require_content_type(content_type_list: list[str] | None = None):
     """
     Logs API invocations with a wrong or missing content type header.
     This decorator may reject requests that do not have one of the required content types.
@@ -78,18 +78,11 @@ def require_content_type(content_type_list: list[str] = None):
         def inner(request, *args, **kwargs):
             if request.content_type is None or request.content_type == "":
                 logger.info(
-                    "MissingContentType: %s %s was called without a Content-Type header"
-                    % (request.method, request.path)
+                    f"MissingContentType: {request.method} {request.path} was called without a Content-Type header"
                 )
             elif request.content_type not in content_type_list:
                 logger.info(
-                    "InvalidContentType: %s %s was called with %s, expected one of %s"
-                    % (
-                        request.method,
-                        request.path,
-                        request.content_type,
-                        ",".join(content_type_list),
-                    )
+                    f"InvalidContentType: {request.method} {request.path} was called with {request.content_type}, expected one of {",".join(content_type_list)}"
                 )
             return func(request, *args, **kwargs)
 

@@ -1,11 +1,11 @@
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
+from collections.abc import Iterable, Sequence
+from datetime import UTC, datetime, timedelta
 from logging import getLogger
-from typing import Iterable, Sequence
-
-from humanize import naturaldelta, naturaltime
 
 import discord
+from humanize import naturaldelta, naturaltime
+
 from rcon.api_commands import RconAPI
 from rcon.seed_vip.models import (
     BaseCondition,
@@ -134,7 +134,7 @@ def make_seed_announcement_embed(
     logger.debug(f"{num_allied_players=} {num_axis_players=}")
 
     embed = discord.Embed(title=message)
-    embed.timestamp = datetime.now(tz=timezone.utc)
+    embed.timestamp = datetime.now(tz=UTC)
     embed.add_field(name="Current Map", value=current_map)
     embed.add_field(name="Time Remaining", value=time_remaining)
     embed.add_field(

@@ -1,11 +1,11 @@
 import re
+from collections.abc import Iterable, Sequence
 from enum import Enum
 from logging import getLogger
-from typing import TYPE_CHECKING, Any, Iterable, Literal, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Any, Literal
 
 import pydantic
 import typing_extensions
-from typing_extensions import Literal
 
 logger = getLogger(__name__)
 
@@ -189,7 +189,7 @@ class Layer(pydantic.BaseModel):
     id: str
     map: Map
     game_mode: GameMode
-    attackers: Union[Team, None] = None
+    attackers: Team | None = None
     environment: Environment = Environment.DAY
 
     def __str__(self) -> str:
@@ -1671,7 +1671,7 @@ def safe_get_map_name(map_name: str, pretty: bool = True) -> str:
 def is_server_loading_map(map_name: str) -> bool:
     return "untitled" in map_name.lower()
 
-def get_all_layers_by_map(map: Map, game_mode: Optional[GameMode] = None, team: Optional[Team] = None) -> set[Layer]:
+def get_all_layers_by_map(map: Map, game_mode: GameMode | None = None, team: Team | None = None) -> set[Layer]:
     if game_mode:
         return {
             layer

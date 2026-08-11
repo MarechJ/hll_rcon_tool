@@ -3,26 +3,27 @@ import logging
 import random
 import re
 import time
+from collections.abc import Iterable, Sequence
 from concurrent.futures import ThreadPoolExecutor
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from functools import cached_property
 from itertools import chain
-from typing import Any, Iterable, List, Literal, Optional, Sequence, overload
+from typing import Literal, Optional, overload
 
 from dateutil import parser
 
-from rcon.connection import HLLCommandError
 import rcon.steam_utils
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import HLLCommandFailedError, ServerCtl, VipId
+from rcon.connection import HLLCommandError
 from rcon.maps import UNKNOWN_MAP_NAME, Layer, is_server_loading_map, parse_layer
-from rcon.models import PlayerID, PlayerVIP, enter_session, GameLayout
+from rcon.models import GameLayout, PlayerID, PlayerVIP, enter_session
 from rcon.perf_statistics import PerformanceStatistics
 from rcon.player_history import (
+    get_player_profile,
     get_profiles,
     safe_save_player_action,
     save_player,
-    get_player_profile,
 )
 from rcon.settings import SERVER_INFO
 from rcon.types import (
@@ -57,7 +58,6 @@ from rcon.utils import (
     get_server_number,
     parse_raw_player_info,
 )
-from hllrcon import Faction
 
 PLAYER_ID = "player_id"
 NAME = "name"
@@ -145,7 +145,7 @@ def do_run_commands(rcon, commands):
             else:
                 # Non user config settings
                 rcon.__getattribute__(command)(**params)
-        except AttributeError as e:
+        except AttributeError:
             logger.exception(
                 "%s is not a valid command, double check the name!", command
             )
@@ -258,17 +258,17 @@ class Rcon(ServerCtl):
         }
         # can't pickle dict keys object
         steam_profiles = rcon.steam_utils.get_steam_profiles_mult_players(
-            steam_id_64s=[k for k in player_ids.keys()]
+            steam_id_64s=[k for k in player_ids]
         )
 
         vip_player_ids = set(v[PLAYER_ID] for v in super().get_vip_ids())
         profiles = {
             p[PLAYER_ID]: p
-            for p in get_profiles([player_id for player_id in player_ids.keys()])
+            for p in get_profiles([player_id for player_id in player_ids])
         }
 
         players: dict[str, GetPlayersType] = {}
-        for player_id in player_ids.keys():
+        for player_id in player_ids:
             profile = steam_profiles.get(player_id)
             players[player_id] = {
                 NAME: player_ids[player_id]["name"],
@@ -285,13 +285,13 @@ class Rcon(ServerCtl):
         try:
             current_map_start = MapsHistory()[0]["start"]
             if not current_map_start:
-                current_map_start = datetime.now(timezone.utc).timestamp()
+                current_map_start = datetime.now(UTC).timestamp()
         except IndexError:
             logger.error("No maps information available")
-            current_map_start = datetime.now(timezone.utc).timestamp()
+            current_map_start = datetime.now(UTC).timestamp()
 
         map_time_seconds = int(
-            datetime.now(timezone.utc).timestamp() - current_map_start
+            datetime.now(UTC).timestamp() - current_map_start
         )
 
         players = self.get_players()
@@ -1274,7 +1274,7 @@ class Rcon(ServerCtl):
 
     # TODO: Repeat above map rotation-related commands for the map sequence
 
-    def get_objective_rows(self) -> List[List[str]]:
+    def get_objective_rows(self) -> list[list[str]]:
         return super().get_objective_rows()
 
     def set_game_layout(
@@ -1523,7 +1523,7 @@ class Rcon(ServerCtl):
     def split_raw_log_lines(raw_logs: list[str]) -> Iterable[tuple[str, str, str]]:
         """Split raw game server logs into the relative time, timestamp and content"""
         for raw_log in raw_logs:
-            log = re.match(r"^(\[.+? \((\d+)\)\]) ([\w\W]*)$", raw_log, flags=re.M)
+            log = re.match(r"^(\[.+? \((\d+)\)\]) ([\w\W]*)$", raw_log, flags=re.MULTILINE)
             if log is None:
                 logger.error(f"Unable to parse log line: '{raw_log}'")
                 continue

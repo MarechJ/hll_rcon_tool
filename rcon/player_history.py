@@ -19,9 +19,9 @@ from rcon.models import (
     PlayerFlag,
     PlayerID,
     PlayerName,
-    PlayerSoldier,
     PlayersAction,
     PlayerSession,
+    PlayerSoldier,
     SteamInfo,
     WatchList,
     enter_session,
@@ -180,7 +180,7 @@ def get_players_by_appearance(
         )
 
         if player_id:
-            query = query.filter(PlayerID.player_id.ilike("%{}%".format(player_id)))
+            query = query.filter(PlayerID.player_id.ilike(f"%{player_id}%"))
 
         if player_name:
             soldier_name = PlayerName.name
@@ -194,9 +194,9 @@ def get_players_by_appearance(
                     .join(PlayerID.account)
                     .filter(
                         or_(
-                            soldier_name.ilike("%{}%".format(player_name)),
+                            soldier_name.ilike(f"%{player_name}%"),
                             account_name.isnot(None)
-                            & account_name.ilike("%{}%".format(player_name)),
+                            & account_name.ilike(f"%{player_name}%"),
                         )
                     )
                 )
@@ -386,7 +386,7 @@ def safe_save_player_action(
 ):
     try:
         return save_player_action(action_type, player_id, player_name, by, reason)
-    except Exception as e:
+    except Exception:
         logger.exception(
             "Failed to record player action: %s %s", action_type, player_name
         )

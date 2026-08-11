@@ -2,7 +2,6 @@
 
 from typing import Final
 
-
 VOTEMAP_SCHEMA_VERSION: Final = 1
 
 

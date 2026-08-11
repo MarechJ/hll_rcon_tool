@@ -1,8 +1,7 @@
 from datetime import datetime, timedelta
-from typing import List
 
 
-def is_time(times: List[datetime], interval_seconds: int):
+def is_time(times: list[datetime], interval_seconds: int):
     try:
         last_time = times[-1]
     except IndexError:

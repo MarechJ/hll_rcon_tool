@@ -1,5 +1,4 @@
 import json
-from functools import wraps
 from logging import getLogger
 from typing import Any
 
@@ -34,7 +33,7 @@ def _get_data(request: HttpRequest) -> dict[Any, Any] | Any:
         # for instance without this api/get_recent_logs?filter_action=KILL&filter_action=CHAT
         # otherwise it would result in: filter_action = 'CHAT'
         # rather than: filter_action = ['KILL', 'CHAT']
-        for key in request.GET.keys():
+        for key in request.GET:
             v = request.GET.getlist(key)
             if len(v) == 1:
                 v = v[0]
@@ -54,13 +53,6 @@ def _get_data(request: HttpRequest) -> dict[Any, Any] | Any:
         return _convert_player_id_to_string(data)
 
 
-def allow_csv(endpoint):
-    @wraps(endpoint)
-    def wrapper(request, *args, **kwargs):
-        to_csv = _get_data(request).get("to_csv")
-        res = endpoint(request, *args, **kwargs)
-
-
 # TODO: this isn't used anywhere
 def audit(func_name, request, arguments):
     dont_audit = ["get_"]
@@ -75,7 +67,7 @@ def audit(func_name, request, arguments):
             pass
         arguments = " ".join([f"{k}: `{v}`" for k, v in args.items()])
         send_to_discord_audit(
-            "`{}`: {}".format(func_name, arguments), request.user.username
+            f"`{func_name}`: {arguments}", request.user.username
         )
-    except:
+    except: # noqa
         logger.exception("Can't send audit log")

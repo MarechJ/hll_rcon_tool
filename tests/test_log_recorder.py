@@ -1,11 +1,11 @@
 import datetime
+from datetime import UTC
 
 import pytest
 from sqlalchemy.orm import Session
 
 from rcon.logs.recorder import LogRecorder
-from rcon.models import LogLine, enter_session, PlayerID
-
+from rcon.models import LogLine, PlayerID, enter_session
 
 first_player_id = "76561198091327692"
 second_player_id = "76561198133214514"
@@ -36,7 +36,7 @@ class TestLogRecorder:
                 {
                     "version": 1,
                     "timestamp_ms": 1612695641000,
-                    "event_time": datetime.datetime.fromtimestamp(1612695641),
+                    "event_time": datetime.datetime.fromtimestamp(1612695641, tz=UTC),
                     "action": "TEAM KILL",
                     "player_name_1": "[ARC] DYDSO ★ツ",
                     "player_id_1": first_player_id,
@@ -65,7 +65,7 @@ class TestLogRecorder:
             {
                 "version": 1,
                 "timestamp_ms": 1612695641000,
-                "event_time": datetime.datetime.fromtimestamp(1612695641),
+                "event_time": datetime.datetime.fromtimestamp(1612695641, tz=UTC),
                 "action": "TEAM KILL",
                 "player_name_1": "[ARC] DYDSO ★ツ",
                 "player_id_1": first_player_id,
@@ -94,16 +94,16 @@ class TestLogRecorder:
             res = sess.query(LogLine).all()
             assert len(res) == 2
             assert res[0].type == "TEAM KILL"
-            assert res[0].event_time == datetime.datetime.fromtimestamp(1612695641)
+            assert res[0].event_time == datetime.datetime.fromtimestamp(1612695641, tz=UTC)
             assert res[1].type == "KILL"
-            assert res[1].event_time == datetime.datetime.fromtimestamp(1612695641)
+            assert res[1].event_time == datetime.datetime.fromtimestamp(1612695641, tz=UTC)
 
     def test_no_duplicate_records(self, log_recorder):
         logs = [
             {
                 "version": 1,
                 "timestamp_ms": 1612695641000,
-                "event_time": datetime.datetime.fromtimestamp(1612695641),
+                "event_time": datetime.datetime.fromtimestamp(1612695641, tz=UTC),
                 "action": "TEAM KILL",
                 "player_name_1": "[ARC] DYDSO ★ツ",
                 "player_id_1": first_player_id,

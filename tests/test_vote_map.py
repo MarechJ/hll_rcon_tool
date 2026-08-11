@@ -1,12 +1,21 @@
-from datetime import datetime
+from datetime import UTC, datetime
+from unittest.mock import MagicMock, patch
+
 import pytest
 from fakeredis import FakeStrictRedis
-from unittest.mock import MagicMock, patch
+
 from rcon import maps
+from rcon.maps import LAYERS, MAPS, Environment, GameMode, Layer, Team
+from rcon.types import PlayerProfileType, PlayerVIPType
 from rcon.user_config.vote_map import DefaultMethods
-from rcon.vote_map import InvalidVoteError, PlayerChoiceNotAllowed, PlayerVoteNotAllowed, VoteMap, VoteMapException, VoteMapUserConfig
-from rcon.maps import LAYERS, MAPS, Environment, Layer, GameMode, Team
-from rcon.types import PlayerProfileType
+from rcon.vote_map import (
+    InvalidVoteError,
+    PlayerChoiceNotAllowed,
+    PlayerVoteNotAllowed,
+    VoteMap,
+    VoteMapException,
+    VoteMapUserConfig,
+)
 
 ALL_MAPS = list(LAYERS.values())
 
@@ -164,7 +173,7 @@ def mock_maps_history():
     CAR_NIGHT - 0x\n
     OTHER - 1x
     """
-    now = int(datetime.now().timestamp())
+    now = int(datetime.now(tz=UTC).timestamp())
     minus_hour = lambda n=1: now - (60 * 60 * n)
 
     history = [
@@ -261,13 +270,13 @@ def votemap_flags(
 
 # Helper to mock player profile
 def mock_player_profile(
-    player_id: str, player_name: str, flags: list[str] | None = [], vips=[]
+    player_id: str, player_name: str, flags: list[str] | None = None, vips: list[PlayerVIPType] | None = None
 ) -> PlayerProfileType:
     return {
         "player_id": player_id,
         "names": [{"name": player_name}],
-        "flags": [{ "flag": flag } for flag in flags],
-        "vips": vips,
+        "flags": [{ "flag": flag } for flag in flags or []],
+        "vips": vips or [],
     }
 
 
@@ -295,7 +304,7 @@ def test_add_map_to_whitelist(votemap):
 
 def test_add_duplicate_map_to_whitelist(votemap):
     """Test adding a duplicate map to the whitelist does nothing"""
-    map = list(votemap.get_map_whitelist())[0]
+    map = next(votemap.get_map_whitelist())
     original_length = len(votemap.get_map_whitelist())
     votemap.add_map_to_whitelist(map)  # Add duplicate
     assert map in votemap.get_map_whitelist()
@@ -304,13 +313,13 @@ def test_add_duplicate_map_to_whitelist(votemap):
 
 def test_add_invalid_map_to_whitelist(votemap):
     """Test adding map with invalid id to the whitelist raises error"""
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         votemap.add_map_to_whitelist(INVALID_MAP)
 
 
 def test_set_invalid_maps_to_whitelist(votemap):
     """Test adding maps with invalid id to the whitelist raises error"""
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         whitelist = votemap.get_map_whitelist()
         whitelist.add(INVALID_MAP)
         votemap.add_maps_to_whitelist(whitelist)
@@ -371,7 +380,7 @@ def test_register_vote(votemap):
     entry = (
         votemap.get_selection().index(selected_map) + 1
     )  # selection starts from 1
-    votemap.register_vote(player, int(datetime.now().timestamp()), entry)
+    votemap.register_vote(player, int(datetime.now(tz=UTC).timestamp()), entry)
     votes = votemap.get_votes()
     assert len(votes) == 1
     vote = votemap.get_vote(player["player_id"])
@@ -385,7 +394,7 @@ def test_register_vote(votemap):
 def test_remove_winning_map_from_selection_reapplies_results(votemap, mock_rcon):
     player = mock_player_profile("123456", "player_1")
     votemap.set_selection([HUR_WARFARE_DAY, UTAH_WARFARE_DAY])
-    votemap.register_vote(player, int(datetime.now().timestamp()), 1)
+    votemap.register_vote(player, int(datetime.now(tz=UTC).timestamp()), 1)
 
     assert votemap.get_next_map() == HUR_WARFARE_DAY
 
@@ -401,10 +410,10 @@ def test_register_vote_invalid_entry(votemap):
     votemap.set_selection(selection)
     entry = 0  # without player choice the selection starts from 1
     with pytest.raises(InvalidVoteError):
-        votemap.register_vote(player, int(datetime.now().timestamp()), entry)
+        votemap.register_vote(player, int(datetime.now(tz=UTC).timestamp()), entry)
     entry = len(selection) + 1  # the entry range should be between 1 and len(selection)
     with pytest.raises(InvalidVoteError):
-        votemap.register_vote(player, int(datetime.now().timestamp()), entry)
+        votemap.register_vote(player, int(datetime.now(tz=UTC).timestamp()), entry)
 
 def test_register_vote_match_highest_value_without_vip(votemap_flags):
     player = mock_player_profile("123456", "player_1", flags=["🔨", "❤️"])
@@ -414,7 +423,7 @@ def test_register_vote_match_highest_value_without_vip(votemap_flags):
     entry = (
         votemap_flags.get_selection().index(selected_map) + 1
     )
-    votemap_flags.register_vote(player, int(datetime.now().timestamp()), entry)
+    votemap_flags.register_vote(player, int(datetime.now(tz=UTC).timestamp()), entry)
     vote = votemap_flags.get_vote(player["player_id"])
     assert vote["vote_count"] == 4
 
@@ -426,7 +435,7 @@ def test_register_vote_match_highest_value_with_vip(votemap_flags):
     entry = (
         votemap_flags.get_selection().index(selected_map) + 1
     )
-    votemap_flags.register_vote(player, int(datetime.now().timestamp()), entry)
+    votemap_flags.register_vote(player, int(datetime.now(tz=UTC).timestamp()), entry)
     vote = votemap_flags.get_vote(player["player_id"])
     assert vote["vote_count"] == 69
 
@@ -439,7 +448,7 @@ def test_player_banned_from_voting_based_on_vote_ban_flag(votemap_flags):
         votemap_flags.get_selection().index(selected_map) + 1
     )
     with pytest.raises(PlayerVoteNotAllowed):
-        votemap_flags.register_vote(player, int(datetime.now().timestamp()), entry)
+        votemap_flags.register_vote(player, int(datetime.now(tz=UTC).timestamp()), entry)
 
 
 def test_player_not_allowed_register_player_choice(votemap_flags):
@@ -469,7 +478,7 @@ def test_player_can_register_player_choice_when_everyone_allowed(votemap):
     selection = votemap.get_selection()
     assert len(selection) == 4
     assert selection[0] == selected_map
-    
+
 def test_player_fails_to_register_player_choice_again(votemap):
     player = mock_player_profile("123456", "player_1")
     selection = [HUR_WARFARE_DAY, CAR_OFF_AXIS, CAR_SKIRMISH_DAY]

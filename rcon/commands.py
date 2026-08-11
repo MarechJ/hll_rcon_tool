@@ -1,15 +1,18 @@
-from datetime import timedelta
 import logging
 import threading
 import time
+from collections.abc import Generator, Sequence
 from contextlib import contextmanager, nullcontext
+from datetime import timedelta
 from functools import wraps
-from typing import Generator, Literal, Sequence, Any, List
+from typing import Any, Literal
 
-from rcon.connection import HLLCommandError, HLLConnection, Handle, Response
-from rcon.maps import LAYERS, MAPS, UNKNOWN_MAP_NAME, Environment, GameMode, LayerType
+from rcon.connection import Handle, HLLCommandError, HLLConnection, Response
+from rcon.maps import LAYERS, UNKNOWN_MAP_NAME, GameMode
 from rcon.perf_statistics import PerformanceStatistics
 from rcon.types import (
+    AdminType,
+    GameStateType,
     MapRotationResponse,
     MapSequenceResponse,
     PlayerInfoType,
@@ -17,8 +20,6 @@ from rcon.types import (
     ServerInfoType,
     SlotsType,
     VipId,
-    GameStateType,
-    AdminType,
 )
 from rcon.utils import exception_in_chain
 
@@ -56,7 +57,6 @@ def _escape_params(func):
 class HLLCommandFailedError(Exception):
     """Raised when a command fails"""
 
-    pass
 
 
 class HLLBrokenConnectionError(Exception):
@@ -746,7 +746,7 @@ class ServerCtl:
 
         return self.get_objective_rows()[row]
 
-    def get_objective_rows(self) -> List[List[str]]:
+    def get_objective_rows(self) -> list[list[str]]:
         details = self.exchange("GetClientReferenceData", 2, "SetSectorLayout")
         parameters = details.content_dict["dialogueParameters"]
         if not parameters or not all(

@@ -3,12 +3,25 @@ import os
 import re
 import sys
 from collections import defaultdict
+from collections.abc import Generator, Sequence
 from contextlib import contextmanager
-from datetime import datetime, timezone
-from typing import Any, Generator, List, Literal, Optional, Sequence, overload
+from datetime import UTC, datetime
+from typing import Any, Literal, Optional, overload
 
 import pydantic
-from sqlalchemy import TIMESTAMP, Enum, ForeignKey, String, create_engine, select, text, JSON, Engine, NullPool, Pool
+from sqlalchemy import (
+    JSON,
+    TIMESTAMP,
+    Engine,
+    Enum,
+    ForeignKey,
+    NullPool,
+    Pool,
+    String,
+    create_engine,
+    select,
+    text,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -26,10 +39,6 @@ from sqlalchemy.schema import UniqueConstraint
 from rcon.maps import Team
 from rcon.types import (
     AuditLogType,
-    GetDetailedPlayer,
-    MapResult,
-    MapScore,
-    MessageTemplateType,
     BlacklistRecordType,
     BlacklistRecordWithBlacklistType,
     BlacklistRecordWithPlayerType,
@@ -37,7 +46,12 @@ from rcon.types import (
     BlacklistType,
     BlacklistWithRecordsType,
     DBLogLineType,
+    GameLayout,
+    GetDetailedPlayer,
+    MapScore,
     MapsType,
+    MessageTemplateCategory,
+    MessageTemplateType,
     PenaltyCountType,
     PlayerAccountType,
     PlayerActionState,
@@ -51,15 +65,16 @@ from rcon.types import (
     PlayerSessionType,
     PlayerSoldierType,
     PlayerStatsType,
+    PlayerTeamAssociation,
+    PlayerTeamConfidence,
     PlayerVIPType,
-    UnitHistoryEntry,
     ServerCountType,
     SteamBansType,
     SteamInfoType,
     SteamPlayerSummaryType,
     StructuredLogLineWithMetaData,
+    UnitHistoryEntry,
     WatchListType,
-    MessageTemplateCategory, PlayerTeamAssociation, PlayerTeamConfidence, GameLayout,
 )
 from rcon.utils import (
     SafeStringFormat,
@@ -68,7 +83,7 @@ from rcon.utils import (
     mask_to_server_numbers,
     server_numbers_to_mask,
 )
-from rcon.weapons import WEAPON_SIDE_MAP, ALL_WEAPONS, WeaponType
+from rcon.weapons import ALL_WEAPONS, WEAPON_SIDE_MAP, WeaponType
 
 logger = logging.getLogger(__name__)
 
@@ -281,8 +296,8 @@ class PlayerSoldier(Base):
 
     updated: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True),
-        default=lambda: datetime.now(tz=timezone.utc),
-        onupdate=lambda: datetime.now(tz=timezone.utc)
+        default=lambda: datetime.now(tz=UTC),
+        onupdate=lambda: datetime.now(tz=UTC)
     )
 
     @classmethod
@@ -317,8 +332,7 @@ class PlayerSoldier(Base):
             profile.platform = player["platform"]
             profile.clan_tag = player["clan_tag"]
             
-            if player["level"] > profile.level:
-                profile.level = player["level"]
+            profile.level = max(profile.level, player["level"])
             
             sess.commit()
 
@@ -408,8 +422,8 @@ class PlayerAccount(Base):
     
     updated: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True),
-        default=lambda: datetime.now(tz=timezone.utc),
-        onupdate=lambda: datetime.now(tz=timezone.utc)
+        default=lambda: datetime.now(tz=UTC),
+        onupdate=lambda: datetime.now(tz=UTC)
     )
 
     @classmethod
@@ -773,8 +787,8 @@ class Maps(Base):
         return {
             "id": self.id,
             "creation_time": self.creation_time,
-            "start": self.start.replace(tzinfo=timezone.utc),
-            "end": self.end.replace(tzinfo=timezone.utc),
+            "start": self.start.replace(tzinfo=UTC),
+            "end": self.end.replace(tzinfo=UTC),
             "server_number": self.server_number,
             "map_name": self.map_name,
             "result": (
@@ -1109,13 +1123,13 @@ class Blacklist(Base):
     sync: Mapped[BlacklistSyncMethod] = mapped_column(
         Enum(BlacklistSyncMethod), default=BlacklistSyncMethod.KICK_ONLY
     )
-    servers: Mapped[Optional[int]]
+    servers: Mapped[int | None]
 
     records: Mapped[list["BlacklistRecord"]] = relationship(
         back_populates="blacklist", cascade="all, delete"
     )
 
-    def get_server_numbers(self) -> Optional[set[int]]:
+    def get_server_numbers(self) -> set[int] | None:
         if self.servers is None:
             return None
 
@@ -1159,9 +1173,9 @@ class BlacklistRecord(Base):
     reason: Mapped[str]
     admin_name: Mapped[str]
     created_at: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True), default=lambda: datetime.now(tz=timezone.utc)
+        TIMESTAMP(timezone=True), default=lambda: datetime.now(tz=UTC)
     )
-    expires_at: Mapped[Optional[datetime]] = mapped_column(TIMESTAMP(timezone=True))
+    expires_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
 
     player_id_id: Mapped[int] = mapped_column(
         ForeignKey("steam_id_64.id"), nullable=False, index=True
@@ -1176,12 +1190,12 @@ class BlacklistRecord(Base):
     def expires_in(self):
         if not self.expires_at:
             return None
-        return self.expires_at - datetime.now(tz=timezone.utc)
+        return self.expires_at - datetime.now(tz=UTC)
 
     def is_expired(self):
         if not self.expires_at:
             return None
-        return self.expires_at <= datetime.now(tz=timezone.utc)
+        return self.expires_at <= datetime.now(tz=UTC)
 
     def get_formatted_reason(self):
         variables = {
@@ -1289,8 +1303,8 @@ class LogLineWebHookField(pydantic.BaseModel):
     """
 
     url: str
-    mentions: Optional[List[str]] = []
-    servers: List[str] = []
+    mentions: list[str] | None = []
+    servers: list[str] = []
 
     @pydantic.field_validator("mentions")
     def valid_role(cls, values):

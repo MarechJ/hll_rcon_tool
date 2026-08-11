@@ -4,7 +4,7 @@ import os
 import random
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 from logging import getLogger
 from typing import TypedDict
@@ -13,10 +13,10 @@ import httpx
 import orjson
 import pydantic
 import redis
+import redis.exceptions
 from discord_webhook import AsyncDiscordWebhook, DiscordWebhookDict
 from pydantic import BaseModel, Field
 
-import redis.exceptions
 from rcon.cache_utils import construct_redis_url, get_redis_client
 from rcon.utils import get_server_number
 
@@ -65,7 +65,7 @@ except (ValueError, TypeError):
     LOCAL_RL_RESET_AFTER = 3
 
 try:
-    LOCAL_RL_REQUESTS_PER = int(os.getenv("HLL_WH_SERVICE_RL_REQUESTS_PER", 5))
+    LOCAL_RL_REQUESTS_PER = int(os.getenv("HLL_WH_SERVICE_RL_REQUESTS_PER", "5"))
 except (ValueError, TypeError):
     LOCAL_RL_REQUESTS_PER = 5
 
@@ -239,7 +239,7 @@ class WebhookMessage(BaseModel):
     )
 
     sent_at: datetime = Field(
-        default_factory=lambda: datetime.now(tz=timezone.utc),
+        default_factory=lambda: datetime.now(tz=UTC),
         description="The original UTC time the message was attempted to be sent",
     )
     retry_attempts: int = Field(
@@ -287,7 +287,7 @@ def update_bucket_rate_limit(
     hash_name = f"{prefix}:{webhook_type}:{bucket_id}"
     # We can set this to whatever; we're just counting the number of hash entries
     # but using the timestamp should make it unique
-    key = str(datetime.now().timestamp())
+    key = str(datetime.now(tz=UTC).timestamp())
     value = "1"
     red.hset(hash_name, key, value)
     red.hexpire(hash_name, reset_seconds, key)
@@ -344,7 +344,7 @@ def get_global_rate_limit_reset_after(red: redis.StrictRedis) -> datetime | None
 
     try:
         raw: bytes = red.get(GLOBAL_RATE_LIMIT_RESET_AFTER)  # type: ignore
-        limit = datetime.fromtimestamp(float(raw.decode()))
+        limit = datetime.fromtimestamp(float(raw.decode()), tz=UTC)
     except (AttributeError, TypeError) as e:
         logger.debug("Unable to parse the global rate limit reset after time: %s", e)
 
@@ -353,7 +353,7 @@ def get_global_rate_limit_reset_after(red: redis.StrictRedis) -> datetime | None
 
 def set_global_rate_limit_reset_after(red: redis.StrictRedis, limit: float) -> None:
     """Set the timestamp the global rate limit expires in Redis"""
-    seconds = limit - datetime.now().timestamp()
+    seconds = limit - datetime.now(tz=UTC).timestamp()
     if seconds > 0:
         pipe = red.pipeline()
         pipe.set(GLOBAL_RATE_LIMIT_RESET_AFTER, limit)
@@ -417,7 +417,6 @@ def get_bucket_lock(
     """Get the lock for a rate limit bucket"""
     bucket_data = get_rate_limit_bucket_data(red=red, bucket_id=bucket_id)
 
-    global _RATE_LIMIT_BUCKETS
     return bucket_data, _RATE_LIMIT_BUCKETS[bucket_id]
 
 
@@ -426,7 +425,6 @@ def set_bucket_data(
 ) -> None:
     """Set the bucket data and lock using the bucket ID"""
     logger.debug("Updating bucket data: %s", bucket)
-    global _RATE_LIMIT_BUCKETS
 
     if bucket.id:
         _RATE_LIMIT_BUCKETS[bucket.id] = lock
@@ -466,9 +464,9 @@ def get_webhook_error(
     key = f"{prefix}:{webhook_type}:{webhook_id}"
     raw: dict[bytes, int] = red.hgetall(key)  # type: ignore
     values: DiscordErrorResponse = {
-        "http_401": True if raw.get(b"http_401") == b"1" else False,
-        "http_403": True if raw.get(b"http_403") == b"1" else False,
-        "http_404": True if raw.get(b"http_404") == b"1" else False,
+        "http_401": raw.get(b"http_401") == b"1",
+        "http_403": raw.get(b"http_403") == b"1",
+        "http_404": raw.get(b"http_404") == b"1",
     }
     return values
 
@@ -535,7 +533,7 @@ def enqueue_message(
         red = get_redis_client(redis_url=url, decode_responses=False, global_pool=True)
 
     if not isinstance(message, WebhookMessage):
-        raise ValueError(f"{message} must be a WebhookMessage instance")
+        raise TypeError(f"{message} must be a WebhookMessage instance")
 
     # Because we use lists; each type of message gets its own queue so that we can
     # more efficiently purge types of messages (for instance all kill log lines)
@@ -603,9 +601,9 @@ async def dequeue_message(
         # If we somehow get a `None` message; log it and return gracefully
         try:
             message = unpack_message(raw_message=raw_message)
-        except orjson.JSONDecodeError as e:
+        except orjson.JSONDecodeError:
             logger.error(f"{raw_message=} {queue_id=} {bucket_data}")
-            logger.exception(e)
+            logger.exception("decode error")
             return
 
         wh = construct_webhook(
@@ -668,7 +666,7 @@ async def dequeue_message(
         bucket_data.remaining_requests = int(res.headers[X_RATELIMIT_REMAINING])
         bucket_data.reset_after_secs = int(res.headers[X_RATELIMIT_RESET_AFTER])
         bucket_data.reset_timestamp = math.ceil(
-            datetime.now().timestamp() + bucket_data.reset_after_secs
+            datetime.now(tz=UTC).timestamp() + bucket_data.reset_after_secs
         )
 
         if lock == get_shared_lock():
@@ -701,13 +699,13 @@ async def dequeue_message(
                 discord_message = body.get("message")
                 logger.warning(
                     "Your IP is currently globally rate limited by discord: Retrying after %s, %s",
-                    datetime.now() + timedelta(seconds=retry_after_secs),
+                    datetime.now(tz=UTC) + timedelta(seconds=retry_after_secs),
                     discord_message,
                 )
                 set_global_rate_limit_reset_after(
                     red=red,
                     limit=(
-                        datetime.now() + timedelta(seconds=math.ceil(retry_after_secs))
+                        datetime.now(tz=UTC) + timedelta(seconds=math.ceil(retry_after_secs))
                     ).timestamp(),
                 )
 
@@ -716,7 +714,7 @@ async def dequeue_message(
                 res.status_code,
                 wh.webhook_id,
                 message.webhook_type,
-                datetime.fromtimestamp(bucket_data.reset_timestamp),
+                datetime.fromtimestamp(bucket_data.reset_timestamp, tz=UTC),
             )
 
             if not message.discardable:
@@ -778,8 +776,8 @@ async def dequeue_message(
                 lock=lock,
             )
             logger.debug("finished with %s", lock)
-        except pydantic.ValidationError as e:
-            logger.exception(e)
+        except pydantic.ValidationError:
+            logger.exception("validation error")
 
 
 def get_all_queue_keys(
@@ -1128,7 +1126,7 @@ async def main():
                     logger.debug("%s locked", lock)
                     await asyncio.sleep(HLL_WH_LOOP_SLEEP_TIME)
                     continue
-                ts = int(datetime.now(tz=timezone.utc).timestamp())
+                ts = int(datetime.now(tz=UTC).timestamp())
 
                 # Even with Discords headers, and using a local rate limit, I still have issues with
                 # hooks getting rate limited during testing, if we rate limit a bucket, pad it an extra

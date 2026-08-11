@@ -1,8 +1,7 @@
-from typing import Optional, TypedDict
+from typing import Annotated, TypedDict
 
 from pydantic import BaseModel, BeforeValidator, Field, HttpUrl, field_serializer
 from pydantic.functional_validators import BeforeValidator
-from typing_extensions import Annotated
 
 from rcon.types import Roles
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
@@ -26,7 +25,7 @@ class RoleType(TypedDict):
 class AutoModLevelType(TypedDict):
     enabled: bool
     dry_run: bool
-    discord_webhook_url: Optional[HttpUrl]
+    discord_webhook_url: HttpUrl | None
 
     whitelist_flags: list[str]
     dont_do_anything_below_this_number_of_players: int
@@ -94,7 +93,7 @@ class AutoModLevelUserConfig(BaseUserConfig):
         title="Dry-Run",
         description="If checked and if the Level Automod is enabled, no actions are done to the players. You can observe what actions the Automod would've done in the audit logs",
     )
-    discord_webhook_url: Optional[HttpUrl] = Field(
+    discord_webhook_url: HttpUrl | None = Field(
         default=None,
         title="Discord Webhook URL",
         description="A webhook URL for a Discord channel to write audit messages (what the Automod did) to",

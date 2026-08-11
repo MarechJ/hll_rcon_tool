@@ -326,7 +326,7 @@ for w in [*US_WEAPONS.keys(), *SOVIET_WEAPONS.keys(), *BRITISH_WEAPONS.keys()]:
         continue
     WEAPON_SIDE_MAP[w] = Team.ALLIES
 
-for w in AXIS_WEAPONS.keys():
+for w in AXIS_WEAPONS:
     if w in NO_SIDE_WEAPONS:
         continue
     WEAPON_SIDE_MAP[w] = Team.AXIS

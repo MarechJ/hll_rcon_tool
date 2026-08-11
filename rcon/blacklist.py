@@ -1,9 +1,10 @@
 import logging
 import os
 import struct
-from datetime import datetime, timedelta, timezone
+from collections.abc import Sequence
+from datetime import UTC, datetime, timedelta
 from enum import IntEnum, auto
-from typing import Literal, Sequence, overload
+from typing import Literal, overload
 
 import orjson
 import redis
@@ -320,7 +321,7 @@ def get_highest_priority_record(records: Sequence[BlacklistRecord]):
 
 def round_timedelta_to_hours(td: timedelta | datetime):
     if isinstance(td, datetime):
-        td = td - datetime.now(tz=timezone.utc)
+        td = td - datetime.now(tz=UTC)
     return max(round(td.total_seconds() / (60 * 60)), 1)
 
 
@@ -608,7 +609,7 @@ def edit_record_from_blacklist(
                 )
             )
 
-        current_time = datetime.now(tz=timezone.utc)
+        current_time = datetime.now(tz=UTC)
         # temp ban -> perma ban
         if old_record["expires_at"] and not new_record["expires_at"]:
             update_penalty_count(
@@ -622,15 +623,7 @@ def edit_record_from_blacklist(
             not old_record["expires_at"]
             and new_record["expires_at"]
             and new_record["expires_at"] > current_time
-        ):
-            update_penalty_count(
-                player_id=record.player.player_id,
-                player_names=player_names,
-                action=PlayerActionState.TEMPBAN,
-                admin_name=new_record["admin_name"],
-            )
-        # temp ban -> different duration temp ban that isn't already expired
-        elif (
+        ) or (
             old_record["expires_at"]
             and new_record["expires_at"]
             and new_record["expires_at"] > current_time
@@ -815,7 +808,7 @@ def blacklist_or_ban(
             player_id=player_id,
             reason=reason,
             duration_hours=round_timedelta_to_hours(
-                expires_at - datetime.now(tz=timezone.utc)
+                expires_at - datetime.now(tz=UTC)
             ),
             by=admin_name,
         )
@@ -832,7 +825,7 @@ def expire_all_player_blacklists(player_id: str):
         )
 
         if records:
-            expire_time = datetime.now(tz=timezone.utc)
+            expire_time = datetime.now(tz=UTC)
             server_mask = 0
 
             for record in records:

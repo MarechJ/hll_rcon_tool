@@ -2,9 +2,10 @@ import pathlib
 import sys
 import time
 from collections import defaultdict
+from collections.abc import Generator
 from contextlib import contextmanager
-from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Generator, TypedDict
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, TypedDict
 from urllib.parse import urljoin
 
 from discord_webhook import DiscordEmbed, DiscordWebhook
@@ -39,7 +40,7 @@ if TYPE_CHECKING:
 
 from logging import getLogger
 
-from sqlalchemy import Engine, create_engine, select
+from sqlalchemy import Engine
 
 logger = getLogger(__name__)
 
@@ -216,7 +217,7 @@ def get_map_image_url(config: ScoreboardUserConfig, gamestate: GameStateType):
     try:
         image_name = gamestate["current_map"]["image_name"]
         url = urljoin(str(config.public_scoreboard_url), f"maps/{image_name}")
-    except (IndexError, KeyError, TypeError) as e:
+    except (IndexError, KeyError, TypeError):
         url = urljoin(
             str(config.public_scoreboard_url), f"maps/{UNKNOWN_MAP_NAME}.webp"
         )
@@ -306,7 +307,7 @@ def build_header_gamestate_embed(
         embed.set_image(url=url)
 
     embed.set_footer(text=f"{short_name} - {config.footer_last_refreshed_text}")
-    embed.set_timestamp(datetime.now(tz=timezone.utc))
+    embed.set_timestamp(datetime.now(tz=UTC))
 
     return embed
 
@@ -359,7 +360,7 @@ def build_map_rotation_embed(
         embed.add_embed_field(name="", value="\n".join(description))
 
     embed.set_footer(text=f"{short_name} - {config.footer_last_refreshed_text}")
-    embed.set_timestamp(datetime.now(tz=timezone.utc))
+    embed.set_timestamp(datetime.now(tz=UTC))
     return embed
 
 
@@ -405,7 +406,7 @@ def build_player_stats_embed(
             )
 
     embed.set_footer(text=f"{short_name} - {config.footer_last_refreshed_text}")
-    embed.set_timestamp(datetime.now(tz=timezone.utc))
+    embed.set_timestamp(datetime.now(tz=UTC))
     return embed
 
 

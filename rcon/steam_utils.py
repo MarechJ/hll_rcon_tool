@@ -1,10 +1,10 @@
 import datetime
 import logging
-import math
 import time
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from functools import wraps
-from typing import Any, Iterable, Sequence
+from typing import Any
 
 import steam.exceptions
 from sqlalchemy import or_, select

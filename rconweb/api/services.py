@@ -46,7 +46,7 @@ def get_services(request):
     try:
         processes = client.supervisor.getAllProcessInfo()
         result = [dict(info=info.get(p["name"], ""), **p) for p in processes]
-    except:
+    except: # noqa
         if os.getenv("DJANGO_DEBUG"):
             result = []
         else:
@@ -105,7 +105,7 @@ def do_service(request):
             command_name=f"service {action}",
             by=request.user.username,
         )
-    except CannotSendRequest as e:
+    except CannotSendRequest:
         error = "Service request already sent"
         logger.info(f"{error=}")
     except Fault as e:

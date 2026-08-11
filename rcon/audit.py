@@ -1,6 +1,5 @@
 import json
 import logging
-from typing import List
 
 from redis import BlockingConnectionPool, Redis
 
@@ -43,7 +42,7 @@ def heartbeat(username, player_id, timeout=120):
 # This exists only no to create a weird interdependancy / tight coupling with the API layer.
 # Ideally we'd extract the services (i.e. broadcast, logs_event, etc) in a separated package, and let them
 # use a service account to talk the the API.
-def set_registered_mods(moderators_name_steamids: List[tuple]):
+def set_registered_mods(moderators_name_steamids: list[tuple]):
     red = _red()
 
     logger.warning("Registering mods: %s", moderators_name_steamids)

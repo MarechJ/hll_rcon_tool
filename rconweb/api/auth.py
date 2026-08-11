@@ -2,10 +2,10 @@ import csv
 import datetime
 import json
 import logging
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from functools import wraps
-from typing import Any, Sequence
-from django_ratelimit.decorators import ratelimit
+from typing import Any
 
 import orjson
 import pydantic
@@ -19,13 +19,13 @@ from django.core.exceptions import PermissionDenied
 from django.db.models.signals import post_delete, post_save
 from django.http import HttpResponse, QueryDict, parse_cookie
 from django.views.decorators.csrf import csrf_exempt
-
-from rcon.audit import heartbeat, set_registered_mods
-from rcon.cache_utils import ttl_cache, invalidates
-from rcon.types import DjangoGroup, DjangoPermission, DjangoUserPermissions
-from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
+from django_ratelimit.decorators import ratelimit
 from rconweb.settings import SECRET_KEY, TAG_VERSION
 
+from rcon.audit import heartbeat, set_registered_mods
+from rcon.cache_utils import invalidates, ttl_cache
+from rcon.types import DjangoGroup, DjangoPermission, DjangoUserPermissions
+from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 
 from .decorators import require_content_type, require_http_methods
 from .models import DjangoAPIKey, SteamPlayer
@@ -164,7 +164,7 @@ class RconJsonResponse(HttpResponse):
         elif isinstance(o, set):
             return [val for val in sorted(o)]
         else:
-            raise ValueError(f"Cannot serialize {o}, {type(o)} to JSON")
+            raise TypeError(f"Cannot serialize {o}, {type(o)} to JSON")
 
     def __init__(self, data, **kwargs):
         data = orjson.dumps(
@@ -179,7 +179,7 @@ class RconJsonResponse(HttpResponse):
 def api_response(*args, **kwargs):
     status_code = kwargs.pop("status_code", 200)
     return RconJsonResponse(
-        RconResponse(version=TAG_VERSION, *args, **kwargs).to_dict(), status=status_code
+        RconResponse(version=TAG_VERSION, *args, **kwargs).to_dict(), status=status_code # noqa
     )
 
 
@@ -189,7 +189,7 @@ def api_csv_response(content, name, header):
     response = HttpResponse(
         content_type="text/csv",
     )
-    response["Content-Disposition"] = 'attachment; filename="%s"' % name
+    response["Content-Disposition"] = f'attachment; filename="{name}"'
 
     writer = csv.DictWriter(response, fieldnames=header, dialect="excel")
     writer.writerow({k: k for k in header})
@@ -247,16 +247,16 @@ def is_logged_in(request):
             player_id = None
             try:
                 player_id = request.user.steamplayer.steam_id_64
-            except:
+            except: # noqa
                 logger.warning("%s's player ID is not set", request.user.username)
             try:
                 heartbeat(request.user.username, player_id)
-            except:
+            except: # noqa
                 logger.exception("Unable to register mods")
-        except:
+        except: # noqa
             logger.exception("Can't record heartbeat")
 
-    res = dict(authenticated=is_auth)
+    res = {"authenticated": is_auth}
     return api_response(result=res, command="is_logged_in", failed=False)
 
 
@@ -314,7 +314,7 @@ def login_required():
 
             try:
                 return func(request, *args, **kwargs)
-            except PermissionDenied as e:
+            except PermissionDenied:
                 return api_response(
                     command=request.path,
                     error="You do not have the required permissions to use this",
@@ -333,9 +333,7 @@ def login_required():
 
 
 def staff_required(request):
-    if request.user.is_authenticated and request.user.is_staff:
-        return True
-    return False
+    return request.user.is_authenticated and request.user.is_staff
 
 
 def stats_login_required(func):
@@ -395,7 +393,7 @@ def get_own_user_permissions(request):
     ]
     try:
         player_id = request.user.steamplayer.steam_id_64
-    except SteamPlayer.DoesNotExist as e:
+    except SteamPlayer.DoesNotExist:
         logger.info(f"{request.user} does not have a player ID set on the admin site")
         player_id = None
 

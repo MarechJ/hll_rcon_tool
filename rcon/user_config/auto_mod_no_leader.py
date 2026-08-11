@@ -1,4 +1,4 @@
-from typing import Optional, TypedDict
+from typing import TypedDict
 
 from pydantic import Field, HttpUrl, field_serializer, field_validator
 
@@ -13,7 +13,7 @@ KICK_MESSAGE = "Your Squad ({squad_name}) must have an officer.\nYour grace peri
 class AutoModNoLeaderType(TypedDict):
     enabled: bool
     dry_run: bool
-    discord_webhook_url: Optional[HttpUrl]
+    discord_webhook_url: HttpUrl | None
 
     whitelist_flags: list[str]
     immune_roles: list[Roles]
@@ -51,7 +51,7 @@ class AutoModNoLeaderUserConfig(BaseUserConfig):
         title="Dry-Run",
         description="If checked and if the Automod is enabled, no actions are done to the players. You can observe what actions the Automod would've done in the audit logs",
     )
-    discord_webhook_url: Optional[HttpUrl] = Field(
+    discord_webhook_url: HttpUrl | None = Field(
         default=None,
         title="Discord Webhook URL",
         description="A webhook URL for a Discord channel to write audit messages (what the Automod did) to",

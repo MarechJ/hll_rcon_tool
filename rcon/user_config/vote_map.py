@@ -1,6 +1,8 @@
 import enum
 from typing import TypedDict
-from pydantic import Field, BaseModel
+
+from pydantic import BaseModel, Field
+
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
 

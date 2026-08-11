@@ -248,12 +248,6 @@ def describe_rcon_server_settings_config(request):
 def describe_scoreboard_config(request):
     command_name = "describe_scoreboard_config"
 
-    try:
-        config = ScoreboardUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
     return api_response(
         result=ScoreboardUserConfig.model_json_schema(),
         command=command_name,
@@ -316,7 +310,7 @@ def get_all_standard_message_config(request):
     try:
         res = get_all_message_types(as_dict=True)
     except Exception as e:
-        logger.exception(e)
+        logger.exception(e) # noqa
         return api_response(command=command_name, error=str(e), failed=True)
 
     return api_response(
@@ -486,11 +480,10 @@ def describe_log_stream_config(request):
 def get_all_discord_webhooks_config(request):
     command_name = "get_all_discord_webhooks"
 
-    error_msg = None
     try:
         hooks = get_all_hook_types(as_dict=True)
         return api_response(result=hooks, command=command_name, failed=False)
-    except Exception as e:
+    except Exception as e: # noqa
         error_msg = str(e)
         return api_response(command=command_name, error=error_msg)
 

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from logging import getLogger
 from unittest import mock
 
@@ -34,10 +34,12 @@ logger = getLogger(__name__)
 
 class MockRconServerSettingsUserConfig:
     def __init__(
-        self, short_name="", discord_invite_url=HttpUrl("http://example.com")
+        self,
+        short_name="",
+        discord_invite_url: HttpUrl | None = None,
     ) -> None:
         self.short_name = short_name
-        self.discord_invite_url = discord_invite_url
+        self.discord_invite_url = discord_invite_url or HttpUrl("http://example.com")
 
 
 class MockAdminPingWebhooksUserConfig:
@@ -294,8 +296,8 @@ def test_chat_commands_hook_command_words(
 
     struct_log: StructuredLogLineWithMetaData = {
         "version": 1,
-        "timestamp_ms": int(datetime.now().timestamp()),
-        "event_time": datetime.now(),
+        "timestamp_ms": int(datetime.now(tz=UTC).timestamp()),
+        "event_time": datetime.now(tz=UTC),
         "relative_time_ms": None,
         "line_without_time": "",
         "raw": "",
@@ -418,8 +420,8 @@ def test_chat_commands_hook_help_words(
 
     struct_log: StructuredLogLineWithMetaData = {
         "version": 1,
-        "timestamp_ms": int(datetime.now().timestamp()),
-        "event_time": datetime.now(),
+        "timestamp_ms": int(datetime.now(tz=UTC).timestamp()),
+        "event_time": datetime.now(tz=UTC),
         "relative_time_ms": None,
         "line_without_time": "",
         "raw": "",
@@ -487,8 +489,8 @@ def test_chat_commands_hook_description_words(
 
     struct_log: StructuredLogLineWithMetaData = {
         "version": 1,
-        "timestamp_ms": int(datetime.now().timestamp()),
-        "event_time": datetime.now(),
+        "timestamp_ms": int(datetime.now(tz=UTC).timestamp()),
+        "event_time": datetime.now(tz=UTC),
         "relative_time_ms": None,
         "line_without_time": "",
         "raw": "",
@@ -533,7 +535,7 @@ def test_message_formatting(format_str, context, expected):
     assert format_message_string(format_str, context) == expected
 
 
-@pytest.mark.parametrize("message", [("{unknown}")])
+@pytest.mark.parametrize("message", ["{unknown}"])
 def test_invalid_message_variable_raises(message):
     with pytest.raises(pydantic.ValidationError):
         ChatCommandsUserConfig(
@@ -541,7 +543,7 @@ def test_invalid_message_variable_raises(message):
         )
 
 
-@pytest.mark.parametrize("message", [("{vip_expiration}")])
+@pytest.mark.parametrize("message", ["{vip_expiration}"])
 def test_valid_message_variable_does_not_raise(message):
     ChatCommandsUserConfig(
         command_words=[ChatCommand(message=message)],
@@ -582,7 +584,5 @@ def test_is_description_word(words, description_words, expected):
     ],
 )
 def test_format_winning_map(winning_maps, expected) -> None:
-    with (
-        mock.patch("rcon.rcon.Rcon", autospec=True) as ctl,
-    ):
+    with (mock.patch("rcon.rcon.Rcon", autospec=True) as ctl,):
         assert format_winning_map(ctl=ctl, winning_maps=winning_maps) == expected

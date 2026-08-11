@@ -2,21 +2,21 @@ import json
 import logging
 import re
 import shlex
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from functools import wraps
 from typing import Final
 
+from discord.utils import escape_markdown
 from discord_webhook import DiscordEmbed
 
-import rcon.steam_utils as steam_utils
-from discord.utils import escape_markdown
+from rcon import steam_utils
 from rcon.arguments import max_arg_index, replace_params
 from rcon.blacklist import (
     apply_blacklist_punishment,
     blacklist_or_ban,
     is_player_blacklisted,
 )
-from rcon.cache_utils import invalidates, get_redis_client
+from rcon.cache_utils import get_redis_client, invalidates
 from rcon.commands import HLLCommandFailedError
 from rcon.discord import get_prepared_discord_hooks, send_to_discord_audit
 from rcon.logs.loop import (
@@ -29,9 +29,8 @@ from rcon.logs.loop import (
 )
 from rcon.maps import UNKNOWN_MAP_NAME, GameMode, parse_layer
 from rcon.message_variables import format_message_string, populate_message_variables
-from rcon.models import PlayerID, PlayerSoldier, enter_session, GameLayout
+from rcon.models import GameLayout, PlayerID, PlayerSoldier, enter_session
 from rcon.player_history import (
-    _get_set_player,
     get_player,
     save_end_player_session,
     save_player,
@@ -69,8 +68,8 @@ from rcon.utils import DefaultStringFormat, MapsHistory, guess_map_from_log
 from rcon.vote_map import VoteMap
 from rcon.workers import (
     get_queue,
-    save_missing_match_logs_worker,
     record_stats_worker,
+    save_missing_match_logs_worker,
     temporary_broadcast,
     temporary_welcome,
     update_player_steaminfo_on_connect_worker,
@@ -210,8 +209,7 @@ def chat_rcon_command(
         for _, params in command.commands.items():
             for _, v in params.items():
                 a = max_arg_index(v)
-                if a > expected_argument_count:
-                    expected_argument_count = a
+                expected_argument_count = max(expected_argument_count, a)
         if len(args) != expected_argument_count:
             logger.info(
                 "provided message does not have expected number of arguments. Expected %d, got %d. Message: %s, Command: %s",
@@ -332,7 +330,6 @@ def handle_new_match_start(rcon: Rcon, struct_log):
                 }
         except Exception as e:
             logger.error("Could not fetch Game Layout", e)
-            pass
         maps_history.save_new_map(
             new_map=str(map_to_save),
             guessed=guessed,
@@ -482,7 +479,7 @@ def ban_if_has_vac_bans(rcon: Rcon, player_id: str, name: str):
             )
             if config.auto_expire:
                 days_until_expire = max_days_since_ban - days_since_last_ban
-                expires_at = datetime.now(tz=timezone.utc) + timedelta(
+                expires_at = datetime.now(tz=UTC) + timedelta(
                     days=days_until_expire
                 )
             else:

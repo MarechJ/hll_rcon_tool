@@ -50,7 +50,7 @@ def get_auto_settings(request):
     return api_response(
         result=ordered_config,
         command="get_auto_settings",
-        arguments=dict(server_number=server_number),
+        arguments={"server_number": server_number},
         failed=False,
     )
 
@@ -118,6 +118,6 @@ def set_auto_settings(request):
     return api_response(
         result=settings,
         command=command_name,
-        arguments=dict(server_number=server_number, restart_service=do_restart_service),
+        arguments={"server_number": server_number, "restart_service": do_restart_service},
         failed=False,
     )

@@ -2,15 +2,13 @@ import datetime
 import logging
 import os
 from collections import defaultdict
-from typing import Dict, List
+from datetime import UTC
 
 from dateutil import parser, relativedelta
 from django import forms
 from django.http import HttpResponse
-from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
-from rcon.commands import HLLCommandFailedError
 from rcon.discord import send_to_discord_audit
 from rcon.models import PlayerID, PlayerVIP, enter_session
 from rcon.steam_utils import is_steam_id_64
@@ -63,7 +61,7 @@ def upload_vips(request):
                         name = " ".join(name_chunks)
                         try:
                             expiration_timestamp = parser.parse(possible_timestamp)
-                        except:
+                        except: # noqa
                             logger.warning(
                                 f"#{idx} Unable to parse {possible_timestamp=} for {name=} {player_id=}"
                             )
@@ -86,7 +84,7 @@ def upload_vips(request):
                 except UnicodeDecodeError:
                     errors.append("File encoding is not supported. Must use UTF8")
                     break
-                except Exception as e:
+                except Exception as e: # noqa
                     errors.append(f"#{idx} Error on line {line}: {e}")
     else:
         return api_response(error="Bad method", status_code=400)
@@ -125,11 +123,11 @@ def upload_vips_result(request):
 @require_http_methods(["GET"])
 def download_vips(request):
     vips = rcon_api.get_vip_ids()
-    vip_lines: List[str]
+    vip_lines: list[str]
 
     # Treating anyone without an explicit expiration date as having indefinite VIP access
-    expiration_lookup: Dict[str, datetime.datetime] = defaultdict(
-        lambda: datetime.datetime.utcnow() + relativedelta.relativedelta(years=200)
+    expiration_lookup: dict[str, datetime.datetime] = defaultdict(
+        lambda: datetime.datetime.now(tz=UTC) + relativedelta.relativedelta(years=200)
     )
     with enter_session() as session:
         players = (
@@ -152,6 +150,6 @@ def download_vips(request):
     )
 
     response["Content-Disposition"] = (
-        f"attachment; filename={datetime.datetime.now().isoformat()}_vips.txt"
+        f"attachment; filename={datetime.datetime.now(tz=UTC).isoformat()}_vips.txt"
     )
     return response

@@ -1,12 +1,12 @@
 import sys
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from logging import getLogger
 from time import sleep
 
+import discord
 import humanize
 
-import discord
 from rcon.api_commands import get_rcon_api
 from rcon.seed_vip.utils import (
     calc_vip_expiration_timestamp,
@@ -109,7 +109,7 @@ def run():
 
             # Server seeded
             if is_seeding and is_seeded(config=config, gamestate=gamestate):
-                seeded_timestamp = datetime.now(tz=timezone.utc)
+                seeded_timestamp = datetime.now(tz=UTC)
                 logger.info(f"Server seeded at {seeded_timestamp.isoformat()}")
                 # Use the full VIP list for logic so offline VIPs are respected
                 all_vips = get_vips(rcon=rcon_api)
@@ -127,7 +127,7 @@ def run():
                     lambda: calc_vip_expiration_timestamp(
                         config=config,
                         expiration=None,
-                        from_time=seeded_timestamp or datetime.now(tz=timezone.utc),
+                        from_time=seeded_timestamp or datetime.now(tz=UTC),
                     )
                 )
                 for player in all_vips.values():
@@ -197,7 +197,7 @@ def run():
             ):
                 delta: timedelta | None = None
                 if seeded_timestamp:
-                    delta = datetime.now(tz=timezone.utc) - seeded_timestamp
+                    delta = datetime.now(tz=UTC) - seeded_timestamp
 
                 if not seeded_timestamp:
                     logger.debug(
@@ -250,7 +250,7 @@ def run():
                         num_axis_players=gamestate["num_axis_players"],
                     )
                     if next_player_bucket == config.player_announce_thresholds[-1]:
-                        logger.debug(f"setting last_bucket_announced=True")
+                        logger.debug("setting last_bucket_announced=True")
                         last_bucket_announced = True
 
                     if embed:

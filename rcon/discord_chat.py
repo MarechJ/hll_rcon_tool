@@ -1,13 +1,12 @@
 import logging
 import re
+from collections.abc import Iterable
 from datetime import datetime
 from functools import lru_cache
-from typing import Iterable
-
-from discord_webhook import DiscordEmbed, DiscordWebhook
 
 import discord.utils
-from rcon.utils import get_server_number
+from discord_webhook import DiscordEmbed, DiscordWebhook
+
 from rcon.cache_utils import ttl_cache
 from rcon.discord import make_hook
 from rcon.logs.loop import on_chat, on_kill, on_tk
@@ -19,11 +18,12 @@ from rcon.user_config.webhooks import (
     DiscordWebhook,
     KillsWebhooksUserConfig,
 )
+from rcon.utils import get_server_number
 from rcon.webhook_service import (
-    enqueue_message,
     WebhookMessage,
-    WebhookType,
     WebhookMessageType,
+    WebhookType,
+    enqueue_message,
 )
 
 STEAM_PROFILE_URL = "http://steamcommunity.com/profiles/{id64}"

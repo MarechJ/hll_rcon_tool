@@ -5,8 +5,6 @@ from typing import TypedDict
 import pydantic
 from pydantic import Field
 
-import discord
-
 logger = getLogger(__name__)
 
 from rcon.user_config.utils import BaseUserConfig, _listType, key_check, set_user_config

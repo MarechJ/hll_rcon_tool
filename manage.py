@@ -11,7 +11,7 @@ def _get_missing_env(keys, env):
     missing = []
     for k in keys:
         if not env.get(k):
-            missing.append("'{}' was not specified in your configuration".format(k))
+            missing.append(f"'{k}' was not specified in your configuration")
     return missing
 
 

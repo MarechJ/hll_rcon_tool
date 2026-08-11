@@ -4,13 +4,13 @@ Ported with some tweaks/additions from https://github.com/ElGuillermo/HLL_CRCON_
 
 import sys
 from collections import Counter, defaultdict
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from logging import getLogger
 from time import sleep
 
 from discord_webhook import DiscordEmbed, DiscordWebhook
 
-from rcon.api_commands import get_rcon_api, RconAPI
+from rcon.api_commands import RconAPI, get_rcon_api
 from rcon.cache_utils import invalidates, ttl_cache
 from rcon.player_history import get_player_profile, player_has_flag
 from rcon.player_stats import current_game_stats
@@ -287,7 +287,7 @@ def watch_killrate(
             config.killrate_threshold_artillery,
             config.killrate_threshold_mg,
         ):
-            timestamp = datetime.now()
+            timestamp = datetime.now(tz=UTC)
             used_weapons = Counter(stats["weapons"])
 
             # TODO: redo this section so we aren't looping over used_weapons 4 different times
@@ -398,7 +398,7 @@ def watch_killrate(
                 set_cache_value(player_id, timestamp)
 
                 logger.info(
-                    "Creating embed %s/%s playtime_secs=%s kills=%s kpm=%s, filtered_kpm=%s, armor_kpm=%s, arty_kpm=%s, mg_kpm=%s, %s",
+                    "Creating embed %s/%s, kpm=%s, filtered_kpm=%s, armor_kpm=%s, arty_kpm=%s, mg_kpm=%s, %s",
                     player_name,
                     player_id,
                     kpm,
@@ -414,7 +414,7 @@ def watch_killrate(
                     player_level: int = detailed_info["level"]
                     player_role: str = detailed_info["role"]
                     player_loadout: str = detailed_info["loadout"]
-                except Exception:
+                except Exception: # noqa
                     logger.warning(
                         "Unable to retrieve detailed playerinfo for %s", player_id
                     )
@@ -425,7 +425,7 @@ def watch_killrate(
                 try:
                     gamestate = api.get_gamestate()
                     map_name = gamestate["current_map"]["pretty_name"]
-                except Exception:
+                except Exception: # noqa
                     logger.warning("Unable to retrieve current game state")
                     map_name = "Unknown"
 
@@ -466,7 +466,7 @@ def watch_killrate(
 
             else:
                 logger.info(
-                    "Already reported %s/%s at %s, playtime_secs=%s kills=%s kpm=%s, filtered_kpm=%s, armor_kpm=%s, arty_kpm=%s, mg_kpm=%s, %s",
+                    "Already reported %s/%s at %s, kpm=%s, filtered_kpm=%s, armor_kpm=%s, arty_kpm=%s, mg_kpm=%s, %s",
                     player_name,
                     player_id,
                     last_reported,
@@ -502,7 +502,7 @@ def run() -> None:
 if __name__ == "__main__":
     try:
         run()
-    except Exception as e:
+    except Exception:
         logger.error("Watch KillRate stopped")
-        logger.exception(e)
+        logger.exception("watch killrate error")
         sys.exit(1)

@@ -37,7 +37,7 @@ def get_server_list(request):
             res = requests.get(
                 url,
                 timeout=5,
-                cookies=dict(sessionid=request.COOKIES.get("sessionid")),
+                cookies={"sessionid": request.COOKIES.get("sessionid")},
                 headers=headers,
             )
             if res.ok:

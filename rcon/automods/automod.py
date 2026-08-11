@@ -1,12 +1,10 @@
 import logging
 import time
 from threading import Timer
-from typing import List
 
 from pydantic import HttpUrl
 from redis.client import Redis
 
-import rcon.game_logs
 from rcon.automods.level_thresholds import LevelThresholdsAutomod
 from rcon.automods.models import ActionMethod, PunishPlayer, PunitionsToApply
 from rcon.automods.no_leader import NoLeaderAutomod
@@ -16,7 +14,7 @@ from rcon.cache_utils import get_redis_client
 from rcon.commands import HLLCommandFailedError
 from rcon.discord import send_to_discord_audit
 from rcon.hooks import inject_player_ids
-from rcon.logs.loop import on_kill, on_connected
+from rcon.logs.loop import on_connected, on_kill
 from rcon.rcon import Rcon, get_rcon
 from rcon.types import GetDetailedPlayer, StructuredLogLineType
 from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
@@ -66,7 +64,7 @@ def get_punitions_to_apply(rcon, moderators) -> PunitionsToApply:
 def _do_punitions(
     rcon: Rcon,
     method: ActionMethod,
-    players: List[PunishPlayer],
+    players: list[PunishPlayer],
     mods,
 ):
     for aplayer in players:

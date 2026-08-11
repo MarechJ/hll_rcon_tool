@@ -12,11 +12,11 @@ from rcon.maps import (
     GameMode,
     Layer,
     Team,
+    _parse_legacy_layer,
     get_opposite_side,
     is_server_loading_map,
     numbered_maps,
     parse_layer,
-    _parse_legacy_layer,
 )
 
 logger = getLogger(__name__)

@@ -63,7 +63,7 @@ class Series:
                 )
             except redis.exceptions.ResponseError:
                 logger.debug("Already exists timeseries aggregation %s", rule_name)
-                pass  # rule already exists
+                # rule already exists
                 # TODO: Handle change
 
     def get_last(self):

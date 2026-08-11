@@ -1,22 +1,19 @@
-import enum
 from enum import StrEnum
 from logging import getLogger
-from typing import Final, Literal, Optional, Self, TypedDict
+from typing import Final, TypedDict
 
 from pydantic import (
+    AnyUrl,
     BaseModel,
     Field,
     HttpUrl,
     field_serializer,
     field_validator,
-    AnyUrl,
 )
 
 from rcon.types import PlayerStatsEnum
-from rcon.user_config.legacy_scorebot import ScorebotUserConfig
 from rcon.user_config.utils import BaseUserConfig, _listType, key_check, set_user_config
 from rcon.user_config.webhooks import DiscordWebhook, WebhookType
-from rcon.utils import get_server_number
 
 logger = getLogger(__name__)
 

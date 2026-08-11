@@ -1,6 +1,7 @@
 import logging
 import os
-from typing import Any, Iterable, Self, Type
+from collections.abc import Iterable
+from typing import Any, Self
 
 import pydantic
 from sqlalchemy.exc import SQLAlchemyError
@@ -47,17 +48,17 @@ class InvalidKeysConfigurationError(Exception):
 
     def __init__(
         self,
-        missing_keys: set[str] = set(),
-        extra_keys: set[str] = set(),
-        mandatory_keys: set[str] = set(),
-        provided_keys: set[str] = set(),
+        missing_keys: set[str] | None = None,
+        extra_keys: set[str] | None = None,
+        mandatory_keys: set[str] | None = None,
+        provided_keys: set[str] | None = None,
         *args: object,
     ) -> None:
         super().__init__(*args)
-        self.missing_keys = missing_keys
-        self.extra_keys = extra_keys
-        self.mandatory_keys = mandatory_keys
-        self.provided_keys = provided_keys
+        self.missing_keys = missing_keys or set()
+        self.extra_keys = extra_keys or set()
+        self.mandatory_keys = mandatory_keys or set()
+        self.provided_keys = provided_keys or set()
 
     def __str__(self) -> str:
         return self.__repr__()
@@ -89,7 +90,7 @@ class BaseUserConfig(pydantic.BaseModel):
     def load_from_db(cls, default_on_validation_error: bool = True) -> Self:
         # This should never happen in production, but allows tests to run
         if not os.getenv("HLL_DB_URL"):
-            logger.warning(f"HLL_DB_URL not set, returning a default instance")
+            logger.warning("HLL_DB_URL not set, returning a default instance")
             return cls()
 
         # If the cache is unavailable, it will fall back to creating a default
@@ -134,7 +135,7 @@ class BaseUserConfig(pydantic.BaseModel):
 def _get_conf(sess, key):
     try:
         return sess.query(UserConfig).filter(UserConfig.key == key).one_or_none()
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         # Don't let a failed transaction block model creation
         # the session context manager will handle this
         sess.rollback()
@@ -153,7 +154,7 @@ def get_user_config(key: str, default=None) -> dict[str, Any] | Any | None:
 def _add_conf(sess, key, val):
     try:
         return sess.add(UserConfig(key=key, value=val))
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         # Don't let a failed transaction block model creation
         # the session context manager will handle this
         sess.rollback()
@@ -193,7 +194,7 @@ def set_user_config(key: str, object_: dict[str, Any] | BaseUserConfig):
 
 
 def validate_user_config(
-    model: Type[BaseUserConfig],
+    model: type[BaseUserConfig],
     data: dict[str, Any] | BaseUserConfig,
     dry_run: bool = True,
     reset_to_default: bool = False,
@@ -207,23 +208,26 @@ def validate_user_config(
 
 def mask_sensitive_data(
     values: dict[str, Any],
-    sensitive_keys: set[str] = {
-        "discord_webhook_url",
-        "username",
-        "password",
-        "url",
-        "webhook_urls",
-        "api_key",
-    },
+    sensitive_keys: set[str] | None = None,
     masked_value: str = "***",
 ) -> None:
+    if sensitive_keys is None:
+        sensitive_keys = {
+            "discord_webhook_url",
+            "username",
+            "password",
+            "url",
+            "webhook_urls",
+            "api_key",
+        }
+
     """Replace the value of any dict key in sensitive_keys with masked_value"""
     if not isinstance(values, dict):
         return
 
     for k, v in values.items():
         if isinstance(v, dict):
-            mask_sensitive_data(values[k], sensitive_keys=sensitive_keys)
+            mask_sensitive_data(v, sensitive_keys=sensitive_keys)
         elif isinstance(v, list):
             for ele in v:
                 mask_sensitive_data(ele, sensitive_keys=sensitive_keys)

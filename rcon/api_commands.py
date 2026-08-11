@@ -1,9 +1,9 @@
 import functools
 import inspect
-from collections import defaultdict
+from collections.abc import Iterable, Sequence
 from datetime import datetime, timedelta
 from logging import getLogger
-from typing import Any, Dict, Iterable, Literal, Optional, Sequence, Type
+from typing import Any, Literal, Optional
 
 from rcon import blacklist, game_logs, maps, player_history, webhook_service
 from rcon.audit import ingame_mods, online_mods
@@ -20,7 +20,7 @@ from rcon.message_templates import (
     get_message_template_categories,
     get_message_templates,
 )
-from rcon.models import MessageTemplate, enter_session
+from rcon.models import enter_session
 from rcon.player_history import (
     add_flag_to_player,
     get_players_by_appearance,
@@ -94,7 +94,7 @@ PLAYER_ID = "player_id"
 CTL: Optional["RconAPI"] = None
 
 
-def parameter_aliases(alias_to_param: Dict[str, str]):
+def parameter_aliases(alias_to_param: dict[str, str]):
     """Specify parameter aliases of a function. This might be useful to preserve backwards
     compatibility or to handle parameters named after a Python reserved keyword.
 
@@ -151,7 +151,7 @@ class RconAPI(Rcon):
     def _validate_user_config(
         command_name: str,
         by: str,
-        model: Type[BaseUserConfig],
+        model: type[BaseUserConfig],
         data: dict[str, Any] | BaseUserConfig,
         dry_run: bool = True,
         reset_to_default: bool = False,
@@ -2062,7 +2062,7 @@ class RconAPI(Rcon):
         Does not overwrite any existing non-null values.
         Returns the updated soldier as dict or None if not found.
         """
-        from rcon.models import enter_session, PlayerSoldier
+        from rcon.models import PlayerSoldier, enter_session
 
         with enter_session() as sess:
             soldier_db, changed = PlayerSoldier.update_missing_fields(
@@ -2102,7 +2102,7 @@ class RconAPI(Rcon):
         All fields can be updated, including setting them to null.
         Returns dict with account data and success message.
         """
-        from rcon.models import enter_session, PlayerAccount
+        from rcon.models import PlayerAccount, enter_session
 
         with enter_session() as sess:
             account_db = PlayerAccount.update_account(
