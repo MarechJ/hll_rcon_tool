@@ -29,7 +29,6 @@ from rcon.rcon import get_rcon
 from rcon.steam_utils import enrich_db_users
 from rcon.user_config.auto_settings import AutoSettingsConfig
 from rcon.user_config.log_stream import LogStreamUserConfig
-from rcon.user_config.scoreboard import _port_legacy_scorebot_urls
 from rcon.user_config.webhooks import (
     BaseMentionWebhookUserConfig,
     BaseUserConfig,
@@ -44,11 +43,6 @@ logger = logging.getLogger(__name__)
 @click.group()
 def cli():
     pass
-
-
-@cli.command(name="port_legacy_scorebot_urls")
-def port_legacy_scorebot_urls():
-    _port_legacy_scorebot_urls()
 
 
 @cli.command(name="live_stats_loop")
@@ -253,7 +247,8 @@ def process_games(start_day_offset, end_day_offset=0, force=False):
         for map_ in all_maps:
             print("Reprocessing map: ", map_.to_dict())
             try:
-                record_stats_from_map(sess, map_, dict(), force=force)
+                # TODO we could attempt to find the temporary cached stats in redis for the match 
+                record_stats_from_map(sess, map_, None, force=force)
                 sess.commit()
                 print("Done")
             except IntegrityError as e:
@@ -547,6 +542,14 @@ def _merge_duplicate_player_ids(existing_ids: set[str] | None = None):
             )
             session.execute(
                 text("DELETE FROM player_names WHERE playersteamid_id = ANY(:ids)"),
+                {"ids": ids},
+            )
+            session.execute(
+                text("DELETE FROM player_soldier WHERE player_id_id = ANY(:ids)"),
+                {"ids": ids},
+            )
+            session.execute(
+                text("DELETE FROM player_account WHERE player_id_id = ANY(:ids)"),
                 {"ids": ids},
             )
             session.execute(

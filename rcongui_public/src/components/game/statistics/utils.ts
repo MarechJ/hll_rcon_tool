@@ -3,15 +3,29 @@ import colors from 'tailwindcss/colors'
 
 export function mergeKillsDeaths(player: Player) {
   const { most_killed: killsByPlayer, death_by: deathsByPlayer } = player
-  const allPlayerNames = new Set(Object.keys(killsByPlayer).concat(Object.keys(deathsByPlayer)))
+  const allPlayerKeys = new Set(Object.keys(killsByPlayer).concat(Object.keys(deathsByPlayer)))
   const merged: Faceoff[] = []
-  allPlayerNames.forEach((name) => {
-    merged.push({
-      name: name,
-      kills: killsByPlayer[name] ?? 0,
-      deaths: deathsByPlayer[name] ?? 0,
-      diff: (killsByPlayer[name] ?? 0) - (deathsByPlayer[name] ?? 0),
-    })
+  // hacky way to recognize if key is player's name or players'id
+  // if any of the keys has any other value than [a-z0-9] it is set of names
+  // as it used to be recorded like that 
+  const isSetOfNames = allPlayerKeys.keys().some(key => !key.match(/^[a-zA-Z0-9]+$/))
+  allPlayerKeys.forEach((key) => {
+    const faceoff: Faceoff =
+    isSetOfNames
+      ? {
+          name: key,
+          kills: killsByPlayer[key] ?? 0,
+          deaths: deathsByPlayer[key] ?? 0,
+          diff: (killsByPlayer[key] ?? 0) - (deathsByPlayer[key] ?? 0),
+        }
+      : {
+          id: key,
+          kills: killsByPlayer[key] ?? 0,
+          deaths: deathsByPlayer[key] ?? 0,
+          diff: (killsByPlayer[key] ?? 0) - (deathsByPlayer[key] ?? 0),
+        }
+
+    merged.push(faceoff)
   })
   merged.sort((a, b) => b.kills - a.kills)
   return merged
@@ -31,11 +45,19 @@ export function getColorForTeam(team: TeamEnum | undefined): string {
   return teamColors[team];
 }
 
-export function getTeamFromAssociation(team: PlayerTeamAssociation | undefined): TeamEnum {
-  if (team === undefined) {
+export function getTeamFromAssociation(team?: PlayerTeamAssociation | string | null): TeamEnum {
+  if (team === undefined || team === null) {
     return TeamEnum.UNKNOWN;
   }
-  return team.confidence === 'strong' ? team.side : TeamEnum.MIXED;
+  if (typeof team === "string") {
+    if (team === "axis") return TeamEnum.AXIS;
+    if (team === "allies") return TeamEnum.ALLIES;
+    return TeamEnum.UNKNOWN;
+  }
+  if (typeof team === "object" && "confidence" in team) {
+    return team.confidence === 'strong' ? team.side : TeamEnum.MIXED;
+  }
+  return TeamEnum.UNKNOWN
 }
 
 export const generateTicks = (max: number, interval: number, negative?: boolean) => {

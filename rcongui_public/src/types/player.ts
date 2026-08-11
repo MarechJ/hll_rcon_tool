@@ -1,3 +1,4 @@
+import { MatchScore } from './api'
 import {Weapon, WeaponType} from './weapon'
 
 type Team = {
@@ -69,6 +70,14 @@ export interface ServerFinalStats {
   forwards_results?: null
 }
 
+
+export interface PlayerUnit {
+  ts: number
+  team: number
+  squad: number
+  role: number
+}
+
 export interface Result {
   id: number
   creation_time: string
@@ -77,6 +86,8 @@ export interface Result {
   server_number: number
   map_name: string
   player_stats?: Player[] | null
+  match_time: number
+  cap_flips: MatchScore[]
 }
 
 // Base player interface with common properties
@@ -85,6 +96,7 @@ export interface PlayerBase {
   player_id: string
   steam_id_64: string
   player: string
+  platform?: string | null
   steaminfo?: Steaminfo
   map_id: number
   kills: number
@@ -116,6 +128,20 @@ export interface PlayerBase {
   death_by_weapons: Record<Weapon, number> | null
   team: PlayerTeamAssociation
   level: number
+  kills_and_assists: number
+  deaths_and_redeploys: number
+  vehicle_kills: number
+  vehicles_destroyed: number
+  units: PlayerUnit[]
+  encounters: KillInfo[]
+}
+
+export interface KillInfo {
+    action: "KILL" | "DEATH"
+    player_id: string
+    player_name: string
+    ts: number
+    weapon: string
 }
 
 export interface PlayerTeamAssociation {
@@ -130,13 +156,29 @@ export enum TeamEnum {
   UNKNOWN = 'unknown',
 }
 
-// Live player interface with online status
-export interface LivePlayer extends PlayerBase {
-  is_online: boolean
+export enum FactionEnum {
+  CW = 'cw',
+  GB = 'gb',
+  GER = 'ger',
+  RUS = 'rus',
+  US = 'us',
+  CAN = 'can',
 }
 
-export type Player = PlayerBase
-export type PlayerWithStatus = LivePlayer
+export enum StatusEnum {
+  ONLINE = 'online',
+  OFFLINE = 'offline',
+  IDLE = 'idle'
+}
+
+// Live player interface with status
+export interface LivePlayer extends Omit<PlayerBase, "team" | "units" | "encounters"> {
+  status: StatusEnum | null
+  faction: FactionEnum | null
+  team: string | null
+}
+
+export type Player = PlayerBase | LivePlayer
 
 export interface Steaminfo {
   id: number
@@ -195,9 +237,18 @@ type TeamsStats = {
   players: Player[]
 }
 
-export type Faceoff = {
-  name: string
+type FaceoffBase = {
   kills: number
   deaths: number
   diff: number
 }
+
+type FaceoffID = FaceoffBase & {
+  id: string
+}
+
+type FaceoffName = FaceoffBase & {
+  name: string
+}
+
+export type Faceoff = FaceoffID | FaceoffName

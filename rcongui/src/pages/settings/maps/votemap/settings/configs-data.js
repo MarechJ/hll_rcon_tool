@@ -2,11 +2,16 @@ export const padlockConfigs = [
     { name: "allow_opt_out", label: "Allow user to opt-out of vote map reminders by typing !votemap never" },
     { name: "consider_offensive_same_map", label: "Consider offensive maps as being the same when excluding:" },
     { name: "consider_skirmishes_as_same_map", label: "Consider skirmish maps as being the same when excluding:" },
+    { name: "consider_environment_as_same_map", label: "Consider maps with different environment(day, ...) as being the same when excluding:" },
     { name: "allow_consecutive_offensives", label: "Allow consecutive offensive map" },
-    { name: "allow_consecutive_offensives_opposite_sides", label: "Allow consecutive offensive where a team would play defense twice in a row. E.g off_ger followed by off_us" },
+    { name: "allow_consecutive_offensives_opposite_sides", label: "Allow consecutive offensive where a team would play defense twice in a row. For example off_ger followed by off_us" },
     { name: "allow_consecutive_skirmishes", label: "Allow consecutive skirmish map" },
     { name: "allow_default_to_offensive", label: "Allow default map to be an offensive" },
     { name: "allow_default_to_skirmish", label: "Allow default map to be a skirmish" },
+    { name: "allow_multiple_maps_with_same_environment", label: "Allow multiple maps with different environment in the selection eg. day, night, ..." },
+    { name: "remind_on_match_start", label: "Send reminder on match start" },
+    { name: "remind_on_match_end", label: "Send reminder on match end" },
+    { name: "allow_vip_only", label: "Allow votemap to VIP players only" },
 ];
 
 export const messageFieldConfigs = [
@@ -27,6 +32,18 @@ export const messageFieldConfigs = [
         label: "Help text:",
         helperText: "This text will show to the player in case of a bad !votemap command, or if the user types !votemap help",
         rows: 10,
+    },
+    {
+        name: "player_choice_help_text",
+        label: "Help text:",
+        helperText: "This text will show to the player if the user types !votemap add or !votemap add help command. This help text is followed by a list of options.",
+        rows: 10,
+    },
+    {
+        name: "no_vote_text",
+        label: "No vote text:",
+        helperText: "This text will show in {scrolling_votemap} as winning map when no votes taken",
+        rows: 1,
     },
 ];
 
@@ -57,6 +74,12 @@ export const textFieldConfigs = [
         label: "Number of recently played maps excluded:",
         helperText: "Exclude the last N played maps from the selection. The current map is always excluded.",
         inputProps: { min: 0, max: 6, step: 1 },
+    },
+    {
+        name: "vip_vote_count",
+        label: "Vote count for VIP players:",
+        helperText: "Players with VIP have their vote counted n times.",
+        inputProps: { min: 1, max: 100, step: 1 },
     },
 ];
 

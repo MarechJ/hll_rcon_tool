@@ -20,10 +20,11 @@ dayjs.extend(localizedFormat)
 const GameDetailLayout = ({ game }: { game: ScoreboardMapStats }) => {
   const { t } = useTranslation('navigation')
   const pathname = useLocation().pathname;
+  const duration = getGameDuration(game.start, game.end)
 
   const gameOverviewProps = {
     map: game.map,
-    time: getGameDuration(game.start, game.end),
+    time: duration,
     axis: game.map.map.axis,
     allies: game.map.map.allies,
     mapName: game.map.pretty_name,
@@ -32,6 +33,9 @@ const GameDetailLayout = ({ game }: { game: ScoreboardMapStats }) => {
       allies: game.result?.allied,
       axis: game.result?.axis,
     },
+    capFlips: game?.cap_flips,
+    matchTime: game?.match_time,
+    remainingTime: game.match_time ? game.match_time - duration.asSeconds() : 0
   }
 
   return (
@@ -40,9 +44,9 @@ const GameDetailLayout = ({ game }: { game: ScoreboardMapStats }) => {
         <title>{`${t('gameDetail')} - ${dayjs(game.start).format('L')} - ${game.map.map.pretty_name}`}</title>
       </Helmet>
       <div className="flex flex-col-reverse lg:flex-row divide-y lg:divide-y-0">
-        <div className="w-full">
+        <div className="w-full space-y-2">
           <GameOverview {...gameOverviewProps}/>
-          <ToggleGroup type="single" value={pathname} variant="outline" className="p-4">
+          <ToggleGroup type="single" value={pathname} variant="outline" className="justify-start h-12">
             <ToggleGroupItem value={`/games/${game.id}`} asChild>
               <Link to={`/games/${game.id}`}>
                 <TableIcon size={20}/>
