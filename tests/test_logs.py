@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 import pytest
 
@@ -219,7 +219,7 @@ def test_multiline_parsing(raw_logs, expected):
 @pytest.mark.parametrize(
     "raw_timestamp, expected",
     [
-        ("1606999065", datetime(2020, 12, 3, 12, 37, 45)),
+        ("1606999065", datetime(2020, 12, 3, 12, 37, 45, tzinfo=UTC)),
     ],
 )
 def test_timestamp_parsing(raw_timestamp, expected):

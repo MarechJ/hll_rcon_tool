@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
-import { Player, TeamEnum } from '@/types/player'
+import { LivePlayer, Player, TeamEnum } from '@/types/player'
 import { useTranslation } from 'react-i18next'
 import { getTeamFromAssociation } from '@/components/game/statistics/utils'
 import { TeamIndicator } from '@/components/game/statistics/team-indicator'
@@ -39,7 +39,7 @@ interface DataTableProps<TData, TValue> {
   tableId: string
 }
 
-export function DataTable<TData extends Player, TValue>({ columns, data, tableId }: DataTableProps<TData, TValue>) {
+export function DataTable<TData extends Player | LivePlayer, TValue>({ columns, data, tableId }: DataTableProps<TData, TValue>) {
   const [playerFilter, setPlayerFilter] = useState<string[]>([])
 
   useEffect(() => {
@@ -56,12 +56,9 @@ export function DataTable<TData extends Player, TValue>({ columns, data, tableId
         .map((name) => ({ value: name, label: name })),
     )
 
-  const [sorting, setSorting] = React.useState<SortingState>([
-    {
-      id: 'kills',
-      desc: true,
-    },
-  ])
+  const [sorting, setSorting] = React.useState<SortingState>(() =>
+    data.some((player) => 'status' in player) ? [] : [{ id: 'kills', desc: true }],
+  )
 
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 
@@ -76,6 +73,8 @@ export function DataTable<TData extends Player, TValue>({ columns, data, tableId
     ['defense']: false,
     ['offense']: false,
     ['support']: false,
+    ['vehicles_destroyed']: false,
+    ['vehicle_kills']: false,
   })
 
   const table = useReactTable({
@@ -115,7 +114,7 @@ export function DataTable<TData extends Player, TValue>({ columns, data, tableId
 
   const { t } = useTranslation('game')
 
-  const hasIsOnline = table.getAllColumns().find((c) => c.id === 'is_online')
+  const hasStatus = table.getAllColumns().find((c) => c.id === 'status')
   const hasTeam = table.getAllColumns().find((c) => c.id === 'team')
   const teamOptions = ['axis', 'allies', 'mixed', 'unknown'] as const
   const teamCounts = useMemo(
@@ -127,8 +126,8 @@ export function DataTable<TData extends Player, TValue>({ columns, data, tableId
     <div className="border w-full divide-y">
       <div className="flex flex-row justify-between items-start p-2 gap-3">
         <div className="flex flex-row items-start gap-3 flex-1">
-          {hasIsOnline && (
-            <Select onValueChange={(value) => table.getColumn('is_online')?.setFilterValue(value)}>
+          {hasStatus && (
+            <Select onValueChange={(value) => table.getColumn('status')?.setFilterValue(value)}>
               <SelectTrigger className="w-24">
                 <SelectValue placeholder={t('playersTable.status')} />
               </SelectTrigger>
