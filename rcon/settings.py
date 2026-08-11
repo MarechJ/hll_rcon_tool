@@ -6,7 +6,7 @@ import colorlog
 from logging.config import dictConfig
 from subprocess import PIPE, run
 
-from rcon.types import ServerInfo, ServerInfoType
+from rcon.types import ServerInfo
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 
 try:
@@ -37,10 +37,6 @@ def check_config() -> ServerInfo:
     for k, v in server_info.as_dict().items():
         if not v:
             raise ValueError(f"{k} environment variable must be set")
-    try:
-        server_info.port = int(server_info.port)  # type: ignore[assignment]
-    except Exception as e:
-        raise ValueError("HLL_PORT must be an integer") from e
     return server_info
 
 

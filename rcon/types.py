@@ -166,19 +166,23 @@ class MostRecentEvents:
     last_tk_nemesis_weapon: str | None = None
 
 
-class ServerInfoType(TypedDict):
-    host: str | None
-    port: str | None
-    password: str | None
-    game: str
-
-
 @dataclass
 class ServerInfo:
     host: str | None = None
-    port: str | None = None
+    port: int | None = None
     password: str | None = None
     game: str = "hll"
+
+    def __post_init__(self) -> None:
+        if self.port is None:
+            return
+        if isinstance(self.port, str):
+            try:
+                self.port = int(self.port)
+            except ValueError as e:
+                raise ValueError("HLL_PORT must be an integer") from e
+        elif not isinstance(self.port, int):
+            raise TypeError("ServerInfo.port must be an int or None")
 
     @classmethod
     def from_env(cls) -> "ServerInfo":
@@ -188,15 +192,6 @@ class ServerInfo:
             password=os.getenv("HLL_PASSWORD"),
             game=os.getenv("HLL_GAME") or "hll",
         )
-
-    def as_dict(self) -> ServerInfoType:
-        return {
-            "host": self.host,
-            "port": self.port,
-            "password": self.password,
-            "game": self.game,
-        }
-
 
 # Have to inherit from str to allow for JSON serialization w/ pydantic
 class Roles(str, enum.Enum):
