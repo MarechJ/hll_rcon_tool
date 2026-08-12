@@ -97,6 +97,10 @@ class GameMode(str, Enum):
 def get_theoretical_match_time(game_mode: GameMode, match_time: int) -> int:
     """Return the full match window represented by the server timer."""
     if game_mode == GameMode.OFFENSIVE:
+        if match_time == 90 * 60:
+            # Server bug: the uncustomized Offensive timer is reported as the
+            # 90-minute Warfare timer instead of the 30-minute objective timer.
+            match_time = 30 * 60
         # The server reports the timer for one objective. An Offensive match can
         # use that timer up to five times.
         return match_time * 5

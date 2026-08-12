@@ -82,7 +82,7 @@ def test_live_map_mismatch_does_not_record_cap_flip(maps_history_cls):
 
 
 @patch("rcon.logs.loop.MapsHistory")
-def test_offensive_match_time_uses_live_objective_timer(maps_history_cls):
+def test_offensive_match_time_normalizes_broken_server_default(maps_history_cls):
     current_map = make_map_info()
     history = maps_history_cls.return_value
     history.get_current_map.return_value = current_map

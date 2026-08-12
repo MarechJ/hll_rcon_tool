@@ -29,7 +29,6 @@ from rcon.logs.loop import (
 )
 from rcon.maps import (
     UNKNOWN_MAP_NAME,
-    GameMode,
     get_theoretical_match_time,
     parse_layer,
 )
@@ -296,11 +295,6 @@ def handle_new_match_start(rcon: Rcon, struct_log):
                         current_map.game_mode,
                         gamestate["game_mode"],
                     )
-                elif gamestate["game_mode"] == GameMode.OFFENSIVE:
-                    # matchTime has been observed retaining Warfare's 90-minute
-                    # value at this boundary. The polling loop derives the
-                    # objective window from remainingMatchTime once play starts.
-                    match_time = 0
                 else:
                     match_time = get_theoretical_match_time(
                         gamestate["game_mode"], gamestate["match_time"]

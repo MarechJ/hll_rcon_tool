@@ -14,7 +14,7 @@ from hllrcon.data import Role, Team
 from rcon.cache_utils import get_redis_client, ttl_cache
 from rcon.connection import HLLServerError
 from rcon.discord import make_hook
-from rcon.maps import GameMode, get_theoretical_match_time, parse_layer
+from rcon.maps import get_theoretical_match_time, parse_layer
 from rcon.rcon import get_rcon
 from rcon.types import AllLogTypes, GameStateType, GetDetailedPlayers, MapInfo, MapScore, UnitHistoryEntry, StructuredLogLineWithMetaData, PlayerStat, WorldPositionType
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
@@ -319,26 +319,9 @@ class LogLoop:
             return 0
 
         if current_map["match_time"] == 0:
-            if cached_game_mode == GameMode.OFFENSIVE:
-                remaining = int(gs["time_remaining"].total_seconds())
-                if curr_map_time_elapsed <= 60 and remaining > 100:
-                    # The session's matchTime can still contain Warfare's
-                    # 90-minute value at the match boundary. remainingMatchTime
-                    # is the live Offensive objective timer; round it back up to
-                    # its configured whole-minute value after polling delay.
-                    objective_time = ((remaining + 59) // 60) * 60
-                    current_map["match_time"] = get_theoretical_match_time(
-                        cached_game_mode, objective_time
-                    )
-                    logger.info(
-                        "Recorded Offensive match time %ds from %ds objective timer",
-                        current_map["match_time"],
-                        objective_time,
-                    )
-            else:
-                current_map["match_time"] = get_theoretical_match_time(
-                    cached_game_mode, gs["match_time"]
-                )
+            current_map["match_time"] = get_theoretical_match_time(
+                cached_game_mode, gs["match_time"]
+            )
 
         dp = self.get_detailed_players()
         logger.info(

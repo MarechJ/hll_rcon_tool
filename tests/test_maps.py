@@ -13,6 +13,7 @@ from rcon.maps import (
     Layer,
     Team,
     get_opposite_side,
+    get_theoretical_match_time,
     is_server_loading_map,
     numbered_maps,
     parse_layer,
@@ -20,6 +21,23 @@ from rcon.maps import (
 )
 
 logger = getLogger(__name__)
+
+
+@pytest.mark.parametrize(
+    ("game_mode", "server_match_time", "expected"),
+    (
+        (GameMode.OFFENSIVE, 10 * 60, 50 * 60),
+        (GameMode.OFFENSIVE, 30 * 60, 5 * 30 * 60),
+        (GameMode.OFFENSIVE, 60 * 60, 5 * 60 * 60),
+        # The server incorrectly reports Warfare's default when the Offensive
+        # timer has not been customized.
+        (GameMode.OFFENSIVE, 90 * 60, 5 * 30 * 60),
+        (GameMode.WARFARE, 90 * 60, 90 * 60),
+        (GameMode.SKIRMISH, 30 * 60, 30 * 60),
+    ),
+)
+def test_get_theoretical_match_time(game_mode, server_match_time, expected):
+    assert get_theoretical_match_time(game_mode, server_match_time) == expected
 
 MOR_WARFARE_DAY = Layer(
     id="mortain_warfare_day", map=MAPS["mortain"], game_mode=GameMode.WARFARE
