@@ -27,7 +27,11 @@ from rcon.logs.loop import (
     on_match_end,
     on_match_start,
 )
-from rcon.maps import UNKNOWN_MAP_NAME, GameMode, parse_layer
+from rcon.maps import (
+    UNKNOWN_MAP_NAME,
+    get_theoretical_match_time,
+    parse_layer,
+)
 from rcon.message_variables import format_message_string, populate_message_variables
 from rcon.models import PlayerID, PlayerSoldier, enter_session, GameLayout
 from rcon.player_history import (
@@ -280,10 +284,21 @@ def handle_new_match_start(rcon: Rcon, struct_log):
                 # Don't use the current_map property and clear the cache to pull the new map name
                 gamestate = rcon.get_gamestate()
                 current_map = parse_layer(gamestate["current_map"]["id"])
-                match_time = gamestate["match_time"]
-                if current_map.game_mode == GameMode.OFFENSIVE:
-                    # HLL Server displays match time for only one objetive not the theoretical length for all 5 objectives
-                    match_time *= 5
+                if current_map.game_mode != gamestate["game_mode"]:
+                    # During a map transition the session fields are not updated
+                    # atomically. Do not combine a new layer with the old mode's
+                    # timer; the polling loop will fill this in once they agree.
+                    match_time = 0
+                    logger.warning(
+                        "Current map mode %s does not match session mode %s; "
+                        "deferring match-time recording",
+                        current_map.game_mode,
+                        gamestate["game_mode"],
+                    )
+                else:
+                    match_time = get_theoretical_match_time(
+                        gamestate["game_mode"], gamestate["match_time"]
+                    )
             except HLLCommandFailedError:
                 current_map = parse_layer(UNKNOWN_MAP_NAME)
                 match_time = 0
