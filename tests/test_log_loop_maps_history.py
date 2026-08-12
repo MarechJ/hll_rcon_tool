@@ -2,6 +2,8 @@ import os
 from datetime import timedelta
 from unittest.mock import Mock, patch
 
+import pytest
+
 os.environ.setdefault("HLL_MAINTENANCE_CONTAINER", "1")
 os.environ.setdefault("SERVER_NUMBER", "1")
 
@@ -41,6 +43,7 @@ def make_gamestate(
 def make_loop(gamestate):
     loop = object.__new__(LogLoop)
     loop.ACTIVE_MAP_INDEX = 0
+    loop.CURR_MAP_END = 0
     loop.now = 1_002
     loop.rcon = Mock()
     loop.rcon.get_gamestate.return_value = gamestate
@@ -58,12 +61,12 @@ def test_ended_match_is_not_mutated_by_next_match_score(maps_history_cls):
 
     elapsed = loop.update_maps_history(prev_map_time_elapsed=98)
 
-    assert elapsed == 100
+    assert elapsed == 2
     assert current_map["cap_flips"] == [
         {"allied_score": 0, "axis_score": 5, "ts": 0}
     ]
-    loop.get_detailed_players.assert_not_called()
-    history.update.assert_not_called()
+    loop.get_detailed_players.assert_called_once()
+    history.update.assert_called_once_with(0, current_map)
 
 
 @patch("rcon.logs.loop.MapsHistory")
@@ -97,4 +100,47 @@ def test_offensive_match_time_normalizes_broken_server_default(maps_history_cls)
         "axis_score": 4,
         "ts": 2,
     }
-    history.update.assert_called_once_with(0, current_map)
+    assert history.update.call_count == 2
+    history.update.assert_called_with(0, current_map)
+
+
+@pytest.mark.parametrize(
+    ("map_name", "initial_score", "later_score"),
+    (
+        ("carentan_offensive_us", (0, 5), (1, 4)),
+        ("carentan_offensive_ger", (5, 0), (4, 1)),
+    ),
+)
+def test_offensive_initial_score_cannot_be_recorded_again(
+    map_name, initial_score, later_score
+):
+    current_map = make_map_info()
+    current_map["name"] = map_name
+    current_map["cap_flips"] = []
+    loop = object.__new__(LogLoop)
+
+    gs = make_gamestate(
+        map_id=map_name,
+        allied_score=initial_score[0],
+        axis_score=initial_score[1],
+    )
+    loop.record_cap_flips(current_map, 0, gs)
+
+    gs["allied_score"], gs["axis_score"] = later_score
+    loop.record_cap_flips(current_map, 300, gs)
+
+    gs["allied_score"], gs["axis_score"] = initial_score
+    loop.record_cap_flips(current_map, 600, gs)
+
+    assert current_map["cap_flips"] == [
+        {
+            "allied_score": initial_score[0],
+            "axis_score": initial_score[1],
+            "ts": 0,
+        },
+        {
+            "allied_score": later_score[0],
+            "axis_score": later_score[1],
+            "ts": 300,
+        },
+    ]

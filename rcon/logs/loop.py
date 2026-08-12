@@ -14,7 +14,7 @@ from hllrcon.data import Role, Team
 from rcon.cache_utils import get_redis_client, ttl_cache
 from rcon.connection import HLLServerError
 from rcon.discord import make_hook
-from rcon.maps import get_theoretical_match_time, parse_layer
+from rcon.maps import GameMode, Team as MapTeam, get_theoretical_match_time, parse_layer
 from rcon.rcon import get_rcon
 from rcon.types import AllLogTypes, GameStateType, GetDetailedPlayers, MapInfo, MapScore, UnitHistoryEntry, StructuredLogLineWithMetaData, PlayerStat, WorldPositionType
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
@@ -236,6 +236,7 @@ class LogLoop:
         self.RECORD_PLAYER_STATS_DELAY = 120 # 2 minutes
         self.GET_LOGS_SINCE_MIN = 180 # 3 hours
         self.CLEANUP_MIN = 180 # 3 hours
+        self.CURR_MAP_END = 0
         self.now = 0
         logger.info("Registered hooks: %s", HOOKS)
 
@@ -290,9 +291,13 @@ class LogLoop:
 
         curr_map_time_elapsed = self.now - map_start
 
-        if current_map["end"] is not None:
+        map_has_ended = current_map["end"] is not None
+        if map_has_ended:
             logger.info("[MATCH ENDED]")
-            return current_map["end"] - map_start
+            # Let it record stats one more time
+            if current_map["end"] == self.CURR_MAP_END:
+                return current_map["end"] - map_start
+            self.CURR_MAP_END = current_map["end"]
 
         if gs["current_map"]["id"] != current_map["name"]:
             logger.info(
@@ -323,12 +328,15 @@ class LogLoop:
                 cached_game_mode, gs["match_time"]
             )
 
+        if not map_has_ended:
+            self.record_cap_flips(current_map, curr_map_time_elapsed, gs)
+            maps_history.update(self.ACTIVE_MAP_INDEX, current_map)
+
         dp = self.get_detailed_players()
         logger.info(
             "RCON map/player polling completed in %.3fs",
             time.perf_counter() - started,
         )
-        self.record_cap_flips(current_map, curr_map_time_elapsed, gs)
 
         # logger.debug("\n[MATCH RUNNING] - Recording stats")
         # logger.debug("\n[MATCH RUNNING]\nMatch Start: %d\nMatch Time: %d\nRemaining Match Time: %d\nTime elapsed: %d\nTime elapsed(now-start): %d\n", current_map["start"], gs["match_time"], gs["time_remaining"].seconds, prev_map_time_elapsed, now - current_map["start"])
@@ -366,10 +374,30 @@ class LogLoop:
 
     def record_cap_flips(self, current_map: MapInfo, sec_from_start: int, gs: GameStateType):
         cap_flips = current_map.setdefault("cap_flips", [])
+        layer = parse_layer(current_map["name"])
 
-        if gs["allied_score"] == 2 and gs["axis_score"] == 2 and len(cap_flips) > 0:
-            # Most likely leak from the current map
+        if (
+            layer.game_mode == GameMode.WARFARE
+            and gs["allied_score"] == 2
+            and gs["axis_score"] == 2
+            and cap_flips
+        ):
+            # Most likely the initial score leaking from a new match.
             return
+
+        if layer.game_mode == GameMode.OFFENSIVE and cap_flips:
+            initial_score = {
+                MapTeam.ALLIES: (0, 5),
+                MapTeam.AXIS: (5, 0),
+            }.get(layer.attackers)
+            live_score = (gs["allied_score"], gs["axis_score"])
+            if live_score == initial_score:
+                logger.warning(
+                    "Ignoring Offensive score reset to %d:%d after %d cap flips",
+                    *live_score,
+                    len(cap_flips),
+                )
+                return
 
         if len(cap_flips) == 0 or cap_flips[-1]["allied_score"] != gs["allied_score"] or cap_flips[-1]["axis_score"] != gs["axis_score"]:
             logger.debug("[MATCH SCORE] - New cap flip recorded as the score has changed")
