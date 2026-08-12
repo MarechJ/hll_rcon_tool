@@ -426,9 +426,17 @@ class VoteMap:
     def get_new_selection(self) -> list[Layer]:
         config = self.config
         new_selection = []
+        maps_history = [maps.parse_layer(m["name"]) for m in self._maps_history]
+        current_map = self._maps_history.get_current_map()
         options = {
-            "maps_history": [maps.parse_layer(m["name"]) for m in self._maps_history],
-            "current_map": self._rcon.current_map,
+            "maps_history": maps_history,
+            # Map history is updated before votemap is restarted on match start,
+            # while Rcon.current_map may still contain the previous cached layer.
+            "current_map": (
+                maps.parse_layer(current_map["name"])
+                if current_map
+                else self._rcon.current_map
+            ),
             "allowed_maps": set(self.get_map_whitelist()),
             **config.model_dump(),
         }
