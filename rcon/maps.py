@@ -94,6 +94,15 @@ class GameMode(str, Enum):
         return self in GameMode.small()
 
 
+def get_theoretical_match_time(game_mode: GameMode, match_time: int) -> int:
+    """Return the full match window represented by the server timer."""
+    if game_mode == GameMode.OFFENSIVE:
+        # The server reports the timer for one objective. An Offensive match can
+        # use that timer up to five times.
+        return match_time * 5
+    return match_time
+
+
 class Team(str, Enum):
     ALLIES = "allies"
     AXIS = "axis"

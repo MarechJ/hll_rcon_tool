@@ -1,0 +1,100 @@
+import os
+from datetime import timedelta
+from unittest.mock import Mock, patch
+
+os.environ.setdefault("HLL_MAINTENANCE_CONTAINER", "1")
+os.environ.setdefault("SERVER_NUMBER", "1")
+
+from rcon.logs.loop import LogLoop
+from rcon.maps import GameMode
+
+
+OFFENSIVE_MAP = "carentan_offensive_us"
+
+
+def make_map_info(*, end=None, match_time=0):
+    return {
+        "name": OFFENSIVE_MAP,
+        "start": 1_000,
+        "end": end,
+        "guessed": False,
+        "player_stats": {},
+        "game_layout": {"requested": [], "set": []},
+        "cap_flips": [{"allied_score": 0, "axis_score": 5, "ts": 0}],
+        "match_time": match_time,
+    }
+
+
+def make_gamestate(
+    *, map_id=OFFENSIVE_MAP, remaining=1_798, allied_score=1, axis_score=4
+):
+    return {
+        "current_map": {"id": map_id},
+        "game_mode": GameMode.OFFENSIVE,
+        "time_remaining": timedelta(seconds=remaining),
+        "match_time": 5_400,
+        "allied_score": allied_score,
+        "axis_score": axis_score,
+    }
+
+
+def make_loop(gamestate):
+    loop = object.__new__(LogLoop)
+    loop.ACTIVE_MAP_INDEX = 0
+    loop.now = 1_002
+    loop.rcon = Mock()
+    loop.rcon.get_gamestate.return_value = gamestate
+    loop.get_detailed_players = Mock(return_value={"players": {}, "fail_count": 0})
+    loop.record_player_stats = Mock()
+    return loop
+
+
+@patch("rcon.logs.loop.MapsHistory")
+def test_ended_match_is_not_mutated_by_next_match_score(maps_history_cls):
+    current_map = make_map_info(end=1_100, match_time=9_000)
+    history = maps_history_cls.return_value
+    history.get_current_map.return_value = current_map
+    loop = make_loop(make_gamestate(allied_score=5, axis_score=0))
+
+    elapsed = loop.update_maps_history(prev_map_time_elapsed=98)
+
+    assert elapsed == 100
+    assert current_map["cap_flips"] == [
+        {"allied_score": 0, "axis_score": 5, "ts": 0}
+    ]
+    loop.get_detailed_players.assert_not_called()
+    history.update.assert_not_called()
+
+
+@patch("rcon.logs.loop.MapsHistory")
+def test_live_map_mismatch_does_not_record_cap_flip(maps_history_cls):
+    current_map = make_map_info(match_time=9_000)
+    history = maps_history_cls.return_value
+    history.get_current_map.return_value = current_map
+    loop = make_loop(make_gamestate(map_id="foy_offensive_ger"))
+
+    elapsed = loop.update_maps_history(prev_map_time_elapsed=98)
+
+    assert elapsed == 0
+    assert len(current_map["cap_flips"]) == 1
+    loop.get_detailed_players.assert_not_called()
+    history.update.assert_not_called()
+
+
+@patch("rcon.logs.loop.MapsHistory")
+def test_offensive_match_time_uses_live_objective_timer(maps_history_cls):
+    current_map = make_map_info()
+    history = maps_history_cls.return_value
+    history.get_current_map.return_value = current_map
+    loop = make_loop(make_gamestate())
+
+    elapsed = loop.update_maps_history(prev_map_time_elapsed=1)
+
+    assert elapsed == 2
+    assert current_map["match_time"] == 9_000
+    assert current_map["cap_flips"][-1] == {
+        "allied_score": 1,
+        "axis_score": 4,
+        "ts": 2,
+    }
+    history.update.assert_called_once_with(0, current_map)

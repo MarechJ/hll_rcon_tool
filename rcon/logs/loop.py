@@ -14,6 +14,7 @@ from hllrcon.data import Role, Team
 from rcon.cache_utils import get_redis_client, ttl_cache
 from rcon.connection import HLLServerError
 from rcon.discord import make_hook
+from rcon.maps import GameMode, get_theoretical_match_time, parse_layer
 from rcon.rcon import get_rcon
 from rcon.types import AllLogTypes, GameStateType, GetDetailedPlayers, MapInfo, MapScore, UnitHistoryEntry, StructuredLogLineWithMetaData, PlayerStat, WorldPositionType
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
@@ -274,9 +275,7 @@ class LogLoop:
 
     def update_maps_history(self, prev_map_time_elapsed: int) -> int:
         started = time.perf_counter()
-        dp = self.get_detailed_players()
         gs = self.rcon.get_gamestate()
-        logger.info("RCON map/player polling completed in %.3fs", time.perf_counter() - started)
         maps_history = MapsHistory()
         current_map = maps_history.get_current_map()
 
@@ -290,27 +289,63 @@ class LogLoop:
             return prev_map_time_elapsed
 
         curr_map_time_elapsed = self.now - map_start
-        self.record_cap_flips(current_map, curr_map_time_elapsed, gs)
-        maps_history.update(self.ACTIVE_MAP_INDEX, current_map)
 
-        # it should be 100 not 90 but let's leave 10s to log latest stats on match end
-        if map_start is not None and current_map["end"] is not None and gs["time_remaining"].seconds <= 90 and gs["time_remaining"].seconds > 0:
+        if current_map["end"] is not None:
             logger.info("[MATCH ENDED]")
             return current_map["end"] - map_start
 
-        if gs["current_map"]["id"] != current_map["name"] and gs["time_remaining"].seconds == 0:
-            logger.info("[MATCH IDLE] - Map has changed but has not started yet(based on map id diff), skipping saving stats - current_map: %s - cached_map:%s", gs["current_map"]["id"], current_map["name"])
+        if gs["current_map"]["id"] != current_map["name"]:
+            logger.info(
+                "[MATCH IDLE] - Live and cached map IDs differ, skipping stats "
+                "- current_map: %s - cached_map: %s",
+                gs["current_map"]["id"],
+                current_map["name"],
+            )
             return 0
-        
+
+        cached_game_mode = parse_layer(current_map["name"]).game_mode
+        if cached_game_mode != gs["game_mode"]:
+            logger.info(
+                "[MATCH IDLE] - Live and cached game modes differ, skipping stats "
+                "- current_mode: %s - cached_mode: %s",
+                gs["game_mode"],
+                cached_game_mode,
+            )
+            return 0
+
         # time remaining is 0 during match overtime so that value alone is not sufficient enough
         if gs["time_remaining"].seconds == 0 and prev_map_time_elapsed == 0:
             logger.info("[MATCH IDLE] - Map has changed but has not started yet(based on time remaining diff), skipping saving stats - time_remaining: %d - currently_recorded_time_elapsed: %d - previously_recorded_time_elapsed: %d", gs["time_remaining"].seconds, curr_map_time_elapsed, prev_map_time_elapsed)
             return 0
 
-        if gs["allied_score"] == 2 and gs["axis_score"] == 2 and len(current_map["cap_flips"]) > 1:
-            logger.info("New score is 2:2 but there are some cap flips records already")
-            current_map["cap_flips"].clear()
-            return gs["time_remaining"].seconds
+        if current_map["match_time"] == 0:
+            if cached_game_mode == GameMode.OFFENSIVE:
+                remaining = int(gs["time_remaining"].total_seconds())
+                if curr_map_time_elapsed <= 60 and remaining > 100:
+                    # The session's matchTime can still contain Warfare's
+                    # 90-minute value at the match boundary. remainingMatchTime
+                    # is the live Offensive objective timer; round it back up to
+                    # its configured whole-minute value after polling delay.
+                    objective_time = ((remaining + 59) // 60) * 60
+                    current_map["match_time"] = get_theoretical_match_time(
+                        cached_game_mode, objective_time
+                    )
+                    logger.info(
+                        "Recorded Offensive match time %ds from %ds objective timer",
+                        current_map["match_time"],
+                        objective_time,
+                    )
+            else:
+                current_map["match_time"] = get_theoretical_match_time(
+                    cached_game_mode, gs["match_time"]
+                )
+
+        dp = self.get_detailed_players()
+        logger.info(
+            "RCON map/player polling completed in %.3fs",
+            time.perf_counter() - started,
+        )
+        self.record_cap_flips(current_map, curr_map_time_elapsed, gs)
 
         # logger.debug("\n[MATCH RUNNING] - Recording stats")
         # logger.debug("\n[MATCH RUNNING]\nMatch Start: %d\nMatch Time: %d\nRemaining Match Time: %d\nTime elapsed: %d\nTime elapsed(now-start): %d\n", current_map["start"], gs["match_time"], gs["time_remaining"].seconds, prev_map_time_elapsed, now - current_map["start"])
