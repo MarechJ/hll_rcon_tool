@@ -518,7 +518,7 @@ def handle_on_connect(
     rcon: Rcon, struct_log: StructuredLogLineWithMetaData, name: str, player_id: str
 ):
     try:
-        rcon.get_players.cache_clear()
+        rcon.get_players.clear_for()
         rcon.get_player_info.clear_for(player_id=struct_log["player_id_1"])
         rcon.get_detailed_player_info.clear_for(player_id=struct_log["player_id_1"])
     except Exception:

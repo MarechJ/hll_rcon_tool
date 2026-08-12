@@ -2,6 +2,7 @@ import asyncio
 import math
 import os
 import random
+import time
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
@@ -91,6 +92,11 @@ try:
     HLL_WH_LOOP_SLEEP_TIME = float(os.getenv("HLL_WH_LOOP_SLEEP_TIME"))
 except (ValueError, TypeError):
     HLL_WH_LOOP_SLEEP_TIME = 0.006
+
+# Queue contents still get checked every service loop. Redis key discovery is
+# intentionally slower because newly created webhook queues can tolerate this
+# small delay and SCAN is otherwise executed hundreds of times per second.
+QUEUE_KEY_REFRESH_INTERVAL_SECS = 1.0
 
 # Global datastructures to support associating hooks with locks
 _RATE_LIMIT_BUCKETS: defaultdict[str, asyncio.Lock | None] = defaultdict(lambda: None)
@@ -830,6 +836,37 @@ def get_all_queue_keys_not_empty(
     return populated_queues + populated_transient_messages
 
 
+@dataclass
+class WebhookQueueKeyCache:
+    """Reuse webhook queue keys while continuing to poll their contents."""
+
+    red: redis.StrictRedis
+    prefix: str = PREFIX
+    refresh_interval_secs: float = QUEUE_KEY_REFRESH_INTERVAL_SECS
+    queue_ids: tuple[str, ...] = ()
+    transient_message_keys: tuple[str, ...] = ()
+    next_refresh_at: float = 0.0
+
+    def get_not_empty(self, now: float | None = None) -> list[str]:
+        now = time.monotonic() if now is None else now
+        if now >= self.next_refresh_at:
+            self.queue_ids = tuple(get_all_queue_keys(red=self.red, prefix=self.prefix))
+            self.transient_message_keys = tuple(
+                get_all_transient_message_keys(red=self.red, prefix=self.prefix)
+            )
+            self.next_refresh_at = now + self.refresh_interval_secs
+
+        populated_queues = [
+            queue_id for queue_id in self.queue_ids if self.red.llen(queue_id) > 0
+        ]
+        populated_transient_messages = [
+            queue_id
+            for queue_id in self.transient_message_keys
+            if self.red.exists(queue_id)
+        ]
+        return populated_queues + populated_transient_messages
+
+
 def get_transient_message_overview(
     queue_id: str,
     red: redis.StrictRedis | None,
@@ -1088,6 +1125,7 @@ async def main():
     client = httpx.AsyncClient()
     lock: asyncio.Lock | None = None
     continue_logged = False
+    queue_key_cache = WebhookQueueKeyCache(red=red)
 
     # Create a file to use for the docker health check
     from pathlib import Path
@@ -1096,8 +1134,7 @@ async def main():
     path.touch()
 
     while True:
-        # Check each loop to pick up new queues that have been added since last iteration
-        queue_ids = get_all_queue_keys_not_empty(red=red)
+        queue_ids = queue_key_cache.get_not_empty()
 
         # Keep each message queue under its max, dropping the oldest messages first
         for queue_id in queue_ids:
