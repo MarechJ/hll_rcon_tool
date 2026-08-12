@@ -34,8 +34,6 @@ def _get_empty(value):
 @csrf_exempt
 def get_api_documentation(request):
     """Auto-generate minimal API documentation through introspection"""
-    from rcon.api_commands import RconAPI
-
     api_docs = []
     for name, func in endpoints:
         item = {}
@@ -62,7 +60,7 @@ def get_api_documentation(request):
         # manually created endpoints (there could be, if they were defined with different names)
         # but almost all of our endpoints share the name with functions, and those that don't map
         # to entirely different things like `login -> do_login` that are out of scope of RconAPI
-        item["auto_settings_capable"] = name in dir(RconAPI)
+        item["auto_settings_capable"] = name in dir(type(views.rcon_api))
 
         try:
             item["permissions_required"] = ENDPOINT_PERMISSIONS_LOOKUP[func.__name__]

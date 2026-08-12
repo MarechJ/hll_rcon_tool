@@ -71,6 +71,7 @@ class GameMode(str, Enum):
     SKIRMISH = "skirmish"
     PHASED = "phased"
     MAJORITY = "majority"
+    DOMINATION = "domination"
 
     @classmethod
     def large(cls):

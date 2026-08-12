@@ -14,8 +14,14 @@ from dateutil import parser
 from rcon.connection import HLLCommandError
 import rcon.steam_utils
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
-from rcon.commands import HLLCommandFailedError, ServerCtl, VipId
-from rcon.maps import UNKNOWN_MAP_NAME, Layer, is_server_loading_map, parse_layer
+from rcon.commands import (
+    HLLCommandFailedError,
+    HLLServerCtl,
+    HLLVServerCtl,
+    ServerCtl,
+    VipId,
+)
+from rcon.maps import UNKNOWN_MAP_NAME, Layer, is_server_loading_map
 from rcon.models import PlayerID, PlayerVIP, enter_session, GameLayout
 from rcon.perf_statistics import PerformanceStatistics
 from rcon.player_history import get_profiles, safe_save_player_action, save_player, get_player_profile
@@ -23,6 +29,7 @@ import rcon.settings
 from rcon.types import (
     AdminType,
     GameLayoutRandomConstraints,
+    GameEnum,
     GameServerBanType,
     GameStateType,
     GetDetailedPlayer,
@@ -97,6 +104,16 @@ logger = logging.getLogger(__name__)
 CTL: Optional["Rcon"] = None
 
 
+def create_rcon(credentials: ServerInfo) -> "Rcon":
+    """Construct the concrete controller for the configured game."""
+
+    controller_type = {
+        GameEnum.HLL_WW2: HLLRcon,
+        GameEnum.HLL_VIETNAM: HLLVRcon,
+    }[credentials.game]
+    return controller_type(credentials)
+
+
 def get_rcon(credentials: ServerInfo | None = None):
     """Return a initialized Rcon connection to the game server
 
@@ -114,7 +131,7 @@ def get_rcon(credentials: ServerInfo | None = None):
         credentials = rcon.settings.get_server_info()
 
     if CTL is None:
-        CTL = Rcon(credentials)
+        CTL = create_rcon(credentials)
     return CTL
 
 
@@ -154,6 +171,7 @@ def is_user_config_func(name: str) -> bool:
 
 
 class Rcon(ServerCtl):
+    """Shared high-level RCON behavior composed with a game controller."""
     settings = (
         ("team_switch_cooldown", int),
         ("autobalance_threshold", int),
@@ -205,8 +223,8 @@ class Rcon(ServerCtl):
             self.pool_size = config.thread_pool_size
 
         self._config = config
-        self._current_map = parse_layer(UNKNOWN_MAP_NAME)
-        self._next_map = parse_layer(UNKNOWN_MAP_NAME)
+        self._current_map = self.game_profile.parse_layer(UNKNOWN_MAP_NAME)
+        self._next_map = self.game_profile.parse_layer(UNKNOWN_MAP_NAME)
 
     def performance_stats_interval(self) -> int:
         if self._config.performance_statistics_enabled:
@@ -221,7 +239,7 @@ class Rcon(ServerCtl):
     @current_map.setter
     def current_map(self, map_name: str):
         if not is_server_loading_map(map_name):
-            self._current_map = parse_layer(map_name)
+            self._current_map = self.game_profile.parse_layer(map_name)
 
     @property
     def next_map(self) -> Layer:
@@ -230,7 +248,7 @@ class Rcon(ServerCtl):
 
     @next_map.setter
     def next_map(self, map_name: str):
-        self._next_map = parse_layer(map_name)
+        self._next_map = self.game_profile.parse_layer(map_name)
 
     @cached_property
     def thread_pool(self):
@@ -971,7 +989,7 @@ class Rcon(ServerCtl):
 
     @ttl_cache(ttl=60 * 60 * 24)
     def get_maps(self) -> list[Layer]:
-        return [parse_layer(m) for m in super().get_maps()]
+        return [self.game_profile.parse_layer(m) for m in super().get_maps()]
 
     # TODO: fix typing
     def get_server_settings(self):
@@ -1139,7 +1157,7 @@ class Rcon(ServerCtl):
             if not self.map_regexp.match(map_):
                 raise HLLCommandFailedError("Server returned wrong data")
 
-            maps.append(parse_layer(map_))
+            maps.append(self.game_profile.parse_layer(map_))
 
         next_map_index = map_sequence["current_index"] + 1
         if (next_map_index >= len(map_sequence["maps"])):
@@ -1161,7 +1179,7 @@ class Rcon(ServerCtl):
             if not self.map_regexp.match(map_):
                 raise HLLCommandFailedError("Server returned wrong data")
 
-            maps.append(parse_layer(map_))
+            maps.append(self.game_profile.parse_layer(map_))
         s["maps"] = maps
         return s
 
@@ -1593,3 +1611,13 @@ class Rcon(ServerCtl):
             "players": list(players),
             "logs": parsed_log_lines,
         }
+
+
+class HLLRcon(Rcon, HLLServerCtl):
+    def game_test_command(self) -> GameEnum:
+        return GameEnum.HLL_WW2
+
+
+class HLLVRcon(Rcon, HLLVServerCtl):
+    def game_test_command(self) -> GameEnum:
+        return GameEnum.HLL_VIETNAM

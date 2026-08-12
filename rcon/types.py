@@ -179,16 +179,6 @@ class ServerInfo:
     game: GameEnum | None = None
 
     def __post_init__(self) -> None:
-        if self.port is None:
-            return
-        if isinstance(self.port, str):
-            try:
-                self.port = int(self.port)
-            except ValueError as e:
-                raise ValueError("HLL_PORT must be an integer") from e
-        elif not isinstance(self.port, int):
-            raise TypeError("ServerInfo.port must be an int or None")
-        
         if self.game is None or not self.game:
             self.game = GameEnum.HLL_WW2
         elif isinstance(self.game, str):
@@ -198,6 +188,16 @@ class ServerInfo:
                 raise ValueError(
                     f"HLL_GAME must be one of the following values: {', '.join(game.value for game in GameEnum)}"
                 ) from e
+
+        if self.port is None:
+            return
+        if isinstance(self.port, str):
+            try:
+                self.port = int(self.port)
+            except ValueError as e:
+                raise ValueError("HLL_PORT must be an integer") from e
+        elif not isinstance(self.port, int):
+            raise TypeError("ServerInfo.port must be an int or None")
 
     @classmethod
     def from_env(cls) -> "ServerInfo":

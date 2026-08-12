@@ -7,11 +7,11 @@ from functools import wraps
 from typing import Generator, Literal, Sequence, Any, List
 
 from rcon.connection import HLLCommandError, HLLConnection, Handle, Response
-from rcon.maps import LAYERS, MAPS, UNKNOWN_MAP_NAME, Environment, GameMode, LayerType
+from rcon.game import get_game_profile
+from rcon.maps import GameMode
 from rcon.perf_statistics import PerformanceStatistics
 from rcon.types import MapRotationResponse, MapSequenceResponse, PlayerInfoType, PublicConfig, ServerInfo, SlotsType, VipId, GameStateType, AdminType
 from rcon.utils import exception_in_chain
-from rcon.settings import get_server_info
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +63,7 @@ class ServerCtl:
         self, config: ServerInfo, perf_stats: PerformanceStatistics, auto_retry=1
     ) -> None:
         self.config = config
+        self.game_profile = get_game_profile(config.game)
         self.perf_stats = perf_stats
         self.auto_retry = auto_retry
         self.mu = threading.Lock()
@@ -364,11 +365,12 @@ class ServerCtl:
         }
 
     def get_map_sequence(self) -> MapSequenceResponse:
-        data = self.exchange("GetServerInformation", 2, {"Name": "mapsequence", "Value": ""}).content_dict
+        data = self.exchange(
+            "GetServerInformation", 2, {"Name": "mapsequence", "Value": ""}
+        ).content_dict
         return {
-            # Map[iD] can be in format as '/Game/Maps/driel_offensive_ger'
             "maps": [x["iD"].split("/")[-1] for x in data["mAPS"]],
-            "current_index": data["currentIndex"]
+            "current_index": data["currentIndex"],
         }
 
     def get_slots(self) -> SlotsType:
@@ -526,7 +528,11 @@ class ServerCtl:
         self.exchange("RemoveMapFromSequence", 2, {"Index": map_index})
 
     def move_map_in_sequence(self, current_index: int, new_index: int) -> None:
-        self.exchange("MoveMapInSequence", 2, {"CurrentIndex": current_index, "NewIndex": new_index})
+        self.exchange(
+            "MoveMapInSequence",
+            2,
+            {"CurrentIndex": current_index, "NewIndex": new_index},
+        )
 
     @_escape_params
     def punish(self, player_id: str, reason: str) -> bool:
@@ -600,26 +606,19 @@ class ServerCtl:
 
     def get_gamestate(self) -> GameStateType:
         s = self.exchange("GetServerInformation", 2, {"Name": "session", "Value": ""}).content_dict
-        map_sequence = self.get_map_sequence()
-
         time_remaining = timedelta(seconds=int(s["remainingMatchTime"]))
         seconds_remaining = int(time_remaining.total_seconds())
         raw_time_remaining = f"{seconds_remaining // 3600}:{(seconds_remaining // 60) % 60:02}:{seconds_remaining % 60:02}"
 
-        game_mode = GameMode(s["gameMode"].lower())
+        game_mode = self.game_profile.parse_game_mode(s["gameMode"])
+        current_map = self.game_profile.parse_layer_or_unknown(s["mapId"])
 
         try:
-            current_map = LAYERS[s["mapId"].lower()]
+            next_map = self.game_profile.parse_layer_or_unknown(
+                self._get_next_map_id()
+            )
         except Exception:
-            current_map = LAYERS[UNKNOWN_MAP_NAME]
-
-        try:
-            next_map_index = map_sequence["current_index"] + 1
-            if (next_map_index >= len(map_sequence["maps"])):
-                next_map_index = 0
-            next_map = map_sequence["maps"][next_map_index]
-        except Exception:
-            next_map = LAYERS[UNKNOWN_MAP_NAME]
+            next_map = self.game_profile.parse_layer_or_unknown("unknown")
 
         return GameStateType(
             next_map=next_map.model_dump(),
@@ -646,79 +645,91 @@ class ServerCtl:
             server_name=s["serverName"],
         )
 
-    def get_objective_row(self, row: int):
-        if not (0 <= row <= 4):
-            raise ValueError("Row must be between 0 and 4")
-
-        return self.get_objective_rows()[row]
-
-    def get_objective_rows(self) -> List[List[str]]:
-        details = self.exchange("GetClientReferenceData", 2, "SetSectorLayout")
-        parameters = details.content_dict["dialogueParameters"]
-        if not parameters or not all(
-                p["iD"].startswith("Sector_") for p in parameters[:5]
-        ):
-            msg = "Received unexpected response from server."
-            raise HLLCommandFailedError(msg)
-
-        return [
-            parameters[0]["valueMember"].split(","),
-            parameters[1]["valueMember"].split(","),
-            parameters[2]["valueMember"].split(","),
-            parameters[3]["valueMember"].split(","),
-            parameters[4]["valueMember"].split(","),
-        ]
-
-    def set_game_layout(self, objectives: Sequence[str]):
-        if len(objectives) != 5:
-            raise ValueError("5 objectives must be provided")
-        print(self.exchange("SetSectorLayout", 2, {
-            "Sector_1": objectives[0],
-            "Sector_2": objectives[1],
-            "Sector_3": objectives[2],
-            "Sector_4": objectives[3],
-            "Sector_5": objectives[4],
-        }).content)
-        return list(objectives)
-
-    def get_game_mode(self) -> Literal["Warfare", "Offensive", "Skirmish"]:
+    def get_game_mode(self) -> str:
         return self.exchange("GetServerInformation", 2, {"Name": "session", "Value": ""}).content_dict["gameMode"]
 
 
-    def set_match_timer(self, game_mode: GameMode, length: int):
-        self.exchange("SetMatchTimer", 2, {"GameMode": game_mode.value, "MatchLength": length})
+    def set_match_timer(self, game_mode: str | GameMode, length: int):
+        mode = self.game_profile.parse_game_mode(game_mode)
+        self.exchange("SetMatchTimer", 2, {"GameMode": mode.value, "MatchLength": length})
 
 
-    def remove_match_timer(self, game_mode: GameMode):
-        self.exchange("RemoveMatchTimer", 2, {"GameMode": game_mode.value})
+    def remove_match_timer(self, game_mode: str | GameMode):
+        mode = self.game_profile.parse_game_mode(game_mode)
+        self.exchange("RemoveMatchTimer", 2, {"GameMode": mode.value})
 
 
-    def set_warmup_timer(self, game_mode: GameMode, length: int):
-        self.exchange("SetWarmupTimer", 2, {"GameMode": game_mode.value, "WarmupLength": length})
+    def set_warmup_timer(self, game_mode: str | GameMode, length: int):
+        mode = self.game_profile.parse_game_mode(game_mode)
+        self.exchange("SetWarmupTimer", 2, {"GameMode": mode.value, "WarmupLength": length})
 
 
-    def remove_warmup_timer(self, game_mode: GameMode):
-        self.exchange("RemoveWarmupTimer", 2, {"GameMode": game_mode.value})
+    def remove_warmup_timer(self, game_mode: str | GameMode):
+        mode = self.game_profile.parse_game_mode(game_mode)
+        self.exchange("RemoveWarmupTimer", 2, {"GameMode": mode.value})
 
-
-    def set_dynamic_weather_enabled(self, map_name: str, enabled: bool):
-        self.exchange("SetDynamicWeatherEnabled", 2, {"MapId": map_name, "Enable": enabled})
 
     def get_server_config(self) -> PublicConfig:
         cfg = self.exchange("GetServerInformation", 2, {"Name": "serverconfig", "Value": ""}).content_dict
-        server_info = get_server_info()
         return {
             "build_number": cfg["buildNumber"],
             "build_revision": cfg["buildRevision"],
             "password_protected": cfg["passwordProtected"],
             "server_name": cfg["serverName"],
             "supported_platforms": cfg["supportedPlatforms"],
-            "game": server_info.game
+            "game": self.config.game
         }
+
+    def _get_next_map_id(self) -> str:
+        sequence = self.get_map_sequence()
+        if not sequence["maps"]:
+            return "unknown"
+        next_index = (sequence["current_index"] + 1) % len(sequence["maps"])
+        return sequence["maps"][next_index]
+
+    def get_objective_row(self, row: int):
+        if not (0 <= row <= 4):
+            raise ValueError("Row must be between 0 and 4")
+        return self.get_objective_rows()[row]
+
+    def get_objective_rows(self) -> List[List[str]]:
+        details = self.exchange("GetClientReferenceData", 2, "SetSectorLayout")
+        parameters = details.content_dict["dialogueParameters"]
+        if not parameters or not all(
+            p["iD"].startswith("Sector_") for p in parameters[:5]
+        ):
+            raise HLLCommandFailedError("Received unexpected response from server.")
+        return [p["valueMember"].split(",") for p in parameters[:5]]
+
+    def set_game_layout(self, objectives: Sequence[str]):
+        if len(objectives) != 5:
+            raise ValueError("5 objectives must be provided")
+        response = self.exchange(
+            "SetSectorLayout",
+            2,
+            {f"Sector_{index}": value for index, value in enumerate(objectives, 1)},
+        )
+        print(response.content)
+        return list(objectives)
+
+    def set_dynamic_weather_enabled(self, map_name: str, enabled: bool):
+        self.exchange("SetDynamicWeatherEnabled", 2, {"MapId": map_name, "Enable": enabled})
+
+
+class HLLServerCtl(ServerCtl):
+    """Hell Let Loose controller extension point."""
+
+
+class HLLVServerCtl(ServerCtl):
+    """Hell Let Loose: Vietnam controller extension point."""
 
 
 
 if __name__ == "__main__":
     import rcon.settings
 
-    ctl = ServerCtl(rcon.settings.get_server_info(), PerformanceStatistics('rcon'))
+    server_info = rcon.settings.get_server_info()
+    controller_type = (
+        HLLServerCtl if server_info.game.value == "hll" else HLLVServerCtl
+    )
+    ctl = controller_type(server_info, PerformanceStatistics('rcon'))

@@ -27,7 +27,7 @@ from rcon.player_history import (
     remove_flag,
 )
 from rcon.player_stats import TimeWindowStats
-from rcon.rcon import Rcon
+from rcon.rcon import HLLRcon, HLLVRcon, Rcon
 from rcon.scoreboard import ScoreboardUserConfig
 import rcon.settings
 from rcon.types import (
@@ -37,6 +37,7 @@ from rcon.types import (
     BlacklistType,
     BlacklistWithRecordsType,
     GameServerBanType,
+    GameEnum,
     MessageTemplateCategory,
     MessageTemplateType,
     ParsedLogsType,
@@ -94,6 +95,16 @@ PLAYER_ID = "player_id"
 CTL: Optional["RconAPI"] = None
 
 
+def create_rcon_api(credentials: ServerInfo) -> "RconAPI":
+    """Construct the concrete API controller for the configured game."""
+
+    controller_type = {
+        GameEnum.HLL_WW2: HLLRconAPI,
+        GameEnum.HLL_VIETNAM: HLLVRconAPI,
+    }[credentials.game]
+    return controller_type(credentials)
+
+
 def parameter_aliases(alias_to_param: Dict[str, str]):
     """Specify parameter aliases of a function. This might be useful to preserve backwards
     compatibility or to handle parameters named after a Python reserved keyword.
@@ -131,7 +142,7 @@ def get_rcon_api(credentials: ServerInfo | None = None) -> "RconAPI":
         credentials = rcon.settings.get_server_info()
 
     if CTL is None:
-        CTL = RconAPI(credentials)
+        CTL = create_rcon_api(credentials)
     return CTL
 
 
@@ -2123,3 +2134,11 @@ class RconAPI(Rcon):
                 "account": account_db.to_dict(),
                 "msg": "Successfully updated account details.",
             }
+
+
+class HLLRconAPI(RconAPI, HLLRcon):
+    pass
+
+
+class HLLVRconAPI(RconAPI, HLLVRcon):
+    pass
