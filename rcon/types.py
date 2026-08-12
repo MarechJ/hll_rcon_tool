@@ -166,12 +166,17 @@ class MostRecentEvents:
     last_tk_nemesis_weapon: str | None = None
 
 
+class GameEnum(enum.Enum):
+    HLL_WW2 = "hll"
+    HLL_VIETNAM = "hllv"
+
+
 @dataclass
 class ServerInfo:
     host: str | None = None
     port: int | None = None
     password: str | None = None
-    game: str = "hll"
+    game: GameEnum | None = None
 
     def __post_init__(self) -> None:
         if self.port is None:
@@ -183,6 +188,16 @@ class ServerInfo:
                 raise ValueError("HLL_PORT must be an integer") from e
         elif not isinstance(self.port, int):
             raise TypeError("ServerInfo.port must be an int or None")
+        
+        if self.game is None or not self.game:
+            self.game = GameEnum.HLL_WW2
+        elif isinstance(self.game, str):
+            try:
+                self.game = GameEnum(self.game)
+            except ValueError as e:
+                raise ValueError(
+                    f"HLL_GAME must be one of the following values: {', '.join(game.value for game in GameEnum)}"
+                ) from e
 
     @classmethod
     def from_env(cls) -> "ServerInfo":
@@ -190,7 +205,7 @@ class ServerInfo:
             host=os.getenv("HLL_HOST"),
             port=os.getenv("HLL_PORT"),
             password=os.getenv("HLL_PASSWORD"),
-            game=os.getenv("HLL_GAME") or "hll",
+            game=os.getenv("HLL_GAME"),
         )
 
 # Have to inherit from str to allow for JSON serialization w/ pydantic
