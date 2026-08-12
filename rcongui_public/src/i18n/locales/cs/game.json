@@ -65,7 +65,7 @@
     "death": "Smrt",
     "killed": "zabil",
     "wasKilledBy": "byl zabit hráčem",
-    "withWeapon": "se zbraní <weapon>{{weapon}}</weapon>",
+    "withWeapon": "se zbraní <weapon />",
     "tankDestroyed": "{{player}} zničil tank",
     "playerState": {
       "joined": "<player>{{player}}</player> se připojil za <team>{{team}}</team>",

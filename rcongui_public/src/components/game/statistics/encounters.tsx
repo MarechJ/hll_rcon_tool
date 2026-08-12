@@ -103,8 +103,9 @@ function EncounterItem({
           <Trans
             t={t}
             i18nKey="timelineDetails.withWeapon"
-            values={{ weapon: encounter.weapon }}
-            components={{ weapon: <span className="font-medium text-foreground" /> }}
+            components={{
+              weapon: <span className="font-medium text-foreground">{encounter.weapon}</span>,
+            }}
           />
         </span>
       )}
