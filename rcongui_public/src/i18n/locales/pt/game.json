@@ -97,7 +97,7 @@
     "death": "Morte",
     "killed": "abateu",
     "wasKilledBy": "foi abatido por",
-    "withWeapon": "com <weapon>{{weapon}}</weapon>",
+    "withWeapon": "com <weapon />",
     "tankDestroyed": "{{player}} destruiu um tanque",
     "playerState": {
       "joined": "<player>{{player}}</player> entrou como <team>{{team}}</team>",

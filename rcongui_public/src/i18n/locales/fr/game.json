@@ -65,7 +65,7 @@
     "death": "Mort",
     "killed": "a éliminé",
     "wasKilledBy": "a été éliminé par",
-    "withWeapon": "avec <weapon>{{weapon}}</weapon>",
+    "withWeapon": "avec <weapon />",
     "tankDestroyed": "{{player}} a détruit un char",
     "playerState": {
       "joined": "<player>{{player}}</player> a rejoint les <team>{{team}}</team>",
