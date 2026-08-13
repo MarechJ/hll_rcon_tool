@@ -291,7 +291,7 @@ def test_hllv_set_game_layout_accepts_an_explicit_map():
 
 
 def test_hllv_get_objective_rows_uses_hllrcon_sector_definitions():
-    ctl = HLLVServerCtl(ServerInfo(game=GameEnum.HLL_VIETNAM), Mock())
+    ctl = object.__new__(HLLVRcon)
     ctl.exchange = Mock()
 
     result = ctl.get_objective_rows("WDEV_E")
@@ -306,10 +306,18 @@ def test_hllv_get_objective_rows_uses_hllrcon_sector_definitions():
     ctl.exchange.assert_not_called()
 
 
-def test_hllv_get_objective_rows_accepts_layer_id():
-    ctl = HLLVServerCtl(ServerInfo(game=GameEnum.HLL_VIETNAM), Mock())
+@pytest.mark.parametrize(
+    "layer_id",
+    [
+        "wdevc_warfare_day",
+        "wdevc_offensivenva_day",
+        "wdevc_domination_day",
+    ],
+)
+def test_hllv_get_objective_rows_accepts_supported_layer_id(layer_id):
+    ctl = object.__new__(HLLVRcon)
 
-    result = ctl.get_objective_rows("wdevc_warfare_day")
+    result = ctl.get_objective_rows(layer_id)
 
     assert result[0] == [
         "Market Town",
@@ -321,7 +329,7 @@ def test_hllv_get_objective_rows_accepts_layer_id():
 
 
 def test_hllv_get_objective_rows_rejects_unknown_map():
-    ctl = HLLVServerCtl(ServerInfo(game=GameEnum.HLL_VIETNAM), Mock())
+    ctl = object.__new__(HLLVRcon)
 
     with pytest.raises(ValueError, match="Unknown HLL Vietnam map or layer ID"):
         ctl.get_objective_rows("not-a-map")
