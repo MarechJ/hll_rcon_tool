@@ -15,7 +15,7 @@ from rcon.cache_utils import get_redis_pool
 from rcon.game.registry import game_switch
 from rcon.models import GameLayout
 from rcon.types import GameEnum, GetDetailedPlayer, MapInfo, PlayerInfoType, PlayerStat, PlayerStatsType, StructuredLogLineWithMetaData
-from rcon.maps import Layer, parse_map_string, LAYERS, Environment, UNKNOWN_MAP_NAME
+from rcon.maps import Layer, parse_map_string, LAYERS, Environment, UNKNOWN_MAP_NAME, Team
 
 logger = logging.getLogger("rcon")
 
@@ -537,7 +537,7 @@ def parse_raw_player_info(raw: PlayerInfoType, game: GameEnum) -> GetDetailedPla
         role = None
 
     data["faction"] = faction.short_name.lower() if faction else None
-    data["team"] = faction.team.name.lower() if faction else None
+    data["team"] = Team.from_hllrcon(faction.team).value if faction else None
     data["role"] = role.name.lower() if role else None
     data["loadout"] = raw["loadout"].lower()
     data["level"] = int(raw["level"])
