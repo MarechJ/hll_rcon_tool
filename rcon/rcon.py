@@ -1682,29 +1682,21 @@ class HLLVRcon(Rcon, HLLVServerCtl):
         return selected
 
     def get_objective_rows(self, map_name: str) -> List[List[str]]:
-        map_or_layer_id = map_name.casefold()
-        layers = hllrcon.HLLVLayer.all()
+        try:
+            layer = hllrcon.HLLVLayer.by_id(map_name)
+        except ValueError:
+            try:
+                map_ = hllrcon.HLLVMap.by_id(map_name)
+                canonical_layer_id = (
+                    f"{map_.id.replace('_', '').lower()}_warfare_day"
+                )
+                layer = hllrcon.HLLVLayer.by_id(canonical_layer_id)
+            except ValueError as exc:
+                raise ValueError(
+                    f"Unknown HLL Vietnam map or layer ID: {map_name!r}"
+                ) from exc
 
-        def has_selectable_layout(layer: hllrcon.HLLVLayer) -> bool:
-            return len(layer.sectors) == 5 and all(
-                len(sector.capture_zones) == 3 for sector in layer.sectors
-            )
-
-        layer = next(
-            (layer for layer in layers if layer.id.casefold() == map_or_layer_id),
-            None,
-        )
-        if layer is None:
-            layer = next(
-                (
-                    layer
-                    for layer in layers
-                    if layer.map.id.casefold() == map_or_layer_id
-                    and has_selectable_layout(layer)
-                ),
-                None,
-            )
-        if layer is None:
+        if layer.map.id.casefold() == "unknown":
             raise ValueError(f"Unknown HLL Vietnam map or layer ID: {map_name!r}")
 
         objective_rows = [
