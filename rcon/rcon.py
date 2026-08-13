@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from functools import cached_property
 from itertools import chain
-from typing import Literal, Optional, overload
+from typing import Iterable, List, Literal, Optional, Sequence, cast, overload
 
 from dateutil import parser
 
@@ -24,7 +24,7 @@ from rcon.commands import (
 )
 from rcon.connection import HLLCommandError
 from rcon.maps import UNKNOWN_MAP_NAME, Layer, is_server_loading_map
-from rcon.models import GameLayout, PlayerID, PlayerVIP, enter_session
+from rcon.models import PlayerID, PlayerVIP, enter_session
 from rcon.perf_statistics import PerformanceStatistics
 from rcon.player_history import (
     get_player_profile,
@@ -106,10 +106,10 @@ LOG_ACTIONS = [
 ]
 logger = logging.getLogger(__name__)
 
-CTL: Optional["Rcon"] = None
+CTL: Optional["HLLRcon | HLLVRcon"] = None
 
 
-def create_rcon(credentials: ServerInfo) -> "Rcon":
+def create_rcon(credentials: ServerInfo) -> "HLLRcon | HLLVRcon":
     """Construct the concrete controller for the configured game."""
 
     controller_type = {
@@ -119,7 +119,7 @@ def create_rcon(credentials: ServerInfo) -> "Rcon":
     return controller_type(credentials)
 
 
-def get_rcon(credentials: ServerInfo | None = None):
+def get_rcon(credentials: ServerInfo | None = None) -> "HLLRcon | HLLVRcon":
     """Return a initialized Rcon connection to the game server
 
     This maintains a single initialized instance across a Python interpreter
@@ -1309,19 +1309,19 @@ class Rcon(ServerCtl):
     def get_objective_rows(self) -> list[list[str]]:
         return super().get_objective_rows()
 
-    def set_game_layout(
+    def _generate_game_layout(
         self,
         objectives: Sequence[str | int | None],
-        random_constraints: GameLayoutRandomConstraints | None = None,
-    ):
-        if random_constraints is None:
-            random_constraints = GameLayoutRandomConstraints(0)
+        objective_rows: Sequence[Sequence[str | int]],
+        random_constraints: GameLayoutRandomConstraints = GameLayoutRandomConstraints(0),
+    ) -> list[str | int]:
         if len(objectives) != 5:
             raise ValueError("5 objectives must be provided")
+        if len(objective_rows) != 5 or any(len(row) != 3 for row in objective_rows):
+            raise ValueError("5 objective rows with 3 objectives each must be provided")
 
-        obj_rows = self.get_objective_rows()
-        parsed_objs: list[str] = []
-        for row, (obj, obj_row) in enumerate(zip(objectives, obj_rows)):
+        parsed_objs: list[str | int | None] = []
+        for row, (obj, obj_row) in enumerate(zip(objectives, objective_rows)):
             if isinstance(obj, str):
                 # Verify whether the objective exists, or if it can be logically determined
                 if obj in obj_row:
@@ -1351,13 +1351,17 @@ class Rcon(ServerCtl):
                 else:
                     # No constraints, no need for a special algorithm
                     parsed_objs.append(random.choice(obj_row))
+            else:
+                raise TypeError(
+                    f"Objective in row {row + 1} must be a name, index, or None"
+                )
 
         # Special algorithm to apply randomness with constraints. Prioritizes rows with already
         # determined neighbors to avoid conflicts in situations with two neighbors.
         while None in parsed_objs:
             # If no rows are predetermined, determine the middle row first
             if all(obj is None for obj in parsed_objs):
-                parsed_objs[2] = random.choice(obj_rows[2])
+                parsed_objs[2] = random.choice(objective_rows[2])
 
             for row, obj in enumerate(parsed_objs):
                 # Skip if row is already determined
@@ -1367,17 +1371,17 @@ class Rcon(ServerCtl):
                 # Get the indices of the objectives of neighboring rows, if they are already determined
                 neighbors = []
                 if row > 0 and parsed_objs[row - 1] is not None:
-                    neighbors.append(obj_rows[row - 1].index(parsed_objs[row - 1]))
+                    neighbors.append(objective_rows[row - 1].index(parsed_objs[row - 1]))
                 if row < 4 and parsed_objs[row + 1] is not None:
-                    neighbors.append(obj_rows[row + 1].index(parsed_objs[row + 1]))
+                    neighbors.append(objective_rows[row + 1].index(parsed_objs[row + 1]))
 
                 # Skip this row for now if neither of its neighbors had their objective determined yet
                 if not neighbors:
                     continue
 
                 # Create a list of available objectives
-                obj_row = obj_rows[row]
-                obj_choices = obj_row.copy()
+                obj_row = objective_rows[row]
+                obj_choices: list[str | int | None] = list(obj_row)
                 for neighbor_idx in neighbors:
                     # Apply constraints
                     if random_constraints & GameLayoutRandomConstraints.ALWAYS_ADJACENT:
@@ -1395,11 +1399,18 @@ class Rcon(ServerCtl):
                     [c for c in obj_choices if c is not None] or obj_row
                 )
 
+        return [obj for obj in parsed_objs if obj is not None]
+
+    @staticmethod
+    def _cache_game_layout(
+        requested: Sequence[str | int | None],
+        selected: Sequence[str | int],
+    ) -> None:
         red = get_redis_client()
         red.set(
-            "GAME_LAYOUT", json.dumps(GameLayout(requested=objectives, set=parsed_objs))
+            "GAME_LAYOUT",
+            json.dumps({"requested": requested, "set": selected}),
         )
-        return super().set_game_layout(parsed_objs)
 
     @staticmethod
     def parse_log_line(raw_line: str) -> StructuredLogLineType:
@@ -1632,10 +1643,38 @@ class Rcon(ServerCtl):
 
 
 class HLLRcon(Rcon, HLLServerCtl):
+    def set_game_layout(
+        self,
+        objectives: Sequence[str | int | None],
+        random_constraints: GameLayoutRandomConstraints = GameLayoutRandomConstraints(0),
+    ):
+        selected = self._generate_game_layout(
+            objectives,
+            self.get_objective_rows(),
+            random_constraints,
+        )
+        self._cache_game_layout(objectives, selected)
+        return HLLServerCtl.set_game_layout(self, cast(list[str], selected))
+
     def game_test_command(self) -> GameEnum:
         return GameEnum.HLL_WW2
 
 
 class HLLVRcon(Rcon, HLLVServerCtl):
+    def set_game_layout(
+        self,
+        map_name: str,
+        objectives: Sequence[str | int | None],
+        random_constraints: GameLayoutRandomConstraints = GameLayoutRandomConstraints(0),
+    ):
+        objective_rows = ((0, 1, 2),) * 5
+        selected = self._generate_game_layout(
+            objectives,
+            objective_rows,
+            random_constraints,
+        )
+        self._cache_game_layout(objectives, selected)
+        return HLLVServerCtl.set_game_layout(self, map_name, cast(list[int], selected))
+
     def game_test_command(self) -> GameEnum:
         return GameEnum.HLL_VIETNAM
