@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 from unittest.mock import Mock
 
-from hllrcon import HLLVLayer, HLLVMap
+from hllrcon import HLLVLayer
 
 import pytest
 
