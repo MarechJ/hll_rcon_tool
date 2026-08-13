@@ -5,6 +5,8 @@ fallback. Known HLLV maps and layers can be added here without changing shared
 RCON command code or risking a lookup in the WW2 catalog.
 """
 
+import hllrcon
+
 from rcon.maps import (
     UNKNOWN_MAP_NAME,
     Environment,
@@ -29,6 +31,9 @@ HLLV_MAPS: dict[str, Map] = {
         orientation=Orientation.VERTICAL,
     )
 }
+for map_data in hllrcon.HLLVMap.all():
+    map_ = Map.from_hllrcon(map_data)
+    HLLV_MAPS[map_.id] = map_
 
 HLLV_LAYERS: dict[str, Layer] = {
     UNKNOWN_MAP_NAME: Layer(
@@ -37,7 +42,11 @@ HLLV_LAYERS: dict[str, Layer] = {
         game_mode=GameMode.DOMINATION,
     )
 }
-
+# TODO: hllrcon does not preserve details of outdated map IDs. CRCON on the other hand needs them for historical data purposes.
+#   If a layer is ever removed or has its ID updated, its details will have to be manually added above.
+for layer_data in hllrcon.HLLVLayer.all():
+    layer = Layer.from_hllrcon(layer_data)
+    HLLV_LAYERS[layer.id] = layer
 
 def parse_layer(layer_name: str | Layer) -> Layer:
     if isinstance(layer_name, Layer):
