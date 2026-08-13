@@ -325,9 +325,11 @@ class ServerCtl:
     def get_player_ids(self) -> dict[str, str]:
         return {x["name"]: x["iD"] for x in self.exchange("GetServerInformation", 2, {"Name": "players", "Value": ""}).content_dict["players"]}
 
+    # TODO: HLLV: Update response type and everything that depends on it
     def get_all_player_info(self) -> list[PlayerInfoType]:
         return self.exchange("GetServerInformation", 2, {"Name": "players", "Value": ""}).content_dict["players"]
 
+    # TODO: HLLV: Update response type and everything that depends on it
     def get_player_info(self, player_id: str) -> PlayerInfoType | None:
         return self.exchange("GetServerInformation", 2, {"Name": "player", "Value": player_id}).content_dict
 
@@ -701,6 +703,7 @@ class ServerCtl:
             raise HLLCommandFailedError("Received unexpected response from server.")
         return [p["valueMember"].split(",") for p in parameters[:5]]
 
+    # TODO: HLLV: Objective names are replaced with indices (0 to 2)
     def set_game_layout(self, objectives: Sequence[str]):
         if len(objectives) != 5:
             raise ValueError("5 objectives must be provided")
@@ -711,6 +714,8 @@ class ServerCtl:
         )
         print(response.content)
         return list(objectives)
+    
+    # TODO: HLLV: Add commands to get and remove sector layouts
 
     def set_dynamic_weather_enabled(self, map_name: str, enabled: bool):
         self.exchange("SetDynamicWeatherEnabled", 2, {"MapId": map_name, "Enable": enabled})

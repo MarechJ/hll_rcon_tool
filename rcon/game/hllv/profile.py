@@ -13,5 +13,12 @@ HLLV_PROFILE = GameProfile(
     role_labels=HLLV_ROLE_LABELS,
     weapons=HLLV_WEAPONS,
     weapon_sides=HLLV_WEAPON_SIDES,
-    supported_game_modes=frozenset({GameMode.DOMINATION}),
+    supported_game_modes=frozenset(
+        {
+            GameMode.WARFARE,
+            GameMode.OFFENSIVE,
+            GameMode.CONQUEST,
+            GameMode.DOMINATION,
+        }
+    ),
 )

@@ -646,7 +646,7 @@ def edit_record_from_blacklist(
         return new_record
 
 
-def remove_record_from_blacklist(record_id: str):
+def remove_record_from_blacklist(record_id: int):
     with enter_session() as sess:
         record = get_record(sess, record_id)
         if not record:

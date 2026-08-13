@@ -17,6 +17,7 @@ HLL_PROFILE = GameProfile(
         {
             GameMode.WARFARE,
             GameMode.OFFENSIVE,
+            GameMode.CONQUEST,
             GameMode.SKIRMISH,
             GameMode.PHASED,
             GameMode.MAJORITY,

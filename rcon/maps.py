@@ -68,16 +68,21 @@ class Orientation(str, Enum):
 class GameMode(str, Enum):
     WARFARE = "warfare"
     OFFENSIVE = "offensive"
+    CONQUEST = "conquest"
+    DOMINATION = "domination"
     SKIRMISH = "skirmish"
     PHASED = "phased"
     MAJORITY = "majority"
-    DOMINATION = "domination"
+    # When adding a new game mode, also add it to the supported_game_modes set of all game
+    # profiles that support it
 
     @classmethod
     def large(cls):
         return (
             cls.WARFARE,
             cls.OFFENSIVE,
+            cls.CONQUEST,
+            cls.DOMINATION,
         )
 
     @classmethod
@@ -117,6 +122,7 @@ class FactionName(Enum):
     RUS = "rus"
     US = "us"
     CAN = "can"
+    NVA = "nva"
 
 
 class Faction(pydantic.BaseModel):

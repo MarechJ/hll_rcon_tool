@@ -33,6 +33,7 @@ import rcon.settings
 from rcon.types import (
     AdminUserType,
     AllMessageTemplateTypes,
+    BlacklistRecordWithBlacklistType,
     BlacklistSyncMethod,
     BlacklistType,
     BlacklistWithRecordsType,
@@ -320,7 +321,7 @@ class RconAPI(Rcon):
         reason: str,
         expires_at: datetime | None = None,
         admin_name: str = "",
-    ) -> BlacklistType:
+    ) -> BlacklistRecordWithBlacklistType:
         """
         Adds a new record to a blacklist.
 
@@ -348,7 +349,7 @@ class RconAPI(Rcon):
         blacklist_id: int = MISSING,
         reason: str = MISSING,
         expires_at: datetime | None = MISSING,
-    ) -> bool:
+    ) -> BlacklistRecordWithBlacklistType:
         """
         Edits a blacklist record.
 
