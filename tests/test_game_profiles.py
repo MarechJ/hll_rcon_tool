@@ -248,6 +248,92 @@ def test_game_specific_controller_surface():
         assert callable(getattr(hllv, method_name))
 
 
+def test_hll_set_game_layout_uses_objective_names():
+    ctl = HLLServerCtl(ServerInfo(game=GameEnum.HLL_WW2), Mock())
+    ctl.exchange = Mock(return_value=_response({}))
+    objectives = ["one", "two", "three", "four", "five"]
+
+    result = ctl.set_game_layout(objectives)
+
+    ctl.exchange.assert_called_once_with(
+        "SetSectorLayout",
+        2,
+        {
+            "Sector_1": "one",
+            "Sector_2": "two",
+            "Sector_3": "three",
+            "Sector_4": "four",
+            "Sector_5": "five",
+        },
+    )
+    assert result == objectives
+
+
+def test_hllv_set_game_layout_accepts_an_explicit_map():
+    ctl = HLLVServerCtl(ServerInfo(game=GameEnum.HLL_VIETNAM), Mock())
+    ctl.exchange = Mock(return_value=_response({}))
+
+    result = ctl.set_game_layout("map-id", [0, 1, 2, 1, 0])
+
+    ctl.exchange.assert_called_once_with(
+        "SetSectorLayout",
+        2,
+        {
+            "MapId": "map-id",
+            "Sector_1": 0,
+            "Sector_2": 1,
+            "Sector_3": 2,
+            "Sector_4": 1,
+            "Sector_5": 0,
+        },
+    )
+    assert result == [0, 1, 2, 1, 0]
+
+
+def test_shared_game_layout_generator_uses_supplied_objective_rows():
+    ctl = object.__new__(Rcon)
+    rows = [
+        ["a1", "a2", "a3"],
+        ["b1", "b2", "b3"],
+        ["c1", "c2", "c3"],
+        ["d1", "d2", "d3"],
+        ["e1", "e2", "e3"],
+    ]
+
+    result = ctl._generate_game_layout(
+        ["left", 1, "right", "mid", 0],
+        rows,
+    )
+
+    assert result == ["a1", "b2", "c3", "d2", "e1"]
+
+
+def test_hllv_rcon_generates_then_serializes_integer_layout():
+    ctl = object.__new__(HLLVRcon)
+    ctl.exchange = Mock(return_value=_response({}))
+    ctl._cache_game_layout = Mock()
+
+    result = ctl.set_game_layout("map-id", ["left", 1, "right", "mid", 0])
+
+    ctl.exchange.assert_called_once_with(
+        "SetSectorLayout",
+        2,
+        {
+            "MapId": "map-id",
+            "Sector_1": 0,
+            "Sector_2": 1,
+            "Sector_3": 2,
+            "Sector_4": 1,
+            "Sector_5": 0,
+        },
+    )
+    ctl._cache_game_layout.assert_called_once_with(
+        ["left", 1, "right", "mid", 0],
+        [0, 1, 2, 1, 0],
+    )
+    assert result == [0, 1, 2, 1, 0]
+
+
 @pytest.mark.parametrize(
     ("game", "expected_type"),
     [
@@ -278,6 +364,8 @@ def test_concrete_rcon_classes_share_commands_but_identify_their_game():
 
     assert HLLRcon.game_test_command(None) is GameEnum.HLL_WW2
     assert HLLVRcon.game_test_command(None) is GameEnum.HLL_VIETNAM
+    assert HLLRcon.set_game_layout is not HLLServerCtl.set_game_layout
+    assert HLLVRcon.set_game_layout is not HLLVServerCtl.set_game_layout
 
 
 @pytest.mark.parametrize(
@@ -305,6 +393,8 @@ def test_api_classes_share_commands_and_keep_concrete_game_identity():
     assert hasattr(HLLVRconAPI, "set_dynamic_weather_enabled")
     assert HLLRconAPI.game_test_command(None) is GameEnum.HLL_WW2
     assert HLLVRconAPI.game_test_command(None) is GameEnum.HLL_VIETNAM
+    assert HLLRconAPI.set_game_layout is HLLRcon.set_game_layout
+    assert HLLVRconAPI.set_game_layout is HLLVRcon.set_game_layout
 
 
 def test_timer_commands_validate_mode_against_profile():

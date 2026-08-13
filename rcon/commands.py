@@ -793,19 +793,6 @@ class ServerCtl:
             raise HLLCommandFailedError("Received unexpected response from server.")
         return [p["valueMember"].split(",") for p in parameters[:5]]
 
-    # TODO: HLLV: Objective names are replaced with indices (0 to 2)
-    def set_game_layout(self, objectives: Sequence[str]):
-        if len(objectives) != 5:
-            raise ValueError("5 objectives must be provided")
-        response = self.exchange(
-            "SetSectorLayout",
-            2,
-            {f"Sector_{index}": value for index, value in enumerate(objectives, 1)},
-        )
-        print(response.content)
-        return list(objectives)
-
-    # TODO: HLLV: Add commands to get and remove sector layouts
     def set_dynamic_weather_enabled(self, map_name: str, enabled: bool):
         self.exchange(
             "SetDynamicWeatherEnabled", 2, {"MapId": map_name, "Enable": enabled}
@@ -815,10 +802,39 @@ class ServerCtl:
 class HLLServerCtl(ServerCtl):
     """Hell Let Loose controller extension point."""
 
+    def set_game_layout(self, objectives: Sequence[str]):
+        if len(objectives) != 5:
+            raise ValueError("5 objectives must be provided")
+        self.exchange(
+            "SetSectorLayout",
+            2,
+            {f"Sector_{index}": value for index, value in enumerate(objectives, 1)},
+        )
+        return list(objectives)
+
 
 class HLLVServerCtl(ServerCtl):
     """Hell Let Loose: Vietnam controller extension point."""
 
+    def set_game_layout(self, map_name: str, objectives: Sequence[int]):
+        if len(objectives) != 5:
+            raise ValueError("5 objectives must be provided")
+        self.exchange(
+            "SetSectorLayout",
+            2,
+            {
+                "MapId": map_name,
+                "Sector_1": objectives[0],
+                "Sector_2": objectives[1],
+                "Sector_3": objectives[2],
+                "Sector_4": objectives[3],
+                "Sector_5": objectives[4],
+            },
+        )
+        return list(objectives)
+
+    def get_game_layout(self):    
+        return self.exchange("GetSectorLayout", 2).content_dict
 
 if __name__ == "__main__":
     import rcon.settings
