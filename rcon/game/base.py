@@ -32,7 +32,14 @@ class GameProfile:
             return self.layers["unknown"]
 
     def parse_game_mode(self, game_mode: str | GameMode) -> GameMode:
-        mode = game_mode if isinstance(game_mode, GameMode) else GameMode(game_mode.lower())
+        # HLL Vietnam prefixes offensive modes with the attacking faction,
+        # e.g. "US Offensive" / "NVA Offensive". Every GameMode value is a
+        # single word, so match on the final token.
+        mode = (
+            game_mode
+            if isinstance(game_mode, GameMode)
+            else GameMode(game_mode.strip().lower().rsplit(None, 1)[-1])
+        )
         if mode not in self.supported_game_modes:
             raise ValueError(
                 f"Game mode {mode.value!r} is not supported by the '{self.game.value}' game profile"
