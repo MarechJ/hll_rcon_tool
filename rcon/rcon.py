@@ -1684,32 +1684,38 @@ class HLLVRcon(Rcon, HLLVServerCtl):
     def get_objective_rows(self, map_name: str) -> List[List[str]]:
         try:
             layer = hllrcon.HLLVLayer.by_id(map_name)
-        except ValueError:
-            try:
-                map_ = hllrcon.HLLVMap.by_id(map_name)
-                canonical_layer_id = (
-                    f"{map_.id.replace('_', '').lower()}_warfare_day"
-                )
-                layer = hllrcon.HLLVLayer.by_id(canonical_layer_id)
-            except ValueError as exc:
-                raise ValueError(
-                    f"Unknown HLL Vietnam map or layer ID: {map_name!r}"
-                ) from exc
+        except ValueError as exc:
+            raise ValueError(
+                f"Unknown HLL Vietnam layer ID: {map_name!r}"
+            ) from exc
 
         if layer.map.id.casefold() == "unknown":
-            raise ValueError(f"Unknown HLL Vietnam map or layer ID: {map_name!r}")
+            raise ValueError(f"Unknown HLL Vietnam layer ID: {map_name!r}")
+
+        map_ = layer.map
+        map_sectors = next(
+            (
+                candidate.sectors
+                for candidate in hllrcon.HLLVLayer.all()
+                if candidate.map == map_
+                and len(candidate.sectors) == 5
+                and all(
+                    len(sector.capture_zones) == 3
+                    for sector in candidate.sectors
+                )
+            ),
+            None,
+        )
+        if map_sectors is None:
+            raise ValueError(
+                f"Map for layer {map_name!r} does not define a 5x3 sector layout"
+            )
 
         objective_rows = [
             [capture_zone.strongpoint.name for capture_zone in sector.capture_zones]
-            for sector in layer.sectors
+            for sector in map_sectors
         ]
-        if len(objective_rows) != 5 or any(
-            len(objectives) != 3 for objectives in objective_rows
-        ):
-            raise ValueError(
-                f"Map {map_name!r} does not define a 5x3 sector layout"
-            )
         return objective_rows
-    
+
     def game_test_command(self) -> GameEnum:
         return GameEnum.HLL_VIETNAM
