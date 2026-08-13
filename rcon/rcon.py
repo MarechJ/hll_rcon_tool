@@ -520,7 +520,7 @@ class Rcon(ServerCtl):
         return self._get_detailed_player_info(player_info, player)
 
     def _get_detailed_player_info(self, player_info: PlayerInfoType, player: GetPlayersType | None = None) -> GetDetailedPlayer:
-        player_data = parse_raw_player_info(player_info)
+        player_data = parse_raw_player_info(player_info, self.game_profile.game)
         if player is not None and 'is_vip' in player:
             player_data["is_vip"] = player.get('is_vip')
         else:
