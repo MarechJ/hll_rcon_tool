@@ -85,10 +85,10 @@ def test_profiles_only_accept_their_supported_game_modes():
     assert HLL_PROFILE.parse_game_mode("Skirmish") is GameMode.SKIRMISH
     assert HLLV_PROFILE.parse_game_mode("Domination") is GameMode.DOMINATION
 
-    with pytest.raises(ValueError, match="not supported by the hll game profile"):
+    with pytest.raises(ValueError, match="not supported by the 'hll' game profile"):
         HLL_PROFILE.parse_game_mode("Domination")
 
-    with pytest.raises(ValueError, match="not supported by the hllv game profile"):
+    with pytest.raises(ValueError, match="not supported by the 'hllv' game profile"):
         HLLV_PROFILE.parse_game_mode("Skirmish")
 
 

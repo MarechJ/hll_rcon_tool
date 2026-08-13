@@ -1,6 +1,6 @@
 import pytest
 
-from rcon.types import GetDetailedPlayer
+from rcon.types import GetDetailedPlayer, GameEnum
 from rcon.utils import parse_raw_player_info
 
 
@@ -170,4 +170,4 @@ def mock_get_detailed_player(
     ],
 )
 def test_parse_raw_player_info(raw, expected):
-    assert parse_raw_player_info(raw=raw) == expected
+    assert parse_raw_player_info(raw=raw, game=GameEnum.HLL_WW2) == expected
