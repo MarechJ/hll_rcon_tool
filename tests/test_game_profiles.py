@@ -290,12 +290,11 @@ def test_hllv_set_game_layout_accepts_an_explicit_map():
     assert result == [0, 1, 2, 1, 0]
 
 
-def test_hllv_get_objective_rows_uses_hllrcon_sector_definitions(monkeypatch):
+def test_hllv_get_objective_rows_uses_core_map_sector_definitions():
     ctl = object.__new__(HLLVRcon)
     ctl.exchange = Mock()
-    monkeypatch.setattr(HLLVLayer, "all", Mock(return_value=[]))
 
-    result = ctl.get_objective_rows("WDEV_E")
+    result = ctl.get_objective_rows("wdeve_conquest_day")
 
     assert result == [
         ["Pol Storage", "Signal Site", "Pol Jetty"],
@@ -312,7 +311,9 @@ def test_hllv_get_objective_rows_uses_hllrcon_sector_definitions(monkeypatch):
     [
         "wdevc_warfare_day",
         "wdevc_offensivenva_day",
+        "wdevc_offensiveus_day",
         "wdevc_domination_day",
+        "wdevc_conquest_day",
     ],
 )
 def test_hllv_get_objective_rows_accepts_supported_layer_id(layer_id):
@@ -329,11 +330,12 @@ def test_hllv_get_objective_rows_accepts_supported_layer_id(layer_id):
     assert all(len(row) == 3 for row in result)
 
 
-def test_hllv_get_objective_rows_rejects_unknown_map():
+@pytest.mark.parametrize("map_name", ["WDEV_E", "not-a-map"])
+def test_hllv_get_objective_rows_rejects_non_layer_id(map_name):
     ctl = object.__new__(HLLVRcon)
 
-    with pytest.raises(ValueError, match="Unknown HLL Vietnam map or layer ID"):
-        ctl.get_objective_rows("not-a-map")
+    with pytest.raises(ValueError, match="Unknown HLL Vietnam layer ID"):
+        ctl.get_objective_rows(map_name)
 
 
 def test_shared_game_layout_generator_uses_supplied_objective_rows():
@@ -359,13 +361,14 @@ def test_hllv_rcon_generates_then_serializes_integer_layout():
     ctl.exchange = Mock(return_value=_response({}))
     ctl._cache_game_layout = Mock()
 
-    result = ctl.set_game_layout("WDEV_E", ["left", 1, "right", "mid", 0])
+    layer_id = "wdeve_conquest_day"
+    result = ctl.set_game_layout(layer_id, ["left", 1, "right", "mid", 0])
 
     ctl.exchange.assert_called_once_with(
         "SetSectorLayout",
         2,
         {
-            "MapId": "WDEV_E",
+            "MapId": layer_id,
             "Sector_1": 0,
             "Sector_2": 1,
             "Sector_3": 2,
