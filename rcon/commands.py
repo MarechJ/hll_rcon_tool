@@ -779,6 +779,12 @@ class ServerCtl:
         next_index = (sequence["current_index"] + 1) % len(sequence["maps"])
         return sequence["maps"][next_index]
 
+    def set_dynamic_weather_enabled(self, map_name: str, enabled: bool):
+        self.exchange("SetDynamicWeatherEnabled", 2, {"MapId": map_name, "Enable": enabled})
+
+
+class HLLServerCtl(ServerCtl):
+    """Hell Let Loose controller extension point."""
     def get_objective_row(self, row: int):
         if not (0 <= row <= 4):
             raise ValueError("Row must be between 0 and 4")
@@ -792,15 +798,6 @@ class ServerCtl:
         ):
             raise HLLCommandFailedError("Received unexpected response from server.")
         return [p["valueMember"].split(",") for p in parameters[:5]]
-
-    def set_dynamic_weather_enabled(self, map_name: str, enabled: bool):
-        self.exchange(
-            "SetDynamicWeatherEnabled", 2, {"MapId": map_name, "Enable": enabled}
-        )
-
-
-class HLLServerCtl(ServerCtl):
-    """Hell Let Loose controller extension point."""
 
     def set_game_layout(self, objectives: Sequence[str]):
         if len(objectives) != 5:
@@ -833,7 +830,10 @@ class HLLVServerCtl(ServerCtl):
         )
         return list(objectives)
 
-    def get_game_layout(self):    
+    def remove_game_layout(self, map_name: str):
+        return self.exchange("RemoveSectorLayout", 2, {"MapId": map_name})
+
+    def get_game_layout(self):
         return self.exchange("GetSectorLayout", 2).content_dict
 
 if __name__ == "__main__":

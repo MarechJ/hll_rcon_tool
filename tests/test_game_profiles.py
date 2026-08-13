@@ -290,6 +290,43 @@ def test_hllv_set_game_layout_accepts_an_explicit_map():
     assert result == [0, 1, 2, 1, 0]
 
 
+def test_hllv_get_objective_rows_uses_hllrcon_sector_definitions():
+    ctl = HLLVServerCtl(ServerInfo(game=GameEnum.HLL_VIETNAM), Mock())
+    ctl.exchange = Mock()
+
+    result = ctl.get_objective_rows("WDEV_E")
+
+    assert result == [
+        ["Pol Storage", "Signal Site", "Pol Jetty"],
+        ["Roadside Camp", "Checkpoint", "Ammo Pier"],
+        ["Cantonment Outskirts", "Base Camp", "Delong Piers"],
+        ["Desert Jungle Crossing", "Dry Creek Bed", "Storage Yard"],
+        ["Jungle Hill", "Maintenance Market", "Communications Centre"],
+    ]
+    ctl.exchange.assert_not_called()
+
+
+def test_hllv_get_objective_rows_accepts_layer_id():
+    ctl = HLLVServerCtl(ServerInfo(game=GameEnum.HLL_VIETNAM), Mock())
+
+    result = ctl.get_objective_rows("wdevc_warfare_day")
+
+    assert result[0] == [
+        "Market Town",
+        "Riverside Plantation",
+        "Hidden Encampment",
+    ]
+    assert len(result) == 5
+    assert all(len(row) == 3 for row in result)
+
+
+def test_hllv_get_objective_rows_rejects_unknown_map():
+    ctl = HLLVServerCtl(ServerInfo(game=GameEnum.HLL_VIETNAM), Mock())
+
+    with pytest.raises(ValueError, match="Unknown HLL Vietnam map or layer ID"):
+        ctl.get_objective_rows("not-a-map")
+
+
 def test_shared_game_layout_generator_uses_supplied_objective_rows():
     ctl = object.__new__(Rcon)
     rows = [
@@ -313,13 +350,13 @@ def test_hllv_rcon_generates_then_serializes_integer_layout():
     ctl.exchange = Mock(return_value=_response({}))
     ctl._cache_game_layout = Mock()
 
-    result = ctl.set_game_layout("map-id", ["left", 1, "right", "mid", 0])
+    result = ctl.set_game_layout("WDEV_E", ["left", 1, "right", "mid", 0])
 
     ctl.exchange.assert_called_once_with(
         "SetSectorLayout",
         2,
         {
-            "MapId": "map-id",
+            "MapId": "WDEV_E",
             "Sector_1": 0,
             "Sector_2": 1,
             "Sector_3": 2,
@@ -329,9 +366,21 @@ def test_hllv_rcon_generates_then_serializes_integer_layout():
     )
     ctl._cache_game_layout.assert_called_once_with(
         ["left", 1, "right", "mid", 0],
-        [0, 1, 2, 1, 0],
+        [
+            "Pol Storage",
+            "Checkpoint",
+            "Delong Piers",
+            "Dry Creek Bed",
+            "Jungle Hill",
+        ],
     )
-    assert result == [0, 1, 2, 1, 0]
+    assert result == [
+        "Pol Storage",
+        "Checkpoint",
+        "Delong Piers",
+        "Dry Creek Bed",
+        "Jungle Hill",
+    ]
 
 
 @pytest.mark.parametrize(

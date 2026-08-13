@@ -9,6 +9,7 @@ from datetime import UTC, datetime
 from functools import cached_property
 from itertools import chain
 from typing import Iterable, List, Literal, Optional, Sequence, cast, overload
+import hllrcon
 
 from dateutil import parser
 
@@ -1306,9 +1307,6 @@ class Rcon(ServerCtl):
 
     # TODO: Repeat above map rotation-related commands for the map sequence
 
-    def get_objective_rows(self) -> list[list[str]]:
-        return super().get_objective_rows()
-
     def _generate_game_layout(
         self,
         objectives: Sequence[str | int | None],
@@ -1643,6 +1641,7 @@ class Rcon(ServerCtl):
 
 
 class HLLRcon(Rcon, HLLServerCtl):
+
     def set_game_layout(
         self,
         objectives: Sequence[str | int | None],
@@ -1661,20 +1660,58 @@ class HLLRcon(Rcon, HLLServerCtl):
 
 
 class HLLVRcon(Rcon, HLLVServerCtl):
+
     def set_game_layout(
         self,
         map_name: str,
         objectives: Sequence[str | int | None],
         random_constraints: GameLayoutRandomConstraints = GameLayoutRandomConstraints(0),
     ):
-        objective_rows = ((0, 1, 2),) * 5
+        objective_rows = self.get_objective_rows(map_name)
         selected = self._generate_game_layout(
             objectives,
             objective_rows,
             random_constraints,
         )
+        selected_indices = [
+            objective_rows[row].index(cast(str, objective))
+            for row, objective in enumerate(selected)
+        ]
         self._cache_game_layout(objectives, selected)
-        return HLLVServerCtl.set_game_layout(self, map_name, cast(list[int], selected))
+        HLLVServerCtl.set_game_layout(self, map_name, selected_indices)
+        return selected
 
+    def get_objective_rows(self, map_name: str) -> List[List[str]]:
+        map_or_layer_id = map_name.casefold()
+        layers = hllrcon.HLLVLayer.all()
+        layer = next(
+            (layer for layer in layers if layer.id.casefold() == map_or_layer_id),
+            None,
+        )
+        if layer is None:
+            layer = next(
+                (
+                    layer
+                    for layer in layers
+                    if layer.map.id.casefold() == map_or_layer_id
+                    and layer.game_mode is hllrcon.HLLVGameMode.WARFARE
+                ),
+                None,
+            )
+        if layer is None:
+            raise ValueError(f"Unknown HLL Vietnam map or layer ID: {map_name!r}")
+
+        objective_rows = [
+            [capture_zone.strongpoint.name for capture_zone in sector.capture_zones]
+            for sector in layer.sectors
+        ]
+        if len(objective_rows) != 5 or any(
+            len(objectives) != 3 for objectives in objective_rows
+        ):
+            raise ValueError(
+                f"Map {map_name!r} does not define a 5x3 sector layout"
+            )
+        return objective_rows
+    
     def game_test_command(self) -> GameEnum:
         return GameEnum.HLL_VIETNAM
