@@ -1,11 +1,12 @@
 import os
 import re
 import socket
+from dataclasses import dataclass
 import colorlog
 from logging.config import dictConfig
 from subprocess import PIPE, run
 
-from rcon.types import ServerInfoType
+from rcon.types import ServerInfo
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 
 try:
@@ -25,24 +26,18 @@ try:
 except Exception:
     ENVIRONMENT = "undefined"
 
-# TODO: Use a config style that is not required at import time
 
 
-SERVER_INFO: ServerInfoType = {
-    "host": os.getenv("HLL_HOST"),
-    "port": os.getenv("HLL_PORT"),
-    "password": os.getenv("HLL_PASSWORD"),
-}
+def get_server_info() -> ServerInfo:
+    return ServerInfo.from_env()
 
 
-def check_config():
-    for k, v in SERVER_INFO.items():
+def check_config() -> ServerInfo:
+    server_info = get_server_info()
+    for k, v in server_info.as_dict().items():
         if not v:
             raise ValueError(f"{k} environment variable must be set")
-    try:
-        SERVER_INFO["port"] = int(SERVER_INFO["port"])
-    except ValueError as e:
-        raise ValueError("HLL_PORT must be an integer") from e
+    return server_info
 
 
 # TODO add sentry

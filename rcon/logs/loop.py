@@ -9,14 +9,14 @@ from typing import Callable, Dict, Iterable, DefaultDict
 
 import discord_webhook
 from discord.utils import escape_markdown
-from hllrcon.data import Role, Team
+from hllrcon.data import HLLRole, HLLTeam, HLLVRole, HLLVTeam
 
 from rcon.cache_utils import get_redis_client, ttl_cache
 from rcon.connection import HLLServerError
 from rcon.discord import make_hook
 from rcon.maps import GameMode, Team as MapTeam, get_theoretical_match_time, parse_layer
 from rcon.rcon import get_rcon
-from rcon.types import AllLogTypes, GameStateType, GetDetailedPlayers, MapInfo, MapScore, UnitHistoryEntry, StructuredLogLineWithMetaData, PlayerStat, WorldPositionType
+from rcon.types import AllLogTypes, GameEnum, GameStateType, GetDetailedPlayers, MapInfo, MapScore, UnitHistoryEntry, StructuredLogLineWithMetaData, PlayerStat, WorldPositionType
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.webhooks import DiscordMentionWebhook
@@ -413,8 +413,12 @@ class LogLoop:
         #     logger.debug("\n[MATCH START] - Waiting %ds from map start, skipping caching", self.RECORD_PLAYER_STATS_DELAY)
 
         UNASSIGNED = -111
-        all_roles = {r.name.lower(): r.id for r in Role.all()}
-        all_teams = {t.name.lower(): t.id for t in Team.all()}
+        role_type, team_type = {
+            GameEnum.HLL_WW2: (HLLRole, HLLTeam),
+            GameEnum.HLL_VIETNAM: (HLLVRole, HLLVTeam),
+        }[self.rcon.game_profile.game]
+        all_roles = {r.name.lower(): r.id for r in role_type.all()}
+        all_teams = {t.name.lower(): t.id for t in team_type.all()}
 
         map_cached_stats = current_map.setdefault("player_stats", dict())
 

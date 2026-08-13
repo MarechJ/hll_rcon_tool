@@ -7,9 +7,10 @@ import time
 from dataclasses import dataclass
 from typing import Callable, Iterable, Mapping, TypeAlias, TypedDict
 
-from hllrcon.data.teams import Team
+from hllrcon import HLLTeam
 
 from rcon.cache_utils import get_redis_client
+from rcon.game.registry import game_switch
 from rcon.game_logs import get_historical_logs_records, get_recent_logs
 from rcon.maps import parse_layer
 from rcon.models import enter_session
@@ -19,6 +20,7 @@ from rcon.types import (
     STAT_DISPLAY_LOOKUP,
     AllLogTypes,
     CachedLiveGameStats,
+    GameEnum,
     GetPlayersType,
     MapInfo,
     PlayerProfileType,
@@ -717,11 +719,12 @@ def _apply_current_map_player_stats(
         unit = map_stat.get("p_unit", None)
         if unit:
             try:
-                team = Team.by_id(unit["team"])
+                # TODO: This relies on the assumption that HLLTeam and HLLVTeam are equal enough
+                team = HLLTeam.by_id(unit["team"])
                 team_name = team.name.lower()
-                if team == Team.ALLIES:
+                if team == HLLTeam.ALLIES:
                     faction_name = map_layer.map.allies.name.lower()
-                elif team == Team.AXIS:
+                elif team == HLLTeam.AXIS:
                     faction_name = map_layer.map.axis.name.lower()
             except ValueError:
                 pass

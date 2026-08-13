@@ -34,7 +34,7 @@ def assert_blacklist_exists(blacklist_id: int):
 
 
 @database_sync_to_async
-def ban_player(player_id: str, blacklist_id: int, reason: str):
+def ban_player(player_id: str, blacklist_id: int, reason: str) -> int | None:
     try:
         with models.enter_session() as sess:
             current_records = get_player_blacklist_records(
@@ -56,7 +56,7 @@ def ban_player(player_id: str, blacklist_id: int, reason: str):
         logger.exception("Failed to blacklist player %s", player_id)
         return None
     else:
-        return str(record["id"])
+        return record["id"]
 
 
 @database_sync_to_async
@@ -285,22 +285,23 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
 
         await assert_blacklist_exists(blacklist_id)
 
-        record_ids = await asyncio.gather(
-            *[
-                # The client expects strings, not ints
+        record_ids = [
+            # The client expects strings, not ints
+            str(ban_id)
+            for ban_id in await asyncio.gather(*[
                 ban_player(
                     player_id=player_id,
                     blacklist_id=blacklist_id,
                     reason=reason or payload.config.reason,
                 )
                 for player_id, reason in payload.player_ids.items()
-            ]
-        )
+            ])
+        ]
 
         return {"ban_ids": dict(zip(payload.player_ids.keys(), record_ids))}
 
     async def unban_players(self, payload: UnbanPlayersRequestPayload):
-        record_ids = []
+        record_ids: list[int] = []
         for record_id in payload.record_ids:
             try:
                 record_id = int(record_id)
@@ -313,8 +314,9 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
         )
 
         successful_record_ids = [
-            record_id
-            for record_id, success in zip(payload.record_ids, successes)
+            # The client expects strings, not ints
+            str(record_id)
+            for record_id, success in zip(record_ids, successes)
             if success
         ]
 
