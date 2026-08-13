@@ -18,6 +18,7 @@ class GameProfile:
     layer_parser: Callable[[str | Layer], Layer]
     roles: frozenset[str] = field(default_factory=frozenset)
     role_labels: Mapping[str, str] = field(default_factory=dict)
+    role_ids: Mapping[str, int] = field(default_factory=dict)
     weapons: Mapping[str, WeaponType] = field(default_factory=dict)
     weapon_sides: Mapping[str, Team] = field(default_factory=dict)
     supported_game_modes: frozenset[GameMode] = field(default_factory=frozenset)

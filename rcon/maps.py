@@ -1789,6 +1789,10 @@ def get_all_layers_by_map(map: Map, game_mode: Optional[GameMode] = None, team: 
     
 env_alternation = "|".join(re.escape(e.value) for e in Environment)
 mode_alternation = "|".join(re.escape(m.value) for m in GameMode)
+# Match logs may qualify a mode with the attacking faction. These are log
+# protocol tokens rather than display names (for example, "United States"),
+# so keep the accepted aliases explicit.
+attacker_alternation = "|".join(re.escape(value) for value in ("NVA", "USA", "US"))
 
 ended_pattern = re.compile(
     rf"""
@@ -1798,6 +1802,9 @@ ended_pattern = re.compile(
     (?P<name>.+?)
     (?:
         \s+(?P<env>{env_alternation})
+    )?
+    (?:
+        \s+(?P<attacker>{attacker_alternation})
     )?
     \s+(?P<mode>{mode_alternation})
     `
@@ -1813,6 +1820,9 @@ start_pattern = re.compile(
     (?:
         \s+(?P<env>{env_alternation})
     )?
+    (?:
+        \s+(?P<attacker>{attacker_alternation})
+    )?
     \s+(?P<mode>{mode_alternation})
     (?:\s|$)
     """,
@@ -1827,6 +1837,9 @@ def parse_map_string(s: str) -> tuple[str, Environment | None, GameMode]:
     name = m.group("name").strip()
     env_str = m.group("env")
     mode_str = m.group("mode")
+    # TODO: extract Faction from 'attacker' 
+    # as HLL:V offensive maps display off attackers
+    # e.g. NVA Offensive
 
     env = Environment(env_str.lower()) if env_str is not None else None
     mode = GameMode(mode_str.lower())

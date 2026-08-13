@@ -12,10 +12,11 @@ import redis
 import redis.exceptions
 
 from rcon.cache_utils import get_redis_pool
+from rcon.game.base import GameProfile
 from rcon.game.registry import game_switch
 from rcon.models import GameLayout
 from rcon.types import GameEnum, GetDetailedPlayer, MapInfo, PlayerInfoType, PlayerStat, PlayerStatsType, StructuredLogLineWithMetaData
-from rcon.maps import Layer, parse_map_string, LAYERS, Environment, UNKNOWN_MAP_NAME, Team
+from rcon.maps import Layer, parse_map_string, Environment, UNKNOWN_MAP_NAME, Team
 
 logger = logging.getLogger("rcon")
 
@@ -860,17 +861,28 @@ def strtobool(val) -> bool:
         raise ValueError("invalid truth value %r" % (val,))
     
 
-def guess_map_from_log(log: StructuredLogLineWithMetaData) -> Layer:
-    guessed_map: Layer
+def guess_map_from_log(
+    log: StructuredLogLineWithMetaData, game_profile: GameProfile
+) -> Layer:
+    """Guess a layer from a match log using the selected game's catalog."""
     try:
         name, env, game_mode = parse_map_string(log["raw"])
-        maps = [l for l in LAYERS.values() if l.map.name.lower() == name.lower() and l.game_mode == game_mode]
-        # ignoring attackers for offensives
-        env_to_maps = {l.environment: l for l in maps}
-        if not env:
-            # in most cases when env not provided the env is day
-            env = Environment.DAY
-        guessed_map = env_to_maps.get(env, maps[0])
-    except:
-        guessed_map = LAYERS[UNKNOWN_MAP_NAME]
-    return guessed_map
+    except (KeyError, TypeError, ValueError):
+        return game_profile.parse_layer_or_unknown(UNKNOWN_MAP_NAME)
+
+    candidates = [
+        layer
+        for layer in game_profile.layers.values()
+        if layer.map.name.casefold() == name.casefold()
+        and layer.game_mode == game_mode
+    ]
+    if not candidates:
+        return game_profile.parse_layer_or_unknown(UNKNOWN_MAP_NAME)
+
+    # Match logs do not reliably identify the attacking side for Offensive,
+    # so preserve the existing behavior and choose by environment when possible.
+    environment = env or Environment.DAY
+    return next(
+        (layer for layer in candidates if layer.environment == environment),
+        candidates[0],
+    )

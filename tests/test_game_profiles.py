@@ -18,6 +18,7 @@ from rcon.game.hllv.profile import HLLV_PROFILE
 from rcon.maps import GameMode, Team, UNKNOWN_MAP_NAME
 from rcon.rcon import HLLRcon, HLLVRcon, Rcon, create_rcon
 from rcon.types import GameEnum, ServerInfo
+from rcon.utils import guess_map_from_log
 
 
 def _response(content_dict):
@@ -82,6 +83,37 @@ def test_hllv_profile_loads_hllv_catalog_with_logical_sides():
     assert layer.map.allies.team is Team.ALLIES
     assert layer.map.axis.team is Team.AXIS
     assert layer.attackers is Team.AXIS
+
+
+def test_profiles_expose_game_specific_role_ids():
+    assert HLL_PROFILE.role_ids["armycommander"] == 13
+    assert HLLV_PROFILE.role_ids["armycommander"] == 20
+    assert HLLV_PROFILE.role_ids["specialist"] == 5
+
+
+@pytest.mark.parametrize(
+    ("profile", "raw", "expected_layer_id"),
+    [
+        (HLL_PROFILE, "MATCH START CARENTAN WARFARE", "carentan_warfare"),
+        (
+            HLLV_PROFILE,
+            "MATCH START CAM RANH PORT DOMINATION",
+            "wdeve_domination_day",
+        ),
+    ],
+)
+def test_guess_map_from_log_uses_selected_game_catalog(
+    profile, raw, expected_layer_id
+):
+    assert guess_map_from_log({"raw": raw}, profile).id == expected_layer_id
+
+
+def test_guess_map_from_log_does_not_fall_through_to_other_game_catalog():
+    guessed = guess_map_from_log(
+        {"raw": "MATCH START CARENTAN WARFARE"}, HLLV_PROFILE
+    )
+
+    assert guessed.id == UNKNOWN_MAP_NAME
 
 
 def test_profiles_only_accept_their_supported_game_modes():

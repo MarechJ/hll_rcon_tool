@@ -17,6 +17,7 @@ from rcon.maps import (
     is_server_loading_map,
     numbered_maps,
     parse_layer,
+    parse_map_string,
     _parse_legacy_layer,
 )
 
@@ -38,6 +39,31 @@ logger = getLogger(__name__)
 )
 def test_get_theoretical_match_time(game_mode, server_match_time, expected):
     assert get_theoretical_match_time(game_mode, server_match_time) == expected
+
+
+@pytest.mark.parametrize(
+    ("log_line", "expected"),
+    (
+        (
+            "MATCH START CAM RANH PORT NVA OFFENSIVE",
+            ("CAM RANH PORT", None, GameMode.OFFENSIVE),
+        ),
+        (
+            "MATCH START CAM RANH PORT DAY US OFFENSIVE",
+            ("CAM RANH PORT", Environment.DAY, GameMode.OFFENSIVE),
+        ),
+        (
+            "MATCH ENDED `CAM RANH PORT USA OFFENSIVE` SOUTH (5 - 0) NORTH",
+            ("CAM RANH PORT", None, GameMode.OFFENSIVE),
+        ),
+        (
+            "MATCH START CAM RANH PORT DOMINATION",
+            ("CAM RANH PORT", None, GameMode.DOMINATION),
+        ),
+    ),
+)
+def test_parse_map_string_accepts_optional_attacker_before_mode(log_line, expected):
+    assert parse_map_string(log_line) == expected
 
 MOR_WARFARE_DAY = Layer(
     id="mortain_warfare_day", map=MAPS["mortain"], game_mode=GameMode.WARFARE

@@ -8,7 +8,10 @@ os.environ.setdefault("HLL_MAINTENANCE_CONTAINER", "1")
 os.environ.setdefault("SERVER_NUMBER", "1")
 
 from rcon.logs.loop import LogLoop
+from rcon.game.hll.profile import HLL_PROFILE
+from rcon.game.hllv.profile import HLLV_PROFILE
 from rcon.maps import GameMode
+from rcon.utils import default_player_info_dict
 
 
 OFFENSIVE_MAP = "carentan_offensive_us"
@@ -46,6 +49,7 @@ def make_loop(gamestate):
     loop.CURR_MAP_END = 0
     loop.now = 1_002
     loop.rcon = Mock()
+    loop.rcon.game_profile = HLL_PROFILE
     loop.rcon.get_gamestate.return_value = gamestate
     loop.get_detailed_players = Mock(return_value={"players": {}, "fail_count": 0})
     loop.record_player_stats = Mock()
@@ -118,6 +122,7 @@ def test_offensive_initial_score_cannot_be_recorded_again(
     current_map["name"] = map_name
     current_map["cap_flips"] = []
     loop = object.__new__(LogLoop)
+    loop.rcon = Mock(game_profile=HLL_PROFILE)
 
     gs = make_gamestate(
         map_id=map_name,
@@ -144,3 +149,44 @@ def test_offensive_initial_score_cannot_be_recorded_again(
             "ts": 300,
         },
     ]
+
+
+@pytest.mark.parametrize(
+    ("team", "expected_team_id"),
+    (("allies", 1), ("axis", 2)),
+)
+def test_hllv_player_stats_use_normalized_logical_team_ids(
+    team, expected_team_id
+):
+    loop = object.__new__(LogLoop)
+    loop.rcon = Mock(game_profile=HLLV_PROFILE)
+    loop.now = 2_000
+    loop.RECORD_PLAYER_STATS_DELAY = 120
+    current_map = make_map_info()
+    player = default_player_info_dict()
+    player.update(
+        {
+            "name": "Vietnam Player",
+            "player_id": "player-id",
+            "team": team,
+            "role": "specialist",
+            "unit_id": 3,
+            "level": 10,
+        }
+    )
+    detailed_players = {
+        "players": {"player-id": player},
+        "fail_count": 0,
+    }
+
+    # The first sample creates the cache entry; the next records its unit.
+    loop.record_player_stats(current_map, 10, detailed_players)
+    loop.record_player_stats(current_map, 20, detailed_players)
+
+    unit = current_map["player_stats"]["player-id"]["p_unit"]
+    assert unit == {
+        "ts": 20,
+        "team": expected_team_id,
+        "squad": 3,
+        "role": 5,
+    }
