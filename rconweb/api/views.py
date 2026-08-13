@@ -38,6 +38,7 @@ from rcon.utils import MapsHistory
 from .audit_log import auto_record_audit, record_audit
 from .auth import AUTHORIZATION, RconJsonResponse, api_response, login_required
 from .decorators import permission_required, require_content_type, require_http_methods
+from .game_endpoints import resolve_game_endpoints
 from .multi_servers import forward_command
 from .utils import _get_data
 
@@ -656,9 +657,6 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
         "api.can_remove_temp_bans",
         "api.can_remove_perma_bans",
     },
-    rcon_api.get_objective_rows: "api.can_view_current_map",
-    rcon_api.set_game_layout: "api.can_change_game_layout",
-    rcon_api.get_game_layout: "api.can_view_current_map",
     rcon_api.get_seed_vip_config: "api.can_view_seed_vip_config",
     rcon_api.set_seed_vip_config: "api.can_change_seed_vip_config",
     rcon_api.validate_seed_vip_config: "api.can_change_seed_vip_config",
@@ -738,7 +736,6 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.get_expired_vip_config: ["GET"],
     rcon_api.get_game_layout: ["GET"],
     rcon_api.get_gamestate: ["GET"],
-    rcon_api.get_objective_rows: ["GET"],
     rcon_api.get_historical_logs: ["GET", "POST"],
     rcon_api.get_idle_autokick_time: ["GET"],
     rcon_api.get_ingame_mods: ["GET"],
@@ -841,7 +838,6 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.set_rcon_chat_commands_config: ["POST"],
     rcon_api.set_chat_discord_webhooks_config: ["POST"],
     rcon_api.set_expired_vip_config: ["POST"],
-    rcon_api.set_game_layout: ["POST"],
     rcon_api.set_idle_autokick_time: ["POST"],
     rcon_api.set_kills_discord_webhooks_config: ["POST"],
     rcon_api.set_log_line_webhook_config: ["POST"],
@@ -934,6 +930,13 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.reset_webhook_queue_type: ["POST"],
     rcon_api.reset_webhook_message_type: ["POST"],
 }
+
+game_endpoint_permissions, game_endpoint_http_methods = resolve_game_endpoints(
+    rcon_api,
+    rcon_api.config.game,
+)
+ENDPOINT_PERMISSIONS.update(game_endpoint_permissions)
+RCON_ENDPOINT_HTTP_METHODS.update(game_endpoint_http_methods)
 
 # Check to make sure that ENDPOINT_HTTP_METHODS and ENDPOINT_PERMISSIONS have the same endpoints
 MISSING_ENDPOINTS = set(RCON_ENDPOINT_HTTP_METHODS).symmetric_difference(
