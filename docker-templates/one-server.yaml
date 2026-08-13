@@ -34,6 +34,7 @@ x-backend: &backend
     DONT_SEED_ADMIN_USER: ${DONT_SEED_ADMIN_USER}
     SESSION_COOKIE_DOMAIN: ${SESSION_COOKIE_DOMAIN}
     CSRF_COOKIE_DOMAIN: ${CSRF_COOKIE_DOMAIN}
+    CLIENT_IP_HEADER: ${CLIENT_IP_HEADER}
   command: web
   restart: on-failure
   healthcheck:
