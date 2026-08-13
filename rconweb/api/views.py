@@ -734,7 +734,6 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.get_detailed_player_info: ["GET"],
     rcon_api.get_detailed_players: ["GET"],
     rcon_api.get_expired_vip_config: ["GET"],
-    rcon_api.get_game_layout: ["GET"],
     rcon_api.get_gamestate: ["GET"],
     rcon_api.get_historical_logs: ["GET", "POST"],
     rcon_api.get_idle_autokick_time: ["GET"],

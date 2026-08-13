@@ -827,7 +827,7 @@ class HLLVServerCtl(ServerCtl):
         return list(objectives)
 
     def remove_game_layout(self, map_name: str):
-        return self.exchange("RemoveSectorLayout", 2, {"MapId": map_name})
+        self.exchange("RemoveSectorLayout", 2, {"MapId": map_name})
 
     def get_game_layout(self):
         return self.exchange("GetSectorLayout", 2).content_dict
