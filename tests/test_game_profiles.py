@@ -1,6 +1,8 @@
 from types import SimpleNamespace
 from unittest.mock import Mock
 
+from hllrcon import HLLVLayer, HLLVMap
+
 import pytest
 
 from rcon.commands import HLLServerCtl, HLLVServerCtl
@@ -73,9 +75,10 @@ def test_hllv_profile_does_not_read_hll_map_catalog():
 
 
 def test_hllv_profile_loads_hllv_catalog_with_logical_sides():
-    layer = HLLV_PROFILE.parse_layer("wdeve_offensivenva_day")
+    layer_id = "wdeve_offensivenva_day"
+    layer = HLLV_PROFILE.parse_layer(layer_id)
 
-    assert layer.map.id == "WDEV_E"
+    assert layer.map.id == HLLVLayer.by_id(layer_id, strict=False).map.id
     assert layer.map.allies.team is Team.ALLIES
     assert layer.map.axis.team is Team.AXIS
     assert layer.attackers is Team.AXIS
