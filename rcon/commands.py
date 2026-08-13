@@ -785,10 +785,6 @@ class ServerCtl:
 
 class HLLServerCtl(ServerCtl):
     """Hell Let Loose controller extension point."""
-    def get_objective_row(self, row: int):
-        if not (0 <= row <= 4):
-            raise ValueError("Row must be between 0 and 4")
-        return self.get_objective_rows()[row]
 
     def get_objective_rows(self) -> list[list[str]]:
         details = self.exchange("GetClientReferenceData", 2, "SetSectorLayout")
