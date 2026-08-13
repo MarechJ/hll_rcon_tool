@@ -290,9 +290,10 @@ def test_hllv_set_game_layout_accepts_an_explicit_map():
     assert result == [0, 1, 2, 1, 0]
 
 
-def test_hllv_get_objective_rows_uses_hllrcon_sector_definitions():
+def test_hllv_get_objective_rows_uses_hllrcon_sector_definitions(monkeypatch):
     ctl = object.__new__(HLLVRcon)
     ctl.exchange = Mock()
+    monkeypatch.setattr(HLLVLayer, "all", Mock(return_value=[]))
 
     result = ctl.get_objective_rows("WDEV_E")
 
