@@ -369,6 +369,7 @@ class PlayerSessionType(TypedDict):
 class BasicPlayerProfileType(TypedDict):
     id: int
     player_id: str
+    steam_id: str | None  # Note: If player_id is the Steam ID, then steam_id might be None.
     created: datetime.datetime
     names: list[PlayerNameType]
     steaminfo: Optional[SteamInfoType]

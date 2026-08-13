@@ -136,6 +136,9 @@ class PlayerID(Base):
     player_id: Mapped[str] = mapped_column(
         "steam_id_64", nullable=False, index=True, unique=True
     )
+    # # TODO: This is a temporary Steam ID column so that we can store the Steam ID somewhere for Vietnam servers.
+    # This enables us in the future to retroactively merge the Vietnam and WW2 player data into a single player profile.
+    steam_id: Mapped[str | None]
     created: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     names: Mapped[list["PlayerName"]] = relationship(
         back_populates="player",
@@ -235,6 +238,7 @@ class PlayerID(Base):
         return {
             "id": self.id,
             PLAYER_ID: self.player_id,
+            "steam_id": self.steam_id,
             "created": self.created,
             "names": [name.to_dict() for name in self.names],
             "sessions": [session.to_dict() for session in self.sessions][

@@ -531,17 +531,22 @@ def handle_on_connect(
             struct_log,
         )
         return
+
+    try:
+        player_info = rcon.get_detailed_player_info(player_id)
+    except HLLCommandFailedError as e:
+        logger.warning("Unable to update soldier info for %s\n%s", player_id, str(e))
+        player_info = None
+
     save_player(
         struct_log["player_name_1"],
         player_id,
         timestamp=int(struct_log["timestamp_ms"]) / 1000,
+        steam_id=player_info["steam_id"] if player_info else None,
     )
 
-    try:
-        if (player := rcon.get_detailed_player_info(player_id)):
-            PlayerSoldier.update(player)
-    except HLLCommandFailedError as e:
-        logger.warning("Unable to update soldier info for %s\n%s", player_id, str(e))
+    if player_info:
+        PlayerSoldier.update(player_info)
 
     blacklisted = ban_if_blacklisted(rcon, player_id, struct_log["player_name_1"])
     if blacklisted:
