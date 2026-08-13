@@ -33,7 +33,7 @@ HLLV_MAPS: dict[str, Map] = {
 }
 for map_data in hllrcon.HLLVMap.all():
     map_ = Map.from_hllrcon(map_data)
-    HLLV_MAPS[map_.id] = map_
+    HLLV_MAPS[map_.id.lower()] = map_
 
 HLLV_LAYERS: dict[str, Layer] = {
     UNKNOWN_MAP_NAME: Layer(
@@ -45,7 +45,7 @@ HLLV_LAYERS: dict[str, Layer] = {
 # TODO: hllrcon does not preserve details of outdated map IDs. CRCON on the other hand needs them for historical data purposes.
 #   If a layer is ever removed or has its ID updated, its details will have to be manually added above.
 for layer_data in hllrcon.HLLVLayer.all():
-    layer = Layer.from_hllrcon(layer_data)
+    layer = Layer.from_hllrcon(layer_data, map_catalog=HLLV_MAPS)
     HLLV_LAYERS[layer.id] = layer
 
 def parse_layer(layer_name: str | Layer) -> Layer:

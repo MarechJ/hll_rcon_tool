@@ -1,7 +1,7 @@
 import re
 from enum import Enum
 from logging import getLogger
-from typing import TYPE_CHECKING, Any, Iterable, Literal, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Any, Iterable, Literal, Mapping, Optional, Sequence, Union
 
 import hllrcon
 import pydantic
@@ -116,7 +116,12 @@ class Team(str, Enum):
 
     @classmethod
     def from_hllrcon(cls, team_: hllrcon.AnyTeam) -> "Team":
-        return cls(team_.name.lower())
+        # hllrcon uses Allies/Axis for HLL and South/North for HLL Vietnam,
+        # but both games use the same stable side IDs.
+        return {
+            1: cls.ALLIES,
+            2: cls.AXIS,
+        }.get(team_.id, cls.UNKNOWN)
 
 class Environment(str, Enum):
     DAWN = "dawn"
@@ -279,10 +284,17 @@ class Layer(pydantic.BaseModel):
         return NotImplemented
     
     @classmethod
-    def from_hllrcon(cls, layer_: hllrcon.AnyLayer) -> "Layer":
+    def from_hllrcon(
+        cls,
+        layer_: hllrcon.AnyLayer,
+        map_catalog: Mapping[str, Map] | None = None,
+    ) -> "Layer":
+        if map_catalog is None:
+            map_catalog = MAPS
+
         return cls(
             id=layer_.id,
-            map=MAPS[layer_.map.id.lower()],
+            map=map_catalog[layer_.map.id.lower()],
             game_mode=GameMode.from_hllrcon(layer_.game_mode),
             attackers=Team.from_hllrcon(layer_.attacking_team) if layer_.attacking_team else None,
             environment=Environment.from_hllrcon(layer_),

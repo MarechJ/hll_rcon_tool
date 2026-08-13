@@ -13,7 +13,7 @@ from rcon.api_commands import (
 from rcon.game import get_game_profile
 from rcon.game.hll.profile import HLL_PROFILE
 from rcon.game.hllv.profile import HLLV_PROFILE
-from rcon.maps import GameMode, UNKNOWN_MAP_NAME
+from rcon.maps import GameMode, Team, UNKNOWN_MAP_NAME
 from rcon.rcon import HLLRcon, HLLVRcon, Rcon, create_rcon
 from rcon.types import GameEnum, ServerInfo
 
@@ -70,6 +70,15 @@ def test_hllv_profile_does_not_read_hll_map_catalog():
     assert hllv_layer.id == "carentan_warfare"
     assert hllv_layer.map.id == UNKNOWN_MAP_NAME
     assert hllv_layer.game_mode is GameMode.DOMINATION
+
+
+def test_hllv_profile_loads_hllv_catalog_with_logical_sides():
+    layer = HLLV_PROFILE.parse_layer("wdeve_offensivenva_day")
+
+    assert layer.map.id == "WDEV_E"
+    assert layer.map.allies.team is Team.ALLIES
+    assert layer.map.axis.team is Team.AXIS
+    assert layer.attackers is Team.AXIS
 
 
 def test_profiles_only_accept_their_supported_game_modes():
