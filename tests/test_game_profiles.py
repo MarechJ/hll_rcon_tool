@@ -205,5 +205,5 @@ def test_timer_commands_validate_mode_against_profile():
         "SetMatchTimer", 2, {"GameMode": "domination", "MatchLength": 30}
     )
 
-    with pytest.raises(ValueError, match="not supported by the hllv game profile"):
+    with pytest.raises(ValueError, match="not supported by the 'hllv' game profile"):
         ctl.set_match_timer(GameMode.SKIRMISH, 30)
