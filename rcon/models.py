@@ -26,6 +26,7 @@ from sqlalchemy.schema import UniqueConstraint
 from rcon.maps import Team
 from rcon.types import (
     AuditLogType,
+    GameIntEnum,
     GetDetailedPlayer,
     MapResult,
     MapScore,
@@ -138,7 +139,6 @@ class PlayerID(Base):
     )
     # # TODO: This is a temporary Steam ID column so that we can store the Steam ID somewhere for Vietnam servers.
     # This enables us in the future to retroactively merge the Vietnam and WW2 player data into a single player profile.
-    # NOTE: This also serves as a 'hllv' player flag
     steam_id: Mapped[str | None]
     created: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     names: Mapped[list["PlayerName"]] = relationship(
@@ -700,7 +700,7 @@ class LogLine(Base):
     player_1: Mapped[PlayerID] = relationship(foreign_keys=[player1_player_id])
     player_2: Mapped[PlayerID] = relationship(foreign_keys=[player2_player_id])
     server: Mapped[str] = mapped_column()
-    game: Mapped[str] = mapped_column()
+    game: Mapped[int] = mapped_column(default=GameIntEnum.HLL_WW2.value, server_default=str(GameIntEnum.HLL_WW2.value))
 
     def get_weapon(self) -> str | None:
         if self.weapon:
@@ -772,7 +772,7 @@ class Maps(Base):
     game_layout: Mapped["GameLayout"] = mapped_column(JSON, nullable=False, default=GameLayout)
     cap_flips: Mapped[list[MapScore]] = mapped_column(JSON, nullable=False, default=[])
     match_time: Mapped[int] = mapped_column(default=0)
-    game: Mapped[str] = mapped_column()
+    game: Mapped[int] = mapped_column(default=GameIntEnum.HLL_WW2.value, server_default=str(GameIntEnum.HLL_WW2.value))
 
     player_stats: Mapped[list["PlayerStats"]] = relationship(back_populates="map")
 

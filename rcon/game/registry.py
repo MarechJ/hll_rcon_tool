@@ -1,17 +1,23 @@
 from __future__ import annotations
 
+import os
 from typing import TypeVar, assert_never
 
 from rcon.game.base import GameProfile
 from rcon.game.hll.profile import HLL_PROFILE
 from rcon.game.hllv.profile import HLLV_PROFILE
-from rcon.types import GameEnum
+from rcon.types import GameEnum, GameIntEnum
 
 T = TypeVar("T")
 
 GAME_PROFILES: dict[GameEnum, GameProfile] = {
     profile.game: profile for profile in (HLL_PROFILE, HLLV_PROFILE)
 }
+
+try:
+    GAME_ID = GameEnum(os.getenv("HLL_GAME", "hll")).to_int()
+except:
+    GAME_ID = GameEnum.HLL_WW2.to_int()
 
 def get_game_profile(game: str | GameEnum | None) -> GameProfile:
     """Return the profile for a ServerInfo game value.

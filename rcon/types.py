@@ -171,6 +171,17 @@ class GameEnum(enum.StrEnum):
     HLL_WW2 = "hll"
     HLL_VIETNAM = "hllv"
 
+    def to_int(self) -> "GameIntEnum":
+        return GameIntEnum[self.name]
+
+    @classmethod
+    def from_int(cls, value: int) -> "GameEnum":
+        return cls(GameIntEnum(value).name)
+
+class GameIntEnum(enum.IntEnum):
+    HLL_WW2 = 1
+    HLL_VIETNAM = 2
+
 
 @dataclass
 class ServerInfo:

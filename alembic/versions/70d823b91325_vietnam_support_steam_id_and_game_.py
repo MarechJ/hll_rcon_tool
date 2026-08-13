@@ -18,8 +18,8 @@ depends_on = None
 
 def upgrade():
     op.add_column("steam_id_64", sa.Column("steam_id", sa.String(), nullable=True))
-    op.add_column("log_lines", sa.Column("game", sa.String(), nullable=False, server_default='hll'))
-    op.add_column("map_history", sa.Column("game", sa.String(), nullable=False, server_default='hll'))
+    op.add_column("log_lines", sa.Column("game", sa.Integer(), nullable=False, server_default='1'))
+    op.add_column("map_history", sa.Column("game", sa.Integer(), nullable=False, server_default='1'))
 
 
 def downgrade():
