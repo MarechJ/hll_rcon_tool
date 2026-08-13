@@ -88,7 +88,7 @@ def get_version(request):
 
 @csrf_exempt
 @require_http_methods(["GET"])
-@ratelimit(key='ip', rate='10/m')
+@ratelimit(key='ip', rate='60/m')
 def get_public_info(request):
     cached_cur_map = MapsHistory().get_current_map()
     if not cached_cur_map:

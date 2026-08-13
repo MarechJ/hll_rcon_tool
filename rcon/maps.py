@@ -1,8 +1,9 @@
 import re
 from enum import Enum
 from logging import getLogger
-from typing import TYPE_CHECKING, Any, Iterable, Literal, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Any, Iterable, Literal, Mapping, Optional, Sequence, Union
 
+import hllrcon
 import pydantic
 import typing_extensions
 from typing_extensions import Literal
@@ -64,19 +65,29 @@ class Orientation(str, Enum):
     HORIZONTAL = "horizontal"
     VERTICAL = "vertical"
 
+    @classmethod
+    def from_hllrcon(cls, orientation_: hllrcon.Orientation) -> "Orientation":
+        return cls(orientation_.value)
+
 
 class GameMode(str, Enum):
     WARFARE = "warfare"
     OFFENSIVE = "offensive"
+    CONQUEST = "conquest"
+    DOMINATION = "domination"
     SKIRMISH = "skirmish"
     PHASED = "phased"
     MAJORITY = "majority"
+    # When adding a new game mode, also add it to the supported_game_modes set of all game
+    # profiles that support it
 
     @classmethod
     def large(cls):
         return (
             cls.WARFARE,
             cls.OFFENSIVE,
+            cls.CONQUEST,
+            cls.DOMINATION,
         )
 
     @classmethod
@@ -86,6 +97,10 @@ class GameMode(str, Enum):
             cls.PHASED,
             cls.MAJORITY,
         )
+    
+    @classmethod
+    def from_hllrcon(cls, game_mode_: hllrcon.AnyGameMode) -> "GameMode":
+        return cls(game_mode_.id.lower())
 
     def is_large(self):
         return self in GameMode.large()
@@ -112,6 +127,14 @@ class Team(str, Enum):
     AXIS = "axis"
     UNKNOWN = "unknown"
 
+    @classmethod
+    def from_hllrcon(cls, team_: hllrcon.AnyTeam) -> "Team":
+        # hllrcon uses Allies/Axis for HLL and South/North for HLL Vietnam,
+        # but both games use the same stable side IDs.
+        return {
+            1: cls.ALLIES,
+            2: cls.AXIS,
+        }.get(team_.id, cls.UNKNOWN)
 
 class Environment(str, Enum):
     DAWN = "dawn"
@@ -121,19 +144,60 @@ class Environment(str, Enum):
     OVERCAST = "overcast"
     RAIN = "rain"
 
+    @classmethod
+    def from_hllrcon(cls, layer_: hllrcon.AnyLayer) -> "Environment":
+        """
+        class TimeOfDay(StrEnum):
+            DAWN = "Dawn"
+            DAY = "Day"
+            DUSK = "Dusk"
+            NIGHT = "Night"
+
+
+        class Weather(StrEnum):
+            CLEAR = "Clear"
+            OVERCAST = "Overcast"
+            RAIN = "Rain"
+            SNOW = "Snow"
+        """
+        if layer_.time_of_day == hllrcon.TimeOfDay.NIGHT:
+            return Environment.NIGHT
+        if layer_.time_of_day == hllrcon.TimeOfDay.DUSK:
+            return Environment.DUSK
+        if layer_.time_of_day == hllrcon.TimeOfDay.DAWN:
+            return Environment.DAWN
+
+        if layer_.weather in (hllrcon.Weather.RAIN, hllrcon.Weather.SNOW):
+            return Environment.RAIN
+        if layer_.weather == hllrcon.Weather.OVERCAST:
+            return Environment.OVERCAST
+
+        return Environment.DAY
+
 
 class FactionName(Enum):
-    CW = "cw"
-    GB = "gb"
+    US = "us"
     GER = "ger"
     RUS = "rus"
-    US = "us"
+    SOV = "rus"
+    CW = "cw"
+    GB = "cw"
+    B8A = "b8a"
+    DAK = "dak"
     CAN = "can"
+    NVA = "nva"
 
 
 class Faction(pydantic.BaseModel):
     name: str
     team: Team
+
+    @classmethod
+    def from_hllrcon(cls, faction_: hllrcon.AnyFaction) -> "Faction":
+        return cls(
+            name=faction_.short_name.lower(),
+            team=Team.from_hllrcon(faction_.team),
+        )
 
     if TYPE_CHECKING:
         # Ensure type checkers see the correct return type
@@ -180,6 +244,19 @@ class Map(pydantic.BaseModel):
         if isinstance(other, (Map, str)):
             return str(self).lower() == str(other).lower()
         return NotImplemented
+    
+    @classmethod
+    def from_hllrcon(cls, map_: hllrcon.AnyMap) -> "Map":
+        return cls(
+            id=map_.id,
+            name=map_.name,
+            tag=map_.tag,
+            pretty_name=map_.pretty_name,
+            shortname=map_.short_name,
+            allies=Faction.from_hllrcon(map_.allies),
+            axis=Faction.from_hllrcon(map_.axis),
+            orientation=Orientation.from_hllrcon(map_.orientation),
+        )
 
     if TYPE_CHECKING:
         # Ensure type checkers see the correct return type
@@ -218,6 +295,23 @@ class Layer(pydantic.BaseModel):
         if isinstance(other, (Layer, str)):
             return str(self).lower() == str(other).lower()
         return NotImplemented
+    
+    @classmethod
+    def from_hllrcon(
+        cls,
+        layer_: hllrcon.AnyLayer,
+        map_catalog: Mapping[str, Map] | None = None,
+    ) -> "Layer":
+        if map_catalog is None:
+            map_catalog = MAPS
+
+        return cls(
+            id=layer_.id,
+            map=map_catalog[layer_.map.id.lower()],
+            game_mode=GameMode.from_hllrcon(layer_.game_mode),
+            attackers=Team.from_hllrcon(layer_.attacking_team) if layer_.attacking_team else None,
+            environment=Environment.from_hllrcon(layer_),
+        )
 
     if TYPE_CHECKING:
         # Ensure type checkers see the correct return type

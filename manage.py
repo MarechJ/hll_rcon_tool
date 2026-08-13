@@ -20,6 +20,7 @@ def pre_flight_checks(env):
         "HLL_HOST",
         "HLL_PORT",
         "HLL_PASSWORD",
+        "HLL_GAME",
         "HLL_REDIS_URL",
         "HLL_DB_URL",
     ]

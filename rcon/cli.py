@@ -609,7 +609,12 @@ def remove_orphaned_map_ids():
                 f"Removed map {m.id} / {m.pretty_name} from VoteMap Whitelist as it does not exist in game server anymore"
             )
 
-    if len(res) != len(prev):
+    if len(res) == len(prev):
+        return
+
+    if len(res) == 0:
+        vm.reset_map_whitelist()
+    else:
         vm.set_map_whitelist(res)
 
 
