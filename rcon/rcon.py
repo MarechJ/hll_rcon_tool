@@ -1684,6 +1684,12 @@ class HLLVRcon(Rcon, HLLVServerCtl):
     def get_objective_rows(self, map_name: str) -> List[List[str]]:
         map_or_layer_id = map_name.casefold()
         layers = hllrcon.HLLVLayer.all()
+
+        def has_selectable_layout(layer: hllrcon.HLLVLayer) -> bool:
+            return len(layer.sectors) == 5 and all(
+                len(sector.capture_zones) == 3 for sector in layer.sectors
+            )
+
         layer = next(
             (layer for layer in layers if layer.id.casefold() == map_or_layer_id),
             None,
@@ -1694,7 +1700,7 @@ class HLLVRcon(Rcon, HLLVServerCtl):
                     layer
                     for layer in layers
                     if layer.map.id.casefold() == map_or_layer_id
-                    and layer.game_mode is hllrcon.HLLVGameMode.WARFARE
+                    and has_selectable_layout(layer)
                 ),
                 None,
             )
