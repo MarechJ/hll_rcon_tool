@@ -4,6 +4,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 
 from rcon.maps import GameMode, Layer, Map, Team
+from rcon.types import GameEnum
 from rcon.weapons import WeaponType
 
 
@@ -11,7 +12,7 @@ from rcon.weapons import WeaponType
 class GameProfile:
     """Game-specific reference data and parsing behind a stable interface."""
 
-    key: str
+    game: GameEnum
     maps: Mapping[str, Map]
     layers: Mapping[str, Layer]
     layer_parser: Callable[[str | Layer], Layer]
@@ -34,6 +35,6 @@ class GameProfile:
         mode = game_mode if isinstance(game_mode, GameMode) else GameMode(game_mode.lower())
         if mode not in self.supported_game_modes:
             raise ValueError(
-                f"Game mode {mode.value!r} is not supported by the {self.key} game profile"
+                f"Game mode {mode.value!r} is not supported by the '{self.game.value}' game profile"
             )
         return mode

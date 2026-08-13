@@ -3,9 +3,10 @@ from rcon.game.hllv.maps import HLLV_LAYERS, HLLV_MAPS, parse_layer
 from rcon.game.hllv.roles import HLLV_ROLE_LABELS, HLLV_ROLES
 from rcon.game.hllv.weapons import HLLV_WEAPON_SIDES, HLLV_WEAPONS
 from rcon.maps import GameMode
+from rcon.types import GameEnum
 
 HLLV_PROFILE = GameProfile(
-    key="hllv",
+    game=GameEnum.HLL_VIETNAM,
     maps=HLLV_MAPS,
     layers=HLLV_LAYERS,
     layer_parser=parse_layer,

@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timezone
 from functools import cached_property
 from itertools import chain
-from typing import Any, Iterable, List, Literal, Optional, Sequence, overload
+from typing import Iterable, List, Literal, Optional, Sequence, overload
 
 from dateutil import parser
 
@@ -59,7 +59,6 @@ from rcon.utils import (
     get_server_number,
     parse_raw_player_info,
 )
-from hllrcon import Faction
 
 PLAYER_ID = "player_id"
 NAME = "name"
