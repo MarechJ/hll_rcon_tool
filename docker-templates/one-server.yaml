@@ -71,9 +71,12 @@ x-frontend: &frontend
   build:
     context: .
     dockerfile: Dockerfile-frontend
+    args:
+      HLL_GAME: ${HLL_GAME:-hll}
   image: ${FRONTEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
   environment:
     RCONWEB_EXTERNAL_ADDRESS: ${RCONWEB_EXTERNAL_ADDRESS}
+    HLL_GAME: ${HLL_GAME:-hll}
   restart: always
   volumes:
     - ./static:/static/
