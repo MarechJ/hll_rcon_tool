@@ -14,6 +14,7 @@ GAME_ENDPOINTS: dict[GameEnum, dict[str, EndpointDefinition]] = {
     },
     GameEnum.HLL_VIETNAM: {
         "get_objective_rows": ("api.can_view_current_map", ["GET"]),
+        "get_game_layouts": ("api.can_view_current_map", ["GET"]),
         "get_game_layout": ("api.can_view_current_map", ["GET"]),
         "set_game_layout": ("api.can_change_game_layout", ["POST"]),
         "remove_game_layout": ("api.can_change_game_layout", ["POST"]),
