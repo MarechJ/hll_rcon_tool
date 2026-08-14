@@ -290,6 +290,48 @@ def test_hllv_set_game_layout_accepts_an_explicit_map():
     assert result == [0, 1, 2, 1, 0]
 
 
+def test_hllv_get_game_layouts_returns_server_entries():
+    ctl = HLLVServerCtl(ServerInfo(game=GameEnum.HLL_VIETNAM), Mock())
+    entries = [
+        {"mapId": "wdevc_warfare_day", "sectors": [0, 1, 2, 1, 0]},
+        {"mapId": "wdeve_domination_day", "sectors": [2, 1, 0, 1, 2]},
+    ]
+    ctl.exchange = Mock(return_value=_response({"entries": entries}))
+
+    result = ctl.get_game_layouts()
+
+    ctl.exchange.assert_called_once_with("GetSectorLayout", 2)
+    assert result == entries
+
+
+@pytest.mark.parametrize(
+    ("map_name", "expected"),
+    [
+        ("wdevc_warfare_day", [0, 1, 2, 1, 0]),
+        ("missing_layer", None),
+    ],
+)
+def test_hllv_get_game_layout_returns_matching_sectors_or_none(map_name, expected):
+    ctl = HLLVServerCtl(ServerInfo(game=GameEnum.HLL_VIETNAM), Mock())
+    ctl.exchange = Mock(
+        return_value=_response(
+            {
+                "entries": [
+                    {
+                        "mapId": "wdevc_warfare_day",
+                        "sectors": [0, 1, 2, 1, 0],
+                    }
+                ]
+            }
+        )
+    )
+
+    result = ctl.get_game_layout(map_name)
+
+    ctl.exchange.assert_called_once_with("GetSectorLayout", 2)
+    assert result == expected
+
+
 def test_hllv_get_objective_rows_uses_core_map_sector_definitions():
     ctl = object.__new__(HLLVRcon)
     ctl.exchange = Mock()

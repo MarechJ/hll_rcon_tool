@@ -18,7 +18,10 @@ class HLLVController:
     def get_objective_rows(self, map_name):
         pass
 
-    def get_game_layout(self):
+    def get_game_layouts(self):
+        pass
+
+    def get_game_layout(self, map_name):
         pass
 
     def set_game_layout(self, map_name, objectives):
@@ -41,6 +44,7 @@ class HLLVController:
             GameEnum.HLL_VIETNAM,
             {
                 "get_objective_rows",
+                "get_game_layouts",
                 "get_game_layout",
                 "set_game_layout",
                 "remove_game_layout",
