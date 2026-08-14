@@ -32,7 +32,18 @@ class GameProfile:
             return self.layers["unknown"]
 
     def parse_game_mode(self, game_mode: str | GameMode) -> GameMode:
-        mode = game_mode if isinstance(game_mode, GameMode) else GameMode(game_mode.lower())
+        # HLL Vietnam prefixes offensive modes with the attacking faction,
+        # e.g. "US Offensive" / "NVA Offensive". Every GameMode value is a
+        # single word, so match on the final token.
+        if isinstance(game_mode, GameMode):
+            mode = game_mode
+        else:
+            # rsplit returns [] for a blank string, so guard the index and fall
+            # back to the raw value. The game server sends an empty gameMode
+            # between matches, and an unguarded [-1] raises IndexError there.
+            normalised = game_mode.strip().lower()
+            tokens = normalised.rsplit(None, 1)
+            mode = GameMode(tokens[-1] if tokens else normalised)
         if mode not in self.supported_game_modes:
             raise ValueError(
                 f"Game mode {mode.value!r} is not supported by the '{self.game.value}' game profile"
