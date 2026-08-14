@@ -9,14 +9,12 @@ from typing import Callable, Dict, Iterable, DefaultDict
 
 import discord_webhook
 from discord.utils import escape_markdown
-from hllrcon.data import HLLRole, HLLTeam, HLLVRole, HLLVTeam
-
 from rcon.cache_utils import get_redis_client, ttl_cache
 from rcon.connection import HLLServerError
 from rcon.discord import make_hook
-from rcon.maps import GameMode, Team as MapTeam, get_theoretical_match_time, parse_layer
+from rcon.maps import GameMode, Team as MapTeam, get_theoretical_match_time
 from rcon.rcon import get_rcon
-from rcon.types import AllLogTypes, GameEnum, GameStateType, GetDetailedPlayers, MapInfo, MapScore, UnitHistoryEntry, StructuredLogLineWithMetaData, PlayerStat, WorldPositionType
+from rcon.types import AllLogTypes, GameStateType, GetDetailedPlayers, MapInfo, MapScore, UnitHistoryEntry, StructuredLogLineWithMetaData, PlayerStat, WorldPositionType
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.webhooks import DiscordMentionWebhook
@@ -308,7 +306,9 @@ class LogLoop:
             )
             return 0
 
-        cached_game_mode = parse_layer(current_map["name"]).game_mode
+        cached_game_mode = self.rcon.game_profile.parse_layer(
+            current_map["name"]
+        ).game_mode
         if cached_game_mode != gs["game_mode"]:
             logger.info(
                 "[MATCH IDLE] - Live and cached game modes differ, skipping stats "
@@ -374,7 +374,7 @@ class LogLoop:
 
     def record_cap_flips(self, current_map: MapInfo, sec_from_start: int, gs: GameStateType):
         cap_flips = current_map.setdefault("cap_flips", [])
-        layer = parse_layer(current_map["name"])
+        layer = self.rcon.game_profile.parse_layer(current_map["name"])
 
         if (
             layer.game_mode == GameMode.WARFARE
@@ -413,12 +413,13 @@ class LogLoop:
         #     logger.debug("\n[MATCH START] - Waiting %ds from map start, skipping caching", self.RECORD_PLAYER_STATS_DELAY)
 
         UNASSIGNED = -111
-        role_type, team_type = {
-            GameEnum.HLL_WW2: (HLLRole, HLLTeam),
-            GameEnum.HLL_VIETNAM: (HLLVRole, HLLVTeam),
-        }[self.rcon.game_profile.game]
-        all_roles = {r.name.lower(): r.id for r in role_type.all()}
-        all_teams = {t.name.lower(): t.id for t in team_type.all()}
+        all_roles = self.rcon.game_profile.role_ids
+        # Player info has already normalized HLL Allies/Axis and HLLV
+        # South/North to these stable logical sides.
+        all_teams = {
+            MapTeam.ALLIES.value: 1,
+            MapTeam.AXIS.value: 2,
+        }
 
         map_cached_stats = current_map.setdefault("player_stats", dict())
 
