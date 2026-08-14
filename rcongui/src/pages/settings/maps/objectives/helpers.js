@@ -51,7 +51,7 @@ export const generateObjectivesGrid = (orientation) => {
 export const getMapLayerImageSrc = (mapLayer) =>
   `/maps/icons/${mapLayer?.image_name ?? "unknown.webp"}`;
 export const getTacMapImageSrc = (mapLayer) =>
-  `/tac-maps/${mapLayer.map.id}.webp`;
+  `/tac-maps/${mapLayer.map.id.toLowerCase()}.webp`;
 export const isNotSupportedGameMode = (mapLayer) =>
   unifiedGamemodeName(mapLayer.game_mode) === "skirmish";
 
