@@ -14,6 +14,7 @@ COPY rcongui/ .
 RUN npm ci
 ENV REACT_APP_API_URL=/api/
 COPY .git/ .git/
+COPY assets/shared/ /code/public
 COPY assets/${HLL_GAME}/images/ /code/public
 COPY assets/${HLL_GAME}/rcongui/ /code/public
 RUN git describe --tags > /code/tag_version && rm -rf .git
@@ -30,6 +31,7 @@ WORKDIR /code_public
 
 COPY rcongui_public/ .
 RUN npm ci
+COPY assets/shared/ /code_public/public
 COPY assets/${HLL_GAME}/images/ /code_public/public
 COPY assets/${HLL_GAME}/rcongui_public/ /code_public/public
 RUN npm run build

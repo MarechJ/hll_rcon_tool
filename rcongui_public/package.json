@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "scripts": {
     "prepare": "husky install",
-    "copy-assets": "if [ -z \"$HLL_GAME\" ] && [ -f .env.development.local ]; then . ./.env.development.local; fi; HLL_GAME=${HLL_GAME:-hll}; rm -rf public && mkdir -p public && cp -r ../assets/$HLL_GAME/rcongui_public/. public/ && cp -r ../assets/$HLL_GAME/images/. public/",
+    "copy-assets": "if [ -z \"$HLL_GAME\" ] && [ -f .env.development.local ]; then . ./.env.development.local; fi; HLL_GAME=${HLL_GAME:-hll}; rm -rf public && mkdir -p public && cp -r ../assets/shared/. public/ && cp -r ../assets/$HLL_GAME/images/. public/ && cp -r ../assets/$HLL_GAME/rcongui_public/. public/",
     "dev": "vite",
     "build": "npm run typecheck && vite build",
     "preview": "vite build && vite preview --mode development --port 3000",

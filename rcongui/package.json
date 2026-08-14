@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "prepare": "",
-    "copy-assets": "if [ -z \"$HLL_GAME\" ] && [ -f .env ]; then . ./.env; fi; HLL_GAME=${HLL_GAME:-hll}; rm -rf public && mkdir -p public && cp -r ../assets/$HLL_GAME/rcongui/. public/ && cp -r ../assets/$HLL_GAME/images/. public/",
+    "copy-assets": "if [ -z \"$HLL_GAME\" ] && [ -f .env ]; then . ./.env; fi; HLL_GAME=${HLL_GAME:-hll}; rm -rf public && mkdir -p public && cp -r ../assets/shared/. public/ && cp -r ../assets/$HLL_GAME/images/. public/ && cp -r ../assets/$HLL_GAME/rcongui/. public/",
     "start": "vite",
     "dev": "vite dev",
     "dev:fake": "vite dev --mode fake",
