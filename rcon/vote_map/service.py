@@ -118,7 +118,8 @@ class VoteMap:
         self._rcon = rcon or get_rcon()
         self.__config_loader = config_loader or VoteMapUserConfig.load_from_db
         self._maps_history = maps_history or MapsHistory()
-        self._state = VotemapState()
+        self._parse_layer = self._rcon.game_profile.parse_layer
+        self._state = VotemapState(layer_parser=self._parse_layer)
 
         whitelist_not_initialized = len(self._state.get_whitelist()) == 0
         if whitelist_not_initialized:
@@ -280,6 +281,10 @@ class VoteMap:
     def get_votes(self):
         return self._state.get_votes()
 
+    def parse_layer(self, layer_name: str | Layer) -> Layer:
+        """Parse a layer using the game profile associated with this server."""
+        return self._parse_layer(layer_name)
+
     def get_vote(self, player_id: str) -> VoteMapVote | None:
         return self._state.get_vote(player_id)
 
@@ -426,14 +431,14 @@ class VoteMap:
     def get_new_selection(self) -> list[Layer]:
         config = self.config
         new_selection = []
-        maps_history = [maps.parse_layer(m["name"]) for m in self._maps_history]
+        maps_history = [self.parse_layer(m["name"]) for m in self._maps_history]
         current_map = self._maps_history.get_current_map()
         options = {
             "maps_history": maps_history,
             # Map history is updated before votemap is restarted on match start,
             # while Rcon.current_map may still contain the previous cached layer.
             "current_map": (
-                maps.parse_layer(current_map["name"])
+                self.parse_layer(current_map["name"])
                 if current_map
                 else self._rcon.current_map
             ),
@@ -458,7 +463,7 @@ class VoteMap:
                 "Falling back on all possible maps since the filters are too restrictive"
             )
             options["allowed_maps"] = set(
-                maps.parse_layer(m) for m in self._rcon.get_maps()
+                self.parse_layer(m) for m in self._rcon.get_maps()
             )
             new_selection = self.__suggest_new_selection(**options)
 
@@ -879,7 +884,7 @@ class VoteMap:
             return []
         ranked_maps = counter.most_common()
         return [
-            (maps.parse_layer(map_id), vote_count) for map_id, vote_count in ranked_maps
+            (self.parse_layer(map_id), vote_count) for map_id, vote_count in ranked_maps
         ]
 
     def reset_votes(self):
@@ -900,7 +905,7 @@ class VoteMap:
         if not counter:
             return None
         most_voted_map, _ = counter.most_common()[0]
-        return maps.parse_layer(most_voted_map)
+        return self.parse_layer(most_voted_map)
 
     def _get_least_played_map(self, maps_to_pick_from: list[Layer]) -> Layer:
 
@@ -1335,7 +1340,7 @@ class VoteMapCommandHandler:
 
         player_vote = self.votemap.get_vote(player_id)
         if player_vote:
-            message += f"You've voted for {maps.parse_layer(player_vote["map_id"]).pretty_name}"
+            message += f"You've voted for {self.votemap.parse_layer(player_vote["map_id"]).pretty_name}"
         else:
             message += ">>> You have not voted yet! <<<"
 
