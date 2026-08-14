@@ -16,7 +16,7 @@ from rcon.game.base import GameProfile
 from rcon.game.registry import game_switch
 from rcon.models import GameLayout
 from rcon.types import GameEnum, GetDetailedPlayer, MapInfo, PlayerInfoType, PlayerStat, PlayerStatsType, StructuredLogLineWithMetaData
-from rcon.maps import Layer, parse_map_string, Environment, UNKNOWN_MAP_NAME, Team
+from rcon.maps import Layer, parse_map_string, parse_map_string_attacker, UNKNOWN_MAP_NAME, Team
 
 logger = logging.getLogger("rcon")
 
@@ -867,22 +867,13 @@ def guess_map_from_log(
     """Guess a layer from a match log using the selected game's catalog."""
     try:
         name, env, game_mode = parse_map_string(log["raw"])
+        attacker = parse_map_string_attacker(log["raw"])
     except (KeyError, TypeError, ValueError):
         return game_profile.parse_layer_or_unknown(UNKNOWN_MAP_NAME)
 
-    candidates = [
-        layer
-        for layer in game_profile.layers.values()
-        if layer.map.name.casefold() == name.casefold()
-        and layer.game_mode == game_mode
-    ]
-    if not candidates:
-        return game_profile.parse_layer_or_unknown(UNKNOWN_MAP_NAME)
-
-    # Match logs do not reliably identify the attacking side for Offensive,
-    # so preserve the existing behavior and choose by environment when possible.
-    environment = env or Environment.DAY
-    return next(
-        (layer for layer in candidates if layer.environment == environment),
-        candidates[0],
+    return game_profile.resolve_layer(
+        map_name=name,
+        game_mode=game_mode,
+        environment=env,
+        attacker=attacker,
     )

@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+import unicodedata
 from unittest.mock import Mock
 
 from hllrcon import HLLVLayer
@@ -15,7 +16,7 @@ from rcon.api_commands import (
 from rcon.game import get_game_profile
 from rcon.game.hll.profile import HLL_PROFILE
 from rcon.game.hllv.profile import HLLV_PROFILE
-from rcon.maps import GameMode, Team, UNKNOWN_MAP_NAME
+from rcon.maps import GameMode, Team, UNKNOWN_MAP_NAME, parse_map_string
 from rcon.rcon import HLLRcon, HLLVRcon, Rcon, create_rcon
 from rcon.types import GameEnum, ServerInfo
 from rcon.utils import guess_map_from_log
@@ -85,6 +86,21 @@ def test_hllv_profile_loads_hllv_catalog_with_logical_sides():
     assert layer.attackers is Team.AXIS
 
 
+def test_hllv_profile_resolves_parsed_log_details_not_map_name_as_layer_id():
+    map_name, environment, game_mode = parse_map_string(
+        "MATCH START QUẢNG NGÃI Conquest"
+    )
+
+    layer = HLLV_PROFILE.resolve_layer(
+        map_name=map_name,
+        game_mode=game_mode,
+        environment=environment,
+    )
+
+    assert layer.id == "wdevb_conquest_day"
+    assert layer.pretty_name == "Quảng Ngãi Conquest"
+
+
 def test_profiles_expose_game_specific_role_ids():
     assert HLL_PROFILE.role_ids["armycommander"] == 13
     assert HLLV_PROFILE.role_ids["armycommander"] == 20
@@ -114,6 +130,26 @@ def test_guess_map_from_log_does_not_fall_through_to_other_game_catalog():
     )
 
     assert guessed.id == UNKNOWN_MAP_NAME
+
+
+def test_guess_map_from_log_normalizes_unicode_map_names():
+    decomposed_name = unicodedata.normalize("NFD", "THANH HÒA BRIDGE")
+    guessed = guess_map_from_log(
+        {"raw": f"MATCH START {decomposed_name} NVA OFFENSIVE"},
+        HLLV_PROFILE,
+    )
+
+    assert guessed.id == "wdevf_offensivenva_day"
+
+
+@pytest.mark.parametrize("attacker", ("US", "USA"))
+def test_guess_map_from_log_selects_hllv_offensive_attacker(attacker):
+    guessed = guess_map_from_log(
+        {"raw": f"MATCH START THANH HÒA BRIDGE {attacker} OFFENSIVE"},
+        HLLV_PROFILE,
+    )
+
+    assert guessed.id == "wdevf_offensiveus_day"
 
 
 def test_profiles_only_accept_their_supported_game_modes():

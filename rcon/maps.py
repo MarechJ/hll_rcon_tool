@@ -1829,19 +1829,33 @@ start_pattern = re.compile(
     re.IGNORECASE | re.VERBOSE,
 )
 
-def parse_map_string(s: str) -> tuple[str, Environment | None, GameMode]:
+def _match_map_string(s: str) -> re.Match[str]:
     m = ended_pattern.search(s) or start_pattern.search(s)
     if not m:
         raise ValueError(f"Could not parse map details from: {s!r}")
+    return m
+
+
+def parse_map_string(s: str) -> tuple[str, Environment | None, GameMode]:
+    m = _match_map_string(s)
 
     name = m.group("name").strip()
     env_str = m.group("env")
     mode_str = m.group("mode")
-    # TODO: extract Faction from 'attacker' 
-    # as HLL:V offensive maps display off attackers
-    # e.g. NVA Offensive
 
     env = Environment(env_str.lower()) if env_str is not None else None
     mode = GameMode(mode_str.lower())
 
     return name, env, mode
+
+
+def parse_map_string_attacker(s: str) -> Team | None:
+    """Return the logical attacking side encoded in a match log, if present."""
+    attacker = _match_map_string(s).group("attacker")
+    if attacker is None:
+        return None
+    return {
+        "nva": Team.AXIS,
+        "us": Team.ALLIES,
+        "usa": Team.ALLIES,
+    }[attacker.casefold()]

@@ -325,7 +325,11 @@ def handle_new_match_start(rcon: Rcon, struct_log):
                     current_map.map.name,
                 )
         else:
-            map_to_save = str(current_map)
+            # The initial log fetch can contain match starts from hours ago.
+            # Live game state cannot identify those historical matches and may
+            # still be transitional/unknown, so retain the map parsed from the
+            # log itself.
+            map_to_save = log_map
 
         # TODO added guess - check if it's already in there - set prev end if None
         maps_history = MapsHistory()
