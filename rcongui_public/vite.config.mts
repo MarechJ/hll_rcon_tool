@@ -11,6 +11,7 @@ export default defineConfig(({ mode }) => {
   return {
     base: '/',
     define: {
+      'process.env.HLL_GAME': JSON.stringify(env.HLL_GAME || 'hll'),
       'process.env.REACT_APP_API_URL': JSON.stringify(env.REACT_APP_API_URL || '/api'),
     },
     plugins: [svgr({ svgrOptions: { exportType: 'default' } }), react(), tailwindcss()],

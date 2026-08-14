@@ -33,6 +33,7 @@ export default defineConfig(({ command, mode }) => {
   const REACT_APP_API_URL = env.REACT_APP_API_URL;
   const VITE_CRCON_SERVER_URL = env.VITE_CRCON_SERVER_URL ?? DEFAULT_CRCON_SERVER_URL;
   const VITE_CRCON_API_ENDPOINT = env.VITE_CRCON_API_ENDPOINT ?? DEFAULT_CRCON_API_ENDPOINT;
+  const HLL_GAME = env.HLL_GAME ?? "hll";
   const DEBUG = env.DEBUG;
 
   if (mode === "development") {
@@ -67,6 +68,7 @@ export default defineConfig(({ command, mode }) => {
   return {
     define: {
       "process.env.DEBUG": JSON.stringify(DEBUG),
+      "process.env.HLL_GAME": JSON.stringify(HLL_GAME),
       "process.env.REACT_APP_API_URL": JSON.stringify(REACT_APP_API_URL),
     },
     resolve: {
