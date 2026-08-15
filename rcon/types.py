@@ -176,7 +176,9 @@ class GameEnum(enum.StrEnum):
 
     @classmethod
     def from_int(cls, value: int) -> "GameEnum":
-        return cls(GameIntEnum(value).name)
+        # Look the member up by NAME, mirroring to_int(). Calling cls() would
+        # look it up by VALUE ("hll" / "hllv") and so always raise on a name.
+        return cls[GameIntEnum(value).name]
 
 class GameIntEnum(enum.IntEnum):
     HLL_WW2 = 1

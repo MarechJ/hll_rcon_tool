@@ -18,7 +18,7 @@ from rcon.game.hll.profile import HLL_PROFILE
 from rcon.game.hllv.profile import HLLV_PROFILE
 from rcon.maps import GameMode, Team, UNKNOWN_MAP_NAME, parse_map_string
 from rcon.rcon import HLLRcon, HLLVRcon, Rcon, create_rcon
-from rcon.types import GameEnum, ServerInfo
+from rcon.types import GameEnum, GameIntEnum, ServerInfo
 from rcon.utils import guess_map_from_log
 
 
@@ -323,3 +323,38 @@ def test_timer_commands_validate_mode_against_profile():
 
     with pytest.raises(ValueError, match="not supported by the 'hllv' game profile"):
         ctl.set_match_timer(GameMode.SKIRMISH, 30)
+
+
+@pytest.mark.parametrize("game", list(GameEnum))
+def test_game_enum_survives_a_round_trip_through_its_stored_int(game):
+    """Maps.game persists a GameIntEnum, so reading a row back needs both ways."""
+    assert GameEnum.from_int(game.to_int()) is game
+
+
+@pytest.mark.parametrize(
+    ("stored", "expected"),
+    [
+        (GameIntEnum.HLL_WW2, GameEnum.HLL_WW2),
+        (GameIntEnum.HLL_VIETNAM, GameEnum.HLL_VIETNAM),
+    ],
+)
+def test_game_enum_from_int_accepts_the_values_stored_in_the_database(stored, expected):
+    assert GameEnum.from_int(int(stored)) is expected
+
+
+def test_layer_id_from_another_game_degrades_to_a_placeholder():
+    """Why a stored map name has to be resolved against the game it was played on.
+
+    The WWII catalog has no Vietnam IDs, so it synthesises a layer from the ID
+    itself -- a title-cased name and WWII factions -- rather than failing. Any
+    reader that ignores the recorded game silently shows that placeholder.
+    """
+    stored = "wdevc_warfare_day"
+
+    placeholder = HLL_PROFILE.parse_layer(stored)
+    assert placeholder.map.name == "Wdevc"
+    assert placeholder.map.axis.name == "ger"
+
+    actual = HLLV_PROFILE.parse_layer(stored)
+    assert actual.pretty_name == "Hu\u1ebf Outskirts Warfare"
+    assert actual.map.axis.name == "nva"
