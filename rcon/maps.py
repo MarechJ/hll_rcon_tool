@@ -1789,6 +1789,10 @@ def get_all_layers_by_map(map: Map, game_mode: Optional[GameMode] = None, team: 
     
 env_alternation = "|".join(re.escape(e.value) for e in Environment)
 mode_alternation = "|".join(re.escape(m.value) for m in GameMode)
+# Match logs may qualify a mode with the attacking faction. These are log
+# protocol tokens rather than display names (for example, "United States"),
+# so keep the accepted aliases explicit.
+attacker_alternation = "|".join(re.escape(value) for value in ("NVA", "USA", "US"))
 
 ended_pattern = re.compile(
     rf"""
@@ -1798,6 +1802,9 @@ ended_pattern = re.compile(
     (?P<name>.+?)
     (?:
         \s+(?P<env>{env_alternation})
+    )?
+    (?:
+        \s+(?P<attacker>{attacker_alternation})
     )?
     \s+(?P<mode>{mode_alternation})
     `
@@ -1813,16 +1820,24 @@ start_pattern = re.compile(
     (?:
         \s+(?P<env>{env_alternation})
     )?
+    (?:
+        \s+(?P<attacker>{attacker_alternation})
+    )?
     \s+(?P<mode>{mode_alternation})
     (?:\s|$)
     """,
     re.IGNORECASE | re.VERBOSE,
 )
 
-def parse_map_string(s: str) -> tuple[str, Environment | None, GameMode]:
+def _match_map_string(s: str) -> re.Match[str]:
     m = ended_pattern.search(s) or start_pattern.search(s)
     if not m:
         raise ValueError(f"Could not parse map details from: {s!r}")
+    return m
+
+
+def parse_map_string(s: str) -> tuple[str, Environment | None, GameMode]:
+    m = _match_map_string(s)
 
     name = m.group("name").strip()
     env_str = m.group("env")
@@ -1832,3 +1847,15 @@ def parse_map_string(s: str) -> tuple[str, Environment | None, GameMode]:
     mode = GameMode(mode_str.lower())
 
     return name, env, mode
+
+
+def parse_map_string_attacker(s: str) -> Team | None:
+    """Return the logical attacking side encoded in a match log, if present."""
+    attacker = _match_map_string(s).group("attacker")
+    if attacker is None:
+        return None
+    return {
+        "nva": Team.AXIS,
+        "us": Team.ALLIES,
+        "usa": Team.ALLIES,
+    }[attacker.casefold()]

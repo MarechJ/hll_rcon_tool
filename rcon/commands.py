@@ -612,8 +612,15 @@ class ServerCtl:
         seconds_remaining = int(time_remaining.total_seconds())
         raw_time_remaining = f"{seconds_remaining // 3600}:{(seconds_remaining // 60) % 60:02}:{seconds_remaining % 60:02}"
 
-        game_mode = self.game_profile.parse_game_mode(s["gameMode"])
         current_map = self.game_profile.parse_layer_or_unknown(s["mapId"])
+        # The server reports an empty gameMode between matches. The layer ID is
+        # still populated there and encodes the mode, so prefer it over failing
+        # the whole gamestate call -- an unhandled ValueError here kills every
+        # caller, including the log event loop and the scoreboard service.
+        game_mode = (
+            self.game_profile.parse_game_mode_or_none(s["gameMode"])
+            or current_map.game_mode
+        )
 
         try:
             next_map = self.game_profile.parse_layer_or_unknown(

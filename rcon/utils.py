@@ -12,10 +12,11 @@ import redis
 import redis.exceptions
 
 from rcon.cache_utils import get_redis_pool
+from rcon.game.base import GameProfile
 from rcon.game.registry import game_switch
 from rcon.models import GameLayout
 from rcon.types import GameEnum, GetDetailedPlayer, MapInfo, PlayerInfoType, PlayerStat, PlayerStatsType, StructuredLogLineWithMetaData
-from rcon.maps import Layer, parse_map_string, LAYERS, Environment, UNKNOWN_MAP_NAME, Team
+from rcon.maps import Layer, parse_map_string, parse_map_string_attacker, UNKNOWN_MAP_NAME, Team
 
 logger = logging.getLogger("rcon")
 
@@ -860,17 +861,19 @@ def strtobool(val) -> bool:
         raise ValueError("invalid truth value %r" % (val,))
     
 
-def guess_map_from_log(log: StructuredLogLineWithMetaData) -> Layer:
-    guessed_map: Layer
+def guess_map_from_log(
+    log: StructuredLogLineWithMetaData, game_profile: GameProfile
+) -> Layer:
+    """Guess a layer from a match log using the selected game's catalog."""
     try:
         name, env, game_mode = parse_map_string(log["raw"])
-        maps = [l for l in LAYERS.values() if l.map.name.lower() == name.lower() and l.game_mode == game_mode]
-        # ignoring attackers for offensives
-        env_to_maps = {l.environment: l for l in maps}
-        if not env:
-            # in most cases when env not provided the env is day
-            env = Environment.DAY
-        guessed_map = env_to_maps.get(env, maps[0])
-    except:
-        guessed_map = LAYERS[UNKNOWN_MAP_NAME]
-    return guessed_map
+        attacker = parse_map_string_attacker(log["raw"])
+    except (KeyError, TypeError, ValueError):
+        return game_profile.parse_layer_or_unknown(UNKNOWN_MAP_NAME)
+
+    return game_profile.resolve_layer(
+        map_name=name,
+        game_mode=game_mode,
+        environment=env,
+        attacker=attacker,
+    )

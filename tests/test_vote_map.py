@@ -3,6 +3,8 @@ import pytest
 from fakeredis import FakeStrictRedis
 from unittest.mock import MagicMock, patch
 from rcon import maps
+from rcon.game.hll.profile import HLL_PROFILE
+from rcon.game.hllv.profile import HLLV_PROFILE
 from rcon.user_config.vote_map import DefaultMethods
 from rcon.vote_map import InvalidVoteError, PlayerChoiceNotAllowed, PlayerVoteNotAllowed, VoteMap, VoteMapException, VoteMapUserConfig
 from rcon.maps import LAYERS, MAPS, Environment, Layer, GameMode, Team
@@ -95,6 +97,7 @@ def redis_client():
 def mock_rcon():
     """Fixture for mocking Rcon interactions."""
     rcon = MagicMock()
+    rcon.game_profile = HLL_PROFILE
     rcon.get_maps.return_value = ALL_MAPS
     rcon.get_player_ids.return_value = [
         ("Player1", "71234567890"),
@@ -125,6 +128,40 @@ def mock_rcon():
 
     rcon.add_map_to_rotation.side_effect = add_map_to_rotation
     return rcon
+
+
+def test_hllv_layers_are_rehydrated_with_the_active_game_profile(
+    redis_client, caplog
+):
+    layer_ids = [
+        "wdeve_offensivenva_day",
+        "wdevb_domination_day",
+        "wdevd_conquest_day",
+    ]
+    hllv_layers = [HLLV_PROFILE.parse_layer(layer_id) for layer_id in layer_ids]
+    hllv_rcon = MagicMock()
+    hllv_rcon.game_profile = HLLV_PROFILE
+    hllv_rcon.get_maps.return_value = hllv_layers
+    hllv_rcon.current_map = hllv_layers[0]
+
+    with patch("rcon.vote_map.state.get_redis_client", return_value=redis_client):
+        votemap = VoteMap(
+            rcon=hllv_rcon,
+            config_loader=lambda: VoteMapUserConfig(enabled=True),
+            maps_history=FakeMapsHistory(),
+        )
+
+    votemap.set_map_whitelist(hllv_layers)
+    votemap.set_selection([hllv_layers[0]])
+
+    assert set(votemap.get_map_whitelist()) == set(hllv_layers)
+    assert votemap.get_selection() == [hllv_layers[0]]
+    assert all(
+        layer.map.id != maps.UNKNOWN_MAP_NAME
+        for layer in votemap.get_map_whitelist()
+    )
+    assert all(layer.pretty_name != layer.id for layer in votemap.get_map_whitelist())
+    assert "Unknown layer" not in caplog.text
 
 
 @pytest.fixture
