@@ -163,6 +163,51 @@ def test_profiles_only_accept_their_supported_game_modes():
         HLLV_PROFILE.parse_game_mode("Skirmish")
 
 
+@pytest.mark.parametrize("profile", [HLL_PROFILE, HLLV_PROFILE])
+@pytest.mark.parametrize("game_mode", ["", "   ", "not a game mode"])
+def test_parse_game_mode_or_none_returns_none_instead_of_raising(profile, game_mode):
+    assert profile.parse_game_mode_or_none(game_mode) is None
+
+
+@pytest.mark.parametrize(
+    ("profile", "game_mode", "expected"),
+    [
+        (HLL_PROFILE, "Skirmish", GameMode.SKIRMISH),
+        (HLLV_PROFILE, "US Offensive", GameMode.OFFENSIVE),
+    ],
+)
+def test_parse_game_mode_or_none_still_parses_valid_modes(profile, game_mode, expected):
+    assert profile.parse_game_mode_or_none(game_mode) is expected
+
+
+@pytest.mark.parametrize(
+    ("game", "map_id"),
+    [
+        (GameEnum.HLL_WW2, "carentan_warfare"),
+        (GameEnum.HLL_VIETNAM, "wdeve_warfare_day"),
+    ],
+)
+def test_game_state_falls_back_to_layer_when_game_mode_is_blank(game, map_id):
+    """The server reports an empty gameMode between matches.
+
+    That used to raise ValueError out of get_gamestate(), taking down every
+    caller. The layer ID is still populated, so the mode is read back from it.
+    """
+    ctl_type = HLLServerCtl if game is GameEnum.HLL_WW2 else HLLVServerCtl
+    ctl = ctl_type(ServerInfo(game=game), Mock())
+    ctl.exchange = Mock(
+        side_effect=[
+            _response(_session(map_id, "")),
+            _response({"mAPS": [{"iD": map_id}], "currentIndex": 0}),
+        ]
+    )
+
+    game_state = ctl.get_gamestate()
+
+    assert game_state["game_mode"] is GameMode.WARFARE
+    assert game_state["current_map"]["id"] == map_id
+
+
 @pytest.mark.parametrize(
     ("game", "game_mode", "expected_map_id"),
     [
