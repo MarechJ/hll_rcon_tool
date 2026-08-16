@@ -597,7 +597,13 @@ def convert_win_player_ids():
 @cli.command(name="remove_orphaned_map_ids")
 def remove_orphaned_map_ids():
     vm = VoteMap()
-    known_map_ids = [m.id for m in ctl.get_maps()]
+    try:
+        known_map_ids = [m.id for m in ctl.get_maps()]
+    except OSError as e:
+        logger.error(
+            f"Could not reach the game server to remove orphaned map IDs, skipping: {e}"
+        )
+        return
 
     res = set()
     prev = vm.get_map_whitelist()
