@@ -13,6 +13,12 @@ esac
 
 export HLL_GAME=${game}
 
+# Vite environment variables are compiled into the bundle. Generate the
+# deployment-specific values at container startup instead.
+runtime_config="window.__CRCON_CONFIG__ = Object.freeze({ HLL_GAME: \"$game\" });"
+printf '%s\n' "$runtime_config" > /var/www/runtime-config.js
+printf '%s\n' "$runtime_config" > /var/www_public/runtime-config.js
+
 # Copy game specific assets to nginx root
 cp -R "/code/assets/$game/images/." /var/www/
 cp -R "/code/assets/$game/rcongui/." /var/www/
