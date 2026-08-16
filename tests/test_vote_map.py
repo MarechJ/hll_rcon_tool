@@ -355,7 +355,7 @@ def test_add_map_to_whitelist(votemap):
 
 def test_add_duplicate_map_to_whitelist(votemap):
     """Test adding a duplicate map to the whitelist does nothing"""
-    map = next(votemap.get_map_whitelist())
+    map = votemap.get_map_whitelist()[0]
     original_length = len(votemap.get_map_whitelist())
     votemap.add_map_to_whitelist(map)  # Add duplicate
     assert map in votemap.get_map_whitelist()
@@ -372,7 +372,7 @@ def test_set_invalid_maps_to_whitelist(votemap):
     """Test adding maps with invalid id to the whitelist raises error"""
     with pytest.raises(ValueError):
         whitelist = votemap.get_map_whitelist()
-        whitelist.add(INVALID_MAP)
+        whitelist.append(INVALID_MAP)
         votemap.add_maps_to_whitelist(whitelist)
 
 

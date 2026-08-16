@@ -7,4 +7,4 @@ def is_time(times: list[datetime], interval_seconds: int):
     except IndexError:
         last_time = datetime(year=1988, month=1, day=1, tzinfo=UTC)
 
-    return datetime.now(tz=UTC) - last_time < timedelta(seconds=interval_seconds)
+    return not datetime.now(tz=UTC) - last_time < timedelta(seconds=interval_seconds)

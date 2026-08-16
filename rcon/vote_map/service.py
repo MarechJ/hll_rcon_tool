@@ -70,7 +70,7 @@ def validate_maps(func):
                 )
         # Check for iterable of strings (but not a string itself)
         elif isinstance(map_arg, Iterable) and not isinstance(map_arg, Layer):
-            invalid = [map for map in map_arg if map not in all_maps]
+            invalid = [map.id for map in map_arg if map not in all_maps]
             if invalid:
                 raise ValueError(f"Invalid maps: {', '.join(invalid)}")
         else:
@@ -287,7 +287,7 @@ class VoteMap:
     def get_vote(self, player_id: str) -> VoteMapVote | None:
         return self._state.get_vote(player_id)
 
-    def get_map_whitelist(self):
+    def get_map_whitelist(self) -> list[Layer]:
         return self._state.get_whitelist()
 
     @validate_maps
