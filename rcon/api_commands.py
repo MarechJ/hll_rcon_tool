@@ -27,23 +27,25 @@ from rcon.player_history import (
     remove_flag,
 )
 from rcon.player_stats import TimeWindowStats
-from rcon.rcon import Rcon
+from rcon.rcon import HLLRcon, HLLVRcon, Rcon
 from rcon.scoreboard import ScoreboardUserConfig
-from rcon.settings import SERVER_INFO
+import rcon.settings
 from rcon.types import (
     AdminUserType,
     AllMessageTemplateTypes,
+    BlacklistRecordWithBlacklistType,
     BlacklistSyncMethod,
     BlacklistType,
     BlacklistWithRecordsType,
     GameServerBanType,
+    GameEnum,
     MessageTemplateCategory,
     MessageTemplateType,
     ParsedLogsType,
     PlayerCommentType,
     PlayerFlagType,
     PlayerProfileTypeEnriched,
-    ServerInfoType,
+    ServerInfo,
 )
 from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
 from rcon.user_config.auto_kick import AutoVoteKickUserConfig
@@ -94,6 +96,16 @@ PLAYER_ID = "player_id"
 CTL: Optional["RconAPI"] = None
 
 
+def create_rcon_api(credentials: ServerInfo) -> "RconAPI":
+    """Construct the concrete API controller for the configured game."""
+
+    controller_type = {
+        GameEnum.HLL_WW2: HLLRconAPI,
+        GameEnum.HLL_VIETNAM: HLLVRconAPI,
+    }[credentials.game]
+    return controller_type(credentials)
+
+
 def parameter_aliases(alias_to_param: dict[str, str]):
     """Specify parameter aliases of a function. This might be useful to preserve backwards
     compatibility or to handle parameters named after a Python reserved keyword.
@@ -114,7 +126,7 @@ def parameter_aliases(alias_to_param: dict[str, str]):
     return decorator
 
 
-def get_rcon_api(credentials: ServerInfoType | None = None) -> "RconAPI":
+def get_rcon_api(credentials: ServerInfo | None = None) -> "RconAPI":
     """Return a initialized Rcon connection to the game server
 
     This maintains a single initialized instance across a Python interpreter
@@ -128,10 +140,10 @@ def get_rcon_api(credentials: ServerInfoType | None = None) -> "RconAPI":
     global CTL
 
     if credentials is None:
-        credentials = SERVER_INFO
+        credentials = rcon.settings.get_server_info()
 
     if CTL is None:
-        CTL = RconAPI(credentials)
+        CTL = create_rcon_api(credentials)
     return CTL
 
 
@@ -309,7 +321,7 @@ class RconAPI(Rcon):
         reason: str,
         expires_at: datetime | None = None,
         admin_name: str = "",
-    ) -> BlacklistType:
+    ) -> BlacklistRecordWithBlacklistType:
         """
         Adds a new record to a blacklist.
 
@@ -337,7 +349,7 @@ class RconAPI(Rcon):
         blacklist_id: int = MISSING,
         reason: str = MISSING,
         expires_at: datetime | None = MISSING,
-    ) -> bool:
+    ) -> BlacklistRecordWithBlacklistType:
         """
         Edits a blacklist record.
 
@@ -660,19 +672,19 @@ class RconAPI(Rcon):
 
     def remove_map_from_votemap(self, map_name: str):
         v = VoteMap()
-        v.remove_map_from_selection(maps.parse_layer(map_name))
+        v.remove_map_from_selection(v.parse_layer(map_name))
 
     def add_map_to_votemap(self, map_name: str):
         v = VoteMap()
-        v.add_map_to_selection(maps.parse_layer(map_name))
+        v.add_map_to_selection(v.parse_layer(map_name))
 
     def set_votemap_winner(self, map_name: str):
         v = VoteMap()
-        v.guarantee_next_map(maps.parse_layer(map_name))
+        v.guarantee_next_map(v.parse_layer(map_name))
 
     def add_votemap_vote(self, player_id: str, player_name: str, map_name: str, vote_count: int | None = None):
         v = VoteMap()
-        v.add_vote(maps.parse_layer(map_name), player_id, player_name, vote_count)
+        v.add_vote(v.parse_layer(map_name), player_id, player_name, vote_count)
 
     def send_votemap_reminder(self):
         v = VoteMap()
@@ -691,19 +703,19 @@ class RconAPI(Rcon):
 
     def add_map_to_votemap_whitelist(self, map_name: str):
         v = VoteMap()
-        v.add_map_to_whitelist(maps.parse_layer(map_name))
+        v.add_map_to_whitelist(v.parse_layer(map_name))
 
     def add_maps_to_votemap_whitelist(self, map_names: Iterable[str]):
         v = VoteMap()
-        v.add_maps_to_whitelist([maps.parse_layer(map) for map in map_names])
+        v.add_maps_to_whitelist([v.parse_layer(map) for map in map_names])
 
     def remove_map_from_votemap_whitelist(self, map_name: str):
         v = VoteMap()
-        v.remove_map_from_whitelist(maps.parse_layer(map_name))
+        v.remove_map_from_whitelist(v.parse_layer(map_name))
 
     def remove_maps_from_votemap_whitelist(self, map_names: Iterable[str]):
         v = VoteMap()
-        v.remove_maps_from_whitelist(map_names)
+        v.remove_maps_from_whitelist([v.parse_layer(map) for map in map_names])
 
     def reset_map_votemap_whitelist(self):
         v = VoteMap()
@@ -711,7 +723,7 @@ class RconAPI(Rcon):
 
     def set_votemap_whitelist(self, map_names: Iterable[str]):
         v = VoteMap()
-        v.set_map_whitelist([maps.parse_layer(map) for map in map_names])
+        v.set_map_whitelist([v.parse_layer(map) for map in map_names])
 
     def get_votemap_config(self) -> VoteMapUserConfig:
         v = VoteMap()
@@ -2123,3 +2135,11 @@ class RconAPI(Rcon):
                 "account": account_db.to_dict(),
                 "msg": "Successfully updated account details.",
             }
+
+
+class HLLRconAPI(RconAPI, HLLRcon):
+    pass
+
+
+class HLLVRconAPI(RconAPI, HLLVRcon):
+    pass

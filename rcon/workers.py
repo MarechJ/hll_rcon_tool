@@ -13,6 +13,7 @@ from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
 from rcon.cache_utils import get_redis_client
+from rcon.game.registry import GAME_ID
 from rcon.game_logs import get_historical_logs_records
 from rcon.logs.recorder import LogRecorder
 from rcon.models import Maps, PlayerStats, enter_session
@@ -138,6 +139,7 @@ def get_or_create_map(sess: Session, start: datetime.datetime, end: datetime.dat
         game_layout=game_layout,
         cap_flips=cap_flips,
         match_time=match_time,
+        game=GAME_ID,
     )
     sess.add(map_)
     sess.commit()

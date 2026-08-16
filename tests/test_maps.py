@@ -14,12 +14,75 @@ from rcon.maps import (
     Team,
     _parse_legacy_layer,
     get_opposite_side,
+    get_theoretical_match_time,
     is_server_loading_map,
     numbered_maps,
     parse_layer,
+    parse_map_string,
+    parse_map_string_attacker,
+    _parse_legacy_layer,
 )
 
 logger = getLogger(__name__)
+
+
+@pytest.mark.parametrize(
+    ("game_mode", "server_match_time", "expected"),
+    (
+        (GameMode.OFFENSIVE, 10 * 60, 50 * 60),
+        (GameMode.OFFENSIVE, 30 * 60, 5 * 30 * 60),
+        (GameMode.OFFENSIVE, 60 * 60, 5 * 60 * 60),
+        # The server incorrectly reports Warfare's default when the Offensive
+        # timer has not been customized.
+        (GameMode.OFFENSIVE, 90 * 60, 5 * 30 * 60),
+        (GameMode.WARFARE, 90 * 60, 90 * 60),
+        (GameMode.SKIRMISH, 30 * 60, 30 * 60),
+    ),
+)
+def test_get_theoretical_match_time(game_mode, server_match_time, expected):
+    assert get_theoretical_match_time(game_mode, server_match_time) == expected
+
+
+@pytest.mark.parametrize(
+    ("log_line", "expected"),
+    (
+        (
+            "MATCH START CAM RANH PORT NVA OFFENSIVE",
+            ("CAM RANH PORT", None, GameMode.OFFENSIVE),
+        ),
+        (
+            "MATCH START CAM RANH PORT DAY US OFFENSIVE",
+            ("CAM RANH PORT", Environment.DAY, GameMode.OFFENSIVE),
+        ),
+        (
+            "MATCH ENDED `CAM RANH PORT USA OFFENSIVE` SOUTH (5 - 0) NORTH",
+            ("CAM RANH PORT", None, GameMode.OFFENSIVE),
+        ),
+        (
+            "MATCH START CAM RANH PORT DOMINATION",
+            ("CAM RANH PORT", None, GameMode.DOMINATION),
+        ),
+        (
+            "MATCH START THANH HÒA BRIDGE NVA Offensive",
+            ("THANH HÒA BRIDGE", None, GameMode.OFFENSIVE),
+        ),
+    ),
+)
+def test_parse_map_string_accepts_optional_attacker_before_mode(log_line, expected):
+    assert parse_map_string(log_line) == expected
+
+
+@pytest.mark.parametrize(
+    ("attacker", "expected"),
+    (("NVA", Team.AXIS), ("US", Team.ALLIES), ("USA", Team.ALLIES)),
+)
+def test_parse_map_string_attacker_uses_logical_sides(attacker, expected):
+    assert (
+        parse_map_string_attacker(
+            f"MATCH START THANH HÒA BRIDGE {attacker} OFFENSIVE"
+        )
+        is expected
+    )
 
 MOR_WARFARE_DAY = Layer(
     id="mortain_warfare_day", map=MAPS["mortain"], game_mode=GameMode.WARFARE

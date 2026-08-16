@@ -34,7 +34,7 @@ from rcon.types import (
     PlayerProfileType,
 )
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
-from rcon.utils import strtobool
+from rcon.utils import get_server_number, strtobool
 
 
 class unaccent(ReturnTypeFromArgs):
@@ -112,6 +112,8 @@ def _get_set_player(
     player_id: str,
     player_name: str | None = None,
     timestamp: float | None = None,
+    *,
+    steam_id: str | None = None,
 ):
     player = get_player(sess, player_id)
     if player is None:
@@ -120,6 +122,9 @@ def _get_set_player(
         _save_player_alias(
             sess, player, player_name, timestamp or datetime.datetime.now().timestamp()
         )
+    if steam_id:
+        player.steam_id = steam_id
+        sess.commit()
 
     return player
 
@@ -346,13 +351,22 @@ def _save_player_alias(sess, player: PlayerID, player_name: str, timestamp=None)
     return name
 
 
-def save_player(player_name: str, player_id: str, timestamp: int | None = None) -> None:
+def save_player(
+    player_name: str,
+    player_id: str,
+    timestamp: float | None = None,
+    *,
+    steam_id: str | None = None
+) -> None:
     """Create a PlayerID record if non existent and save the player name alias"""
     with enter_session() as sess:
         player = _save_player_id(sess, player_id)
         _save_player_alias(
             sess, player, player_name, timestamp or datetime.datetime.now().timestamp()
         )
+        if steam_id:
+            player.steam_id = steam_id
+            sess.commit()
 
 
 def save_player_action(
@@ -361,11 +375,17 @@ def save_player_action(
     player_name: str | None,
     by: str,
     reason: str = "",
-    timestamp=None,
+    timestamp: float | None = None,
+    *,
+    steam_id: str | None = None
 ):
     with enter_session() as sess:
         player = _get_set_player(
-            sess, player_name=player_name, player_id=player_id, timestamp=timestamp
+            sess,
+            player_name=player_name,
+            player_id=player_id,
+            timestamp=timestamp,
+            steam_id=steam_id,
         )
         sess.add(
             PlayersAction(
@@ -383,9 +403,18 @@ def safe_save_player_action(
     player_name: str | None,
     by: str,
     reason: str = "",
+    *,
+    steam_id: str | None = None,
 ):
     try:
-        return save_player_action(action_type, player_id, player_name, by, reason)
+        return save_player_action(
+            action_type,
+            player_id,
+            player_name,
+            by,
+            reason,
+            steam_id=steam_id,
+        )
     except Exception:
         logger.exception(
             "Failed to record player action: %s %s", action_type, player_name
@@ -394,12 +423,17 @@ def safe_save_player_action(
 
 
 def save_start_player_session(
-    player_id: str, timestamp, server_name: str | None = None, server_number=None
+    player_id: str,
+    timestamp: float,
+    server_name: str | None = None,
+    server_number: int | None = None
 ):
     config = RconServerSettingsUserConfig.load_from_db()
 
     server_name = server_name or config.short_name
-    server_number = server_number or os.getenv("SERVER_NUMBER")
+
+    if server_number is None:
+        server_number = int(get_server_number())
 
     with enter_session() as sess:
         player = get_player(sess, player_id)
@@ -480,9 +514,16 @@ def add_flag_to_player(
     flag: str,
     comment: str | None = None,
     player_name: str | None = None,
+    *,
+    steam_id: str | None = None,
 ) -> tuple[PlayerProfileType, PlayerFlagType]:
     with enter_session() as sess:
-        player = _get_set_player(sess, player_name=player_name, player_id=player_id)
+        player = _get_set_player(
+            sess,
+            player_name=player_name,
+            player_id=player_id,
+            steam_id=steam_id,
+        )
         exists = (
             sess.query(PlayerFlag)
             .filter(PlayerFlag.player_id_id == player.id, PlayerFlag.flag == flag)
@@ -499,7 +540,9 @@ def add_flag_to_player(
 
 
 def remove_flag(
-    flag_id: int | None = None, player_id: str | None = None, flag: str | None = None
+    flag_id: int | None = None,
+    player_id: str | None = None,
+    flag: str | None = None,
 ) -> tuple[PlayerProfileType, PlayerFlagType]:
     with enter_session() as sess:
         if isinstance(flag_id, int):

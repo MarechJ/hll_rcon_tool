@@ -17,16 +17,11 @@ import redis
 import redis.exceptions
 
 from rcon.cache_utils import get_redis_pool
-from rcon.maps import LAYERS, UNKNOWN_MAP_NAME, Environment, Layer, parse_map_string
+from rcon.game.base import GameProfile
+from rcon.game.registry import game_switch
 from rcon.models import GameLayout
-from rcon.types import (
-    GetDetailedPlayer,
-    MapInfo,
-    PlayerInfoType,
-    PlayerStat,
-    PlayerStatsType,
-    StructuredLogLineWithMetaData,
-)
+from rcon.types import GameEnum, GetDetailedPlayer, MapInfo, PlayerInfoType, PlayerStat, PlayerStatsType, StructuredLogLineWithMetaData
+from rcon.maps import Layer, parse_map_string, parse_map_string_attacker, UNKNOWN_MAP_NAME, Team
 
 logger = logging.getLogger("rcon")
 
@@ -512,6 +507,7 @@ def default_player_info_dict() -> GetDetailedPlayer:
         "level": 0,
         "platform": "",
         "eos_id": "",
+        "steam_id": None,
         "world_position": {
             "x": 0.0,
             "y": 0.0,
@@ -522,7 +518,7 @@ def default_player_info_dict() -> GetDetailedPlayer:
     }
 
 
-def parse_raw_player_info(raw: PlayerInfoType) -> GetDetailedPlayer:
+def parse_raw_player_info(raw: PlayerInfoType, game: GameEnum) -> GetDetailedPlayer:
     """Parse the result of the playerinfo command from the game server"""
 
     data = default_player_info_dict()
@@ -531,19 +527,22 @@ def parse_raw_player_info(raw: PlayerInfoType) -> GetDetailedPlayer:
     data[NAME] = raw[NAME]
     data[PLAYER_ID] = raw["iD"]
 
+    faction_cls = game_switch(game, hllrcon.HLLFaction, hllrcon.HLLVFaction)
+    role_cls = game_switch(game, hllrcon.HLLRole, hllrcon.HLLVRole)
+
     try:
-        faction = hllrcon.data.Faction.by_id(raw["team"])
+        faction = faction_cls.by_id(raw["team"])
     except ValueError:
         logger.exception("Unknown team %s", raw["team"])
         faction = None
     try:
-        role = hllrcon.data.Role.by_id(raw["role"])
+        role = role_cls.by_id(raw["role"])
     except ValueError:
         logger.exception("Unknown role %s", raw["role"])
         role = None
 
     data["faction"] = faction.short_name.lower() if faction else None
-    data["team"] = faction.team.name.lower() if faction else None
+    data["team"] = Team.from_hllrcon(faction.team).value if faction else None
     data["role"] = role.name.lower() if role else None
     data["loadout"] = raw["loadout"].lower()
     data["level"] = int(raw["level"])
@@ -553,7 +552,7 @@ def parse_raw_player_info(raw: PlayerInfoType) -> GetDetailedPlayer:
     data["vehicle_kills"] = int(raw["stats"]["vehicleKills"])
     data["vehicles_destroyed"] = int(raw["stats"]["vehiclesDestroyed"])
 
-    if role is hllrcon.data.Role.COMMANDER:
+    if role is role_cls.COMMANDER:
         data["unit_id"], data["unit_name"] = (-1, "command")
     elif not raw["platoon"]:
         data["unit_id"], data["unit_name"] = (0, "unassigned")
@@ -570,7 +569,16 @@ def parse_raw_player_info(raw: PlayerInfoType) -> GetDetailedPlayer:
 
     data["platform"] = raw["platform"]
     data["clan_tag"] = raw["clanTag"]
-    data["eos_id"] = raw["eosId"]
+    data["eos_id"] = game_switch(
+        game,
+        lambda: raw.get("eosId", ""),
+        lambda: data[PLAYER_ID]
+    )()
+    data["steam_id"] = game_switch(
+        game,
+        lambda: data[PLAYER_ID] if len(data[PLAYER_ID]) == 17 else None,
+        lambda: raw.get("steamId", None)
+    )()
     data["world_position"] = raw["worldPosition"]
 
     return data
@@ -861,17 +869,19 @@ def strtobool(val) -> bool:
         raise ValueError(f"invalid truth value {val}")
     
 
-def guess_map_from_log(log: StructuredLogLineWithMetaData) -> Layer:
-    guessed_map: Layer
+def guess_map_from_log(
+    log: StructuredLogLineWithMetaData, game_profile: GameProfile
+) -> Layer:
+    """Guess a layer from a match log using the selected game's catalog."""
     try:
         name, env, game_mode = parse_map_string(log["raw"])
-        maps = [l for l in LAYERS.values() if l.map.name.lower() == name.lower() and l.game_mode == game_mode]
-        # ignoring attackers for offensives
-        env_to_maps = {l.environment: l for l in maps}
-        if not env:
-            # in most cases when env not provided the env is day
-            env = Environment.DAY
-        guessed_map = env_to_maps.get(env, maps[0])
-    except: # noqa
-        guessed_map = LAYERS[UNKNOWN_MAP_NAME]
-    return guessed_map
+        attacker = parse_map_string_attacker(log["raw"])
+    except (KeyError, TypeError, ValueError):
+        return game_profile.parse_layer_or_unknown(UNKNOWN_MAP_NAME)
+
+    return game_profile.resolve_layer(
+        map_name=name,
+        game_mode=game_mode,
+        environment=env,
+        attacker=attacker,
+    )

@@ -6,9 +6,11 @@ from django.views.decorators.csrf import csrf_exempt
 from django_ratelimit.decorators import ratelimit
 
 from rcon.api_commands import get_rcon_api
-from rcon.maps import parse_layer
+from rcon.game import get_game_profile
+from rcon.maps import Layer
 from rcon.models import Maps, enter_session
 from rcon.player_stats import LiveStats, get_cached_live_game_stats
+from rcon.types import GameEnum
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.utils import MapsHistory
 
@@ -17,6 +19,19 @@ from .decorators import require_http_methods
 from .views import _get_data
 
 logger = logging.getLogger("rconweb")
+
+
+def parse_recorded_layer(record: Maps) -> Layer:
+    """Resolve a stored map name against the game the match was played on.
+
+    Every row carries the game it belongs to, so historical records stay
+    correct even after a server switches games. Resolving against the WWII
+    catalog unconditionally leaves Vietnam matches with a placeholder layer:
+    the ID title-cased into a name ("Wdevc") and default WWII factions.
+    """
+    return get_game_profile(GameEnum.from_int(record.game)).parse_layer(
+        record.map_name
+    )
 
 
 @csrf_exempt
@@ -68,19 +83,20 @@ def get_scoreboard_maps(request):
         res = query.limit(page_size).offset((page - 1) * page_size).all()
 
         maps = []
-        for r in res:
-            r = r.to_dict()
+        for record in res:
+            layer = parse_recorded_layer(record)
+            r = record.to_dict()
             maps.append(
-                {
-                    "map": parse_layer(r["map_name"]),
-                    "id": r["id"],
-                    "creation_time": r["creation_time"],
-                    "start": r["start"],
-                    "end": r["end"],
-                    "server_number": r["server_number"],
-                    "player_stats": r["player_stats"],
-                    "result": r["result"],
-                }
+                dict(
+                    map=layer,
+                    id=r["id"],
+                    creation_time=r["creation_time"],
+                    start=r["start"],
+                    end=r["end"],
+                    server_number=r["server_number"],
+                    player_stats=r["player_stats"],
+                    result=r["result"],
+                )
             )
 
         return api_response(
@@ -112,8 +128,9 @@ def get_map_scoreboard(request):
                 error = "No map for this ID"
                 failed = True
             else:
+                layer = parse_recorded_layer(game)
                 game = game.to_dict(with_stats=True)
-                game["map"] = parse_layer(game["map_name"])
+                game["map"] = layer
 
                 logs = get_rcon_api().get_historical_logs(
                     action="KILL",

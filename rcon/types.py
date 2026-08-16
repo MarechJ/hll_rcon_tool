@@ -1,15 +1,16 @@
 import datetime
 import enum
-from collections.abc import Sequence
+import os
 from dataclasses import dataclass
-from typing import Literal, NotRequired
+from typing import TYPE_CHECKING, List, Literal, Optional, Sequence
 
 # # TODO: On Python 3.11.* specifically, Pydantic requires we use typing_extensions.TypedDict
 # over typing.TypedDict. Once we bump our Python image we can replace this.
 from typing_extensions import TypedDict
 
-from rcon.maps import GameMode, Layer, LayerType, Team
-from rcon.weapons import WeaponType
+if TYPE_CHECKING:
+    from rcon.maps import GameMode, Layer, LayerType, Team
+    from rcon.weapons import WeaponType
 
 
 class WindowsStoreIdActionType(str, enum.Enum):
@@ -166,11 +167,60 @@ class MostRecentEvents:
     last_tk_nemesis_weapon: str | None = None
 
 
-class ServerInfoType(TypedDict):
-    host: str | None
-    port: str | None
-    password: str | None
+class GameEnum(enum.StrEnum):
+    HLL_WW2 = "hll"
+    HLL_VIETNAM = "hllv"
 
+    def to_int(self) -> "GameIntEnum":
+        return GameIntEnum[self.name]
+
+    @classmethod
+    def from_int(cls, value: int) -> "GameEnum":
+        # Look the member up by NAME, mirroring to_int(). Calling cls() would
+        # look it up by VALUE ("hll" / "hllv") and so always raise on a name.
+        return cls[GameIntEnum(value).name]
+
+class GameIntEnum(enum.IntEnum):
+    HLL_WW2 = 1
+    HLL_VIETNAM = 2
+
+
+@dataclass
+class ServerInfo:
+    host: str | None = None
+    port: int | None = None
+    password: str | None = None
+    game: GameEnum | None = None
+
+    def __post_init__(self) -> None:
+        if self.game is None or not self.game:
+            self.game = GameEnum.HLL_WW2
+        elif isinstance(self.game, str):
+            try:
+                self.game = GameEnum(self.game)
+            except ValueError as e:
+                raise ValueError(
+                    f"HLL_GAME must be one of the following values: {', '.join(game.value for game in GameEnum)}"
+                ) from e
+
+        if self.port is None:
+            return
+        if isinstance(self.port, str):
+            try:
+                self.port = int(self.port)
+            except ValueError as e:
+                raise ValueError("HLL_PORT must be an integer") from e
+        elif not isinstance(self.port, int):
+            raise TypeError("ServerInfo.port must be an int or None")
+
+    @classmethod
+    def from_env(cls) -> "ServerInfo":
+        return cls(
+            host=os.getenv("HLL_HOST"),
+            port=os.getenv("HLL_PORT"),
+            password=os.getenv("HLL_PASSWORD"),
+            game=os.getenv("HLL_GAME"),
+        )
 
 # Have to inherit from str to allow for JSON serialization w/ pydantic
 class Roles(str, enum.Enum):
@@ -332,6 +382,7 @@ class PlayerSessionType(TypedDict):
 class BasicPlayerProfileType(TypedDict):
     id: int
     player_id: str
+    steam_id: str | None  # Note: If player_id is the Steam ID, then steam_id might be None.
     created: datetime.datetime
     names: list[PlayerNameType]
     steaminfo: SteamInfoType | None
@@ -420,7 +471,7 @@ class PlayerTeamConfidence(enum.Enum):
 
 class PlayerTeamAssociation(TypedDict):
     # Indicates the side the player played for
-    side: Team
+    side: "Team"
     # Confidence that the value in team is actually correct, based on the impact the player had
     # by comparing kills and deaths from the teams the player played for in the round.
     confidence: PlayerTeamConfidence
@@ -452,8 +503,8 @@ class PlayerStatsType(TypedDict, total=False):
     steaminfo: SteamInfoType | None
     kills: int | None
     kills_streak: int | None
-    kills_by_type: dict[WeaponType, int] | None
-    deaths_by_type: dict[WeaponType, int] | None
+    kills_by_type: dict["WeaponType", int] | None
+    deaths_by_type: dict["WeaponType", int] | None
     deaths: int | None
     deaths_without_kill_streak: int | None
     teamkills: int | None
@@ -718,7 +769,8 @@ class GetDetailedPlayer(TypedDict):
     level: int
     platform: str
     eos_id: str
-    world_position: dict[str, float]
+    steam_id: str | None
+    world_position: "WorldPositionType"
     clan_tag: str
     map_playtime_seconds: int
 
@@ -790,7 +842,7 @@ class GameStateType(TypedDict):
     time_remaining: datetime.timedelta
     current_map: "LayerType"
     next_map: "LayerType"
-    game_mode: GameMode
+    game_mode: "GameMode"
     queue_count: int
     max_queue_count: int
     vip_queue_count: int
@@ -822,7 +874,7 @@ class VoteMapVoter(TypedDict):
     count: int
 
 class VoteMapMapResult(TypedDict):
-    map: Layer
+    map: "Layer"
     voters: list[VoteMapVoter]
     votes_count: int
 
@@ -907,7 +959,7 @@ class InvalidLogTypeError(ValueError):
 
 
 class PublicInfoMapType(TypedDict):
-    map: LayerType
+    map: "LayerType"
     start: float | None
 
 
@@ -935,6 +987,9 @@ class ServerConfigType(TypedDict):
     server_name: str
     supported_platforms: list[str]
 
+class PublicConfig(ServerConfigType):
+    game: str
+
 
 class PublicInfoType(TypedDict):
     """TypedDict for rcon.views.get_public_info"""
@@ -948,7 +1003,7 @@ class PublicInfoType(TypedDict):
     time_remaining: float
     vote_status: VoteMapStatus
     name: PublicInfoNameType
-    config: ServerConfigType
+    config: PublicConfig
     cap_flips: list[MapScore]
     match_time: int
 
@@ -1012,7 +1067,7 @@ class MapSequenceResponse(TypedDict):
 
 
 class GetMapSequence(TypedDict):
-    maps: list[Layer]
+    maps: list["Layer"]
     current_index: int
 
 
@@ -1022,7 +1077,7 @@ class MapRotationResponse(TypedDict):
 
 
 class GetMapRotation(TypedDict):
-    maps: list[Layer]
+    maps: list["Layer"]
     current_index: int
     next_index: int
 
@@ -1061,5 +1116,6 @@ class PlayerInfoType(TypedDict):
     stats: StatsDataType
     platform: str
     clanTag: str
-    eosId: str
+    eosId: NotRequired[str]
+    steamId: NotRequired[str | None]
     worldPosition: WorldPositionType

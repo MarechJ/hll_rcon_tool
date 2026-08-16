@@ -9,6 +9,7 @@ from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from rcon.game.registry import GAME_ID
 from rcon.logs.loop import LogLoop
 from rcon.models import LogLine, PlayerID, enter_session
 from rcon.player_history import _get_set_player
@@ -102,6 +103,7 @@ class LogRecorder:
                     "content": log["message"],
                     "server": self.server_id,
                     "weapon": log["weapon"],
+                    "game": GAME_ID,
                 }
             )
 
