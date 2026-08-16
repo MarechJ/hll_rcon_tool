@@ -3,6 +3,7 @@ import logging
 import time
 
 from rcon.audit import ingame_mods, online_mods
+from rcon.commands import HLLCommandFailedError
 from rcon.perf_statistics import PerformanceStatistics
 from rcon.rcon import Rcon, get_rcon
 from rcon.user_config.auto_kick import AutoVoteKickUserConfig
@@ -63,7 +64,7 @@ def run():
         try:
             toggle_votekick(rcon)
             VoteMap().send_reminder()
-        except CommandFailedError:
+        except HLLCommandFailedError:
             max_fails -= 1
             if max_fails <= 0:
                 logger.exception("Routines 5 failures in a row. Stopping")

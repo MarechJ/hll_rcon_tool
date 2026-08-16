@@ -5,9 +5,9 @@ from collections.abc import Generator, Sequence
 from contextlib import contextmanager, nullcontext
 from datetime import timedelta
 from functools import wraps
-from typing import Any, Literal
+from typing import Any
 
-from rcon.connection import HLLCommandError, HLLConnection, Handle, Response
+from rcon.connection import Handle, HLLCommandError, HLLConnection, Response
 from rcon.game import get_game_profile
 from rcon.maps import GameMode
 from rcon.perf_statistics import PerformanceStatistics
@@ -17,7 +17,8 @@ from rcon.types import (
     MapRotationResponse,
     MapSequenceResponse,
     PlayerInfoType,
-    PublicConfig, ServerInfo,
+    PublicConfig,
+    ServerInfo,
     SlotsType,
     VipId,
 )
@@ -58,7 +59,6 @@ class HLLCommandFailedError(Exception):
     """Raised when a command fails"""
 
 
-
 class HLLBrokenConnectionError(Exception):
     """Raised when the connection has broken and needs to be re-established"""
 
@@ -93,10 +93,7 @@ class ServerCtl:
             conn = self.conns.get(thread_id)
             if conn is None:
                 conn = HLLConnection()
-                try:
-                    self._connect(conn)
-                except Exception:
-                    raise
+                self._connect(conn)
                 self.conns[thread_id] = conn
                 self.perf_stats.increment("connection_established")
             else:
@@ -158,11 +155,9 @@ class ServerCtl:
 
     def _connect(self, conn: HLLConnection) -> None:
         try:
-            conn.connect(
-                self.config.host, int(self.config.port), self.config.password
-            )
-        except (TypeError, ValueError) as e:
-            logger.exception("Invalid connection information", e)
+            conn.connect(self.config.host, int(self.config.port), self.config.password)
+        except (TypeError, ValueError):
+            logger.exception("Invalid connection information")
             raise
 
     def send(
@@ -181,15 +176,15 @@ class ServerCtl:
             connection = nullcontext(enter_result=conn)
 
         if log_info:
-            logger.info("Sending command:", command, content)
+            logger.info("Sending command %s: %s", command, content)
         else:
-            logger.debug("Sending command:", command, content)
+            logger.debug("Sending command %s: %s", command, content)
 
         self.perf_stats.increment("send")
         self.perf_stats.increment("send_size", len(content))
         try:
-            with connection as conn:
-                return conn.send(command, version, content)
+            with connection as c:
+                return c.send(command, version, content)
         except (
             RuntimeError,
             UnicodeDecodeError,
@@ -202,8 +197,8 @@ class ServerCtl:
             )
             time.sleep(1)
 
-            with connection as conn:
-                return conn.send(command, version, content)
+            with connection as c:
+                return c.send(command, version, content)
 
     def receive(
         self,
@@ -251,9 +246,8 @@ class ServerCtl:
             return response if response.is_successful() else None
 
         except (HLLCommandFailedError, UnicodeDecodeError, OSError) as e:
-            if isinstance(e, HLLCommandError):
-                if ignore_internal_errors:
-                    return None
+            if isinstance(e, HLLCommandError) and ignore_internal_errors:
+                return None
 
             if not self.auto_retry:
                 raise
@@ -711,10 +705,8 @@ class ServerCtl:
         )
 
         try:
-            next_map = self.game_profile.parse_layer_or_unknown(
-                self._get_next_map_id()
-            )
-        except Exception:
+            next_map = self.game_profile.parse_layer_or_unknown(self._get_next_map_id())
+        except Exception:  # noqa
             next_map = self.game_profile.parse_layer_or_unknown("unknown")
 
         return GameStateType(
@@ -743,38 +735,41 @@ class ServerCtl:
         )
 
     def get_game_mode(self) -> str:
-        return self.exchange("GetServerInformation", 2, {"Name": "session", "Value": ""}).content_dict["gameMode"]
-
+        return self.exchange(
+            "GetServerInformation", 2, {"Name": "session", "Value": ""}
+        ).content_dict["gameMode"]
 
     def set_match_timer(self, game_mode: str | GameMode, length: int):
         mode = self.game_profile.parse_game_mode(game_mode)
-        self.exchange("SetMatchTimer", 2, {"GameMode": mode.value, "MatchLength": length})
-
+        self.exchange(
+            "SetMatchTimer", 2, {"GameMode": mode.value, "MatchLength": length}
+        )
 
     def remove_match_timer(self, game_mode: str | GameMode):
         mode = self.game_profile.parse_game_mode(game_mode)
         self.exchange("RemoveMatchTimer", 2, {"GameMode": mode.value})
 
-
     def set_warmup_timer(self, game_mode: str | GameMode, length: int):
         mode = self.game_profile.parse_game_mode(game_mode)
-        self.exchange("SetWarmupTimer", 2, {"GameMode": mode.value, "WarmupLength": length})
-
+        self.exchange(
+            "SetWarmupTimer", 2, {"GameMode": mode.value, "WarmupLength": length}
+        )
 
     def remove_warmup_timer(self, game_mode: str | GameMode):
         mode = self.game_profile.parse_game_mode(game_mode)
         self.exchange("RemoveWarmupTimer", 2, {"GameMode": mode.value})
 
-
     def get_server_config(self) -> PublicConfig:
-        cfg = self.exchange("GetServerInformation", 2, {"Name": "serverconfig", "Value": ""}).content_dict
+        cfg = self.exchange(
+            "GetServerInformation", 2, {"Name": "serverconfig", "Value": ""}
+        ).content_dict
         return {
             "build_number": cfg["buildNumber"],
             "build_revision": cfg["buildRevision"],
             "password_protected": cfg["passwordProtected"],
             "server_name": cfg["serverName"],
             "supported_platforms": cfg["supportedPlatforms"],
-            "game": self.config.game
+            "game": self.config.game,
         }
 
     def _get_next_map_id(self) -> str:
@@ -825,12 +820,9 @@ class HLLVServerCtl(ServerCtl):
     """Hell Let Loose: Vietnam controller extension point."""
 
 
-
 if __name__ == "__main__":
     import rcon.settings
 
     server_info = rcon.settings.get_server_info()
-    controller_type = (
-        HLLServerCtl if server_info.game.value == "hll" else HLLVServerCtl
-    )
+    controller_type = HLLServerCtl if server_info.game.value == "hll" else HLLVServerCtl
     ctl = controller_type(server_info, PerformanceStatistics("rcon"))

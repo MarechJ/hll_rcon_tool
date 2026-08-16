@@ -110,9 +110,9 @@ class RedisCached:
         func = self.function
         try:
             val = self.red.get(key)
-        except redis.exceptions.RedisError as e:
+        except redis.exceptions.RedisError:
             cache_available = False
-            logger.exception("Unable to use cache: %s", e)
+            logger.exception("Unable to use cache")
             if self.function_cache_unavailable:
                 func = self.function_cache_unavailable
                 logger.error("Using fallback function due to cache failure: %s", func)

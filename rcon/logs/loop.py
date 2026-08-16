@@ -244,7 +244,7 @@ class LogLoop:
 
     def run(self, loop_frequency_secs=2, cleanup_frequency_minutes=10):
         self.GET_LOGS_SINCE_MIN = 180
-        last_cleanup_time = datetime.datetime.now()
+        last_cleanup_time = datetime.datetime.now(tz=datetime.UTC)
         prev_map_time_elapsed = 0
 
         while True:
@@ -569,10 +569,10 @@ class LogLoop:
         if not log or not map or not map["start"]:
             return False
         log_time = log.get("event_time")
-        map_start = datetime.datetime.fromtimestamp(map["start"])
+        map_start = datetime.datetime.fromtimestamp(map["start"], tz=datetime.UTC)
         if map["end"] is None:
             return log_time >= map_start
-        map_end = datetime.datetime.fromtimestamp(map["end"])
+        map_end = datetime.datetime.fromtimestamp(map["end"], tz=datetime.UTC)
         return map_start <= log_time and log_time <= map_end
         
     def _get_name_to_id(self, map: MapInfo) -> dict[str, str]:
@@ -640,7 +640,7 @@ class LogLoop:
         return log
 
     def cleanup(self, last_cleanup_time: datetime.datetime, cleanup_frequency_minutes: int) -> datetime.datetime:
-        now = datetime.datetime.now()
+        now = datetime.datetime.now(tz=datetime.UTC)
         if (now - last_cleanup_time).total_seconds() < cleanup_frequency_minutes * 60:
             return last_cleanup_time
 
@@ -651,8 +651,8 @@ class LogLoop:
             except ValueError:
                 logger.exception("Invalid key %s", k)
                 continue
-            t = datetime.datetime.fromtimestamp(int(ts) / 1000)
-            if (datetime.datetime.now() - t).total_seconds() > self.CLEANUP_MIN * 60:
+            t = datetime.datetime.fromtimestamp(int(ts) / 1000, tz=datetime.UTC)
+            if (datetime.datetime.now(tz=datetime.UTC) - t).total_seconds() > self.CLEANUP_MIN * 60:
                 logger.debug("Older than %d min, removing: %s", self.CLEANUP_MIN, k)
                 self.red.srem(self.duplicate_guard_key, k)
         logger.info("Cleanup done")

@@ -56,5 +56,5 @@ dev = [
     "cachetools==7.1.1",
     "pytest==9.0.3",
     "ruff==0.15.18",
-    "fakeredis==2.37.0"
+    "fakeredis==2.37.0",
 ]

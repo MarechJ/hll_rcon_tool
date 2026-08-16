@@ -1,22 +1,21 @@
-from types import SimpleNamespace
 import unicodedata
+from types import SimpleNamespace
 from unittest.mock import Mock
 
+import pytest
 from hllrcon import HLLVLayer
 
-import pytest
-
-from rcon.commands import HLLServerCtl, HLLVServerCtl
 from rcon.api_commands import (
     HLLRconAPI,
     HLLVRconAPI,
     RconAPI,
     create_rcon_api,
 )
+from rcon.commands import HLLServerCtl, HLLVServerCtl
 from rcon.game import get_game_profile
 from rcon.game.hll.profile import HLL_PROFILE
 from rcon.game.hllv.profile import HLLV_PROFILE
-from rcon.maps import GameMode, Team, UNKNOWN_MAP_NAME, parse_map_string
+from rcon.maps import UNKNOWN_MAP_NAME, GameMode, Team, parse_map_string
 from rcon.rcon import HLLRcon, HLLVRcon, Rcon, create_rcon
 from rcon.types import GameEnum, GameIntEnum, ServerInfo
 from rcon.utils import guess_map_from_log

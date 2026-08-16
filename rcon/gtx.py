@@ -7,7 +7,6 @@ from io import BytesIO, StringIO
 import paramiko
 from ftpretty import ftpretty
 
-from rcon.cache_utils import invalidates
 from rcon.rcon import Rcon, invalidates
 from rcon.user_config.gtx_server_name import GtxServerNameChangeUserConfig
 
@@ -64,7 +63,7 @@ class GTXFtp:
 
         try:
             self.adapter = SFTPAdapter(ip, port, username, password)
-        except:
+        except: # noqa
             logger.info("Unable to use SFTP, falling back to FTP")
             self.adapter = FTPAdapter(ip, port, username, password)
         self.base_path = self.adapter.get_base_path()

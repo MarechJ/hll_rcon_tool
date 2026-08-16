@@ -51,7 +51,7 @@ class LogStream:
         ] = []
 
         for log in reversed(logs):
-            timestamp = datetime.datetime.fromtimestamp(log["timestamp_ms"] / 1000)
+            timestamp = datetime.datetime.fromtimestamp(log["timestamp_ms"] / 1000, tz=datetime.UTC)
             buckets[timestamp].append(log)
 
         for timestamp in buckets.keys():

@@ -409,7 +409,7 @@ class VoteMap:
     ):
 
         if map not in self.get_selection():
-            raise Exception(
+            raise ValueError(
                 f"Map {map.pretty_name} is not in the selection. Vote could not be counted."
             )
 

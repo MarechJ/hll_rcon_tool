@@ -1,8 +1,12 @@
 import re
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from enum import Enum
 from logging import getLogger
-from typing import TYPE_CHECKING, Any, Iterable, Literal, Mapping, Optional, Sequence, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Literal,
+)
 
 import hllrcon
 import pydantic
@@ -179,9 +183,9 @@ class FactionName(Enum):
     US = "us"
     GER = "ger"
     RUS = "rus"
-    SOV = "rus"
+    SOV = "rus" # noqa: PIE796 Supposed to be the same
     CW = "cw"
-    GB = "cw"
+    GB = "cw" # noqa: PIE796 Supposed to be the same
     B8A = "b8a"
     DAK = "dak"
     CAN = "can"
@@ -1685,7 +1689,7 @@ def parse_layer(layer_name: str | Layer) -> Layer:
 def _parse_legacy_layer(layer_name: str):
     layer_match = RE_LEGACY_LAYER_NAME.match(layer_name)
     if not layer_match:
-        raise ValueError("Unparsable layer '%s'" % layer_name)
+        raise ValueError(f"Unparsable layer '{layer_name}'")
 
     layer_data = layer_match.groupdict()
 

@@ -123,12 +123,12 @@ class LogRecorder:
             logger.exception("Unable to record log batch")
 
     def run(self, run_immediately=False, one_off=False):
-        last_run = datetime.datetime.now()
+        last_run = datetime.datetime.now(tz=datetime.UTC)
         if run_immediately or one_off:
             last_run = last_run - datetime.timedelta(seconds=self.dump_frequency_seconds + 1)
 
         while True:
-            now = datetime.datetime.now()
+            now = datetime.datetime.now(tz=datetime.UTC)
             if not (now - last_run).total_seconds() > self.dump_frequency_seconds:
                 logger.debug("Not due for recording yet")
                 time.sleep(5)
@@ -139,6 +139,6 @@ class LogRecorder:
 
                 self._save_logs(sess, to_store)
 
-                last_run = datetime.datetime.now()
+                last_run = datetime.datetime.now(tz=datetime.UTC)
             if one_off:
                 break

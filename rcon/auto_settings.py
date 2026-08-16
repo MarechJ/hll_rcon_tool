@@ -1,4 +1,5 @@
 import logging
+import sys
 import time
 
 import pytz
@@ -54,7 +55,7 @@ def run():
                         c_params,
                     )
 
-            if all([c.is_valid(rcon=rcon) for c in conditions]):
+            if all(c.is_valid(rcon=rcon) for c in conditions):
                 if always_apply_defaults:
                     # Overwrites the saved commands in case they're duplicate
                     do_run_commands(rcon, {**saved_commands, **commands})
@@ -86,6 +87,6 @@ def run():
 if __name__ == "__main__":
     try:
         run()
-    except:
+    except: # noqa
         logger.exception("Unable to run")
-        exit(1)
+        sys.exit(1)

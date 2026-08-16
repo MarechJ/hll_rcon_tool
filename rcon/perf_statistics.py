@@ -37,8 +37,6 @@ class PerformanceStatistics:
         a = p.execute()
 
         res = {}
-        idx = 0
-        for k in keys:
+        for idx, k in enumerate(keys):
             res[k.decode().replace(self.namespace + "::", "")] = int(a[idx])
-            idx += 1
         return res

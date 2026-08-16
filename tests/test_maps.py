@@ -20,7 +20,6 @@ from rcon.maps import (
     parse_layer,
     parse_map_string,
     parse_map_string_attacker,
-    _parse_legacy_layer,
 )
 
 logger = getLogger(__name__)

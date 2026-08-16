@@ -39,11 +39,6 @@ from sqlalchemy.schema import UniqueConstraint
 from rcon.maps import Team
 from rcon.types import (
     AuditLogType,
-    GameIntEnum,
-    GetDetailedPlayer,
-    MapResult,
-    MapScore,
-    MessageTemplateType,
     BlacklistRecordType,
     BlacklistRecordWithBlacklistType,
     BlacklistRecordWithPlayerType,
@@ -51,6 +46,7 @@ from rcon.types import (
     BlacklistType,
     BlacklistWithRecordsType,
     DBLogLineType,
+    GameIntEnum,
     GameLayout,
     GetDetailedPlayer,
     MapScore,
@@ -142,12 +138,16 @@ def get_engine():
 
 class Base(DeclarativeBase):
     # TODO: Replace dict[str, Any] w/ actual types
-    type_annotation_map = {
-        dict[str, Any]: JSONB,
-        dict[str, int]: JSONB,
-        SteamPlayerSummaryType: JSONB,
-        SteamBansType: JSONB,
-    }
+    type_annotation_map: dict[Any, Any]
+
+    def __init__(self, **kw: Any):
+        self.type_annotation_map = {
+            dict[str, Any]: JSONB,
+            dict[str, int]: JSONB,
+            SteamPlayerSummaryType: JSONB,
+            SteamBansType: JSONB,
+        }
+        super().__init__(**kw)
 
 
 class PlayerID(Base):
@@ -227,7 +227,7 @@ class PlayerID(Base):
 
         for i, s in enumerate(self.sessions):
             if not s.end and s.start and i == 0:
-                total += (datetime.now() - s.start).total_seconds()
+                total += (datetime.now(tz=UTC) - s.start).total_seconds()
             elif s.end and s.start:
                 total += (s.end - s.start).total_seconds()
 
@@ -238,7 +238,7 @@ class PlayerID(Base):
             if self.sessions[0].end:
                 return 0
             start = self.sessions[0].start or self.sessions[0].created
-            return int((datetime.now() - start).total_seconds())
+            return int((datetime.now(tz=UTC) - start).total_seconds())
         return 0
 
     def to_dict(self, limit_sessions=5) -> PlayerProfileType:
@@ -311,19 +311,21 @@ class PlayerSoldier(Base):
 
     @classmethod
     def update(cls, player: GetDetailedPlayer):
-        logger.debug("Updating soldier %s" % player["name"])
+        logger.debug(f"Updating soldier {player["name"]}")
         with enter_session() as sess:
             # Retrieve the PlayerID instance to get its ID for foreign key reference
             player_id_stmt = select(PlayerID).where(PlayerID.player_id == player["player_id"])
             player_id_record = sess.execute(player_id_stmt).scalars().one_or_none()
-            
+
             if not player_id_record:
                 # Handle case where PlayerID does not exist
-                logger.exception("PlayerID not found for player_id: %s" % player['player_id'])
+                logger.exception(
+                    f"PlayerID not found for player_id: {player['player_id']}"
+                )
                 return
-            
+
             player_id_fk = player_id_record.id
-            
+
             # Query for existing PlayerSoldier
             profile_stmt = (
                 select(cls)
@@ -334,15 +336,15 @@ class PlayerSoldier(Base):
                 # Create new instance
                 profile = cls(player_id_id=player_id_fk)
                 sess.add(profile)
-            
+
             # Proceed with updates
             profile.eos_id = player["eos_id"]
             profile.name = player["name"]
             profile.platform = player["platform"]
             profile.clan_tag = player["clan_tag"]
-            
+
             profile.level = max(profile.level, player["level"])
-            
+
             sess.commit()
 
     @classmethod
@@ -367,7 +369,7 @@ class PlayerSoldier(Base):
         ).scalars().one_or_none()
         if not player_db:
             return None, False
-        
+
         # Look up or create PlayerSoldier
         soldier_db = sess.execute(
             select(cls).where(cls.player_id_id == player_db.id)
@@ -375,7 +377,7 @@ class PlayerSoldier(Base):
         if not soldier_db:
             soldier_db = cls(player_id_id=player_db.id)
             sess.add(soldier_db)
-        
+
         # Update only None fields
         changed = False
         if soldier_db.eos_id is None and eos_id is not None:
@@ -393,10 +395,10 @@ class PlayerSoldier(Base):
         if soldier_db.clan_tag is None and clan_tag is not None:
             soldier_db.clan_tag = clan_tag
             changed = True
-        
+
         if changed:
             sess.commit()
-        
+
         return soldier_db, changed
 
     def to_dict(self) -> PlayerSoldierType:
@@ -727,7 +729,7 @@ class LogLine(Base):
         if self.type and self.type.lower() in ("kill", "team kill"):
             try:
                 return self.raw.rsplit(" with ", 1)[-1]
-            except:
+            except: # noqa
                 logger.exception("Unable to extract weapon")
 
         return None
@@ -1064,7 +1066,7 @@ class PlayerAtCount(Base):
     def to_dict(self) -> PlayerAtCountType:
         try:
             name = self.player.names[0].name
-        except:
+        except: # noqa
             logger.exception("Unable to load name for %s", self.player.player_id)
             name = ""
 
@@ -1299,8 +1301,8 @@ def enter_session() -> Generator[Session, None, None]:
         yield sess
         # Only commit if there were no exceptions, otherwise rollback
         sess.commit()
-    except (ProgrammingError, InvalidRequestError) as e:
-        logger.exception(e)
+    except (ProgrammingError, InvalidRequestError):
+        logger.exception("SQL Error")
         sess.rollback()
     finally:
         sess.close()

@@ -35,7 +35,7 @@ def heartbeat(username, player_id, timeout=120):
     return red.setex(
         _heartbeat_key(username),
         timeout,
-        json.dumps(dict(username=username, player_id=player_id)),
+        json.dumps({"username": username, "player_id": player_id}),
     )
 
 
@@ -68,7 +68,7 @@ def ingame_mods(rcon=None) -> list[AdminUserType]:
 
     rcon = rcon or get_rcon()
     players = rcon.get_players()
-    mods_ids = set(v.decode() for v in mods.values())
+    mods_ids = {v.decode() for v in mods.values()}
     ig_mods: list[AdminUserType] = []
     for player in players:
         if player[PLAYER_ID] in mods_ids:

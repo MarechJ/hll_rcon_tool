@@ -87,16 +87,16 @@ def get_scoreboard_maps(request):
             layer = parse_recorded_layer(record)
             r = record.to_dict()
             maps.append(
-                dict(
-                    map=layer,
-                    id=r["id"],
-                    creation_time=r["creation_time"],
-                    start=r["start"],
-                    end=r["end"],
-                    server_number=r["server_number"],
-                    player_stats=r["player_stats"],
-                    result=r["result"],
-                )
+                {
+                    "map": layer,
+                    "id": r["id"],
+                    "creation_time": r["creation_time"],
+                    "start": r["start"],
+                    "end": r["end"],
+                    "server_number": r["server_number"],
+                    "player_stats": r["player_stats"],
+                    "result": r["result"],
+                }
             )
 
         return api_response(

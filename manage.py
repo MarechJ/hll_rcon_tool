@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import logging
 import os
+import sys
 
 
 class ConfigurationError(Exception):
@@ -46,12 +47,12 @@ if __name__ == "__main__":
         cli()
     except SystemExit as e:
         logger.info("Program requested exit %s", repr(e))
-        exit(e.args[0])
+        sys.exit(e.args[0])
     except ConfigurationError as e:
         print(repr(e))
         logger.error("MISSING Configuration: %s", e.args)
-        exit(1)
+        sys.exit(1)
     except Exception as e:
         print(repr(e))
         logger.exception("Unexpected error.")
-        exit(1)
+        sys.exit(1)

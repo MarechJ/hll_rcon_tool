@@ -4,9 +4,20 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fakeredis import FakeStrictRedis
 
-from rcon import maps
 from rcon.game.hll.profile import HLL_PROFILE
 from rcon.game.hllv.profile import HLLV_PROFILE
+from rcon.maps import (
+    LAYERS,
+    MAPS,
+    UNKNOWN_MAP_NAME,
+    Environment,
+    GameMode,
+    Layer,
+    Team,
+    parse_layer,
+)
+from rcon.models import PlayerVIPType
+from rcon.player_history import PlayerProfileType
 from rcon.user_config.vote_map import DefaultMethods
 from rcon.vote_map import (
     InvalidVoteError,
@@ -119,7 +130,7 @@ def mock_rcon():
     # Mock remove_map_from_rotation
     def remove_map_from_rotation(map_id):
         nonlocal rotation
-        map = maps.parse_layer(map_id)
+        map = parse_layer(map_id)
         rotation = [m for m in rotation if m != map]
         return rotation
     
@@ -128,7 +139,7 @@ def mock_rcon():
     # Mock add_map_to_rotation
     def add_map_to_rotation(map_id):
         nonlocal rotation
-        map = maps.parse_layer(map_id)
+        map = parse_layer(map_id)
         if map not in rotation:
             rotation.append(map)
         return rotation
@@ -164,7 +175,7 @@ def test_hllv_layers_are_rehydrated_with_the_active_game_profile(
     assert set(votemap.get_map_whitelist()) == set(hllv_layers)
     assert votemap.get_selection() == [hllv_layers[0]]
     assert all(
-        layer.map.id != maps.UNKNOWN_MAP_NAME
+        layer.map.id != UNKNOWN_MAP_NAME
         for layer in votemap.get_map_whitelist()
     )
     assert all(layer.pretty_name != layer.id for layer in votemap.get_map_whitelist())

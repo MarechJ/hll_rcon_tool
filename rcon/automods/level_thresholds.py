@@ -5,7 +5,7 @@ Enforces the min/max global and per-role levels requirements
 import logging
 import pickle
 from contextlib import contextmanager
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Literal
 
 import redis
@@ -71,43 +71,41 @@ class LevelThresholdsAutomod:
             }
 
             # Populate min_level message if configured
-            if min_level > 0:
+            if min_level > 0 and (
                 # only set info message if player level is impacted by the threshold
-                if (
-                    not self.config.only_announce_impacted_players
-                    or detailed_player_info is None
-                    or detailed_player_info["level"] < min_level
-                ):
-                    message = self.config.min_level_message
-                    try:
-                        message = message.format(level=min_level) + "\n"
-                    except KeyError:
-                        self.logger.warning(
-                            "The automod message (%s) contains an invalid key", message
-                        )
-                    data["min_level_msg"] = message
+                not self.config.only_announce_impacted_players
+                or detailed_player_info is None
+                or detailed_player_info["level"] < min_level
+            ):
+                message = self.config.min_level_message
+                try:
+                    message = message.format(level=min_level) + "\n"
+                except KeyError:
+                    self.logger.warning(
+                        "The automod message (%s) contains an invalid key", message
+                    )
+                data["min_level_msg"] = message
 
             # Populate max_level message if configured
-            if max_level > 0:
+            if max_level > 0 and (
                 # only set info message if player level is impacted by the threshold
-                if (
-                    not self.config.only_announce_impacted_players
-                    or detailed_player_info is None
-                    or detailed_player_info["level"] > max_level
-                ):
-                    message = self.config.max_level_message
-                    try:
-                        message = message.format(level=max_level) + "\n"
-                    except KeyError:
-                        self.logger.warning(
-                            "The automod message (%s) contains an invalid key", message
-                        )
-                    data["max_level_msg"] = message
+                not self.config.only_announce_impacted_players
+                or detailed_player_info is None
+                or detailed_player_info["level"] > max_level
+            ):
+                message = self.config.max_level_message
+                try:
+                    message = message.format(level=max_level) + "\n"
+                except KeyError:
+                    self.logger.warning(
+                        "The automod message (%s) contains an invalid key", message
+                    )
+                data["max_level_msg"] = message
 
             # Populate level thresholds by role message if configured
             if self.config.level_thresholds:
                 level_thresholds_msg = ""
-                for role, role_config in self.config.level_thresholds.items():
+                for role_config in self.config.level_thresholds.values():
                     # only set info message if player level is impacted by the threshold
                     if (
                         not self.config.only_announce_impacted_players
@@ -502,7 +500,7 @@ class LevelThresholdsAutomod:
                 len(warnings),
                 num_or_inf(self.config.number_of_warnings),
             )
-            warnings.append(datetime.now())
+            warnings.append(datetime.now(tz=UTC))
             return PunishStepState.APPLY
 
         self.logger.info(
@@ -573,7 +571,7 @@ class LevelThresholdsAutomod:
                 len(punishes),
                 num_or_inf(self.config.number_of_punishments),
             )
-            punishes.append(datetime.now())
+            punishes.append(datetime.now(tz=UTC))
             return PunishStepState.APPLY
 
         self.logger.info(
@@ -632,7 +630,7 @@ class LevelThresholdsAutomod:
             return PunishStepState.DISABLED
 
         # kick_grace_period_seconds
-        if datetime.now() - last_time < timedelta(
+        if datetime.now(tz=UTC) - last_time < timedelta(
             seconds=self.config.kick_grace_period_seconds
         ):
             return PunishStepState.WAIT

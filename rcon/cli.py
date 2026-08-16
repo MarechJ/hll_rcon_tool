@@ -2,7 +2,7 @@ import inspect
 import json
 import logging
 import sys
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import click
@@ -51,7 +51,7 @@ def run_stats_loop():
         live_stats_loop()
     except KeyboardInterrupt:
         sys.exit(0)
-    except:
+    except: # noqa
         logger.exception("Stats loop stopped")
         sys.exit(1)
 
@@ -60,8 +60,8 @@ def run_stats_loop():
 def run_enrich_db_users():
     try:
         enrich_db_users()
-    except Exception as e:
-        logger.exception("DB users enrichment stopped: %s", e)
+    except Exception:
+        logger.exception("DB users enrichment stopped: %s")
         sys.exit(1)
 
 
@@ -72,7 +72,7 @@ def run_log_loop():
     with invalidates(load_generic_hooks, get_handler):
         try:
             LogLoop().run()
-        except:
+        except: # noqa
             logger.exception("Chat recorder stopped")
             sys.exit(1)
 
@@ -85,7 +85,7 @@ def run_log_stream():
         stream.clear()
         if config.enabled:
             stream.run()
-    except:
+    except: # noqa
         logger.exception("Log stream stopped")
         sys.exit(1)
 
@@ -114,7 +114,7 @@ def run_expiring_vips():
 def run_seed_vip():
     try:
         rcon.seed_vip.service.run()
-    except:
+    except: # noqa
         logger.exception("seed VIP stopped")
         sys.exit(1)
 
@@ -123,7 +123,7 @@ def run_seed_vip():
 def watch_killrate():
     try:
         rcon.watch_killrate.run()
-    except:
+    except: # noqa
         logger.exception("Watch_KillRate stopped")
         sys.exit(1)
 
@@ -144,7 +144,7 @@ def run_blacklists():
 @click.option("-n", "--now", is_flag=True)
 def run_log_recorder(interval, frequency_min, now):
     if frequency_min and interval:
-        raise Exception("Cannot have frequency-min and interval at the same time")
+        raise Exception("Cannot have frequency-min and interval at the same time") # noqa
     if frequency_min:
         interval = frequency_min * 60
     LogRecorder(interval).run(run_immediately=now)
@@ -231,9 +231,9 @@ def process_games(start_day_offset, end_day_offset=0, force=False):
     from rcon.models import Maps, enter_session
     from rcon.workers import record_stats_from_map
 
-    start_date = datetime.now() - timedelta(days=start_day_offset)
+    start_date = datetime.now(tz=UTC) - timedelta(days=start_day_offset)
     start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
-    end_date = datetime.now() - timedelta(days=end_day_offset)
+    end_date = datetime.now(tz=UTC) - timedelta(days=end_day_offset)
     end_date = end_date.replace(hour=23, minute=59, second=59, microsecond=999)
 
     print("Reprocessing date range: ", start_date, end_date)
@@ -243,11 +243,11 @@ def process_games(start_day_offset, end_day_offset=0, force=False):
             .filter(and_(Maps.start > start_date, Maps.start < end_date))
             .all()
         )
-        print("Found %s games to reprocess" % len(all_maps))
+        print(f"Found {len(all_maps)} games to reprocess")
         for map_ in all_maps:
             print("Reprocessing map: ", map_.to_dict())
             try:
-                # TODO we could attempt to find the temporary cached stats in redis for the match 
+                # TODO we could attempt to find the temporary cached stats in redis for the match
                 record_stats_from_map(sess, map_, None, force=force)
                 sess.commit()
                 print("Done")
@@ -265,13 +265,7 @@ def _models_to_exclude():
     """Return model classes that do not map directly to a user config"""
     # Any sort of parent class that doesn't directly map to a user config
     # should be excluded
-    return set(
-        [
-            BaseWebhookUserConfig.__name__,
-            BaseMentionWebhookUserConfig.__name__,
-            BaseUserConfig.__name__,
-        ]
-    )
+    return {BaseWebhookUserConfig.__name__, BaseMentionWebhookUserConfig.__name__, BaseUserConfig.__name__}
 
 
 @cli.command(name="get_user_settings")
@@ -312,7 +306,6 @@ def get_user_setting(server: int, output: click.Path, output_server=None):
             dump[output_key] = config.model_dump()
 
     # Auto settings are unique right now
-    auto_settings_key = f"{server}_auto_settings"
     auto_settings_output_key = f"{output_server}_auto_settings"
     auto_settings_model = rcon.user_config.utils.get_user_config(
         f"{server}_auto_settings"
@@ -364,7 +357,7 @@ def set_user_settings(server: int, input: click.Path, dry_run=True):
             logger.error(e)
             sys.exit(-1)
 
-    for key in user_settings.keys():
+    for key in user_settings:
         if key not in config_models and key != auto_settings_key:
             logger.error(f"{key} not an allowed key, no changes made.")
             sys.exit(-1)

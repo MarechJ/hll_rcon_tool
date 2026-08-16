@@ -71,7 +71,7 @@ class BaseChatCommand(BaseModel):
 
     @cached_property
     def help_words(self) -> set[str]:
-        return set(f"?{word[1:]}" for word in self.words)
+        return {f"?{word[1:]}" for word in self.words}
 
     @field_validator("words")
     @classmethod

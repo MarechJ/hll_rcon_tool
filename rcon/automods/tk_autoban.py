@@ -26,7 +26,7 @@ def is_player_kill(player, log):
 @on_tk
 def auto_ban_if_tks_right_after_connection(
     rcon: Rcon,
-    log: StructuredLogLineWithMetaData,
+    trigger: StructuredLogLineWithMetaData,
     config: BanTeamKillOnConnectUserConfig | None = None,
 ) -> None | BlacklistRecordWithBlacklistType:
     if config is None:
@@ -36,17 +36,17 @@ def auto_ban_if_tks_right_after_connection(
 
     result: None | BlacklistRecordWithBlacklistType = None
 
-    player_name = log["player_name_1"]
-    player_id = log["player_id_1"]
+    player_name = trigger["player_name_1"]
+    player_id = trigger["player_id_1"]
     player_profile = None
     vips = {}
     try:
         player_profile = get_player_profile(player_id, 0)
-    except:
+    except: # noqa
         logger.exception("Unable to get player profile")
     try:
-        vips = set(v["player_id"] for v in rcon.get_vip_ids())
-    except:
+        vips = {v["player_id"] for v in rcon.get_vip_ids()}
+    except: # noqa
         logger.exception("Unable to get VIPS")
 
     last_logs = get_recent_logs(
@@ -110,8 +110,8 @@ def auto_ban_if_tks_right_after_connection(
             if log["timestamp_ms"] - last_connect_time > max_time_minute * 60 * 1000:
                 logger.debug(
                     "Not counting TK as offense due to elapsed time exclusion, last connection time %s, tk time %s",
-                    datetime.datetime.fromtimestamp(last_connect_time / 1000),
-                    datetime.datetime.fromtimestamp(log["timestamp_ms"] / 1000),
+                    datetime.datetime.fromtimestamp(last_connect_time / 1000, tz=datetime.UTC),
+                    datetime.datetime.fromtimestamp(log["timestamp_ms"] / 1000, tz=datetime.UTC),
                 )
                 continue
 
@@ -122,7 +122,7 @@ def auto_ban_if_tks_right_after_connection(
                 )
                 if config.ban_duration.total_seconds > 0:
                     expires_at = (
-                        datetime.datetime.now() + config.ban_duration.as_timedelta
+                            datetime.datetime.now(tz=datetime.UTC) + config.ban_duration.as_timedelta
                     )
                 else:
                     expires_at = None

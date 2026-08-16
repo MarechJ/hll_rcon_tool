@@ -165,7 +165,7 @@ def send_to_discord_audit(
                     server_number=int(get_server_number()),
                 )
             )
-    except:
+    except: # noqa
         logger.exception("Can't send audit log")
         if not silent:
             raise

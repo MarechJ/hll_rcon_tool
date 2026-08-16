@@ -67,8 +67,7 @@ def run():
                     current_lang = config.language
                     humanize.activate(config.language)
                     logger.info(f"Activated language={config.language}")
-            except FileNotFoundError as e:
-                logger.exception(e)
+            except FileNotFoundError:
                 logger.error(
                     f"Unable to activate language={config.language}, defaulting to English"
                 )
@@ -109,8 +108,8 @@ def run():
 
             # Server seeded
             if is_seeding and is_seeded(config=config, gamestate=gamestate):
-                seeded_timestamp = datetime.now(tz=UTC)
-                logger.info(f"Server seeded at {seeded_timestamp.isoformat()}")
+                st = seeded_timestamp = datetime.now(tz=UTC)
+                logger.info(f"Server seeded at {st.isoformat()}")
                 # Use the full VIP list for logic so offline VIPs are respected
                 all_vips = get_vips(rcon=rcon_api)
 
@@ -124,10 +123,10 @@ def run():
                 } - to_add_vip_steam_ids
 
                 expiration_timestamps = defaultdict(
-                    lambda: calc_vip_expiration_timestamp(
-                        config=config,
+                    lambda time=st, cfg=config: calc_vip_expiration_timestamp(
+                        config=cfg,
                         expiration=None,
-                        from_time=seeded_timestamp or datetime.now(tz=UTC),
+                        from_time=time,
                     )
                 )
                 for player in all_vips.values():
@@ -135,7 +134,7 @@ def run():
                         calc_vip_expiration_timestamp(
                             config=config,
                             expiration=player.expiration_date if player else None,
-                            from_time=seeded_timestamp,
+                            from_time=st,
                         )
                     )
 
@@ -272,7 +271,6 @@ def run():
 if __name__ == "__main__":
     try:
         run()
-    except Exception as e:
-        logger.error("Seed VIP stopped")
-        logger.exception(e)
+    except:  # noqa
+        logger.exception("Seed VIP stopped")
         sys.exit(1)

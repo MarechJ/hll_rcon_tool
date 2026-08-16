@@ -199,7 +199,7 @@ def get_vip_count_by_team(rcon_api: "RconAPI") -> TeamVIPCount:
     team_view = rcon_api.get_team_view()
     for team in teams:
         try:
-            for squad_key in team_view[team]["squads"].keys():
+            for squad_key in team_view[team]["squads"]:
                 for player in team_view[team]["squads"][squad_key]["players"]:
                     if player["is_vip"]:
                         teams[team] += 1
@@ -481,7 +481,7 @@ def run():
         )
 
         while True:
-            timestamp = datetime.now()
+            timestamp = datetime.now(tz=UTC)
             config = ScoreboardUserConfig.load_from_db()
             server_config = RconServerSettingsUserConfig.load_from_db()
 
@@ -564,8 +564,8 @@ def run():
             )
             time.sleep(sleep_time)
 
-    except Exception as e:
-        logger.exception("The bot stopped", e)
+    except Exception:
+        logger.exception("The bot stopped")
         raise
 
 
@@ -587,6 +587,6 @@ if __name__ == "__main__":
         logger.info("Attempting to start scorebot")
         Base.metadata.create_all(ENGINE)
         run()
-    except Exception as e:
-        logger.exception(e)
+    except Exception:
+        logger.exception("scorebot failed unexpectedly")
         raise

@@ -6,7 +6,7 @@ from typing import TypeVar, assert_never
 from rcon.game.base import GameProfile
 from rcon.game.hll.profile import HLL_PROFILE
 from rcon.game.hllv.profile import HLLV_PROFILE
-from rcon.types import GameEnum, GameIntEnum
+from rcon.types import GameEnum
 
 T = TypeVar("T")
 
@@ -16,7 +16,7 @@ GAME_PROFILES: dict[GameEnum, GameProfile] = {
 
 try:
     GAME_ID = GameEnum(os.getenv("HLL_GAME", "hll")).to_int()
-except:
+except: # noqa
     GAME_ID = GameEnum.HLL_WW2.to_int()
 
 def get_game_profile(game: str | GameEnum | None) -> GameProfile:
@@ -41,7 +41,7 @@ def get_game_profile(game: str | GameEnum | None) -> GameProfile:
 
     return profile
 
-def game_switch(game: GameEnum, hll_value: T, hllv_value: T) -> T:
+def game_switch[T](game: GameEnum, hll_value: T, hllv_value: T) -> T:
     """Return the appropriate value for the given game."""
     match game:
         case GameEnum.HLL_WW2:

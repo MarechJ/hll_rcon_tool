@@ -19,9 +19,23 @@ import redis.exceptions
 from rcon.cache_utils import get_redis_pool
 from rcon.game.base import GameProfile
 from rcon.game.registry import game_switch
+from rcon.maps import (
+    UNKNOWN_MAP_NAME,
+    Layer,
+    Team,
+    parse_map_string,
+    parse_map_string_attacker,
+)
 from rcon.models import GameLayout
-from rcon.types import GameEnum, GetDetailedPlayer, MapInfo, PlayerInfoType, PlayerStat, PlayerStatsType, StructuredLogLineWithMetaData
-from rcon.maps import Layer, parse_map_string, parse_map_string_attacker, UNKNOWN_MAP_NAME, Team
+from rcon.types import (
+    GameEnum,
+    GetDetailedPlayer,
+    MapInfo,
+    PlayerInfoType,
+    PlayerStat,
+    PlayerStatsType,
+    StructuredLogLineWithMetaData,
+)
 
 logger = logging.getLogger("rcon")
 

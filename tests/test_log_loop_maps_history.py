@@ -7,12 +7,11 @@ import pytest
 os.environ.setdefault("HLL_MAINTENANCE_CONTAINER", "1")
 os.environ.setdefault("SERVER_NUMBER", "1")
 
-from rcon.logs.loop import LogLoop
 from rcon.game.hll.profile import HLL_PROFILE
 from rcon.game.hllv.profile import HLLV_PROFILE
+from rcon.logs.loop import LogLoop
 from rcon.maps import GameMode
 from rcon.utils import default_player_info_dict
-
 
 OFFENSIVE_MAP = "carentan_offensive_us"
 

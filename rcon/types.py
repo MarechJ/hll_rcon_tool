@@ -1,8 +1,9 @@
 import datetime
 import enum
 import os
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, List, Literal, Optional, Sequence
+from typing import TYPE_CHECKING, Literal, NotRequired
 
 # # TODO: On Python 3.11.* specifically, Pydantic requires we use typing_extensions.TypedDict
 # over typing.TypedDict. Once we bump our Python image we can replace this.
@@ -92,7 +93,7 @@ class MessageVariable(enum.Enum):
     votenextmap_by_mod_vertical = "votenextmap_by_mod_vertical"
     votenextmap_by_mod_vertical_all = "votenextmap_by_mod_vertical_all"
     votenextmap_by_mod_split = "votenextmap_by_mod_split"
-    total_votes = "votenextmap_line"
+    total_votes = "total_votes"
     winning_maps_short = "winning_maps_short"
     winning_maps_all = "winning_maps_all"
     scrolling_votemap = "scrolling_votemap"
@@ -493,7 +494,7 @@ class KillInfo(TypedDict):
     weapon: str
 
 PlayerEncounters = list[KillInfo]
-    
+
 class PlayerStatsType(TypedDict, total=False):
     id: int
     player_id: str

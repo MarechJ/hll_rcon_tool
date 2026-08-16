@@ -37,7 +37,7 @@ class RConChatCommand(BaseChatCommand):
 
     @cached_property
     def help_words(self) -> set[str]:
-        return set(f"?{word[1:]}" for word in self.words)
+        return {f"?{word[1:]}" for word in self.words}
 
     @field_validator("commands")
     @classmethod
@@ -78,12 +78,7 @@ class RConChatCommand(BaseChatCommand):
                     condition,
                     params,
                 )
-        return all(
-            [
-                c.is_valid(rcon=rcon, player_id=p, message_context=ctx)
-                for c in conditions
-            ]
-        )
+        return all(c.is_valid(rcon=rcon, player_id=p, message_context=ctx) for c in conditions)
 
 
 class RConChatCommandsUserConfig(BaseChatCommandUserConfig):

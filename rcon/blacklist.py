@@ -69,10 +69,9 @@ def update_penalty_count(
             player_name=player_name,
             by=admin_name,
         )
-    except Exception as e:
+    except Exception:
         # Don't let errors prevent adding/editing blacklist records
-        logger.error(f"Unable to save player {action=} while adding blacklist record")
-        logger.exception(e)
+        logger.exception(f"Unable to save player {action=} while adding blacklist record")
 
 
 def get_server_number_mask():
@@ -103,7 +102,7 @@ def get_blacklist(
 ) -> Blacklist | None:
     blacklist = sess.get(Blacklist, blacklist_id)
     if not blacklist and strict:
-        raise HLLCommandFailedError("No blacklist found with ID %s" % blacklist_id)
+        raise HLLCommandFailedError(f"No blacklist found with ID {blacklist_id}")
     return blacklist
 
 
@@ -124,7 +123,7 @@ def get_record(
 def get_record(sess: Session, record_id: int, strict: bool = False):
     record = sess.get(BlacklistRecord, record_id)
     if not record and strict:
-        raise HLLCommandFailedError("No record found with ID %s" % record_id)
+        raise HLLCommandFailedError(f"No record found with ID {record_id}")
     return record
 
 
@@ -145,7 +144,7 @@ def get_player_blacklist_records(
     player_id: str,
     include_expired=True,
     include_other_servers=True,
-    exclude: set[int] = None,
+    exclude: set[int] | None = None,
 ) -> list[BlacklistRecord]:
     stmt = (
         select(BlacklistRecord)
@@ -153,7 +152,8 @@ def get_player_blacklist_records(
         .join(BlacklistRecord.blacklist)
         .filter(
             # Record must target the given player
-            PlayerID.player_id == player_id,
+            PlayerID.player_id
+            == player_id,
         )
     )
 
@@ -184,9 +184,9 @@ def get_player_blacklist_records(
 
 def search_blacklist_records(
     sess: Session,
-    player_id: str = None,
-    reason: str = None,
-    blacklist_id: int = None,
+    player_id: str | None = None,
+    reason: str | None = None,
+    blacklist_id: int | None = None,
     exclude_expired: bool = False,
     page_size: int = 50,
     page: int = 1,
@@ -241,7 +241,7 @@ def search_blacklist_records(
 
 
 def is_player_blacklisted(
-    sess: Session, player_id: str, exclude: set[int] = {}
+    sess: Session, player_id: str, exclude: set[int] | None = None
 ) -> BlacklistRecord | None:
     """Determine whether a player is blacklisted, and return
     the blacklist record with the highest priority.
@@ -265,7 +265,7 @@ def is_player_blacklisted(
         player_id,
         include_expired=False,
         include_other_servers=False,
-        exclude=exclude,
+        exclude=exclude or set(),
     )
 
     if not records:
@@ -423,8 +423,8 @@ def synchronize_ban(
 def apply_blacklist_punishment(
     rcon: Rcon,
     record: BlacklistRecord,
-    player_id: str = None,
-    player_name: str = None,
+    player_id: str | None = None,
+    player_name: str | None = None,
 ):
     logger.info("Applying punishment to %s", player_id)
     try:
@@ -478,7 +478,7 @@ def apply_blacklist_punishment(
                     by=f"BLACKLIST: {record.admin_name}",
                 )
 
-    except:
+    except:  # noqa
         logger.exception("Failed to apply blacklist")
         try:
             send_to_discord_audit(
@@ -486,18 +486,18 @@ def apply_blacklist_punishment(
                 command_name="blacklist",
                 by="ERROR",
             )
-        except:
+        except:  # noqa
             logger.error("Unable to send blacklist error to audit log")
         return False
 
     else:
         try:
             send_to_discord_audit(
-                message=f"{dict_to_discord(dict(player=player_name, reason=reason))}",
+                message=f"{dict_to_discord({"player": player_name, "reason": reason})}",
                 command_name="blacklist",
                 by="BLACKLIST",
             )
-        except:
+        except:  # noqa
             logger.error("Unable to send blacklist to audit log")
         return True
 
@@ -756,11 +756,11 @@ def delete_blacklist(blacklist_id: int):
             # Players can be on the same blacklist multiple times. Here we check
             # whether we have already seen a record of that player and if it has
             # a lower priority, replace it.
-            if other := banned_players.get(player_id):
-                if not _is_higher_priority_record(
-                    record.created_at, record.expires_at, *other
-                ):
-                    continue
+            other = banned_players.get(player_id)
+            if other and not _is_higher_priority_record(
+                record.created_at, record.expires_at, *other
+            ):
+                continue
 
             banned_players[player_id] = (record.created_at, record.expires_at)
 
@@ -800,16 +800,14 @@ def blacklist_or_ban(
                 expires_at=expires_at,
                 admin_name=admin_name,
             )
-        except:
+        except:  # noqa
             logger.exception("Failed to blacklist player, banning them instead")
 
     if expires_at:
         rcon.temp_ban(
             player_id=player_id,
             reason=reason,
-            duration_hours=round_timedelta_to_hours(
-                expires_at - datetime.now(tz=UTC)
-            ),
+            duration_hours=round_timedelta_to_hours(expires_at - datetime.now(tz=UTC)),
             by=admin_name,
         )
     else:
@@ -953,7 +951,7 @@ class BlacklistCommandHandler:
                     # Command is not meant for this server
                     continue
 
-                logger.info("Handling %s command" % cmd.command.name)
+                logger.info(f"Handling {cmd.command.name} command")
 
                 try:
                     match cmd.command:
@@ -989,14 +987,14 @@ class BlacklistCommandHandler:
                             )
                         case _:
                             logger.error("Unknown command %r", cmd.command)
-                except:
+                except:  # noqa
                     logger.exception(
                         "Error whilst executing %s command with payload %s",
                         cmd.command.name,
                         cmd.payload,
                     )
 
-            except:
+            except:  # noqa
                 logger.exception("Failed to parse data %s", data)
             logger.info("Ready for next message!")
 
@@ -1173,7 +1171,7 @@ class BlacklistCommandHandler:
                         else:
                             old_state = BanState.TEMP
                         synchronize_ban(self.rcon, player_id, new_record, old_state)
-                except:
+                except:  # noqa
                     logger.exception(
                         "Failed to synchronize ban for player %s after deleting blacklist",
                         player_id,

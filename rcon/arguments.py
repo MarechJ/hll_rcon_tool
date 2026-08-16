@@ -48,7 +48,7 @@ def replace_params(ctx: dict[str, str], args: list[str], v: Any) -> Any:
     if len(args) == 0:
         v = do(v, lambda d: d)
     for i, a in enumerate(args):
-        v = do(v, lambda d: d.replace(f"${i + 1}", a))
+        v = do(v, lambda d, p=a, idx=i: d.replace(f"${idx + 1}", p))
     return v
 
 

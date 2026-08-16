@@ -37,7 +37,6 @@ class RconServerSettingsType(TypedDict):
     # unblacklist_does_unban: bool
     # broadcast_temp_bans: bool
     broadcast_unbans: bool
-    lock_stats_api: bool
     live_stats_refresh_seconds: int
     live_stats_refresh_current_game_seconds: int
     windows_store_players: WindowsStorePlayersType
@@ -83,7 +82,6 @@ class RconServerSettingsUserConfig(BaseUserConfig):
     server_url: HttpUrl | None = Field(default=None)
     discord_invite_url: HttpUrl | None = Field(default=None)
 
-    lock_stats_api: bool = Field(default=False)
     # unban_does_unblacklist: bool = Field(default=True)
     # unblacklist_does_unban: bool = Field(default=True)
     # broadcast_temp_bans: bool = Field(default=True)

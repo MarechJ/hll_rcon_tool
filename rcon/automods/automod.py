@@ -250,7 +250,7 @@ def on_connected(rcon: Rcon, _, name: str, player_id: str):
     detailed_player_info: GetDetailedPlayer | None = None
     try:
         detailed_player_info = rcon.get_detailed_player_info(player_id)
-    except Exception as e:
+    except Exception as e: # noqa
         logger.error(
             f"get_detailed_player_info threw an exception for {player_id}: {e}"
         )
@@ -272,8 +272,8 @@ def on_connected(rcon: Rcon, _, name: str, player_id: str):
                     by=p.details.author,
                     save_message=False,
                 )
-        except Exception as e:
-            logger.error("Could not message player '%s' (%s) : %s", name, player_id, e)
+        except Exception as e: # noqa
+            logger.error(f"Could not message player '{name}' ({player_id}): {e}")
 
     if len(punitions_to_apply.warning) == 0:
         return

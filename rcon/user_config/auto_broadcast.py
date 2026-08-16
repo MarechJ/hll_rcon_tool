@@ -40,7 +40,7 @@ class RawAutoBroadCastMessage(BaseModel):
     @classmethod
     def validiate_time_and_message(cls, v):
         if match := re.match(cls.pattern, v):
-            time, message = match.groups()
+            _, _ = match.groups()
             return v
         else:
             raise ValueError(

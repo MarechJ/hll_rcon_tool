@@ -8,7 +8,7 @@ Enforces the various seeding rules :
 import logging
 import pickle
 from contextlib import contextmanager
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Literal
 
 import redis
@@ -103,7 +103,7 @@ class SeedingRulesAutomod:
             or len(disallowed_weapons) != 0
             or enforce_cap_fight_maxplayers != 0
         ):
-            if all([self._is_seeding_rule_disabled(r) for r in SEEDING_RULE_NAMES]):
+            if all(self._is_seeding_rule_disabled(r) for r in SEEDING_RULE_NAMES):
                 return p
 
             data = {
@@ -377,13 +377,13 @@ class SeedingRulesAutomod:
                 if (
                     not self._is_seeding_rule_disabled("disallowed_roles")
                     and drc.min_players <= server_player_count < drc.max_players
+                    and Roles(aplayer.role) in drc.roles
                 ):
-                    if Roles(aplayer.role) in drc.roles:
-                        violations.append(
-                            drc.violation_message.format(
-                                role=drc.roles.get(Roles(aplayer.role))
-                            )
+                    violations.append(
+                        drc.violation_message.format(
+                            role=drc.roles.get(Roles(aplayer.role))
                         )
+                    )
 
                 if game_state["game_mode"] != GameMode.WARFARE:
                     self._disable_for_round("enforce_cap_fight")
@@ -408,7 +408,7 @@ class SeedingRulesAutomod:
                             warnings = watch_status.warned.setdefault(aplayer.name, [])
                             for _ in range(self.config.number_of_warnings):
                                 warnings.append(
-                                    datetime.now()
+                                    datetime.now(tz=UTC)
                                     - timedelta(
                                         seconds=self.config.warning_interval_seconds + 1
                                     )
@@ -535,7 +535,7 @@ class SeedingRulesAutomod:
                 len(warnings),
                 num_or_inf(self.config.number_of_warnings),
             )
-            warnings.append(datetime.now())
+            warnings.append(datetime.now(tz=UTC))
             return PunishStepState.APPLY
 
         self.logger.info(
@@ -611,7 +611,7 @@ class SeedingRulesAutomod:
                 len(punishes),
                 num_or_inf(self.config.number_of_punishments),
             )
-            punishes.append(datetime.now())
+            punishes.append(datetime.now(tz=UTC))
             return PunishStepState.APPLY
 
         self.logger.info(
@@ -675,7 +675,7 @@ class SeedingRulesAutomod:
             return PunishStepState.DISABLED
 
         # kick_grace_period_seconds
-        if datetime.now() - last_time < timedelta(
+        if datetime.now(tz=UTC) - last_time < timedelta(
             seconds=self.config.kick_grace_period_seconds
         ):
             return PunishStepState.WAIT

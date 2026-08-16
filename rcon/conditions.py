@@ -50,7 +50,7 @@ def create_condition(name, **kwargs):
     elif name == "player_id":
         return PlayerIdCondition(**kwargs)
     else:
-        raise ValueError("Invalid condition type: %s" % name)
+        raise ValueError(f"Invalid condition type: {name}")
 
 
 class Condition:
@@ -66,7 +66,7 @@ class Condition:
     def metric_getter(self):
         try:
             return METRICS[self.metric_name]
-        except:
+        except: # noqa
             return None
 
     def is_valid(self, **metric_sources):
@@ -134,17 +134,17 @@ class ListCondition(Condition):
 
 
 class CurrentMapCondition(ListCondition):
-    def __init__(self, map_names=[], *args, **kwargs):
+    def __init__(self, map_names: list | None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.values = map_names
+        self.values = map_names or []
         self.metric_name = "current_map"
         self.metric_source = "rcon"
 
 
 class PlayerFlagCondition(Condition):
-    def __init__(self, flags=[], *args, **kwargs):
+    def __init__(self, flags: list | None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.flags = flags
+        self.flags = flags or []
         self.metric_name = "player_flags"
         self.metric_source = "player_id"
 
@@ -168,9 +168,9 @@ class PlayerFlagCondition(Condition):
 
 
 class PlayerIdCondition(ListCondition):
-    def __init__(self, player_ids=[], *args, **kwargs):
+    def __init__(self, player_ids: list | None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.values = player_ids
+        self.values = player_ids or []
         self.metric_name = "player_id"
         self.metric_source = "player_id"
 
@@ -198,8 +198,8 @@ class TimeOfDayCondition(Condition):
             max_h, max_m = [int(i) for i in self.max.split(":")[:2]]
             min = datetime.now(tz=self.tz).replace(hour=min_h, minute=min_m)
             max = datetime.now(tz=self.tz).replace(hour=max_h, minute=max_m)
-        except Exception as e:
-            logger.exception("Time Of Day condition is invalid and is ignored", e)
+        except Exception:
+            logger.exception("Time Of Day condition is invalid and is ignored")
             return False  # The condition should fail
         comparand = datetime.now(tz=self.tz)
         res = min <= comparand <= max

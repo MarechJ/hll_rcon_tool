@@ -47,7 +47,7 @@ MAPS_HISTORY_BACKUP_TTL_SECONDS = 7 * 24 * 60 * 60
 
 def _migrate_player_stat_v1(player_id: str, value: Any) -> dict[str, Any]:
     if not isinstance(value, Mapping):
-        raise ValueError(f"Invalid maps_history player_stats entry for {player_id!r}")
+        raise TypeError(f"Invalid maps_history player_stats entry for {player_id!r}")
 
     stat = dict(value)
     defaults = {
@@ -96,7 +96,7 @@ def _migrate_to_v1(value: Mapping[str, Any]) -> dict[str, Any]:
     if player_stats is None:
         player_stats = {}
     if not isinstance(player_stats, Mapping):
-        raise ValueError("Invalid maps_history player_stats value")
+        raise TypeError("Invalid maps_history player_stats value")
     item["player_stats"] = {
         str(player_id): _migrate_player_stat_v1(str(player_id), stat)
         for player_id, stat in player_stats.items()
@@ -126,7 +126,7 @@ MAP_INFO_MIGRATIONS = {
 def migrate_map_info(value: Any) -> MapInfo:
     """Return a current MapInfo without mutating the supplied cached value."""
     if not isinstance(value, Mapping):
-        raise ValueError("Invalid maps_history item")
+        raise TypeError("Invalid maps_history item")
 
     item = dict(value)
     version = item.get("_schema_version", 0)

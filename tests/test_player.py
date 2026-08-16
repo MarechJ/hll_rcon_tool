@@ -1,6 +1,6 @@
 import pytest
 
-from rcon.types import GetDetailedPlayer, GameEnum
+from rcon.types import GameEnum, GetDetailedPlayer
 from rcon.utils import parse_raw_player_info
 
 

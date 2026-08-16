@@ -1,7 +1,6 @@
 from typing import Annotated, TypedDict
 
 from pydantic import BaseModel, BeforeValidator, Field, HttpUrl, field_serializer
-from pydantic.functional_validators import BeforeValidator
 
 from rcon.types import Roles
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
@@ -69,7 +68,7 @@ class Role(BaseModel):
 def validate_level_thresholds(vs):
     """Required to prevent validation errors for empty values"""
     if not vs or vs == []:
-        return dict()
+        return {}
 
     validated_level_threshholds: dict[Roles, Role] = {}
     for raw_role, obj in vs.items():

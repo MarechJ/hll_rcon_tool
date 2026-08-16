@@ -46,14 +46,14 @@ def check_player_conditions(
     config: SeedVIPUserConfig, server_pop: ServerPopulation
 ) -> set[str]:
     """Return a set of steam IDs that meet seeding criteria"""
-    return set(
+    return {
         player.player_id
         for player in server_pop.players.values()
         if PlayTimeCondition(
             min_time_secs=int(config.requirements.minimum_play_time.total_seconds),
             current_time_secs=player.current_playtime_seconds,
         ).is_met()
-    )
+    }
 
 
 def is_seeded(config: SeedVIPUserConfig, gamestate: GameStateType) -> bool:
@@ -268,7 +268,7 @@ def get_online_players(
     players = {}
     for raw_player in result:
         name = raw_player["name"]
-        player_id = player_id = raw_player["player_id"]
+        player_id = raw_player["player_id"]
         if raw_player["profile"] is None:
             # Apparently CRCON will occasionally not return a player profile
             logger.debug(f"No CRCON profile, skipping {raw_player}")

@@ -29,7 +29,7 @@ def auto_kick(rcon: RconAPI, struct_log, name: str, player_id: str):
                         player_id,
                     )
                     return
-        except:
+        except: # noqa
             logger.exception("Unable to check player profile")
 
         if re.match(r, name):
@@ -52,6 +52,6 @@ def auto_kick(rcon: RconAPI, struct_log, name: str, player_id: str):
                     by="NAME_KICK",
                     webhookurls=webhookurls,
                 )
-            except Exception:
+            except Exception: # noqa
                 logger.error("Unable to send to audit_log")
             return

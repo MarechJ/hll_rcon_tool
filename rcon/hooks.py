@@ -192,7 +192,7 @@ def chat_rcon_command(
 ):
     player_id = ctx[MessageVariableContext.player_id.value]
     player: PlayerID
-    with enter_session() as session:
+    with (enter_session() as session):
         player = (
             session.query(PlayerID)
             .filter(PlayerID.player_id == player_id)
@@ -209,8 +209,8 @@ def chat_rcon_command(
         arguments = msg[msg.find(triggering_word) + len(triggering_word) + 1 :]
         args = shlex.split(arguments)
         expected_argument_count = 0
-        for _, params in command.commands.items():
-            for _, v in params.items():
+        for params in command.commands.values():
+            for v in params.values():
                 a = max_arg_index(v)
                 expected_argument_count = max(expected_argument_count, a)
         if len(args) != expected_argument_count:
@@ -331,12 +331,11 @@ def handle_new_match_start(rcon: Rcon, struct_log):
 
         # TODO added guess - check if it's already in there - set prev end if None
         maps_history = MapsHistory()
-        if len(maps_history) > 0:
-            if maps_history[0]["end"] is None and maps_history[0]["name"]:
-                maps_history.save_map_end(
-                    old_map=maps_history[0]["name"],
-                    end_timestamp=int(struct_log["timestamp_ms"] / 1000),
-                )
+        if len(maps_history) > 0 and maps_history[0]["end"] is None and maps_history[0]["name"]:
+            maps_history.save_map_end(
+                old_map=maps_history[0]["name"],
+                end_timestamp=int(struct_log["timestamp_ms"] / 1000),
+            )
 
         game_layout: GameLayout = {"requested": [], "set": []}
         try:
@@ -348,8 +347,8 @@ def handle_new_match_start(rcon: Rcon, struct_log):
                     "requested": loaded.get("requested", []),
                     "set": loaded.get("set", []),
                 }
-        except Exception as e:
-            logger.error("Could not fetch Game Layout", e)
+        except Exception as e: # noqa
+            logger.error("Could not fetch Game Layout: %s", e)
         maps_history.save_new_map(
             new_map=str(map_to_save),
             guessed=guessed,
@@ -357,9 +356,6 @@ def handle_new_match_start(rcon: Rcon, struct_log):
             game_layout=game_layout,
             match_time=match_time,
         )
-    except Exception as e:
-        logger.exception(e)
-        raise
     finally:
         prev_map = MapsHistory()[1]
         vm = VoteMap()
@@ -435,11 +431,16 @@ def should_ban(
     bans: SteamBansType | None,
     max_game_bans: float,
     max_days_since_ban: int,
-    player_flags: list[PlayerFlagType] = [],
-    whitelist_flags: list[str] = [],
+    player_flags: list[PlayerFlagType] | None = None,
+    whitelist_flags: list[str] | None = None,
 ) -> bool | None:
+    if player_flags is None:
+        player_flags = []
+    if whitelist_flags is None:
+        whitelist_flags = []
+
     if not bans:
-        return
+        return None
 
     if any(player_flag in whitelist_flags for player_flag in player_flags):
         return False
@@ -448,17 +449,14 @@ def should_ban(
         days_since_last_ban = int(bans["DaysSinceLastBan"])
         number_of_game_bans = int(bans.get("NumberOfGameBans", 0))
     except ValueError:  # In case DaysSinceLastBan can be null
-        return
+        return None
 
     has_a_ban = bans.get("VACBanned") == True or number_of_game_bans >= max_game_bans
 
     if days_since_last_ban <= 0:
         return False
 
-    if days_since_last_ban <= max_days_since_ban and has_a_ban:
-        return True
-
-    return False
+    return days_since_last_ban <= max_days_since_ban and has_a_ban
 
 
 def ban_if_has_vac_bans(rcon: Rcon, player_id: str, name: str):
@@ -656,7 +654,7 @@ def windows_store_player_check(rcon: Rcon, _, name: str, player_id: str):
                 reason=config.player_message,
                 by=config.audit_message_author,
             )
-    except Exception as e:
+    except Exception as e: # noqa
         logger.error(
             "Could not %s whitespace name player %s/%s: %s",
             action_value,

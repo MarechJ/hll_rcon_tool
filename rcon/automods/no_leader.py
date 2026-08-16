@@ -5,7 +5,7 @@ Enforces the "Every squad must have an officer" rule
 import logging
 import pickle
 from contextlib import contextmanager
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Literal
 
 import redis
@@ -315,7 +315,7 @@ class NoLeaderAutomod:
                 len(notes),
                 num_or_inf(self.config.number_of_notes),
             )
-            notes.append(datetime.now())
+            notes.append(datetime.now(tz=UTC))
             return PunishStepState.APPLY
 
         self.logger.info(
@@ -376,7 +376,7 @@ class NoLeaderAutomod:
                 len(warnings),
                 num_or_inf(self.config.number_of_warnings),
             )
-            warnings.append(datetime.now())
+            warnings.append(datetime.now(tz=UTC))
             return PunishStepState.APPLY
 
         self.logger.info(
@@ -452,7 +452,7 @@ class NoLeaderAutomod:
                 len(punishes),
                 num_or_inf(self.config.number_of_punishments),
             )
-            punishes.append(datetime.now())
+            punishes.append(datetime.now(tz=UTC))
             return PunishStepState.APPLY
 
         self.logger.info(
@@ -516,7 +516,7 @@ class NoLeaderAutomod:
             return PunishStepState.DISABLED
 
         # kick_grace_period_seconds
-        if datetime.now() - last_time < timedelta(
+        if datetime.now(tz=UTC) - last_time < timedelta(
             seconds=self.config.kick_grace_period_seconds
         ):
             return PunishStepState.WAIT

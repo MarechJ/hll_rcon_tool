@@ -1,8 +1,8 @@
 import datetime
 import logging
 import math
-import os
 import unicodedata
+from datetime import UTC
 from functools import cmp_to_key
 
 from dateutil import parser
@@ -14,7 +14,6 @@ from rcon.commands import HLLCommandFailedError
 from rcon.models import (
     BlacklistRecord,
     PlayerAccount,
-    PlayerActionState,
     PlayerComment,
     PlayerFlag,
     PlayerID,
@@ -120,7 +119,7 @@ def _get_set_player(
         player = _save_player_id(sess, player_id)
     if player_name:
         _save_player_alias(
-            sess, player, player_name, timestamp or datetime.datetime.now().timestamp()
+            sess, player, player_name, timestamp or datetime.datetime.now(tz=UTC).timestamp()
         )
     if steam_id:
         player.steam_id = steam_id
@@ -336,9 +335,9 @@ def _save_player_alias(sess, player: PlayerID, player_name: str, timestamp=None)
     )
 
     if timestamp:
-        dt = datetime.datetime.fromtimestamp(timestamp)
+        dt = datetime.datetime.fromtimestamp(timestamp, tz=UTC)
     else:
-        dt = datetime.datetime.now()
+        dt = datetime.datetime.now(tz=UTC)
     if not name:
         name = PlayerName(name=player_name, player=player, last_seen=dt)
         sess.add(name)
@@ -362,7 +361,7 @@ def save_player(
     with enter_session() as sess:
         player = _save_player_id(sess, player_id)
         _save_player_alias(
-            sess, player, player_name, timestamp or datetime.datetime.now().timestamp()
+            sess, player, player_name, timestamp or datetime.datetime.now(tz=UTC).timestamp()
         )
         if steam_id:
             player.steam_id = steam_id
@@ -443,7 +442,7 @@ def save_start_player_session(
             )
             return
 
-        start_time = datetime.datetime.fromtimestamp(timestamp)
+        start_time = datetime.datetime.fromtimestamp(timestamp, tz=UTC)
         already_saved = (
             sess.query(PlayerSession)
             .filter(PlayerSession.player == player)
@@ -468,7 +467,7 @@ def save_start_player_session(
         logger.info(
             "Recorded player %s session start at %s",
             player_id,
-            datetime.datetime.fromtimestamp(timestamp),
+            datetime.datetime.fromtimestamp(timestamp, tz=UTC),
         )
         sess.commit()
 
@@ -504,7 +503,7 @@ def save_end_player_session(player_id: str, timestamp):
             last_session = PlayerSession(
                 player=player,
             )
-        last_session.end = datetime.datetime.fromtimestamp(timestamp)
+        last_session.end = datetime.datetime.fromtimestamp(timestamp, tz=UTC)
         logger.info("Recorded player %s session end at %s", player_id, last_session.end)
         sess.commit()
 
@@ -599,18 +598,18 @@ def post_player_comment(player_id: str, comment, user: str = "Bot"):
 
 if __name__ == "__main__":
     save_player("Achile5115", "76561198172574911")
-    save_start_player_session("76561198172574911", datetime.datetime.now().timestamp())
+    save_start_player_session("76561198172574911", datetime.datetime.now(tz=UTC).timestamp())
     save_end_player_session(
         "76561198172574911",
         int(
-            (datetime.datetime.now() + datetime.timedelta(minutes=30)).timestamp()
+            (datetime.datetime.now(tz=UTC) + datetime.timedelta(minutes=30)).timestamp()
             * 1000
         ),
     )
     save_end_player_session(
         "76561198172574911",
         int(
-            (datetime.datetime.now() + datetime.timedelta(minutes=30)).timestamp()
+            (datetime.datetime.now(tz=UTC) + datetime.timedelta(minutes=30)).timestamp()
             * 1000
         ),
     )
@@ -622,18 +621,18 @@ if __name__ == "__main__":
     save_player("Dr.WeeD5", "4242")
     save_player("Dr.WeeD6", "4242")
     save_player("test", "76561197984877751")
-    save_start_player_session("4242", datetime.datetime.now().timestamp())
+    save_start_player_session("4242", datetime.datetime.now(tz=UTC).timestamp())
     save_end_player_session(
         "4242",
         int(
-            (datetime.datetime.now() + datetime.timedelta(minutes=30)).timestamp()
+            (datetime.datetime.now(tz=UTC) + datetime.timedelta(minutes=30)).timestamp()
             * 1000
         ),
     )
     save_end_player_session(
         "4242",
         int(
-            (datetime.datetime.now() + datetime.timedelta(minutes=30)).timestamp()
+            (datetime.datetime.now(tz=UTC) + datetime.timedelta(minutes=30)).timestamp()
             * 1000
         ),
     )

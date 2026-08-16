@@ -39,10 +39,7 @@ def is_player(search_str, player, exact_match=False):
         unicodedata.normalize("NFD", player).encode("ascii", "ignore").decode("utf-8")
     )
 
-    if normalize_search in normalize_player:
-        return True
-
-    return False
+    return normalize_search in normalize_player
 
 
 def is_action(action_filter, action, exact_match=False):
@@ -65,13 +62,18 @@ def is_action(action_filter, action, exact_match=False):
 def get_recent_logs(
     start: int = 0,
     end: int = 100000,
-    player_search: list[str] | str = [],
-    action_filter: list[str] = [],
+    player_search: list[str] | str | None = None,
+    action_filter: list[str] | None = None,
     min_timestamp: float | None = None,
     exact_player_match: bool = False,
     exact_action: bool = False,
     inclusive_filter: bool = True,
 ) -> ParsedLogsType:
+    if player_search is None:
+        player_search = []
+    if action_filter is None:
+        action_filter = []
+
     # The default behavior is to only show log lines with actions in `actions_filter`
     # inclusive_filter=True retains this default behavior
     # inclusive_filter=False will do the opposite, show all lines except what is passed in
@@ -111,29 +113,36 @@ def get_recent_logs(
             break
         if player_search:
             for player_name_search in player_search:
-                if is_player(
-                    player_name_search, line["player_name_1"], exact_player_match
-                ) or is_player(
-                    player_name_search, line["player_name_2"], exact_player_match
-                ):
+                if (
+                    is_player(
+                        player_name_search, line["player_name_1"], exact_player_match
+                    )
+                    or is_player(
+                        player_name_search, line["player_name_2"], exact_player_match
+                    )
+                ) and (
                     # Filter out anything that isn't in action_filter
-                    if (
+                    (
                         action_filter
                         and inclusive_filter
                         and is_action(action_filter, line["action"], exact_action)
-                    ) or (
+                    )
+                    or (
                         action_filter
                         and not inclusive_filter
                         and not is_action(action_filter, line["action"], exact_action)
-                    ) or not action_filter:
-                        logs.append(line)
-                        break
+                    )
+                    or not action_filter
+                ):
+                    logs.append(line)
+                    break
         elif action_filter:
             # Filter out anything that isn't in action_filter
-            if inclusive_filter and is_action(
-                action_filter, line["action"], exact_action
-            ) or not inclusive_filter and not is_action(
-                action_filter, line["action"], exact_action
+            if (
+                inclusive_filter
+                and is_action(action_filter, line["action"], exact_action)
+                or not inclusive_filter
+                and not is_action(action_filter, line["action"], exact_action)
             ):
                 logs.append(line)
         elif not player_search and not action_filter:
@@ -146,7 +155,7 @@ def get_recent_logs(
         actions.add(line["action"])
 
     return {
-        "actions": sorted(list(actions)),
+        "actions": sorted(actions),
         "players": list(all_players),
         "logs": logs,
     }

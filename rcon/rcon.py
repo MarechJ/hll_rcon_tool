@@ -8,10 +8,11 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from functools import cached_property
 from itertools import chain
-from typing import Iterable, List, Literal, Optional, Sequence, overload
+from typing import Literal, Optional, overload
 
 from dateutil import parser
 
+import rcon.settings
 import rcon.steam_utils
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import (
@@ -31,11 +32,10 @@ from rcon.player_history import (
     safe_save_player_action,
     save_player,
 )
-import rcon.settings
 from rcon.types import (
     AdminType,
-    GameLayoutRandomConstraints,
     GameEnum,
+    GameLayoutRandomConstraints,
     GameServerBanType,
     GameStateType,
     GetDetailedPlayer,
@@ -166,8 +166,8 @@ def do_run_commands(rcon, commands):
             logger.exception(
                 "%s is not a valid command, double check the name!", command
             )
-        except Exception as e:
-            logger.exception("Unable to apply %s %s: %s", command, params, e)
+        except Exception:
+            logger.exception("Unable to apply %s: %s", command, params)
         time.sleep(5)  # go easy on the server
 
 
@@ -279,7 +279,7 @@ class Rcon(ServerCtl):
             steam_id_64s=[k for k in player_ids]
         )
 
-        vip_player_ids = set(v[PLAYER_ID] for v in super().get_vip_ids())
+        vip_player_ids = {v[PLAYER_ID] for v in super().get_vip_ids()}
         profiles = {
             p[PLAYER_ID]: p
             for p in get_profiles([player_id for player_id in player_ids])
@@ -326,7 +326,7 @@ class Rcon(ServerCtl):
 
             try:
                 player_data = self._get_detailed_player_info(player_info, player)
-            except Exception:
+            except Exception: # noqa
                 logger.error("Failed to get info for %s", player_id)
                 fail_count += 1
                 player_data = default_player_info_dict()
@@ -364,7 +364,7 @@ class Rcon(ServerCtl):
             squad_players.append(player)
 
         for team, squads in teams.items():
-            for squad_name, squad in squads.items():
+            for squad in squads.values():
                 squad["players"] = sorted(
                     squad["players"],
                     key=lambda player: (
@@ -375,15 +375,12 @@ class Rcon(ServerCtl):
                 squad["type"] = self._guess_squad_type(squad)
                 squad["has_leader"] = self._has_leader(squad)
 
-                try:
-                    squad["combat"] = sum(p["combat"] for p in squad["players"])
-                    squad["offense"] = sum(p["offense"] for p in squad["players"])
-                    squad["defense"] = sum(p["defense"] for p in squad["players"])
-                    squad["support"] = sum(p["support"] for p in squad["players"])
-                    squad["kills"] = sum(p["kills"] for p in squad["players"])
-                    squad["deaths"] = sum(p["deaths"] for p in squad["players"])
-                except Exception as e:
-                    logger.exception(e)
+                squad["combat"] = sum(p["combat"] for p in squad["players"])
+                squad["offense"] = sum(p["offense"] for p in squad["players"])
+                squad["defense"] = sum(p["defense"] for p in squad["players"])
+                squad["support"] = sum(p["support"] for p in squad["players"])
+                squad["kills"] = sum(p["kills"] for p in squad["players"])
+                squad["deaths"] = sum(p["deaths"] for p in squad["players"])
 
         game = {}
         for team, squads in teams.items():
@@ -543,7 +540,7 @@ class Rcon(ServerCtl):
         if player is not None and "is_vip" in player:
             player_data["is_vip"] = player.get("is_vip")
         else:
-            vip_player_ids = set(v[PLAYER_ID] for v in super().get_vip_ids())
+            vip_player_ids = {v[PLAYER_ID] for v in super().get_vip_ids()}
             player_data["is_vip"] = player_data["player_id"] in vip_player_ids
 
         if player is not None and "profile" in player:
@@ -755,10 +752,7 @@ class Rcon(ServerCtl):
     def remove_all_vips(self) -> bool:
         vips = self.get_vip_ids()
         for vip in vips:
-            try:
-                self.remove_vip(vip[PLAYER_ID])
-            except (HLLCommandFailedError, ValueError):
-                raise
+            self.remove_vip(vip[PLAYER_ID])
 
         return True
 
@@ -1301,10 +1295,10 @@ class Rcon(ServerCtl):
     def set_game_layout(
         self,
         objectives: Sequence[str | int | None],
-        random_constraints: GameLayoutRandomConstraints = GameLayoutRandomConstraints(
-            0
-        ),
+        random_constraints: GameLayoutRandomConstraints | None = None,
     ):
+        if random_constraints is None:
+            random_constraints = GameLayoutRandomConstraints(0)
         if len(objectives) != 5:
             raise ValueError("5 objectives must be provided")
 
@@ -1322,17 +1316,12 @@ class Rcon(ServerCtl):
                 elif obj in ("right", "bottom"):
                     parsed_objs.append(obj_row[2])
                 else:
-                    raise ValueError(
-                        "Objective %s does not exist in row %s" % (obj, row)
-                    )
+                    raise ValueError(f"Objective {obj} does not exist in row {row}")
 
             elif isinstance(obj, int):
                 # Use index of the objective
                 if not (0 <= obj <= 2):
-                    raise ValueError(
-                        "Objective index %s is out of range 0-2 in row %s"
-                        % (obj, row + 1)
-                    )
+                    raise ValueError(f"Objective index {obj} is out of range 0-2 in row {row + 1}")
                 parsed_objs.append(obj_row[obj])
 
             elif obj is None:
@@ -1406,7 +1395,7 @@ class Rcon(ServerCtl):
         content: str = raw_line
         sub_content: str | None = None
 
-        if raw_line.startswith("KILL") or raw_line.startswith("TEAM KILL"):
+        if raw_line.startswith(("KILL", "TEAM KILL")):
             # KILL: Muctar(Axis/71234567891234567) -> Chris(Allies/71234567891234576) with GEWEHR 43
             # TEAM KILL: SonofJack(Allies/71234567891234567) -> Joseph Cannon(Allies/71234567891234576) with M1 GARAND
             action, content = raw_line.split(": ", 1)
@@ -1414,7 +1403,7 @@ class Rcon(ServerCtl):
                 player, player_id_1, player2, player_id_2, weapon = match.groups()
             else:
                 raise ValueError(f"Unable to parse line: {raw_line}")
-        elif raw_line.startswith("DISCONNECTED") or raw_line.startswith("CONNECTED"):
+        elif raw_line.startswith(("DISCONNECTED", "CONNECTED")):
             action, name_and_player_id = raw_line.split(" ", 1)
             if match := re.match(Rcon.connect_disconnect_pattern, name_and_player_id):
                 player, player_id_1 = match.groups()
@@ -1436,7 +1425,7 @@ class Rcon(ServerCtl):
                 player, sub_content = match.groups()
             else:
                 raise ValueError(f"Unable to parse line: {raw_line}")
-        elif raw_line.startswith("KICK") or raw_line.startswith("BAN"):
+        elif raw_line.startswith(("KICK", "BAN")):
             if match := re.match(Rcon.kick_ban_pattern, raw_line):
                 _action, player, sub_content, type_ = match.groups()
             else:
@@ -1582,7 +1571,7 @@ class Rcon(ServerCtl):
                     {
                         "version": 1,
                         "timestamp_ms": int(time.timestamp() * 1000),
-                        "event_time": datetime.fromtimestamp(int(raw_timestamp)),
+                        "event_time": datetime.fromtimestamp(int(raw_timestamp), tz=UTC),
                         "relative_time_ms": (time - now).total_seconds() * 1000,
                         "raw": raw_relative_time + " " + raw_log_line,
                         "line_without_time": raw_log_line,
