@@ -1,6 +1,8 @@
 import os
 from logging import getLogger
 from pathlib import Path
+from rcon.game import get_game_profile
+from rcon.types import GameEnum
 
 import pytest
 
@@ -254,12 +256,14 @@ def test_is_server_loading_map(map_name, expected):
 
 
 def test_all_map_images_exist():
-    ALL_MAP_IMAGES = [f for f in os.listdir(Path("./assets/images/maps"))]
-    ALL_MAP_ICONS = [f for f in os.listdir(Path("./assets/images/maps/icons"))]
+    for _game in GameEnum:
+        game = get_game_profile(_game)
+        ALL_MAP_IMAGES = [f for f in os.listdir(Path(f"./assets/{_game.value}/images/maps"))]
+        ALL_MAP_ICONS = [f for f in os.listdir(Path(f"./assets/{_game.value}/images/maps/icons"))]
 
-    for l in LAYERS.values():
-        assert l.image_name in ALL_MAP_IMAGES
-        assert l.image_name in ALL_MAP_ICONS
+        for l in game.layers.values():
+            assert l.image_name in ALL_MAP_IMAGES
+            assert l.image_name in ALL_MAP_ICONS
 
 @pytest.mark.parametrize(
     "team, expected",
