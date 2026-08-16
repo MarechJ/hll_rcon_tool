@@ -1,4 +1,5 @@
 import os
+from typing import ClassVar
 from unittest import TestCase, mock
 
 from rcon.maps import parse_layer
@@ -37,13 +38,8 @@ class MaxArgsTest(TestCase):
 
 
 class ReplaceParamsTest(TestCase):
-    ctx: dict[str, str]
-    args: list[str]
-
-    def __init__(self):
-        self.args = ["parameter1", "parameter2"]
-        self.ctx = {"player_name": "SOME_PLAYER_NAME"}
-        super().__init__()
+    ctx: ClassVar[dict[str, str]] = {"player_name": "SOME_PLAYER_NAME"}
+    args: ClassVar[list[str]] = ["parameter1", "parameter2"]
 
     def test_string(self):
         assert replace_params(self.ctx, self.args, "parameter") == "parameter"
