@@ -42,7 +42,7 @@ class LogRecorder:
             if not isinstance(log, dict):
                 logger.warning("Log is invalid, not a dict: %s", log)
                 continue
-            if last_log and int(log["event_time"]) == last_log.event_time and '] ' + log["line_without_time"] in last_log.raw:
+            if last_log and log["event_time"] == last_log.event_time and '] ' + log["line_without_time"] in last_log.raw:
                 logger.debug("This log is the same as the last saved log, skipping saving the rest of the logs\n%s", log)
                 break
             to_store.append(log)
