@@ -7,6 +7,7 @@ from rcon.user_config.webhooks import (
     DiscordMentionWebhook,
     DiscordWebhook,
     KillsWebhooksUserConfig,
+    TriggerWordMentionWebhook,
 )
 
 
@@ -103,7 +104,7 @@ def test_admin_pings_mention_start():
     config = AdminPingWebhooksUserConfig(
         trigger_words=["!admin"],
         hooks=[
-            DiscordMentionWebhook(
+            TriggerWordMentionWebhook(
                 url=HttpUrl("http://example.com"),
                 user_mentions=["<@1212>"],
                 role_mentions=[],
@@ -118,7 +119,8 @@ def test_admin_pings_mention_start():
             "player_name_1": "some dude",
             "player_id_1": "1234",
             "action": "CHAT[Allies][Team]",
-        }
+        },
+        hook=config.hooks[0],
     )
 
     assert embed.description == "__**!admin**__ test @\u200bhere"
@@ -130,7 +132,7 @@ def test_admin_pings_mention_middle():
     config = AdminPingWebhooksUserConfig(
         trigger_words=["!admin"],
         hooks=[
-            DiscordMentionWebhook(
+            TriggerWordMentionWebhook(
                 url=HttpUrl("http://example.com"),
                 user_mentions=["<@1212>"],
                 role_mentions=[],
@@ -145,7 +147,8 @@ def test_admin_pings_mention_middle():
             "player_name_1": "some dude",
             "player_id_1": "1234",
             "action": "CHAT[Allies][Team]",
-        }
+        },
+        hook=config.hooks[0],
     )
 
     assert embed.description == "test __**!admin**__ @\u200bhere"
@@ -157,7 +160,7 @@ def test_admin_pings_contains_numbers():
     config = AdminPingWebhooksUserConfig(
         trigger_words=["testword123"],
         hooks=[
-            DiscordMentionWebhook(
+            TriggerWordMentionWebhook(
                 url=HttpUrl("http://example.com"),
                 user_mentions=["<@1212>"],
                 role_mentions=[],
@@ -172,12 +175,90 @@ def test_admin_pings_contains_numbers():
             "player_name_1": "some dude",
             "player_id_1": "1234",
             "action": "CHAT[Allies][Team]",
-        }
+        },
+        hook=config.hooks[0],
     )
 
     assert embed.description == "__**testword123**__ test @\u200bhere"
     assert triggered
     assert content == "<@1212>"
+
+
+def test_admin_ping_per_hook_trigger_words():
+    config = AdminPingWebhooksUserConfig(
+        hooks=[
+            TriggerWordMentionWebhook(
+                url=HttpUrl("http://example.com"),
+                user_mentions=["<@1111>"],
+                role_mentions=[],
+                trigger_words=["!report"],
+            ),
+            TriggerWordMentionWebhook(
+                url=HttpUrl("http://example.com"),
+                user_mentions=["<@2222>"],
+                role_mentions=[],
+                trigger_words=["!teamkill"],
+            ),
+        ],
+    )
+
+    handler = DiscordWebhookHandler(admin_wh_config=config)
+    report_hook, teamkill_hook = config.hooks
+
+    log = {
+        "sub_content": "!report help",
+        "player_name_1": "some dude",
+        "player_id_1": "1234",
+        "action": "CHAT[Allies][Team]",
+    }
+
+    content, embed, triggered = handler.create_admin_ping_message(log, hook=report_hook)
+    assert triggered
+    assert content == "<@1111>"
+    assert embed.description == "__**!report**__ help"
+
+    content, embed, triggered = handler.create_admin_ping_message(
+        log, hook=teamkill_hook
+    )
+    assert not triggered
+    assert content == ""
+
+
+def test_admin_ping_config_words_apply_to_every_hook():
+    config = AdminPingWebhooksUserConfig(
+        trigger_words=["!admin"],
+        hooks=[
+            TriggerWordMentionWebhook(
+                url=HttpUrl("http://example.com"),
+                user_mentions=["<@1111>"],
+                role_mentions=[],
+            ),
+            TriggerWordMentionWebhook(
+                url=HttpUrl("http://example.com"),
+                user_mentions=["<@2222>"],
+                role_mentions=[],
+                trigger_words=["!report"],
+            ),
+        ],
+    )
+
+    handler = DiscordWebhookHandler(admin_wh_config=config)
+    plain_hook, report_hook = config.hooks
+
+    log = {
+        "sub_content": "!admin help",
+        "player_name_1": "some dude",
+        "player_id_1": "1234",
+        "action": "CHAT[Allies][Team]",
+    }
+
+    content, _, triggered = handler.create_admin_ping_message(log, hook=plain_hook)
+    assert triggered
+    assert content == "<@1111>"
+
+    content, _, triggered = handler.create_admin_ping_message(log, hook=report_hook)
+    assert triggered
+    assert content == "<@2222>"
 
 
 def test_kill_message():

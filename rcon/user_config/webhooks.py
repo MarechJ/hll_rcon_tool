@@ -91,6 +91,30 @@ class DiscordMentionWebhook(DiscordWebhook):
         return list(role_ids)
 
 
+def _normalize_trigger_words(vs: list[str]) -> list[str]:
+    """Lower-case, strip and de-duplicate trigger words."""
+    processed_words = set()
+    for v in vs:
+        processed_words.add(v.lower().strip())
+    return sorted(processed_words)
+
+
+class TriggerWordMentionWebhook(DiscordMentionWebhook):
+    """A mention webhook that may define its own trigger words.
+
+    These are added on top of the config level
+    ``AdminPingWebhooksUserConfig.trigger_words`` (which apply to every hook), so
+    a hook fires on the shared words plus any extra words defined here.
+    """
+
+    trigger_words: list[str] = pydantic.Field(default_factory=list)
+
+    @pydantic.field_validator("trigger_words")
+    @classmethod
+    def ensure_case_unique(cls, vs):
+        return _normalize_trigger_words(vs)
+
+
 class BaseMentionWebhookUserConfig(BaseUserConfig):
     hooks: list[DiscordMentionWebhook] = pydantic.Field(default_factory=list)
 
@@ -148,16 +172,12 @@ class CameraWebhooksUserConfig(BaseMentionWebhookUserConfig):
 
 class AdminPingWebhooksUserConfig(BaseMentionWebhookUserConfig):
     trigger_words: list[str] = pydantic.Field(default_factory=list)
+    hooks: list[TriggerWordMentionWebhook] = pydantic.Field(default_factory=list)
 
     @pydantic.field_validator("trigger_words")
     @classmethod
     def ensure_case_unique(cls, vs):
-        processed_words = set()
-        v: str
-        for v in vs:
-            processed_words.add(v.lower().strip())
-
-        return sorted(list(processed_words))
+        return _normalize_trigger_words(vs)
 
     @staticmethod
     def save_to_db(values: AdminPingWebhookType, dry_run=False) -> None:
@@ -167,11 +187,11 @@ class AdminPingWebhooksUserConfig(BaseMentionWebhookUserConfig):
         for obj in raw_hooks:
             key_check(
                 WebhookMentionType.__required_keys__,
-                WebhookMentionType.__optional_keys__,
+                WebhookMentionType.__optional_keys__ | {"trigger_words"},
                 obj.keys(),
             )
 
-        validated_hooks = parse_raw_mention_hooks(raw_hooks)
+        validated_hooks = parse_raw_admin_ping_hooks(raw_hooks)
         validated_conf = AdminPingWebhooksUserConfig(
             trigger_words=values.get("trigger_words"),
             hooks=validated_hooks,
@@ -247,6 +267,25 @@ def parse_raw_mention_hooks(
             url=raw_hook.get("url"),
             user_mentions=list(user_ids),
             role_mentions=list(role_ids),
+        )
+        validated_hooks.append(h)
+
+    return validated_hooks
+
+
+def parse_raw_admin_ping_hooks(
+    raw_hooks: list[WebhookMentionType],
+) -> list["TriggerWordMentionWebhook"]:
+    validated_hooks: list[TriggerWordMentionWebhook] = []
+    for raw_hook in raw_hooks:
+        user_ids = set(raw_hook.get("user_mentions", []))
+        role_ids = set(raw_hook.get("role_mentions", []))
+
+        h = TriggerWordMentionWebhook(
+            url=raw_hook.get("url"),
+            user_mentions=list(user_ids),
+            role_mentions=list(role_ids),
+            trigger_words=raw_hook.get("trigger_words", []),
         )
         validated_hooks.append(h)
 

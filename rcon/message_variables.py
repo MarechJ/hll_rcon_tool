@@ -334,7 +334,10 @@ def _discord_invite_url(config: RconServerSettingsUserConfig | None = None) -> s
 def _admin_ping_trigger_words(config: AdminPingWebhooksUserConfig | None = None) -> str:
     if config is None:
         config = AdminPingWebhooksUserConfig.load_from_db()
-    return ", ".join(config.trigger_words[:])
+    words = list(config.trigger_words)
+    for hook in config.hooks:
+        words.extend(hook.trigger_words)
+    return ", ".join(dict.fromkeys(words))
 
 
 def _next_map(rcon: Rcon | None = None) -> str:

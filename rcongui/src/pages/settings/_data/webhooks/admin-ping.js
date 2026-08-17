@@ -1,6 +1,6 @@
 const adminPingWebhooksNotes = `
 {
-    /* 
+    /*
         A list of Discord webhook URLs and user/role IDs to mention when one of \`trigger_words\` is used in game chat
 
         You can set as many URLs as you want, but these are updated sequentially not concurrently,
@@ -17,11 +17,21 @@ const adminPingWebhooksNotes = `
             /* A list of role ID(s), must be in the <@&...> format */
             "role_mentions": [
                 "<@&1234>"
+            ],
+            /*
+                Optional trigger words for THIS hook only, in addition to the
+                top-level "trigger_words" below. Use these for words that should
+                ping only this hook (with its own mentions). Leave empty to only
+                use the shared top-level words.
+            */
+            "trigger_words": [
+                "!report"
             ]
         }
     ],
     /*
-        Comma-separated list of trigger words. Case-insensitive. Trigger words match whole words.
+        Shared trigger words that ping every hook. Comma-separated list. Case-insensitive.
+        Trigger words match whole words.
         "this is a TeSt message" would match trigger word "test"
         "this is a testmessage" would NOT match trigger word "test"
     */
