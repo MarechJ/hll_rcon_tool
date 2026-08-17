@@ -23,7 +23,7 @@ from rcon.automods.models import (
 )
 from rcon.automods.num_or_inf import num_or_inf
 from rcon.types import GameStateType, GetDetailedPlayer
-from rcon.user_config.auto_mod_level import AutoModLevelUserConfig, Roles
+from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
 
 LEVEL_THRESHOLDS_RESET_SECS = 120
 AUTOMOD_USERNAME = "AutoMod_LevelThresholds"
@@ -367,7 +367,7 @@ class LevelThresholdsAutomod:
 
                 # By role level thresholds check
                 if self.config.level_thresholds:
-                    role_config = self.config.level_thresholds.get(Roles(aplayer.role))
+                    role_config = self.config.level_thresholds.get(aplayer.role)
 
                     if (
                         role_config

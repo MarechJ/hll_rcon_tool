@@ -84,6 +84,8 @@ class RConChatCommand(BaseChatCommand):
 
 
 class RConChatCommandsUserConfig(BaseChatCommandUserConfig):
+    NAME = "RConChatCommandsUserConfig"
+
     command_words: list[RConChatCommand] = Field(
         default=[
             RConChatCommand(
@@ -166,4 +168,4 @@ class RConChatCommandsUserConfig(BaseChatCommandUserConfig):
         )
 
         if not dry_run:
-            set_user_config(RConChatCommandsUserConfig.KEY(), validated_conf)
+            set_user_config(RConChatCommandsUserConfig.NAME, validated_conf)

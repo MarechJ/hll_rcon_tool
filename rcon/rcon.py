@@ -219,7 +219,25 @@ class Rcon(ServerCtl):
     )
 
     def __init__(self, *args, pool_size: bool | None = None, **kwargs):
-        config = RconConnectionSettingsUserConfig.load_from_db()
+        environment_info = ServerInfo.from_env()
+        supplied_info = args[0] if args and isinstance(args[0], ServerInfo) else None
+        if supplied_info is None:
+            supplied_info = kwargs.get("credentials")
+        if isinstance(supplied_info, ServerInfo):
+            self.server_info = ServerInfo(
+                host=supplied_info.host,
+                port=supplied_info.port,
+                password=supplied_info.password,
+                game=supplied_info.game,
+                number=supplied_info.number or environment_info.number,
+            )
+        else:
+            self.server_info = environment_info
+
+        config = RconConnectionSettingsUserConfig.load_from_db(
+            game=self.server_info.game,
+            server_number=self.server_info.number,
+        )
         super().__init__(
             *args,
             **kwargs,

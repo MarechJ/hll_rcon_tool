@@ -152,6 +152,8 @@ class Reward(pydantic.BaseModel):
 
 
 class SeedVIPUserConfig(BaseUserConfig):
+    NAME = "SeedVIPUserConfig"
+
     enabled: bool = Field(default=False)
     dry_run: bool = Field(default=True)
     language: str | None = Field(default="en_US")
@@ -252,4 +254,4 @@ class SeedVIPUserConfig(BaseUserConfig):
 
         if not dry_run:
             logger.info(f"setting {validated_conf=}")
-            set_user_config(SeedVIPUserConfig.KEY(), validated_conf)
+            set_user_config(SeedVIPUserConfig.NAME, validated_conf)

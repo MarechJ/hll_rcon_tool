@@ -111,6 +111,8 @@ class ChatCommand(BaseChatCommand):
 
 
 class BaseChatCommandUserConfig(BaseUserConfig):
+    NAME = "BaseChatCommandUserConfig"
+
     command_words: list[BaseChatCommand] = Field(
         default_factory=list,
         title="Command Words",
@@ -146,6 +148,8 @@ class BaseChatCommandUserConfig(BaseUserConfig):
 
 
 class ChatCommandsUserConfig(BaseChatCommandUserConfig):
+    NAME = "ChatCommandsUserConfig"
+
     command_words: list[ChatCommand] = Field(
         default_factory=list,
         title="Command Words",
@@ -186,4 +190,4 @@ class ChatCommandsUserConfig(BaseChatCommandUserConfig):
         )
 
         if not dry_run:
-            set_user_config(ChatCommandsUserConfig.KEY(), validated_conf)
+            set_user_config(ChatCommandsUserConfig.NAME, validated_conf)

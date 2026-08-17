@@ -11,6 +11,8 @@ class CameraNotificationType(TypedDict):
 
 
 class CameraNotificationUserConfig(BaseUserConfig):
+    NAME = "CameraNotificationUserConfig"
+
     broadcast: bool = Field(default=False)
     welcome: bool = Field(default=False)
 
@@ -27,4 +29,4 @@ class CameraNotificationUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(CameraNotificationUserConfig.KEY(), validated_conf)
+            set_user_config(CameraNotificationUserConfig.NAME, validated_conf)

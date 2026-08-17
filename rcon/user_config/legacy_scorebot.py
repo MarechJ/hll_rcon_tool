@@ -93,6 +93,8 @@ class ScorebotConfigType(TypedDict):
 
 
 class ScorebotUserConfig(BaseUserConfig):
+    NAME = "ScorebotUserConfig"
+
     all_stats_text: str = Field(default=ALL_STATS)
     author_name_text: str = Field(default=AUTHOR_NAME)
     author_icon_url: str = Field(default=AUTHOR_ICON_URL)
@@ -215,4 +217,4 @@ class ScorebotUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(validated_conf.KEY(), validated_conf)
+            set_user_config(validated_conf.NAME, validated_conf)

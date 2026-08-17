@@ -26,6 +26,8 @@ class WatchKillRateType(TypedDict):
 
 
 class WatchKillRateUserConfig(BaseUserConfig):
+    NAME = "WatchKillRateUserConfig"
+
     enabled: bool = Field(default=False)
     match_start_cooldown_secs: int = Field(default=180, ge=0)
     watch_interval_secs: int = Field(default=60, ge=2)
@@ -82,4 +84,4 @@ class WatchKillRateUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(WatchKillRateUserConfig.KEY(), validated_conf)
+            set_user_config(WatchKillRateUserConfig.NAME, validated_conf)

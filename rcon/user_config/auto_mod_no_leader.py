@@ -1,9 +1,13 @@
 from typing import TypedDict
 
-from pydantic import Field, HttpUrl, field_serializer, field_validator
+from pydantic import Field, HttpUrl, ValidationInfo, field_serializer, field_validator
 
-from rcon.types import Roles
-from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
+from rcon.user_config.utils import (
+    BaseUserConfig,
+    key_check,
+    set_user_config,
+    validate_game_roles,
+)
 
 WARNING_MESSAGE = "Warning, {player_name}! Your squad ({squad_name}) does not have an officer. Players of squads without an officer will be punished after {max_warnings} warnings (you already received {received_warnings}), then kicked.\nNext check will happen automatically in {next_check_seconds}s."
 PUNISH_MESSAGE = "Your squad ({squad_name}) must have an officer.\nYou're being punished by a bot ({received_punishes}/{max_punishes}).\nNext check in {next_check_seconds} seconds"
@@ -16,7 +20,7 @@ class AutoModNoLeaderType(TypedDict):
     discord_webhook_url: HttpUrl | None
 
     whitelist_flags: list[str]
-    immune_roles: list[Roles]
+    immune_roles: list[str]
     immune_player_level: int
     dont_do_anything_below_this_number_of_players: int
 
@@ -41,6 +45,8 @@ class AutoModNoLeaderType(TypedDict):
 
 
 class AutoModNoLeaderUserConfig(BaseUserConfig):
+    NAME = "AutoModNoLeaderUserConfig"
+
     enabled: bool = Field(
         default=False,
         title="Enable",
@@ -62,7 +68,7 @@ class AutoModNoLeaderUserConfig(BaseUserConfig):
         title="Whitelist Flags",
         description="Players having one of the flags will be excluded from actions of the Automod",
     )
-    immune_roles: list[Roles] = Field(
+    immune_roles: list[str] = Field(
         default_factory=list,
         title="Immune Roles",
         description="Players playing these roles are exempted from actions done by the Automod",
@@ -185,12 +191,8 @@ class AutoModNoLeaderUserConfig(BaseUserConfig):
 
     @field_validator("immune_roles")
     @classmethod
-    def validate_roles(cls, vs):
-        validated_immune_roles: list[Roles] = []
-        for raw_role in vs:
-            validated_immune_roles.append(Roles(raw_role))
-
-        return validated_immune_roles
+    def validate_roles(cls, values, info: ValidationInfo):
+        return validate_game_roles(values, info)
 
     @staticmethod
     def save_to_db(values: AutoModNoLeaderType, dry_run=False):
@@ -228,4 +230,4 @@ class AutoModNoLeaderUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(AutoModNoLeaderUserConfig.KEY(), validated_conf)
+            set_user_config(AutoModNoLeaderUserConfig.NAME, validated_conf)

@@ -17,6 +17,8 @@ class VacGameBansType(TypedDict):
 
 
 class VacGameBansUserConfig(BaseUserConfig):
+    NAME = "VacGameBansUserConfig"
+
     vac_history_days: int = Field(ge=0, default=0)
     game_ban_threshhold: int = Field(ge=0, default=0)
     blacklist_id: int | None = None
@@ -42,4 +44,4 @@ class VacGameBansUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(VacGameBansUserConfig.KEY(), validated_conf)
+            set_user_config(VacGameBansUserConfig.NAME, validated_conf)
