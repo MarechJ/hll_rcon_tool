@@ -197,6 +197,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "api.middleware.XRealIpMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -250,7 +251,7 @@ DATABASES = {
         "NAME": db_info["NAME"],
         "OPTIONS": {
             "application_name": (os.getenv("SERVER_NUMBER") or "") + "Django",
-        }
+        },
     }
 }
 

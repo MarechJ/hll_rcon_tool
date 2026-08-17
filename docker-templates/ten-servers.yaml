@@ -83,6 +83,8 @@ x-frontend: &frontend
   image: ${FRONTEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
   environment:
     RCONWEB_EXTERNAL_ADDRESS: ${RCONWEB_EXTERNAL_ADDRESS}
+    RCONWEB_REAL_IP_HEADER: ${RCONWEB_REAL_IP_HEADER}
+    RCONWEB_TRUSTED_PROXIES: ${RCONWEB_TRUSTED_PROXIES}
   restart: always
   volumes:
     - ./static:/static/
