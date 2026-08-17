@@ -577,11 +577,32 @@ class WatchList(Base):
 
 class UserConfig(Base):
     __tablename__ = "user_config"
+    __table_args__ = (
+        UniqueConstraint(
+            "game",
+            "server_number",
+            "name",
+            name="uq_user_config_game_server_number_name",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    key: Mapped[str] = mapped_column(unique=True, index=True)
-    # TODO: Fix this on the UI settings branch once merged
+    name: Mapped[str] = mapped_column()
+    game: Mapped[int] = mapped_column(
+        default=GameIntEnum.HLL_WW2.value,
+        server_default=str(GameIntEnum.HLL_WW2.value),
+    )
+    server_number: Mapped[int] = mapped_column()
     value: Mapped[dict[str, Any]] = mapped_column()
+
+    @property
+    def key(self) -> str:
+        """Unique config key used for caching in Redis
+
+        Returns:
+            str: The key
+        """
+        return f"{self.game}_{self.server_number}_{self.name}"
 
 
 class PlayerFlag(Base):
