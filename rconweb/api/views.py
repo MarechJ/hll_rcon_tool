@@ -6,7 +6,6 @@ import traceback
 from functools import wraps
 from subprocess import PIPE, run
 from typing import Any, Callable
-from django_ratelimit.decorators import ratelimit
 import psutil
 
 import pydantic
@@ -80,7 +79,6 @@ def set_temp_msg(request, func, name):
 
 @csrf_exempt
 @require_http_methods(["GET"])
-@ratelimit(key='ip', rate='10/m')
 def get_version(request):
     res = run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE)
     return api_response(res.stdout.decode(), failed=False, command="get_version")
@@ -88,7 +86,6 @@ def get_version(request):
 
 @csrf_exempt
 @require_http_methods(["GET"])
-@ratelimit(key='ip', rate='60/m')
 def get_public_info(request):
     cached_cur_map = MapsHistory().get_current_map()
     if not cached_cur_map:
