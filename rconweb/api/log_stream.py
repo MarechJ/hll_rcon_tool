@@ -6,12 +6,12 @@ from typing import TypedDict
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.urls import path
 
+from api.auth import APITokenAuthMiddleware
 from rcon.game_logs import is_action
 from rcon.logs.stream import LogStream
 from rcon.types import AllLogTypes, StructuredLogLineWithMetaData
 from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.utils import StreamID, StreamInvalidID
-from api.auth import APITokenAuthMiddleware
 
 logger = getLogger(__name__)
 

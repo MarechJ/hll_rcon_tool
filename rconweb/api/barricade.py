@@ -13,16 +13,16 @@ from sqlalchemy import exists, func
 from api.auth import APITokenAuthMiddleware
 from rcon import models
 from rcon.barricade import (
-    NewReportRequestPayload,
-    BarricadeRequestError,
-    UnbanPlayersRequestPayload,
-    BanPlayersRequestPayload,
-    ResponseBody,
-    ClientRequestType,
-    RequestBody,
-    ServerRequestType,
-    ScanPlayersRequestPayload,
     GROUP_NAME,
+    BanPlayersRequestPayload,
+    BarricadeRequestError,
+    ClientRequestType,
+    NewReportRequestPayload,
+    RequestBody,
+    ResponseBody,
+    ScanPlayersRequestPayload,
+    ServerRequestType,
+    UnbanPlayersRequestPayload,
 )
 from rcon.blacklist import (
     BlacklistBarricadeWarnOnlineCommand,

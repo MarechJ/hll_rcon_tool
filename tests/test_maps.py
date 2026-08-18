@@ -1,11 +1,10 @@
 import os
 from logging import getLogger
 from pathlib import Path
-from rcon.game import get_game_profile
-from rcon.types import GameEnum
 
 import pytest
 
+from rcon.game import get_game_profile
 from rcon.maps import (
     LAYERS,
     MAPS,
@@ -23,6 +22,7 @@ from rcon.maps import (
     parse_map_string,
     parse_map_string_attacker,
 )
+from rcon.types import GameEnum
 
 logger = getLogger(__name__)
 

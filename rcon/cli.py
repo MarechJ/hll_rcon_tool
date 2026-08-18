@@ -592,7 +592,7 @@ def remove_orphaned_map_ids():
     vm = VoteMap()
     try:
         known_map_ids = [m.id for m in ctl.get_maps()]
-    except Exception as e:
+    except Exception as e: # noqa
         logger.error(
             f"Could not reach the game server to remove orphaned map IDs, skipping: {e}"
         )

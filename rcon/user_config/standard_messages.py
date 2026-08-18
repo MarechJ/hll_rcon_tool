@@ -1,9 +1,7 @@
 import json
 import os
 from logging import getLogger
-from typing import Any, TypedDict
-
-from typing import Self
+from typing import Any, Self, TypedDict
 
 import pydantic
 from pydantic import Field
