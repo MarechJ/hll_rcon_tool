@@ -5,7 +5,7 @@ target-version = ['py312']
 requires-python = ">=3.12"
 dependencies = [
     # Alembic does not use semantic versioning, so be careful with the version numbers https://alembic.sqlalchemy.org/en/latest/front.html#versioning-scheme
-    "alembic==1.18.4",
+    "alembic==1.19.1",
     "channels==4.3.2",
     "channels-redis==4.3.0",
     "click==8.4.0",
@@ -29,7 +29,7 @@ dependencies = [
     "psycopg2-binary>=2.9.12",
     "pydantic==2.13.4",
     "python-dateutil==2.9.0.post0",
-    "pytz>=2026.2",
+    "pytz>=2026.3.post1",
     "redis==7.4.0",
     "requests==2.34.2",
     "rq==2.8.0",
@@ -56,5 +56,5 @@ dev = [
     "cachetools==7.1.1",
     "pytest==9.0.3",
     "ruff==0.15.18",
-    "fakeredis==2.37.0",
+    "fakeredis==2.37.1",
 ]
