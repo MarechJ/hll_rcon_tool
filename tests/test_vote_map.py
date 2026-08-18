@@ -372,10 +372,10 @@ def test_add_invalid_map_to_whitelist(votemap):
 
 
 def test_set_invalid_maps_to_whitelist(votemap):
-    """Test adding maps with invalid id to the whitelist raises error"""
-    with pytest.raises(ValueError):
-        whitelist = votemap.get_map_whitelist()
-        whitelist.append(INVALID_MAP)
+    """Test adding maps with invalid id to the whitelist raises error naming them"""
+    whitelist = list(votemap.get_map_whitelist())
+    whitelist.append(INVALID_MAP)
+    with pytest.raises(ValueError, match="Invalid maps: invalid"):
         votemap.add_maps_to_whitelist(whitelist)
 
 

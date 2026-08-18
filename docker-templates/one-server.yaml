@@ -57,7 +57,7 @@ x-backend: &backend
     - ./logs:/logs/
     - ./servicediscovery:/servicediscovery
     - ./static:/static/
-    - ./config:/config/
+    - ./config:/config/:ro
 x-supervisor: &supervisor
   image: ${BACKEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
   restart: on-failure
@@ -65,7 +65,7 @@ x-supervisor: &supervisor
   volumes:
     - ./logs:/logs/
     - ./supervisor_data:/data
-    - ./config:/config/
+    - ./config:/config/:ro
     - scoreboard_db:/scoreboard_db
 x-frontend: &frontend
   build:
@@ -78,7 +78,7 @@ x-frontend: &frontend
   volumes:
     - ./static:/static/
     - ./certs:/certs/
-    - ./config/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    - ./config:/config/:ro
 
 services:
   ########### SERVER 1  #############

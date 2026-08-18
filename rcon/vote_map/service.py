@@ -72,7 +72,9 @@ def validate_maps(func):
         elif isinstance(map_arg, Iterable) and not isinstance(map_arg, Layer):
             invalid = [map.id for map in map_arg if map not in all_maps]
             if invalid:
-                raise ValueError(f"Invalid maps: {', '.join(invalid)}")
+                raise ValueError(
+                    f"Invalid maps: {', '.join(str(map) for map in invalid)}"
+                )
         else:
             raise TypeError("Invalid argument type for map(s)")
         return func(self, map_arg, *args, **kwargs)
