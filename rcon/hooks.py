@@ -451,7 +451,7 @@ def should_ban(
     except ValueError:  # In case DaysSinceLastBan can be null
         return None
 
-    has_a_ban = bans.get("VACBanned") == True or number_of_game_bans >= max_game_bans
+    has_a_ban = bans.get("VACBanned") or number_of_game_bans >= max_game_bans
 
     if days_since_last_ban <= 0:
         return False

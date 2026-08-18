@@ -384,7 +384,7 @@ def enrich_db_users(chunk_size=100, update_from_days_old=30):
         # Missing JSONB records are surprisingly difficult to identify depending
         # on how they've been persisted but JSONB.NULL should cover the different cases
         # This query can also return many thousands of results, using stream_results and
-        # yield_per doesn't fetch all of the results at once, but pages through them
+        # yield_per doesn't fetch all the results at once, but pages through them
         stmt = (
             select(PlayerID)
             .execution_options(stream_results=True, yield_per=chunk_size)
@@ -392,7 +392,7 @@ def enrich_db_users(chunk_size=100, update_from_days_old=30):
             .where(func.length(PlayerID.player_id) == 17)
             .where(
                 or_(
-                    PlayerID.steaminfo == None,
+                    PlayerID.steaminfo is None,
                     SteamInfo.updated <= max_age,
                     SteamInfo.bans == JSONB.NULL,
                     SteamInfo.profile == JSONB.NULL,

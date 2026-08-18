@@ -586,8 +586,8 @@ MAPS = {
 }
 
 LAYERS = {
-    l.id.lower(): l
-    for l in (
+    layer.id.lower(): layer
+    for layer in (
         # In older versions (prior to v9.8.0) map names could be recorded as bla_
         # if the map name could not be retrieved from the game server
         Layer(id="bla_", map=MAPS[UNKNOWN_MAP_NAME], game_mode=GameMode.WARFARE),

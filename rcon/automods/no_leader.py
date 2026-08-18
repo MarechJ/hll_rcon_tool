@@ -203,7 +203,7 @@ class NoLeaderAutomod:
                 if state == PunishStepState.APPLY:
                     punitions_to_apply.add_squad_state(team, squad_name, squad)
 
-                if not state in [
+                if state not in [
                     PunishStepState.DISABLED,
                     PunishStepState.GO_TO_NEXT_STEP,
                 ]:
@@ -223,7 +223,7 @@ class NoLeaderAutomod:
                     # only here to make the tests pass, otherwise useless
                     punitions_to_apply.add_squad_state(team, squad_name, squad)
 
-                if not state in [
+                if state not in [
                     PunishStepState.DISABLED,
                     PunishStepState.GO_TO_NEXT_STEP,
                 ]:
@@ -241,7 +241,7 @@ class NoLeaderAutomod:
                     punitions_to_apply.punish.append(aplayer)
                     punitions_to_apply.add_squad_state(team, squad_name, squad)
 
-                if not state in [
+                if state not in [
                     PunishStepState.DISABLED,
                     PunishStepState.GO_TO_NEXT_STEP,
                 ]:

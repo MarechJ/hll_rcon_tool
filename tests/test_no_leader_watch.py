@@ -2030,7 +2030,7 @@ def fake_state(team, squad_name):
 
 def test_default_config():
     config = AutoModNoLeaderUserConfig.load_from_db()
-    assert config.enabled == False
+    assert not config.enabled
 
 
 def fake_setex(k, _, v):

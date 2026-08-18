@@ -10,8 +10,20 @@ from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.urls import path
 from sqlalchemy import exists, func
 
+from api.auth import APITokenAuthMiddleware
 from rcon import models
-from rcon.barricade import *
+from rcon.barricade import (
+    NewReportRequestPayload,
+    BarricadeRequestError,
+    UnbanPlayersRequestPayload,
+    BanPlayersRequestPayload,
+    ResponseBody,
+    ClientRequestType,
+    RequestBody,
+    ServerRequestType,
+    ScanPlayersRequestPayload,
+    GROUP_NAME,
+)
 from rcon.blacklist import (
     BlacklistBarricadeWarnOnlineCommand,
     BlacklistCommand,
@@ -52,7 +64,7 @@ def ban_player(player_id: str, blacklist_id: int, reason: str) -> int | None:
             reason=reason,
             admin_name="Barricade",
         )
-    except: # noqa
+    except:  # noqa
         logger.exception("Failed to blacklist player %s", player_id)
         return None
     else:
@@ -64,7 +76,7 @@ def unban_player(record_id: int):
     try:
         remove_record_from_blacklist(record_id=record_id)
         return True
-    except: # noqa
+    except:  # noqa
         logger.exception("Failed to remove blacklist record #%s", record_id)
         return False
 
@@ -289,14 +301,16 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
         record_ids = [
             # The client expects strings, not ints
             str(ban_id)
-            for ban_id in await asyncio.gather(*[
-                ban_player(
-                    player_id=player_id,
-                    blacklist_id=blacklist_id,
-                    reason=reason or payload.config.reason,
-                )
-                for player_id, reason in payload.player_ids.items()
-            ])
+            for ban_id in await asyncio.gather(
+                *[
+                    ban_player(
+                        player_id=player_id,
+                        blacklist_id=blacklist_id,
+                        reason=reason or payload.config.reason,
+                    )
+                    for player_id, reason in payload.player_ids.items()
+                ]
+            )
         ]
 
         return {"ban_ids": dict(zip(payload.player_ids.keys(), record_ids))}
@@ -339,8 +353,6 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
             )
         )
 
-
-from api.auth import APITokenAuthMiddleware
 
 urlpatterns = [
     path(

@@ -261,9 +261,9 @@ def test_all_map_images_exist():
         ALL_MAP_IMAGES = [f for f in os.listdir(Path(f"./assets/{_game.value}/images/maps"))]
         ALL_MAP_ICONS = [f for f in os.listdir(Path(f"./assets/{_game.value}/images/maps/icons"))]
 
-        for l in game.layers.values():
-            assert l.image_name in ALL_MAP_IMAGES
-            assert l.image_name in ALL_MAP_ICONS
+        for layer in game.layers.values():
+            assert layer.image_name in ALL_MAP_IMAGES
+            assert layer.image_name in ALL_MAP_ICONS
 
 @pytest.mark.parametrize(
     "team, expected",

@@ -231,7 +231,7 @@ def get_players_by_appearance(
         if is_watched is True:
             query = (
                 query.join(PlayerID.watchlist)
-                .filter(WatchList.is_watched == True)
+                .filter(WatchList.is_watched)
                 .options(contains_eager(PlayerID.watchlist))
             )
 

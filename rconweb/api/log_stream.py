@@ -11,6 +11,7 @@ from rcon.logs.stream import LogStream
 from rcon.types import AllLogTypes, StructuredLogLineWithMetaData
 from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.utils import StreamID, StreamInvalidID
+from api.auth import APITokenAuthMiddleware
 
 logger = getLogger(__name__)
 
@@ -130,8 +131,6 @@ class LogStreamConsumer(AsyncJsonWebsocketConsumer):
     async def send_json(self, content, close=False):
         return await super().send_json(content, close)
 
-
-from api.auth import APITokenAuthMiddleware
 
 urlpatterns = [
     path(

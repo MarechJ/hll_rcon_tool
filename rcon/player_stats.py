@@ -386,33 +386,33 @@ class LiveStats(BaseStats):
     ) -> tuple[dict[str, list[StructuredLogLineWithMetaData]], dict[str, str]]:
         logs_indexed: dict[str, list[StructuredLogLineWithMetaData]] = {}
         id_to_name: dict[str, str] = {}
-        for l in logs:
+        for log in logs:
             update_player_name_map(
-                id_to_name, l.get("player_id_1"), l.get("player_name_1")
+                id_to_name, log.get("player_id_1"), log.get("player_name_1")
             )
             update_player_name_map(
-                id_to_name, l.get("player_id_2"), l.get("player_name_2")
+                id_to_name, log.get("player_id_2"), log.get("player_name_2")
             )
 
             player = indexed_players_by_id.get(
-                l.get("player_id_1")
-            ) or indexed_players_by_name.get(l.get("player_name_1"))
+                log.get("player_id_1")
+            ) or indexed_players_by_name.get(log.get("player_name_1"))
             player2 = indexed_players_by_id.get(
-                l.get("player_id_2")
-            ) or indexed_players_by_name.get(l.get("player_name_2"))
+                log.get("player_id_2")
+            ) or indexed_players_by_name.get(log.get("player_name_2"))
 
             try:
                 # Only consider stats for a player from his last connection (so a disconnect reconnect should reset stats) otherwise multiple sessions could be blended into one, even if they are far apart
-                if player and self._is_log_from_current_session(now, player, l):
-                    key = l["player_id_1"]
+                if player and self._is_log_from_current_session(now, player, log):
+                    key = log["player_id_1"]
                     if key:
-                        logs_indexed.setdefault(key, []).append(l)
-                if player2 and self._is_log_from_current_session(now, player2, l):
-                    key = l["player_id_2"]
+                        logs_indexed.setdefault(key, []).append(log)
+                if player2 and self._is_log_from_current_session(now, player2, log):
+                    key = log["player_id_2"]
                     if key:
-                        logs_indexed.setdefault(key, []).append(l)
+                        logs_indexed.setdefault(key, []).append(log)
             except KeyError:
-                logger.exception("Invalid log line %s", l)
+                logger.exception("Invalid log line %s", log)
 
         return logs_indexed, id_to_name
 

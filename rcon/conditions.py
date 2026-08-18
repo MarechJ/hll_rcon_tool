@@ -1,5 +1,4 @@
 import logging
-from collections.abc import Callable
 from datetime import datetime
 
 import pytz
@@ -19,8 +18,13 @@ def _get_current_map_metric(rcon):
     return str(rcon.current_map)
 
 
-player_flags: Callable[[PlayerID], list[str]] = lambda p: [f.flag for f in p.flags]
-player_id: Callable[[PlayerID], str] = lambda p: p.player_id
+def player_flags(p: PlayerID) -> list:
+    return [f.flag for f in p.flags]
+
+
+def player_id(p: PlayerID) -> str:
+    return p.player_id
+
 
 METRICS = {
     "player_count": lambda rcon: int(rcon.get_slots()["current_players"]),
@@ -66,7 +70,7 @@ class Condition:
     def metric_getter(self):
         try:
             return METRICS[self.metric_name]
-        except: # noqa
+        except:  # noqa
             return None
 
     def is_valid(self, **metric_sources):

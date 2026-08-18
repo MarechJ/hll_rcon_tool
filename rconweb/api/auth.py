@@ -102,7 +102,7 @@ class APITokenAuthMiddleware:
                 header_name, raw_api_key = headers.get("authorization", "").split(
                     maxsplit=1
                 )
-                if not header_name.upper().strip() in BEARER:
+                if header_name.upper().strip() not in BEARER:
                     raw_api_key = None
             except (KeyError, ValueError):
                 raw_api_key = None
@@ -275,7 +275,7 @@ def check_api_key(request):
         header_name, raw_api_key = request.META[HTTP_AUTHORIZATION_HEADER].split(
             maxsplit=1
         )
-        if not header_name.upper().strip() in BEARER:
+        if header_name.upper().strip() not in BEARER:
             raw_api_key = None
     except (KeyError, ValueError):
         raw_api_key = None

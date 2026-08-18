@@ -944,7 +944,8 @@ class VoteMap:
             choice = random.choice(self.get_map_whitelist())
             return choice
 
-        last_played_map = lambda map: map.id != self._maps_history[0]["name"]
+        def last_played_map(layer: Layer) -> bool:
+            return layer.id != self._maps_history[0]["name"]
 
         try:
             next_default_map: Layer = {

@@ -718,4 +718,4 @@ def test_should_wait_kick(team_view):
 
 def test_default_config():
     config = AutoModNoSoloTankUserConfig.load_from_db()
-    assert config.enabled == False
+    assert not config.enabled

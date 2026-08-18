@@ -3,7 +3,6 @@ import os
 from logging import getLogger
 from typing import Any, TypedDict
 
-logger = getLogger(__name__)
 from typing import Self
 
 import pydantic
@@ -21,6 +20,8 @@ from rcon.user_config.utils import (
     key_check,
     set_user_config,
 )
+
+logger = getLogger(__name__)
 
 
 class StandardMessageType(TypedDict):

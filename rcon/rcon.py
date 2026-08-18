@@ -1184,10 +1184,10 @@ class Rcon(ServerCtl):
     @ttl_cache(60 * 5)
     def get_map_sequence(self) -> GetMapSequence:
         s = super().get_map_sequence()
-        l = s["maps"]
+        layers = s["maps"]
 
         maps: list[Layer] = []
-        for map_ in l:
+        for map_ in layers:
             if not self.map_regexp.match(map_):
                 raise HLLCommandFailedError("Server returned wrong data")
 
