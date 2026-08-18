@@ -71,7 +71,9 @@ def update_penalty_count(
         )
     except Exception:
         # Don't let errors prevent adding/editing blacklist records
-        logger.exception(f"Unable to save player {action=} while adding blacklist record")
+        logger.exception(
+            f"Unable to save player {action=} while adding blacklist record"
+        )
 
 
 def get_server_number_mask():
@@ -152,8 +154,7 @@ def get_player_blacklist_records(
         .join(BlacklistRecord.blacklist)
         .filter(
             # Record must target the given player
-            PlayerID.player_id
-            == player_id,
+            PlayerID.player_id == player_id,
         )
     )
 
@@ -493,7 +494,7 @@ def apply_blacklist_punishment(
     else:
         try:
             send_to_discord_audit(
-                message=f"{dict_to_discord({"player": player_name, "reason": reason})}",
+                message=f"{dict_to_discord({'player': player_name, 'reason': reason})}",
                 command_name="blacklist",
                 by="BLACKLIST",
             )

@@ -87,7 +87,7 @@ class Series:
         logger.debug("Taking snaphost for %s", self.NAME)
         try:
             self.snapshot(rcon)
-        except: # noqa
+        except:  # noqa
             self.fails += 1
             if self.fails > self.max_fails:
                 raise

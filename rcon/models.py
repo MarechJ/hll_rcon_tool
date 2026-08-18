@@ -210,7 +210,6 @@ class PlayerID(Base):
     def get_penalty_count(self) -> PenaltyCountType:
         counts = defaultdict(int)
         for action in self.received_actions:
-
             try:
                 action = PlayerActionState[action.action_type]
                 counts[action] += 1
@@ -314,7 +313,7 @@ class PlayerSoldier(Base):
 
     @classmethod
     def update(cls, player: GetDetailedPlayer):
-        logger.debug(f"Updating soldier {player["name"]}")
+        logger.debug(f"Updating soldier {player['name']}")
         with enter_session() as sess:
             # Retrieve the PlayerID instance to get its ID for foreign key reference
             player_id_stmt = select(PlayerID).where(
@@ -718,7 +717,9 @@ class LogLine(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     version: Mapped[int] = mapped_column(default=1)
     creation_time: Mapped[datetime] = mapped_column(TIMESTAMP, default=datetime.utcnow)
-    event_time: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False, index=True)
+    event_time: Mapped[datetime] = mapped_column(
+        UTCDateTime, nullable=False, index=True
+    )
     type: Mapped[str] = mapped_column(nullable=True)
     player1_name: Mapped[str] = mapped_column(nullable=True)
     player1_player_id: Mapped[int] = mapped_column(

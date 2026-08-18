@@ -51,7 +51,7 @@ def run_stats_loop():
         live_stats_loop()
     except KeyboardInterrupt:
         sys.exit(0)
-    except: # noqa
+    except:  # noqa
         logger.exception("Stats loop stopped")
         sys.exit(1)
 
@@ -72,7 +72,7 @@ def run_log_loop():
     with invalidates(load_generic_hooks, get_handler):
         try:
             LogLoop().run()
-        except: # noqa
+        except:  # noqa
             logger.exception("Chat recorder stopped")
             sys.exit(1)
 
@@ -85,7 +85,7 @@ def run_log_stream():
         stream.clear()
         if config.enabled:
             stream.run()
-    except: # noqa
+    except:  # noqa
         logger.exception("Log stream stopped")
         sys.exit(1)
 
@@ -114,7 +114,7 @@ def run_expiring_vips():
 def run_seed_vip():
     try:
         rcon.seed_vip.service.run()
-    except: # noqa
+    except:  # noqa
         logger.exception("seed VIP stopped")
         sys.exit(1)
 
@@ -123,7 +123,7 @@ def run_seed_vip():
 def watch_killrate():
     try:
         rcon.watch_killrate.run()
-    except: # noqa
+    except:  # noqa
         logger.exception("Watch_KillRate stopped")
         sys.exit(1)
 
@@ -144,7 +144,7 @@ def run_blacklists():
 @click.option("-n", "--now", is_flag=True)
 def run_log_recorder(interval, frequency_min, now):
     if frequency_min and interval:
-        raise Exception("Cannot have frequency-min and interval at the same time") # noqa
+        raise Exception("Cannot have frequency-min and interval at the same time")  # noqa
     if frequency_min:
         interval = frequency_min * 60
     LogRecorder(interval).run(run_immediately=now)
@@ -265,7 +265,11 @@ def _models_to_exclude():
     """Return model classes that do not map directly to a user config"""
     # Any sort of parent class that doesn't directly map to a user config
     # should be excluded
-    return {BaseWebhookUserConfig.__name__, BaseMentionWebhookUserConfig.__name__, BaseUserConfig.__name__}
+    return {
+        BaseWebhookUserConfig.__name__,
+        BaseMentionWebhookUserConfig.__name__,
+        BaseUserConfig.__name__,
+    }
 
 
 @cli.command(name="get_user_settings")
@@ -592,7 +596,7 @@ def remove_orphaned_map_ids():
     vm = VoteMap()
     try:
         known_map_ids = [m.id for m in ctl.get_maps()]
-    except Exception as e: # noqa
+    except Exception as e:  # noqa
         logger.error(
             f"Could not reach the game server to remove orphaned map IDs, skipping: {e}"
         )

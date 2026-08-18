@@ -24,7 +24,7 @@ class Central:
                 },
                 auth=("bearer", self.token),
             )
-        except: # noqa
+        except:  # noqa
             pass
 
     def push_ban_list(self, ban_list):

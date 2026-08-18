@@ -118,9 +118,7 @@ def test_multiple_sides():
 
 
 def test_prefer_more_kills():
-    p = PlayerStats(
-        weapons={"M1A1 THOMPSON": 1, "GEWEHR 43": 2}, death_by_weapons={}
-    )
+    p = PlayerStats(weapons={"M1A1 THOMPSON": 1, "GEWEHR 43": 2}, death_by_weapons={})
 
     assert p.detect_team() == PlayerTeamAssociation(
         side=Team.AXIS, confidence=PlayerTeamConfidence.MIXED, ratio=66.67

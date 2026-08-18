@@ -66,8 +66,6 @@ def audit(func_name, request, arguments):
         except KeyError:
             pass
         arguments = " ".join([f"{k}: `{v}`" for k, v in args.items()])
-        send_to_discord_audit(
-            f"`{func_name}`: {arguments}", request.user.username
-        )
-    except: # noqa
+        send_to_discord_audit(f"`{func_name}`: {arguments}", request.user.username)
+    except:  # noqa
         logger.exception("Can't send audit log")

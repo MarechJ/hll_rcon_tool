@@ -53,9 +53,7 @@ def make_hook(webhook_url) -> DiscordWebhook | None:
         return None
 
     # Keep webhook delivery from blocking the caller indefinitely.
-    return DiscordWebhook(
-        url=str(webhook_url), timeout=DISCORD_WEBHOOK_TIMEOUT_SECONDS
-    )
+    return DiscordWebhook(url=str(webhook_url), timeout=DISCORD_WEBHOOK_TIMEOUT_SECONDS)
 
 
 def make_allowed_mentions(user_ids, role_ids):
@@ -165,7 +163,7 @@ def send_to_discord_audit(
                     server_number=int(get_server_number()),
                 )
             )
-    except: # noqa
+    except:  # noqa
         logger.exception("Can't send audit log")
         if not silent:
             raise

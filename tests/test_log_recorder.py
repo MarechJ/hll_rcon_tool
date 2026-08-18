@@ -94,9 +94,13 @@ class TestLogRecorder:
             res = sess.query(LogLine).all()
             assert len(res) == 2
             assert res[0].type == "TEAM KILL"
-            assert res[0].event_time == datetime.datetime.fromtimestamp(1612695641, tz=UTC)
+            assert res[0].event_time == datetime.datetime.fromtimestamp(
+                1612695641, tz=UTC
+            )
             assert res[1].type == "KILL"
-            assert res[1].event_time == datetime.datetime.fromtimestamp(1612695641, tz=UTC)
+            assert res[1].event_time == datetime.datetime.fromtimestamp(
+                1612695641, tz=UTC
+            )
 
     def test_no_duplicate_records(self, log_recorder):
         logs = [

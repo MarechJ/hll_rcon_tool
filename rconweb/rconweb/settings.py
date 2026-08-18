@@ -30,7 +30,7 @@ try:
         .stdout.decode()
         .strip()
     )
-except Exception: # noqa
+except Exception:  # noqa
     TAG_VERSION = "unknown"
 
 HLL_MAINTENANCE_CONTAINER = os.getenv("HLL_MAINTENANCE_CONTAINER")

@@ -196,7 +196,7 @@ class VoteMap:
 
             if player_choice:
                 map_choice = selection.pop(0)
-                s = f"{player_choice["player_name"]}'s pick:\n"
+                s = f"{player_choice['player_name']}'s pick:\n"
                 s += f"[{maps_to_numbers[map_choice]}] {map_choice.pretty_name} - {ranked_votes[map_choice]}/{total_vote_counts} votes"
                 text.append(s)
             categorized = categorize_maps(selection)
@@ -313,7 +313,7 @@ class VoteMap:
     @validate_maps
     def set_map_whitelist(self, maps: Iterable[Layer]):
         if len([*maps]) < 1:
-            raise Exception("Votemap whitelist must have at least 1 one map.") # noqa
+            raise Exception("Votemap whitelist must have at least 1 one map.")  # noqa
         self._state.set_whitelist(maps)
 
     def get_selection(self) -> list[Layer]:
@@ -368,7 +368,7 @@ class VoteMap:
                 position = idx
                 break
         if position == -1:
-            raise Exception(f"Map {map.pretty_name} is not in the selection.") # noqa
+            raise Exception(f"Map {map.pretty_name} is not in the selection.")  # noqa
 
         if self.get_player_choice() and position == 0:
             self.delete_player_choice()
@@ -417,11 +417,11 @@ class VoteMap:
             try:
                 # get vote count based on vip or flags
                 vote_count = self._get_vote_count(self._get_player(player_id))
-            except: # noqa
+            except:  # noqa
                 # if player not found or any other issue default to 1
                 vote_count = 1
         elif vote_count < 1:
-            raise Exception("Number of votes must be 1 or greater.") # noqa
+            raise Exception("Number of votes must be 1 or greater.")  # noqa
 
         self._state.add_vote(
             player_id=player_id, player_name=player_name, map=map, vote_count=vote_count
@@ -586,7 +586,7 @@ class VoteMap:
         ### Vote map result
         Winner map: `{status["next_map"]}`
         Total votes: `{sum([d["votes_count"] for d in status["results"]])}`
-        {"\n".join([f"1. {d["map"].pretty_name} [{d["votes_count"]} votes]" for d in status['results']])}
+        {"\n".join([f"1. {d['map'].pretty_name} [{d['votes_count']} votes]" for d in status["results"]])}
         """
 
     def _get_optin_players(self) -> list[tuple[str, str]]:
@@ -1096,7 +1096,7 @@ class VoteMap:
                 raise ValueError(
                     f"Multiple entries found for player {player_id=}."
                 ) from e
-            except Exception: # noqa
+            except Exception:  # noqa
                 raise PlayerNotFound(
                     f"Something went wrong while searching for your {player_id=} profile."
                 )
@@ -1228,14 +1228,17 @@ class VoteMapCommandHandler:
             )
 
         attackers = None
-        if game_mode == GameMode.OFFENSIVE.value and (attackers := self.__get_next_param(params, "allies")) not in teams:
+        if (
+            game_mode == GameMode.OFFENSIVE.value
+            and (attackers := self.__get_next_param(params, "allies")) not in teams
+        ):
             raise InvalidMapParam(
                 f"""INVALID ATTACK TEAM\n                    
                 When choosing the Offensive mode, you must specify attacking team to select environment.\n
                 => {map_tag} {game_mode} <{" | ".join(teams)}> [env]\n                    
                 OPTIONS:
                 {"\n".join(teams)}"""
-                )
+            )
 
         if (environment := self.__get_next_param(params, "day")) not in environments:
             raise InvalidMapParam(
@@ -1246,10 +1249,12 @@ class VoteMapCommandHandler:
 
         map_found = list(
             filter(
-                lambda m: m.map.tag == map_tag.upper()
-                and m.game_mode == game_mode
-                and m.attackers == attackers
-                and m.environment == environment,
+                lambda m: (
+                    m.map.tag == map_tag.upper()
+                    and m.game_mode == game_mode
+                    and m.attackers == attackers
+                    and m.environment == environment
+                ),
                 all_maps,
             )
         )
@@ -1335,7 +1340,7 @@ class VoteMapCommandHandler:
 
         player_vote = self.votemap.get_vote(player_id)
         if player_vote:
-            message += f"You've voted for {self.votemap.parse_layer(player_vote["map_id"]).pretty_name}"
+            message += f"You've voted for {self.votemap.parse_layer(player_vote['map_id']).pretty_name}"
         else:
             message += ">>> You have not voted yet! <<<"
 

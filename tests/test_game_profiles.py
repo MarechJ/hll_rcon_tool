@@ -117,16 +117,12 @@ def test_profiles_expose_game_specific_role_ids():
         ),
     ],
 )
-def test_guess_map_from_log_uses_selected_game_catalog(
-    profile, raw, expected_layer_id
-):
+def test_guess_map_from_log_uses_selected_game_catalog(profile, raw, expected_layer_id):
     assert guess_map_from_log({"raw": raw}, profile).id == expected_layer_id
 
 
 def test_guess_map_from_log_does_not_fall_through_to_other_game_catalog():
-    guessed = guess_map_from_log(
-        {"raw": "MATCH START CARENTAN WARFARE"}, HLLV_PROFILE
-    )
+    guessed = guess_map_from_log({"raw": "MATCH START CARENTAN WARFARE"}, HLLV_PROFILE)
 
     assert guessed.id == UNKNOWN_MAP_NAME
 

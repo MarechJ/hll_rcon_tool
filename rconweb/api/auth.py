@@ -178,7 +178,7 @@ class RconJsonResponse(HttpResponse):
 def api_response(*args, **kwargs):
     status_code = kwargs.pop("status_code", 200)
     return RconJsonResponse(
-        RconResponse(version=TAG_VERSION, *args, **kwargs).to_dict(), # noqa
+        RconResponse(version=TAG_VERSION, *args, **kwargs).to_dict(),  # noqa
         status=status_code,
     )
 

@@ -242,7 +242,9 @@ def format_map_vote(format_type="line"):
         if format_type == "by_mod_line":
             return f"OFFENSIVE: {off} WARFARE: {warfare} SKIRMISH: {control_skirmish}"
         if format_type == "by_mod_vertical":
-            return f"OFFENSIVE:\n{off}\nWARFARE:\n{warfare}\nSKIRMISH:\n{control_skirmish}"
+            return (
+                f"OFFENSIVE:\n{off}\nWARFARE:\n{warfare}\nSKIRMISH:\n{control_skirmish}"
+            )
         if format_type == "by_mod_split":
             return f"OFFENSIVE: {off}\nWARFARE: {warfare}\nSKIRMISH: {control_skirmish}"
         if format_type == "by_mod_vertical_all":

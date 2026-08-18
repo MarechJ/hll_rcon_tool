@@ -119,7 +119,10 @@ def _get_set_player(
         player = _save_player_id(sess, player_id)
     if player_name:
         _save_player_alias(
-            sess, player, player_name, timestamp or datetime.datetime.now(tz=UTC).timestamp()
+            sess,
+            player,
+            player_name,
+            timestamp or datetime.datetime.now(tz=UTC).timestamp(),
         )
     if steam_id:
         player.steam_id = steam_id
@@ -355,13 +358,16 @@ def save_player(
     player_id: str,
     timestamp: float | None = None,
     *,
-    steam_id: str | None = None
+    steam_id: str | None = None,
 ) -> None:
     """Create a PlayerID record if non existent and save the player name alias"""
     with enter_session() as sess:
         player = _save_player_id(sess, player_id)
         _save_player_alias(
-            sess, player, player_name, timestamp or datetime.datetime.now(tz=UTC).timestamp()
+            sess,
+            player,
+            player_name,
+            timestamp or datetime.datetime.now(tz=UTC).timestamp(),
         )
         if steam_id:
             player.steam_id = steam_id
@@ -376,7 +382,7 @@ def save_player_action(
     reason: str = "",
     timestamp: float | None = None,
     *,
-    steam_id: str | None = None
+    steam_id: str | None = None,
 ):
     with enter_session() as sess:
         player = _get_set_player(
@@ -425,7 +431,7 @@ def save_start_player_session(
     player_id: str,
     timestamp: float,
     server_name: str | None = None,
-    server_number: int | None = None
+    server_number: int | None = None,
 ):
     config = RconServerSettingsUserConfig.load_from_db()
 
@@ -598,7 +604,9 @@ def post_player_comment(player_id: str, comment, user: str = "Bot"):
 
 if __name__ == "__main__":
     save_player("Achile5115", "76561198172574911")
-    save_start_player_session("76561198172574911", datetime.datetime.now(tz=UTC).timestamp())
+    save_start_player_session(
+        "76561198172574911", datetime.datetime.now(tz=UTC).timestamp()
+    )
     save_end_player_session(
         "76561198172574911",
         int(

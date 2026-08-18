@@ -69,7 +69,7 @@ def filter_steam_ids():
             # Remove any duplicates and sort to force redis cache hits even if the
             # originating call has steam IDs in different orders
             player_ids = sorted({id_ for id_ in player_ids if is_steam_id_64(id_)})
-            return f(player_ids=player_ids, *args, **kwargs) # noqa
+            return f(player_ids=player_ids, *args, **kwargs)  # noqa
 
         return wrapper
 
@@ -99,7 +99,7 @@ def filter_steam_id(return_value: Any = None):
         @wraps(f)
         def wrapper(player_id: str, *args, **kwargs):
             if is_steam_id_64(player_id):
-                return f(player_id=player_id, *args, **kwargs) # noqa
+                return f(player_id=player_id, *args, **kwargs)  # noqa
             else:
                 return ReturnValue(value=return_value)()
 
@@ -149,9 +149,14 @@ def fetch_steam_player_summary_mult_players(
                 logger.info("Fetching player summaries for %s steam IDs", len(chunk))
                 started = time.perf_counter()
                 try:
-                    raw_result = api.ISteamUser.GetPlayerSummaries(steamids=chunk_steam_ids)
+                    raw_result = api.ISteamUser.GetPlayerSummaries(
+                        steamids=chunk_steam_ids
+                    )
                 finally:
-                    logger.info("Steam player summary request finished in %.3fs", time.perf_counter() - started)
+                    logger.info(
+                        "Steam player summary request finished in %.3fs",
+                        time.perf_counter() - started,
+                    )
                 chunk_profiles: list[SteamPlayerSummaryType] = raw_result["response"][
                     "players"
                 ]
@@ -163,7 +168,7 @@ def fetch_steam_player_summary_mult_players(
                 break
             except IndexError:
                 logger.error("Steam: no player(s) found")
-            except Exception as e: # noqa
+            except Exception as e:  # noqa
                 logger.error("Unexpected error while fetching steam profile: %s", e)
 
     return {raw["steamid"]: raw for raw in raw_profiles}
@@ -198,7 +203,10 @@ def fetch_steam_bans_mult_players(
                         steamids=chunk_steam_ids
                     )
                 finally:
-                    logger.info("Steam ban request finished in %.3fs", time.perf_counter() - started)
+                    logger.info(
+                        "Steam ban request finished in %.3fs",
+                        time.perf_counter() - started,
+                    )
                 chunk_bans: SteamBansType = raw_result["players"]
                 raw_bans.extend(chunk_bans)  # type: ignore
 
@@ -208,7 +216,7 @@ def fetch_steam_bans_mult_players(
             logger.error("Steam API key is invalid, can't fetch steam profile")
         except IndexError:
             logger.error("Steam no player found")
-        except: # noqa
+        except:  # noqa
             logger.error("Unexpected error while fetching steam bans")
 
     return {raw["SteamId"]: raw for raw in raw_bans}
@@ -343,7 +351,8 @@ def update_missing_old_steam_info_single_player(
         player.steaminfo is None
         or player.steaminfo
         and player.steaminfo.updated
-        and (datetime.datetime.now(tz=datetime.UTC) - player.steaminfo.updated) >= age_limit
+        and (datetime.datetime.now(tz=datetime.UTC) - player.steaminfo.updated)
+        >= age_limit
     ):
         # Fetch both the profile and bans
         profile = fetch_steam_player_summary_player(player.player_id)
@@ -379,7 +388,9 @@ def update_missing_old_steam_info_single_player(
 
 def enrich_db_users(chunk_size=100, update_from_days_old=30):
     """Use the Steam API to update steam profiles/bans for missing or old records"""
-    max_age = datetime.datetime.now(tz=datetime.UTC) - datetime.timedelta(days=update_from_days_old)
+    max_age = datetime.datetime.now(tz=datetime.UTC) - datetime.timedelta(
+        days=update_from_days_old
+    )
     with enter_session() as sess:
         # Missing JSONB records are surprisingly difficult to identify depending
         # on how they've been persisted but JSONB.NULL should cover the different cases
@@ -419,7 +430,7 @@ def enrich_db_users(chunk_size=100, update_from_days_old=30):
                     num_profs,
                     num_bans,
                 )
-            except Exception as e: # noqa
+            except Exception as e:  # noqa
                 logger.error("Error while fetching page %s: %s", idx + 1, e)
 
             # Shouldn't really need this with how many API calls we should be able to make

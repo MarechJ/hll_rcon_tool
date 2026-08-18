@@ -67,5 +67,5 @@ def list_logs(request, path=""):
 
         html += "</pre><hr></body></html>"
         return HttpResponse(html)
-    except Exception as e: # noqa
+    except Exception as e:  # noqa
         return HttpResponse(f"Error accessing logs: {e}", status=500)

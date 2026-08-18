@@ -63,8 +63,7 @@ def remove_expired_vips(rcon_hook: Rcon, webhook_url: HttpUrl | None = None):
             # so they get changed to the new fixed UTC 3000-01-01 datetime
             elif (
                 player_expiration
-                and player_expiration
-                >= datetime.now(UTC) + timedelta(days=365 * 100)
+                and player_expiration >= datetime.now(UTC) + timedelta(days=365 * 100)
                 and player_expiration.year < 3000
             ):
                 missing_expiration_records.append(player)

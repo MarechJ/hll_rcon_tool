@@ -16,6 +16,7 @@ MAP_INFO_MIGRATIONS = {
     2: _migrate_to_v2,
 }
 """
+
 import logging
 import os
 import uuid
@@ -35,7 +36,6 @@ from rcon.cache_migrations.redis_databases import (
 from rcon.types import MapInfo
 
 logger = logging.getLogger(__name__)
-
 
 
 MAPS_HISTORY_SCHEMA_VERSION = 1

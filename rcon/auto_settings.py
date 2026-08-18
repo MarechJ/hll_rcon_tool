@@ -87,6 +87,6 @@ def run():
 if __name__ == "__main__":
     try:
         run()
-    except: # noqa
+    except:  # noqa
         logger.exception("Unable to run")
         sys.exit(1)

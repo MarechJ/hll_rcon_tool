@@ -223,7 +223,7 @@ def mock_maps_history():
     """
     now = int(datetime.now(tz=UTC).timestamp())
 
-    def minus_hour(n: int=1) -> int:
+    def minus_hour(n: int = 1) -> int:
         return now - (60 * 60 * n)
 
     history = [

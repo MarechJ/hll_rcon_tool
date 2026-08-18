@@ -46,7 +46,7 @@ class DjangoAPIKeyInline(admin.StackedInline):
     show_change_link = True
 
     extra = 0
-    readonly_fields = ["date_created", "date_modified"] # noqa
+    readonly_fields = ["date_created", "date_modified"]  # noqa
 
 
 # Define a new User admin

@@ -5,6 +5,7 @@ from sqlalchemy import DateTime, TypeDecorator
 
 class UTCDateTime(TypeDecorator):
     """Same as SQLAlchemy DateTime, but always stores with UTC and always reads UTC to support TZ unaware database fields."""
+
     impl = DateTime(timezone=False)
     cache_ok = True
 

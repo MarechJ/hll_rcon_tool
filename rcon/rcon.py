@@ -177,6 +177,7 @@ def is_user_config_func(name: str) -> bool:
 
 class Rcon(ServerCtl):
     """Shared high-level RCON behavior composed with a game controller."""
+
     settings = (
         ("team_switch_cooldown", int),
         ("autobalance_threshold", int),
@@ -308,9 +309,7 @@ class Rcon(ServerCtl):
             logger.error("No maps information available")
             current_map_start = datetime.now(UTC).timestamp()
 
-        map_time_seconds = int(
-            datetime.now(UTC).timestamp() - current_map_start
-        )
+        map_time_seconds = int(datetime.now(UTC).timestamp() - current_map_start)
 
         players = self.get_players()
         fail_count = 0
@@ -326,7 +325,7 @@ class Rcon(ServerCtl):
 
             try:
                 player_data = self._get_detailed_player_info(player_info, player)
-            except Exception: # noqa
+            except Exception:  # noqa
                 logger.error("Failed to get info for %s", player_id)
                 fail_count += 1
                 player_data = default_player_info_dict()
@@ -1321,7 +1320,9 @@ class Rcon(ServerCtl):
             elif isinstance(obj, int):
                 # Use index of the objective
                 if not (0 <= obj <= 2):
-                    raise ValueError(f"Objective index {obj} is out of range 0-2 in row {row + 1}")
+                    raise ValueError(
+                        f"Objective index {obj} is out of range 0-2 in row {row + 1}"
+                    )
                 parsed_objs.append(obj_row[obj])
 
             elif obj is None:
@@ -1533,7 +1534,9 @@ class Rcon(ServerCtl):
     def split_raw_log_lines(raw_logs: list[str]) -> Iterable[tuple[str, str, str]]:
         """Split raw game server logs into the relative time, timestamp and content"""
         for raw_log in raw_logs:
-            log = re.match(r"^(\[.+? \((\d+)\)\]) ([\w\W]*)$", raw_log, flags=re.MULTILINE)
+            log = re.match(
+                r"^(\[.+? \((\d+)\)\]) ([\w\W]*)$", raw_log, flags=re.MULTILINE
+            )
             if log is None:
                 logger.error(f"Unable to parse log line: '{raw_log}'")
                 continue
@@ -1571,7 +1574,9 @@ class Rcon(ServerCtl):
                     {
                         "version": 1,
                         "timestamp_ms": int(time.timestamp() * 1000),
-                        "event_time": datetime.fromtimestamp(int(raw_timestamp), tz=UTC),
+                        "event_time": datetime.fromtimestamp(
+                            int(raw_timestamp), tz=UTC
+                        ),
                         "relative_time_ms": (time - now).total_seconds() * 1000,
                         "raw": raw_relative_time + " " + raw_log_line,
                         "line_without_time": raw_log_line,

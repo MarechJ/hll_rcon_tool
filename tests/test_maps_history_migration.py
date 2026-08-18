@@ -140,6 +140,7 @@ def test_maintenance_migrates_maps_history_in_every_populated_database(monkeypat
         2,
     )
     for database in (1, 7):
-        assert orjson.loads(clients[database].lindex("maps_history", 0))[
-            "_schema_version"
-        ] == MAPS_HISTORY_SCHEMA_VERSION
+        assert (
+            orjson.loads(clients[database].lindex("maps_history", 0))["_schema_version"]
+            == MAPS_HISTORY_SCHEMA_VERSION
+        )

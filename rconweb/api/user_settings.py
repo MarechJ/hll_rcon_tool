@@ -310,7 +310,7 @@ def get_all_standard_message_config(request):
     try:
         res = get_all_message_types(as_dict=True)
     except Exception as e:
-        logger.exception(e) # noqa
+        logger.exception(e)  # noqa
         return api_response(command=command_name, error=str(e), failed=True)
 
     return api_response(
@@ -483,7 +483,7 @@ def get_all_discord_webhooks_config(request):
     try:
         hooks = get_all_hook_types(as_dict=True)
         return api_response(result=hooks, command=command_name, failed=False)
-    except Exception as e: # noqa
+    except Exception as e:  # noqa
         error_msg = str(e)
         return api_response(command=command_name, error=error_msg)
 

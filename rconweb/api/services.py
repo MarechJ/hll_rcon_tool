@@ -46,7 +46,7 @@ def get_services(request):
     try:
         processes = client.supervisor.getAllProcessInfo()
         result = [dict(info=info.get(p["name"], ""), **p) for p in processes]
-    except: # noqa
+    except:  # noqa
         if os.getenv("DJANGO_DEBUG"):
             result = []
         else:

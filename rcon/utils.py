@@ -303,10 +303,7 @@ class FixedLenList[T]:
                 raise ValueError("Step is not supported")
             start = index.start or 0
             end = index.stop if index.stop is not None else -1
-            return [
-                self.deserializer(o)
-                for o in self.red.lrange(self.key, start, end)
-            ]
+            return [self.deserializer(o) for o in self.red.lrange(self.key, start, end)]
 
         val = self.red.lindex(self.key, index)
         if val is None:
@@ -336,6 +333,7 @@ class FixedLenList[T]:
     def clear(self) -> None:
         self.red.delete(self.key)
 
+
 def logs_deserializer(data: bytes | str) -> StructuredLogLineWithMetaData:
     """
     A custom deserializer that ensures conversion of datetime strings
@@ -350,6 +348,7 @@ def logs_deserializer(data: bytes | str) -> StructuredLogLineWithMetaData:
             obj["event_time"] = datetime.fromisoformat(obj["event_time"], tz=UTC)
 
     return obj
+
 
 class LogsHistory(FixedLenList[StructuredLogLineWithMetaData]):
     def __init__(self, key: str = "logs_history", max_len: int = 100_000):
@@ -366,7 +365,9 @@ class MapsHistory(FixedLenList[MapInfo]):
         except IndexError:
             return None
 
-    def save_map_end(self, old_map: str | None = None, end_timestamp: int | None = None):
+    def save_map_end(
+        self, old_map: str | None = None, end_timestamp: int | None = None
+    ):
         ts = end_timestamp or int(datetime.now(tz=UTC).timestamp())
         logger.info("Saving end of map %s at time %s", old_map, ts)
         prev = self.lpop() or MapInfo(
@@ -584,18 +585,17 @@ def parse_raw_player_info(raw: PlayerInfoType, game: GameEnum) -> GetDetailedPla
     data["platform"] = raw["platform"]
     data["clan_tag"] = raw["clanTag"]
     data["eos_id"] = game_switch(
-        game,
-        lambda: raw.get("eosId", ""),
-        lambda: data[PLAYER_ID]
+        game, lambda: raw.get("eosId", ""), lambda: data[PLAYER_ID]
     )()
     data["steam_id"] = game_switch(
         game,
         lambda: data[PLAYER_ID] if len(data[PLAYER_ID]) == 17 else None,
-        lambda: raw.get("steamId", None)
+        lambda: raw.get("steamId", None),
     )()
     data["world_position"] = raw["worldPosition"]
 
     return data
+
 
 # ── Field lists (update these when new stats are introduced) ─────────────────
 GAME_LOG_STAT_FIELDS: list[str] = [
@@ -635,6 +635,7 @@ TEMP_FIELDS: dict[str, str | None] = {
     "units": None,
 }
 
+
 def get_temp_default_stats(existing: PlayerStatsType | None) -> PlayerStat:
     """Return temp stat defaults (p_* [shortly for prev] fields reset to 0)."""
     if existing is not None:
@@ -661,7 +662,7 @@ def get_temp_default_stats(existing: PlayerStatsType | None) -> PlayerStat:
             "p_coord": existing.p_coord,
             "has_spawned": existing.has_spawned,
             "names": existing.names,
-            "status": existing.status
+            "status": existing.status,
         }
     return {
         "combat": 0,
@@ -683,11 +684,12 @@ def get_temp_default_stats(existing: PlayerStatsType | None) -> PlayerStat:
         "units": [],
         "p_unit": {"ts": 0, "team": -1, "squad": -1, "role": -1},
         "level": 0,
-        "p_coord": { "x": 0.0, "y": 0.0, "z": 0.0 },
+        "p_coord": {"x": 0.0, "y": 0.0, "z": 0.0},
         "has_spawned": False,
         "names": [],
-        "status": "offline"
+        "status": "offline",
     }
+
 
 def get_default_player_stats() -> PlayerStatsType:
     return {
@@ -731,6 +733,7 @@ def get_default_player_stats() -> PlayerStatsType:
         "kills_and_assists": 0,
         "deaths_and_redeploys": 0,
     }
+
 
 # https://docs.python.org/3.12/library/itertools.html#itertools.batched
 def batched(iterable: Iterable[Any], n: int):
@@ -881,7 +884,7 @@ def strtobool(val) -> bool:
         return False
     else:
         raise ValueError(f"invalid truth value {val}")
-    
+
 
 def guess_map_from_log(
     log: StructuredLogLineWithMetaData, game_profile: GameProfile

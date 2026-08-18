@@ -63,7 +63,7 @@ class GTXFtp:
 
         try:
             self.adapter = SFTPAdapter(ip, port, username, password)
-        except: # noqa
+        except:  # noqa
             logger.info("Unable to use SFTP, falling back to FTP")
             self.adapter = FTPAdapter(ip, port, username, password)
         self.base_path = self.adapter.get_base_path()

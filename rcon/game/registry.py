@@ -16,8 +16,9 @@ GAME_PROFILES: dict[GameEnum, GameProfile] = {
 
 try:
     GAME_ID = GameEnum(os.getenv("HLL_GAME", "hll")).to_int()
-except: # noqa
+except:  # noqa
     GAME_ID = GameEnum.HLL_WW2.to_int()
+
 
 def get_game_profile(game: str | GameEnum | None) -> GameProfile:
     """Return the profile for a ServerInfo game value.
@@ -34,12 +35,15 @@ def get_game_profile(game: str | GameEnum | None) -> GameProfile:
         game = GameEnum(game)
     except NameError:
         raise ValueError(f"Unknown game {game!r}; expected one of: {supported}")
-    
+
     profile = GAME_PROFILES.get(game)
     if profile is None:
-        raise ValueError(f"No profile is known for {game!r}; expected one of: {supported}")
+        raise ValueError(
+            f"No profile is known for {game!r}; expected one of: {supported}"
+        )
 
     return profile
+
 
 def game_switch[T](game: GameEnum, hll_value: T, hllv_value: T) -> T:
     """Return the appropriate value for the given game."""

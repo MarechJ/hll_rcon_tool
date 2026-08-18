@@ -705,7 +705,8 @@ async def dequeue_message(
                 set_global_rate_limit_reset_after(
                     red=red,
                     limit=(
-                        datetime.now(tz=UTC) + timedelta(seconds=math.ceil(retry_after_secs))
+                        datetime.now(tz=UTC)
+                        + timedelta(seconds=math.ceil(retry_after_secs))
                     ).timestamp(),
                 )
 

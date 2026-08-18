@@ -118,6 +118,9 @@ def set_auto_settings(request):
     return api_response(
         result=settings,
         command=command_name,
-        arguments={"server_number": server_number, "restart_service": do_restart_service},
+        arguments={
+            "server_number": server_number,
+            "restart_service": do_restart_service,
+        },
         failed=False,
     )

@@ -13,7 +13,7 @@ try:
         .stdout.decode()
         .strip()
     )
-except Exception: # noqa
+except Exception:  # noqa
     TAG_VERSION = "unknown"
 
 try:
@@ -21,9 +21,8 @@ try:
     ENVIRONMENT = re.sub("[^0-9a-zA-Z]+", "", (config.short_name or "default").strip())[
         :64
     ]
-except Exception: # noqa
+except Exception:  # noqa
     ENVIRONMENT = "undefined"
-
 
 
 def get_server_info() -> ServerInfo:

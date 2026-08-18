@@ -130,7 +130,7 @@ class PunitionsToApply:
             self.squads_state.append(
                 ASquad(team=team, name=squad_name, players=players)
             )
-        except: # noqa
+        except:  # noqa
             logger.exception("Unable to add squad info")
 
     def merge(self, o: "PunitionsToApply"):

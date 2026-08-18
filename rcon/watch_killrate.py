@@ -414,7 +414,7 @@ def watch_killrate(
                     player_level: int = detailed_info["level"]
                     player_role: str = detailed_info["role"]
                     player_loadout: str = detailed_info["loadout"]
-                except Exception: # noqa
+                except Exception:  # noqa
                     logger.warning(
                         "Unable to retrieve detailed playerinfo for %s", player_id
                     )
@@ -425,7 +425,7 @@ def watch_killrate(
                 try:
                     gamestate = api.get_gamestate()
                     map_name = gamestate["current_map"]["pretty_name"]
-                except Exception: # noqa
+                except Exception:  # noqa
                     logger.warning("Unable to retrieve current game state")
                     map_name = "Unknown"
 

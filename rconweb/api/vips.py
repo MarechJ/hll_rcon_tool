@@ -61,7 +61,7 @@ def upload_vips(request):
                         name = " ".join(name_chunks)
                         try:
                             expiration_timestamp = parser.parse(possible_timestamp)
-                        except: # noqa
+                        except:  # noqa
                             logger.warning(
                                 f"#{idx} Unable to parse {possible_timestamp=} for {name=} {player_id=}"
                             )
@@ -84,7 +84,7 @@ def upload_vips(request):
                 except UnicodeDecodeError:
                     errors.append("File encoding is not supported. Must use UTF8")
                     break
-                except Exception as e: # noqa
+                except Exception as e:  # noqa
                     errors.append(f"#{idx} Error on line {line}: {e}")
     else:
         return api_response(error="Bad method", status_code=400)

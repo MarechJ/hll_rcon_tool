@@ -82,7 +82,7 @@ def require_content_type(content_type_list: list[str] | None = None):
                 )
             elif request.content_type not in content_type_list:
                 logger.info(
-                    f"InvalidContentType: {request.method} {request.path} was called with {request.content_type}, expected one of {",".join(content_type_list)}"
+                    f"InvalidContentType: {request.method} {request.path} was called with {request.content_type}, expected one of {','.join(content_type_list)}"
                 )
             return func(request, *args, **kwargs)
 

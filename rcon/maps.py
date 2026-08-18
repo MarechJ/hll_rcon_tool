@@ -140,6 +140,7 @@ class Team(str, Enum):
             2: cls.AXIS,
         }.get(team_.id, cls.UNKNOWN)
 
+
 class Environment(str, Enum):
     DAWN = "dawn"
     DAY = "day"
@@ -183,9 +184,9 @@ class FactionName(Enum):
     US = "us"
     GER = "ger"
     RUS = "rus"
-    SOV = "rus" # noqa: PIE796 Supposed to be the same
+    SOV = "rus"  # noqa: PIE796 Supposed to be the same
     CW = "cw"
-    GB = "cw" # noqa: PIE796 Supposed to be the same
+    GB = "cw"  # noqa: PIE796 Supposed to be the same
     B8A = "b8a"
     DAK = "dak"
     CAN = "can"
@@ -313,7 +314,9 @@ class Layer(pydantic.BaseModel):
             id=layer_.id,
             map=map_catalog[layer_.map.id.lower()],
             game_mode=GameMode.from_hllrcon(layer_.game_mode),
-            attackers=Team.from_hllrcon(layer_.attacking_team) if layer_.attacking_team else None,
+            attackers=Team.from_hllrcon(layer_.attacking_team)
+            if layer_.attacking_team
+            else None,
             environment=Environment.from_hllrcon(layer_),
         )
 
@@ -1782,15 +1785,21 @@ def safe_get_map_name(map_name: str, pretty: bool = True) -> str:
 def is_server_loading_map(map_name: str) -> bool:
     return "untitled" in map_name.lower()
 
-def get_all_layers_by_map(map: Map, game_mode: GameMode | None = None, team: Team | None = None) -> set[Layer]:
+
+def get_all_layers_by_map(
+    map: Map, game_mode: GameMode | None = None, team: Team | None = None
+) -> set[Layer]:
     if game_mode:
         return {
             layer
             for layer in LAYERS.values()
-            if layer.map == map and layer.game_mode == game_mode and layer.attackers == team
+            if layer.map == map
+            and layer.game_mode == game_mode
+            and layer.attackers == team
         }
     return {layer for layer in LAYERS.values() if layer.map == map}
-    
+
+
 env_alternation = "|".join(re.escape(e.value) for e in Environment)
 mode_alternation = "|".join(re.escape(m.value) for m in GameMode)
 # Match logs may qualify a mode with the attacking faction. These are log
@@ -1832,6 +1841,7 @@ start_pattern = re.compile(
     """,
     re.IGNORECASE | re.VERBOSE,
 )
+
 
 def _match_map_string(s: str) -> re.Match[str]:
     m = ended_pattern.search(s) or start_pattern.search(s)
