@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "scripts": {
     "prepare": "husky install",
-    "copy-assets": "mkdir -p public && cp -r ../assets/rcongui/* public/ && cp -r ../assets/images/* public/",
+    "copy-assets": "mkdir -p public && cp -r ../assets/shared/. public/ && cp -r ../assets/${HLL_GAME:-hll}/images/. public/ && cp -r ../assets/${HLL_GAME:-hll}/rcongui_public/. public/",
     "dev": "vite",
     "build": "npm run typecheck && vite build",
     "preview": "vite build && vite preview --mode development --port 3000",

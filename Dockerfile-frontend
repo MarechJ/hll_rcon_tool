@@ -10,8 +10,7 @@ COPY rcongui/ .
 RUN npm ci
 ENV REACT_APP_API_URL=/api/
 COPY .git/ .git/
-COPY assets/images/ /code/public
-COPY assets/rcongui/ /code/public
+COPY assets/shared/ /code/public/
 RUN git describe --tags > /code/tag_version && rm -rf .git
 RUN npx browserslist@latest --update-db
 RUN npm run build
@@ -23,8 +22,7 @@ WORKDIR /code_public
 
 COPY rcongui_public/ .
 RUN npm ci
-COPY assets/images/ /code_public/public
-COPY assets/rcongui_public/ /code_public/public
+COPY assets/shared/ /code_public/public/
 RUN npm run build
 RUN mv /code_public/dist /www_public
 
@@ -38,6 +36,14 @@ RUN mkdir /var/www_public/
 COPY --from=publicbuild /www_public /var/www_public/
 COPY --from=adminbuild /www /var/www/
 COPY --from=adminbuild /code/tag_version /code/tag_version
+
+COPY assets/hll/images/ /code/assets/hll/images/
+COPY assets/hll/rcongui/ /code/assets/hll/rcongui/
+COPY assets/hll/rcongui_public/ /code/assets/hll/rcongui_public/
+
+COPY assets/hllv/images/ /code/assets/hllv/images/
+COPY assets/hllv/rcongui/ /code/assets/hllv/rcongui/
+COPY assets/hllv/rcongui_public/ /code/assets/hllv/rcongui_public/
 
 VOLUME /certs
 COPY rcongui/entrypoint.sh /code/entrypoint.sh
