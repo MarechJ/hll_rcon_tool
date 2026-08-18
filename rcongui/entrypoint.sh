@@ -30,4 +30,12 @@ if [ ! -f "/certs/cert.crt" ] || [ ! -f "/certs/key.key" ]; then
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /certs/key.key -out /certs/cert.crt -subj "/C=US/ST=Oregon/L=Portland/O=Company Name/OU=Org/CN=$RCONWEB_EXTERNAL_ADDRESS" 
 fi
 
+if [ -f "/config/nginx.conf" ]; then
+    echo "nginx.conf found using it"
+    cp /config/nginx.conf /etc/nginx/conf.d/default.conf
+else
+    echo "nginx.conf not found, falling back to default-nginx.conf"
+    cp /config/default-nginx.conf /etc/nginx/conf.d/default.conf
+fi
+
 nginx -g "daemon off;"
