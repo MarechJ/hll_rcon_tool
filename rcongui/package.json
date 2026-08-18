@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "prepare": "",
-    "copy-assets": "mkdir -p public && cp -r ../assets/rcongui/* public/ && cp -r ../assets/images/* public/",
+    "copy-assets": "mkdir -p public && cp -r ../assets/shared/. public/ && cp -r ../assets/${HLL_GAME:-hll}/images/. public/ && cp -r ../assets/${HLL_GAME:-hll}/rcongui/. public/",
     "start": "vite",
     "dev": "vite dev",
     "dev:fake": "vite dev --mode fake",

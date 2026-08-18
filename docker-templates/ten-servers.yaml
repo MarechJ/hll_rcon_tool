@@ -81,7 +81,7 @@ x-frontend: &frontend
     context: .
     dockerfile: Dockerfile-frontend
   image: ${FRONTEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
-  environment:
+  environment: &frontend-env
     RCONWEB_EXTERNAL_ADDRESS: ${RCONWEB_EXTERNAL_ADDRESS}
   restart: always
   volumes:
@@ -127,6 +127,9 @@ services:
           - supervisor
   frontend_1:
     <<: *frontend
+    environment:
+      <<: *frontend-env
+      HLL_GAME: ${HLL_GAME:-hll}
     ports:
       - ${RCONWEB_PORT}:80
       - ${RCONWEB_PORT_HTTPS}:443
@@ -177,6 +180,9 @@ services:
           - supervisor
   frontend_2:
     <<: *frontend
+    environment:
+      <<: *frontend-env
+      HLL_GAME: ${HLL_GAME_2:-hll}
     ports:
       - ${RCONWEB_PORT_2}:80
       - ${RCONWEB_PORT_HTTPS_2}:443
@@ -227,6 +233,9 @@ services:
           - supervisor
   frontend_3:
     <<: *frontend
+    environment:
+      <<: *frontend-env
+      HLL_GAME: ${HLL_GAME_3:-hll}
     ports:
       - ${RCONWEB_PORT_3}:80
       - ${RCONWEB_PORT_HTTPS_3}:443
@@ -277,6 +286,9 @@ services:
           - supervisor
   frontend_4:
     <<: *frontend
+    environment:
+      <<: *frontend-env
+      HLL_GAME: ${HLL_GAME_4:-hll}
     ports:
       - ${RCONWEB_PORT_4}:80
       - ${RCONWEB_PORT_HTTPS_4}:443
@@ -327,6 +339,9 @@ services:
           - supervisor
   frontend_5:
     <<: *frontend
+    environment:
+      <<: *frontend-env
+      HLL_GAME: ${HLL_GAME_5:-hll}
     ports:
       - ${RCONWEB_PORT_5}:80
       - ${RCONWEB_PORT_HTTPS_5}:443
@@ -377,6 +392,9 @@ services:
           - supervisor
   frontend_6:
     <<: *frontend
+    environment:
+      <<: *frontend-env
+      HLL_GAME: ${HLL_GAME_6:-hll}
     ports:
       - ${RCONWEB_PORT_6}:80
       - ${RCONWEB_PORT_HTTPS_6}:443
@@ -427,6 +445,9 @@ services:
           - supervisor
   frontend_7:
     <<: *frontend
+    environment:
+      <<: *frontend-env
+      HLL_GAME: ${HLL_GAME_7:-hll}
     ports:
       - ${RCONWEB_PORT_7}:80
       - ${RCONWEB_PORT_HTTPS_7}:443
@@ -477,6 +498,9 @@ services:
           - supervisor
   frontend_8:
     <<: *frontend
+    environment:
+      <<: *frontend-env
+      HLL_GAME: ${HLL_GAME_8:-hll}
     ports:
       - ${RCONWEB_PORT_8}:80
       - ${RCONWEB_PORT_HTTPS_8}:443
@@ -527,6 +551,9 @@ services:
           - supervisor
   frontend_9:
     <<: *frontend
+    environment:
+      <<: *frontend-env
+      HLL_GAME: ${HLL_GAME_9:-hll}
     ports:
       - ${RCONWEB_PORT_9}:80
       - ${RCONWEB_PORT_HTTPS_9}:443
@@ -577,6 +604,9 @@ services:
           - supervisor
   frontend_10:
     <<: *frontend
+    environment:
+      <<: *frontend-env
+      HLL_GAME: ${HLL_GAME_10:-hll}
     ports:
       - ${RCONWEB_PORT_10}:80
       - ${RCONWEB_PORT_HTTPS_10}:443
