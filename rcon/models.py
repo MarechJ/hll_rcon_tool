@@ -77,6 +77,7 @@ from rcon.types import (
     UnitHistoryEntry,
     WatchListType,
 )
+from rcon.tz_unaware_column import UTCDateTime
 from rcon.utils import (
     SafeStringFormat,
     get_server_number,
@@ -160,7 +161,7 @@ class PlayerID(Base):
     # # TODO: This is a temporary Steam ID column so that we can store the Steam ID somewhere for Vietnam servers.
     # This enables us in the future to retroactively merge the Vietnam and WW2 player data into a single player profile.
     steam_id: Mapped[str | None]
-    created: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    created: Mapped[datetime] = mapped_column(UTCDateTime, default=datetime.utcnow)
     names: Mapped[list["PlayerName"]] = relationship(
         back_populates="player",
         order_by="nullslast(desc(PlayerName.last_seen))",
@@ -511,8 +512,8 @@ class SteamInfo(Base):
         index=True,
         unique=True,
     )
-    created: Mapped[datetime] = mapped_column(default=datetime.utcnow)
-    updated: Mapped[datetime] = mapped_column(onupdate=datetime.utcnow)
+    created: Mapped[datetime] = mapped_column(UTCDateTime, default=datetime.utcnow)
+    updated: Mapped[datetime] = mapped_column(UTCDateTime, onupdate=datetime.utcnow)
     profile: Mapped[SteamPlayerSummaryType] = mapped_column(default=JSONB.NULL)
     country: Mapped[str | None] = mapped_column(index=True)
     bans: Mapped[SteamBansType] = mapped_column(default=JSONB.NULL)
@@ -548,7 +549,7 @@ class WatchList(Base):
     __tablename__ = "player_watchlist"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    modified: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    modified: Mapped[datetime] = mapped_column(UTCDateTime, default=datetime.utcnow)
     player_id_id: Mapped[int] = mapped_column(
         "playersteamid_id",
         ForeignKey("steam_id_64.id"),
@@ -596,7 +597,7 @@ class PlayerFlag(Base):
     )
     flag: Mapped[str] = mapped_column(nullable=False, index=True)
     comment: Mapped[str] = mapped_column(String, nullable=True)
-    modified: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    modified: Mapped[datetime] = mapped_column(UTCDateTime, default=datetime.utcnow)
 
     player: Mapped[PlayerID] = relationship(back_populates="flags")
 
@@ -623,7 +624,7 @@ class PlayerOptins(Base):
     )
     optin_name: Mapped[str] = mapped_column(nullable=False, index=True)
     optin_value: Mapped[str] = mapped_column(nullable=True)
-    modified: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    modified: Mapped[datetime] = mapped_column(UTCDateTime, default=datetime.utcnow)
 
     player: Mapped[PlayerID] = relationship(back_populates="optins")
 
@@ -647,8 +648,8 @@ class PlayerName(Base):
         "playersteamid_id", ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
     name: Mapped[str] = mapped_column(nullable=False)
-    created: Mapped[datetime] = mapped_column(default=datetime.utcnow)
-    last_seen: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    created: Mapped[datetime] = mapped_column(UTCDateTime, default=datetime.utcnow)
+    last_seen: Mapped[datetime] = mapped_column(UTCDateTime, default=datetime.utcnow)
 
     player: Mapped[PlayerID] = relationship(back_populates="names")
 
@@ -669,9 +670,9 @@ class PlayerSession(Base):
     player_id_id: Mapped[int] = mapped_column(
         "playersteamid_id", ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
-    start: Mapped[datetime] = mapped_column()
-    end: Mapped[datetime] = mapped_column()
-    created: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    start: Mapped[datetime] = mapped_column(UTCDateTime)
+    end: Mapped[datetime] = mapped_column(UTCDateTime)
+    created: Mapped[datetime] = mapped_column(UTCDateTime, default=datetime.utcnow)
     server_number: Mapped[int] = mapped_column()
     server_name: Mapped[str] = mapped_column()
 
@@ -697,7 +698,7 @@ class PlayersAction(Base):
     )
     reason: Mapped[str] = mapped_column()
     by: Mapped[str] = mapped_column()
-    time: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    time: Mapped[datetime] = mapped_column(UTCDateTime, default=datetime.utcnow)
 
     player: Mapped[PlayerID] = relationship(back_populates="received_actions")
 
@@ -717,7 +718,7 @@ class LogLine(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     version: Mapped[int] = mapped_column(default=1)
     creation_time: Mapped[datetime] = mapped_column(TIMESTAMP, default=datetime.utcnow)
-    event_time: Mapped[datetime] = mapped_column(nullable=False, index=True)
+    event_time: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False, index=True)
     type: Mapped[str] = mapped_column(nullable=True)
     player1_name: Mapped[str] = mapped_column(nullable=True)
     player1_player_id: Mapped[int] = mapped_column(
@@ -798,8 +799,8 @@ class Maps(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
 
     creation_time: Mapped[datetime] = mapped_column(TIMESTAMP, default=datetime.utcnow)
-    start: Mapped[datetime] = mapped_column(nullable=False, index=True)
-    end: Mapped[datetime] = mapped_column(index=True)
+    start: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False, index=True)
+    end: Mapped[datetime] = mapped_column(UTCDateTime, index=True)
     server_number: Mapped[int] = mapped_column(index=True)
     map_name: Mapped[str] = mapped_column(nullable=False, index=True)
     # A dict with the result of the game mapped as Axis=int, Allied=int
