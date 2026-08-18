@@ -19,7 +19,6 @@ from django.core.exceptions import PermissionDenied
 from django.db.models.signals import post_delete, post_save
 from django.http import HttpResponse, QueryDict, parse_cookie
 from django.views.decorators.csrf import csrf_exempt
-from django_ratelimit.decorators import ratelimit
 from rconweb.settings import SECRET_KEY, TAG_VERSION
 
 from rcon.audit import heartbeat, set_registered_mods
@@ -179,7 +178,8 @@ class RconJsonResponse(HttpResponse):
 def api_response(*args, **kwargs):
     status_code = kwargs.pop("status_code", 200)
     return RconJsonResponse(
-        RconResponse(version=TAG_VERSION, *args, **kwargs).to_dict(), status=status_code # noqa
+        RconResponse(version=TAG_VERSION, *args, **kwargs).to_dict(), # noqa
+        status=status_code,
     )
 
 
@@ -201,7 +201,6 @@ def api_csv_response(content, name, header):
 @csrf_exempt
 @require_http_methods(["POST"])
 @require_content_type()
-@ratelimit(key='ip', rate='10/15m')
 def do_login(request):
     try:
         data = json.loads(request.body)
@@ -239,7 +238,6 @@ def get_moderators_accounts() -> list[tuple[str, str]]:
 
 @csrf_exempt
 @require_http_methods(["GET"])
-@ratelimit(key='ip', rate='60/m')
 def is_logged_in(request):
     is_auth = request.user.is_authenticated
     if is_auth:
@@ -247,13 +245,13 @@ def is_logged_in(request):
             player_id = None
             try:
                 player_id = request.user.steamplayer.steam_id_64
-            except: # noqa
+            except:  # noqa
                 logger.warning("%s's player ID is not set", request.user.username)
             try:
                 heartbeat(request.user.username, player_id)
-            except: # noqa
+            except:  # noqa
                 logger.exception("Unable to register mods")
-        except: # noqa
+        except:  # noqa
             logger.exception("Can't record heartbeat")
 
     res = {"authenticated": is_auth}
@@ -262,7 +260,6 @@ def is_logged_in(request):
 
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
-@ratelimit(key='ip', rate='10/m')
 def do_logout(request):
     logout(request)
     return api_response(result=True, command="logout", failed=False)

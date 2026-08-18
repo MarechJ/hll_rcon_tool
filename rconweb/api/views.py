@@ -18,7 +18,6 @@ from django.http import (
     HttpResponseNotAllowed,
 )
 from django.views.decorators.csrf import csrf_exempt
-from django_ratelimit.decorators import ratelimit
 from rconweb.settings import TAG_VERSION
 
 from rcon.api_commands import get_rcon_api
@@ -72,7 +71,7 @@ def set_temp_msg(request, func, name):
     error = None
     try:
         func(rcon_api, data["msg"], data["seconds"])
-    except Exception as e: # noqa
+    except Exception as e:  # noqa
         failed = True
         error = repr(e)
 
@@ -81,7 +80,6 @@ def set_temp_msg(request, func, name):
 
 @csrf_exempt
 @require_http_methods(["GET"])
-@ratelimit(key='ip', rate='10/m')
 def get_version(request):
     res = run(["git", "describe", "--tags"], check=False, capture_output=True)
     return api_response(res.stdout.decode(), failed=False, command="get_version")
@@ -89,7 +87,6 @@ def get_version(request):
 
 @csrf_exempt
 @require_http_methods(["GET"])
-@ratelimit(key='ip', rate='60/m')
 def get_public_info(request):
     cached_cur_map = MapsHistory().get_current_map()
     if not cached_cur_map:
@@ -225,7 +222,7 @@ def audit(func_name, request, arguments):
             by=request.user.username,
             md_escape_message=False,
         )
-    except: # noqa
+    except:  # noqa
         logger.exception("Can't send audit log")
 
 
@@ -348,7 +345,7 @@ def expose_api_endpoint(
                     auth_header=request.headers.get(AUTHORIZATION),
                     json=data,
                 )
-            except Exception as e: # noqa
+            except Exception as e:  # noqa
                 logger.error("Unexpected error while forwarding request: %s", e)
 
         return response
@@ -391,8 +388,8 @@ def run_raw_command(request):
             res = rcon_api._str_request(command, can_fail=True, log_info=True)
         except HLLCommandFailedError:
             res = "Command returned FAIL"
-        except: # noqa
-            logging.exception("Internal error when executing raw command") # noqa
+        except:  # noqa
+            logging.exception("Internal error when executing raw command")  # noqa
             res = "Internal error!\n\n" + traceback.format_exc()
     return HttpResponse(res, content_type="text/plain")
 
@@ -943,7 +940,9 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
 }
 
 # Check to make sure that ENDPOINT_HTTP_METHODS and ENDPOINT_PERMISSIONS have the same endpoints
-MISSING_ENDPOINTS = set(RCON_ENDPOINT_HTTP_METHODS).symmetric_difference(set(ENDPOINT_PERMISSIONS))
+MISSING_ENDPOINTS = set(RCON_ENDPOINT_HTTP_METHODS).symmetric_difference(
+    set(ENDPOINT_PERMISSIONS)
+)
 
 if len(MISSING_ENDPOINTS) > 0:
     logger.error(f"{MISSING_ENDPOINTS=}")
