@@ -12,7 +12,7 @@ services:
       retries: 5
     volumes:
       - ./redis_data:/data
-      - ./config:/usr/local/etc/redis
+      - ./config:/usr/local/etc/redis:ro
     networks:
       - common
   postgres:
