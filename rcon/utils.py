@@ -345,7 +345,12 @@ def logs_deserializer(data: bytes | str) -> StructuredLogLineWithMetaData:
         if isinstance(obj["event_time"], (int, float)):
             obj["event_time"] = datetime.fromtimestamp(obj["event_time"], tz=UTC)
         elif isinstance(obj["event_time"], str):
-            obj["event_time"] = datetime.fromisoformat(obj["event_time"], tz=UTC)
+            event_time = datetime.fromisoformat(obj["event_time"])
+            obj["event_time"] = (
+                event_time.replace(tzinfo=UTC)
+                if event_time.tzinfo is None
+                else event_time
+            )
 
     return obj
 
