@@ -4,10 +4,10 @@ import {ScaleIcon, ZapIcon, SkullIcon, HeartOffIcon} from 'lucide-react'
 export const points = [
   { key: 'kills', label: 'K', icon: '/icons/roles/infantry.png', transKey: 'playersTable.kills' },
   { key: 'deaths', label: 'D', icon: '/icons/roles/medic.png', transKey: 'playersTable.deaths' },
-  { key: 'combat', label: 'C', icon: '/icons/roles/score_combat.png', transKey: 'playersTable.combat' },
-  { key: 'offense', label: 'O', icon: '/icons/roles/score_offensive.png', transKey: 'playersTable.offense' },
-  { key: 'defense', label: 'D', icon: '/icons/roles/score_defensive.png', transKey: 'playersTable.defense' },
-  { key: 'support', label: 'S', icon: '/icons/roles/score_support.png', transKey: 'playersTable.support' },
+  { key: 'combat', label: 'C', icon: '/icons/metrics/combat.png', transKey: 'playersTable.combat' },
+  { key: 'offense', label: 'O', icon: '/icons/metrics/offense.png', transKey: 'playersTable.offense' },
+  { key: 'defense', label: 'D', icon: '/icons/metrics/defense.png', transKey: 'playersTable.defense' },
+  { key: 'support', label: 'S', icon: '/icons/metrics/support.png', transKey: 'playersTable.support' },
 ] as const
 
 export const scores = [

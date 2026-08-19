@@ -1,24 +1,23 @@
-from types import SimpleNamespace
 import unicodedata
+from types import SimpleNamespace
 from unittest.mock import Mock
 
+import pytest
 from hllrcon import HLLVLayer
 
-import pytest
-
-from rcon.commands import HLLServerCtl, HLLVServerCtl
 from rcon.api_commands import (
     HLLRconAPI,
     HLLVRconAPI,
     RconAPI,
     create_rcon_api,
 )
+from rcon.commands import HLLServerCtl, HLLVServerCtl
 from rcon.game import get_game_profile
 from rcon.game.hll.profile import HLL_PROFILE
 from rcon.game.hllv.profile import HLLV_PROFILE
-from rcon.maps import GameMode, Team, UNKNOWN_MAP_NAME, parse_map_string
+from rcon.maps import UNKNOWN_MAP_NAME, GameMode, Team, parse_map_string
 from rcon.rcon import HLLRcon, HLLVRcon, Rcon, create_rcon
-from rcon.types import GameEnum, ServerInfo
+from rcon.types import GameEnum, GameIntEnum, ServerInfo
 from rcon.utils import guess_map_from_log
 
 
@@ -118,16 +117,12 @@ def test_profiles_expose_game_specific_role_ids():
         ),
     ],
 )
-def test_guess_map_from_log_uses_selected_game_catalog(
-    profile, raw, expected_layer_id
-):
+def test_guess_map_from_log_uses_selected_game_catalog(profile, raw, expected_layer_id):
     assert guess_map_from_log({"raw": raw}, profile).id == expected_layer_id
 
 
 def test_guess_map_from_log_does_not_fall_through_to_other_game_catalog():
-    guessed = guess_map_from_log(
-        {"raw": "MATCH START CARENTAN WARFARE"}, HLLV_PROFILE
-    )
+    guessed = guess_map_from_log({"raw": "MATCH START CARENTAN WARFARE"}, HLLV_PROFILE)
 
     assert guessed.id == UNKNOWN_MAP_NAME
 
@@ -161,6 +156,51 @@ def test_profiles_only_accept_their_supported_game_modes():
 
     with pytest.raises(ValueError, match="not supported by the 'hllv' game profile"):
         HLLV_PROFILE.parse_game_mode("Skirmish")
+
+
+@pytest.mark.parametrize("profile", [HLL_PROFILE, HLLV_PROFILE])
+@pytest.mark.parametrize("game_mode", ["", "   ", "not a game mode"])
+def test_parse_game_mode_or_none_returns_none_instead_of_raising(profile, game_mode):
+    assert profile.parse_game_mode_or_none(game_mode) is None
+
+
+@pytest.mark.parametrize(
+    ("profile", "game_mode", "expected"),
+    [
+        (HLL_PROFILE, "Skirmish", GameMode.SKIRMISH),
+        (HLLV_PROFILE, "US Offensive", GameMode.OFFENSIVE),
+    ],
+)
+def test_parse_game_mode_or_none_still_parses_valid_modes(profile, game_mode, expected):
+    assert profile.parse_game_mode_or_none(game_mode) is expected
+
+
+@pytest.mark.parametrize(
+    ("game", "map_id"),
+    [
+        (GameEnum.HLL_WW2, "carentan_warfare"),
+        (GameEnum.HLL_VIETNAM, "wdeve_warfare_day"),
+    ],
+)
+def test_game_state_falls_back_to_layer_when_game_mode_is_blank(game, map_id):
+    """The server reports an empty gameMode between matches.
+
+    That used to raise ValueError out of get_gamestate(), taking down every
+    caller. The layer ID is still populated, so the mode is read back from it.
+    """
+    ctl_type = HLLServerCtl if game is GameEnum.HLL_WW2 else HLLVServerCtl
+    ctl = ctl_type(ServerInfo(game=game), Mock())
+    ctl.exchange = Mock(
+        side_effect=[
+            _response(_session(map_id, "")),
+            _response({"mAPS": [{"iD": map_id}], "currentIndex": 0}),
+        ]
+    )
+
+    game_state = ctl.get_gamestate()
+
+    assert game_state["game_mode"] is GameMode.WARFARE
+    assert game_state["current_map"]["id"] == map_id
 
 
 @pytest.mark.parametrize(
@@ -278,3 +318,38 @@ def test_timer_commands_validate_mode_against_profile():
 
     with pytest.raises(ValueError, match="not supported by the 'hllv' game profile"):
         ctl.set_match_timer(GameMode.SKIRMISH, 30)
+
+
+@pytest.mark.parametrize("game", list(GameEnum))
+def test_game_enum_survives_a_round_trip_through_its_stored_int(game):
+    """Maps.game persists a GameIntEnum, so reading a row back needs both ways."""
+    assert GameEnum.from_int(game.to_int()) is game
+
+
+@pytest.mark.parametrize(
+    ("stored", "expected"),
+    [
+        (GameIntEnum.HLL_WW2, GameEnum.HLL_WW2),
+        (GameIntEnum.HLL_VIETNAM, GameEnum.HLL_VIETNAM),
+    ],
+)
+def test_game_enum_from_int_accepts_the_values_stored_in_the_database(stored, expected):
+    assert GameEnum.from_int(int(stored)) is expected
+
+
+def test_layer_id_from_another_game_degrades_to_a_placeholder():
+    """Why a stored map name has to be resolved against the game it was played on.
+
+    The WWII catalog has no Vietnam IDs, so it synthesises a layer from the ID
+    itself -- a title-cased name and WWII factions -- rather than failing. Any
+    reader that ignores the recorded game silently shows that placeholder.
+    """
+    stored = "wdevc_warfare_day"
+
+    placeholder = HLL_PROFILE.parse_layer(stored)
+    assert placeholder.map.name == "Wdevc"
+    assert placeholder.map.axis.name == "ger"
+
+    actual = HLLV_PROFILE.parse_layer(stored)
+    assert actual.pretty_name == "Hu\u1ebf Outskirts Warfare"
+    assert actual.map.axis.name == "nva"

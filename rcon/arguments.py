@@ -1,11 +1,13 @@
 import re
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from rcon.message_variables import format_message_string, populate_message_variables
 from rcon.types import MessageVariableContext
 from rcon.user_config.chat_commands import MESSAGE_VAR_RE
 
 ARG_RE = re.compile(r"\$(\d+)")
+
 
 def replace_params(ctx: dict[str, str], args: list[str], v: Any) -> Any:
     """
@@ -23,14 +25,17 @@ def replace_params(ctx: dict[str, str], args: list[str], v: Any) -> Any:
     :param v:
     :return:
     """
+
     def do(value: Any, modifier: Callable[[str], str]) -> Any:
         if isinstance(value, str):
             message_vars: list[str] = MESSAGE_VAR_RE.findall(v)
-            player_id = ctx.get(MessageVariableContext.player_id.value) or ''
+            player_id = ctx.get(MessageVariableContext.player_id.value) or ""
             populated_variables = populate_message_variables(
                 vars=message_vars, player_id=player_id
             )
-            value = format_message_string(modifier(value), context=ctx, populated_variables=populated_variables)
+            value = format_message_string(
+                modifier(value), context=ctx, populated_variables=populated_variables
+            )
         elif isinstance(value, list):
             for li, lv in enumerate(value):
                 value[li] = replace_params(ctx, args, lv)
@@ -43,8 +48,9 @@ def replace_params(ctx: dict[str, str], args: list[str], v: Any) -> Any:
     if len(args) == 0:
         v = do(v, lambda d: d)
     for i, a in enumerate(args):
-        v = do(v, lambda d: d.replace(f"${i + 1}", a))
+        v = do(v, lambda d, p=a, idx=i: d.replace(f"${idx + 1}", p))
     return v
+
 
 def max_arg_index(p: Any) -> int:
     """
@@ -59,17 +65,14 @@ def max_arg_index(p: Any) -> int:
     if isinstance(p, list):
         for v in p:
             a = max_arg_index(v)
-            if a > max_count:
-                max_count = a
+            max_count = max(max_count, a)
     elif isinstance(p, str):
         for a in ARG_RE.findall(p):
-            if int(a) > max_count:
-                max_count = int(a)
+            max_count = max(max_count, int(a))
     elif isinstance(p, dict):
         for k in p:
             v = p[k]
             a = max_arg_index(v)
-            if a > max_count:
-                max_count = a
+            max_count = max(max_count, a)
 
     return max_count

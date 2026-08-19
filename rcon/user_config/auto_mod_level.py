@@ -1,8 +1,6 @@
-from typing import Optional, TypedDict
+from typing import Annotated, TypedDict
 
 from pydantic import BaseModel, BeforeValidator, Field, HttpUrl, field_serializer
-from pydantic.functional_validators import BeforeValidator
-from typing_extensions import Annotated
 
 from rcon.types import Roles
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
@@ -26,7 +24,7 @@ class RoleType(TypedDict):
 class AutoModLevelType(TypedDict):
     enabled: bool
     dry_run: bool
-    discord_webhook_url: Optional[HttpUrl]
+    discord_webhook_url: HttpUrl | None
 
     whitelist_flags: list[str]
     dont_do_anything_below_this_number_of_players: int
@@ -70,7 +68,7 @@ class Role(BaseModel):
 def validate_level_thresholds(vs):
     """Required to prevent validation errors for empty values"""
     if not vs or vs == []:
-        return dict()
+        return {}
 
     validated_level_threshholds: dict[Roles, Role] = {}
     for raw_role, obj in vs.items():
@@ -84,43 +82,178 @@ def validate_level_thresholds(vs):
 
 
 class AutoModLevelUserConfig(BaseUserConfig):
-    enabled: bool = Field(default=False, title="Enable", description="Whether the Level Automod is enabled or not")
-    dry_run: bool = Field(default=False, title="Dry-Run", description="If checked and if the Level Automod is enabled, no actions are done to the players. You can observe what actions the Automod would've done in the audit logs")
-    discord_webhook_url: Optional[HttpUrl] = Field(default=None, title="Discord Webhook URL", description="A webhook URL for a Discord channel to write audit messages (what the Automod did) to")
+    enabled: bool = Field(
+        default=False,
+        title="Enable",
+        description="Whether the Level Automod is enabled or not",
+    )
+    dry_run: bool = Field(
+        default=False,
+        title="Dry-Run",
+        description="If checked and if the Level Automod is enabled, no actions are done to the players. You can observe what actions the Automod would've done in the audit logs",
+    )
+    discord_webhook_url: HttpUrl | None = Field(
+        default=None,
+        title="Discord Webhook URL",
+        description="A webhook URL for a Discord channel to write audit messages (what the Automod did) to",
+    )
 
-    whitelist_flags: list[str] = Field(default_factory=list, title="Whitelist Flags", description="Players having one of the flags will be excluded from action sof the Automod")
-    dont_do_anything_below_this_number_of_players: int = Field(ge=0, le=100, default=0, title="Min Player Threshold", description="If the player count of the server is beneath this threshold, it will not do anything")
+    whitelist_flags: list[str] = Field(
+        default_factory=list,
+        title="Whitelist Flags",
+        description="Players having one of the flags will be excluded from action sof the Automod",
+    )
+    dont_do_anything_below_this_number_of_players: int = Field(
+        ge=0,
+        le=100,
+        default=0,
+        title="Min Player Threshold",
+        description="If the player count of the server is beneath this threshold, it will not do anything",
+    )
 
-    announcement_enabled: bool = Field(default=False, title="Enable Announcements", description="Send an announcement message to players, who connect to the server, that it is under level threshold enforcement")
-    only_announce_impacted_players: bool = Field(default=True, title="Restrict Announcement", description="If checked, announcement messages (if enabled) are only sent to players who are affected by the level Automod")
-    announcement_message: str = Field(default=ANNOUNCE_MESSAGE, title="Announcement Message", description="The announcement message to send to players")
+    announcement_enabled: bool = Field(
+        default=False,
+        title="Enable Announcements",
+        description="Send an announcement message to players, who connect to the server, that it is under level threshold enforcement",
+    )
+    only_announce_impacted_players: bool = Field(
+        default=True,
+        title="Restrict Announcement",
+        description="If checked, announcement messages (if enabled) are only sent to players who are affected by the level Automod",
+    )
+    announcement_message: str = Field(
+        default=ANNOUNCE_MESSAGE,
+        title="Announcement Message",
+        description="The announcement message to send to players",
+    )
 
-    number_of_warnings: int = Field(ge=-1, default=2, title="Number of warnings", description="The number of warning messages to an impacted player, before the Automod transitions to the next stage")
-    warning_interval_seconds: int = Field(ge=1, default=60, title="Warning Interval", description="The interval in seconds in which warning messages should be send, if the player did not remediate the level threshold")
-    warning_message: str = Field(default=WARNING_MESSAGE, title="Warning Message", description="The warning message send to a player who violates level requirements")
+    number_of_warnings: int = Field(
+        ge=-1,
+        default=2,
+        title="Number of warnings",
+        description="The number of warning messages to an impacted player, before the Automod transitions to the next stage",
+    )
+    warning_interval_seconds: int = Field(
+        ge=1,
+        default=60,
+        title="Warning Interval",
+        description="The interval in seconds in which warning messages should be send, if the player did not remediate the level threshold",
+    )
+    warning_message: str = Field(
+        default=WARNING_MESSAGE,
+        title="Warning Message",
+        description="The warning message send to a player who violates level requirements",
+    )
 
-    number_of_punishments: int = Field(ge=-1, default=2, title="Number of punishments", description="The number of punishes to an impacted player, before the Automod transitions to the next stage")
-    min_squad_players_for_punish: int = Field(ge=0, le=6, default=0, title="Punishment minimum squad players", description="Minimum number of players in the squad of an impacted player to punish")
-    min_server_players_for_punish: int = Field(ge=0, le=100, default=0, title="Punishment minimum server players", description="Minimum number of players on the server for an impacted player to punish")
-    punish_interval_seconds: int = Field(ge=1, default=60, title="Punish Interval", description="The interval in seconds in which the player is punished, if they did not remediate the level threshold")
-    punish_message: str = Field(default=PUNISH_MESSAGE, title="Punish message", description="The message the player sees when they are punished by the level Automod")
+    number_of_punishments: int = Field(
+        ge=-1,
+        default=2,
+        title="Number of punishments",
+        description="The number of punishes to an impacted player, before the Automod transitions to the next stage",
+    )
+    min_squad_players_for_punish: int = Field(
+        ge=0,
+        le=6,
+        default=0,
+        title="Punishment minimum squad players",
+        description="Minimum number of players in the squad of an impacted player to punish",
+    )
+    min_server_players_for_punish: int = Field(
+        ge=0,
+        le=100,
+        default=0,
+        title="Punishment minimum server players",
+        description="Minimum number of players on the server for an impacted player to punish",
+    )
+    punish_interval_seconds: int = Field(
+        ge=1,
+        default=60,
+        title="Punish Interval",
+        description="The interval in seconds in which the player is punished, if they did not remediate the level threshold",
+    )
+    punish_message: str = Field(
+        default=PUNISH_MESSAGE,
+        title="Punish message",
+        description="The message the player sees when they are punished by the level Automod",
+    )
 
-    kick_after_max_punish: bool = Field(default=True, title="Enable Kick", description="Whether kicking a player is enabled as a stage of the level Automod after all punishments are exhausted")
-    min_squad_players_for_kick: int = Field(ge=0, le=6, default=0, title="Kick minimum squad players", description="Minimum number of players in the squad of an impacted player to be kicked")
-    min_server_players_for_kick: int = Field(ge=0, le=100, default=0, title="Kick minimum server players", description="Minimum number of players on the server for an impacted player to be kicked")
-    kick_grace_period_seconds: int = Field(ge=1, default=60, title="Kick Grace Period", description="A grace period in seconds since the last punishment the player has time to remediate the level violation before they are kicked")
-    kick_message: str = Field(default=KICK_MESSAGE, title="Kick message", description="The message the player sees when they are kicked by the level Automod")
+    kick_after_max_punish: bool = Field(
+        default=True,
+        title="Enable Kick",
+        description="Whether kicking a player is enabled as a stage of the level Automod after all punishments are exhausted",
+    )
+    min_squad_players_for_kick: int = Field(
+        ge=0,
+        le=6,
+        default=0,
+        title="Kick minimum squad players",
+        description="Minimum number of players in the squad of an impacted player to be kicked",
+    )
+    min_server_players_for_kick: int = Field(
+        ge=0,
+        le=100,
+        default=0,
+        title="Kick minimum server players",
+        description="Minimum number of players on the server for an impacted player to be kicked",
+    )
+    kick_grace_period_seconds: int = Field(
+        ge=1,
+        default=60,
+        title="Kick Grace Period",
+        description="A grace period in seconds since the last punishment the player has time to remediate the level violation before they are kicked",
+    )
+    kick_message: str = Field(
+        default=KICK_MESSAGE,
+        title="Kick message",
+        description="The message the player sees when they are kicked by the level Automod",
+    )
 
-    force_kick_message: str = Field(default=FORCEKICK_MESSAGE, title="Server Level Kick Message", description="The message the player sees when they are kicked because they do not meet the server level requirement")
-    min_level: int = Field(ge=0, le=500, default=0, title="Server Minimum Level", description="The minimum level a player needs to have to join the server")
-    min_level_message: str = Field(default=MIN_LEVEL_MESSAGE, title="Server Minimum Level Message", description="A message template for Server Level Kick Message when the player violated the minimum server level requirement")
-    max_level: int = Field(ge=0, le=500, default=0, title="Server Maximum Level", description="The maximum level a player needs to have to join the server")
-    max_level_message: str = Field(default=MAX_LEVEL_MESSAGE, title="Server Maximum Level Message", description="A message template for Server Level Kick Message when the player violated the maximum server level requirement")
-    violation_message: str = Field(default=VIOLATION_MESSAGE, title="Violation Message", description="A message the player sees when they violate the level requirement for a specific role")
-    levelbug_enabled: bool = Field(default=False, title="Exclude Players with Level-Bug", description="Hell Let Loose players may suffer a level bug, meaning the game presents them with level 1, even though they've another level. Enabling this flag will exclude all level 1 players from level requirements enforced by the level Automod")
+    force_kick_message: str = Field(
+        default=FORCEKICK_MESSAGE,
+        title="Server Level Kick Message",
+        description="The message the player sees when they are kicked because they do not meet the server level requirement",
+    )
+    min_level: int = Field(
+        ge=0,
+        le=500,
+        default=0,
+        title="Server Minimum Level",
+        description="The minimum level a player needs to have to join the server",
+    )
+    min_level_message: str = Field(
+        default=MIN_LEVEL_MESSAGE,
+        title="Server Minimum Level Message",
+        description="A message template for Server Level Kick Message when the player violated the minimum server level requirement",
+    )
+    max_level: int = Field(
+        ge=0,
+        le=500,
+        default=0,
+        title="Server Maximum Level",
+        description="The maximum level a player needs to have to join the server",
+    )
+    max_level_message: str = Field(
+        default=MAX_LEVEL_MESSAGE,
+        title="Server Maximum Level Message",
+        description="A message template for Server Level Kick Message when the player violated the maximum server level requirement",
+    )
+    violation_message: str = Field(
+        default=VIOLATION_MESSAGE,
+        title="Violation Message",
+        description="A message the player sees when they violate the level requirement for a specific role",
+    )
+    levelbug_enabled: bool = Field(
+        default=False,
+        title="Exclude Players with Level-Bug",
+        description="Hell Let Loose players may suffer a level bug, meaning the game presents them with level 1, even though they've another level. Enabling this flag will exclude all level 1 players from level requirements enforced by the level Automod",
+    )
     level_thresholds: Annotated[
         dict[Roles, Role], BeforeValidator(validate_level_thresholds)
-    ] = Field(default_factory=dict, title="Role Level Thresholds", description="Level thresholds for specific roles")
+    ] = Field(
+        default_factory=dict,
+        title="Role Level Thresholds",
+        description="Level thresholds for specific roles",
+    )
 
     @field_serializer("discord_webhook_url")
     def serialize_server_url(self, discord_webhook_url: HttpUrl, _info):

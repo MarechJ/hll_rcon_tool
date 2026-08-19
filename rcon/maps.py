@@ -1,12 +1,16 @@
 import re
+from collections.abc import Iterable, Mapping, Sequence
 from enum import Enum
 from logging import getLogger
-from typing import TYPE_CHECKING, Any, Iterable, Literal, Mapping, Optional, Sequence, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Literal,
+)
 
 import hllrcon
 import pydantic
 import typing_extensions
-from typing_extensions import Literal
 
 logger = getLogger(__name__)
 
@@ -97,7 +101,7 @@ class GameMode(str, Enum):
             cls.PHASED,
             cls.MAJORITY,
         )
-    
+
     @classmethod
     def from_hllrcon(cls, game_mode_: hllrcon.AnyGameMode) -> "GameMode":
         return cls(game_mode_.id.lower())
@@ -135,6 +139,7 @@ class Team(str, Enum):
             1: cls.ALLIES,
             2: cls.AXIS,
         }.get(team_.id, cls.UNKNOWN)
+
 
 class Environment(str, Enum):
     DAWN = "dawn"
@@ -179,9 +184,9 @@ class FactionName(Enum):
     US = "us"
     GER = "ger"
     RUS = "rus"
-    SOV = "rus"
+    SOV = "rus"  # noqa: PIE796 Supposed to be the same
     CW = "cw"
-    GB = "cw"
+    GB = "cw"  # noqa: PIE796 Supposed to be the same
     B8A = "b8a"
     DAK = "dak"
     CAN = "can"
@@ -244,7 +249,7 @@ class Map(pydantic.BaseModel):
         if isinstance(other, (Map, str)):
             return str(self).lower() == str(other).lower()
         return NotImplemented
-    
+
     @classmethod
     def from_hllrcon(cls, map_: hllrcon.AnyMap) -> "Map":
         return cls(
@@ -279,7 +284,7 @@ class Layer(pydantic.BaseModel):
     id: str
     map: Map
     game_mode: GameMode
-    attackers: Union[Team, None] = None
+    attackers: Team | None = None
     environment: Environment = Environment.DAY
 
     def __str__(self) -> str:
@@ -295,7 +300,7 @@ class Layer(pydantic.BaseModel):
         if isinstance(other, (Layer, str)):
             return str(self).lower() == str(other).lower()
         return NotImplemented
-    
+
     @classmethod
     def from_hllrcon(
         cls,
@@ -309,7 +314,9 @@ class Layer(pydantic.BaseModel):
             id=layer_.id,
             map=map_catalog[layer_.map.id.lower()],
             game_mode=GameMode.from_hllrcon(layer_.game_mode),
-            attackers=Team.from_hllrcon(layer_.attacking_team) if layer_.attacking_team else None,
+            attackers=Team.from_hllrcon(layer_.attacking_team)
+            if layer_.attacking_team
+            else None,
             environment=Environment.from_hllrcon(layer_),
         )
 
@@ -582,8 +589,8 @@ MAPS = {
 }
 
 LAYERS = {
-    l.id.lower(): l
-    for l in (
+    layer.id.lower(): layer
+    for layer in (
         # In older versions (prior to v9.8.0) map names could be recorded as bla_
         # if the map name could not be retrieved from the game server
         Layer(id="bla_", map=MAPS[UNKNOWN_MAP_NAME], game_mode=GameMode.WARFARE),
@@ -1685,7 +1692,7 @@ def parse_layer(layer_name: str | Layer) -> Layer:
 def _parse_legacy_layer(layer_name: str):
     layer_match = RE_LEGACY_LAYER_NAME.match(layer_name)
     if not layer_match:
-        raise ValueError("Unparsable layer '%s'" % layer_name)
+        raise ValueError(f"Unparsable layer '{layer_name}'")
 
     layer_data = layer_match.groupdict()
 
@@ -1778,15 +1785,21 @@ def safe_get_map_name(map_name: str, pretty: bool = True) -> str:
 def is_server_loading_map(map_name: str) -> bool:
     return "untitled" in map_name.lower()
 
-def get_all_layers_by_map(map: Map, game_mode: Optional[GameMode] = None, team: Optional[Team] = None) -> set[Layer]:
+
+def get_all_layers_by_map(
+    map: Map, game_mode: GameMode | None = None, team: Team | None = None
+) -> set[Layer]:
     if game_mode:
         return {
             layer
             for layer in LAYERS.values()
-            if layer.map == map and layer.game_mode == game_mode and layer.attackers == team
+            if layer.map == map
+            and layer.game_mode == game_mode
+            and layer.attackers == team
         }
     return {layer for layer in LAYERS.values() if layer.map == map}
-    
+
+
 env_alternation = "|".join(re.escape(e.value) for e in Environment)
 mode_alternation = "|".join(re.escape(m.value) for m in GameMode)
 # Match logs may qualify a mode with the attacking faction. These are log
@@ -1828,6 +1841,7 @@ start_pattern = re.compile(
     """,
     re.IGNORECASE | re.VERBOSE,
 )
+
 
 def _match_map_string(s: str) -> re.Match[str]:
     m = ended_pattern.search(s) or start_pattern.search(s)

@@ -5,8 +5,8 @@ from pydantic import HttpUrl
 
 from rcon.api_commands import RconAPI
 from rcon.discord import send_to_discord_audit
-from rcon.logs.loop import on_connected
 from rcon.hooks import inject_player_ids
+from rcon.logs.loop import on_connected
 from rcon.player_history import get_player_profile, player_has_flag
 from rcon.user_config.name_kicks import NameKickUserConfig
 
@@ -29,7 +29,7 @@ def auto_kick(rcon: RconAPI, struct_log, name: str, player_id: str):
                         player_id,
                     )
                     return
-        except:
+        except:  # noqa
             logger.exception("Unable to check player profile")
 
         if re.match(r, name):
@@ -52,6 +52,6 @@ def auto_kick(rcon: RconAPI, struct_log, name: str, player_id: str):
                     by="NAME_KICK",
                     webhookurls=webhookurls,
                 )
-            except Exception:
+            except Exception:  # noqa
                 logger.error("Unable to send to audit_log")
             return

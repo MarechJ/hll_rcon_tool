@@ -1,4 +1,4 @@
-from typing import Optional, TypedDict
+from typing import TypedDict
 
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
@@ -8,7 +8,7 @@ class SteamType(TypedDict):
 
 
 class SteamUserConfig(BaseUserConfig):
-    api_key: Optional[str] = None
+    api_key: str | None = None
 
     @staticmethod
     def save_to_db(values: SteamType, dry_run=False):

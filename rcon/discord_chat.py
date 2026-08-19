@@ -1,13 +1,12 @@
 import logging
 import re
-from datetime import datetime
+from collections.abc import Iterable
+from datetime import UTC, datetime
 from functools import lru_cache
-from typing import Iterable
-
-from discord_webhook import DiscordEmbed, DiscordWebhook
 
 import discord.utils
-from rcon.utils import get_server_number
+from discord_webhook import DiscordEmbed, DiscordWebhook
+
 from rcon.cache_utils import ttl_cache
 from rcon.discord import make_hook
 from rcon.logs.loop import on_chat, on_kill, on_tk
@@ -16,14 +15,14 @@ from rcon.user_config.webhooks import (
     AdminPingWebhooksUserConfig,
     ChatWebhooksUserConfig,
     DiscordMentionWebhook,
-    DiscordWebhook,
     KillsWebhooksUserConfig,
 )
+from rcon.utils import get_server_number
 from rcon.webhook_service import (
-    enqueue_message,
     WebhookMessage,
-    WebhookType,
     WebhookMessageType,
+    WebhookType,
+    enqueue_message,
 )
 
 STEAM_PROFILE_URL = "http://steamcommunity.com/profiles/{id64}"
@@ -81,20 +80,20 @@ class DiscordWebhookHandler:
         ping_trigger_webhooks = []
         try:
             ping_trigger_webhooks = self._make_hook(self.admin_wh_config.hooks)
-        except Exception as e:
-            logger.exception("Error initializing ping trigger webhooks: %s", e)
+        except Exception:
+            logger.exception("Error initializing ping trigger webhooks")
 
         chat_webhooks = []
         try:
             chat_webhooks = self._make_hook(self.chat_wh_config.hooks)
-        except Exception as e:
-            logger.exception("Error initializing ping trigger webhooks: %s", e)
+        except Exception:
+            logger.exception("Error initializing ping trigger webhooks")
 
         kills_webhooks = []
         try:
             kills_webhooks = self._make_hook(self.kills_wh_config.hooks)
-        except Exception as e:
-            logger.exception("Error initializing ping trigger webhooks: %s", e)
+        except Exception:
+            logger.exception("Error initializing ping trigger webhooks")
 
         # TODO: If we don't get a valid response for a webhook we should log it
         self.ping_trigger_webhooks = [wh for wh in ping_trigger_webhooks if wh]
@@ -119,7 +118,7 @@ class DiscordWebhookHandler:
         color = CHAT_ACTION_TO_COLOR[action]
 
         embed = DiscordEmbed(
-            description=message, color=color, timestamp=datetime.utcnow()
+            description=message, color=color, timestamp=datetime.now(tz=UTC)
         )
         embed.set_author(
             name=f"{player} {action}", url=STEAM_PROFILE_URL.format(id64=player_id)
@@ -155,7 +154,6 @@ class DiscordWebhookHandler:
         return content, embed, triggered
 
     def create_chat_message(self, log) -> DiscordEmbed:
-        message = log["sub_content"]
         embed = self.create_chat_embed(
             log, allow_mentions=self.chat_wh_config.allow_mentions
         )
@@ -225,8 +223,8 @@ class DiscordWebhookHandler:
                             server_number=int(get_server_number()),
                         )
                     )
-        except Exception as e:
-            logger.exception("error enqueing chat message webhook: %s", e)
+        except Exception:
+            logger.exception("error enqueing chat message webhook")
             raise
 
     def send_generic_kill_message(self, log):
@@ -235,7 +233,7 @@ class DiscordWebhookHandler:
 
         try:
             if log["action"] == "KILL":
-                type_ = message_type = WebhookMessageType.LOG_LINE_KILL
+                message_type = WebhookMessageType.LOG_LINE_KILL
             else:
                 message_type = WebhookMessageType.LOG_LINE_TEAMKILL
             embed = self.create_kill_message(log)
@@ -252,8 +250,8 @@ class DiscordWebhookHandler:
                         server_number=int(get_server_number()),
                     )
                 )
-        except Exception as e:
-            logger.exception("error enqueing kill message webhook %s", e)
+        except Exception:
+            logger.exception("error enqueing kill message webhook")
 
     def send_kill_message(self, log):
         if log["action"] == "KILL" and self.kills_wh_config.send_kills:

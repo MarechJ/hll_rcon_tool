@@ -2,6 +2,9 @@
 
 # All public files are copied from /assets during build time
 public/
+!public/
+public/*
+!public/runtime-config.js
 
 # dependencies
 /node_modules

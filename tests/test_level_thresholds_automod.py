@@ -4,7 +4,7 @@ from unittest.mock import Mock
 
 from rcon.automods.level_thresholds import LevelThresholdsAutomod
 from rcon.automods.models import NoLevelViolation, WatchStatus
-from rcon.user_config.auto_mod_level import AutoModLevelUserConfig, Role, Roles
+from rcon.user_config.auto_mod_level import AutoModLevelUserConfig, Roles
 from tests.test_player import mock_get_detailed_player
 
 state = {}
@@ -85,7 +85,7 @@ def test_announces_on_connect():
             max_level_message="max level is {level}",
             violation_message="{role} needs level {level}",
             level_thresholds={
-                Roles.spotter: dict(label="Spotter", min_players=0, min_level=10)
+                Roles.spotter: {"label": "Spotter", "min_players": 0, "min_level": 10}
             },
         )
     )
@@ -117,7 +117,7 @@ def test_announces_on_connect_partially_impacted():
             max_level_message="max level is {level}",
             violation_message="{role} needs level {level}",
             level_thresholds={
-                Roles.spotter: dict(label="Spotter", min_players=0, min_level=50)
+                Roles.spotter: {"label": "Spotter", "min_players": 0, "min_level": 50}
             },
         )
     )
@@ -146,7 +146,7 @@ def test_announces_on_connect_not_impacted():
             max_level_message="max level is {level}",
             violation_message="{role} needs level {level}",
             level_thresholds={
-                Roles.spotter: dict(label="Spotter", min_players=0, min_level=10)
+                Roles.spotter: {"label": "Spotter", "min_players": 0, "min_level": 10}
             },
         )
     )
@@ -174,7 +174,7 @@ def test_announces_on_connect_detailed_player_info_is_none():
             max_level_message="max level is {level}",
             violation_message="{role} needs level {level}",
             level_thresholds={
-                Roles.spotter: dict(label="Spotter", min_players=0, min_level=10)
+                Roles.spotter: {"label": "Spotter", "min_players": 0, "min_level": 10}
             },
         )
     )

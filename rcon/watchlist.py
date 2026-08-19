@@ -1,10 +1,10 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 from discord_webhook import DiscordEmbed
 
 from rcon.discord import get_prepared_discord_hooks
-from rcon.logs.loop import on_connected
 from rcon.hooks import inject_player_ids
+from rcon.logs.loop import on_connected
 from rcon.models import WatchList, enter_session
 from rcon.player_history import _get_set_player, get_player
 from rcon.rcon import HLLCommandFailedError, Rcon
@@ -93,7 +93,7 @@ class PlayerWatch:
                 sess, player_name=player_name, player_id=self.player_id
             )
             if player.watchlist:
-                player.watchlist.modified = datetime.utcnow()
+                player.watchlist.modified = datetime.now(tz=UTC)
                 player.watchlist.is_watched = True
                 player.watchlist.reason = reason
                 player.watchlist.by = by

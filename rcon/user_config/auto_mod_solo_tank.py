@@ -1,8 +1,7 @@
-from typing import Optional, TypedDict
+from typing import TypedDict
 
-from pydantic import Field, HttpUrl, field_serializer, field_validator
+from pydantic import Field, HttpUrl, field_serializer
 
-from rcon.types import Roles
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
 WARNING_MESSAGE = """Warning, {player_name} !
@@ -24,7 +23,7 @@ You failed to comply with the previous warnings."""
 class AutoModNoSoloTankType(TypedDict):
     enabled: bool
     dry_run: bool
-    discord_webhook_url: Optional[HttpUrl]
+    discord_webhook_url: HttpUrl | None
 
     whitelist_flags: list[str]
     immune_player_level: int
@@ -51,7 +50,7 @@ class AutoModNoSoloTankType(TypedDict):
 class AutoModNoSoloTankUserConfig(BaseUserConfig):
     enabled: bool = Field(default=False)
     dry_run: bool = Field(default=False)
-    discord_webhook_url: Optional[HttpUrl] = Field(default=None)
+    discord_webhook_url: HttpUrl | None = Field(default=None)
 
     whitelist_flags: list[str] = Field(default_factory=list)
     immune_player_level: int = Field(ge=0, le=500, default=0)

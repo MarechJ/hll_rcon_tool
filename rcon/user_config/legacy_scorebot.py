@@ -1,5 +1,4 @@
-import enum
-from typing import Optional, TypedDict
+from typing import TypedDict
 
 from pydantic import BaseModel, Field, HttpUrl, field_serializer, field_validator
 
@@ -114,10 +113,10 @@ class ScorebotUserConfig(BaseUserConfig):
 
     stats_to_display: list[StatDisplay] = Field(default_factory=list)
 
-    base_api_url: Optional[HttpUrl] = Field(
+    base_api_url: HttpUrl | None = Field(
         default=HttpUrl(f"http://frontend_{get_server_number()}/")
     )
-    base_scoreboard_url: Optional[HttpUrl] = Field(default=None)
+    base_scoreboard_url: HttpUrl | None = Field(default=None)
 
     webhook_urls: list[str] = Field(default_factory=list)
 

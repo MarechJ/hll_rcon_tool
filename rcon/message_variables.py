@@ -1,10 +1,11 @@
 import math
 import random
+from collections.abc import Iterable, Sequence
 from datetime import datetime
 from functools import partial
 from itertools import takewhile
 from logging import getLogger
-from typing import Any, Iterable, Sequence
+from typing import Any
 
 from rcon import maps
 from rcon.audit import ingame_mods, online_mods
@@ -153,7 +154,7 @@ def scrolling_votemap(rcon, winning_maps, repeat=10):
     )
     winning_maps = separator.join([winning_maps] * repeat_winning_maps)
 
-    return "{}\n{}\n{}".format(options, instructions, winning_maps)
+    return f"{options}\n{instructions}\n{winning_maps}"
 
 
 def format_winning_map(
@@ -179,7 +180,7 @@ def format_winning_map(
 
 
 def vote_status():
-    logger.info(f"Crunching vote_status")
+    logger.info("Crunching vote_status")
     return VoteMap().get_vote_overview()
 
 
@@ -239,17 +240,13 @@ def format_map_vote(format_type="line"):
             maps_to_numbers=maps_to_numbers,
         )
         if format_type == "by_mod_line":
-            return "OFFENSIVE: {} WARFARE: {} SKIRMISH: {}".format(
-                off, warfare, control_skirmish
-            )
+            return f"OFFENSIVE: {off} WARFARE: {warfare} SKIRMISH: {control_skirmish}"
         if format_type == "by_mod_vertical":
-            return "OFFENSIVE:\n{}\nWARFARE:\n{}\nSKIRMISH:\n{}".format(
-                off, warfare, control_skirmish
+            return (
+                f"OFFENSIVE:\n{off}\nWARFARE:\n{warfare}\nSKIRMISH:\n{control_skirmish}"
             )
         if format_type == "by_mod_split":
-            return "OFFENSIVE: {}\nWARFARE: {}\nSKIRMISH: {}".format(
-                off, warfare, control_skirmish
-            )
+            return f"OFFENSIVE: {off}\nWARFARE: {warfare}\nSKIRMISH: {control_skirmish}"
         if format_type == "by_mod_vertical_all":
             return "OFFENSIVE:\n{}\nWARFARE:\n{}\nSKIRMISH:\n{}".format(
                 join_vote_options(

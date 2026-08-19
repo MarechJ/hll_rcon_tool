@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import unicodedata
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
-import unicodedata
 
 from rcon.maps import Environment, GameMode, Layer, Map, Team
 from rcon.types import GameEnum
@@ -67,6 +67,18 @@ class GameProfile:
             ),
             candidates[0],
         )
+
+    def parse_game_mode_or_none(self, game_mode: str | GameMode) -> GameMode | None:
+        """Best-effort game mode parse, mirroring :meth:`parse_layer_or_unknown`.
+
+        The server reports an empty ``gameMode`` while no match is in progress,
+        which is a normal transient state rather than an error, so callers that
+        poll the game state need a total function here.
+        """
+        try:
+            return self.parse_game_mode(game_mode)
+        except (KeyError, TypeError, ValueError):
+            return None
 
     def parse_game_mode(self, game_mode: str | GameMode) -> GameMode:
         # HLL Vietnam prefixes offensive modes with the attacking faction,

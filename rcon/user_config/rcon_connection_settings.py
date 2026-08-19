@@ -29,7 +29,9 @@ class RconConnectionSettingsUserConfig(BaseUserConfig):
         validated_conf = RconConnectionSettingsUserConfig(
             thread_pool_size=values.get("thread_pool_size"),
             performance_statistics_enabled=values.get("performance_statistics_enabled"),
-            performance_statistics_interval_seconds=values.get("performance_statistics_interval_seconds"),
+            performance_statistics_interval_seconds=values.get(
+                "performance_statistics_interval_seconds"
+            ),
         )
 
         if not dry_run:

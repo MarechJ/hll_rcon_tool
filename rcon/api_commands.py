@@ -1,10 +1,11 @@
 import functools
 import inspect
-from collections import defaultdict
-from datetime import datetime, timedelta
+from collections.abc import Iterable, Sequence
+from datetime import UTC, datetime, timedelta
 from logging import getLogger
-from typing import Any, Dict, Iterable, Literal, Optional, Sequence, Type
+from typing import Any, Literal, Optional
 
+import rcon.settings
 from rcon import blacklist, game_logs, maps, player_history, webhook_service
 from rcon.audit import ingame_mods, online_mods
 from rcon.cache_utils import RedisCached, get_redis_pool
@@ -20,7 +21,7 @@ from rcon.message_templates import (
     get_message_template_categories,
     get_message_templates,
 )
-from rcon.models import MessageTemplate, enter_session
+from rcon.models import enter_session
 from rcon.player_history import (
     add_flag_to_player,
     get_players_by_appearance,
@@ -29,7 +30,6 @@ from rcon.player_history import (
 from rcon.player_stats import TimeWindowStats
 from rcon.rcon import HLLRcon, HLLVRcon, Rcon
 from rcon.scoreboard import ScoreboardUserConfig
-import rcon.settings
 from rcon.types import (
     AdminUserType,
     AllMessageTemplateTypes,
@@ -37,8 +37,8 @@ from rcon.types import (
     BlacklistSyncMethod,
     BlacklistType,
     BlacklistWithRecordsType,
-    GameServerBanType,
     GameEnum,
+    GameServerBanType,
     MessageTemplateCategory,
     MessageTemplateType,
     ParsedLogsType,
@@ -106,7 +106,7 @@ def create_rcon_api(credentials: ServerInfo) -> "RconAPI":
     return controller_type(credentials)
 
 
-def parameter_aliases(alias_to_param: Dict[str, str]):
+def parameter_aliases(alias_to_param: dict[str, str]):
     """Specify parameter aliases of a function. This might be useful to preserve backwards
     compatibility or to handle parameters named after a Python reserved keyword.
 
@@ -163,7 +163,7 @@ class RconAPI(Rcon):
     def _validate_user_config(
         command_name: str,
         by: str,
-        model: Type[BaseUserConfig],
+        model: type[BaseUserConfig],
         data: dict[str, Any] | BaseUserConfig,
         dry_run: bool = True,
         reset_to_default: bool = False,
@@ -283,9 +283,9 @@ class RconAPI(Rcon):
 
     def get_blacklist_records(
         self,
-        player_id: str = None,
-        reason: str = None,
-        blacklist_id: int = None,
+        player_id: str | None = None,
+        reason: str | None = None,
+        blacklist_id: int | None = None,
         exclude_expired: bool = False,
         page_size: int = 50,
         page: int = 1,
@@ -521,7 +521,7 @@ class RconAPI(Rcon):
 
         """
 
-        player, new_flag = add_flag_to_player(
+        _, new_flag = add_flag_to_player(
             player_id=player_id, flag=flag, comment=comment, player_name=player_name
         )
         # TODO: can we preserve discord auditing with player aliases?
@@ -542,9 +542,7 @@ class RconAPI(Rcon):
             player_id: steam_id_64 or windows store ID
             flag: The flag to remove from `player_id` if present
         """
-        player, removed_flag = remove_flag(
-            flag_id=flag_id, player_id=player_id, flag=flag
-        )
+        _, removed_flag = remove_flag(flag_id=flag_id, player_id=player_id, flag=flag)
         return removed_flag
 
     def set_server_name(self, name: str):
@@ -644,8 +642,8 @@ class RconAPI(Rcon):
 
     def get_recent_logs(
         self,
-        filter_player: list[str] | str = [],
-        filter_action: list[str] = [],
+        filter_player: list[str] | str | None = None,
+        filter_action: list[str] | None = None,
         inclusive_filter: bool = True,
         start: int = 0,
         end: int = 10000,
@@ -655,8 +653,8 @@ class RconAPI(Rcon):
         return game_logs.get_recent_logs(
             start=start,
             end=end,
-            player_search=filter_player,
-            action_filter=filter_action,
+            player_search=filter_player or [],
+            action_filter=filter_action or [],
             exact_player_match=exact_player_match,
             exact_action=exact_action,
             inclusive_filter=inclusive_filter,
@@ -682,7 +680,13 @@ class RconAPI(Rcon):
         v = VoteMap()
         v.guarantee_next_map(v.parse_layer(map_name))
 
-    def add_votemap_vote(self, player_id: str, player_name: str, map_name: str, vote_count: int | None = None):
+    def add_votemap_vote(
+        self,
+        player_id: str,
+        player_name: str,
+        map_name: str,
+        vote_count: int | None = None,
+    ):
         v = VoteMap()
         v.add_vote(v.parse_layer(map_name), player_id, player_name, vote_count)
 
@@ -690,8 +694,8 @@ class RconAPI(Rcon):
         v = VoteMap()
         result = v.send_reminder(force=True)
         if not result.ok:
-            raise Exception(result.message)
-    
+            raise ValueError(result.message)
+
     def reset_votemap_state(self):
         v = VoteMap()
         v.restart()
@@ -754,7 +758,7 @@ class RconAPI(Rcon):
     ) -> bool:
         old_config = VoteMapUserConfig.load_from_db()
 
-        res = self._validate_user_config(
+        self._validate_user_config(
             by=by,
             command_name=inspect.currentframe().f_code.co_name,  # type: ignore
             model=VoteMapUserConfig,
@@ -1905,22 +1909,22 @@ class RconAPI(Rcon):
 
     def get_date_scoreboard(self, start: int, end: int):
         try:
-            start_date = datetime.fromtimestamp(int(start))
+            start_date = datetime.fromtimestamp(int(start), tz=UTC)
         except (ValueError, KeyError, TypeError) as e:
             logger.error(e)
-            start_date = datetime.now() - timedelta(minutes=60)
+            start_date = datetime.now(tz=UTC) - timedelta(minutes=60)
         try:
-            end_date = datetime.fromtimestamp(int(end))
+            end_date = datetime.fromtimestamp(int(end), tz=UTC)
         except (ValueError, KeyError, TypeError) as e:
             logger.error(e)
-            end_date = datetime.now()
+            end_date = datetime.now(tz=UTC)
 
         stats = TimeWindowStats()
 
         try:
             result = stats.get_players_stats_at_time(start_date, end_date)
-        except Exception as e:
-            logger.exception("Unable to produce date stats: %s", e)
+        except Exception:
+            logger.exception("Unable to produce date stats")
             result = {}
 
         return result
@@ -2039,12 +2043,12 @@ class RconAPI(Rcon):
 
         online_players = self.get_detailed_players()["players"]
 
-        squad_players = list(
+        squad_players = [
             online_players[id]
             for id in online_players
             if online_players[id]["team"] == team_name
             and online_players[id]["unit_name"] == squad_name
-        )
+        ]
 
         if not squad_players:
             raise HLLCommandFailedError(
@@ -2074,7 +2078,7 @@ class RconAPI(Rcon):
         Does not overwrite any existing non-null values.
         Returns the updated soldier as dict or None if not found.
         """
-        from rcon.models import enter_session, PlayerSoldier
+        from rcon.models import PlayerSoldier, enter_session
 
         with enter_session() as sess:
             soldier_db, changed = PlayerSoldier.update_missing_fields(
@@ -2114,7 +2118,7 @@ class RconAPI(Rcon):
         All fields can be updated, including setting them to null.
         Returns dict with account data and success message.
         """
-        from rcon.models import enter_session, PlayerAccount
+        from rcon.models import PlayerAccount, enter_session
 
         with enter_session() as sess:
             account_db = PlayerAccount.update_account(
@@ -2130,7 +2134,7 @@ class RconAPI(Rcon):
                 return HLLCommandFailedError(
                     f"Player {player_id} was not found. The account could not be updated."
                 )
-            
+
             return {
                 "account": account_db.to_dict(),
                 "msg": "Successfully updated account details.",

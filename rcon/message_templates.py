@@ -1,10 +1,11 @@
-from rcon.models import enter_session, MessageTemplate
+from sqlalchemy import select
+
+from rcon.models import MessageTemplate, enter_session
 from rcon.types import (
+    AllMessageTemplateTypes,
     MessageTemplateCategory,
     MessageTemplateType,
-    AllMessageTemplateTypes,
 )
-from sqlalchemy import select
 
 # create
 # retrieve

@@ -1,12 +1,14 @@
 import asyncio
+from collections.abc import Generator
 from logging import getLogger
-from typing import Generator, TypedDict
+from typing import TypedDict
 
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.urls import path
 
-from rcon.logs.stream import LogStream
+from api.auth import APITokenAuthMiddleware
 from rcon.game_logs import is_action
+from rcon.logs.stream import LogStream
 from rcon.types import AllLogTypes, StructuredLogLineWithMetaData
 from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.utils import StreamID, StreamInvalidID
@@ -129,8 +131,6 @@ class LogStreamConsumer(AsyncJsonWebsocketConsumer):
     async def send_json(self, content, close=False):
         return await super().send_json(content, close)
 
-
-from api.auth import APITokenAuthMiddleware
 
 urlpatterns = [
     path(

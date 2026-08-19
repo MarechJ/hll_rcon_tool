@@ -39,7 +39,10 @@ const MenuProps = {
  */
 export const MapFilter = ({ maps, onFilterChange }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedModes, setSelectedModes] = useState(["warfare"]);
+  // An empty selection means "no mode filter". Defaulting to a single mode
+  // hides most of the pool behind checkboxes the admin has to find first,
+  // which is especially misleading on HLL:V, where Warfare is 6 of 30 layers.
+  const [selectedModes, setSelectedModes] = useState([]);
   const [selectedWeathers, setSelectedWeathers] = useState([]);
 
   // Compute unique modes and weathers for dropdowns

@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from rcon.game import get_game_profile
 from rcon.maps import (
     LAYERS,
     MAPS,
@@ -12,6 +13,7 @@ from rcon.maps import (
     GameMode,
     Layer,
     Team,
+    _parse_legacy_layer,
     get_opposite_side,
     get_theoretical_match_time,
     is_server_loading_map,
@@ -19,8 +21,8 @@ from rcon.maps import (
     parse_layer,
     parse_map_string,
     parse_map_string_attacker,
-    _parse_legacy_layer,
 )
+from rcon.types import GameEnum
 
 logger = getLogger(__name__)
 
@@ -77,11 +79,10 @@ def test_parse_map_string_accepts_optional_attacker_before_mode(log_line, expect
 )
 def test_parse_map_string_attacker_uses_logical_sides(attacker, expected):
     assert (
-        parse_map_string_attacker(
-            f"MATCH START THANH HÒA BRIDGE {attacker} OFFENSIVE"
-        )
+        parse_map_string_attacker(f"MATCH START THANH HÒA BRIDGE {attacker} OFFENSIVE")
         is expected
     )
+
 
 MOR_WARFARE_DAY = Layer(
     id="mortain_warfare_day", map=MAPS["mortain"], game_mode=GameMode.WARFARE
@@ -210,6 +211,7 @@ def test_numbered_maps(maps, expected):
 def test_parse_layer(layer_name, expected):
     assert parse_layer(layer_name=layer_name) == expected
 
+
 @pytest.mark.parametrize(
     "layer_name, expected",
     [
@@ -254,12 +256,19 @@ def test_is_server_loading_map(map_name, expected):
 
 
 def test_all_map_images_exist():
-    ALL_MAP_IMAGES = [f for f in os.listdir(Path("./assets/images/maps"))]
-    ALL_MAP_ICONS = [f for f in os.listdir(Path("./assets/images/maps/icons"))]
+    for _game in GameEnum:
+        game = get_game_profile(_game)
+        ALL_MAP_IMAGES = [
+            f for f in os.listdir(Path(f"./assets/{_game.value}/images/maps"))
+        ]
+        ALL_MAP_ICONS = [
+            f for f in os.listdir(Path(f"./assets/{_game.value}/images/maps/icons"))
+        ]
 
-    for l in LAYERS.values():
-        assert l.image_name in ALL_MAP_IMAGES
-        assert l.image_name in ALL_MAP_ICONS
+        for layer in game.layers.values():
+            assert layer.image_name in ALL_MAP_IMAGES
+            assert layer.image_name in ALL_MAP_ICONS
+
 
 @pytest.mark.parametrize(
     "team, expected",

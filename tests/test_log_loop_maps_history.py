@@ -7,12 +7,11 @@ import pytest
 os.environ.setdefault("HLL_MAINTENANCE_CONTAINER", "1")
 os.environ.setdefault("SERVER_NUMBER", "1")
 
-from rcon.logs.loop import LogLoop
 from rcon.game.hll.profile import HLL_PROFILE
 from rcon.game.hllv.profile import HLLV_PROFILE
+from rcon.logs.loop import LogLoop
 from rcon.maps import GameMode
 from rcon.utils import default_player_info_dict
-
 
 OFFENSIVE_MAP = "carentan_offensive_us"
 
@@ -66,9 +65,7 @@ def test_ended_match_is_not_mutated_by_next_match_score(maps_history_cls):
     elapsed = loop.update_maps_history(prev_map_time_elapsed=98)
 
     assert elapsed == 2
-    assert current_map["cap_flips"] == [
-        {"allied_score": 0, "axis_score": 5, "ts": 0}
-    ]
+    assert current_map["cap_flips"] == [{"allied_score": 0, "axis_score": 5, "ts": 0}]
     loop.get_detailed_players.assert_called_once()
     history.update.assert_called_once_with(0, current_map)
 
@@ -155,9 +152,7 @@ def test_offensive_initial_score_cannot_be_recorded_again(
     ("team", "expected_team_id"),
     (("allies", 1), ("axis", 2)),
 )
-def test_hllv_player_stats_use_normalized_logical_team_ids(
-    team, expected_team_id
-):
+def test_hllv_player_stats_use_normalized_logical_team_ids(team, expected_team_id):
     loop = object.__new__(LogLoop)
     loop.rcon = Mock(game_profile=HLLV_PROFILE)
     loop.now = 2_000

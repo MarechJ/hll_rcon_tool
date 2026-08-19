@@ -1,5 +1,5 @@
 import re
-from typing import Optional, TypedDict
+from typing import TypedDict
 
 from pydantic import Field, HttpUrl, field_serializer, field_validator
 
@@ -11,14 +11,14 @@ KICK_REASON = "Your nickname is invalid"
 class NameKickType(TypedDict):
     regular_expressions: list[str]
     kick_reason: str
-    discord_webhook_url: Optional[HttpUrl]
+    discord_webhook_url: HttpUrl | None
     whitelist_flags: list[str]
 
 
 class NameKickUserConfig(BaseUserConfig):
     regular_expressions: list[str] = Field(default_factory=list)
     kick_reason: str = Field(default=KICK_REASON)
-    discord_webhook_url: Optional[HttpUrl] = Field(default=None)
+    discord_webhook_url: HttpUrl | None = Field(default=None)
     whitelist_flags: list[str] = Field(default_factory=list)
 
     @field_serializer("discord_webhook_url")

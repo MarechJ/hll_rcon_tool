@@ -3,10 +3,8 @@ import logging
 import math
 from functools import wraps
 
-from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
 from sqlalchemy import and_, func, or_, select
-from sqlalchemy.orm import query
 
 from rcon.models import AuditLog, enter_session
 
@@ -72,11 +70,10 @@ def auto_record_audit(name):
 def get_audit_logs_autocomplete(request):
     failed = False
     error = None
-    res = None
     try:
         with enter_session() as sess:
-            usernames = [u for u, in sess.query(AuditLog.username).distinct().all()]
-            commands = [c for c, in sess.query(AuditLog.command).distinct().all()]
+            usernames = [u for (u,) in sess.query(AuditLog.username).distinct().all()]
+            commands = [c for (c,) in sess.query(AuditLog.command).distinct().all()]
             logger.debug("Audit metadata: %s %s", usernames, commands)
     except Exception as e:
         logger.exception("Getting audit log failed")

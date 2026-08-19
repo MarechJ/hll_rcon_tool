@@ -40,8 +40,8 @@ subs = {
 
 
 def format_message(ctl, msg):
-    for sub in subs:
-        msg = msg.replace(f"{{{sub}}}", f"{{{subs[sub].value}}}")
+    for sub, value in subs.items():
+        msg = msg.replace(f"{{{sub}}}", f"{{{value.value}}}")
     message_vars: list[str] = re.findall(MESSAGE_VAR_RE, msg)
     populated_variables = populate_message_variables(
         vars=message_vars, player_id=None, rcon=ctl

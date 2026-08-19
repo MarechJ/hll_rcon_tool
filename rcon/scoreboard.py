@@ -2,9 +2,10 @@ import pathlib
 import sys
 import time
 from collections import defaultdict
+from collections.abc import Generator
 from contextlib import contextmanager
-from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Generator, TypedDict
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, TypedDict
 from urllib.parse import urljoin
 
 from discord_webhook import DiscordEmbed, DiscordWebhook
@@ -39,7 +40,7 @@ if TYPE_CHECKING:
 
 from logging import getLogger
 
-from sqlalchemy import Engine, create_engine, select
+from sqlalchemy import Engine
 
 logger = getLogger(__name__)
 
@@ -198,7 +199,7 @@ def get_vip_count_by_team(rcon_api: "RconAPI") -> TeamVIPCount:
     team_view = rcon_api.get_team_view()
     for team in teams:
         try:
-            for squad_key in team_view[team]["squads"].keys():
+            for squad_key in team_view[team]["squads"]:
                 for player in team_view[team]["squads"][squad_key]["players"]:
                     if player["is_vip"]:
                         teams[team] += 1
@@ -216,7 +217,7 @@ def get_map_image_url(config: ScoreboardUserConfig, gamestate: GameStateType):
     try:
         image_name = gamestate["current_map"]["image_name"]
         url = urljoin(str(config.public_scoreboard_url), f"maps/{image_name}")
-    except (IndexError, KeyError, TypeError) as e:
+    except (IndexError, KeyError, TypeError):
         url = urljoin(
             str(config.public_scoreboard_url), f"maps/{UNKNOWN_MAP_NAME}.webp"
         )
@@ -241,7 +242,6 @@ def build_header_gamestate_embed(
     for option in config.header_gamestate_embeds:
         name: str | None = None
         match option.value:
-
             case HeaderGameStateEmbedEnum.QUICK_CONNECT_URL:
                 value = config.quick_connect_url
             case HeaderGameStateEmbedEnum.BATTLEMETRICS_URL:
@@ -292,7 +292,7 @@ def build_header_gamestate_embed(
                     gamestate["allied_score"], gamestate["axis_score"]
                 )
             # Not ideal but the match statement won't let us use the constant here
-            case "\u200B":
+            case "\u200b":
                 name = ""
                 value = EMPTY_EMBED
             case _:
@@ -307,7 +307,7 @@ def build_header_gamestate_embed(
         embed.set_image(url=url)
 
     embed.set_footer(text=f"{short_name} - {config.footer_last_refreshed_text}")
-    embed.set_timestamp(datetime.now(tz=timezone.utc))
+    embed.set_timestamp(datetime.now(tz=UTC))
 
     return embed
 
@@ -360,7 +360,7 @@ def build_map_rotation_embed(
         embed.add_embed_field(name="", value="\n".join(description))
 
     embed.set_footer(text=f"{short_name} - {config.footer_last_refreshed_text}")
-    embed.set_timestamp(datetime.now(tz=timezone.utc))
+    embed.set_timestamp(datetime.now(tz=UTC))
     return embed
 
 
@@ -396,7 +396,7 @@ def build_player_stats_embed(
                 reverse=reverse_sort[PlayerStatsEnum(stat)],
             )[: config.player_stats_num_to_display]
             stats_strings = [
-                f"[#{idx+1}][{player_stat['player']}]: {player_stat[stat]}"
+                f"[#{idx + 1}][{player_stat['player']}]: {player_stat[stat]}"
                 for idx, player_stat in enumerate(stats)
             ]
             embed.add_embed_field(
@@ -406,7 +406,7 @@ def build_player_stats_embed(
             )
 
     embed.set_footer(text=f"{short_name} - {config.footer_last_refreshed_text}")
-    embed.set_timestamp(datetime.now(tz=timezone.utc))
+    embed.set_timestamp(datetime.now(tz=UTC))
     return embed
 
 
@@ -481,7 +481,7 @@ def run():
         )
 
         while True:
-            timestamp = datetime.now()
+            timestamp = datetime.now(tz=UTC)
             config = ScoreboardUserConfig.load_from_db()
             server_config = RconServerSettingsUserConfig.load_from_db()
 
@@ -493,7 +493,6 @@ def run():
                     for key in MESSAGE_KEYS:
                         last_updated_key = last_updated[url][key]
                         if key == HEADER_GAMESTATE and config.header_gamestate_enabled:
-
                             if (
                                 last_updated_key
                                 and (timestamp - last_updated_key).total_seconds()
@@ -516,7 +515,6 @@ def run():
                             )
 
                         if key == MAP_ROTATION and config.map_rotation_enabled:
-
                             if (
                                 last_updated_key
                                 and (timestamp - last_updated_key).total_seconds()
@@ -539,7 +537,6 @@ def run():
                             )
 
                         if key == PLAYER_STATS and config.player_stats_enabled:
-
                             if (
                                 last_updated_key
                                 and (timestamp - last_updated_key).total_seconds()
@@ -567,8 +564,8 @@ def run():
             )
             time.sleep(sleep_time)
 
-    except Exception as e:
-        logger.exception("The bot stopped", e)
+    except Exception:
+        logger.exception("The bot stopped")
         raise
 
 
@@ -590,6 +587,6 @@ if __name__ == "__main__":
         logger.info("Attempting to start scorebot")
         Base.metadata.create_all(ENGINE)
         run()
-    except Exception as e:
-        logger.exception(e)
+    except Exception:
+        logger.exception("scorebot failed unexpectedly")
         raise

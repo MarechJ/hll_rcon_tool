@@ -8,4 +8,4 @@ HLL_ROLES = frozenset(role.value for role in Roles)
 HLL_ROLE_LABELS = {role.value: label for role, label in ROLES_TO_LABELS.items()}
 HLL_ROLE_IDS = {role.name.lower(): role.id for role in HLLRole.all()}
 
-__all__ = ["HLL_ROLES", "HLL_ROLE_LABELS", "HLL_ROLE_IDS"]
+__all__ = ["HLL_ROLES", "HLL_ROLE_IDS", "HLL_ROLE_LABELS"]

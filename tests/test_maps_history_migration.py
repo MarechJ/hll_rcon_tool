@@ -17,7 +17,6 @@ from rcon.cache_migrations.maps_history import (
 )
 from rcon.types import MapInfo, PlayerStat
 
-
 LEGACY_MAP_VALUE = {
     "name": "stmariedumont_off_us",
     "start": 1786038619,
@@ -141,6 +140,7 @@ def test_maintenance_migrates_maps_history_in_every_populated_database(monkeypat
         2,
     )
     for database in (1, 7):
-        assert orjson.loads(clients[database].lindex("maps_history", 0))[
-            "_schema_version"
-        ] == MAPS_HISTORY_SCHEMA_VERSION
+        assert (
+            orjson.loads(clients[database].lindex("maps_history", 0))["_schema_version"]
+            == MAPS_HISTORY_SCHEMA_VERSION
+        )
