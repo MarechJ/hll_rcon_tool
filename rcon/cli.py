@@ -406,9 +406,9 @@ def set_user_settings(
     for key, payload in user_settings.items():
         if key == auto_settings_key:
             try:
-                AutoSettingsConfig(
-                    game=game, server_number=server
-                ).validate_settings(payload)
+                AutoSettingsConfig(game=game, server_number=server).validate_settings(
+                    payload
+                )
             except (TypeError, ValueError) as e:
                 logger.error(e)
                 sys.exit(-1)

@@ -57,10 +57,8 @@ class StandardWelcomeMessagesUserConfig(BaseStandardMessageUserConfig):
     NAME = "StandardWelcomeMessagesUserConfig"
 
 
-
 class StandardPunishmentMessagesUserConfig(BaseStandardMessageUserConfig):
     NAME = "StandardPunishmentMessagesUserConfig"
-
 
 
 class StandardBroadcastMessagesUserConfig(BaseUserConfig):

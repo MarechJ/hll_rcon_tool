@@ -380,9 +380,7 @@ class SeedingRulesAutomod:
                     and aplayer.role in drc.roles
                 ):
                     violations.append(
-                        drc.violation_message.format(
-                            role=drc.roles.get(aplayer.role)
-                        )
+                        drc.violation_message.format(role=drc.roles.get(aplayer.role))
                     )
 
                 if game_state["game_mode"] != GameMode.WARFARE:

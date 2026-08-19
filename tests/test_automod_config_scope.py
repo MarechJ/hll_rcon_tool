@@ -83,9 +83,7 @@ def test_action_execution_reuses_one_config_snapshot(monkeypatch):
     moderators = [mock.Mock()]
     load_moderators = mock.Mock(return_value=moderators)
     apply_actions = mock.Mock()
-    monkeypatch.setattr(
-        "rcon.automods.automod.enabled_moderators", load_moderators
-    )
+    monkeypatch.setattr("rcon.automods.automod.enabled_moderators", load_moderators)
     monkeypatch.setattr("rcon.automods.automod._do_punitions", apply_actions)
 
     do_punitions(rcon, PunitionsToApply())
