@@ -43,8 +43,6 @@ import GeneralSettingsPage from "./pages/settings/general-group/general";
 import { loader as generalSettingsLoader } from "./pages/settings/general-group/general/loader"
 import AdminCamSettingsPage from "./pages/settings/general-group/admin-cam-notifications";
 import { loader as adminCamSettingsLoader } from "./pages/settings/general-group/admin-cam-notifications/loader"
-import ServerNameSettingsPage from "./pages/settings/general-group/server-name";
-import { loader as serverNameSettingsLoader } from "./pages/settings/general-group/server-name/loader"
 import CrconAppSettingsPage from "./pages/settings/general-group/crcon-app";
 import GameSettingsPage from "./pages/settings/general-group/game";
 import { loader as gameSettingsLoader } from "./pages/settings/general-group/game/loader"
@@ -246,13 +244,6 @@ const router = createBrowserRouter([
                         handle: { crumb: () => <span>Admin Cam Notifications</span> },
                         element: <AdminCamSettingsPage />,
                         loader: adminCamSettingsLoader,
-                        errorElement: <RouteError />,
-                    },
-                    {
-                        path: 'server-name',
-                        handle: { crumb: () => <span>Server Name</span> },
-                        element: <ServerNameSettingsPage />,
-                        loader: serverNameSettingsLoader,
                         errorElement: <RouteError />,
                     },
                     {

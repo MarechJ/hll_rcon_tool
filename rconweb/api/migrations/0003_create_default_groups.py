@@ -147,8 +147,6 @@ GROUPS = [
             "can_change_tk_ban_on_connect_config",
             "can_view_expired_vip_config",
             "can_change_expired_vip_config",
-            "can_view_server_name_change_config",
-            "can_change_server_name_change_config",
             "can_view_log_line_discord_webhook_config",
             "can_change_log_line_discord_webhook_config",
             "can_view_name_kick_config",

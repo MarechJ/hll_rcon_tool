@@ -12,7 +12,6 @@ from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.chat_commands import ChatCommandsUserConfig
 from rcon.user_config.expired_vips import ExpiredVipsUserConfig
-from rcon.user_config.gtx_server_name import GtxServerNameChangeUserConfig
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
 from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.user_config.name_kicks import NameKickUserConfig
@@ -172,19 +171,6 @@ def describe_expired_vip_config(request):
 
     return api_response(
         result=ExpiredVipsUserConfig.model_json_schema(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@require_http_methods(["GET"])
-def describe_server_name_change_config(request):
-    command_name = "describe_server_name_change_config"
-
-    return api_response(
-        result=GtxServerNameChangeUserConfig.model_json_schema(),
         command=command_name,
         failed=False,
     )
