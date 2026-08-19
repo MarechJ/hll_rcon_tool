@@ -2,13 +2,28 @@ from contextlib import contextmanager
 from datetime import timedelta
 from unittest.mock import Mock
 
+from pytest import fixture
+
 from rcon.automods.level_thresholds import LevelThresholdsAutomod
 from rcon.automods.models import NoLevelViolation, WatchStatus
-from rcon.user_config.auto_mod_level import AutoModLevelUserConfig, Roles
+from rcon.types import GameEnum
+from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
 from tests.test_player import mock_get_detailed_player
 
 state = {}
 redis_store = {}
+
+
+@fixture(params=list(GameEnum), ids=lambda game: game.value)
+def game_role(request):
+    return {
+        GameEnum.HLL_WW2: (request.param, "support"),
+        GameEnum.HLL_VIETNAM: (request.param, "squadleader"),
+    }[request.param]
+
+
+def level_config(game: GameEnum, **values):
+    return AutoModLevelUserConfig.model_validate(values, context={"game": game})
 
 
 def raw_time_from_timedelta(td: timedelta) -> str:
@@ -72,9 +87,11 @@ def test_announces_on_connect_disabled():
     assert 0 == len(punitions.warning)
 
 
-def test_announces_on_connect():
+def test_announces_on_connect(game_role):
+    game, role = game_role
     mod = mod_with_config(
-        AutoModLevelUserConfig(
+        level_config(
+            game,
             enabled=True,
             announcement_enabled=True,
             only_announce_impacted_players=False,
@@ -85,7 +102,7 @@ def test_announces_on_connect():
             max_level_message="max level is {level}",
             violation_message="{role} needs level {level}",
             level_thresholds={
-                Roles.spotter: {"label": "Spotter", "min_players": 0, "min_level": 10}
+                role: {"label": "Test role", "min_players": 0, "min_level": 10}
             },
         )
     )
@@ -99,14 +116,16 @@ def test_announces_on_connect():
     print(punitions)
     assert 1 == len(punitions.warning)
     assert (
-        "message\nmin level is 10\nmax level is 100\nSpotter needs level 10\n"
+        "message\nmin level is 10\nmax level is 100\nTest role needs level 10\n"
         == punitions.warning[0].details.message
     )
 
 
-def test_announces_on_connect_partially_impacted():
+def test_announces_on_connect_partially_impacted(game_role):
+    game, role = game_role
     mod = mod_with_config(
-        AutoModLevelUserConfig(
+        level_config(
+            game,
             enabled=True,
             announcement_enabled=True,
             only_announce_impacted_players=True,
@@ -117,7 +136,7 @@ def test_announces_on_connect_partially_impacted():
             max_level_message="max level is {level}",
             violation_message="{role} needs level {level}",
             level_thresholds={
-                Roles.spotter: {"label": "Spotter", "min_players": 0, "min_level": 50}
+                role: {"label": "Test role", "min_players": 0, "min_level": 50}
             },
         )
     )
@@ -130,12 +149,14 @@ def test_announces_on_connect_partially_impacted():
     punitions = mod.on_connected(player["name"], player["player_id"], player)
     print(punitions)
     assert 1 == len(punitions.warning)
-    assert "message\nSpotter needs level 50\n" == punitions.warning[0].details.message
+    assert "message\nTest role needs level 50\n" == punitions.warning[0].details.message
 
 
-def test_announces_on_connect_not_impacted():
+def test_announces_on_connect_not_impacted(game_role):
+    game, role = game_role
     mod = mod_with_config(
-        AutoModLevelUserConfig(
+        level_config(
+            game,
             enabled=True,
             announcement_enabled=True,
             only_announce_impacted_players=True,
@@ -146,7 +167,7 @@ def test_announces_on_connect_not_impacted():
             max_level_message="max level is {level}",
             violation_message="{role} needs level {level}",
             level_thresholds={
-                Roles.spotter: {"label": "Spotter", "min_players": 0, "min_level": 10}
+                role: {"label": "Test role", "min_players": 0, "min_level": 10}
             },
         )
     )
@@ -161,9 +182,11 @@ def test_announces_on_connect_not_impacted():
     assert 0 == len(punitions.warning)
 
 
-def test_announces_on_connect_detailed_player_info_is_none():
+def test_announces_on_connect_detailed_player_info_is_none(game_role):
+    game, role = game_role
     mod = mod_with_config(
-        AutoModLevelUserConfig(
+        level_config(
+            game,
             enabled=True,
             announcement_enabled=True,
             only_announce_impacted_players=True,
@@ -174,7 +197,7 @@ def test_announces_on_connect_detailed_player_info_is_none():
             max_level_message="max level is {level}",
             violation_message="{role} needs level {level}",
             level_thresholds={
-                Roles.spotter: {"label": "Spotter", "min_players": 0, "min_level": 10}
+                role: {"label": "Test role", "min_players": 0, "min_level": 10}
             },
         )
     )
@@ -185,6 +208,6 @@ def test_announces_on_connect_detailed_player_info_is_none():
     print(punitions)
     assert 1 == len(punitions.warning)
     assert (
-        "message\nmin level is 10\nmax level is 100\nSpotter needs level 10\n"
+        "message\nmin level is 10\nmax level is 100\nTest role needs level 10\n"
         == punitions.warning[0].details.message
     )

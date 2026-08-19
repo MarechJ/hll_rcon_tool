@@ -1,16 +1,13 @@
-import os
 from contextlib import contextmanager
 
 import pytest
 from pydantic import ValidationInfo, field_validator
 
-os.environ.setdefault("SERVER_NUMBER", "1")
-os.environ.setdefault("HLL_GAME", "hll")
-
 from rcon.models import UserConfig
 from rcon.types import GameEnum, GameIntEnum
 from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
+from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig
 from rcon.user_config.auto_settings import AutoSettingsConfig
 from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
 from rcon.user_config.utils import (
@@ -192,7 +189,11 @@ def test_level_threshold_roles_use_selected_game_profile():
     config = AutoModLevelUserConfig.model_validate(
         {
             "level_thresholds": {
-                "squadleader": {"label": "Squad Leader", "min_players": 0, "min_level": 25}
+                "squadleader": {
+                    "label": "Squad Leader",
+                    "min_players": 0,
+                    "min_level": 25,
+                }
             }
         },
         context={"game": GameEnum.HLL_VIETNAM},
@@ -229,24 +230,41 @@ def test_weapon_validation_uses_selected_game_profile():
         )
 
 
-def test_auto_settings_maps_use_selected_game_profile():
-    vietnam_settings = {
-        "rules": [
-            {
-                "conditions": {
-                    "current_map": {"map_names": ["wdeve_warfare_day"]}
-                }
-            }
-        ]
-    }
-
-    AutoSettingsConfig(game=GameEnum.HLL_VIETNAM).validate_settings(
-        vietnam_settings
+@pytest.mark.parametrize(
+    ("game", "role", "weapon"),
+    [
+        (GameEnum.HLL_WW2, "support", "MP40"),
+        (GameEnum.HLL_VIETNAM, "squadleader", "M16A1"),
+    ],
+)
+def test_seeding_config_validates_each_games_catalog(game, role, weapon):
+    config = AutoModSeedingUserConfig.model_validate(
+        {
+            "immune_roles": [role],
+            "disallowed_roles": {"roles": {role: role}},
+            "disallowed_weapons": {"weapons": {weapon: weapon}},
+        },
+        context={"game": game},
     )
-    with pytest.raises(ValueError, match="not valid for hll"):
-        AutoSettingsConfig(game=GameEnum.HLL_WW2).validate_settings(
-            vietnam_settings
-        )
+
+    assert config.immune_roles == [role]
+    assert list(config.disallowed_roles.roles) == [role]
+    assert list(config.disallowed_weapons.weapons) == [weapon]
+
+
+@pytest.mark.parametrize(
+    ("game", "other_game", "layer"),
+    [
+        (GameEnum.HLL_WW2, GameEnum.HLL_VIETNAM, "stmereeglise_warfare"),
+        (GameEnum.HLL_VIETNAM, GameEnum.HLL_WW2, "wdeve_warfare_day"),
+    ],
+)
+def test_auto_settings_maps_use_selected_game_profile(game, other_game, layer):
+    settings = {"rules": [{"conditions": {"current_map": {"map_names": [layer]}}}]}
+
+    AutoSettingsConfig(game=game).validate_settings(settings)
+    with pytest.raises(ValueError, match=f"not valid for {other_game.value}"):
+        AutoSettingsConfig(game=other_game).validate_settings(settings)
 
 
 def test_validation_scope_reaches_legacy_save_implementation(monkeypatch):

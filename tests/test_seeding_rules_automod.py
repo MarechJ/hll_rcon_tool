@@ -1,6 +1,7 @@
 import time
 from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
+from typing import NamedTuple
 from unittest.mock import Mock
 
 import pytest
@@ -16,7 +17,7 @@ from rcon.automods.models import (
 )
 from rcon.automods.seeding_rules import SeedingRulesAutomod
 from rcon.maps import GameMode
-from rcon.types import GameStateType, StructuredLogLineWithMetaData
+from rcon.types import GameEnum, GameStateType, StructuredLogLineWithMetaData
 from rcon.user_config.auto_mod_seeding import (
     AutoModSeedingUserConfig,
     DisallowedRoles,
@@ -27,6 +28,27 @@ from rcon.user_config.auto_mod_seeding import (
 
 state = {}
 redis_store = {}
+
+
+class GameData(NamedTuple):
+    game: GameEnum
+    disallowed_weapon: str
+    allowed_weapon: str
+
+
+@fixture(
+    params=[
+        GameData(GameEnum.HLL_WW2, "MP40", "MK2_Grenade"),
+        GameData(GameEnum.HLL_VIETNAM, "M16A1", "M60"),
+    ],
+    ids=lambda value: value.game.value,
+)
+def game_data(request):
+    return request.param
+
+
+def game_model(model, game: GameEnum, **values):
+    return model.model_validate(values, context={"game": game})
 
 
 @fixture
@@ -284,7 +306,7 @@ def mod_with_config(c: AutoModSeedingUserConfig) -> SeedingRulesAutomod:
     return mod
 
 
-def test_disallowed_roles_does_not_enforce_below_min_players(team_view):
+def test_disallowed_roles_does_not_enforce_below_min_players(team_view, game_data):
     min_players = (
         get_team_count(team_view, "allies") + get_team_count(team_view, "axis") + 1
     )
@@ -293,7 +315,9 @@ def test_disallowed_roles_does_not_enforce_below_min_players(team_view):
     )
 
     config = AutoModSeedingUserConfig(
-        disallowed_roles=DisallowedRoles(
+        disallowed_roles=game_model(
+            DisallowedRoles,
+            game_data.game,
             roles={
                 Roles.tank_commander: "Tanks",
                 Roles.crewman: "Tanks",
@@ -313,10 +337,12 @@ def test_disallowed_roles_does_not_enforce_below_min_players(team_view):
     assert [] == punitions.kick
 
 
-def test_does_nothing_when_enough_players(team_view):
+def test_does_nothing_when_enough_players(team_view, game_data):
     config = AutoModSeedingUserConfig(
         enabled=True,
-        disallowed_roles=DisallowedRoles(
+        disallowed_roles=game_model(
+            DisallowedRoles,
+            game_data.game,
             roles={
                 Roles.tank_commander: "Tanks",
                 Roles.crewman: "Tanks",
@@ -326,9 +352,11 @@ def test_does_nothing_when_enough_players(team_view):
             + get_team_count(team_view, "axis")
             - 1,
         ),
-        disallowed_weapons=DisallowedWeapons(
+        disallowed_weapons=game_model(
+            DisallowedWeapons,
+            game_data.game,
             weapons={
-                "MP40": "MP40",
+                game_data.disallowed_weapon: game_data.disallowed_weapon,
             },
             min_players=get_team_count(team_view, "allies")
             + get_team_count(team_view, "axis")
@@ -342,14 +370,18 @@ def test_does_nothing_when_enough_players(team_view):
     assert PunitionsToApply() == mod.punitions_to_apply(
         team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
     )
-    assert PunitionsToApply() == mod.on_kill(kill_event_log)
+    assert PunitionsToApply() == mod.on_kill(
+        kill_event_log | {"weapon": game_data.disallowed_weapon}
+    )
 
 
-def test_does_nothing_when_not_enough_players(team_view):
+def test_does_nothing_when_not_enough_players(team_view, game_data):
     mod = mod_with_config(
         AutoModSeedingUserConfig(
             enabled=True,
-            disallowed_roles=DisallowedRoles(
+            disallowed_roles=game_model(
+                DisallowedRoles,
+                game_data.game,
                 roles={
                     Roles.tank_commander: "Tanks",
                     Roles.crewman: "Tanks",
@@ -359,8 +391,10 @@ def test_does_nothing_when_not_enough_players(team_view):
                 + 1,
                 max_players=0,
             ),
-            disallowed_weapons=DisallowedWeapons(
-                weapons={"MP40": "MP40"},
+            disallowed_weapons=game_model(
+                DisallowedWeapons,
+                game_data.game,
+                weapons={game_data.disallowed_weapon: game_data.disallowed_weapon},
                 min_players=get_team_count(team_view, "allies")
                 + get_team_count(team_view, "axis")
                 + 1,
@@ -372,10 +406,12 @@ def test_does_nothing_when_not_enough_players(team_view):
     assert PunitionsToApply() == mod.punitions_to_apply(
         team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
     )
-    assert PunitionsToApply() == mod.on_kill(kill_event_log)
+    assert PunitionsToApply() == mod.on_kill(
+        kill_event_log | {"weapon": game_data.disallowed_weapon}
+    )
 
 
-def test_cycles_warn_punish_kick_armor_players(team_view):
+def test_cycles_warn_punish_kick_armor_players(team_view, game_data):
     config = AutoModSeedingUserConfig(
         enabled=True,
         number_of_warnings=1,
@@ -387,7 +423,9 @@ def test_cycles_warn_punish_kick_armor_players(team_view):
         kick_after_max_punish=True,
         kick_message="",
         kick_grace_period_seconds=1,
-        disallowed_roles=DisallowedRoles(
+        disallowed_roles=game_model(
+            DisallowedRoles,
+            game_data.game,
             roles={Roles.tank_commander: "Tanks", Roles.crewman: "Tanks"},
             min_players=0,
             max_players=get_team_count(team_view, "allies")
@@ -678,7 +716,7 @@ def test_stops_when_players_reached(team_view):
     assert [] == punitions.kick
 
 
-def test_stops_when_no_violations_anymore(team_view):
+def test_stops_when_no_violations_anymore(team_view, game_data):
     config = AutoModSeedingUserConfig(
         enabled=True,
         number_of_warnings=1,
@@ -690,7 +728,9 @@ def test_stops_when_no_violations_anymore(team_view):
         kick_after_max_punish=False,
         kick_message="",
         kick_grace_period_seconds=1,
-        disallowed_roles=DisallowedRoles(
+        disallowed_roles=game_model(
+            DisallowedRoles,
+            game_data.game,
             min_players=0,
             max_players=get_team_count(team_view, "allies")
             + get_team_count(team_view, "axis")
@@ -718,7 +758,7 @@ def test_stops_when_no_violations_anymore(team_view):
     assert [] == punitions.kick
 
 
-def test_disallowed_weapons_does_not_enforce_below_min_players(team_view):
+def test_disallowed_weapons_does_not_enforce_below_min_players(team_view, game_data):
     min_players = (
         get_team_count(team_view, "allies") + get_team_count(team_view, "axis") + 1
     )
@@ -729,8 +769,10 @@ def test_disallowed_weapons_does_not_enforce_below_min_players(team_view):
     mod = mod_with_config(
         AutoModSeedingUserConfig(
             enabled=True,
-            disallowed_weapons=DisallowedWeapons(
-                weapons={"MP40": "MP40"},
+            disallowed_weapons=game_model(
+                DisallowedWeapons,
+                game_data.game,
+                weapons={game_data.disallowed_weapon: game_data.disallowed_weapon},
                 min_players=min_players,
                 max_players=max_players,
             ),
@@ -740,18 +782,20 @@ def test_disallowed_weapons_does_not_enforce_below_min_players(team_view):
         team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
     )
 
-    punitions = mod.on_kill(kill_event_log)
+    punitions = mod.on_kill(kill_event_log | {"weapon": game_data.disallowed_weapon})
     assert [] == punitions.warning
     assert [] == punitions.punish
     assert [] == punitions.kick
 
 
-def test_punishes_when_weapon_disallowed(team_view):
+def test_punishes_when_weapon_disallowed(team_view, game_data):
     mod = mod_with_config(
         AutoModSeedingUserConfig(
             enabled=True,
-            disallowed_weapons=DisallowedWeapons(
-                weapons={"MP40": "MP40"},
+            disallowed_weapons=game_model(
+                DisallowedWeapons,
+                game_data.game,
+                weapons={game_data.disallowed_weapon: game_data.disallowed_weapon},
                 min_players=get_team_count(team_view, "allies")
                 + get_team_count(team_view, "axis")
                 - 1,
@@ -765,16 +809,18 @@ def test_punishes_when_weapon_disallowed(team_view):
         team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
     )
 
-    punitions = mod.on_kill(kill_event_log)
+    punitions = mod.on_kill(kill_event_log | {"weapon": game_data.disallowed_weapon})
     assert 1 == len(punitions.punish)
 
 
-def test_does_not_punish_when_weapon_allowed(team_view):
+def test_does_not_punish_when_weapon_allowed(team_view, game_data):
     mod = mod_with_config(
         AutoModSeedingUserConfig(
             enabled=True,
-            disallowed_weapons=DisallowedWeapons(
-                weapons={"MK2_Grenade": "Grenade"},
+            disallowed_weapons=game_model(
+                DisallowedWeapons,
+                game_data.game,
+                weapons={game_data.allowed_weapon: "Allowed weapon"},
                 min_players=get_team_count(team_view, "allies")
                 + get_team_count(team_view, "axis")
                 - 1,
@@ -788,21 +834,25 @@ def test_does_not_punish_when_weapon_allowed(team_view):
         team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
     )
 
-    punitions = mod.on_kill(kill_event_log)
+    punitions = mod.on_kill(kill_event_log | {"weapon": game_data.disallowed_weapon})
     assert 0 == len(punitions.punish)
 
 
-def test_announces_on_connect(team_view):
+def test_announces_on_connect(team_view, game_data):
     mod = mod_with_config(
         AutoModSeedingUserConfig(
             enabled=True,
             announcement_enabled=True,
             announcement_message="",
-            disallowed_weapons=DisallowedWeapons(
-                weapons={"MK2_Grenade": "Grenade"},
+            disallowed_weapons=game_model(
+                DisallowedWeapons,
+                game_data.game,
+                weapons={game_data.allowed_weapon: "Allowed weapon"},
             ),
-            disallowed_roles=DisallowedRoles(
-                roles={Roles.tank_commander: "Tanks", Roles.crewman: "Tanks"}
+            disallowed_roles=game_model(
+                DisallowedRoles,
+                game_data.game,
+                roles={Roles.tank_commander: "Tanks", Roles.crewman: "Tanks"},
             ),
         )
     )
@@ -811,21 +861,25 @@ def test_announces_on_connect(team_view):
     assert 1 == len(punitions.warning)
 
 
-def test_does_not_announces_when_all_disabled(team_view):
+def test_does_not_announces_when_all_disabled(team_view, game_data):
     config = AutoModSeedingUserConfig(
         enabled=True,
         announcement_enabled=True,
         announcement_message="",
         number_of_warnings=0,
         number_of_punishments=0,
-        disallowed_weapons=DisallowedWeapons(
-            weapons={"MK2_Grenade": "Grenade"},
+        disallowed_weapons=game_model(
+            DisallowedWeapons,
+            game_data.game,
+            weapons={game_data.allowed_weapon: "Allowed weapon"},
             min_players=0,
             max_players=get_team_count(team_view, "allies")
             + get_team_count(team_view, "axis")
             - 1,
         ),
-        disallowed_roles=DisallowedRoles(
+        disallowed_roles=game_model(
+            DisallowedRoles,
+            game_data.game,
             roles={Roles.tank_commander: "Tanks", Roles.crewman: "Tanks"},
             min_players=0,
             max_players=get_team_count(team_view, "allies")
@@ -843,8 +897,12 @@ def test_does_not_announces_when_all_disabled(team_view):
     assert 0 == len(punitions.warning)
 
 
-def test_non_existing_roles_raises():
+def test_non_existing_roles_raises(game_data):
     with pytest.raises(ValueError):
         AutoModSeedingUserConfig(
-            disallowed_roles=DisallowedRoles(roles={Roles("does_not_exist"): ""})
+            disallowed_roles=game_model(
+                DisallowedRoles,
+                game_data.game,
+                roles={Roles("does_not_exist"): ""},
+            )
         )
