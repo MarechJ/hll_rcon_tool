@@ -37,13 +37,16 @@ HLL_MAINTENANCE_CONTAINER = os.getenv("HLL_MAINTENANCE_CONTAINER")
 HLL_WH_SERVICE_CONTAINER = os.getenv("HLL_WH_SERVICE_CONTAINER")
 
 
-try:
-    config = RconServerSettingsUserConfig.load_from_db()
-    ENVIRONMENT = re.sub("[^0-9a-zA-Z]+", "", (config.short_name or "default").strip())[
-        :64
-    ]
-except (ValidationError, IndexError):
+if HLL_MAINTENANCE_CONTAINER or HLL_WH_SERVICE_CONTAINER:
     ENVIRONMENT = "undefined"
+else:
+    try:
+        config = RconServerSettingsUserConfig.load_from_db()
+        ENVIRONMENT = re.sub(
+            "[^0-9a-zA-Z]+", "", (config.short_name or "default").strip()
+        )[:64]
+    except (ValidationError, IndexError):
+        ENVIRONMENT = "undefined"
 
 LOGGING = {
     "version": 1,
