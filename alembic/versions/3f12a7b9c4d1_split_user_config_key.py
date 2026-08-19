@@ -88,6 +88,17 @@ def downgrade():
         "user_config",
         sa.Column("key", sa.String(), nullable=True),
     )
+
+    # The legacy schema cannot distinguish games because its unique key only
+    # contains the server number and config name. Preserve the original HLL
+    # (WW2) records and discard configs for games unsupported by that schema.
+    op.execute(
+        """
+        DELETE FROM user_config
+        WHERE game != 1
+        """
+    )
+
     op.execute(
         """
         UPDATE user_config
