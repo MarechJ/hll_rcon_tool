@@ -56,13 +56,11 @@ class BaseStandardMessageUserConfig(BaseUserConfig):
 class StandardWelcomeMessagesUserConfig(BaseStandardMessageUserConfig):
     NAME = "StandardWelcomeMessagesUserConfig"
 
-    pass
 
 
 class StandardPunishmentMessagesUserConfig(BaseStandardMessageUserConfig):
     NAME = "StandardPunishmentMessagesUserConfig"
 
-    pass
 
 
 class StandardBroadcastMessagesUserConfig(BaseUserConfig):

@@ -9,7 +9,7 @@ from pydantic import (
     field_validator,
 )
 
-from rcon.types import Roles  # Backwards-compatible export for existing callers.
+from rcon.types import Roles as Roles  # Backwards-compatible public export.
 from rcon.user_config.utils import (
     BaseUserConfig,
     key_check,

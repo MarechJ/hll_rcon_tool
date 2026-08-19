@@ -377,13 +377,13 @@ class SeedingRulesAutomod:
                 if (
                     not self._is_seeding_rule_disabled("disallowed_roles")
                     and drc.min_players <= server_player_count < drc.max_players
+                    and aplayer.role in drc.roles
                 ):
-                    if aplayer.role in drc.roles:
-                        violations.append(
-                            drc.violation_message.format(
-                                role=drc.roles.get(aplayer.role)
-                            )
+                    violations.append(
+                        drc.violation_message.format(
+                            role=drc.roles.get(aplayer.role)
                         )
+                    )
 
                 if game_state["game_mode"] != GameMode.WARFARE:
                     self._disable_for_round("enforce_cap_fight")

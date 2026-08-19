@@ -1,11 +1,11 @@
 from unittest import mock
 
+from rcon.api_commands import RconAPI
 from rcon.automods import server_info_for_automod
 from rcon.automods.automod import do_punitions, enabled_moderators
 from rcon.automods.models import ActionMethod, PunitionsToApply
 from rcon.automods.tk_autoban import auto_ban_if_tks_right_after_connection
 from rcon.game.hllv.profile import HLLV_PROFILE
-from rcon.api_commands import RconAPI
 from rcon.types import GameEnum, ServerInfo
 from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig

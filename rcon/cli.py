@@ -27,6 +27,7 @@ from rcon.models import PlayerID, enter_session, install_unaccent
 from rcon.player_stats import live_stats_loop
 from rcon.rcon import get_rcon
 from rcon.steam_utils import enrich_db_users
+from rcon.types import GameEnum, ServerInfo
 from rcon.user_config.auto_settings import AutoSettingsConfig
 from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.user_config.webhooks import (
@@ -34,7 +35,6 @@ from rcon.user_config.webhooks import (
     BaseUserConfig,
     BaseWebhookUserConfig,
 )
-from rcon.types import GameEnum, ServerInfo
 from rcon.utils import ApiKey
 from rcon.vote_map import VoteMap
 

@@ -105,7 +105,7 @@ def set_auto_settings(request):
     config = AutoSettingsConfig(server_number=server_number)
     try:
         config.set_settings(settings)
-    except ValueError as e:
+    except (TypeError, ValueError) as e:
         return api_response(error=str(e), command=command_name)
 
     if do_restart_service:

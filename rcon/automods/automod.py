@@ -5,7 +5,6 @@ from threading import Timer
 from pydantic import HttpUrl
 from redis.client import Redis
 
-import rcon.game_logs
 from rcon.automods import server_info_for_automod
 from rcon.automods.level_thresholds import LevelThresholdsAutomod
 from rcon.automods.models import ActionMethod, PunishPlayer, PunitionsToApply

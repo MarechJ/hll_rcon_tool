@@ -7,8 +7,8 @@ from rcon.user_config.utils import (
     _add_conf,
     _remove_conf,
     _set_default,
-    get_user_config_game,
     get_user_config,
+    get_user_config_game,
     set_user_config,
 )
 
@@ -71,30 +71,30 @@ class AutoSettingsConfig:
     def validate_settings(self, settings) -> None:
         """Validate game-specific references embedded in auto-setting rules."""
         if not isinstance(settings, dict):
-            raise ValueError("Auto settings must be a JSON object")
+            raise TypeError("Auto settings must be a JSON object")
         rules = settings.get("rules", [])
         if not isinstance(rules, list):
-            raise ValueError("Auto settings rules must be a list")
+            raise TypeError("Auto settings rules must be a list")
         profile = get_game_profile(GameEnum.from_int(get_user_config_game(self.game)))
         valid_layers = {layer_id.casefold() for layer_id in profile.layers}
         for index, rule in enumerate(rules):
             if not isinstance(rule, dict):
-                raise ValueError(f"Auto-settings rule {index} must be an object")
+                raise TypeError(f"Auto-settings rule {index} must be an object")
             conditions = rule.get("conditions", {})
             if not isinstance(conditions, dict):
-                raise ValueError(
+                raise TypeError(
                     f"Auto-settings rule {index} conditions must be an object"
                 )
             current_map = conditions.get("current_map")
             if current_map is None:
                 continue
             if not isinstance(current_map, dict):
-                raise ValueError(
+                raise TypeError(
                     f"Auto-settings rule {index} current_map must be an object"
                 )
             map_names = current_map.get("map_names", [])
             if not isinstance(map_names, list):
-                raise ValueError(
+                raise TypeError(
                     f"Auto-settings rule {index} current_map.map_names must be a list"
                 )
             invalid_maps = sorted(

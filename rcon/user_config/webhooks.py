@@ -145,13 +145,11 @@ class BaseWebhookUserConfig(BaseUserConfig):
 class WatchlistWebhooksUserConfig(BaseMentionWebhookUserConfig):
     NAME = "WatchlistWebhooksUserConfig"
 
-    pass
 
 
 class CameraWebhooksUserConfig(BaseMentionWebhookUserConfig):
     NAME = "CameraWebhooksUserConfig"
 
-    pass
 
 
 class AdminPingWebhooksUserConfig(BaseMentionWebhookUserConfig):
@@ -219,7 +217,6 @@ class ChatWebhooksUserConfig(BaseWebhookUserConfig):
 class AuditWebhooksUserConfig(BaseWebhookUserConfig):
     NAME = "AuditWebhooksUserConfig"
 
-    pass
 
 
 class KillsWebhooksUserConfig(BaseWebhookUserConfig):
