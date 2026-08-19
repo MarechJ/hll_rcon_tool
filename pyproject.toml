@@ -51,7 +51,7 @@ discord-webhook = { git = "https://github.com/cemathey/python-discord-webhook", 
 
 [dependency-groups]
 dev = [
-    "cachetools==7.1.1",
+    "cachetools==7.1.7",
     "pytest==9.0.3",
     "ruff==0.15.18",
     "fakeredis==2.37.1",
