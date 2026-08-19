@@ -4,6 +4,7 @@ db_data/
 .env
 dev.env
 broadcasts.txt
+config/nginx.conf
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
