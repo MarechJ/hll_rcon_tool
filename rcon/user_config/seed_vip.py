@@ -5,12 +5,11 @@ from typing import TypedDict
 import pydantic
 from pydantic import Field
 
-import discord
+from rcon.user_config.utils import BaseUserConfig, _listType, key_check, set_user_config
+from rcon.user_config.webhooks import DiscordWebhook, WebhookType
 
 logger = getLogger(__name__)
 
-from rcon.user_config.utils import BaseUserConfig, _listType, key_check, set_user_config
-from rcon.user_config.webhooks import DiscordWebhook, WebhookType
 
 SEEDING_IN_PROGRESS_MESSAGE = "Server has reached {player_count} players"
 SEEDING_COMPLETE_MESSAGE = "Server is live!"

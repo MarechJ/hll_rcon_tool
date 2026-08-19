@@ -1,10 +1,7 @@
 import json
 import os
 from logging import getLogger
-from typing import Any, TypedDict
-
-logger = getLogger(__name__)
-from typing import Self
+from typing import Any, Self, TypedDict
 
 import pydantic
 from pydantic import Field
@@ -21,6 +18,8 @@ from rcon.user_config.utils import (
     key_check,
     set_user_config,
 )
+
+logger = getLogger(__name__)
 
 
 class StandardMessageType(TypedDict):
@@ -68,7 +67,7 @@ class StandardBroadcastMessagesUserConfig(BaseUserConfig):
 
         # This should never happen in production, but allows tests to run
         if not os.getenv("HLL_DB_URL"):
-            logger.warning(f"HLL_DB_URL not set, returning a default instance")
+            logger.warning("HLL_DB_URL not set, returning a default instance")
             return cls()
 
         # If the cache is unavailable, it will fall back to creating a default
@@ -159,7 +158,9 @@ class StandardBroadcastMessagesUserConfig(BaseUserConfig):
             set_user_config(StandardBroadcastMessagesUserConfig.KEY(), validated_conf)
 
 
-def get_all_message_types(as_dict=False, as_json=False) -> (
+def get_all_message_types(
+    as_dict=False, as_json=False
+) -> (
     dict[str, dict[str, Any]]
     | str
     | tuple[

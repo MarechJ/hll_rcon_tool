@@ -50,7 +50,7 @@ def get_auto_settings(request):
     return api_response(
         result=ordered_config,
         command="get_auto_settings",
-        arguments=dict(server_number=server_number),
+        arguments={"server_number": server_number},
         failed=False,
     )
 
@@ -75,7 +75,11 @@ def set_auto_settings(request):
     if do_forward == "true" or do_forward == "1":
         do_forward = True
     if not isinstance(do_forward, bool):
-        return api_response(error="forward needs to be a boolean value or empty", failed=True, status_code=400)
+        return api_response(
+            error="forward needs to be a boolean value or empty",
+            failed=True,
+            status_code=400,
+        )
 
     settings = data.get("settings")
     if not settings:
@@ -114,6 +118,9 @@ def set_auto_settings(request):
     return api_response(
         result=settings,
         command=command_name,
-        arguments=dict(server_number=server_number, restart_service=do_restart_service),
+        arguments={
+            "server_number": server_number,
+            "restart_service": do_restart_service,
+        },
         failed=False,
     )

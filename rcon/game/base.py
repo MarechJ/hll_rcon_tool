@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import unicodedata
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
-import unicodedata
 
 from rcon.maps import Environment, GameMode, Layer, Map, Team
 from rcon.types import GameEnum

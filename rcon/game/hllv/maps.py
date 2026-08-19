@@ -48,6 +48,7 @@ for layer_data in hllrcon.HLLVLayer.all():
     layer = Layer.from_hllrcon(layer_data, map_catalog=HLLV_MAPS)
     HLLV_LAYERS[layer.id] = layer
 
+
 def parse_layer(layer_name: str | Layer) -> Layer:
     if isinstance(layer_name, Layer):
         return layer_name

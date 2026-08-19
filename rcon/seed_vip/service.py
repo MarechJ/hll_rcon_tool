@@ -1,12 +1,12 @@
 import sys
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from logging import getLogger
 from time import sleep
 
+import discord
 import humanize
 
-import discord
 from rcon.api_commands import get_rcon_api
 from rcon.seed_vip.utils import (
     calc_vip_expiration_timestamp,
@@ -67,8 +67,7 @@ def run():
                     current_lang = config.language
                     humanize.activate(config.language)
                     logger.info(f"Activated language={config.language}")
-            except FileNotFoundError as e:
-                logger.exception(e)
+            except FileNotFoundError:
                 logger.error(
                     f"Unable to activate language={config.language}, defaulting to English"
                 )
@@ -90,14 +89,16 @@ def run():
                 sleep(config.poll_time_seeding)
                 continue
 
-            total_players = gamestate["num_allied_players"] + gamestate["num_axis_players"]
+            total_players = (
+                gamestate["num_allied_players"] + gamestate["num_axis_players"]
+            )
 
             player_name_lookup |= {
                 p.player_id: p.name for p in online_players.players.values()
             }
 
             logger.debug(
-                f"{is_seeding=} {len(online_players.players.keys())} online players (`get_players`), {gamestate["num_allied_players"]} allied {gamestate["num_axis_players"]} axis players (gamestate)",
+                f"{is_seeding=} {len(online_players.players.keys())} online players (`get_players`), {gamestate['num_allied_players']} allied {gamestate['num_axis_players']} axis players (gamestate)",
             )
             to_add_vip_steam_ids = collect_steam_ids(
                 config=config,
@@ -107,8 +108,8 @@ def run():
 
             # Server seeded
             if is_seeding and is_seeded(config=config, gamestate=gamestate):
-                seeded_timestamp = datetime.now(tz=timezone.utc)
-                logger.info(f"Server seeded at {seeded_timestamp.isoformat()}")
+                st = seeded_timestamp = datetime.now(tz=UTC)
+                logger.info(f"Server seeded at {st.isoformat()}")
                 # Use the full VIP list for logic so offline VIPs are respected
                 all_vips = get_vips(rcon=rcon_api)
 
@@ -122,10 +123,10 @@ def run():
                 } - to_add_vip_steam_ids
 
                 expiration_timestamps = defaultdict(
-                    lambda: calc_vip_expiration_timestamp(
-                        config=config,
+                    lambda time=st, cfg=config: calc_vip_expiration_timestamp(
+                        config=cfg,
                         expiration=None,
-                        from_time=seeded_timestamp or datetime.now(tz=timezone.utc),
+                        from_time=time,
                     )
                 )
                 for player in all_vips.values():
@@ -133,7 +134,7 @@ def run():
                         calc_vip_expiration_timestamp(
                             config=config,
                             expiration=player.expiration_date if player else None,
-                            from_time=seeded_timestamp,
+                            from_time=st,
                         )
                     )
 
@@ -195,7 +196,7 @@ def run():
             ):
                 delta: timedelta | None = None
                 if seeded_timestamp:
-                    delta = datetime.now(tz=timezone.utc) - seeded_timestamp
+                    delta = datetime.now(tz=UTC) - seeded_timestamp
 
                 if not seeded_timestamp:
                     logger.debug(
@@ -248,7 +249,7 @@ def run():
                         num_axis_players=gamestate["num_axis_players"],
                     )
                     if next_player_bucket == config.player_announce_thresholds[-1]:
-                        logger.debug(f"setting last_bucket_announced=True")
+                        logger.debug("setting last_bucket_announced=True")
                         last_bucket_announced = True
 
                     if embed:
@@ -270,7 +271,6 @@ def run():
 if __name__ == "__main__":
     try:
         run()
-    except Exception as e:
-        logger.error("Seed VIP stopped")
-        logger.exception(e)
+    except:  # noqa
+        logger.exception("Seed VIP stopped")
         sys.exit(1)

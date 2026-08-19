@@ -1,8 +1,8 @@
 import datetime
 import logging
 import math
-import os
 import unicodedata
+from datetime import UTC
 from functools import cmp_to_key
 
 from dateutil import parser
@@ -14,14 +14,13 @@ from rcon.commands import HLLCommandFailedError
 from rcon.models import (
     BlacklistRecord,
     PlayerAccount,
-    PlayerActionState,
     PlayerComment,
     PlayerFlag,
     PlayerID,
     PlayerName,
-    PlayerSoldier,
     PlayersAction,
     PlayerSession,
+    PlayerSoldier,
     SteamInfo,
     WatchList,
     enter_session,
@@ -120,7 +119,10 @@ def _get_set_player(
         player = _save_player_id(sess, player_id)
     if player_name:
         _save_player_alias(
-            sess, player, player_name, timestamp or datetime.datetime.now().timestamp()
+            sess,
+            player,
+            player_name,
+            timestamp or datetime.datetime.now(tz=UTC).timestamp(),
         )
     if steam_id:
         player.steam_id = steam_id
@@ -185,7 +187,7 @@ def get_players_by_appearance(
         )
 
         if player_id:
-            query = query.filter(PlayerID.player_id.ilike("%{}%".format(player_id)))
+            query = query.filter(PlayerID.player_id.ilike(f"%{player_id}%"))
 
         if player_name:
             soldier_name = PlayerName.name
@@ -194,17 +196,26 @@ def get_players_by_appearance(
                 soldier_name = unaccent(PlayerName.name)
                 player_name = remove_accent(player_name)
             if not exact_name_match:
-                query = query.join(PlayerID.names).join(PlayerID.account).filter(
-                    or_(
-                        soldier_name.ilike("%{}%".format(player_name)),
-                        account_name.isnot(None) & account_name.ilike("%{}%".format(player_name))
+                query = (
+                    query.join(PlayerID.names)
+                    .join(PlayerID.account)
+                    .filter(
+                        or_(
+                            soldier_name.ilike(f"%{player_name}%"),
+                            account_name.isnot(None)
+                            & account_name.ilike(f"%{player_name}%"),
+                        )
                     )
                 )
             else:
-                query = query.join(PlayerID.names).join(PlayerID.account).filter(
-                    or_(
-                        soldier_name == player_name,
-                        account_name.isnot(None) & (account_name == player_name)
+                query = (
+                    query.join(PlayerID.names)
+                    .join(PlayerID.account)
+                    .filter(
+                        or_(
+                            soldier_name == player_name,
+                            account_name.isnot(None) & (account_name == player_name),
+                        )
                     )
                 )
 
@@ -223,7 +234,7 @@ def get_players_by_appearance(
         if is_watched is True:
             query = (
                 query.join(PlayerID.watchlist)
-                .filter(WatchList.is_watched == True)
+                .filter(WatchList.is_watched)
                 .options(contains_eager(PlayerID.watchlist))
             )
 
@@ -233,8 +244,13 @@ def get_players_by_appearance(
             query = query.join(PlayerID.flags).filter(PlayerFlag.flag.in_(flags))
 
         if country:
-            query = query.join(PlayerID.steaminfo).join(PlayerID.account).filter(
-                SteamInfo.country == country.upper() or PlayerAccount.country == country.upper()
+            query = (
+                query.join(PlayerID.steaminfo)
+                .join(PlayerID.account)
+                .filter(
+                    SteamInfo.country == country.upper()
+                    or PlayerAccount.country == country.upper()
+                )
             )
 
         if last_seen_from:
@@ -322,9 +338,9 @@ def _save_player_alias(sess, player: PlayerID, player_name: str, timestamp=None)
     )
 
     if timestamp:
-        dt = datetime.datetime.fromtimestamp(timestamp)
+        dt = datetime.datetime.fromtimestamp(timestamp, tz=UTC)
     else:
-        dt = datetime.datetime.now()
+        dt = datetime.datetime.now(tz=UTC)
     if not name:
         name = PlayerName(name=player_name, player=player, last_seen=dt)
         sess.add(name)
@@ -342,13 +358,16 @@ def save_player(
     player_id: str,
     timestamp: float | None = None,
     *,
-    steam_id: str | None = None
+    steam_id: str | None = None,
 ) -> None:
     """Create a PlayerID record if non existent and save the player name alias"""
     with enter_session() as sess:
         player = _save_player_id(sess, player_id)
         _save_player_alias(
-            sess, player, player_name, timestamp or datetime.datetime.now().timestamp()
+            sess,
+            player,
+            player_name,
+            timestamp or datetime.datetime.now(tz=UTC).timestamp(),
         )
         if steam_id:
             player.steam_id = steam_id
@@ -363,7 +382,7 @@ def save_player_action(
     reason: str = "",
     timestamp: float | None = None,
     *,
-    steam_id: str | None = None
+    steam_id: str | None = None,
 ):
     with enter_session() as sess:
         player = _get_set_player(
@@ -401,7 +420,7 @@ def safe_save_player_action(
             reason,
             steam_id=steam_id,
         )
-    except Exception as e:
+    except Exception:
         logger.exception(
             "Failed to record player action: %s %s", action_type, player_name
         )
@@ -412,7 +431,7 @@ def save_start_player_session(
     player_id: str,
     timestamp: float,
     server_name: str | None = None,
-    server_number: int | None = None
+    server_number: int | None = None,
 ):
     config = RconServerSettingsUserConfig.load_from_db()
 
@@ -429,7 +448,7 @@ def save_start_player_session(
             )
             return
 
-        start_time = datetime.datetime.fromtimestamp(timestamp)
+        start_time = datetime.datetime.fromtimestamp(timestamp, tz=UTC)
         already_saved = (
             sess.query(PlayerSession)
             .filter(PlayerSession.player == player)
@@ -454,7 +473,7 @@ def save_start_player_session(
         logger.info(
             "Recorded player %s session start at %s",
             player_id,
-            datetime.datetime.fromtimestamp(timestamp),
+            datetime.datetime.fromtimestamp(timestamp, tz=UTC),
         )
         sess.commit()
 
@@ -490,7 +509,7 @@ def save_end_player_session(player_id: str, timestamp):
             last_session = PlayerSession(
                 player=player,
             )
-        last_session.end = datetime.datetime.fromtimestamp(timestamp)
+        last_session.end = datetime.datetime.fromtimestamp(timestamp, tz=UTC)
         logger.info("Recorded player %s session end at %s", player_id, last_session.end)
         sess.commit()
 
@@ -585,18 +604,20 @@ def post_player_comment(player_id: str, comment, user: str = "Bot"):
 
 if __name__ == "__main__":
     save_player("Achile5115", "76561198172574911")
-    save_start_player_session("76561198172574911", datetime.datetime.now().timestamp())
+    save_start_player_session(
+        "76561198172574911", datetime.datetime.now(tz=UTC).timestamp()
+    )
     save_end_player_session(
         "76561198172574911",
         int(
-            (datetime.datetime.now() + datetime.timedelta(minutes=30)).timestamp()
+            (datetime.datetime.now(tz=UTC) + datetime.timedelta(minutes=30)).timestamp()
             * 1000
         ),
     )
     save_end_player_session(
         "76561198172574911",
         int(
-            (datetime.datetime.now() + datetime.timedelta(minutes=30)).timestamp()
+            (datetime.datetime.now(tz=UTC) + datetime.timedelta(minutes=30)).timestamp()
             * 1000
         ),
     )
@@ -608,18 +629,18 @@ if __name__ == "__main__":
     save_player("Dr.WeeD5", "4242")
     save_player("Dr.WeeD6", "4242")
     save_player("test", "76561197984877751")
-    save_start_player_session("4242", datetime.datetime.now().timestamp())
+    save_start_player_session("4242", datetime.datetime.now(tz=UTC).timestamp())
     save_end_player_session(
         "4242",
         int(
-            (datetime.datetime.now() + datetime.timedelta(minutes=30)).timestamp()
+            (datetime.datetime.now(tz=UTC) + datetime.timedelta(minutes=30)).timestamp()
             * 1000
         ),
     )
     save_end_player_session(
         "4242",
         int(
-            (datetime.datetime.now() + datetime.timedelta(minutes=30)).timestamp()
+            (datetime.datetime.now(tz=UTC) + datetime.timedelta(minutes=30)).timestamp()
             * 1000
         ),
     )

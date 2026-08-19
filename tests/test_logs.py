@@ -1,8 +1,24 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta, timezone
 
+import orjson
 import pytest
 
 from rcon.rcon import Rcon
+from rcon.utils import logs_deserializer
+
+
+def test_logs_deserializer_preserves_iso_timestamp_timezone():
+    event_time = datetime(2026, 8, 19, 9, 6, 3, tzinfo=timezone(timedelta(hours=2)))
+
+    result = logs_deserializer(orjson.dumps({"event_time": event_time}))
+
+    assert result["event_time"] == event_time
+
+
+def test_logs_deserializer_assumes_utc_for_naive_iso_timestamp():
+    result = logs_deserializer(b'{"event_time":"2026-08-19T09:06:03"}')
+
+    assert result["event_time"] == datetime(2026, 8, 19, 9, 6, 3, tzinfo=UTC)
 
 
 # Test that we successfully split raw log lines from the game server

@@ -3,12 +3,14 @@ import logging
 import os
 import sys
 import traceback
+from collections.abc import Callable
 from functools import wraps
-from subprocess import PIPE, run
-from typing import Any, Callable
-import psutil
+from subprocess import run
+from typing import Any
 
+import psutil
 import pydantic
+from discord.utils import escape_markdown
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -16,8 +18,8 @@ from django.http import (
     HttpResponseNotAllowed,
 )
 from django.views.decorators.csrf import csrf_exempt
+from rconweb.settings import TAG_VERSION
 
-from discord.utils import escape_markdown
 from rcon.api_commands import get_rcon_api
 from rcon.commands import HLLCommandFailedError
 from rcon.discord import send_to_discord_audit
@@ -31,7 +33,6 @@ from rcon.types import (
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.utils import InvalidKeysConfigurationError
 from rcon.utils import MapsHistory, get_server_number
-from rconweb.settings import TAG_VERSION
 
 from .audit_log import auto_record_audit, record_audit
 from .auth import AUTHORIZATION, RconJsonResponse, api_response, login_required
@@ -51,7 +52,7 @@ rcon_api = get_rcon_api()
 @require_http_methods(["POST"])
 def restart_gunicorn(request):
     """Restart gunicorn workers which reconnects Rcon endpoint instances"""
-    exit_code = os.system(f"cat /code/rconweb/gunicorn.pid | xargs kill -HUP")
+    exit_code = os.system("cat /code/rconweb/gunicorn.pid | xargs kill -HUP")
     error_msg = None
     if exit_code == 0:
         result = "Web server restarted successfully"
@@ -70,7 +71,7 @@ def set_temp_msg(request, func, name):
     error = None
     try:
         func(rcon_api, data["msg"], data["seconds"])
-    except Exception as e:
+    except Exception as e:  # noqa
         failed = True
         error = repr(e)
 
@@ -80,7 +81,7 @@ def set_temp_msg(request, func, name):
 @csrf_exempt
 @require_http_methods(["GET"])
 def get_version(request):
-    res = run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE)
+    res = run(["git", "describe", "--tags"], check=False, capture_output=True)
     return api_response(res.stdout.decode(), failed=False, command="get_version")
 
 
@@ -157,6 +158,7 @@ def get_public_info(request):
         command="get_public_info",
     )
 
+
 @login_required()
 @csrf_exempt
 @require_http_methods(["GET"])
@@ -220,7 +222,7 @@ def audit(func_name, request, arguments):
             by=request.user.username,
             md_escape_message=False,
         )
-    except:
+    except:  # noqa
         logger.exception("Can't send audit log")
 
 
@@ -248,7 +250,7 @@ def expose_api_endpoint(
         res: Any = None
         data = _get_data(request)
 
-        json_invalid_content_type_error = f"InvalidContentType: {request.method} {request.path} was called with {request.content_type}, expected one of {','.join(['application/json'])}"
+        json_invalid_content_type_error = f"InvalidContentType: {request.method} {request.path} was called with {request.content_type}, expected one of application/json"
         if request.method not in endpoint_allowed_http_methods[func]:
             return HttpResponseNotAllowed([request.method])
         # There's nothing in RconAPI that will accept file uploads or any other weird content types
@@ -258,7 +260,7 @@ def expose_api_endpoint(
 
         # This is a total hack to avoid having to name every single parameter for
         # every single user config endpoint
-        if "kwargs" in parameters.keys():
+        if "kwargs" in parameters:
             if data.pop("errors_as_json", None):
                 errors_as_json = True
             arguments = data
@@ -318,15 +320,15 @@ def expose_api_endpoint(
             error = e.args[0] if e.args else None
 
         response = RconJsonResponse(
-            dict(
-                result=res,
-                command=command_name,
-                arguments=data,
-                failed=failure,
-                error=error,
-                forward_results=others,
-                version=TAG_VERSION,
-            ),
+            {
+                "result": res,
+                "command": command_name,
+                "arguments": data,
+                "failed": failure,
+                "error": error,
+                "forward_results": others,
+                "version": TAG_VERSION,
+            },
             status=400 if error is not None else 200,
         )
 
@@ -335,7 +337,7 @@ def expose_api_endpoint(
         # using forward_command and not forward_request so that the `forwarded`parameter
         # is passed to avoid infinite loops of forwarding
         config = RconServerSettingsUserConfig.load_from_db()
-        if config.broadcast_unbans and func == rcon_api.unban:
+        if config.broadcast_unbans and func == rcon_api.unban or data.get("forward"):
             try:
                 forward_command(
                     path=request.path,
@@ -343,18 +345,7 @@ def expose_api_endpoint(
                     auth_header=request.headers.get(AUTHORIZATION),
                     json=data,
                 )
-            except Exception as e:
-                logger.error("Unexpected error while forwarding request: %s", e)
-        # Handle all the other non special case forwarding
-        elif data.get("forward"):
-            try:
-                forward_command(
-                    path=request.path,
-                    sessionid=request.COOKIES.get("sessionid"),
-                    auth_header=request.headers.get(AUTHORIZATION),
-                    json=data,
-                )
-            except Exception as e:
+            except Exception as e:  # noqa
                 logger.error("Unexpected error while forwarding request: %s", e)
 
         return response
@@ -397,8 +388,8 @@ def run_raw_command(request):
             res = rcon_api._str_request(command, can_fail=True, log_info=True)
         except HLLCommandFailedError:
             res = "Command returned FAIL"
-        except:
-            logging.exception("Internal error when executing raw command")
+        except:  # noqa
+            logging.exception("Internal error when executing raw command")  # noqa
             res = "Internal error!\n\n" + traceback.format_exc()
     return HttpResponse(res, content_type="text/plain")
 
@@ -949,9 +940,9 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
 }
 
 # Check to make sure that ENDPOINT_HTTP_METHODS and ENDPOINT_PERMISSIONS have the same endpoints
-MISSING_ENDPOINTS = set(
-    k for k in RCON_ENDPOINT_HTTP_METHODS.keys()
-).symmetric_difference(set(k for k in ENDPOINT_PERMISSIONS))
+MISSING_ENDPOINTS = set(RCON_ENDPOINT_HTTP_METHODS).symmetric_difference(
+    set(ENDPOINT_PERMISSIONS)
+)
 
 if len(MISSING_ENDPOINTS) > 0:
     logger.error(f"{MISSING_ENDPOINTS=}")
@@ -973,7 +964,7 @@ commands = [
     ("get_connection_info", get_connection_info),
     ("get_public_info", get_public_info),
     ("run_raw_command", run_raw_command),
-    ("get_system_usage", get_system_usage)
+    ("get_system_usage", get_system_usage),
 ]
 
 if not os.getenv("HLL_MAINTENANCE_CONTAINER") and not os.getenv(
@@ -983,7 +974,7 @@ if not os.getenv("HLL_MAINTENANCE_CONTAINER") and not os.getenv(
 
     # Dynamically register all the methods from ServerCtl
     # TODO: remove deprecated endpoints check once endpoints are removed
-    for func in ENDPOINT_PERMISSIONS.keys():
+    for func, perms in ENDPOINT_PERMISSIONS.items():
         try:
             name = func.__name__
             commands.append(
@@ -992,7 +983,7 @@ if not os.getenv("HLL_MAINTENANCE_CONTAINER") and not os.getenv(
                     expose_api_endpoint(
                         func=func,
                         command_name=name,
-                        permissions=ENDPOINT_PERMISSIONS[func],
+                        permissions=perms,
                         endpoint_allowed_http_methods=RCON_ENDPOINT_HTTP_METHODS,
                     ),
                 ),

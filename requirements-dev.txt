@@ -1,6 +1,0 @@
-black==26.5.0
-isort==8.0.1
-pytest==9.0.3
-cachetools==7.1.2
-fakeredis==2.37.0
-daphne==4.2.2

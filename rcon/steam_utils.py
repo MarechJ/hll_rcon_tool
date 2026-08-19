@@ -1,10 +1,11 @@
 import datetime
 import logging
-import math
 import time
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
+from datetime import UTC
 from functools import wraps
-from typing import Any, Iterable, Sequence
+from typing import Any
 
 import steam.exceptions
 from sqlalchemy import or_, select
@@ -20,7 +21,7 @@ from rcon.user_config.steam import SteamUserConfig
 from rcon.utils import batched
 
 logger = logging.getLogger(__name__)
-last_steam_api_key_warning = datetime.datetime.now()
+last_steam_api_key_warning = datetime.datetime.now(tz=UTC)
 
 STEAM_API_MAX_STEAM_IDS = 100
 STEAM_API_TIMEOUT_SECONDS = 10
@@ -45,7 +46,7 @@ def get_steam_api_key() -> str | None:
 
     config = SteamUserConfig.load_from_db()
     if config.api_key is None or config.api_key == "":
-        timestamp = datetime.datetime.now()
+        timestamp = datetime.datetime.now(tz=UTC)
         # Only log once an hour or it is super spammy
         if (timestamp - last_steam_api_key_warning).total_seconds() > 3600:
             logger.warning("Steam API key is not set some features will be disabled.")
@@ -56,9 +57,7 @@ def get_steam_api_key() -> str | None:
 
 def is_steam_id_64(player_id: str) -> bool:
     """Test if an ID is a steam_id_64 or a windows store ID"""
-    if len(player_id) == 17 and player_id.isdigit():
-        return True
-    return False
+    return len(player_id) == 17 and player_id.isdigit()
 
 
 def filter_steam_ids():
@@ -69,8 +68,8 @@ def filter_steam_ids():
         def wrapper(player_ids: Iterable[str], *args, **kwargs):
             # Remove any duplicates and sort to force redis cache hits even if the
             # originating call has steam IDs in different orders
-            player_ids = sorted(set([id_ for id_ in player_ids if is_steam_id_64(id_)]))
-            return f(player_ids=player_ids, *args, **kwargs)
+            player_ids = sorted({id_ for id_ in player_ids if is_steam_id_64(id_)})
+            return f(player_ids=player_ids, *args, **kwargs)  # noqa
 
         return wrapper
 
@@ -100,7 +99,7 @@ def filter_steam_id(return_value: Any = None):
         @wraps(f)
         def wrapper(player_id: str, *args, **kwargs):
             if is_steam_id_64(player_id):
-                return f(player_id=player_id, *args, **kwargs)
+                return f(player_id=player_id, *args, **kwargs)  # noqa
             else:
                 return ReturnValue(value=return_value)()
 
@@ -150,9 +149,14 @@ def fetch_steam_player_summary_mult_players(
                 logger.info("Fetching player summaries for %s steam IDs", len(chunk))
                 started = time.perf_counter()
                 try:
-                    raw_result = api.ISteamUser.GetPlayerSummaries(steamids=chunk_steam_ids)
+                    raw_result = api.ISteamUser.GetPlayerSummaries(
+                        steamids=chunk_steam_ids
+                    )
                 finally:
-                    logger.info("Steam player summary request finished in %.3fs", time.perf_counter() - started)
+                    logger.info(
+                        "Steam player summary request finished in %.3fs",
+                        time.perf_counter() - started,
+                    )
                 chunk_profiles: list[SteamPlayerSummaryType] = raw_result["response"][
                     "players"
                 ]
@@ -164,9 +168,8 @@ def fetch_steam_player_summary_mult_players(
                 break
             except IndexError:
                 logger.error("Steam: no player(s) found")
-            except Exception as e:
-                logger.exception(e)
-                logger.error("Unexpected error while fetching steam profile")
+            except Exception as e:  # noqa
+                logger.error("Unexpected error while fetching steam profile: %s", e)
 
     return {raw["steamid"]: raw for raw in raw_profiles}
 
@@ -200,7 +203,10 @@ def fetch_steam_bans_mult_players(
                         steamids=chunk_steam_ids
                     )
                 finally:
-                    logger.info("Steam ban request finished in %.3fs", time.perf_counter() - started)
+                    logger.info(
+                        "Steam ban request finished in %.3fs",
+                        time.perf_counter() - started,
+                    )
                 chunk_bans: SteamBansType = raw_result["players"]
                 raw_bans.extend(chunk_bans)  # type: ignore
 
@@ -210,7 +216,7 @@ def fetch_steam_bans_mult_players(
             logger.error("Steam API key is invalid, can't fetch steam profile")
         except IndexError:
             logger.error("Steam no player found")
-        except:
+        except:  # noqa
             logger.error("Unexpected error while fetching steam bans")
 
     return {raw["SteamId"]: raw for raw in raw_bans}
@@ -242,10 +248,10 @@ def get_steam_profiles_mult_players(
 
     profiles: dict[str, SteamInfoType | None] = dict.fromkeys(steam_id_64s, None)
     if sess is None:
-        with enter_session() as sess:
+        with enter_session() as s:
             # Needed to avoid an DetachedInstanceError error
-            sess.expire_on_commit = False
-            players = sess.scalars(stmt).all()
+            s.expire_on_commit = False
+            players = s.scalars(stmt).all()
     else:
         players = sess.scalars(stmt).all()
 
@@ -345,7 +351,8 @@ def update_missing_old_steam_info_single_player(
         player.steaminfo is None
         or player.steaminfo
         and player.steaminfo.updated
-        and (datetime.datetime.utcnow() - player.steaminfo.updated) >= age_limit
+        and (datetime.datetime.now(tz=datetime.UTC) - player.steaminfo.updated)
+        >= age_limit
     ):
         # Fetch both the profile and bans
         profile = fetch_steam_player_summary_player(player.player_id)
@@ -381,12 +388,14 @@ def update_missing_old_steam_info_single_player(
 
 def enrich_db_users(chunk_size=100, update_from_days_old=30):
     """Use the Steam API to update steam profiles/bans for missing or old records"""
-    max_age = datetime.datetime.utcnow() - datetime.timedelta(days=update_from_days_old)
+    max_age = datetime.datetime.now(tz=datetime.UTC) - datetime.timedelta(
+        days=update_from_days_old
+    )
     with enter_session() as sess:
         # Missing JSONB records are surprisingly difficult to identify depending
         # on how they've been persisted but JSONB.NULL should cover the different cases
         # This query can also return many thousands of results, using stream_results and
-        # yield_per doesn't fetch all of the results at once, but pages through them
+        # yield_per doesn't fetch all the results at once, but pages through them
         stmt = (
             select(PlayerID)
             .execution_options(stream_results=True, yield_per=chunk_size)
@@ -394,7 +403,7 @@ def enrich_db_users(chunk_size=100, update_from_days_old=30):
             .where(func.length(PlayerID.player_id) == 17)
             .where(
                 or_(
-                    PlayerID.steaminfo == None,
+                    PlayerID.steaminfo is None,
                     SteamInfo.updated <= max_age,
                     SteamInfo.bans == JSONB.NULL,
                     SteamInfo.profile == JSONB.NULL,
@@ -421,8 +430,7 @@ def enrich_db_users(chunk_size=100, update_from_days_old=30):
                     num_profs,
                     num_bans,
                 )
-            except Exception as e:
-                logger.exception(e)
+            except Exception as e:  # noqa
                 logger.error("Error while fetching page %s: %s", idx + 1, e)
 
             # Shouldn't really need this with how many API calls we should be able to make

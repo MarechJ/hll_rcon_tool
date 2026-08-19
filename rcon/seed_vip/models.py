@@ -1,9 +1,7 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from logging import getLogger
 
 import pydantic
-
-from rcon.maps import Layer
 
 logger = getLogger(__name__)
 

@@ -1,6 +1,5 @@
 import json
 import logging
-from typing import List
 
 from redis import BlockingConnectionPool, Redis
 
@@ -36,14 +35,14 @@ def heartbeat(username, player_id, timeout=120):
     return red.setex(
         _heartbeat_key(username),
         timeout,
-        json.dumps(dict(username=username, player_id=player_id)),
+        json.dumps({"username": username, "player_id": player_id}),
     )
 
 
 # This exists only no to create a weird interdependancy / tight coupling with the API layer.
 # Ideally we'd extract the services (i.e. broadcast, logs_event, etc) in a separated package, and let them
 # use a service account to talk the the API.
-def set_registered_mods(moderators_name_steamids: List[tuple]):
+def set_registered_mods(moderators_name_steamids: list[tuple]):
     red = _red()
 
     logger.warning("Registering mods: %s", moderators_name_steamids)
@@ -69,7 +68,7 @@ def ingame_mods(rcon=None) -> list[AdminUserType]:
 
     rcon = rcon or get_rcon()
     players = rcon.get_players()
-    mods_ids = set(v.decode() for v in mods.values())
+    mods_ids = {v.decode() for v in mods.values()}
     ig_mods: list[AdminUserType] = []
     for player in players:
         if player[PLAYER_ID] in mods_ids:

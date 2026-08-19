@@ -1,6 +1,6 @@
 import pytest
 
-from rcon.types import GetDetailedPlayer, GameEnum
+from rcon.types import GameEnum, GetDetailedPlayer
 from rcon.utils import parse_raw_player_info
 
 
@@ -10,7 +10,7 @@ def mock_get_detailed_player(
     eos_id="",
     steam_id=None,
     platform="steam",
-    world_position={},
+    world_position: dict | None = None,
     player_id="0",
     team="",
     faction="",
@@ -37,7 +37,7 @@ def mock_get_detailed_player(
         "clan_tag": clan_tag,
         "eos_id": eos_id,
         "platform": platform,
-        "world_position": world_position,
+        "world_position": world_position or {},
         "player_id": player_id,
         "steam_id": steam_id,
         "team": team,

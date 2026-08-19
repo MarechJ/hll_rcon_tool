@@ -82,7 +82,7 @@ def seed_default_config():
             WatchKillRateUserConfig.seed_db(sess)
             WatchlistWebhooksUserConfig.seed_db(sess)
 
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to seed DB")
 
 

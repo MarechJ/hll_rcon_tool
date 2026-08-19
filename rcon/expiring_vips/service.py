@@ -1,7 +1,6 @@
 import logging
 import time
-from datetime import datetime, timedelta, timezone
-from typing import List, Optional
+from datetime import UTC, datetime, timedelta
 
 from pydantic import HttpUrl
 
@@ -15,17 +14,17 @@ SERVICE_NAME = "ExpiringVIPs"
 logger = logging.getLogger(__name__)
 
 
-def remove_expired_vips(rcon_hook: Rcon, webhook_url: Optional[HttpUrl] = None):
-    logger.info(f"Checking for expired VIPs")
+def remove_expired_vips(rcon_hook: Rcon, webhook_url: HttpUrl | None = None):
+    logger.info("Checking for expired VIPs")
 
     count = 0
     server_number = get_server_number()
     with enter_session() as session:
-        expired_vips: List[PlayerVIP] = (
+        expired_vips: list[PlayerVIP] = (
             session.query(PlayerVIP)
             .filter(
                 PlayerVIP.server_number == server_number,
-                PlayerVIP.expiration < datetime.utcnow(),
+                PlayerVIP.expiration < datetime.now(tz=UTC),
             )
             .all()
         )
@@ -64,8 +63,7 @@ def remove_expired_vips(rcon_hook: Rcon, webhook_url: Optional[HttpUrl] = None):
             # so they get changed to the new fixed UTC 3000-01-01 datetime
             elif (
                 player_expiration
-                and player_expiration
-                >= datetime.now(timezone.utc) + timedelta(days=365 * 100)
+                and player_expiration >= datetime.now(UTC) + timedelta(days=365 * 100)
                 and player_expiration.year < 3000
             ):
                 missing_expiration_records.append(player)

@@ -63,7 +63,7 @@ class Series:
                 )
             except redis.exceptions.ResponseError:
                 logger.debug("Already exists timeseries aggregation %s", rule_name)
-                pass  # rule already exists
+                # rule already exists
                 # TODO: Handle change
 
     def get_last(self):
@@ -87,7 +87,7 @@ class Series:
         logger.debug("Taking snaphost for %s", self.NAME)
         try:
             self.snapshot(rcon)
-        except:
+        except:  # noqa
             self.fails += 1
             if self.fails > self.max_fails:
                 raise

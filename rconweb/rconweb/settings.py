@@ -14,9 +14,10 @@ import logging
 import os
 import re
 import socket
-from subprocess import PIPE, run
+from subprocess import run
 
 import sentry_sdk
+from pydantic import ValidationError
 from sentry_sdk import configure_scope
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
@@ -25,24 +26,27 @@ from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 
 try:
     TAG_VERSION = (
-        run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE)
+        run(["git", "describe", "--tags"], capture_output=True, check=False)
         .stdout.decode()
         .strip()
     )
-except Exception:
+except Exception:  # noqa
     TAG_VERSION = "unknown"
 
 HLL_MAINTENANCE_CONTAINER = os.getenv("HLL_MAINTENANCE_CONTAINER")
 HLL_WH_SERVICE_CONTAINER = os.getenv("HLL_WH_SERVICE_CONTAINER")
 
 
-try:
-    config = RconServerSettingsUserConfig.load_from_db()
-    ENVIRONMENT = re.sub("[^0-9a-zA-Z]+", "", (config.short_name or "default").strip())[
-        :64
-    ]
-except Exception:
+if HLL_MAINTENANCE_CONTAINER or HLL_WH_SERVICE_CONTAINER:
     ENVIRONMENT = "undefined"
+else:
+    try:
+        config = RconServerSettingsUserConfig.load_from_db()
+        ENVIRONMENT = re.sub(
+            "[^0-9a-zA-Z]+", "", (config.short_name or "default").strip()
+        )[:64]
+    except (ValidationError, IndexError):
+        ENVIRONMENT = "undefined"
 
 LOGGING = {
     "version": 1,
@@ -136,7 +140,7 @@ SECRET_KEY = (
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DJANGO_DEBUG", False) is not False
+DEBUG = os.getenv("DJANGO_DEBUG", None) is not None
 
 ALLOWED_HOSTS = [
     "backend:8000",
@@ -146,8 +150,8 @@ ALLOWED_HOSTS = [
     "localhost",
     "localhost:3000",
 ] + os.getenv("DOMAINS", "").split(",")
-CORS_ALLOWED_ORIGINS = ["http://{}".format(h) for h in ALLOWED_HOSTS if h] + [
-    "https://{}".format(h) for h in ALLOWED_HOSTS if h
+CORS_ALLOWED_ORIGINS = [f"http://{h}" for h in ALLOWED_HOSTS if h] + [
+    f"https://{h}" for h in ALLOWED_HOSTS if h
 ]
 CORS_ALLOW_CREDENTIALS = True
 
@@ -250,7 +254,7 @@ DATABASES = {
         "NAME": db_info["NAME"],
         "OPTIONS": {
             "application_name": (os.getenv("SERVER_NUMBER") or "") + "Django",
-        }
+        },
     }
 }
 

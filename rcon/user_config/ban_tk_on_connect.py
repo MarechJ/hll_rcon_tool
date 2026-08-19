@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import Optional, TypedDict
+from typing import TypedDict
 
 from pydantic import BaseModel, Field, HttpUrl, field_serializer
 
@@ -35,7 +35,7 @@ class BanTeamKillOnConnectType(TypedDict):
     ignore_tk_after_n_deaths: int
     whitelist_players: BanTeamKillOnConnectWhitelistType
     teamkill_tolerance_count: int
-    discord_webhook_url: Optional[HttpUrl]
+    discord_webhook_url: HttpUrl | None
     discord_webhook_message: str
 
 
@@ -77,7 +77,7 @@ class BanTeamKillOnConnectUserConfig(BaseUserConfig):
         default_factory=BanTeamKillOnConnectWhiteList
     )
     teamkill_tolerance_count: int = Field(ge=0, default=1)
-    discord_webhook_url: Optional[HttpUrl] = Field(default=None)
+    discord_webhook_url: HttpUrl | None = Field(default=None)
     discord_webhook_message: str = Field(default=DISCORD_WEBHOOK_MESSAGE)
 
     @field_serializer("discord_webhook_url")
