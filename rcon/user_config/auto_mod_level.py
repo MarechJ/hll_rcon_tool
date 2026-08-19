@@ -9,7 +9,6 @@ from pydantic import (
     field_serializer,
 )
 
-from rcon.types import Roles as Roles  # Backwards-compatible public export.
 from rcon.user_config.utils import (
     BaseUserConfig,
     key_check,

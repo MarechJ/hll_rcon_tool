@@ -17,13 +17,12 @@ from rcon.automods.models import (
 )
 from rcon.automods.seeding_rules import SeedingRulesAutomod
 from rcon.maps import GameMode
-from rcon.types import GameEnum, GameStateType, StructuredLogLineWithMetaData
+from rcon.types import GameEnum, GameStateType, Roles, StructuredLogLineWithMetaData
 from rcon.user_config.auto_mod_seeding import (
     AutoModSeedingUserConfig,
     DisallowedRoles,
     DisallowedWeapons,
     EnforceCapFight,
-    Roles,
 )
 
 state = {}
