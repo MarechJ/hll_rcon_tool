@@ -239,6 +239,14 @@ class Roles(str, enum.Enum):
     artillery_observer = "artilleryobserver"
     operator = "operator"
     gunner = "gunner"
+    squad_leader = "squadleader"
+    mortar_observer = "mortarobserver"
+    mortar_gunner = "mortargunner"
+    helicopter_logistics_officer = "helicopterlogisticsofficer"
+    helicopter_pilot = "helicopterpilot"
+    grenadier = "grenadier"
+    mortar_support = "mortarsupport"
+    specialist = "specialist"
 
 
 class InvalidRoleError(ValueError):
@@ -278,6 +286,14 @@ ROLES_TO_LABELS = {
     Roles.artillery_observer: "Artillery Observer",
     Roles.operator: "Operator",
     Roles.gunner: "Gunner",
+    Roles.squad_leader: "Squad Leader",
+    Roles.mortar_observer: "Mortar Observer",
+    Roles.mortar_gunner: "Mortar Gunner",
+    Roles.helicopter_logistics_officer: "Helicopter Logistics Officer",
+    Roles.helicopter_pilot: "Helicopter Pilot",
+    Roles.grenadier: "Grenadier",
+    Roles.mortar_support: "Mortar Support",
+    Roles.specialist: "Specialist",
 }
 
 

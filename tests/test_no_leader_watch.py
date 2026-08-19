@@ -2054,3 +2054,39 @@ def mod_with_config(c: AutoModNoLeaderUserConfig) -> NoLeaderAutomod:
     mod.red.exists = fake_exists
     mod.watch_state = fake_state
     return mod
+
+
+def test_hllv_leader_roles():
+    """HLL Vietnam leader roles must be recognized as squad leaders."""
+    from rcon.rcon import Rcon
+
+    leader_roles = [
+        "officer",
+        "squadleader",
+        "spotter",
+        "tankcommander",
+        "artilleryobserver",
+        "mortarobserver",
+        "helicopterlogisticsofficer",
+    ]
+
+    non_leader_roles = [
+        "rifleman",
+        "grenadier",
+        "mortargunner",
+        "mortarsupport",
+        "helicopterpilot",
+        "specialist",
+    ]
+
+    for role in leader_roles:
+        squad = {"players": [{"role": role}]}
+        assert Rcon._has_leader(None, squad) is True, (
+            f"{role} should be recognized as a leader"
+        )
+
+    for role in non_leader_roles:
+        squad = {"players": [{"role": role}]}
+        assert Rcon._has_leader(None, squad) is False, (
+            f"{role} should not be recognized as a leader"
+        )

@@ -474,7 +474,15 @@ class Rcon(ServerCtl):
 
     def _has_leader(self, squad) -> bool:
         for players in squad.get("players", []):
-            if players.get("role") in ["tankcommander", "officer", "spotter", "artilleryobserver"]:
+            if players.get("role") in [
+                "tankcommander",
+                "officer",
+                "squadleader",
+                "spotter",
+                "artilleryobserver",
+                "mortarobserver",
+                "helicopterlogisticsofficer",
+            ]:
                 return True
         return False
 
