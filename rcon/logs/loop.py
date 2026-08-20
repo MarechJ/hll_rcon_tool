@@ -535,7 +535,7 @@ class LogLoop:
             
             current_role = all_roles.get(current["role"] or "", UNASSIGNED)
             current_team = all_teams.get(current["team"] or "", UNASSIGNED)
-            current_squad = current["unit_id"] or UNASSIGNED
+            current_squad = current.get("unit_id", UNASSIGNED)
 
             cached_unit = cached["p_unit"]
 
