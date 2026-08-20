@@ -5,7 +5,7 @@ Enforces the "Every squad must have an officer" rule
 import logging
 import pickle
 from contextlib import contextmanager
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Literal
 
 import redis
@@ -165,7 +165,6 @@ class NoLeaderAutomod:
             return punitions_to_apply
 
         with self.watch_state(team, squad_name) as watch_status:
-
             # if squad_name is None or squad is None:
             #     raise SquadHasLeader()
 
@@ -204,7 +203,7 @@ class NoLeaderAutomod:
                 if state == PunishStepState.APPLY:
                     punitions_to_apply.add_squad_state(team, squad_name, squad)
 
-                if not state in [
+                if state not in [
                     PunishStepState.DISABLED,
                     PunishStepState.GO_TO_NEXT_STEP,
                 ]:
@@ -224,7 +223,7 @@ class NoLeaderAutomod:
                     # only here to make the tests pass, otherwise useless
                     punitions_to_apply.add_squad_state(team, squad_name, squad)
 
-                if not state in [
+                if state not in [
                     PunishStepState.DISABLED,
                     PunishStepState.GO_TO_NEXT_STEP,
                 ]:
@@ -242,7 +241,7 @@ class NoLeaderAutomod:
                     punitions_to_apply.punish.append(aplayer)
                     punitions_to_apply.add_squad_state(team, squad_name, squad)
 
-                if not state in [
+                if state not in [
                     PunishStepState.DISABLED,
                     PunishStepState.GO_TO_NEXT_STEP,
                 ]:
@@ -316,7 +315,7 @@ class NoLeaderAutomod:
                 len(notes),
                 num_or_inf(self.config.number_of_notes),
             )
-            notes.append(datetime.now())
+            notes.append(datetime.now(tz=UTC))
             return PunishStepState.APPLY
 
         self.logger.info(
@@ -377,7 +376,7 @@ class NoLeaderAutomod:
                 len(warnings),
                 num_or_inf(self.config.number_of_warnings),
             )
-            warnings.append(datetime.now())
+            warnings.append(datetime.now(tz=UTC))
             return PunishStepState.APPLY
 
         self.logger.info(
@@ -453,7 +452,7 @@ class NoLeaderAutomod:
                 len(punishes),
                 num_or_inf(self.config.number_of_punishments),
             )
-            punishes.append(datetime.now())
+            punishes.append(datetime.now(tz=UTC))
             return PunishStepState.APPLY
 
         self.logger.info(
@@ -517,7 +516,7 @@ class NoLeaderAutomod:
             return PunishStepState.DISABLED
 
         # kick_grace_period_seconds
-        if datetime.now() - last_time < timedelta(
+        if datetime.now(tz=UTC) - last_time < timedelta(
             seconds=self.config.kick_grace_period_seconds
         ):
             return PunishStepState.WAIT

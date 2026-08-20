@@ -1,5 +1,5 @@
 import time
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from pytest import fixture
 
@@ -647,7 +647,7 @@ def test_shouldnt_kick_without_punish(team_view):
         team_view["allies"]["squads"]["baker"],
         aplayer,
     )
-    watch_status.punished.setdefault(player["name"], []).append(datetime.now())
+    watch_status.punished.setdefault(player["name"], []).append(datetime.now(tz=UTC))
     assert PunishStepState.APPLY == mod.should_kick_player(
         watch_status,
         team_view,
@@ -668,7 +668,7 @@ def test_shouldnt_kick_disabled(team_view):
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["baker"]["players"][0]
     aplayer = construct_aplayer(player)
-    watch_status.punished.setdefault(player["name"], []).append(datetime.now())
+    watch_status.punished.setdefault(player["name"], []).append(datetime.now(tz=UTC))
 
     assert PunishStepState.DISABLED == mod.should_kick_player(
         watch_status,
@@ -690,7 +690,7 @@ def test_should_wait_kick(team_view):
     # baker squad is a solo tank squad, w/ SL
     player = team_view["allies"]["squads"]["baker"]["players"][0]
     aplayer = construct_aplayer(player)
-    watch_status.punished.setdefault(player["name"], []).append(datetime.now())
+    watch_status.punished.setdefault(player["name"], []).append(datetime.now(tz=UTC))
 
     assert PunishStepState.WAIT == mod.should_kick_player(
         watch_status,
@@ -718,4 +718,4 @@ def test_should_wait_kick(team_view):
 
 def test_default_config():
     config = AutoModNoSoloTankUserConfig.load_from_db()
-    assert config.enabled == False
+    assert not config.enabled

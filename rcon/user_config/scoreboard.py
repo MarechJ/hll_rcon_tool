@@ -1,26 +1,23 @@
-import enum
 from enum import StrEnum
 from logging import getLogger
-from typing import Final, Literal, Optional, Self, TypedDict
+from typing import Final, TypedDict
 
 from pydantic import (
+    AnyUrl,
     BaseModel,
     Field,
     HttpUrl,
     field_serializer,
     field_validator,
-    AnyUrl,
 )
 
 from rcon.types import PlayerStatsEnum
-from rcon.user_config.legacy_scorebot import ScorebotUserConfig
 from rcon.user_config.utils import BaseUserConfig, _listType, key_check, set_user_config
 from rcon.user_config.webhooks import DiscordWebhook, WebhookType
-from rcon.utils import get_server_number
 
 logger = getLogger(__name__)
 
-EMPTY_EMBED: Final = "\u200B"
+EMPTY_EMBED: Final = "\u200b"
 
 MAP_LEGEND = """
 Legend
@@ -233,6 +230,8 @@ def seed_default_player_stat_displays():
 
 
 class ScoreboardUserConfig(BaseUserConfig):
+    NAME = "ScoreboardUserConfig"
+
     # TODO: update descriptions
     public_scoreboard_url: HttpUrl | None = Field(
         default=None, description="The URL of your public scoreboard/stats site"
@@ -429,4 +428,4 @@ class ScoreboardUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(validated_conf.KEY(), validated_conf)
+            set_user_config(validated_conf.NAME, validated_conf)

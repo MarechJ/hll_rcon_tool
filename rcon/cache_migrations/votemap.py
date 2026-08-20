@@ -55,7 +55,7 @@ def _legacy_whitelist(client: redis.Redis) -> set[str] | None:
     try:
         values = pickle.loads(raw)
         if not isinstance(values, Iterable) or isinstance(values, (str, bytes)):
-            raise ValueError("legacy votemap whitelist is not an iterable of maps")
+            raise TypeError("legacy votemap whitelist is not an iterable of maps")
         return _map_ids(values)
     except Exception:
         logger.exception(

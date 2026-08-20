@@ -121,11 +121,6 @@ export const others = [
     name: "Expired VIP",
   },
   {
-    path: "/settings/others/gtx-server",
-    command: "server_name_change_config",
-    name: "GTX Server Name Change",
-  },
-  {
     path: "/settings/others/log-stream",
     command: "log_stream_config",
     name: "Log Stream",

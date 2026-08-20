@@ -8,7 +8,7 @@ Enforces the various seeding rules :
 import logging
 import pickle
 from contextlib import contextmanager
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Literal
 
 import redis
@@ -27,9 +27,9 @@ from rcon.automods.models import (
 from rcon.automods.num_or_inf import num_or_inf
 from rcon.cache_utils import get_redis_client
 from rcon.logs.loop import on_match_start
-from rcon.maps import GameMode, parse_layer
+from rcon.maps import GameMode
 from rcon.rcon import StructuredLogLineType
-from rcon.types import GameStateType, GetDetailedPlayer, Roles
+from rcon.types import GameStateType, GetDetailedPlayer
 from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig
 
 SEEDING_RULES_RESET_SECS = 120
@@ -103,7 +103,7 @@ class SeedingRulesAutomod:
             or len(disallowed_weapons) != 0
             or enforce_cap_fight_maxplayers != 0
         ):
-            if all([self._is_seeding_rule_disabled(r) for r in SEEDING_RULE_NAMES]):
+            if all(self._is_seeding_rule_disabled(r) for r in SEEDING_RULE_NAMES):
                 return p
 
             data = {
@@ -150,10 +150,9 @@ class SeedingRulesAutomod:
         """
         p: PunitionsToApply = PunitionsToApply()
 
-        if log[
-            "weapon"
-        ] in self.config.disallowed_weapons.weapons and not self._is_seeding_rule_disabled(
-            "disallowed_weapons"
+        if (
+            log["weapon"] in self.config.disallowed_weapons.weapons
+            and not self._is_seeding_rule_disabled("disallowed_weapons")
         ):
             author = AUTOMOD_USERNAME + ("-DryRun" if self.config.dry_run else "")
 
@@ -324,7 +323,6 @@ class SeedingRulesAutomod:
             return punitions_to_apply
 
         with self.watch_state(team, squad_name) as watch_status:
-
             # if squad_name is None or squad is None:
             #     raise NoSeedingViolation()
 
@@ -379,13 +377,11 @@ class SeedingRulesAutomod:
                 if (
                     not self._is_seeding_rule_disabled("disallowed_roles")
                     and drc.min_players <= server_player_count < drc.max_players
+                    and aplayer.role in drc.roles
                 ):
-                    if Roles(aplayer.role) in drc.roles:
-                        violations.append(
-                            drc.violation_message.format(
-                                role=drc.roles.get(Roles(aplayer.role))
-                            )
-                        )
+                    violations.append(
+                        drc.violation_message.format(role=drc.roles.get(aplayer.role))
+                    )
 
                 if game_state["game_mode"] != GameMode.WARFARE:
                     self._disable_for_round("enforce_cap_fight")
@@ -410,7 +406,7 @@ class SeedingRulesAutomod:
                             warnings = watch_status.warned.setdefault(aplayer.name, [])
                             for _ in range(self.config.number_of_warnings):
                                 warnings.append(
-                                    datetime.now()
+                                    datetime.now(tz=UTC)
                                     - timedelta(
                                         seconds=self.config.warning_interval_seconds + 1
                                     )
@@ -537,7 +533,7 @@ class SeedingRulesAutomod:
                 len(warnings),
                 num_or_inf(self.config.number_of_warnings),
             )
-            warnings.append(datetime.now())
+            warnings.append(datetime.now(tz=UTC))
             return PunishStepState.APPLY
 
         self.logger.info(
@@ -613,7 +609,7 @@ class SeedingRulesAutomod:
                 len(punishes),
                 num_or_inf(self.config.number_of_punishments),
             )
-            punishes.append(datetime.now())
+            punishes.append(datetime.now(tz=UTC))
             return PunishStepState.APPLY
 
         self.logger.info(
@@ -677,7 +673,7 @@ class SeedingRulesAutomod:
             return PunishStepState.DISABLED
 
         # kick_grace_period_seconds
-        if datetime.now() - last_time < timedelta(
+        if datetime.now(tz=UTC) - last_time < timedelta(
             seconds=self.config.kick_grace_period_seconds
         ):
             return PunishStepState.WAIT

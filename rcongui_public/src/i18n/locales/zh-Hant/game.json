@@ -65,7 +65,7 @@
     "death": "死亡",
     "killed": "擊殺了",
     "wasKilledBy": "被擊殺者",
-    "withWeapon": "使用 <weapon>{{weapon}}</weapon>",
+    "withWeapon": "使用 <weapon />",
     "tankDestroyed": "{{player}}摧毀了一輛戰車",
     "playerState": {
       "joined": "<player>{{player}}</player>加入<team>{{team}}</team>",

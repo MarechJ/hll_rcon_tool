@@ -1,5 +1,6 @@
 import re
-from typing import ClassVar, Iterable, TypedDict
+from collections.abc import Iterable
+from typing import ClassVar, TypedDict
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -39,7 +40,7 @@ class RawAutoBroadCastMessage(BaseModel):
     @classmethod
     def validiate_time_and_message(cls, v):
         if match := re.match(cls.pattern, v):
-            time, message = match.groups()
+            _, _ = match.groups()
             return v
         else:
             raise ValueError(
@@ -48,9 +49,22 @@ class RawAutoBroadCastMessage(BaseModel):
 
 
 class AutoBroadcastUserConfig(BaseUserConfig):
-    enabled: bool = Field(default=False, strict=True, title="Enable", description="Enable auto broadcasts")
-    randomize: bool = Field(default=False, strict=True, title="Randomize messages", description="Set broadcasts in random order")
-    messages: list[AutoBroadcastMessage] = Field(default_factory=list, title="Messages", description="A list of dicts with `time_sec` (length in seconds the broadcast is set for) and `message` (the broadcast message) keys")
+    NAME = "AutoBroadcastUserConfig"
+
+    enabled: bool = Field(
+        default=False, strict=True, title="Enable", description="Enable auto broadcasts"
+    )
+    randomize: bool = Field(
+        default=False,
+        strict=True,
+        title="Randomize messages",
+        description="Set broadcasts in random order",
+    )
+    messages: list[AutoBroadcastMessage] = Field(
+        default_factory=list,
+        title="Messages",
+        description="A list of dicts with `time_sec` (length in seconds the broadcast is set for) and `message` (the broadcast message) keys",
+    )
 
     @staticmethod
     def save_to_db(values: AutoBroadcastType, dry_run=False):
@@ -88,4 +102,4 @@ class AutoBroadcastUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(AutoBroadcastUserConfig.KEY(), validated_conf)
+            set_user_config(AutoBroadcastUserConfig.NAME, validated_conf)

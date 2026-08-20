@@ -1,6 +1,7 @@
 import time
 from contextlib import contextmanager
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
+from typing import NamedTuple
 from unittest import mock
 from unittest.mock import Mock
 
@@ -18,11 +19,35 @@ from rcon.automods.models import (
     WatchStatus,
 )
 from rcon.automods.no_leader import NoLeaderAutomod
-from rcon.types import GameStateType, Roles
+from rcon.types import GameEnum, GameStateType
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 
 state = {}
 redis_store = {}
+
+
+class GameData(NamedTuple):
+    game: GameEnum
+    player_role: str
+    other_role: str
+
+
+@fixture(
+    params=[
+        GameData(GameEnum.HLL_WW2, "antitank", "support"),
+        GameData(GameEnum.HLL_VIETNAM, "crewman", "squadleader"),
+    ],
+    ids=lambda value: value.game.value,
+)
+def game_data(request):
+    return request.param
+
+
+def no_leader_config(game: GameEnum, **values):
+    return AutoModNoLeaderUserConfig.model_validate(
+        values,
+        context={"game": game},
+    )
 
 
 @fixture
@@ -679,17 +704,19 @@ def test_should_warn_infinite(team_view):
         )
 
 
-def test_should_punish(team_view):
-    config = AutoModNoLeaderUserConfig(
+def test_should_punish(team_view, game_data):
+    config = no_leader_config(
+        game_data.game,
         number_of_punishments=2,
         min_squad_players_for_punish=0,
         min_server_players_for_punish=10,
-        immune_roles=[Roles("support")],
+        immune_roles=[game_data.other_role],
     )
     mod = mod_with_config(config)
 
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
+    player["role"] = game_data.player_role
     aplayer = construct_aplayer(player)
 
     assert PunishStepState.APPLY == mod.should_punish_player(
@@ -875,19 +902,21 @@ def test_punish_disabled(team_view):
     )
 
 
-def test_punish_immuned_role(team_view):
-    config = AutoModNoLeaderUserConfig(
+def test_punish_immuned_role(team_view, game_data):
+    config = no_leader_config(
+        game_data.game,
         number_of_punishments=2,
         punish_interval_seconds=0,
         min_squad_players_for_punish=0,
         min_server_players_for_punish=0,
         immune_player_level=10,
-        immune_roles=[Roles.anti_tank],
+        immune_roles=[game_data.player_role],
     )
     mod = mod_with_config(config)
 
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
+    player["role"] = game_data.player_role
     aplayer = construct_aplayer(player)
 
     assert PunishStepState.IMMUNED == mod.should_punish_player(
@@ -898,13 +927,14 @@ def test_punish_immuned_role(team_view):
         aplayer,
     )
 
-    config = AutoModNoLeaderUserConfig(
+    config = no_leader_config(
+        game_data.game,
         number_of_punishments=2,
         punish_interval_seconds=0,
         min_squad_players_for_punish=0,
         min_server_players_for_punish=0,
         immune_player_level=10,
-        immune_roles=[Roles.anti_tank, Roles.support],
+        immune_roles=[game_data.player_role, game_data.other_role],
     )
     mod = mod_with_config(config)
 
@@ -942,19 +972,21 @@ def test_punish_immuned_lvl(team_view):
     )
 
 
-def test_shouldnt_kick_without_punish(team_view):
-    config = AutoModNoLeaderUserConfig(
+def test_shouldnt_kick_without_punish(team_view, game_data):
+    config = no_leader_config(
+        game_data.game,
         kick_after_max_punish=True,
         kick_grace_period_seconds=0,
         min_squad_players_for_kick=0,
         min_server_players_for_kick=0,
         immune_player_level=10,
-        immune_roles=[Roles.support],
+        immune_roles=[game_data.other_role],
     )
     mod = mod_with_config(config)
 
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
+    player["role"] = game_data.player_role
     aplayer = construct_aplayer(player)
 
     assert PunishStepState.DISABLED == mod.should_kick_player(
@@ -964,7 +996,7 @@ def test_shouldnt_kick_without_punish(team_view):
         team_view["allies"]["squads"]["able"],
         aplayer,
     )
-    watch_status.punished.setdefault(player["name"], []).append(datetime.now())
+    watch_status.punished.setdefault(player["name"], []).append(datetime.now(tz=UTC))
     assert PunishStepState.APPLY == mod.should_kick_player(
         watch_status,
         team_view,
@@ -974,20 +1006,22 @@ def test_shouldnt_kick_without_punish(team_view):
     )
 
 
-def test_shouldnt_kick_immuned(team_view):
-    config = AutoModNoLeaderUserConfig(
+def test_shouldnt_kick_immuned(team_view, game_data):
+    config = no_leader_config(
+        game_data.game,
         kick_after_max_punish=True,
         kick_grace_period_seconds=0,
         min_squad_players_for_kick=0,
         min_server_players_for_kick=0,
         immune_player_level=10,
-        immune_roles=[Roles.anti_tank],
+        immune_roles=[game_data.player_role],
     )
     mod = mod_with_config(config)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
+    player["role"] = game_data.player_role
     aplayer = construct_aplayer(player)
-    watch_status.punished.setdefault(player["name"], []).append(datetime.now())
+    watch_status.punished.setdefault(player["name"], []).append(datetime.now(tz=UTC))
 
     assert PunishStepState.IMMUNED == mod.should_kick_player(
         watch_status,
@@ -1011,7 +1045,7 @@ def test_shouldnt_kick_immuned_lvl(team_view):
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
     aplayer = construct_aplayer(player)
-    watch_status.punished.setdefault(player["name"], []).append(datetime.now())
+    watch_status.punished.setdefault(player["name"], []).append(datetime.now(tz=UTC))
 
     assert PunishStepState.IMMUNED == mod.should_kick_player(
         watch_status,
@@ -1035,7 +1069,7 @@ def test_shouldnt_kick_small_squad(team_view):
     watch_status = WatchStatus()
     player = team_view["axis"]["squads"]["baker"]["players"][0]
     aplayer = construct_aplayer(player)
-    watch_status.punished.setdefault(player["name"], []).append(datetime.now())
+    watch_status.punished.setdefault(player["name"], []).append(datetime.now(tz=UTC))
 
     assert PunishStepState.WAIT == mod.should_kick_player(
         watch_status,
@@ -1059,7 +1093,7 @@ def test_shouldnt_kick_small_game(team_view):
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
     aplayer = construct_aplayer(player)
-    watch_status.punished.setdefault(player["name"], []).append(datetime.now())
+    watch_status.punished.setdefault(player["name"], []).append(datetime.now(tz=UTC))
 
     assert PunishStepState.WAIT == mod.should_kick_player(
         watch_status,
@@ -1083,7 +1117,7 @@ def test_shouldnt_kick_disabled(team_view):
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
     aplayer = construct_aplayer(player)
-    watch_status.punished.setdefault(player["name"], []).append(datetime.now())
+    watch_status.punished.setdefault(player["name"], []).append(datetime.now(tz=UTC))
 
     assert PunishStepState.DISABLED == mod.should_kick_player(
         watch_status,
@@ -1107,7 +1141,7 @@ def test_should_wait_kick(team_view):
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
     aplayer = construct_aplayer(player)
-    watch_status.punished.setdefault(player["name"], []).append(datetime.now())
+    watch_status.punished.setdefault(player["name"], []).append(datetime.now(tz=UTC))
 
     assert PunishStepState.WAIT == mod.should_kick_player(
         watch_status,
@@ -2030,7 +2064,8 @@ def fake_state(team, squad_name):
 
 def test_default_config():
     config = AutoModNoLeaderUserConfig.load_from_db()
-    assert config.enabled == False
+    assert not config.enabled
+
 
 def fake_setex(k, _, v):
     redis_store[k] = v
@@ -2043,8 +2078,10 @@ def fake_get(k):
 def fake_exists(k):
     return redis_store.get(k, None) is not None
 
+
 def fake_delete(ks: str):
     redis_store.pop(ks, None)
+
 
 def mod_with_config(c: AutoModNoLeaderUserConfig) -> NoLeaderAutomod:
     mod = NoLeaderAutomod(c, Mock())

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
+
 import os
 import sys
 
@@ -20,7 +21,7 @@ def main():
     if not os.getenv("HLL_MAINTENANCE_CONTAINER") and not os.getenv(
         "HLL_WH_SERVICE_CONTAINER"
     ):
-        import api.views
+        pass
 
 
 if __name__ == "__main__":

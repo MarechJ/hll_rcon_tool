@@ -1,9 +1,9 @@
 """Redis-backed votemap state."""
 
 import pickle
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from datetime import datetime
-from typing import Any, Dict, Set, cast
+from typing import Any, cast
 
 from rcon import maps
 from rcon.cache_utils import get_redis_client
@@ -29,15 +29,19 @@ class VotemapState:
     NEXT_MAP = VotemapKeys.NEXT_MAP
     RESULT_HISTORY = VotemapKeys.RESULT_HISTORY
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        layer_parser: Callable[[str | Layer], Layer] = maps.parse_layer,
+    ) -> None:
         self.client = get_redis_client()
+        self._parse_layer = layer_parser
         self.results = FixedLenList[list[VoteMapHistory]](self.RESULT_HISTORY)
 
     ###
     # PLAYER CHOICE
     ###
-    def get_player_choice(self) -> Dict[str, str] | None:
-        raw = cast(Dict[bytes, bytes], self.client.hgetall(self.PLAYER_CHOICE))
+    def get_player_choice(self) -> dict[str, str] | None:
+        raw = cast(dict[bytes, bytes], self.client.hgetall(self.PLAYER_CHOICE))
         if not raw:
             return None
         return {k.decode(): v.decode() for k, v in raw.items()}
@@ -60,7 +64,7 @@ class VotemapState:
         raw = cast(bytes | None, self.client.hget(self.ADMIN_NEXT_MAP, "map_name"))
         if not raw:
             return None
-        return maps.parse_layer(raw.decode())
+        return self._parse_layer(raw.decode())
 
     def set_admin_next_map(self, map: Layer):
         self.client.hset(
@@ -124,9 +128,9 @@ class VotemapState:
     # MAP WHITELIST
     ###
     def get_whitelist(self) -> list[Layer]:
-        raw = cast(Set[bytes], self.client.smembers(self.MAP_WHITELIST))
+        raw = cast(set[bytes], self.client.smembers(self.MAP_WHITELIST))
         uniques = {item.decode() for item in raw}
-        return [maps.parse_layer(map_id) for map_id in uniques]
+        return [self._parse_layer(map_id) for map_id in uniques]
 
     def add_map_to_whitelist(self, map: Layer):
         self.client.sadd(self.MAP_WHITELIST, map.id)
@@ -143,8 +147,8 @@ class VotemapState:
     ###
     def get_selection(self) -> list[Layer]:
         # Get all map ids in order
-        raw = cast(Set[bytes], self.client.zrange(self.MAP_SELECTION, 0, -1))
-        return [maps.parse_layer(item.decode()) for item in raw]
+        raw = cast(set[bytes], self.client.zrange(self.MAP_SELECTION, 0, -1))
+        return [self._parse_layer(item.decode()) for item in raw]
 
     def set_selection(self, maps: Iterable[Layer]):
         self.delete_selection()
@@ -166,7 +170,7 @@ class VotemapState:
         next_map = cast(bytes | None, self.client.get(self.NEXT_MAP))
         if next_map is None:
             return None
-        return maps.parse_layer(next_map.decode())
+        return self._parse_layer(next_map.decode())
 
     def set_next_map(self, map: Layer):
         self.client.set(self.NEXT_MAP, map.id)
@@ -181,11 +185,11 @@ class VotemapState:
         history = FixedLenList[list[VoteMapHistory]](self.RESULT_HISTORY)
         return [
             {
-                "map": maps.parse_layer(x["map_id"]),
+                "map": self._parse_layer(x["map_id"]),
                 "ts": x["ts"],
                 "results": [
                     {
-                        "map": maps.parse_layer(r["map_id"]),
+                        "map": self._parse_layer(r["map_id"]),
                         "votes_count": r["votes_count"],
                     }
                     for r in x["results"]

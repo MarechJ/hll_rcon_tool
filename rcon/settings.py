@@ -1,20 +1,19 @@
 import os
 import re
 import socket
-import colorlog
 from logging.config import dictConfig
-from subprocess import PIPE, run
+from subprocess import run
 
-from rcon.types import ServerInfoType
+from rcon.types import ServerInfo
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 
 try:
     TAG_VERSION = (
-        run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE)
+        run(["git", "describe", "--tags"], check=False, capture_output=True)
         .stdout.decode()
         .strip()
     )
-except Exception:
+except Exception:  # noqa
     TAG_VERSION = "unknown"
 
 try:
@@ -22,27 +21,20 @@ try:
     ENVIRONMENT = re.sub("[^0-9a-zA-Z]+", "", (config.short_name or "default").strip())[
         :64
     ]
-except Exception:
+except Exception:  # noqa
     ENVIRONMENT = "undefined"
 
-# TODO: Use a config style that is not required at import time
+
+def get_server_info() -> ServerInfo:
+    return ServerInfo.from_env()
 
 
-SERVER_INFO: ServerInfoType = {
-    "host": os.getenv("HLL_HOST"),
-    "port": os.getenv("HLL_PORT"),
-    "password": os.getenv("HLL_PASSWORD"),
-}
-
-
-def check_config():
-    for k, v in SERVER_INFO.items():
+def check_config() -> ServerInfo:
+    server_info = get_server_info()
+    for k, v in server_info.as_dict().items():
         if not v:
             raise ValueError(f"{k} environment variable must be set")
-    try:
-        SERVER_INFO["port"] = int(SERVER_INFO["port"])
-    except ValueError as e:
-        raise ValueError("HLL_PORT must be an integer") from e
+    return server_info
 
 
 # TODO add sentry

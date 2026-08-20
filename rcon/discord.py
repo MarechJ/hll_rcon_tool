@@ -1,13 +1,13 @@
 import logging
 import re
 from functools import lru_cache
-from typing import Any, List, Type
+from typing import Any
 
 import requests
+from discord.utils import escape_markdown
 from discord_webhook import DiscordWebhook
 from pydantic import HttpUrl
 
-from discord.utils import escape_markdown
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.utils import (
     DISCORD_AUDIT_FORMAT,
@@ -21,10 +21,10 @@ from rcon.user_config.webhooks import (
 )
 from rcon.utils import dict_differences, get_server_number
 from rcon.webhook_service import (
-    enqueue_message,
     WebhookMessage,
-    WebhookType,
     WebhookMessageType,
+    WebhookType,
+    enqueue_message,
 )
 
 
@@ -53,9 +53,7 @@ def make_hook(webhook_url) -> DiscordWebhook | None:
         return None
 
     # Keep webhook delivery from blocking the caller indefinitely.
-    return DiscordWebhook(
-        url=str(webhook_url), timeout=DISCORD_WEBHOOK_TIMEOUT_SECONDS
-    )
+    return DiscordWebhook(url=str(webhook_url), timeout=DISCORD_WEBHOOK_TIMEOUT_SECONDS)
 
 
 def make_allowed_mentions(user_ids, role_ids):
@@ -73,8 +71,8 @@ def make_allowed_mentions(user_ids, role_ids):
 
 
 def get_prepared_discord_hooks(
-    hook_type: Type[CameraWebhooksUserConfig | WatchlistWebhooksUserConfig],
-) -> List[DiscordWebhook]:
+    hook_type: type[CameraWebhooksUserConfig | WatchlistWebhooksUserConfig],
+) -> list[DiscordWebhook]:
     hooks = hook_type.load_from_db().hooks
 
     return [
@@ -144,12 +142,7 @@ def send_to_discord_audit(
         logger.debug("No webhooks set for audit log")
         return
     try:
-        content = "[`{}`][`{}`]][**{}**] {}".format(
-            server_config.short_name,
-            command_name,
-            escape_markdown(by) if md_escape_author else by,
-            escape_markdown(message) if md_escape_message else message,
-        )
+        content = f"[`{server_config.short_name}`][`{command_name}`]][**{escape_markdown(by) if md_escape_author else by}**] {escape_markdown(message) if md_escape_message else message}"
         logger.info(f"send_to_discord_audit {content=}")
         # TODO: fix typing or set `by` to something besides None
         dh_webhooks = [
@@ -170,7 +163,7 @@ def send_to_discord_audit(
                     server_number=int(get_server_number()),
                 )
             )
-    except:
+    except:  # noqa
         logger.exception("Can't send audit log")
         if not silent:
             raise

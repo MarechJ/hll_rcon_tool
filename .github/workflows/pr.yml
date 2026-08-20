@@ -50,12 +50,18 @@ jobs:
       POSTGRES_IMAGE: postgres:12-alpine
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
-      - name: install requirements
-        run: |
-          pip install -r requirements.txt -r requirements-dev.txt --no-compile
+          python-version-file: ".python-version"
+      - name: Install uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      - name: Install the project
+        run: uv sync --locked --all-extras --dev
+      - name: Run ruff linter
+        run: uvx ruff check
+      - name: Run ruff format check
+        run: uvx ruff format --check
       - name: start dependencies
         run: docker compose -f docker-compose.dev.yml up -d postgres redis
       - name: perform database migrations
@@ -63,11 +69,11 @@ jobs:
           export HLL_DB_URL=postgresql://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}/${HLL_DB_NAME}
           export HLL_REDIS_URL=redis://${HLL_REDIS_HOST}:${HLL_REDIS_PORT}/${HLL_REDIS_DB}
           
-          PYTHONPATH=. alembic upgrade head
-          PYTHONPATH=. python ./manage.py init_db
-          PYTHONPATH=. python ./rconweb/manage.py migrate --noinput
+          PYTHONPATH=. uv run alembic upgrade head
+          PYTHONPATH=. uv run ./manage.py init_db
+          PYTHONPATH=. uv run ./rconweb/manage.py migrate --noinput
       - name: run tests
         run: |
           export HLL_DB_URL=postgresql://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}/${HLL_DB_NAME}
           export HLL_REDIS_URL=redis://${HLL_REDIS_HOST}:${HLL_REDIS_PORT}/${HLL_REDIS_DB}
-          pytest tests/
+          uv run pytest tests/

@@ -1,6 +1,6 @@
+from collections.abc import Callable
 from inspect import _empty, getdoc, signature, unwrap
 from logging import getLogger
-from typing import Callable
 
 from django.urls import path
 from django.views.decorators.csrf import csrf_exempt
@@ -34,8 +34,6 @@ def _get_empty(value):
 @csrf_exempt
 def get_api_documentation(request):
     """Auto-generate minimal API documentation through introspection"""
-    from rcon.api_commands import RconAPI
-
     api_docs = []
     for name, func in endpoints:
         item = {}
@@ -43,9 +41,7 @@ def get_api_documentation(request):
 
         sig = signature(unwrap(func))
         for k, v in sig.parameters.items():
-            if k == "request":
-                continue
-            elif k == "self":
+            if k == "request" or k == "self":
                 continue
             expanded_args = {
                 "default": _get_empty(v.default),
@@ -62,7 +58,7 @@ def get_api_documentation(request):
         # manually created endpoints (there could be, if they were defined with different names)
         # but almost all of our endpoints share the name with functions, and those that don't map
         # to entirely different things like `login -> do_login` that are out of scope of RconAPI
-        item["auto_settings_capable"] = name in dir(RconAPI)
+        item["auto_settings_capable"] = name in dir(type(views.rcon_api))
 
         try:
             item["permissions_required"] = ENDPOINT_PERMISSIONS_LOOKUP[func.__name__]
@@ -139,10 +135,6 @@ endpoints: list[tuple[str, Callable]] = [
         user_settings.describe_camera_notification_config,
     ),
     ("describe_expired_vip_config", user_settings.describe_expired_vip_config),
-    (
-        "describe_server_name_change_config",
-        user_settings.describe_server_name_change_config,
-    ),
     (
         "describe_log_line_webhook_config",
         user_settings.describe_log_line_webhook_config,

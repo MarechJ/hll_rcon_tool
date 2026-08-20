@@ -1,11 +1,16 @@
 import re
+from collections.abc import Iterable, Mapping, Sequence
 from enum import Enum
 from logging import getLogger
-from typing import TYPE_CHECKING, Any, Iterable, Literal, Optional, Sequence, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Literal,
+)
 
+import hllrcon
 import pydantic
 import typing_extensions
-from typing_extensions import Literal
 
 logger = getLogger(__name__)
 
@@ -64,19 +69,29 @@ class Orientation(str, Enum):
     HORIZONTAL = "horizontal"
     VERTICAL = "vertical"
 
+    @classmethod
+    def from_hllrcon(cls, orientation_: hllrcon.Orientation) -> "Orientation":
+        return cls(orientation_.value)
+
 
 class GameMode(str, Enum):
     WARFARE = "warfare"
     OFFENSIVE = "offensive"
+    CONQUEST = "conquest"
+    DOMINATION = "domination"
     SKIRMISH = "skirmish"
     PHASED = "phased"
     MAJORITY = "majority"
+    # When adding a new game mode, also add it to the supported_game_modes set of all game
+    # profiles that support it
 
     @classmethod
     def large(cls):
         return (
             cls.WARFARE,
             cls.OFFENSIVE,
+            cls.CONQUEST,
+            cls.DOMINATION,
         )
 
     @classmethod
@@ -87,6 +102,10 @@ class GameMode(str, Enum):
             cls.MAJORITY,
         )
 
+    @classmethod
+    def from_hllrcon(cls, game_mode_: hllrcon.AnyGameMode) -> "GameMode":
+        return cls(game_mode_.id.lower())
+
     def is_large(self):
         return self in GameMode.large()
 
@@ -94,10 +113,32 @@ class GameMode(str, Enum):
         return self in GameMode.small()
 
 
+def get_theoretical_match_time(game_mode: GameMode, match_time: int) -> int:
+    """Return the full match window represented by the server timer."""
+    if game_mode == GameMode.OFFENSIVE:
+        if match_time == 90 * 60:
+            # Server bug: the uncustomized Offensive timer is reported as the
+            # 90-minute Warfare timer instead of the 30-minute objective timer.
+            match_time = 30 * 60
+        # The server reports the timer for one objective. An Offensive match can
+        # use that timer up to five times.
+        return match_time * 5
+    return match_time
+
+
 class Team(str, Enum):
     ALLIES = "allies"
     AXIS = "axis"
     UNKNOWN = "unknown"
+
+    @classmethod
+    def from_hllrcon(cls, team_: hllrcon.AnyTeam) -> "Team":
+        # hllrcon uses Allies/Axis for HLL and South/North for HLL Vietnam,
+        # but both games use the same stable side IDs.
+        return {
+            1: cls.ALLIES,
+            2: cls.AXIS,
+        }.get(team_.id, cls.UNKNOWN)
 
 
 class Environment(str, Enum):
@@ -108,19 +149,60 @@ class Environment(str, Enum):
     OVERCAST = "overcast"
     RAIN = "rain"
 
+    @classmethod
+    def from_hllrcon(cls, layer_: hllrcon.AnyLayer) -> "Environment":
+        """
+        class TimeOfDay(StrEnum):
+            DAWN = "Dawn"
+            DAY = "Day"
+            DUSK = "Dusk"
+            NIGHT = "Night"
+
+
+        class Weather(StrEnum):
+            CLEAR = "Clear"
+            OVERCAST = "Overcast"
+            RAIN = "Rain"
+            SNOW = "Snow"
+        """
+        if layer_.time_of_day == hllrcon.TimeOfDay.NIGHT:
+            return Environment.NIGHT
+        if layer_.time_of_day == hllrcon.TimeOfDay.DUSK:
+            return Environment.DUSK
+        if layer_.time_of_day == hllrcon.TimeOfDay.DAWN:
+            return Environment.DAWN
+
+        if layer_.weather in (hllrcon.Weather.RAIN, hllrcon.Weather.SNOW):
+            return Environment.RAIN
+        if layer_.weather == hllrcon.Weather.OVERCAST:
+            return Environment.OVERCAST
+
+        return Environment.DAY
+
 
 class FactionName(Enum):
-    CW = "cw"
-    GB = "gb"
+    US = "us"
     GER = "ger"
     RUS = "rus"
-    US = "us"
+    SOV = "rus"  # noqa: PIE796 Supposed to be the same
+    CW = "cw"
+    GB = "cw"  # noqa: PIE796 Supposed to be the same
+    B8A = "b8a"
+    DAK = "dak"
     CAN = "can"
+    NVA = "nva"
 
 
 class Faction(pydantic.BaseModel):
     name: str
     team: Team
+
+    @classmethod
+    def from_hllrcon(cls, faction_: hllrcon.AnyFaction) -> "Faction":
+        return cls(
+            name=faction_.short_name.lower(),
+            team=Team.from_hllrcon(faction_.team),
+        )
 
     if TYPE_CHECKING:
         # Ensure type checkers see the correct return type
@@ -168,6 +250,19 @@ class Map(pydantic.BaseModel):
             return str(self).lower() == str(other).lower()
         return NotImplemented
 
+    @classmethod
+    def from_hllrcon(cls, map_: hllrcon.AnyMap) -> "Map":
+        return cls(
+            id=map_.id,
+            name=map_.name,
+            tag=map_.tag,
+            pretty_name=map_.pretty_name,
+            shortname=map_.short_name,
+            allies=Faction.from_hllrcon(map_.allies),
+            axis=Faction.from_hllrcon(map_.axis),
+            orientation=Orientation.from_hllrcon(map_.orientation),
+        )
+
     if TYPE_CHECKING:
         # Ensure type checkers see the correct return type
         def model_dump(
@@ -189,7 +284,7 @@ class Layer(pydantic.BaseModel):
     id: str
     map: Map
     game_mode: GameMode
-    attackers: Union[Team, None] = None
+    attackers: Team | None = None
     environment: Environment = Environment.DAY
 
     def __str__(self) -> str:
@@ -205,6 +300,25 @@ class Layer(pydantic.BaseModel):
         if isinstance(other, (Layer, str)):
             return str(self).lower() == str(other).lower()
         return NotImplemented
+
+    @classmethod
+    def from_hllrcon(
+        cls,
+        layer_: hllrcon.AnyLayer,
+        map_catalog: Mapping[str, Map] | None = None,
+    ) -> "Layer":
+        if map_catalog is None:
+            map_catalog = MAPS
+
+        return cls(
+            id=layer_.id,
+            map=map_catalog[layer_.map.id.lower()],
+            game_mode=GameMode.from_hllrcon(layer_.game_mode),
+            attackers=Team.from_hllrcon(layer_.attacking_team)
+            if layer_.attacking_team
+            else None,
+            environment=Environment.from_hllrcon(layer_),
+        )
 
     if TYPE_CHECKING:
         # Ensure type checkers see the correct return type
@@ -475,8 +589,8 @@ MAPS = {
 }
 
 LAYERS = {
-    l.id.lower(): l
-    for l in (
+    layer.id.lower(): layer
+    for layer in (
         # In older versions (prior to v9.8.0) map names could be recorded as bla_
         # if the map name could not be retrieved from the game server
         Layer(id="bla_", map=MAPS[UNKNOWN_MAP_NAME], game_mode=GameMode.WARFARE),
@@ -1578,7 +1692,7 @@ def parse_layer(layer_name: str | Layer) -> Layer:
 def _parse_legacy_layer(layer_name: str):
     layer_match = RE_LEGACY_LAYER_NAME.match(layer_name)
     if not layer_match:
-        raise ValueError("Unparsable layer '%s'" % layer_name)
+        raise ValueError(f"Unparsable layer '{layer_name}'")
 
     layer_data = layer_match.groupdict()
 
@@ -1671,17 +1785,27 @@ def safe_get_map_name(map_name: str, pretty: bool = True) -> str:
 def is_server_loading_map(map_name: str) -> bool:
     return "untitled" in map_name.lower()
 
-def get_all_layers_by_map(map: Map, game_mode: Optional[GameMode] = None, team: Optional[Team] = None) -> set[Layer]:
+
+def get_all_layers_by_map(
+    map: Map, game_mode: GameMode | None = None, team: Team | None = None
+) -> set[Layer]:
     if game_mode:
         return {
             layer
             for layer in LAYERS.values()
-            if layer.map == map and layer.game_mode == game_mode and layer.attackers == team
+            if layer.map == map
+            and layer.game_mode == game_mode
+            and layer.attackers == team
         }
     return {layer for layer in LAYERS.values() if layer.map == map}
-    
+
+
 env_alternation = "|".join(re.escape(e.value) for e in Environment)
 mode_alternation = "|".join(re.escape(m.value) for m in GameMode)
+# Match logs may qualify a mode with the attacking faction. These are log
+# protocol tokens rather than display names (for example, "United States"),
+# so keep the accepted aliases explicit.
+attacker_alternation = "|".join(re.escape(value) for value in ("NVA", "USA", "US"))
 
 ended_pattern = re.compile(
     rf"""
@@ -1691,6 +1815,9 @@ ended_pattern = re.compile(
     (?P<name>.+?)
     (?:
         \s+(?P<env>{env_alternation})
+    )?
+    (?:
+        \s+(?P<attacker>{attacker_alternation})
     )?
     \s+(?P<mode>{mode_alternation})
     `
@@ -1706,16 +1833,25 @@ start_pattern = re.compile(
     (?:
         \s+(?P<env>{env_alternation})
     )?
+    (?:
+        \s+(?P<attacker>{attacker_alternation})
+    )?
     \s+(?P<mode>{mode_alternation})
     (?:\s|$)
     """,
     re.IGNORECASE | re.VERBOSE,
 )
 
-def parse_map_string(s: str) -> tuple[str, Environment | None, GameMode]:
+
+def _match_map_string(s: str) -> re.Match[str]:
     m = ended_pattern.search(s) or start_pattern.search(s)
     if not m:
         raise ValueError(f"Could not parse map details from: {s!r}")
+    return m
+
+
+def parse_map_string(s: str) -> tuple[str, Environment | None, GameMode]:
+    m = _match_map_string(s)
 
     name = m.group("name").strip()
     env_str = m.group("env")
@@ -1725,3 +1861,15 @@ def parse_map_string(s: str) -> tuple[str, Environment | None, GameMode]:
     mode = GameMode(mode_str.lower())
 
     return name, env, mode
+
+
+def parse_map_string_attacker(s: str) -> Team | None:
+    """Return the logical attacking side encoded in a match log, if present."""
+    attacker = _match_map_string(s).group("attacker")
+    if attacker is None:
+        return None
+    return {
+        "nva": Team.AXIS,
+        "us": Team.ALLIES,
+        "usa": Team.ALLIES,
+    }[attacker.casefold()]

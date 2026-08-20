@@ -65,7 +65,7 @@
     "death": "사망",
     "killed": "처치함",
     "wasKilledBy": "에게 처치됨",
-    "withWeapon": "<weapon>{{weapon}}</weapon> 사용",
+    "withWeapon": "<weapon /> 사용",
     "tankDestroyed": "{{player}}님이 전차를 파괴함",
     "playerState": {
       "joined": "<player>{{player}}</player>님이 <team>{{team}}</team>로 참가",

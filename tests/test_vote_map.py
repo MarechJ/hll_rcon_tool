@@ -1,12 +1,32 @@
-from datetime import datetime
+from datetime import UTC, datetime
+from unittest.mock import MagicMock, patch
+
 import pytest
 from fakeredis import FakeStrictRedis
-from unittest.mock import MagicMock, patch
-from rcon import maps
+
+from rcon.game.hll.profile import HLL_PROFILE
+from rcon.game.hllv.profile import HLLV_PROFILE
+from rcon.maps import (
+    LAYERS,
+    MAPS,
+    UNKNOWN_MAP_NAME,
+    Environment,
+    GameMode,
+    Layer,
+    Team,
+    parse_layer,
+)
+from rcon.models import PlayerVIPType
+from rcon.player_history import PlayerProfileType
 from rcon.user_config.vote_map import DefaultMethods
-from rcon.vote_map import InvalidVoteError, PlayerChoiceNotAllowed, PlayerVoteNotAllowed, VoteMap, VoteMapException, VoteMapUserConfig
-from rcon.maps import LAYERS, MAPS, Environment, Layer, GameMode, Team
-from rcon.types import PlayerProfileType
+from rcon.vote_map import (
+    InvalidVoteError,
+    PlayerChoiceNotAllowed,
+    PlayerVoteNotAllowed,
+    VoteMap,
+    VoteMapException,
+    VoteMapUserConfig,
+)
 
 ALL_MAPS = list(LAYERS.values())
 
@@ -80,6 +100,11 @@ SAMPLE_MAPS = [
 ]
 
 
+class FakeMapsHistory(list):
+    def get_current_map(self):
+        return self[0] if self else None
+
+
 @pytest.fixture
 def redis_client():
     """Fixture for a fake Redis client."""
@@ -90,36 +115,68 @@ def redis_client():
 def mock_rcon():
     """Fixture for mocking Rcon interactions."""
     rcon = MagicMock()
+    rcon.game_profile = HLL_PROFILE
     rcon.get_maps.return_value = ALL_MAPS
     rcon.get_player_ids.return_value = [
         ("Player1", "71234567890"),
         ("Player2", "0j8dkd3fj948h9fhv3m9thvm578"),
     ]
-    rcon.get_vip_ids.return_value = [{ "player_id": "ID_WITH_VIP" }]
+    rcon.get_vip_ids.return_value = [{"player_id": "ID_WITH_VIP"}]
     # Initialize dynamic rotation state
     rotation = SAMPLE_MAPS[:1]  # Start with one map
-    rcon.get_map_rotation.side_effect = lambda: { "maps": rotation }
+    rcon.get_map_rotation.side_effect = lambda: {"maps": rotation}
     rcon.current_map = SAMPLE_MAPS[0]
 
     # Mock remove_map_from_rotation
     def remove_map_from_rotation(map_id):
         nonlocal rotation
-        map = maps.parse_layer(map_id)
+        map = parse_layer(map_id)
         rotation = [m for m in rotation if m != map]
         return rotation
-    
+
     rcon.remove_map_from_rotation.side_effect = remove_map_from_rotation
 
     # Mock add_map_to_rotation
     def add_map_to_rotation(map_id):
         nonlocal rotation
-        map = maps.parse_layer(map_id)
+        map = parse_layer(map_id)
         if map not in rotation:
             rotation.append(map)
         return rotation
 
     rcon.add_map_to_rotation.side_effect = add_map_to_rotation
     return rcon
+
+
+def test_hllv_layers_are_rehydrated_with_the_active_game_profile(redis_client, caplog):
+    layer_ids = [
+        "wdeve_offensivenva_day",
+        "wdevb_domination_day",
+        "wdevd_conquest_day",
+    ]
+    hllv_layers = [HLLV_PROFILE.parse_layer(layer_id) for layer_id in layer_ids]
+    hllv_rcon = MagicMock()
+    hllv_rcon.game_profile = HLLV_PROFILE
+    hllv_rcon.get_maps.return_value = hllv_layers
+    hllv_rcon.current_map = hllv_layers[0]
+
+    with patch("rcon.vote_map.state.get_redis_client", return_value=redis_client):
+        votemap = VoteMap(
+            rcon=hllv_rcon,
+            config_loader=lambda: VoteMapUserConfig(enabled=True),
+            maps_history=FakeMapsHistory(),
+        )
+
+    votemap.set_map_whitelist(hllv_layers)
+    votemap.set_selection([hllv_layers[0]])
+
+    assert set(votemap.get_map_whitelist()) == set(hllv_layers)
+    assert votemap.get_selection() == [hllv_layers[0]]
+    assert all(
+        layer.map.id != UNKNOWN_MAP_NAME for layer in votemap.get_map_whitelist()
+    )
+    assert all(layer.pretty_name != layer.id for layer in votemap.get_map_whitelist())
+    assert "Unknown layer" not in caplog.text
 
 
 @pytest.fixture
@@ -164,8 +221,10 @@ def mock_maps_history():
     CAR_NIGHT - 0x\n
     OTHER - 1x
     """
-    now = int(datetime.now().timestamp())
-    minus_hour = lambda n=1: now - (60 * 60 * n)
+    now = int(datetime.now(tz=UTC).timestamp())
+
+    def minus_hour(n: int = 1) -> int:
+        return now - (60 * 60 * n)
 
     history = [
         {
@@ -214,7 +273,7 @@ def mock_maps_history():
             "end": minus_hour(8),
         },
     ]
-    return history
+    return FakeMapsHistory(history)
 
 
 @pytest.fixture
@@ -246,6 +305,7 @@ def votemap_disabled(
             maps_history=mock_maps_history,
         )
 
+
 @pytest.fixture
 def votemap_flags(
     redis_client, mock_rcon, config_loader_with_vote_flags, mock_maps_history
@@ -261,13 +321,16 @@ def votemap_flags(
 
 # Helper to mock player profile
 def mock_player_profile(
-    player_id: str, player_name: str, flags: list[str] | None = [], vips=[]
+    player_id: str,
+    player_name: str,
+    flags: list[str] | None = None,
+    vips: list[PlayerVIPType] | None = None,
 ) -> PlayerProfileType:
     return {
         "player_id": player_id,
         "names": [{"name": player_name}],
-        "flags": [{ "flag": flag } for flag in flags],
-        "vips": vips,
+        "flags": [{"flag": flag} for flag in flags or []],
+        "vips": vips or [],
     }
 
 
@@ -295,7 +358,7 @@ def test_add_map_to_whitelist(votemap):
 
 def test_add_duplicate_map_to_whitelist(votemap):
     """Test adding a duplicate map to the whitelist does nothing"""
-    map = list(votemap.get_map_whitelist())[0]
+    map = votemap.get_map_whitelist()[0]
     original_length = len(votemap.get_map_whitelist())
     votemap.add_map_to_whitelist(map)  # Add duplicate
     assert map in votemap.get_map_whitelist()
@@ -304,15 +367,15 @@ def test_add_duplicate_map_to_whitelist(votemap):
 
 def test_add_invalid_map_to_whitelist(votemap):
     """Test adding map with invalid id to the whitelist raises error"""
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         votemap.add_map_to_whitelist(INVALID_MAP)
 
 
 def test_set_invalid_maps_to_whitelist(votemap):
-    """Test adding maps with invalid id to the whitelist raises error"""
-    with pytest.raises(Exception):
-        whitelist = votemap.get_map_whitelist()
-        whitelist.add(INVALID_MAP)
+    """Test adding maps with invalid id to the whitelist raises error naming them"""
+    whitelist = list(votemap.get_map_whitelist())
+    whitelist.append(INVALID_MAP)
+    with pytest.raises(ValueError, match="Invalid maps: invalid"):
         votemap.add_maps_to_whitelist(whitelist)
 
 
@@ -325,9 +388,7 @@ def test_remove_map_from_whitelist(votemap):
 
 
 def test_select_least_played_map(votemap):
-    least_played_map = votemap._get_least_played_map(
-        maps_to_pick_from=SAMPLE_MAPS
-    )
+    least_played_map = votemap._get_least_played_map(maps_to_pick_from=SAMPLE_MAPS)
     assert least_played_map == CAR_WARFARE_NIGHT
 
 
@@ -337,9 +398,7 @@ def test_select_least_played_map_with_empty_selection(votemap):
 
 
 def test_get_default_next_map_as_least_played_from_selection(votemap):
-    votemap.set_selection(
-        [CAR_WARFARE_DAY, HUR_WARFARE_DAY, UTAH_WARFARE_DAY]
-    )
+    votemap.set_selection([CAR_WARFARE_DAY, HUR_WARFARE_DAY, UTAH_WARFARE_DAY])
     least_played_map = votemap._get_default_next_map()
     assert least_played_map == UTAH_WARFARE_DAY
 
@@ -352,8 +411,7 @@ def test_get_default_next_map_as_least_played_from_all(
             rcon=mock_rcon,
             maps_history=mock_maps_history,
             config_loader=lambda: VoteMapUserConfig(
-                enabled=True,
-                default_method=DefaultMethods.least_played_all_maps
+                enabled=True, default_method=DefaultMethods.least_played_all_maps
             ),
         )
     selection = [HUR_WARFARE_DAY, CAR_OFF_AXIS, CAR_SKIRMISH_DAY]
@@ -364,14 +422,10 @@ def test_get_default_next_map_as_least_played_from_all(
 
 def test_register_vote(votemap):
     player = mock_player_profile("123456", "player_1")
-    votemap.set_selection(
-        [HUR_WARFARE_DAY, CAR_OFF_AXIS, CAR_SKIRMISH_DAY]
-    )
+    votemap.set_selection([HUR_WARFARE_DAY, CAR_OFF_AXIS, CAR_SKIRMISH_DAY])
     selected_map = HUR_WARFARE_DAY
-    entry = (
-        votemap.get_selection().index(selected_map) + 1
-    )  # selection starts from 1
-    votemap.register_vote(player, int(datetime.now().timestamp()), entry)
+    entry = votemap.get_selection().index(selected_map) + 1  # selection starts from 1
+    votemap.register_vote(player, int(datetime.now(tz=UTC).timestamp()), entry)
     votes = votemap.get_votes()
     assert len(votes) == 1
     vote = votemap.get_vote(player["player_id"])
@@ -385,7 +439,7 @@ def test_register_vote(votemap):
 def test_remove_winning_map_from_selection_reapplies_results(votemap, mock_rcon):
     player = mock_player_profile("123456", "player_1")
     votemap.set_selection([HUR_WARFARE_DAY, UTAH_WARFARE_DAY])
-    votemap.register_vote(player, int(datetime.now().timestamp()), 1)
+    votemap.register_vote(player, int(datetime.now(tz=UTC).timestamp()), 1)
 
     assert votemap.get_next_map() == HUR_WARFARE_DAY
 
@@ -401,45 +455,44 @@ def test_register_vote_invalid_entry(votemap):
     votemap.set_selection(selection)
     entry = 0  # without player choice the selection starts from 1
     with pytest.raises(InvalidVoteError):
-        votemap.register_vote(player, int(datetime.now().timestamp()), entry)
+        votemap.register_vote(player, int(datetime.now(tz=UTC).timestamp()), entry)
     entry = len(selection) + 1  # the entry range should be between 1 and len(selection)
     with pytest.raises(InvalidVoteError):
-        votemap.register_vote(player, int(datetime.now().timestamp()), entry)
+        votemap.register_vote(player, int(datetime.now(tz=UTC).timestamp()), entry)
+
 
 def test_register_vote_match_highest_value_without_vip(votemap_flags):
     player = mock_player_profile("123456", "player_1", flags=["🔨", "❤️"])
     selection = [HUR_WARFARE_DAY, CAR_OFF_AXIS, CAR_SKIRMISH_DAY]
     votemap_flags.set_selection(selection)
     selected_map = HUR_WARFARE_DAY
-    entry = (
-        votemap_flags.get_selection().index(selected_map) + 1
-    )
-    votemap_flags.register_vote(player, int(datetime.now().timestamp()), entry)
+    entry = votemap_flags.get_selection().index(selected_map) + 1
+    votemap_flags.register_vote(player, int(datetime.now(tz=UTC).timestamp()), entry)
     vote = votemap_flags.get_vote(player["player_id"])
     assert vote["vote_count"] == 4
+
 
 def test_register_vote_match_highest_value_with_vip(votemap_flags):
     player = mock_player_profile("ID_WITH_VIP", "VIP_PLAYER", flags=["🔨", "❤️"])
     selection = [HUR_WARFARE_DAY, CAR_OFF_AXIS, CAR_SKIRMISH_DAY]
     votemap_flags.set_selection(selection)
     selected_map = HUR_WARFARE_DAY
-    entry = (
-        votemap_flags.get_selection().index(selected_map) + 1
-    )
-    votemap_flags.register_vote(player, int(datetime.now().timestamp()), entry)
+    entry = votemap_flags.get_selection().index(selected_map) + 1
+    votemap_flags.register_vote(player, int(datetime.now(tz=UTC).timestamp()), entry)
     vote = votemap_flags.get_vote(player["player_id"])
     assert vote["vote_count"] == 69
+
 
 def test_player_banned_from_voting_based_on_vote_ban_flag(votemap_flags):
     player = mock_player_profile("123456", "player_1", flags=["😭"])
     selection = [HUR_WARFARE_DAY, CAR_OFF_AXIS, CAR_SKIRMISH_DAY]
     votemap_flags.set_selection(selection)
     selected_map = HUR_WARFARE_DAY
-    entry = (
-        votemap_flags.get_selection().index(selected_map) + 1
-    )
+    entry = votemap_flags.get_selection().index(selected_map) + 1
     with pytest.raises(PlayerVoteNotAllowed):
-        votemap_flags.register_vote(player, int(datetime.now().timestamp()), entry)
+        votemap_flags.register_vote(
+            player, int(datetime.now(tz=UTC).timestamp()), entry
+        )
 
 
 def test_player_not_allowed_register_player_choice(votemap_flags):
@@ -449,6 +502,7 @@ def test_player_not_allowed_register_player_choice(votemap_flags):
     selected_map = UTAH_WARFARE_DAY
     with pytest.raises(PlayerChoiceNotAllowed):
         votemap_flags.register_player_choice(selected_map, player)
+
 
 def test_player_can_register_player_choice_when_only_flagged_allowed(votemap_flags):
     player = mock_player_profile("123456", "player_1", flags=["✅"])
@@ -460,6 +514,7 @@ def test_player_can_register_player_choice_when_only_flagged_allowed(votemap_fla
     assert len(selection) == 4
     assert selection[0] == selected_map
 
+
 def test_player_can_register_player_choice_when_everyone_allowed(votemap):
     player = mock_player_profile("123456", "player_1")
     selection = [HUR_WARFARE_DAY, CAR_OFF_AXIS, CAR_SKIRMISH_DAY]
@@ -469,7 +524,8 @@ def test_player_can_register_player_choice_when_everyone_allowed(votemap):
     selection = votemap.get_selection()
     assert len(selection) == 4
     assert selection[0] == selected_map
-    
+
+
 def test_player_fails_to_register_player_choice_again(votemap):
     player = mock_player_profile("123456", "player_1")
     selection = [HUR_WARFARE_DAY, CAR_OFF_AXIS, CAR_SKIRMISH_DAY]
@@ -480,6 +536,7 @@ def test_player_fails_to_register_player_choice_again(votemap):
     with pytest.raises(VoteMapException):
         votemap.register_player_choice(map_2, player)
 
+
 def test_player_fails_to_register_player_choice_duplicate_map(votemap):
     player = mock_player_profile("123456", "player_1")
     selection = [HUR_WARFARE_DAY, CAR_OFF_AXIS, CAR_SKIRMISH_DAY]
@@ -488,11 +545,13 @@ def test_player_fails_to_register_player_choice_duplicate_map(votemap):
     with pytest.raises(VoteMapException):
         votemap.register_player_choice(map_1, player)
 
+
 def test_ensure_next_map_with_empty_selection(votemap):
     votemap.set_selection([])
     votemap.apply_results()
     next_map = votemap.get_next_map()
     assert next_map in ALL_MAPS
+
 
 def test_ensure_selection_when_no_maps_to_select_from(votemap):
     """Excludes last 3 played, HUR is the last played"""
@@ -502,34 +561,66 @@ def test_ensure_selection_when_no_maps_to_select_from(votemap):
     assert HUR_WARFARE_DAY not in new_selection
 
 
+def test_disallow_consecutive_offensives_uses_current_map_from_history(
+    redis_client, mock_rcon
+):
+    """The RCON current-map cache can still hold the previous layer at match start."""
+    history = FakeMapsHistory([{"name": CAR_OFF_ALLIES.id, "start": 1, "end": None}])
+    mock_rcon.current_map = HUR_WARFARE_DAY
+
+    with patch("rcon.vote_map.state.get_redis_client", return_value=redis_client):
+        votemap = VoteMap(
+            rcon=mock_rcon,
+            config_loader=lambda: VoteMapUserConfig(
+                enabled=True,
+                number_last_played_to_exclude=0,
+                consider_offensive_same_map=False,
+                consider_skirmishes_as_same_map=False,
+                allow_consecutive_offensives=False,
+                allow_consecutive_offensives_opposite_sides=True,
+                num_warfare_options=10,
+                num_offensive_options=10,
+                num_skirmish_control_options=10,
+            ),
+            maps_history=history,
+        )
+    votemap.set_map_whitelist(SAMPLE_MAPS)
+
+    selection = votemap.get_new_selection()
+
+    assert selection
+    assert all(map_.game_mode != GameMode.OFFENSIVE for map_ in selection)
+
+
 def test_exclude_last_maps_considers_same_mode_different_environment(
     redis_client, mock_rcon
 ):
-    """Excluding last 2 maps also excludes same maps with the same game 
+    """Excluding last 2 maps also excludes same maps with the same game
     mode with different environment."""
-    history = [
-        {"name": HUR_WARFARE_DAY.id, "start": 1, "end": None},
-        {"name": CAR_WARFARE_DAY.id, "start": 0, "end": 1},
-    ]
+    history = FakeMapsHistory(
+        [
+            {"name": HUR_WARFARE_DAY.id, "start": 1, "end": None},
+            {"name": CAR_WARFARE_DAY.id, "start": 0, "end": 1},
+        ]
+    )
     mock_rcon.current_map = HUR_WARFARE_DAY
     allowed_maps = list(set(SAMPLE_MAPS) | {UTAH_WARFARE_DAY})
 
     def make_votemap(consider_environment_as_same_map: bool) -> VoteMap:
-        config_loader = lambda: VoteMapUserConfig(
-            enabled=True,
-            number_last_played_to_exclude=2,
-            consider_environment_as_same_map=consider_environment_as_same_map,
-            consider_offensive_same_map=False,
-            consider_skirmishes_as_same_map=False,
-            allow_consecutive_offensives_opposite_sides=True,
-            num_warfare_options=10,
-            num_offensive_options=10,
-            num_skirmish_control_options=10,
-        )
         with patch("rcon.vote_map.state.get_redis_client", return_value=redis_client):
             votemap = VoteMap(
                 rcon=mock_rcon,
-                config_loader=config_loader,
+                config_loader=lambda: VoteMapUserConfig(
+                    enabled=True,
+                    number_last_played_to_exclude=2,
+                    consider_environment_as_same_map=consider_environment_as_same_map,
+                    consider_offensive_same_map=False,
+                    consider_skirmishes_as_same_map=False,
+                    allow_consecutive_offensives_opposite_sides=True,
+                    num_warfare_options=10,
+                    num_offensive_options=10,
+                    num_skirmish_control_options=10,
+                ),
                 maps_history=history,
             )
         votemap.set_map_whitelist(allowed_maps)
@@ -555,30 +646,33 @@ def test_dont_allow_same_map_per_mode_with_different_environment(
     redis_client, mock_rcon
 ):
     """When new votemap selection is created and allow_multiple_maps_with_same_environment
-    is disabled there should never be multiple maps of the same gamemode in the selection"""
-    history = [
-        {"name": CAR_SKIRMISH_DAY.id, "start": 1, "end": None},
-    ]
+    is disabled there should never be multiple maps of the same gamemode in the selection
+    """
+    history = FakeMapsHistory(
+        [
+            {"name": CAR_SKIRMISH_DAY.id, "start": 1, "end": None},
+        ]
+    )
     mock_rcon.current_map = HUR_WARFARE_DAY
     allowed_maps = list(set(SAMPLE_MAPS) | {UTAH_WARFARE_DAY})
 
     def make_votemap(allow_multiple_maps_with_same_environment: bool) -> VoteMap:
-        config_loader = lambda: VoteMapUserConfig(
-            enabled=True,
-            number_last_played_to_exclude=1,
-            consider_environment_as_same_map=False,
-            allow_consecutive_offensives_opposite_sides=True,
-            allow_multiple_maps_with_same_environment=allow_multiple_maps_with_same_environment,
-            consider_offensive_same_map=False,
-            consider_skirmishes_as_same_map=False,
-            num_warfare_options=10,
-            num_offensive_options=10,
-            num_skirmish_control_options=10,
-        )
         with patch("rcon.vote_map.state.get_redis_client", return_value=redis_client):
             votemap = VoteMap(
                 rcon=mock_rcon,
-                config_loader=config_loader,
+                config_loader=lambda: VoteMapUserConfig(
+                    enabled=True,
+                    number_last_played_to_exclude=1,
+                    consider_environment_as_same_map=False,
+                    allow_consecutive_offensives_opposite_sides=True,
+                    allow_consecutive_skirmishes=True,
+                    allow_multiple_maps_with_same_environment=allow_multiple_maps_with_same_environment,
+                    consider_offensive_same_map=False,
+                    consider_skirmishes_as_same_map=False,
+                    num_warfare_options=10,
+                    num_offensive_options=10,
+                    num_skirmish_control_options=10,
+                ),
                 maps_history=history,
             )
         votemap.set_map_whitelist(allowed_maps)
@@ -607,18 +701,20 @@ def test_dont_allow_same_map_per_mode_with_different_environment(
 
 def test_no_cmd_handling_while_disabled(votemap_disabled):
     result = votemap_disabled.handle_vote_command({})
-    assert result.ok == False
+    assert not result.ok
+
 
 def test_no_reminder_sent_while_disabled(votemap_disabled):
     t1 = votemap_disabled.get_last_reminder_time()
     result = votemap_disabled.send_reminder()
     t2 = votemap_disabled.get_last_reminder_time()
-    assert result.ok == False
+    assert not result.ok
     assert t1 == t2
+
 
 def test_reminder_sent_while_enabled(votemap):
     t1 = votemap.get_last_reminder_time()
     result = votemap.send_reminder()
     t2 = votemap.get_last_reminder_time()
-    assert result.ok is True
+    assert result.ok
     assert t1 != t2

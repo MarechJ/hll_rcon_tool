@@ -65,7 +65,7 @@
     "death": "デス",
     "killed": "を倒した",
     "wasKilledBy": "に倒された",
-    "withWeapon": "<weapon>{{weapon}}</weapon>を使用",
+    "withWeapon": "<weapon />を使用",
     "tankDestroyed": "{{player}}が戦車を破壊",
     "playerState": {
       "joined": "<player>{{player}}</player>が<team>{{team}}</team>として参加",

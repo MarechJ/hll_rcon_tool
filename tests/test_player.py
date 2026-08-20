@@ -1,6 +1,6 @@
 import pytest
 
-from rcon.types import GetDetailedPlayer
+from rcon.types import GameEnum, GetDetailedPlayer
 from rcon.utils import parse_raw_player_info
 
 
@@ -8,8 +8,9 @@ def mock_get_detailed_player(
     name="",
     clan_tag="GH",
     eos_id="",
+    steam_id=None,
     platform="steam",
-    world_position={},
+    world_position: dict | None = None,
     player_id="0",
     team="",
     faction="",
@@ -36,8 +37,9 @@ def mock_get_detailed_player(
         "clan_tag": clan_tag,
         "eos_id": eos_id,
         "platform": platform,
-        "world_position": world_position,
+        "world_position": world_position or {},
         "player_id": player_id,
+        "steam_id": steam_id,
         "team": team,
         "faction": faction,
         "role": role,
@@ -97,6 +99,7 @@ def mock_get_detailed_player(
                 platform="steam",
                 world_position={},
                 player_id="76561199502921234",
+                steam_id="76561199502921234",
                 team="axis",
                 faction="ger",
                 role="support",
@@ -170,4 +173,4 @@ def mock_get_detailed_player(
     ],
 )
 def test_parse_raw_player_info(raw, expected):
-    assert parse_raw_player_info(raw=raw) == expected
+    assert parse_raw_player_info(raw=raw, game=GameEnum.HLL_WW2) == expected

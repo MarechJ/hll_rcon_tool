@@ -1,7 +1,6 @@
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
 from django.db import models
-
 from rconweb.settings import SECRET_KEY
 
 
@@ -52,7 +51,10 @@ class RconUser(User):
             ("can_set_match_timer", "Can change the match timer"),
             ("can_remove_match_timer", "Can remove the custom match timer"),
             ("can_remove_warmup_timer", "Can remove the custom warmup timer"),
-            ("can_set_dynamic_weather_enabled", "Can enable or disable dynamic weather"),
+            (
+                "can_set_dynamic_weather_enabled",
+                "Can enable or disable dynamic weather",
+            ),
             ("can_add_admin_roles", "Can add HLL game server admin roles to players"),
             ("can_add_map_to_rotation", "Can add a map to the rotation"),
             ("can_add_map_to_whitelist", "Can add a map to the votemap whitelist"),
@@ -132,7 +134,10 @@ class RconUser(User):
             ("can_reset_votekick_threshold", "Can reset votekick thresholds"),
             ("can_reset_votemap_state", "Can reset votemap selection & votes"),
             ("can_run_raw_commands", "Can send raw commands to the HLL game server"),
-            ("can_send_votemap_reminder", "Can send votemap reminder message to all players"),
+            (
+                "can_send_votemap_reminder",
+                "Can send votemap reminder message to all players",
+            ),
             ("can_set_map_whitelist", "Can set the votemap whitelist"),
             ("can_switch_players_immediately", "Can immediately switch players"),
             ("can_switch_players_on_death", "Can switch players on death"),
@@ -328,14 +333,6 @@ class RconUser(User):
             ("can_view_expired_vip_config", "Can view Expired VIP config"),
             ("can_change_expired_vip_config", "Can change Expired VIP config"),
             (
-                "can_view_server_name_change_config",
-                "Can view server name change (GSP credentials!) config",
-            ),
-            (
-                "can_change_server_name_change_config",
-                "Can change server name change (GSP credentials!) config",
-            ),
-            (
                 "can_view_log_line_discord_webhook_config",
                 "Can view log webhook (messages for log events) config",
             ),
@@ -361,8 +358,8 @@ class RconUser(User):
                 "can_change_rcon_server_settings_config",
                 "Can change general CRCON server settings",
             ),
-            ("can_view_scorebot_config", "Can view scorebot config"),
-            ("can_change_scorebot_config", "Can change scorebot config"),
+            ("can_view_scoreboard_config", "Can view scoreboard config"),
+            ("can_change_scoreboard_config", "Can change scoreboard config"),
             (
                 "can_view_standard_broadcast_messages",
                 "Can view shared broadcast messages",
@@ -485,7 +482,10 @@ class RconUser(User):
                 "can_change_watch_killrate_config",
                 "Can change the Watch KillRate config",
             ),
-            ("can_remove_map_from_votemap", "Can remove map from current votemap selection"),
+            (
+                "can_remove_map_from_votemap",
+                "Can remove map from current votemap selection",
+            ),
             ("can_add_map_to_votemap", "Can add map to current votemap selection"),
             ("can_set_votemap_winner", "Can guarantee next map with votemap enabled"),
             ("can_add_votemap_vote", "Can manually add vote"),

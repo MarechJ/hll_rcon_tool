@@ -10,7 +10,6 @@ function SettingsPage() {
   const tabs = [
     { label: "General", href: "/settings/general" },
     { label: "Game", href: "/settings/game" },
-    { label: "Server Name", href: "/settings/server-name" },
     { label: "Admin Cam", href: "/settings/admin-cam-notifications" },
     { label: "CRCON APP", href: "/settings/crcon" },
   ];

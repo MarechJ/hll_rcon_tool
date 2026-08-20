@@ -2,13 +2,13 @@ import inspect
 import json
 import logging
 import sys
-from datetime import datetime, timedelta
-from typing import Any, Set, Type
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import click
 import pydantic
 from sqlalchemy import func as pg_func
-from sqlalchemy import select, text, update
+from sqlalchemy import select, text
 
 import rcon.expiring_vips.service
 import rcon.seed_vip.service
@@ -18,7 +18,7 @@ import rcon.watch_killrate
 from rcon import auto_settings, broadcast, routines
 from rcon.automods import automod
 from rcon.blacklist import BlacklistCommandHandler
-from rcon.cache_utils import RedisCached, get_redis_client, get_redis_pool, invalidates
+from rcon.cache_utils import RedisCached, get_redis_pool, invalidates
 from rcon.discord_chat import get_handler
 from rcon.logs.loop import LogLoop, load_generic_hooks
 from rcon.logs.recorder import LogRecorder
@@ -27,6 +27,7 @@ from rcon.models import PlayerID, enter_session, install_unaccent
 from rcon.player_stats import live_stats_loop
 from rcon.rcon import get_rcon
 from rcon.steam_utils import enrich_db_users
+from rcon.types import GameEnum, ServerInfo
 from rcon.user_config.auto_settings import AutoSettingsConfig
 from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.user_config.webhooks import (
@@ -40,6 +41,13 @@ from rcon.vote_map import VoteMap
 logger = logging.getLogger(__name__)
 
 
+def _current_game() -> str:
+    game = ServerInfo.from_env().game
+    if game is None:
+        raise ValueError("HLL_GAME is not set")
+    return game.value
+
+
 @click.group()
 def cli():
     pass
@@ -51,7 +59,7 @@ def run_stats_loop():
         live_stats_loop()
     except KeyboardInterrupt:
         sys.exit(0)
-    except:
+    except:  # noqa
         logger.exception("Stats loop stopped")
         sys.exit(1)
 
@@ -60,8 +68,8 @@ def run_stats_loop():
 def run_enrich_db_users():
     try:
         enrich_db_users()
-    except Exception as e:
-        logger.exception("DB users enrichment stopped: %s", e)
+    except Exception:
+        logger.exception("DB users enrichment stopped: %s")
         sys.exit(1)
 
 
@@ -72,7 +80,7 @@ def run_log_loop():
     with invalidates(load_generic_hooks, get_handler):
         try:
             LogLoop().run()
-        except:
+        except:  # noqa
             logger.exception("Chat recorder stopped")
             sys.exit(1)
 
@@ -85,7 +93,7 @@ def run_log_stream():
         stream.clear()
         if config.enabled:
             stream.run()
-    except:
+    except:  # noqa
         logger.exception("Log stream stopped")
         sys.exit(1)
 
@@ -114,7 +122,7 @@ def run_expiring_vips():
 def run_seed_vip():
     try:
         rcon.seed_vip.service.run()
-    except:
+    except:  # noqa
         logger.exception("seed VIP stopped")
         sys.exit(1)
 
@@ -123,7 +131,7 @@ def run_seed_vip():
 def watch_killrate():
     try:
         rcon.watch_killrate.run()
-    except:
+    except:  # noqa
         logger.exception("Watch_KillRate stopped")
         sys.exit(1)
 
@@ -144,7 +152,7 @@ def run_blacklists():
 @click.option("-n", "--now", is_flag=True)
 def run_log_recorder(interval, frequency_min, now):
     if frequency_min and interval:
-        raise Exception("Cannot have frequency-min and interval at the same time")
+        raise Exception("Cannot have frequency-min and interval at the same time")  # noqa
     if frequency_min:
         interval = frequency_min * 60
     LogRecorder(interval).run(run_immediately=now)
@@ -231,9 +239,9 @@ def process_games(start_day_offset, end_day_offset=0, force=False):
     from rcon.models import Maps, enter_session
     from rcon.workers import record_stats_from_map
 
-    start_date = datetime.now() - timedelta(days=start_day_offset)
+    start_date = datetime.now(tz=UTC) - timedelta(days=start_day_offset)
     start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
-    end_date = datetime.now() - timedelta(days=end_day_offset)
+    end_date = datetime.now(tz=UTC) - timedelta(days=end_day_offset)
     end_date = end_date.replace(hour=23, minute=59, second=59, microsecond=999)
 
     print("Reprocessing date range: ", start_date, end_date)
@@ -243,11 +251,11 @@ def process_games(start_day_offset, end_day_offset=0, force=False):
             .filter(and_(Maps.start > start_date, Maps.start < end_date))
             .all()
         )
-        print("Found %s games to reprocess" % len(all_maps))
+        print(f"Found {len(all_maps)} games to reprocess")
         for map_ in all_maps:
             print("Reprocessing map: ", map_.to_dict())
             try:
-                # TODO we could attempt to find the temporary cached stats in redis for the match 
+                # TODO we could attempt to find the temporary cached stats in redis for the match
                 record_stats_from_map(sess, map_, None, force=force)
                 sess.commit()
                 print("Done")
@@ -265,13 +273,11 @@ def _models_to_exclude():
     """Return model classes that do not map directly to a user config"""
     # Any sort of parent class that doesn't directly map to a user config
     # should be excluded
-    return set(
-        [
-            BaseWebhookUserConfig.__name__,
-            BaseMentionWebhookUserConfig.__name__,
-            BaseUserConfig.__name__,
-        ]
-    )
+    return {
+        BaseWebhookUserConfig.__name__,
+        BaseMentionWebhookUserConfig.__name__,
+        BaseUserConfig.__name__,
+    }
 
 
 @cli.command(name="get_user_settings")
@@ -283,7 +289,16 @@ def _models_to_exclude():
     default=None,
     help="The server number to export for (if different)",
 )
-def get_user_setting(server: int, output: click.Path, output_server=None):
+@click.option(
+    "--game",
+    type=click.Choice([game.value for game in GameEnum]),
+    default=_current_game,
+    show_default="HLL_GAME",
+    help="Game whose settings should be exported.",
+)
+def get_user_setting(
+    server: int, output: click.Path, output_server=None, game=GameEnum.HLL_WW2.value
+):
     """Dump all user settings for SERVER to OUTPUT file.
 
     SERVER: The server number (SERVER_NUMBER as set in the compose files).
@@ -300,28 +315,35 @@ def get_user_setting(server: int, output: click.Path, output_server=None):
         for model in rcon.user_config.utils.all_subclasses(BaseUserConfig)
     }
 
-    # Since a CRCON install can have multiple servers, but get_server_number()
-    # depends on the environment, pass the server number to the tool
+    # CLI operations can target a scope other than the current process, so pass
+    # both identity dimensions explicitly.
     dump: dict[str, Any] = {}
     for model in keys_to_models.values():
-        key = key_format.format(server=server, cls_name=model.__name__)
-        output_key = key_format.format(server=output_server, cls_name=model.__name__)
-        value = rcon.user_config.utils.get_user_config(key)
+        output_key = key_format.format(server=output_server, cls_name=model.NAME)
+        value = rcon.user_config.utils.get_user_config(
+            model.NAME, game=game, server_number=server
+        )
         if value:
-            config = model.model_validate(value)
+            config = model.model_validate(
+                value,
+                context=rcon.user_config.utils.user_config_validation_context(
+                    game=game, server_number=server
+                ),
+            )
             dump[output_key] = config.model_dump()
 
-    # Auto settings are unique right now
-    auto_settings_key = f"{server}_auto_settings"
+    # Keep the legacy export key format for backwards-compatible files.
     auto_settings_output_key = f"{output_server}_auto_settings"
     auto_settings_model = rcon.user_config.utils.get_user_config(
-        f"{server}_auto_settings"
+        AutoSettingsConfig.NAME,
+        game=game,
+        server_number=server,
     )
     if auto_settings_model:
         dump[auto_settings_output_key] = auto_settings_model
 
     with open(str(output), "w") as fp:
-        fp.write((json.dumps(dump, indent=2)))
+        fp.write(json.dumps(dump, indent=2))
 
     print("Done")
 
@@ -330,25 +352,35 @@ def get_user_setting(server: int, output: click.Path, output_server=None):
 @click.argument("server", type=int)
 @click.argument("input", type=click.Path())
 @click.option("--dry-run", type=bool, default=True, help="Validate settings only")
-def set_user_settings(server: int, input: click.Path, dry_run=True):
+@click.option(
+    "--game",
+    type=click.Choice([game.value for game in GameEnum]),
+    default=_current_game,
+    show_default="HLL_GAME",
+    help="Game whose settings should be imported.",
+)
+def set_user_settings(
+    server: int,
+    input: click.Path,
+    dry_run=True,
+    game=GameEnum.HLL_WW2.value,
+):
     """Set all (specified) user settings for SERVER from INPUT file.
 
     if DRY_RUN is not false, it will only validate the file.
-    No settings will be set unless the entire file validates correctly.*
-
-    *Auto settings are not validated
+    No settings will be set unless the entire file validates correctly.
 
     SERVER: The server number (SERVER_NUMBER as set in the compose files).
     """
-    # Auto settings are unique right now
+    # Keep accepting the legacy key in imported files.
     auto_settings_key = f"{server}_auto_settings"
 
     if dry_run:
         print(f"{dry_run=} validating models only, not setting")
 
-    config_models: dict[str, Type[BaseUserConfig]] = {
+    config_models: dict[str, type[BaseUserConfig]] = {
         rcon.user_config.utils.USER_CONFIG_KEY_FORMAT.format(
-            server=server, cls_name=model.__name__
+            server=server, cls_name=model.NAME
         ): model
         for model in rcon.user_config.utils.all_subclasses(BaseUserConfig)
         if model.__name__ not in _models_to_exclude()
@@ -364,20 +396,32 @@ def set_user_settings(server: int, input: click.Path, dry_run=True):
             logger.error(e)
             sys.exit(-1)
 
-    for key in user_settings.keys():
+    for key in user_settings:
         if key not in config_models and key != auto_settings_key:
             logger.error(f"{key} not an allowed key, no changes made.")
             sys.exit(-1)
 
-    parsed_models: list[tuple[Type[BaseUserConfig], BaseUserConfig]] = []
+    parsed_models: list[tuple[type[BaseUserConfig], BaseUserConfig]] = []
     model: BaseUserConfig
     for key, payload in user_settings.items():
         if key == auto_settings_key:
+            try:
+                AutoSettingsConfig(game=game, server_number=server).validate_settings(
+                    payload
+                )
+            except (TypeError, ValueError) as e:
+                logger.error(e)
+                sys.exit(-1)
             continue
 
         cls = config_models[key]
         try:
-            model = cls(**payload)
+            model = cls.model_validate(
+                payload,
+                context=rcon.user_config.utils.user_config_validation_context(
+                    game=game, server_number=server
+                ),
+            )
             print(f"Successfully parsed {key} as {cls}")
         except pydantic.ValidationError as e:
             logger.error(e)
@@ -387,15 +431,17 @@ def set_user_settings(server: int, input: click.Path, dry_run=True):
 
     if not dry_run:
         for cls, model in parsed_models:
-            key = rcon.user_config.utils.USER_CONFIG_KEY_FORMAT.format(
-                server=server, cls_name=cls.__name__
+            print(f"setting game={game} server={server} class={cls.__name__}")
+            rcon.user_config.utils.set_user_config(
+                cls.NAME, model, game=game, server_number=server
             )
-            print(f"setting {key=} class={cls.__name__}")
-            rcon.user_config.utils.set_user_config(key, model)
 
         if auto_settings_key in user_settings:
             rcon.user_config.utils.set_user_config(
-                auto_settings_key, user_settings[auto_settings_key]
+                AutoSettingsConfig.NAME,
+                user_settings[auto_settings_key],
+                game=game,
+                server_number=server,
             )
 
     print("Done")
@@ -403,7 +449,14 @@ def set_user_settings(server: int, input: click.Path, dry_run=True):
 
 @cli.command(name="reset_user_settings")
 @click.argument("server", type=int)
-def reset_user_settings(server: int):
+@click.option(
+    "--game",
+    type=click.Choice([game.value for game in GameEnum]),
+    default=_current_game,
+    show_default="HLL_GAME",
+    help="Game whose settings should be reset.",
+)
+def reset_user_settings(server: int, game=GameEnum.HLL_WW2.value):
     """Reset all user settings for SERVER to their defaults.
 
     There is no way to undo this if you do not save your settings in advance!
@@ -411,10 +464,10 @@ def reset_user_settings(server: int):
     SERVER: The server number (SERVER_NUMBER as set in the compose files).
     """
     with enter_session() as sess:
-        AutoSettingsConfig().reset_settings(sess)
+        AutoSettingsConfig(game=game, server_number=server).reset_settings(sess)
         sess.commit()
 
-    models: list[Type[BaseUserConfig]] = [
+    models: list[type[BaseUserConfig]] = [
         model
         for model in rcon.user_config.utils.all_subclasses(BaseUserConfig)
         if model.__name__ not in _models_to_exclude()
@@ -422,17 +475,16 @@ def reset_user_settings(server: int):
 
     for cls in models:
         model = cls()
-        key = rcon.user_config.utils.USER_CONFIG_KEY_FORMAT.format(
-            server=server, cls_name=cls.__name__
+        print(f"Resetting game={game} server={server} class={cls.__name__}")
+        rcon.user_config.utils.set_user_config(
+            cls.NAME, model, game=game, server_number=server
         )
-        print(f"Resetting {key}")
-        rcon.user_config.utils.set_user_config(key, model)
 
     print("Done")
 
 
 def _merge_duplicate_player_ids(existing_ids: set[str] | None = None):
-    logger.info(f"Merging duplicate player ID records")
+    logger.info("Merging duplicate player ID records")
     players = {}
 
     with enter_session() as session:
@@ -555,7 +607,7 @@ def _merge_duplicate_player_ids(existing_ids: set[str] | None = None):
             session.execute(
                 text("DELETE FROM steam_id_64 WHERE id = ANY(:ids)"), {"ids": ids}
             )
-    logger.info(f"Duplicate player ID merge complete")
+    logger.info("Duplicate player ID merge complete")
 
 
 @cli.command(name="merge_duplicate_player_ids")
@@ -568,7 +620,7 @@ def convert_win_player_ids():
     player_ids_to_merge: set[str] = set()
     updated = 0
     with enter_session() as session:
-        logger.info(f"Converting old style windows store player IDs to new style")
+        logger.info("Converting old style windows store player IDs to new style")
         old_style_stmt = select(PlayerID).filter(PlayerID.player_id.like("%-%"))
         old_style_rows = session.execute(old_style_stmt).scalars()
 
@@ -597,7 +649,13 @@ def convert_win_player_ids():
 @cli.command(name="remove_orphaned_map_ids")
 def remove_orphaned_map_ids():
     vm = VoteMap()
-    known_map_ids = [m.id for m in ctl.get_maps()]
+    try:
+        known_map_ids = [m.id for m in ctl.get_maps()]
+    except Exception as e:  # noqa
+        logger.error(
+            f"Could not reach the game server to remove orphaned map IDs, skipping: {e}"
+        )
+        return
 
     res = set()
     prev = vm.get_map_whitelist()
@@ -609,7 +667,12 @@ def remove_orphaned_map_ids():
                 f"Removed map {m.id} / {m.pretty_name} from VoteMap Whitelist as it does not exist in game server anymore"
             )
 
-    if len(res) != len(prev):
+    if len(res) == len(prev):
+        return
+
+    if len(res) == 0:
+        vm.reset_map_whitelist()
+    else:
         vm.set_map_whitelist(res)
 
 
@@ -622,7 +685,7 @@ def clear_maps_cache():
 
 
 PREFIXES_TO_EXPOSE = ["get_", "set_", "do_"]
-EXCLUDED: Set[str] = {"set_map_rotation", "connection_pool"}
+EXCLUDED: set[str] = {"set_map_rotation", "connection_pool"}
 
 # For this to work correctly with click it has to be at the top level of the module and ran on import
 ctl = get_rcon()

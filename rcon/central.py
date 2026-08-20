@@ -5,6 +5,7 @@ import requests
 
 
 # TODO finish this stuff
+# TODO2: Maybe just delete it? :D
 class Central:
     def __init__(self, group_key=None, token=None, central_url=None):
         self.token = token or os.getenv("HLL_CENTRAL_TOKEN", None)
@@ -19,11 +20,11 @@ class Central:
                 data={
                     "server_name": server_name,
                     "version": version,
-                    "group_key": group_key,
+                    # "group_key": group_key,
                 },
                 auth=("bearer", self.token),
             )
-        except:
+        except:  # noqa
             pass
 
     def push_ban_list(self, ban_list):

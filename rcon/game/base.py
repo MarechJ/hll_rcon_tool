@@ -1,0 +1,106 @@
+from __future__ import annotations
+
+import unicodedata
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass, field
+
+from rcon.maps import Environment, GameMode, Layer, Map, Team
+from rcon.types import GameEnum
+from rcon.weapons import WeaponType
+
+
+@dataclass(frozen=True)
+class GameProfile:
+    """Game-specific reference data and parsing behind a stable interface."""
+
+    game: GameEnum
+    maps: Mapping[str, Map]
+    layers: Mapping[str, Layer]
+    layer_parser: Callable[[str | Layer], Layer]
+    roles: frozenset[str] = field(default_factory=frozenset)
+    role_labels: Mapping[str, str] = field(default_factory=dict)
+    role_ids: Mapping[str, int] = field(default_factory=dict)
+    weapons: Mapping[str, WeaponType] = field(default_factory=dict)
+    weapon_ids: frozenset[str] = field(default_factory=frozenset)
+    weapon_sides: Mapping[str, Team] = field(default_factory=dict)
+    supported_game_modes: frozenset[GameMode] = field(default_factory=frozenset)
+
+    @property
+    def valid_weapon_ids(self) -> frozenset[str]:
+        """Weapon IDs accepted in config, independent of classification data."""
+        return self.weapon_ids or frozenset(self.weapons)
+
+    def parse_layer(self, layer_name: str | Layer) -> Layer:
+        return self.layer_parser(layer_name)
+
+    def parse_layer_or_unknown(self, layer_name: str | Layer) -> Layer:
+        try:
+            return self.parse_layer(layer_name)
+        except (KeyError, TypeError, ValueError):
+            return self.layers["unknown"]
+
+    def resolve_layer(
+        self,
+        map_name: str,
+        game_mode: GameMode,
+        environment: Environment | None = None,
+        attacker: Team | None = None,
+    ) -> Layer:
+        """Resolve parsed log details to a layer from this game's catalog.
+
+        Unlike :meth:`parse_layer`, this accepts a display map name rather than
+        a server layer ID. A missing environment is treated as daytime, which
+        matches the format used by most match logs.
+        """
+        normalized_name = unicodedata.normalize("NFKC", map_name).casefold()
+        candidates = [
+            layer
+            for layer in self.layers.values()
+            if unicodedata.normalize("NFKC", layer.map.name).casefold()
+            == normalized_name
+            and layer.game_mode == game_mode
+            and (attacker is None or layer.attackers == attacker)
+        ]
+        if not candidates:
+            return self.layers["unknown"]
+
+        expected_environment = environment or Environment.DAY
+        return next(
+            (
+                layer
+                for layer in candidates
+                if layer.environment == expected_environment
+            ),
+            candidates[0],
+        )
+
+    def parse_game_mode_or_none(self, game_mode: str | GameMode) -> GameMode | None:
+        """Best-effort game mode parse, mirroring :meth:`parse_layer_or_unknown`.
+
+        The server reports an empty ``gameMode`` while no match is in progress,
+        which is a normal transient state rather than an error, so callers that
+        poll the game state need a total function here.
+        """
+        try:
+            return self.parse_game_mode(game_mode)
+        except (KeyError, TypeError, ValueError):
+            return None
+
+    def parse_game_mode(self, game_mode: str | GameMode) -> GameMode:
+        # HLL Vietnam prefixes offensive modes with the attacking faction,
+        # e.g. "US Offensive" / "NVA Offensive". Every GameMode value is a
+        # single word, so match on the final token.
+        if isinstance(game_mode, GameMode):
+            mode = game_mode
+        else:
+            # rsplit returns [] for a blank string, so guard the index and fall
+            # back to the raw value. The game server sends an empty gameMode
+            # between matches, and an unguarded [-1] raises IndexError there.
+            normalised = game_mode.strip().lower()
+            tokens = normalised.rsplit(None, 1)
+            mode = GameMode(tokens[-1] if tokens else normalised)
+        if mode not in self.supported_game_modes:
+            raise ValueError(
+                f"Game mode {mode.value!r} is not supported by the '{self.game.value}' game profile"
+            )
+        return mode

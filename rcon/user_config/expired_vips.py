@@ -1,4 +1,4 @@
-from typing import Optional, TypedDict
+from typing import TypedDict
 
 from pydantic import Field, HttpUrl, field_serializer
 
@@ -8,13 +8,15 @@ from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 class ExpiredVipsType(TypedDict):
     enabled: bool
     interval_minutes: int
-    discord_webhook_url: Optional[HttpUrl]
+    discord_webhook_url: HttpUrl | None
 
 
 class ExpiredVipsUserConfig(BaseUserConfig):
+    NAME = "ExpiredVipsUserConfig"
+
     enabled: bool = Field(default=True)
     interval_minutes: int = Field(ge=1, default=60)
-    discord_webhook_url: Optional[HttpUrl] = Field(default=None)
+    discord_webhook_url: HttpUrl | None = Field(default=None)
 
     @field_serializer("discord_webhook_url")
     def serialize_server_url(self, discord_webhook_url: HttpUrl, _info):
@@ -38,4 +40,4 @@ class ExpiredVipsUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(ExpiredVipsUserConfig.KEY(), validated_conf)
+            set_user_config(ExpiredVipsUserConfig.NAME, validated_conf)
