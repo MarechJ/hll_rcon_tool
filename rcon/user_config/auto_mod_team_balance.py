@@ -1,4 +1,4 @@
-from typing import Optional, TypedDict
+from typing import TypedDict
 
 from pydantic import Field, HttpUrl, field_serializer
 
@@ -12,7 +12,7 @@ You will be switched shortly if the target team has room. Thanks for helping kee
 class AutoModTeamBalanceType(TypedDict):
     enabled: bool
     dry_run: bool
-    discord_webhook_url: Optional[HttpUrl]
+    discord_webhook_url: HttpUrl | None
 
     # Steamroll trigger (duration based, never margin based)
     fast_match_minutes: int
@@ -56,7 +56,7 @@ class AutoModTeamBalanceUserConfig(BaseUserConfig):
 
     enabled: bool = Field(default=False)
     dry_run: bool = Field(default=False)
-    discord_webhook_url: Optional[HttpUrl] = Field(default=None)
+    discord_webhook_url: HttpUrl | None = Field(default=None)
 
     # --- Steamroll trigger ---
     fast_match_minutes: int = Field(

@@ -1,7 +1,8 @@
 'use client'
 
 import {Column, ColumnDef} from '@tanstack/react-table'
-import {Player, PlayerTeamAssociation, PlayerWithStatus} from '@/types/player'
+import {FactionEnum, Player, PlayerTeamAssociation, TeamEnum} from '@/types/player'
+import {MapLayer} from '@/types/mapLayer'
 import {IconHeader as Header} from './column-header'
 import {Status} from './player-status'
 import {isPlayerWithStatus} from './player/utils'
@@ -15,6 +16,8 @@ import {ColumnCategory} from "@/lib/tables";
 import {Awards} from "@/components/game/statistics/award";
 import {PlayerBaseWithAwards} from "@/pages/games/[id]";
 import { Level } from './level'
+import { FactionIndicator } from './faction-indicator'
+import {AvatarGroup} from '@/components/ui/avatar'
 
 const threeDigitsWidth = 40
 const fourDigitsWidth = 50
@@ -35,7 +38,7 @@ function SortableHeader({ column, desc }: { column: Column<Player>; desc: string
   )
 }
 
-function pointColumns(completed: boolean): ColumnDef<Player | PlayerWithStatus>[] {
+function pointColumns(completed: boolean): ColumnDef<Player>[] {
   const { t } = useTranslation('game');
 
   return [
@@ -56,6 +59,28 @@ function pointColumns(completed: boolean): ColumnDef<Player | PlayerWithStatus>[
               column.toggleSorting(column.getIsSorted() !== 'desc')
             }}
           />
+        )
+      },
+    },
+    {
+      id: 'kills_and_assists',
+      meta: { label: t('playersTable.killsAndAssists'), category: ColumnCategory.GENERAL },
+      accessorKey: 'kills_and_assists',
+      size: threeDigitsWidth,
+      header: function SupportHeader({ column }) {
+        const { t } = useTranslation('game')
+        return (
+          <div className="text-left">
+            <Button
+              variant={'text'}
+              onClick={() => {
+                column.toggleSorting(column.getIsSorted() === 'asc')
+              }}
+              className="px-0"
+            >
+              {t('playersTable.killsAndAssists').split(" ").map(w => w[0]).join("")}
+            </Button>
+          </div>
         )
       },
     },
@@ -100,6 +125,28 @@ function pointColumns(completed: boolean): ColumnDef<Player | PlayerWithStatus>[
               column.toggleSorting(column.getIsSorted() !== 'desc')
             }}
           />
+        )
+      },
+    },
+    {
+      id: 'deaths_and_redeploys',
+      meta: { label: t('playersTable.deathsAndRedeploys'), category: ColumnCategory.ADVANCED },
+      accessorKey: 'deaths_and_redeploys',
+      size: threeDigitsWidth,
+      header: function SupportHeader({ column }) {
+        const { t } = useTranslation('game')
+        return (
+          <div className="text-left">
+            <Button
+              variant={'text'}
+              onClick={() => {
+                column.toggleSorting(column.getIsSorted() === 'asc')
+              }}
+              className="px-0"
+            >
+              {t('playersTable.deathsAndRedeploys').split(" ").map(w => w[0]).join("")}
+            </Button>
+          </div>
         )
       },
     },
@@ -276,10 +323,54 @@ function pointColumns(completed: boolean): ColumnDef<Player | PlayerWithStatus>[
         )
       },
     },
+    {
+      id: 'vehicle_kills',
+      meta: { label: t('playersTable.vehicle_kills'), category: ColumnCategory.INGAME },
+      accessorKey: 'vehicle_kills',
+      size: threeDigitsWidth,
+      header: function SupportHeader({ column }) {
+        const { t } = useTranslation('game')
+        return (
+          <div className="text-left">
+            <Button
+              variant={'text'}
+              onClick={() => {
+                column.toggleSorting(column.getIsSorted() === 'asc')
+              }}
+              className="px-0"
+            >
+              {t('playersTable.vehicle_kills').split(" ").map(w => w[0]).join("")}
+            </Button>
+          </div>
+        )
+      },
+    },
+    {
+      id: 'vehicles_destroyed',
+      meta: { label: t('playersTable.vehicles_destroyed'), category: ColumnCategory.INGAME },
+      accessorKey: 'vehicles_destroyed',
+      size: threeDigitsWidth,
+      header: function SupportHeader({ column }) {
+        const { t } = useTranslation('game')
+        return (
+          <div className="text-left">
+            <Button
+              variant={'text'}
+              onClick={() => {
+                column.toggleSorting(column.getIsSorted() === 'asc')
+              }}
+              className="px-0"
+            >
+              {t('playersTable.vehicles_destroyed').split(" ").map(w => w[0]).join("")}
+            </Button>
+          </div>
+        )
+      },
+    },
   ];
 }
 
-const playerColumn = (handlePlayerClick: (id: string) => void): ColumnDef<Player | PlayerWithStatus> => ({
+const playerColumn = (handlePlayerClick: (id: string) => void): ColumnDef<Player> => ({
   id: 'player',
   accessorKey: 'player',
   header: function NameHeader({ column }) {
@@ -326,7 +417,7 @@ const playerColumn = (handlePlayerClick: (id: string) => void): ColumnDef<Player
   enableHiding: false,
 })
 
-const awardColumn = (): ColumnDef<Player | PlayerBaseWithAwards | PlayerWithStatus>  => {
+const awardColumn = (): ColumnDef<Player | PlayerBaseWithAwards | Player>  => {
   const { t } = useTranslation('game');
   return {
     id: 'award',
@@ -342,7 +433,7 @@ const awardColumn = (): ColumnDef<Player | PlayerBaseWithAwards | PlayerWithStat
   }
 };
 
-const teamColumn = (): ColumnDef<Player | PlayerWithStatus> => {
+const teamColumn = (mapLayer?: MapLayer): ColumnDef<Player> => {
   const { t } = useTranslation('game');
 
   return {
@@ -353,7 +444,7 @@ const teamColumn = (): ColumnDef<Player | PlayerWithStatus> => {
       const {t} = useTranslation('game')
       return <div className={"text-center"}>{t('playersTable.team')}</div>
     },
-    size: 20,
+    size: 40,
     filterFn: (row, columnId, filterValue) => {
       if (!filterValue || filterValue === 'all') {
         return true
@@ -363,14 +454,50 @@ const teamColumn = (): ColumnDef<Player | PlayerWithStatus> => {
     },
     cell: ({row}) => {
       const player = row.original;
-      return <div className={"text-center"}>
-        <TeamIndicator team={getTeamFromAssociation(player.team)}/>
+      if ("faction" in player && "status" in player) {
+        return <div className={"text-center"}>
+        <FactionIndicator faction={player.faction} status={player.status}/>
       </div>;
+      }
+
+      const team = getTeamFromAssociation(player.team)
+      const sides: Array<TeamEnum.ALLIES | TeamEnum.AXIS> =
+        team === TeamEnum.MIXED
+          ? [TeamEnum.ALLIES, TeamEnum.AXIS]
+          : team === TeamEnum.ALLIES || team === TeamEnum.AXIS
+            ? [team]
+            : []
+
+      if (mapLayer && sides.length) {
+        return (
+          <AvatarGroup className="justify-center">
+            {sides.map((side) => (
+              <FactionIndicator
+                key={side}
+                className="bg-background"
+                faction={mapLayer.map[side].name as FactionEnum}
+              />
+            ))}
+          </AvatarGroup>
+        )
+      }
+
+      if (mapLayer) {
+        return (
+          <AvatarGroup className="justify-center">
+            <FactionIndicator className="bg-background" />
+          </AvatarGroup>
+        )
+      }
+
+      return <div className={"text-center"}>
+      <TeamIndicator team={team}/>
+    </div>;
     },
   };
 }
 
-const killCategoryColumn = (): ColumnDef<Player | PlayerWithStatus> => {
+const killCategoryColumn = (): ColumnDef<Player> => {
   const { t } = useTranslation('game');
 
   return {
@@ -389,7 +516,7 @@ const killCategoryColumn = (): ColumnDef<Player | PlayerWithStatus> => {
   }
 };
 
-const deathCategoryColumn = (): ColumnDef<Player | PlayerWithStatus> => {
+const deathCategoryColumn = (): ColumnDef<Player> => {
   const { t } = useTranslation('game');
 
   return {
@@ -408,29 +535,26 @@ const deathCategoryColumn = (): ColumnDef<Player | PlayerWithStatus> => {
   }
 };
 
-const statusColumn: ColumnDef<Player | PlayerWithStatus> = {
-  id: 'is_online',
-  accessorKey: 'is_online',
+const statusColumn: ColumnDef<Player> = {
+  id: 'status',
+  accessorKey: 'status',
   header: function StatusHeader() {
     const { t } = useTranslation('game')
     return <div className="sr-only w-4">{t('playersTable.status')}</div>
   },
-  size: 20,
+  size: 0,
   filterFn: (row, columnId, filterValue) => {
     if (!filterValue || filterValue === 'all') {
       return true
     }
-    const cellValue = row.getValue(columnId) ? 'online' : 'offline'
+    const cellValue = row.getValue(columnId)
     return cellValue === filterValue
   },
-  cell: ({ row }) => {
-    const player = row.original
-    return isPlayerWithStatus(player) ? <Status player={player} className="block" /> : null
-  },
+  cell: ({ row }) => null,
   enableHiding: false,
 }
 
-const levelColumn = (): ColumnDef<Player | PlayerWithStatus> => {
+const levelColumn = (): ColumnDef<Player> => {
   const { t } = useTranslation('game')
 
   return {
@@ -438,9 +562,21 @@ const levelColumn = (): ColumnDef<Player | PlayerWithStatus> => {
     accessorKey: 'level',
     meta: { label: t('playersTable.level'), category: ColumnCategory.GENERAL },
     size: threeDigitsWidth,
-    header: function LevelHeader() {
+    header: function LevelHeader({ column }) {
       const { t } = useTranslation('game')
-      return <div>{t('playersTable.level')}</div>
+      return (
+        <div className="text-left">
+          <Button
+            variant={'text'}
+            onClick={() => {
+              column.toggleSorting(column.getIsSorted() === 'asc')
+            }}
+            className="px-0"
+          >
+            {t('playersTable.level')}
+          </Button>
+        </div>
+      )
     },
     cell: ({ row }) => {
       const player = row.original
@@ -449,8 +585,9 @@ const levelColumn = (): ColumnDef<Player | PlayerWithStatus> => {
   }
 }
 
-export const getLiveGameColumns = (handlePlayerClick: (id: string) => void): ColumnDef<Player | PlayerWithStatus>[] => [
+export const getLiveGameColumns = (handlePlayerClick: (id: string) => void): ColumnDef<Player>[] => [
   statusColumn,
+  teamColumn(),
   levelColumn(),
   playerColumn(handlePlayerClick),
   ...pointColumns(false),
@@ -458,4 +595,5 @@ export const getLiveGameColumns = (handlePlayerClick: (id: string) => void): Col
 
 export const getCompletedGameColumns = (
   handlePlayerClick: (id: string) => void,
-): ColumnDef<Player | PlayerWithStatus | PlayerBaseWithAwards>[] => [teamColumn(), levelColumn(), playerColumn(handlePlayerClick), awardColumn(), ...pointColumns(true)]
+  mapLayer: MapLayer,
+): ColumnDef<Player | PlayerBaseWithAwards>[] => [teamColumn(mapLayer), levelColumn(), playerColumn(handlePlayerClick), awardColumn(), ...pointColumns(true)]

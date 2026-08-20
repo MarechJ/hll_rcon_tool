@@ -1,6 +1,7 @@
 import os
 import re
 import socket
+import colorlog
 from logging.config import dictConfig
 from subprocess import PIPE, run
 
@@ -50,8 +51,25 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "console": {
-            "format": f"[%(asctime)s][%(levelname)s][{ENVIRONMENT}][{TAG_VERSION}] %(name)s "
-            "%(filename)s:%(funcName)s:%(lineno)d | %(message)s",
+            "()": "colorlog.ColoredFormatter",
+            "format": (
+                f"[%(asctime)s][%(log_color)s%(levelname)s%(reset)s][{ENVIRONMENT}][{TAG_VERSION}] "
+                "%(name)s %(filename)s:%(funcName)s:%(lineno)d | %(message)s"
+            ),
+            "log_colors": {
+                "DEBUG": "cyan",
+                "INFO": "green",
+                "WARNING": "yellow",
+                "ERROR": "red",
+                "CRITICAL": "bold_red",
+            },
+            "style": "%",
+        },
+        "file": {
+            "format": (
+                f"[%(asctime)s][%(levelname)s][{ENVIRONMENT}][{TAG_VERSION}] "
+                "%(name)s %(filename)s:%(funcName)s:%(lineno)d | %(message)s"
+            ),
         },
     },
     "handlers": {
@@ -62,8 +80,8 @@ LOGGING = {
         },
         "file": {
             "level": "DEBUG",
-            "formatter": "console",
             "class": "logging.FileHandler",
+            "formatter": "file",
             "filename": os.path.join(
                 os.getenv("LOGGING_PATH", ""),
                 os.getenv("LOGGING_FILENAME", f"{socket.gethostname()}.log"),
@@ -82,10 +100,10 @@ LOGGING = {
             "propagate": False,
         },
         "rcon.rcon": {
-            "level": os.getenv("COMMANDS_LOGLEVEL", os.getenv("LOGGING_LEVEL", "INFO"))
+            "level": os.getenv("COMMANDS_LOGLEVEL", os.getenv("LOGGING_LEVEL", "INFO")),
         },
         "rcon.commands": {
-            "level": os.getenv("COMMANDS_LOGLEVEL", os.getenv("LOGGING_LEVEL", "INFO"))
+            "level": os.getenv("COMMANDS_LOGLEVEL", os.getenv("LOGGING_LEVEL", "INFO")),
         },
         # TODO fix that
         "rcon.automods.automod": {

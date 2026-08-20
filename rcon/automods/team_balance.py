@@ -15,7 +15,7 @@ import re
 import time
 from itertools import combinations
 from threading import Timer
-from typing import Literal, Optional
+from typing import Literal
 
 import redis
 
@@ -193,7 +193,7 @@ class TeamBalanceAutomod:
     # Steamroll detection helpers
     # ------------------------------------------------------------------ #
     @staticmethod
-    def _parse_winner(sub_content: str) -> Optional[Literal["allies", "axis"]]:
+    def _parse_winner(sub_content: str) -> Literal["allies", "axis"] | None:
         """Parse the winner from a MATCH ENDED sub_content, e.g.
         '`UTAH BEACH OFFENSIVE` ALLIED (1 - 4) AXIS'. Margin is NOT used to trigger.
         """
@@ -207,9 +207,9 @@ class TeamBalanceAutomod:
             return "axis"
         return None
 
-    def _record_and_get_winners(self, winner: Optional[str]) -> list[Optional[str]]:
+    def _record_and_get_winners(self, winner: str | None) -> list[str | None]:
         """Persist the winner (newest first) and return recent winners."""
-        winners: list[Optional[str]] = []
+        winners: list[str | None] = []
         try:
             raw = self.red.get(MATCH_WINNERS_KEY)
             if raw:
@@ -231,7 +231,7 @@ class TeamBalanceAutomod:
         return winners
 
     @staticmethod
-    def _alternating_streak(winners_newest_first: list[Optional[str]]) -> int:
+    def _alternating_streak(winners_newest_first: list[str | None]) -> int:
         """Length of the alternating run of raw winners from the most recent match.
 
         Because teams swap sides every match, the SAME group winning repeatedly shows
@@ -239,7 +239,7 @@ class TeamBalanceAutomod:
         win passed to the other group, which breaks the streak.
         """
         streak = 0
-        prev: Optional[str] = None
+        prev: str | None = None
         for winner in winners_newest_first:
             if winner is None:
                 break
@@ -253,7 +253,7 @@ class TeamBalanceAutomod:
         return streak
 
     @staticmethod
-    def _match_duration_minutes(struct_log) -> Optional[float]:
+    def _match_duration_minutes(struct_log) -> float | None:
         """Duration of the just-ended match, in minutes (None if unknown)."""
         end_ms = struct_log.get("timestamp_ms")
         if not end_ms:
@@ -320,15 +320,13 @@ class TeamBalanceAutomod:
         stype = squad.get("type")
         if stype in _INFANTRY_EXCLUDED_TYPES:
             return False
-        if stype == "recon" and self.config.exclude_recon:
-            return False
-        return True
+        return not (stype == "recon" and self.config.exclude_recon)
 
     # ------------------------------------------------------------------ #
     # Pass 1 - armor balance
     # ------------------------------------------------------------------ #
     def _select_armor_moves(
-        self, squads: dict, team_counts: dict, cap: Optional[int]
+        self, squads: dict, team_counts: dict, cap: int | None
     ) -> list[dict]:
         armor = {
             team: [s for s in squads[team] if s.get("type") == "armor"]
@@ -380,7 +378,7 @@ class TeamBalanceAutomod:
         dest_player_total: int,
         delta: int,
         threshold: float,
-        cap: Optional[int],
+        cap: int | None,
     ) -> list[dict]:
         """Fewest armor squads that keep the armor squad COUNT within `delta` and get the
         armor score gap as low as possible (within `threshold` when achievable). A team
@@ -390,7 +388,7 @@ class TeamBalanceAutomod:
         feasible: list[tuple] = []
         improving: list[tuple] = []
 
-        for k in range(0, n + 1):
+        for k in range(n + 1):
             for combo in combinations(range(n), k):
                 chosen = [source_armor[i] for i in combo]
                 moved_players = sum(s["size"] for s in chosen)
@@ -430,7 +428,7 @@ class TeamBalanceAutomod:
         count_allies: int,
         count_axis: int,
         prior_moves: list[dict],
-        cap_remaining: Optional[int],
+        cap_remaining: int | None,
     ) -> list[dict]:
         # Apply the headcount effect of Pass 1 armor moves.
         totals = {"allies": count_allies, "axis": count_axis}
@@ -485,7 +483,7 @@ class TeamBalanceAutomod:
         dest_score: float,
         delta: int,
         threshold: float,
-        cap_remaining: Optional[int],
+        cap_remaining: int | None,
     ) -> list[dict]:
         """Fewest squads that keep headcount within delta and get the score gap as low
         as possible (within threshold when achievable). Enumerates subsets (HLL caps a
@@ -499,7 +497,7 @@ class TeamBalanceAutomod:
             []
         )  # fallback: (headcount_gap, num_squads, score_gap, subset)
 
-        for k in range(0, n + 1):
+        for k in range(n + 1):
             for combo in combinations(range(n), k):
                 chosen = [source_squads[i] for i in combo]
                 moved = sum(s["size"] for s in chosen)
@@ -544,7 +542,7 @@ class TeamBalanceAutomod:
         count_allies: int,
         count_axis: int,
         prior_moves: list[dict],
-        cap_remaining: Optional[int],
+        cap_remaining: int | None,
     ) -> list[dict]:
         """Swap squads between teams to reduce the average player-level gap while
         keeping headcount within `max_players_per_team_delta`.
@@ -684,7 +682,7 @@ class TeamBalanceAutomod:
                         by=author,
                         save_message=False,
                     )
-                except Exception:
+                except Exception:  # noqa: BLE001 - RCON transport can raise several client errors.
                     self.logger.warning(
                         "Team balance: could not message %s", player_name
                     )
@@ -725,7 +723,7 @@ class TeamBalanceAutomod:
                 if not dry_run:
                     try:
                         ok = rcon.switch_player_now(player_id)
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - RCON transport can raise several client errors.
                         self.logger.warning(
                             "Team balance: failed to switch %s (%s)",
                             player_name,

@@ -2,7 +2,7 @@ import json
 import time
 from unittest.mock import MagicMock
 
-from pytest import fixture, raises
+from pytest import raises
 
 from rcon.automods.team_balance import (
     MATCH_WINNERS_KEY,
@@ -71,20 +71,20 @@ def mk_team_view(allies_squads, axis_squads, allies_cmd=None, axis_cmd=None):
 
 
 def mk_config(**overrides):
-    defaults = dict(
-        enabled=True,
-        dry_run=False,
-        skip_when_seeding=False,
-        seeding_player_threshold=0,
-        min_players_for_balance=0,
-        max_players_per_team_delta=2,
-        score_gap_threshold=0,
-        win_streak_threshold=3,
-        fast_match_minutes=30,
-        balance_armor=True,
-        max_armor_squad_delta=0,
-        switch_delay_seconds=0,
-    )
+    defaults = {
+        "enabled": True,
+        "dry_run": False,
+        "skip_when_seeding": False,
+        "seeding_player_threshold": 0,
+        "min_players_for_balance": 0,
+        "max_players_per_team_delta": 2,
+        "score_gap_threshold": 0,
+        "win_streak_threshold": 3,
+        "fast_match_minutes": 30,
+        "balance_armor": True,
+        "max_armor_squad_delta": 0,
+        "switch_delay_seconds": 0,
+    }
     defaults.update(overrides)
     return AutoModTeamBalanceUserConfig(**defaults)
 

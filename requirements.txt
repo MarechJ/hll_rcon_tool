@@ -1,4 +1,4 @@
-Click==8.3.3
+Click==8.4.0
 Django==4.2.30
 django-cors-headers==4.9.0
 redis==7.4.0
@@ -12,7 +12,7 @@ sentry-sdk[django]==2.59.0
 python-dateutil==2.9.0.post0
 # discord-webhook[async]
 git+https://github.com/cemathey/python-discord-webhook@89ae25140b30a6747de70e5bf16bc5ba04a9b238
-requests==2.33.1
+requests==2.34.2
 steam==1.4.4
 # Alembic does not use semantic versioning, so be careful with the version numbers https://alembic.sqlalchemy.org/en/latest/front.html#versioning-scheme
 alembic==1.18.4
@@ -20,7 +20,7 @@ rq==2.8.0
 rq-scheduler==0.14.0
 paramiko==5.0.0
 ftpretty==0.4.0
-pytz>=2026.1.post1
+pytz>=2026.2
 pydantic==2.13.4
 discord.py==2.7.1
 pre-commit
@@ -28,3 +28,5 @@ humanize==4.15.0
 httpx==0.28.1
 psutil==7.2.2
 hllrcon>=1.2.1.0
+django-ratelimit==4.1.0
+colorlog==6.12.0

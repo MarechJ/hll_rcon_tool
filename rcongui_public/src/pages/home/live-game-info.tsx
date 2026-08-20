@@ -8,17 +8,25 @@ import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
 import {TableIcon} from "lucide-react";
 import {siTwitch} from "simple-icons";
 import {SimpleIcon} from "@/components/simple-icon";
+import dayjs from 'dayjs';
 
 export default function LiveGameInfo({ game }: { game: PublicInfo }) {
   const { t } = useTranslation('translation')
 
-  const remainingTime = `${String(Math.floor(game.time_remaining / 3600))}:${String(
-    Math.floor((game.time_remaining % 3600) / 60),
-  ).padStart(2, '0')}:${String(game.time_remaining % 60).padStart(2, '0')}`
   const allies = game.current_map.map.map.allies
   const axis = game.current_map.map.map.axis
   const gameMode = game.current_map.map.game_mode
   const mapName = game.current_map.map.map.pretty_name
+  const capFlips = game?.cap_flips
+  const matchTime = game?.match_time
+  let remainingTime = dayjs.duration(game?.time_remaining ?? 0, "seconds")
+  if (gameMode === "offensive" && game.current_map.map.attackers) {
+    const timePerCap = matchTime / 5
+    const attackers = game.current_map.map.attackers
+    const attackersScore = attackers === "axis" ? game.score.axis : game.score.allied
+    remainingTime = dayjs.duration(matchTime - (attackersScore * timePerCap) - (timePerCap - game?.time_remaining), "seconds")
+  }
+
 
   return (
     <>
@@ -36,8 +44,11 @@ export default function LiveGameInfo({ game }: { game: PublicInfo }) {
               mode={gameMode}
               score={{ axis: game.score.axis, allies: game.score.allied }}
               time={remainingTime}
+              capFlips={capFlips}
+              matchTime={matchTime}
+              remainingTime={remainingTime.asSeconds()}
             />
-            <ToggleGroup type="single" variant="outline" className="p-4">
+            <ToggleGroup type="single" variant="outline" className="justify-start h-12">
               <ToggleGroupItem value={`/`} asChild>
                 <Link to={`/`}>
                   <TableIcon size={20}/>

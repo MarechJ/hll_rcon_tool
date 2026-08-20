@@ -1,64 +1,122 @@
 {
-    "gameNotFound": "未找到遊戲 {{ id }}",
-    "loading": "載入中...",
-    "selectPlayer": "選擇玩家",
-    "searchPlayer": "搜尋玩家",
-    "noPlayersFound": "未找到玩家",
-    "onlineStatusFilter": {
-        "online": "線上",
-        "offline": "離線",
-        "all": "全部"
-    },
+  "gameNotFound": "未找到遊戲 {{ id }}",
+  "loading": "載入中...",
+  "selectPlayer": "選擇玩家",
+  "searchPlayer": "搜尋玩家",
+  "noPlayersFound": "未找到玩家",
+  "onlineStatusFilter": {
+    "online": "線上",
+    "offline": "離線",
+    "all": "全部"
+  },
+  "player": "玩家",
+  "players": "玩家",
+  "allies": "盟軍",
+  "axis": "軸心國",
+  "weather": {
+    "day": "白天",
+    "night": "夜晚",
+    "dusk": "黃昏",
+    "dawn": "黎明",
+    "rain": "雨天",
+    "overcast": "陰天"
+  },
+  "playersTable": {
     "player": "玩家",
-    "players": "玩家",
-    "allies": "盟軍",
-    "axis": "軸心國",
-    "weather": {
-        "day": "白天",
-        "night": "夜晚",
-        "dusk": "黃昏",
-        "dawn": "黎明",
-        "rain": "雨天",
-        "overcast": "陰天"
+    "team": "隊伍",
+    "kills": "擊殺",
+    "deaths": "死亡",
+    "combat": "戰鬥",
+    "score": "得分",
+    "weapon": "武器",
+    "vehicle": "載具",
+    "armor": "裝甲",
+    "commander": "指揮官",
+    "offense": "進攻",
+    "defense": "防守",
+    "support": "支援",
+    "utility": "工具",
+    "diff": "差值",
+    "status": "狀態"
+  },
+  "matchTable": {
+    "match": "對戰",
+    "map": "地圖",
+    "mode": "模式",
+    "duration": "時長",
+    "result": "結果",
+    "start": "開始"
+  },
+  "playerStats": {
+    "killsByWeapon": "武器擊殺統計",
+    "deathsByWeapon": "武器死亡統計",
+    "encounters": "遭遇戰",
+    "weapon": "武器",
+    "count": "次數",
+    "timeline": "時間軸"
+  },
+  "timelineDetails": {
+    "roleTimeline": "兵種時間軸",
+    "rolesLabel": "兵種",
+    "roleInterval": "{{role}}，{{start}}–{{end}}",
+    "encountersTimeline": "交戰時間軸",
+    "unknownRole": "未知兵種",
+    "kill": "擊殺",
+    "death": "死亡",
+    "killed": "擊殺了",
+    "wasKilledBy": "被擊殺者",
+    "withWeapon": "使用 <weapon>{{weapon}}</weapon>",
+    "tankDestroyed": "{{player}}摧毀了一輛戰車",
+    "playerState": {
+      "joined": "<player>{{player}}</player>加入<team>{{team}}</team>",
+      "disconnected": "<player>{{player}}</player>中斷連線",
+      "switched": "<player>{{player}}</player>從<previousTeam>{{previousTeam}}</previousTeam>切換到<team>{{team}}</team>",
+      "reconnected": "<player>{{player}}</player>以<team>{{team}}</team>重新連線",
+      "reconnectedAfterSwitch": "<player>{{player}}</player>切換隊伍後以<team>{{team}}</team>重新連線"
     },
-    "playersTable": {
-        "player": "玩家",
-        "team": "隊伍",
-        "kills": "擊殺",
-        "deaths": "死亡",
-        "combat": "戰鬥",
-        "score": "得分",
-        "weapon": "武器",
-        "vehicle": "載具",
-        "armor": "裝甲",
-        "commander": "指揮官",
-        "offense": "進攻",
-        "defense": "防守",
-        "support": "支援",
-        "utility": "工具",
-        "diff": "差值",
-        "status": "狀態"
+    "capFlip": {
+      "playerTeamCaptured": "{{player}}所在隊伍佔領了目標",
+      "playerTeamLost": "{{player}}所在隊伍失去了目標",
+      "teamCaptured": "{{team}}佔領了目標",
+      "score": "比分",
+      "scoreLine": "{{allies}} {{alliedScore}} — {{axisScore}} {{axis}}"
     },
-    "matchTable": {
-        "match": "對戰",
-        "map": "地圖",
-        "mode": "模式",
-        "duration": "時長",
-        "result": "結果",
-        "start": "開始"
+    "streak": {
+      "title": "{{player}}：{{title}}",
+      "ended": "{{player}}：連殺在{{count}}次擊殺時終結",
+      "titles": {
+        "unstoppable": "勢不可擋",
+        "impressive": "令人驚嘆",
+        "dominating": "主宰戰場",
+        "killingSpree": "大殺特殺",
+        "rampage": "暴走"
+      }
     },
-    "playerStats": {
-        "killsByWeapon": "武器擊殺統計",
-        "deathsByWeapon": "武器死亡統計",
-        "encounters": "遭遇戰",
-        "weapon": "武器",
-        "count": "次數"
-    },
-    "score": {
-        "killstreak": "連殺",
-        "deathstreak": "連死",
-        "teamkills": "友軍傷害",
-        "k/d": "擊殺/死亡比"
-    },
-    "downloadTable": "下載表格"
+    "roles": {
+      "rifleman": "步槍兵",
+      "assault": "突擊兵",
+      "automaticrifleman": "自動步槍兵",
+      "medic": "醫療兵",
+      "spotter": "觀察手",
+      "support": "支援兵",
+      "heavymachinegunner": "機槍兵",
+      "antitank": "反戰車兵",
+      "engineer": "工程兵",
+      "officer": "軍官",
+      "sniper": "狙擊手",
+      "crewman": "戰車乘員",
+      "tankcommander": "戰車指揮官",
+      "armycommander": "總指揮",
+      "artilleryobserver": "砲兵觀察員",
+      "operator": "操作員",
+      "gunner": "砲手"
+    }
+  },
+  "score": {
+    "killstreak": "連殺",
+    "deathstreak": "連死",
+    "teamkills": "友軍傷害",
+    "k/d": "擊殺/死亡比"
+  },
+  "downloadTable": "下載表格"
 }
