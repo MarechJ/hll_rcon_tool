@@ -56,7 +56,6 @@ from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.chat_commands import ChatCommandsUserConfig
 from rcon.user_config.expired_vips import ExpiredVipsUserConfig
-from rcon.user_config.legacy_scorebot import ScorebotUserConfig
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
 from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.user_config.name_kicks import NameKickUserConfig
@@ -1321,10 +1320,6 @@ class RconAPI(Rcon):
             dry_run=True,
             reset_to_default=reset_to_default,
         )
-
-    # TODO: legacy remove this in a few releases
-    def get_scorebot_config(self) -> ScorebotUserConfig:
-        return ScorebotUserConfig.load_from_db()
 
     def get_scoreboard_config(self) -> ScoreboardUserConfig:
         return ScoreboardUserConfig.load_from_db()

@@ -418,8 +418,8 @@ export const permissions = [
     description: "Can delete steam player",
   },
   {
-    permission: "can_change_scorebot_config",
-    description: "Can change scorebot config",
+    permission: "can_change_scoreboard_config",
+    description: "Can change scoreboard config",
   },
   {
     permission: "can_view_standard_broadcast_messages",
@@ -604,8 +604,8 @@ export const permissions = [
     description: "Can upload a VIP list",
   },
   {
-    permission: "can_view_scorebot_config",
-    description: "Can view scorebot config",
+    permission: "can_view_scoreboard_config",
+    description: "Can view scoreboard config",
   },
   {
     permission: "can_delete_blacklist_records",
