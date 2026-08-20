@@ -58,24 +58,37 @@ def make_loop(gamestate, now=1002):
 
 @patch("rcon.logs.loop.MapsHistory")
 def test_ended_match_is_not_mutated_by_next_match_score(maps_history_cls):
-    current_map = make_map_info(end=1_100, match_time=9_000, cap_flips=[{"allied_score": 4, "axis_score": 1, "ts": 1}])
+    current_map = make_map_info(
+        end=1_100,
+        match_time=9_000,
+        cap_flips=[{"allied_score": 4, "axis_score": 1, "ts": 1}],
+    )
     history = maps_history_cls.return_value
     history.get_current_map.return_value = current_map
     gs = make_gamestate(allied_score=5, axis_score=0)
     loop = make_loop(gs, now=1_002)
 
     loop.update_maps_history(prev_map_time_elapsed=0)
-    assert current_map["cap_flips"] == [{"allied_score": 4, "axis_score": 1, "ts": 1}, {"allied_score": 5, "axis_score": 0, "ts": 2}]
+    assert current_map["cap_flips"] == [
+        {"allied_score": 4, "axis_score": 1, "ts": 1},
+        {"allied_score": 5, "axis_score": 0, "ts": 2},
+    ]
 
     gs["allied_score"] = 2
     gs["axis_score"] = 2
     loop.update_maps_history(prev_map_time_elapsed=100)
-    assert current_map["cap_flips"] == [{"allied_score": 4, "axis_score": 1, "ts": 1}, {"allied_score": 5, "axis_score": 0, "ts": 2}]
+    assert current_map["cap_flips"] == [
+        {"allied_score": 4, "axis_score": 1, "ts": 1},
+        {"allied_score": 5, "axis_score": 0, "ts": 2},
+    ]
 
     gs["allied_score"] = 0
     gs["axis_score"] = 5
     loop.update_maps_history(prev_map_time_elapsed=100)
-    assert current_map["cap_flips"] == [{"allied_score": 4, "axis_score": 1, "ts": 1}, {"allied_score": 5, "axis_score": 0, "ts": 2}]
+    assert current_map["cap_flips"] == [
+        {"allied_score": 4, "axis_score": 1, "ts": 1},
+        {"allied_score": 5, "axis_score": 0, "ts": 2},
+    ]
 
     loop.get_detailed_players.assert_called_once()
     history.update.assert_called_once_with(0, current_map)
