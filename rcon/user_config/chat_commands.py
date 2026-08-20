@@ -1,9 +1,9 @@
 import logging
 import re
+from collections.abc import Iterable
 from functools import cached_property
-from typing import Iterable, TypedDict, NotRequired, Optional
+from typing import TypedDict
 
-from django.template.defaultfilters import title
 from pydantic import BaseModel, Field, field_validator
 
 from rcon.types import MessageVariable, MessageVariableContext
@@ -57,12 +57,21 @@ class ChatCommandsType(TypedDict):
 
 
 class BaseChatCommand(BaseModel):
-    words: list[str] = Field(default_factory=list, title="Words", description="A list of words that trigger this command. Needs to be prefixed with either one of " + ", ".join(VALID_COMMAND_PREFIXES))
-    description: str = Field(default="", title="Description", description="An optional description that is shown to the player when one of the describe words is used.")
+    words: list[str] = Field(
+        default_factory=list,
+        title="Words",
+        description="A list of words that trigger this command. Needs to be prefixed with either one of "
+        + ", ".join(VALID_COMMAND_PREFIXES),
+    )
+    description: str = Field(
+        default="",
+        title="Description",
+        description="An optional description that is shown to the player when one of the describe words is used.",
+    )
 
     @cached_property
     def help_words(self) -> set[str]:
-        return set(f"?{word[1:]}" for word in self.words)
+        return {f"?{word[1:]}" for word in self.words}
 
     @field_validator("words")
     @classmethod
@@ -77,7 +86,11 @@ class BaseChatCommand(BaseModel):
 
 
 class ChatCommand(BaseChatCommand):
-    message: str = Field(default="", title="Message", description="The message send to the player in-game when the command is triggered. Allows the use of message placeholders.")
+    message: str = Field(
+        default="",
+        title="Message",
+        description="The message send to the player in-game when the command is triggered. Allows the use of message placeholders.",
+    )
 
     @field_validator("message")
     @classmethod
@@ -98,8 +111,18 @@ class ChatCommand(BaseChatCommand):
 
 
 class BaseChatCommandUserConfig(BaseUserConfig):
-    command_words: list[BaseChatCommand] = Field(default_factory=list, title="Command Words", description="Commands that are available to player on the server.")
-    enabled: bool = Field(default=False, title="Enabled", description="Whether chat commands is enabled on the server or not.")
+    NAME = "BaseChatCommandUserConfig"
+
+    command_words: list[BaseChatCommand] = Field(
+        default_factory=list,
+        title="Command Words",
+        description="Commands that are available to player on the server.",
+    )
+    enabled: bool = Field(
+        default=False,
+        title="Enabled",
+        description="Whether chat commands is enabled on the server or not.",
+    )
 
     # These will trigger an automatic help command if `description`s are set on
     # `command_words`
@@ -125,7 +148,13 @@ class BaseChatCommandUserConfig(BaseUserConfig):
 
 
 class ChatCommandsUserConfig(BaseChatCommandUserConfig):
-    command_words: list[ChatCommand] = Field(default_factory=list, title="Command Words", description="Commands that are available to player on the server.")
+    NAME = "ChatCommandsUserConfig"
+
+    command_words: list[ChatCommand] = Field(
+        default_factory=list,
+        title="Command Words",
+        description="Commands that are available to player on the server.",
+    )
 
     @staticmethod
     def save_to_db(values: ChatCommandsType, dry_run=False) -> None:
@@ -161,4 +190,4 @@ class ChatCommandsUserConfig(BaseChatCommandUserConfig):
         )
 
         if not dry_run:
-            set_user_config(ChatCommandsUserConfig.KEY(), validated_conf)
+            set_user_config(ChatCommandsUserConfig.NAME, validated_conf)

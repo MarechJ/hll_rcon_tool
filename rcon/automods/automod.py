@@ -1,12 +1,11 @@
 import logging
 import time
 from threading import Timer
-from typing import List
 
 from pydantic import HttpUrl
 from redis.client import Redis
 
-import rcon.game_logs
+from rcon.automods import server_info_for_automod
 from rcon.automods.level_thresholds import LevelThresholdsAutomod
 from rcon.automods.models import ActionMethod, PunishPlayer, PunitionsToApply
 from rcon.automods.no_leader import NoLeaderAutomod
@@ -18,6 +17,7 @@ from rcon.commands import HLLCommandFailedError
 from rcon.discord import send_to_discord_audit
 from rcon.hooks import inject_player_ids
 from rcon.logs.loop import on_connected, on_kill, on_match_end
+from rcon.logs.loop import on_connected, on_kill
 from rcon.rcon import Rcon, get_rcon
 from rcon.types import GetDetailedPlayer, StructuredLogLineType
 from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
@@ -68,7 +68,7 @@ def get_punitions_to_apply(rcon, moderators) -> PunitionsToApply:
 def _do_punitions(
     rcon: Rcon,
     method: ActionMethod,
-    players: List[PunishPlayer],
+    players: list[PunishPlayer],
     mods,
 ):
     for aplayer in players:
@@ -91,7 +91,10 @@ def _do_punitions(
             if method == ActionMethod.PUNISH:
                 if not aplayer.details.dry_run:
                     rcon.punish(
-                        player_name=aplayer.name, reason=aplayer.details.message, by=aplayer.details.author, player_id=aplayer.player_id
+                        player_name=aplayer.name,
+                        reason=aplayer.details.message,
+                        by=aplayer.details.author,
+                        player_id=aplayer.player_id,
                     )
                 audit(
                     discord_webhook_url=aplayer.details.discord_audit_url,
@@ -131,6 +134,15 @@ def _do_punitions(
 
 
 def do_punitions(rcon: Rcon, punitions_to_apply: PunitionsToApply):
+    mods = enabled_moderators(rcon)
+    _do_punitions_for_moderators(rcon, punitions_to_apply, mods)
+
+
+def _do_punitions_for_moderators(
+    rcon: Rcon,
+    punitions_to_apply: PunitionsToApply,
+    mods,
+):
     if punitions_to_apply:
         logger.debug(
             "Automod will apply the following punitions %s",
@@ -139,26 +151,23 @@ def do_punitions(rcon: Rcon, punitions_to_apply: PunitionsToApply):
     else:
         logger.debug("Automod did not suggest any punitions")
 
-    _do_punitions(
-        rcon, ActionMethod.MESSAGE, punitions_to_apply.warning, enabled_moderators()
-    )
-
-    _do_punitions(
-        rcon, ActionMethod.PUNISH, punitions_to_apply.punish, enabled_moderators()
-    )
-
-    _do_punitions(
-        rcon, ActionMethod.KICK, punitions_to_apply.kick, enabled_moderators()
-    )
+    _do_punitions(rcon, ActionMethod.MESSAGE, punitions_to_apply.warning, mods)
+    _do_punitions(rcon, ActionMethod.PUNISH, punitions_to_apply.punish, mods)
+    _do_punitions(rcon, ActionMethod.KICK, punitions_to_apply.kick, mods)
 
 
-def enabled_moderators():
+def enabled_moderators(rcon: Rcon | None = None):
     red = get_redis_client()
+    server_info = server_info_for_automod(rcon)
+    scope = {
+        "game": server_info.game,
+        "server_number": server_info.number,
+    }
 
-    level_thresholds_config = AutoModLevelUserConfig.load_from_db()
-    no_leader_config = AutoModNoLeaderUserConfig.load_from_db()
-    seeding_config = AutoModSeedingUserConfig.load_from_db()
-    solo_tank_config = AutoModNoSoloTankUserConfig.load_from_db()
+    level_thresholds_config = AutoModLevelUserConfig.load_from_db(**scope)
+    no_leader_config = AutoModNoLeaderUserConfig.load_from_db(**scope)
+    seeding_config = AutoModSeedingUserConfig.load_from_db(**scope)
+    solo_tank_config = AutoModNoSoloTankUserConfig.load_from_db(**scope)
 
     return list(
         filter(
@@ -182,14 +191,14 @@ def set_first_run_done(r: Redis):
 
 
 def punish_squads(rcon: Rcon, r: Redis):
-    mods = enabled_moderators()
+    mods = enabled_moderators(rcon)
     if len(mods) == 0:
         logger.debug("No automod is enabled")
         return
 
     punitions_to_apply = get_punitions_to_apply(rcon, mods)
 
-    do_punitions(rcon, punitions_to_apply)
+    _do_punitions_for_moderators(rcon, punitions_to_apply, mods)
     set_first_run_done(r)
 
 
@@ -215,7 +224,7 @@ def on_kill(rcon: Rcon, log: StructuredLogLineType):
             "giving mods time to warmup"
         )
         return
-    mods = enabled_moderators()
+    mods = enabled_moderators(rcon)
     if len(mods) == 0:
         logger.debug("No automod is enabled")
         return
@@ -226,7 +235,7 @@ def on_kill(rcon: Rcon, log: StructuredLogLineType):
         if callable(on_kill_hook):
             punitions_to_apply.merge(mod.on_kill(log))
 
-    do_punitions(rcon, punitions_to_apply)
+    _do_punitions_for_moderators(rcon, punitions_to_apply, mods)
 
 
 pendingTimers = {}
@@ -242,7 +251,7 @@ def on_connected(rcon: Rcon, _, name: str, player_id: str):
             "giving mods time to warmup"
         )
         return
-    mods = enabled_moderators()
+    mods = enabled_moderators(rcon)
     if len(mods) == 0:
         logger.debug("No automod is enabled")
         return
@@ -251,8 +260,10 @@ def on_connected(rcon: Rcon, _, name: str, player_id: str):
     detailed_player_info: GetDetailedPlayer | None = None
     try:
         detailed_player_info = rcon.get_detailed_player_info(player_id)
-    except Exception as e:
-        logger.error(f"get_detailed_player_info threw an exception for {player_id}: {e}")
+    except Exception as e:  # noqa
+        logger.error(
+            f"get_detailed_player_info threw an exception for {player_id}: {e}"
+        )
 
     punitions_to_apply: PunitionsToApply = PunitionsToApply()
     for mod in mods:
@@ -271,8 +282,8 @@ def on_connected(rcon: Rcon, _, name: str, player_id: str):
                     by=p.details.author,
                     save_message=False,
                 )
-        except Exception as e:
-            logger.error("Could not message player '%s' (%s) : %s", name, player_id, e)
+        except Exception as e:  # noqa
+            logger.error(f"Could not message player '{name}' ({player_id}): {e}")
 
     if len(punitions_to_apply.warning) == 0:
         return

@@ -1,22 +1,21 @@
-from types import SimpleNamespace
 import unicodedata
+from types import SimpleNamespace
 from unittest.mock import Mock
 
+import pytest
 from hllrcon import HLLVLayer
 
-import pytest
-
-from rcon.commands import HLLServerCtl, HLLVServerCtl
 from rcon.api_commands import (
     HLLRconAPI,
     HLLVRconAPI,
     RconAPI,
     create_rcon_api,
 )
+from rcon.commands import HLLServerCtl, HLLVServerCtl
 from rcon.game import get_game_profile
 from rcon.game.hll.profile import HLL_PROFILE
 from rcon.game.hllv.profile import HLLV_PROFILE
-from rcon.maps import GameMode, Team, UNKNOWN_MAP_NAME, parse_map_string
+from rcon.maps import UNKNOWN_MAP_NAME, GameMode, Team, parse_map_string
 from rcon.rcon import HLLRcon, HLLVRcon, Rcon, create_rcon
 from rcon.types import GameEnum, GameIntEnum, ServerInfo
 from rcon.utils import guess_map_from_log
@@ -118,16 +117,12 @@ def test_profiles_expose_game_specific_role_ids():
         ),
     ],
 )
-def test_guess_map_from_log_uses_selected_game_catalog(
-    profile, raw, expected_layer_id
-):
+def test_guess_map_from_log_uses_selected_game_catalog(profile, raw, expected_layer_id):
     assert guess_map_from_log({"raw": raw}, profile).id == expected_layer_id
 
 
 def test_guess_map_from_log_does_not_fall_through_to_other_game_catalog():
-    guessed = guess_map_from_log(
-        {"raw": "MATCH START CARENTAN WARFARE"}, HLLV_PROFILE
-    )
+    guessed = guess_map_from_log({"raw": "MATCH START CARENTAN WARFARE"}, HLLV_PROFILE)
 
     assert guessed.id == UNKNOWN_MAP_NAME
 

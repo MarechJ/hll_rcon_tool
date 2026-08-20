@@ -3,12 +3,25 @@ import os
 import re
 import sys
 from collections import defaultdict
+from collections.abc import Generator, Sequence
 from contextlib import contextmanager
-from datetime import datetime, timezone
-from typing import Any, Generator, List, Literal, Optional, Sequence, overload
+from datetime import UTC, datetime
+from typing import Any, ClassVar, Literal, Optional, overload
 
 import pydantic
-from sqlalchemy import TIMESTAMP, Enum, ForeignKey, String, create_engine, select, text, JSON, Engine, NullPool, Pool
+from sqlalchemy import (
+    JSON,
+    TIMESTAMP,
+    Engine,
+    Enum,
+    ForeignKey,
+    NullPool,
+    Pool,
+    String,
+    create_engine,
+    select,
+    text,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -26,11 +39,6 @@ from sqlalchemy.schema import UniqueConstraint
 from rcon.maps import Team
 from rcon.types import (
     AuditLogType,
-    GameIntEnum,
-    GetDetailedPlayer,
-    MapResult,
-    MapScore,
-    MessageTemplateType,
     BlacklistRecordType,
     BlacklistRecordWithBlacklistType,
     BlacklistRecordWithPlayerType,
@@ -38,7 +46,13 @@ from rcon.types import (
     BlacklistType,
     BlacklistWithRecordsType,
     DBLogLineType,
+    GameIntEnum,
+    GameLayout,
+    GetDetailedPlayer,
+    MapScore,
     MapsType,
+    MessageTemplateCategory,
+    MessageTemplateType,
     PenaltyCountType,
     PlayerAccountType,
     PlayerActionState,
@@ -52,16 +66,18 @@ from rcon.types import (
     PlayerSessionType,
     PlayerSoldierType,
     PlayerStatsType,
+    PlayerTeamAssociation,
+    PlayerTeamConfidence,
     PlayerVIPType,
-    UnitHistoryEntry,
     ServerCountType,
     SteamBansType,
     SteamInfoType,
     SteamPlayerSummaryType,
     StructuredLogLineWithMetaData,
+    UnitHistoryEntry,
     WatchListType,
-    MessageTemplateCategory, PlayerTeamAssociation, PlayerTeamConfidence, GameLayout,
 )
+from rcon.tz_unaware_column import UTCDateTime
 from rcon.utils import (
     SafeStringFormat,
     get_server_number,
@@ -69,7 +85,7 @@ from rcon.utils import (
     mask_to_server_numbers,
     server_numbers_to_mask,
 )
-from rcon.weapons import WEAPON_SIDE_MAP, ALL_WEAPONS, WeaponType
+from rcon.weapons import ALL_WEAPONS, WEAPON_SIDE_MAP, WeaponType
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +104,7 @@ def _connection_name() -> str:
     :return: str
     """
     args = sys.argv
-    name = 'CRCon Generic'
+    name = "CRCon Generic"
     if "manage.py" not in args[0]:
         # stuff like daphne, gunicorn (backend) etc
         name = args[0]
@@ -117,13 +133,18 @@ def get_engine():
     if os.getenv("HLL_DB_DISABLE_CONNECTION_POOL") is not None:
         pool = NullPool
 
-    _ENGINE = create_engine(url, poolclass=pool, echo=False, connect_args={"application_name":_connection_name()})
+    _ENGINE = create_engine(
+        url,
+        poolclass=pool,
+        echo=False,
+        connect_args={"application_name": _connection_name()},
+    )
     return _ENGINE
 
 
 class Base(DeclarativeBase):
     # TODO: Replace dict[str, Any] w/ actual types
-    type_annotation_map = {
+    type_annotation_map: ClassVar[dict[Any, Any]] = {
         dict[str, Any]: JSONB,
         dict[str, int]: JSONB,
         SteamPlayerSummaryType: JSONB,
@@ -140,7 +161,7 @@ class PlayerID(Base):
     # # TODO: This is a temporary Steam ID column so that we can store the Steam ID somewhere for Vietnam servers.
     # This enables us in the future to retroactively merge the Vietnam and WW2 player data into a single player profile.
     steam_id: Mapped[str | None]
-    created: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    created: Mapped[datetime] = mapped_column(UTCDateTime, default=datetime.utcnow)
     names: Mapped[list["PlayerName"]] = relationship(
         back_populates="player",
         order_by="nullslast(desc(PlayerName.last_seen))",
@@ -189,7 +210,6 @@ class PlayerID(Base):
     def get_penalty_count(self) -> PenaltyCountType:
         counts = defaultdict(int)
         for action in self.received_actions:
-
             try:
                 action = PlayerActionState[action.action_type]
                 counts[action] += 1
@@ -208,7 +228,7 @@ class PlayerID(Base):
 
         for i, s in enumerate(self.sessions):
             if not s.end and s.start and i == 0:
-                total += (datetime.now() - s.start).total_seconds()
+                total += (datetime.now(tz=UTC) - s.start).total_seconds()
             elif s.end and s.start:
                 total += (s.end - s.start).total_seconds()
 
@@ -219,7 +239,7 @@ class PlayerID(Base):
             if self.sessions[0].end:
                 return 0
             start = self.sessions[0].start or self.sessions[0].created
-            return int((datetime.now() - start).total_seconds())
+            return int((datetime.now(tz=UTC) - start).total_seconds())
         return 0
 
     def to_dict(self, limit_sessions=5) -> PlayerProfileType:
@@ -266,6 +286,7 @@ class PlayerID(Base):
         aka = " | ".join([n.name for n in self.names])
         return f"{self.player_id} {aka}"
 
+
 class PlayerSoldier(Base):
     __tablename__ = "player_soldier"
 
@@ -286,45 +307,47 @@ class PlayerSoldier(Base):
 
     updated: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True),
-        default=lambda: datetime.now(tz=timezone.utc),
-        onupdate=lambda: datetime.now(tz=timezone.utc)
+        default=lambda: datetime.now(tz=UTC),
+        onupdate=lambda: datetime.now(tz=UTC),
     )
 
     @classmethod
     def update(cls, player: GetDetailedPlayer):
-        logger.debug("Updating soldier %s" % player["name"])
+        logger.debug(f"Updating soldier {player['name']}")
         with enter_session() as sess:
             # Retrieve the PlayerID instance to get its ID for foreign key reference
-            player_id_stmt = select(PlayerID).where(PlayerID.player_id == player["player_id"])
+            player_id_stmt = select(PlayerID).where(
+                PlayerID.player_id == player["player_id"]
+            )
             player_id_record = sess.execute(player_id_stmt).scalars().one_or_none()
-            
+
             if not player_id_record:
                 # Handle case where PlayerID does not exist
-                logger.exception("PlayerID not found for player_id: %s" % player['player_id'])
+                logger.exception(
+                    f"PlayerID not found for player_id: {player['player_id']}"
+                )
                 return
-            
+
             player_id_fk = player_id_record.id
-            
+
             # Query for existing PlayerSoldier
-            profile_stmt = (
-                select(cls)
-                .where(cls.player_id_id == player_id_fk)  # Direct filter on FK; join optional here
-            )
+            profile_stmt = select(cls).where(
+                cls.player_id_id == player_id_fk
+            )  # Direct filter on FK; join optional here
             profile = sess.execute(profile_stmt).scalars().one_or_none()
             if not profile:
                 # Create new instance
                 profile = cls(player_id_id=player_id_fk)
                 sess.add(profile)
-            
+
             # Proceed with updates
             profile.eos_id = player["eos_id"]
             profile.name = player["name"]
             profile.platform = player["platform"]
             profile.clan_tag = player["clan_tag"]
-            
-            if player["level"] > profile.level:
-                profile.level = player["level"]
-            
+
+            profile.level = max(profile.level, player["level"])
+
             sess.commit()
 
     @classmethod
@@ -344,20 +367,24 @@ class PlayerSoldier(Base):
         Returns the updated PlayerSoldier instance or None if PlayerID not found.
         """
         # Look up PlayerID
-        player_db = sess.execute(
-            select(PlayerID).where(PlayerID.player_id == player_id)
-        ).scalars().one_or_none()
+        player_db = (
+            sess.execute(select(PlayerID).where(PlayerID.player_id == player_id))
+            .scalars()
+            .one_or_none()
+        )
         if not player_db:
             return None, False
-        
+
         # Look up or create PlayerSoldier
-        soldier_db = sess.execute(
-            select(cls).where(cls.player_id_id == player_db.id)
-        ).scalars().one_or_none()
+        soldier_db = (
+            sess.execute(select(cls).where(cls.player_id_id == player_db.id))
+            .scalars()
+            .one_or_none()
+        )
         if not soldier_db:
             soldier_db = cls(player_id_id=player_db.id)
             sess.add(soldier_db)
-        
+
         # Update only None fields
         changed = False
         if soldier_db.eos_id is None and eos_id is not None:
@@ -375,10 +402,10 @@ class PlayerSoldier(Base):
         if soldier_db.clan_tag is None and clan_tag is not None:
             soldier_db.clan_tag = clan_tag
             changed = True
-        
+
         if changed:
             sess.commit()
-        
+
         return soldier_db, changed
 
     def to_dict(self) -> PlayerSoldierType:
@@ -390,6 +417,7 @@ class PlayerSoldier(Base):
             "clan_tag": self.clan_tag,
             "updated": self.updated,
         }
+
 
 class PlayerAccount(Base):
     __tablename__ = "player_account"
@@ -410,11 +438,11 @@ class PlayerAccount(Base):
     country: Mapped[str | None] = mapped_column(String(2))
     # ISO 639-1
     lang: Mapped[str] = mapped_column(String(2), default="en")
-    
+
     updated: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True),
-        default=lambda: datetime.now(tz=timezone.utc),
-        onupdate=lambda: datetime.now(tz=timezone.utc)
+        default=lambda: datetime.now(tz=UTC),
+        onupdate=lambda: datetime.now(tz=UTC),
     )
 
     @classmethod
@@ -434,27 +462,31 @@ class PlayerAccount(Base):
         Returns (updated PlayerAccount instance, changed flag) or None if PlayerID not found.
         """
         # Look up PlayerID
-        player_db = sess.execute(
-            select(PlayerID).where(PlayerID.player_id == player_id)
-        ).scalars().one_or_none()
+        player_db = (
+            sess.execute(select(PlayerID).where(PlayerID.player_id == player_id))
+            .scalars()
+            .one_or_none()
+        )
         if not player_db:
             return None
-        
+
         # Look up or create PlayerAccount
-        account_db = sess.execute(
-            select(cls).where(cls.player_id_id == player_db.id)
-        ).scalars().one_or_none()
+        account_db = (
+            sess.execute(select(cls).where(cls.player_id_id == player_db.id))
+            .scalars()
+            .one_or_none()
+        )
         if not account_db:
             account_db = cls(player_id_id=player_db.id)
             sess.add(account_db)
-        
+
         account_db.name = name
         account_db.discord_id = discord_id
         account_db.is_member = is_member
         account_db.country = country.upper() if country else None
         account_db.lang = lang.lower() if lang else "en"
         sess.commit()
-        
+
         return account_db
 
     def to_dict(self) -> PlayerAccountType:
@@ -467,6 +499,7 @@ class PlayerAccount(Base):
             "updated": self.updated,
         }
 
+
 class SteamInfo(Base):
     __tablename__ = "steam_info"
 
@@ -478,8 +511,8 @@ class SteamInfo(Base):
         index=True,
         unique=True,
     )
-    created: Mapped[datetime] = mapped_column(default=datetime.utcnow)
-    updated: Mapped[datetime] = mapped_column(onupdate=datetime.utcnow)
+    created: Mapped[datetime] = mapped_column(UTCDateTime, default=datetime.utcnow)
+    updated: Mapped[datetime] = mapped_column(UTCDateTime, onupdate=datetime.utcnow)
     profile: Mapped[SteamPlayerSummaryType] = mapped_column(default=JSONB.NULL)
     country: Mapped[str | None] = mapped_column(index=True)
     bans: Mapped[SteamBansType] = mapped_column(default=JSONB.NULL)
@@ -515,7 +548,7 @@ class WatchList(Base):
     __tablename__ = "player_watchlist"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    modified: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    modified: Mapped[datetime] = mapped_column(UTCDateTime, default=datetime.utcnow)
     player_id_id: Mapped[int] = mapped_column(
         "playersteamid_id",
         ForeignKey("steam_id_64.id"),
@@ -544,11 +577,32 @@ class WatchList(Base):
 
 class UserConfig(Base):
     __tablename__ = "user_config"
+    __table_args__ = (
+        UniqueConstraint(
+            "game",
+            "server_number",
+            "name",
+            name="uq_user_config_game_server_number_name",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    key: Mapped[str] = mapped_column(unique=True, index=True)
-    # TODO: Fix this on the UI settings branch once merged
+    name: Mapped[str] = mapped_column()
+    game: Mapped[int] = mapped_column(
+        default=GameIntEnum.HLL_WW2.value,
+        server_default=str(GameIntEnum.HLL_WW2.value),
+    )
+    server_number: Mapped[int] = mapped_column()
     value: Mapped[dict[str, Any]] = mapped_column()
+
+    @property
+    def key(self) -> str:
+        """Unique config key used for caching in Redis
+
+        Returns:
+            str: The key
+        """
+        return f"{self.game}_{self.server_number}_{self.name}"
 
 
 class PlayerFlag(Base):
@@ -563,7 +617,7 @@ class PlayerFlag(Base):
     )
     flag: Mapped[str] = mapped_column(nullable=False, index=True)
     comment: Mapped[str] = mapped_column(String, nullable=True)
-    modified: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    modified: Mapped[datetime] = mapped_column(UTCDateTime, default=datetime.utcnow)
 
     player: Mapped[PlayerID] = relationship(back_populates="flags")
 
@@ -590,7 +644,7 @@ class PlayerOptins(Base):
     )
     optin_name: Mapped[str] = mapped_column(nullable=False, index=True)
     optin_value: Mapped[str] = mapped_column(nullable=True)
-    modified: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    modified: Mapped[datetime] = mapped_column(UTCDateTime, default=datetime.utcnow)
 
     player: Mapped[PlayerID] = relationship(back_populates="optins")
 
@@ -614,8 +668,8 @@ class PlayerName(Base):
         "playersteamid_id", ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
     name: Mapped[str] = mapped_column(nullable=False)
-    created: Mapped[datetime] = mapped_column(default=datetime.utcnow)
-    last_seen: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    created: Mapped[datetime] = mapped_column(UTCDateTime, default=datetime.utcnow)
+    last_seen: Mapped[datetime] = mapped_column(UTCDateTime, default=datetime.utcnow)
 
     player: Mapped[PlayerID] = relationship(back_populates="names")
 
@@ -636,9 +690,9 @@ class PlayerSession(Base):
     player_id_id: Mapped[int] = mapped_column(
         "playersteamid_id", ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
-    start: Mapped[datetime] = mapped_column()
-    end: Mapped[datetime] = mapped_column()
-    created: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    start: Mapped[datetime] = mapped_column(UTCDateTime)
+    end: Mapped[datetime] = mapped_column(UTCDateTime)
+    created: Mapped[datetime] = mapped_column(UTCDateTime, default=datetime.utcnow)
     server_number: Mapped[int] = mapped_column()
     server_name: Mapped[str] = mapped_column()
 
@@ -664,7 +718,7 @@ class PlayersAction(Base):
     )
     reason: Mapped[str] = mapped_column()
     by: Mapped[str] = mapped_column()
-    time: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    time: Mapped[datetime] = mapped_column(UTCDateTime, default=datetime.utcnow)
 
     player: Mapped[PlayerID] = relationship(back_populates="received_actions")
 
@@ -684,7 +738,9 @@ class LogLine(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     version: Mapped[int] = mapped_column(default=1)
     creation_time: Mapped[datetime] = mapped_column(TIMESTAMP, default=datetime.utcnow)
-    event_time: Mapped[datetime] = mapped_column(nullable=False, index=True)
+    event_time: Mapped[datetime] = mapped_column(
+        UTCDateTime, nullable=False, index=True
+    )
     type: Mapped[str] = mapped_column(nullable=True)
     player1_name: Mapped[str] = mapped_column(nullable=True)
     player1_player_id: Mapped[int] = mapped_column(
@@ -700,7 +756,9 @@ class LogLine(Base):
     player_1: Mapped[PlayerID] = relationship(foreign_keys=[player1_player_id])
     player_2: Mapped[PlayerID] = relationship(foreign_keys=[player2_player_id])
     server: Mapped[str] = mapped_column()
-    game: Mapped[int] = mapped_column(default=GameIntEnum.HLL_WW2.value, server_default=str(GameIntEnum.HLL_WW2.value))
+    game: Mapped[int] = mapped_column(
+        default=GameIntEnum.HLL_WW2.value, server_default=str(GameIntEnum.HLL_WW2.value)
+    )
 
     def get_weapon(self) -> str | None:
         if self.weapon:
@@ -709,7 +767,7 @@ class LogLine(Base):
         if self.type and self.type.lower() in ("kill", "team kill"):
             try:
                 return self.raw.rsplit(" with ", 1)[-1]
-            except:
+            except:  # noqa
                 logger.exception("Unable to extract weapon")
 
         return None
@@ -763,16 +821,20 @@ class Maps(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
 
     creation_time: Mapped[datetime] = mapped_column(TIMESTAMP, default=datetime.utcnow)
-    start: Mapped[datetime] = mapped_column(nullable=False, index=True)
-    end: Mapped[datetime] = mapped_column(index=True)
+    start: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False, index=True)
+    end: Mapped[datetime] = mapped_column(UTCDateTime, index=True)
     server_number: Mapped[int] = mapped_column(index=True)
     map_name: Mapped[str] = mapped_column(nullable=False, index=True)
     # A dict with the result of the game mapped as Axis=int, Allied=int
     result: Mapped[dict[str, int]] = mapped_column(nullable=True)
-    game_layout: Mapped["GameLayout"] = mapped_column(JSON, nullable=False, default=GameLayout)
+    game_layout: Mapped["GameLayout"] = mapped_column(
+        JSON, nullable=False, default=GameLayout
+    )
     cap_flips: Mapped[list[MapScore]] = mapped_column(JSON, nullable=False, default=[])
     match_time: Mapped[int] = mapped_column(default=0)
-    game: Mapped[int] = mapped_column(default=GameIntEnum.HLL_WW2.value, server_default=str(GameIntEnum.HLL_WW2.value))
+    game: Mapped[int] = mapped_column(
+        default=GameIntEnum.HLL_WW2.value, server_default=str(GameIntEnum.HLL_WW2.value)
+    )
 
     player_stats: Mapped[list["PlayerStats"]] = relationship(back_populates="map")
 
@@ -780,8 +842,8 @@ class Maps(Base):
         return {
             "id": self.id,
             "creation_time": self.creation_time,
-            "start": self.start.replace(tzinfo=timezone.utc),
-            "end": self.end.replace(tzinfo=timezone.utc),
+            "start": self.start.replace(tzinfo=UTC),
+            "end": self.end.replace(tzinfo=UTC),
             "server_number": self.server_number,
             "map_name": self.map_name,
             "result": (
@@ -812,6 +874,7 @@ def calc_weapon_type_usage(weapons: dict[str, int]) -> dict[WeaponType, int]:
             kills_by_type[weapon_type.value] += count
 
     return dict(kills_by_type)
+
 
 class PlayerStats(Base):
     __tablename__ = "player_stats"
@@ -878,10 +941,16 @@ class PlayerStats(Base):
                     axis_count += weapon[1]
 
         if len(self.death_by_weapons) > 0:
-            for weapon in sorted(self.death_by_weapons.items(), key=get_value, reverse=True):
+            for weapon in sorted(
+                self.death_by_weapons.items(), key=get_value, reverse=True
+            ):
                 if WEAPON_SIDE_MAP.get(weapon[0]) is None:
                     continue
-                op = Team.AXIS if WEAPON_SIDE_MAP.get(weapon[0]) == Team.ALLIES else Team.ALLIES
+                op = (
+                    Team.AXIS
+                    if WEAPON_SIDE_MAP.get(weapon[0]) == Team.ALLIES
+                    else Team.ALLIES
+                )
                 if op == Team.ALLIES:
                     allies_count += weapon[1]
                 elif op == Team.AXIS:
@@ -889,7 +958,9 @@ class PlayerStats(Base):
 
         assoc: PlayerTeamAssociation
         if axis_count == 0 and allies_count == 0:
-            return PlayerTeamAssociation(side=Team.UNKNOWN, confidence=PlayerTeamConfidence.STRONG, ratio=0)
+            return PlayerTeamAssociation(
+                side=Team.UNKNOWN, confidence=PlayerTeamConfidence.STRONG, ratio=0
+            )
         elif axis_count > allies_count:
             assoc = PlayerTeamAssociation(
                 side=Team.AXIS,
@@ -908,7 +979,11 @@ class PlayerStats(Base):
                 confidence=PlayerTeamConfidence.MIXED,
                 ratio=50,
             )
-        assoc['confidence'] = PlayerTeamConfidence.STRONG if assoc['ratio'] > 85 else PlayerTeamConfidence.MIXED
+        assoc["confidence"] = (
+            PlayerTeamConfidence.STRONG
+            if assoc["ratio"] > 85
+            else PlayerTeamConfidence.MIXED
+        )
         return assoc
 
     def to_dict(self) -> PlayerStatsType:
@@ -1046,7 +1121,7 @@ class PlayerAtCount(Base):
     def to_dict(self) -> PlayerAtCountType:
         try:
             name = self.player.names[0].name
-        except:
+        except:  # noqa
             logger.exception("Unable to load name for %s", self.player.player_id)
             name = ""
 
@@ -1116,13 +1191,13 @@ class Blacklist(Base):
     sync: Mapped[BlacklistSyncMethod] = mapped_column(
         Enum(BlacklistSyncMethod), default=BlacklistSyncMethod.KICK_ONLY
     )
-    servers: Mapped[Optional[int]]
+    servers: Mapped[int | None]
 
     records: Mapped[list["BlacklistRecord"]] = relationship(
         back_populates="blacklist", cascade="all, delete"
     )
 
-    def get_server_numbers(self) -> Optional[set[int]]:
+    def get_server_numbers(self) -> set[int] | None:
         if self.servers is None:
             return None
 
@@ -1166,9 +1241,9 @@ class BlacklistRecord(Base):
     reason: Mapped[str]
     admin_name: Mapped[str]
     created_at: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True), default=lambda: datetime.now(tz=timezone.utc)
+        TIMESTAMP(timezone=True), default=lambda: datetime.now(tz=UTC)
     )
-    expires_at: Mapped[Optional[datetime]] = mapped_column(TIMESTAMP(timezone=True))
+    expires_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
 
     player_id_id: Mapped[int] = mapped_column(
         ForeignKey("steam_id_64.id"), nullable=False, index=True
@@ -1183,12 +1258,12 @@ class BlacklistRecord(Base):
     def expires_in(self):
         if not self.expires_at:
             return None
-        return self.expires_at - datetime.now(tz=timezone.utc)
+        return self.expires_at - datetime.now(tz=UTC)
 
     def is_expired(self):
         if not self.expires_at:
             return None
-        return self.expires_at <= datetime.now(tz=timezone.utc)
+        return self.expires_at <= datetime.now(tz=UTC)
 
     def get_formatted_reason(self):
         variables = {
@@ -1201,7 +1276,9 @@ class BlacklistRecord(Base):
                 else "forever"
             ),
             "expires_at": (
-                self.expires_at.strftime("%b %d %Y %H:%M") if self.expires_at else "never"
+                self.expires_at.strftime("%b %d %Y %H:%M")
+                if self.expires_at
+                else "never"
             ),
             "duration": (
                 humanize_timedelta(self.expires_at - self.created_at)
@@ -1281,8 +1358,8 @@ def enter_session() -> Generator[Session, None, None]:
         yield sess
         # Only commit if there were no exceptions, otherwise rollback
         sess.commit()
-    except (ProgrammingError, InvalidRequestError) as e:
-        logger.exception(e)
+    except (ProgrammingError, InvalidRequestError):
+        logger.exception("SQL Error")
         sess.rollback()
     finally:
         sess.close()
@@ -1296,8 +1373,8 @@ class LogLineWebHookField(pydantic.BaseModel):
     """
 
     url: str
-    mentions: Optional[List[str]] = []
-    servers: List[str] = []
+    mentions: list[str] | None = []
+    servers: list[str] = []
 
     @pydantic.field_validator("mentions")
     def valid_role(cls, values):

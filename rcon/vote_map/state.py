@@ -3,7 +3,7 @@
 import pickle
 from collections.abc import Callable, Iterable
 from datetime import datetime
-from typing import Any, Dict, Set, cast
+from typing import Any, cast
 
 from rcon import maps
 from rcon.cache_utils import get_redis_client
@@ -40,8 +40,8 @@ class VotemapState:
     ###
     # PLAYER CHOICE
     ###
-    def get_player_choice(self) -> Dict[str, str] | None:
-        raw = cast(Dict[bytes, bytes], self.client.hgetall(self.PLAYER_CHOICE))
+    def get_player_choice(self) -> dict[str, str] | None:
+        raw = cast(dict[bytes, bytes], self.client.hgetall(self.PLAYER_CHOICE))
         if not raw:
             return None
         return {k.decode(): v.decode() for k, v in raw.items()}
@@ -128,7 +128,7 @@ class VotemapState:
     # MAP WHITELIST
     ###
     def get_whitelist(self) -> list[Layer]:
-        raw = cast(Set[bytes], self.client.smembers(self.MAP_WHITELIST))
+        raw = cast(set[bytes], self.client.smembers(self.MAP_WHITELIST))
         uniques = {item.decode() for item in raw}
         return [self._parse_layer(map_id) for map_id in uniques]
 
@@ -147,7 +147,7 @@ class VotemapState:
     ###
     def get_selection(self) -> list[Layer]:
         # Get all map ids in order
-        raw = cast(Set[bytes], self.client.zrange(self.MAP_SELECTION, 0, -1))
+        raw = cast(set[bytes], self.client.zrange(self.MAP_SELECTION, 0, -1))
         return [self._parse_layer(item.decode()) for item in raw]
 
     def set_selection(self, maps: Iterable[Layer]):

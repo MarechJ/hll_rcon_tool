@@ -1,13 +1,29 @@
 FROM python:3.12-slim
 
 WORKDIR /code
-RUN apt-get update -y && apt-get install -y cron logrotate git procps
-COPY requirements.txt .
-# Save Docker container disk space since the cache is useless there
-# and don't generate .pyc
-RUN pip install -r requirements.txt --no-compile --no-cache-dir
-RUN pip install gunicorn daphne supervisor --no-compile --no-cache-dir
+
+ENV UV_NO_DEV=1
+ENV UV_TOOL_BIN_DIR=/usr/local/bin
+ENV UV_COMPILE_BYTECODE=1
+
+RUN apt-get update -y && \
+    apt-get install -y cron logrotate git procps && \
+    rm -rf /var/lib/apt/lists/* && \
+    pip install uv
+
+# Install the project's dependencies using the lockfile and settings
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --locked --no-install-project --no-dev
+
 COPY . .
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked
+
+ENV PATH="/code/.venv/bin:$PATH"
+
 ENV PYTHONPATH=/code/
 RUN chmod +x entrypoint.sh
 RUN chmod +x manage.py

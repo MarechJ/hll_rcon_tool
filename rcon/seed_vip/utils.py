@@ -1,11 +1,11 @@
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
+from collections.abc import Iterable, Sequence
+from datetime import UTC, datetime, timedelta
 from logging import getLogger
-from typing import Iterable, Sequence
-
-from humanize import naturaldelta, naturaltime
 
 import discord
+from humanize import naturaldelta, naturaltime
+
 from rcon.api_commands import RconAPI
 from rcon.seed_vip.models import (
     BaseCondition,
@@ -46,14 +46,14 @@ def check_player_conditions(
     config: SeedVIPUserConfig, server_pop: ServerPopulation
 ) -> set[str]:
     """Return a set of steam IDs that meet seeding criteria"""
-    return set(
+    return {
         player.player_id
         for player in server_pop.players.values()
         if PlayTimeCondition(
             min_time_secs=int(config.requirements.minimum_play_time.total_seconds),
             current_time_secs=player.current_playtime_seconds,
         ).is_met()
-    )
+    }
 
 
 def is_seeded(config: SeedVIPUserConfig, gamestate: GameStateType) -> bool:
@@ -134,7 +134,7 @@ def make_seed_announcement_embed(
     logger.debug(f"{num_allied_players=} {num_axis_players=}")
 
     embed = discord.Embed(title=message)
-    embed.timestamp = datetime.now(tz=timezone.utc)
+    embed.timestamp = datetime.now(tz=UTC)
     embed.add_field(name="Current Map", value=current_map)
     embed.add_field(name="Time Remaining", value=time_remaining)
     embed.add_field(
@@ -268,7 +268,7 @@ def get_online_players(
     players = {}
     for raw_player in result:
         name = raw_player["name"]
-        player_id = player_id = raw_player["player_id"]
+        player_id = raw_player["player_id"]
         if raw_player["profile"] is None:
             # Apparently CRCON will occasionally not return a player profile
             logger.debug(f"No CRCON profile, skipping {raw_player}")

@@ -244,7 +244,7 @@ class LogLoop:
 
     def run(self, loop_frequency_secs=2, cleanup_frequency_minutes=10):
         self.GET_LOGS_SINCE_MIN = 180
-        last_cleanup_time = datetime.datetime.now()
+        last_cleanup_time = datetime.datetime.now(tz=datetime.UTC)
         prev_map_time_elapsed = 0
 
         while True:
@@ -273,6 +273,7 @@ class LogLoop:
     # - If attacking's team manpower is depleted before capturing the point it's game over
 
     def update_maps_history(self, prev_map_time_elapsed: int) -> int:
+        record_stats = True
         started = time.perf_counter()
         gs = self.rcon.get_gamestate()
         maps_history = MapsHistory()
@@ -291,10 +292,11 @@ class LogLoop:
 
         map_has_ended = current_map["end"] is not None
         if map_has_ended:
-            logger.info("[MATCH ENDED]")
             # Let it record stats one more time
             if current_map["end"] == self.CURR_MAP_END:
+                record_stats = False
                 return current_map["end"] - map_start
+            logger.info("[MATCH ENDED] %s - %d:%d", current_map["name"], gs["allied_score"], gs["axis_score"])
             self.CURR_MAP_END = current_map["end"]
 
         if gs["current_map"]["id"] != current_map["name"]:
@@ -328,19 +330,15 @@ class LogLoop:
                 cached_game_mode, gs["match_time"]
             )
 
-        if not map_has_ended:
+        if record_stats:
             self.record_cap_flips(current_map, curr_map_time_elapsed, gs)
-            maps_history.update(self.ACTIVE_MAP_INDEX, current_map)
+            dp = self.get_detailed_players()
+            logger.info(
+                "RCON map/player polling completed in %.3fs",
+                time.perf_counter() - started,
+            )
+            self.record_player_stats(current_map, curr_map_time_elapsed, dp)
 
-        dp = self.get_detailed_players()
-        logger.info(
-            "RCON map/player polling completed in %.3fs",
-            time.perf_counter() - started,
-        )
-
-        # logger.debug("\n[MATCH RUNNING] - Recording stats")
-        # logger.debug("\n[MATCH RUNNING]\nMatch Start: %d\nMatch Time: %d\nRemaining Match Time: %d\nTime elapsed: %d\nTime elapsed(now-start): %d\n", current_map["start"], gs["match_time"], gs["time_remaining"].seconds, prev_map_time_elapsed, now - current_map["start"])
-        self.record_player_stats(current_map, curr_map_time_elapsed, dp)
         maps_history.update(self.ACTIVE_MAP_INDEX, current_map)
         return curr_map_time_elapsed
 
@@ -386,6 +384,7 @@ class LogLoop:
             return
 
         if layer.game_mode == GameMode.OFFENSIVE and cap_flips:
+            # TODO: Check this works with HLL:V
             initial_score = {
                 MapTeam.ALLIES: (0, 5),
                 MapTeam.AXIS: (5, 0),
@@ -400,7 +399,7 @@ class LogLoop:
                 return
 
         if len(cap_flips) == 0 or cap_flips[-1]["allied_score"] != gs["allied_score"] or cap_flips[-1]["axis_score"] != gs["axis_score"]:
-            logger.debug("[MATCH SCORE] - New cap flip recorded as the score has changed")
+            logger.debug("[MATCH SCORE] - New cap flip recorded %d:%d", gs["allied_score"], gs["axis_score"])
             cap_flips.append(MapScore(allied_score=gs["allied_score"], axis_score=gs["axis_score"], ts=sec_from_start))
 
     def record_player_stats(self, current_map: MapInfo, sec_from_start: int, dp: GetDetailedPlayers):
@@ -535,7 +534,7 @@ class LogLoop:
             
             current_role = all_roles.get(current["role"] or "", UNASSIGNED)
             current_team = all_teams.get(current["team"] or "", UNASSIGNED)
-            current_squad = current["unit_id"] or UNASSIGNED
+            current_squad = current.get("unit_id", UNASSIGNED)
 
             cached_unit = cached["p_unit"]
 
@@ -569,10 +568,10 @@ class LogLoop:
         if not log or not map or not map["start"]:
             return False
         log_time = log.get("event_time")
-        map_start = datetime.datetime.fromtimestamp(map["start"])
+        map_start = datetime.datetime.fromtimestamp(map["start"], tz=datetime.UTC)
         if map["end"] is None:
             return log_time >= map_start
-        map_end = datetime.datetime.fromtimestamp(map["end"])
+        map_end = datetime.datetime.fromtimestamp(map["end"], tz=datetime.UTC)
         return map_start <= log_time and log_time <= map_end
         
     def _get_name_to_id(self, map: MapInfo) -> dict[str, str]:
@@ -640,7 +639,7 @@ class LogLoop:
         return log
 
     def cleanup(self, last_cleanup_time: datetime.datetime, cleanup_frequency_minutes: int) -> datetime.datetime:
-        now = datetime.datetime.now()
+        now = datetime.datetime.now(tz=datetime.UTC)
         if (now - last_cleanup_time).total_seconds() < cleanup_frequency_minutes * 60:
             return last_cleanup_time
 
@@ -651,8 +650,8 @@ class LogLoop:
             except ValueError:
                 logger.exception("Invalid key %s", k)
                 continue
-            t = datetime.datetime.fromtimestamp(int(ts) / 1000)
-            if (datetime.datetime.now() - t).total_seconds() > self.CLEANUP_MIN * 60:
+            t = datetime.datetime.fromtimestamp(int(ts) / 1000, tz=datetime.UTC)
+            if (datetime.datetime.now(tz=datetime.UTC) - t).total_seconds() > self.CLEANUP_MIN * 60:
                 logger.debug("Older than %d min, removing: %s", self.CLEANUP_MIN, k)
                 self.red.srem(self.duplicate_guard_key, k)
         logger.info("Cleanup done")

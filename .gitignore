@@ -4,6 +4,7 @@ db_data/
 .env
 dev.env
 broadcasts.txt
+config/nginx.conf
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -93,9 +94,6 @@ target/
 # IPython
 profile_default/
 ipython_config.py
-
-# pyenv
-.python-version
 
 # pipenv
 #   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.

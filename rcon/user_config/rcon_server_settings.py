@@ -1,7 +1,6 @@
-from typing import Optional, Type, TypedDict
+from typing import Annotated, TypedDict
 
 from pydantic import BaseModel, BeforeValidator, Field, HttpUrl, field_serializer
-from typing_extensions import Annotated
 
 from rcon.types import WindowsStoreIdActionType
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
@@ -22,6 +21,7 @@ class WindowsStorePlayersType(TypedDict):
     audit_message_author: str
     temp_ban_length_hours: int
 
+
 class MessageEnhancementsType(TypedDict):
     enabled: bool
     message_header: str
@@ -37,16 +37,13 @@ class RconServerSettingsType(TypedDict):
     # unblacklist_does_unban: bool
     # broadcast_temp_bans: bool
     broadcast_unbans: bool
-    lock_stats_api: bool
     live_stats_refresh_seconds: int
     live_stats_refresh_current_game_seconds: int
     windows_store_players: WindowsStorePlayersType
     message_enhancements: MessageEnhancementsType
 
 
-def _upper_case_action(
-    v: str | None, cls: Type[WindowsStoreIdActionType]
-):
+def _upper_case_action(v: str | None, cls: type[WindowsStoreIdActionType]):
     if v:
         return cls(v.upper())
     else:
@@ -72,18 +69,21 @@ class WindowsStorePlayer(BaseModel):
     audit_message_author: str = Field(default="CRCON")
     temp_ban_length_hours: int = Field(default=1)
 
+
 class MessageEnhancements(BaseModel):
     enabled: bool = Field(default=False)
     message_header: str = Field(default="")
     message_footer: str = Field(default="")
 
+
 class RconServerSettingsUserConfig(BaseUserConfig):
+    NAME = "RconServerSettingsUserConfig"
+
     # Use a callable to defer calling get_server_number until it's used and not on import
     short_name: str = Field(default_factory=lambda: f"MyServer{get_server_number()}")
-    server_url: Optional[HttpUrl] = Field(default=None)
-    discord_invite_url: Optional[HttpUrl] = Field(default=None)
+    server_url: HttpUrl | None = Field(default=None)
+    discord_invite_url: HttpUrl | None = Field(default=None)
 
-    lock_stats_api: bool = Field(default=False)
     # unban_does_unblacklist: bool = Field(default=True)
     # unblacklist_does_unban: bool = Field(default=True)
     # broadcast_temp_bans: bool = Field(default=True)
@@ -96,7 +96,9 @@ class RconServerSettingsUserConfig(BaseUserConfig):
     windows_store_players: WindowsStorePlayer = Field(
         default_factory=WindowsStorePlayer
     )
-    message_enhancements: MessageEnhancements = Field(default_factory=MessageEnhancements)
+    message_enhancements: MessageEnhancements = Field(
+        default_factory=MessageEnhancements
+    )
 
     @field_serializer("server_url", "discord_invite_url")
     def serialize_urls(self, url: HttpUrl, _info):
@@ -147,4 +149,4 @@ class RconServerSettingsUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(RconServerSettingsUserConfig.KEY(), validated_conf)
+            set_user_config(RconServerSettingsUserConfig.NAME, validated_conf)

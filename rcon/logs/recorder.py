@@ -4,6 +4,7 @@ import os
 import time
 from typing import Callable, Iterable
 
+from django.template.context_processors import tz
 from sqlalchemy import desc
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.exc import IntegrityError
@@ -41,7 +42,7 @@ class LogRecorder:
             if not isinstance(log, dict):
                 logger.warning("Log is invalid, not a dict: %s", log)
                 continue
-            if last_log and int(log["timestamp_ms"]) / 1000 == last_log.event_time.timestamp() and '] ' + log["line_without_time"] in last_log.raw:
+            if last_log and log["event_time"] == last_log.event_time and '] ' + log["line_without_time"] in last_log.raw:
                 logger.debug("This log is the same as the last saved log, skipping saving the rest of the logs\n%s", log)
                 break
             to_store.append(log)
@@ -123,12 +124,12 @@ class LogRecorder:
             logger.exception("Unable to record log batch")
 
     def run(self, run_immediately=False, one_off=False):
-        last_run = datetime.datetime.now()
+        last_run = datetime.datetime.now(tz=datetime.UTC)
         if run_immediately or one_off:
             last_run = last_run - datetime.timedelta(seconds=self.dump_frequency_seconds + 1)
 
         while True:
-            now = datetime.datetime.now()
+            now = datetime.datetime.now(tz=datetime.UTC)
             if not (now - last_run).total_seconds() > self.dump_frequency_seconds:
                 logger.debug("Not due for recording yet")
                 time.sleep(5)
@@ -139,6 +140,6 @@ class LogRecorder:
 
                 self._save_logs(sess, to_store)
 
-                last_run = datetime.datetime.now()
+                last_run = datetime.datetime.now(tz=datetime.UTC)
             if one_off:
                 break

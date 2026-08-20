@@ -1,6 +1,8 @@
 import enum
 from typing import TypedDict
-from pydantic import Field, BaseModel
+
+from pydantic import BaseModel, Field
+
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
 
@@ -45,16 +47,16 @@ class DefaultMethods(str, enum.Enum):
     random_suggestions = "random_from_suggestions"
     random_all_maps = "random_from_all_maps"
 
+
 class VoteFlag(BaseModel):
     flag: str = Field(
-        description="A single-character flag", 
-        min_length=1, 
+        description="A single-character flag",
+        min_length=1,
     )
     vote_count: int = Field(
-        ge=1,
-        le=100,
-        description="Number of votes (must be 0 or greater)"
+        ge=1, le=100, description="Number of votes (must be 0 or greater)"
     )
+
 
 INSTRUCTION_TEXT = """Vote for the nextmap:
 Type in the chat !votemap <map number>
@@ -83,7 +85,7 @@ To opt back in
 To see this message again
 > !votemap help"""
 
-PLAYER_CHOICE_HELP_TEXT="""How to add your map?
+PLAYER_CHOICE_HELP_TEXT = """How to add your map?
 
 Type in the chat:
 > !vm add <map_tag> [game_mode] [attackers | only if game_mode=offensive] [environment]
@@ -95,6 +97,8 @@ e.g. > !vm add car -> Carentan Warfare"""
 
 
 class VoteMapUserConfig(BaseUserConfig):
+    NAME = "VoteMapUserConfig"
+
     enabled: bool = Field(default=False)
     default_method: DefaultMethods = Field(
         default=DefaultMethods.least_played_suggestions
@@ -118,28 +122,50 @@ class VoteMapUserConfig(BaseUserConfig):
     reminder_frequency_minutes: int = Field(ge=0, default=20)
     allow_opt_out: bool = Field(default=True)
     help_text: str = Field(default=HELP_TEXT)
-    vote_flags: list[VoteFlag] = Field(default_factory=list, title="Vote Flags", description="Players with a listed flag have their vote counted n times (use highest value if multiple flags or vip; 1 <= n <= 100).")
-    vote_ban_flags: list[str] = Field(default_factory=list, title="Vote Ban Flags", description="Players having one of these flags are banned from using votemap.")
-    player_choice_flags: list[str] = Field(default_factory=list, title="Player Choice Flags", description="Players having one of these flags are allowed to run `!vm add` commands. When no flags provided, everyone can run it.")
+    vote_flags: list[VoteFlag] = Field(
+        default_factory=list,
+        title="Vote Flags",
+        description="Players with a listed flag have their vote counted n times (use highest value if multiple flags or vip; 1 <= n <= 100).",
+    )
+    vote_ban_flags: list[str] = Field(
+        default_factory=list,
+        title="Vote Ban Flags",
+        description="Players having one of these flags are banned from using votemap.",
+    )
+    player_choice_flags: list[str] = Field(
+        default_factory=list,
+        title="Player Choice Flags",
+        description="Players having one of these flags are allowed to run `!vm add` commands. When no flags provided, everyone can run it.",
+    )
     player_choice_help_text: str = Field(default=PLAYER_CHOICE_HELP_TEXT)
-    vip_vote_count: int = Field(default=1, ge=1, le=100, title="VIP Vote Counts", description="VIP Players have their vote counted n times (use highest value if multiple flags or vip; 1 <= n <= 100).")
+    vip_vote_count: int = Field(
+        default=1,
+        ge=1,
+        le=100,
+        title="VIP Vote Counts",
+        description="VIP Players have their vote counted n times (use highest value if multiple flags or vip; 1 <= n <= 100).",
+    )
     remind_on_match_start: bool = Field(default=False)
     remind_on_match_end: bool = Field(default=True)
-    allow_vip_only: bool = Field(default=False, description="Allow votemap for VIP players only.")
-    allow_flag_only: list[str] = Field(default_factory=list, title="Allow votemap for FLAGGED players only.", description="Players having one of these flags are allowed to run votemap commands.")
+    allow_vip_only: bool = Field(
+        default=False, description="Allow votemap for VIP players only."
+    )
+    allow_flag_only: list[str] = Field(
+        default_factory=list,
+        title="Allow votemap for FLAGGED players only.",
+        description="Players having one of these flags are allowed to run votemap commands.",
+    )
 
     @staticmethod
     def save_to_db(values: VoteMapType, dry_run=False):
         key_check(
-                VoteMapType.__required_keys__, 
-                VoteMapType.__optional_keys__, 
-                values.keys()
+            VoteMapType.__required_keys__, VoteMapType.__optional_keys__, values.keys()
         )
 
         model_fields = set(VoteMapUserConfig.model_fields.keys())
         filtered_values = {k: v for k, v in values.items() if k in model_fields}
-        
+
         validated_conf = VoteMapUserConfig.model_validate(filtered_values)
 
         if not dry_run:
-            set_user_config(VoteMapUserConfig.KEY(), validated_conf)
+            set_user_config(VoteMapUserConfig.NAME, validated_conf)

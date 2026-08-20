@@ -4,7 +4,6 @@ from functools import cached_property
 
 import pytz
 from pydantic import Field, field_validator
-from sqlalchemy.orm import Session
 
 from rcon.conditions import Condition, create_condition
 from rcon.models import PlayerID
@@ -14,7 +13,7 @@ from rcon.user_config.chat_commands import (
     BaseChatCommandType,
     BaseChatCommandUserConfig,
 )
-from rcon.user_config.utils import _listType, _set_default, key_check, set_user_config
+from rcon.user_config.utils import _listType, key_check, set_user_config
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +37,7 @@ class RConChatCommand(BaseChatCommand):
 
     @cached_property
     def help_words(self) -> set[str]:
-        return set(f"?{word[1:]}" for word in self.words)
+        return {f"?{word[1:]}" for word in self.words}
 
     @field_validator("commands")
     @classmethod
@@ -80,14 +79,13 @@ class RConChatCommand(BaseChatCommand):
                     params,
                 )
         return all(
-            [
-                c.is_valid(rcon=rcon, player_id=p, message_context=ctx)
-                for c in conditions
-            ]
+            c.is_valid(rcon=rcon, player_id=p, message_context=ctx) for c in conditions
         )
 
 
 class RConChatCommandsUserConfig(BaseChatCommandUserConfig):
+    NAME = "RConChatCommandsUserConfig"
+
     command_words: list[RConChatCommand] = Field(
         default=[
             RConChatCommand(
@@ -170,4 +168,4 @@ class RConChatCommandsUserConfig(BaseChatCommandUserConfig):
         )
 
         if not dry_run:
-            set_user_config(RConChatCommandsUserConfig.KEY(), validated_conf)
+            set_user_config(RConChatCommandsUserConfig.NAME, validated_conf)

@@ -1,16 +1,16 @@
 import functools
 import inspect
-from collections import defaultdict
-from datetime import datetime, timedelta
+from collections.abc import Iterable, Sequence
+from datetime import UTC, datetime, timedelta
 from logging import getLogger
-from typing import Any, Dict, Iterable, Literal, Optional, Sequence, Type
+from typing import Any, Literal, Optional
 
+import rcon.settings
 from rcon import blacklist, game_logs, maps, player_history, webhook_service
 from rcon.audit import ingame_mods, online_mods
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.commands import HLLCommandFailedError
 from rcon.discord import audit_user_config_differences
-from rcon.gtx import GTXFtp
 from rcon.message_templates import (
     add_message_template,
     delete_message_template,
@@ -20,7 +20,7 @@ from rcon.message_templates import (
     get_message_template_categories,
     get_message_templates,
 )
-from rcon.models import MessageTemplate, enter_session
+from rcon.models import enter_session
 from rcon.player_history import (
     add_flag_to_player,
     get_players_by_appearance,
@@ -29,7 +29,6 @@ from rcon.player_history import (
 from rcon.player_stats import TimeWindowStats
 from rcon.rcon import HLLRcon, HLLVRcon, Rcon
 from rcon.scoreboard import ScoreboardUserConfig
-import rcon.settings
 from rcon.types import (
     AdminUserType,
     AllMessageTemplateTypes,
@@ -37,8 +36,8 @@ from rcon.types import (
     BlacklistSyncMethod,
     BlacklistType,
     BlacklistWithRecordsType,
-    GameServerBanType,
     GameEnum,
+    GameServerBanType,
     MessageTemplateCategory,
     MessageTemplateType,
     ParsedLogsType,
@@ -58,8 +57,6 @@ from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.chat_commands import ChatCommandsUserConfig
 from rcon.user_config.expired_vips import ExpiredVipsUserConfig
-from rcon.user_config.gtx_server_name import GtxServerNameChangeUserConfig
-from rcon.user_config.legacy_scorebot import ScorebotUserConfig
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
 from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.user_config.name_kicks import NameKickUserConfig
@@ -74,7 +71,11 @@ from rcon.user_config.standard_messages import (
     StandardWelcomeMessagesUserConfig,
 )
 from rcon.user_config.steam import SteamUserConfig
-from rcon.user_config.utils import BaseUserConfig, validate_user_config
+from rcon.user_config.utils import (
+    BaseUserConfig,
+    server_info_for_rcon,
+    validate_user_config,
+)
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.vote_map import VoteMapUserConfig
 from rcon.user_config.watch_killrate import WatchKillRateUserConfig
@@ -107,7 +108,7 @@ def create_rcon_api(credentials: ServerInfo) -> "RconAPI":
     return controller_type(credentials)
 
 
-def parameter_aliases(alias_to_param: Dict[str, str]):
+def parameter_aliases(alias_to_param: dict[str, str]):
     """Specify parameter aliases of a function. This might be useful to preserve backwards
     compatibility or to handle parameters named after a Python reserved keyword.
 
@@ -160,21 +161,27 @@ class RconAPI(Rcon):
     def __init__(self, *args, pool_size: bool | None = None, **kwargs):
         super().__init__(*args, pool_size=pool_size, **kwargs)
 
-    @staticmethod
     def _validate_user_config(
+        self,
         command_name: str,
         by: str,
-        model: Type[BaseUserConfig],
+        model: type[BaseUserConfig],
         data: dict[str, Any] | BaseUserConfig,
         dry_run: bool = True,
         reset_to_default: bool = False,
     ):
-        old_model = model.load_from_db()
+        server_info = server_info_for_rcon(self)
+        scope = {
+            "game": server_info.game,
+            "server_number": server_info.number,
+        }
+        old_model = model.load_from_db(**scope)
         res = validate_user_config(
             model=model,
             data=data,
             dry_run=dry_run,
             reset_to_default=reset_to_default,
+            **scope,
         )
 
         if res:
@@ -284,9 +291,9 @@ class RconAPI(Rcon):
 
     def get_blacklist_records(
         self,
-        player_id: str = None,
-        reason: str = None,
-        blacklist_id: int = None,
+        player_id: str | None = None,
+        reason: str | None = None,
+        blacklist_id: int | None = None,
         exclude_expired: bool = False,
         page_size: int = 50,
         page: int = 1,
@@ -522,7 +529,7 @@ class RconAPI(Rcon):
 
         """
 
-        player, new_flag = add_flag_to_player(
+        _, new_flag = add_flag_to_player(
             player_id=player_id, flag=flag, comment=comment, player_name=player_name
         )
         # TODO: can we preserve discord auditing with player aliases?
@@ -543,19 +550,8 @@ class RconAPI(Rcon):
             player_id: steam_id_64 or windows store ID
             flag: The flag to remove from `player_id` if present
         """
-        player, removed_flag = remove_flag(
-            flag_id=flag_id, player_id=player_id, flag=flag
-        )
+        _, removed_flag = remove_flag(flag_id=flag_id, player_id=player_id, flag=flag)
         return removed_flag
-
-    def set_server_name(self, name: str):
-        # TODO: server name won't change until map change
-        # but the cache also needs to be cleared, but can't
-        # immediately clear or it will just refresh but we
-        # can use a timer or clear the cache on match start
-
-        gtx = GTXFtp.from_config()
-        gtx.change_server_name(new_name=name)
 
     @staticmethod
     def toggle_player_watch(
@@ -645,8 +641,8 @@ class RconAPI(Rcon):
 
     def get_recent_logs(
         self,
-        filter_player: list[str] | str = [],
-        filter_action: list[str] = [],
+        filter_player: list[str] | str | None = None,
+        filter_action: list[str] | None = None,
         inclusive_filter: bool = True,
         start: int = 0,
         end: int = 10000,
@@ -656,8 +652,8 @@ class RconAPI(Rcon):
         return game_logs.get_recent_logs(
             start=start,
             end=end,
-            player_search=filter_player,
-            action_filter=filter_action,
+            player_search=filter_player or [],
+            action_filter=filter_action or [],
             exact_player_match=exact_player_match,
             exact_action=exact_action,
             inclusive_filter=inclusive_filter,
@@ -683,7 +679,13 @@ class RconAPI(Rcon):
         v = VoteMap()
         v.guarantee_next_map(v.parse_layer(map_name))
 
-    def add_votemap_vote(self, player_id: str, player_name: str, map_name: str, vote_count: int | None = None):
+    def add_votemap_vote(
+        self,
+        player_id: str,
+        player_name: str,
+        map_name: str,
+        vote_count: int | None = None,
+    ):
         v = VoteMap()
         v.add_vote(v.parse_layer(map_name), player_id, player_name, vote_count)
 
@@ -691,8 +693,8 @@ class RconAPI(Rcon):
         v = VoteMap()
         result = v.send_reminder(force=True)
         if not result.ok:
-            raise Exception(result.message)
-    
+            raise ValueError(result.message)
+
     def reset_votemap_state(self):
         v = VoteMap()
         v.restart()
@@ -755,7 +757,7 @@ class RconAPI(Rcon):
     ) -> bool:
         old_config = VoteMapUserConfig.load_from_db()
 
-        res = self._validate_user_config(
+        self._validate_user_config(
             by=by,
             command_name=inspect.currentframe().f_code.co_name,  # type: ignore
             model=VoteMapUserConfig,
@@ -847,7 +849,10 @@ class RconAPI(Rcon):
         )
 
     def get_auto_mod_level_config(self) -> AutoModLevelUserConfig:
-        return AutoModLevelUserConfig.load_from_db()
+        server_info = server_info_for_rcon(self)
+        return AutoModLevelUserConfig.load_from_db(
+            game=server_info.game, server_number=server_info.number
+        )
 
     def validate_auto_mod_level_config(
         self,
@@ -882,7 +887,10 @@ class RconAPI(Rcon):
         )
 
     def get_auto_mod_no_leader_config(self) -> AutoModNoLeaderUserConfig:
-        return AutoModNoLeaderUserConfig.load_from_db()
+        server_info = server_info_for_rcon(self)
+        return AutoModNoLeaderUserConfig.load_from_db(
+            game=server_info.game, server_number=server_info.number
+        )
 
     def validate_auto_mod_no_leader_config(
         self,
@@ -917,7 +925,10 @@ class RconAPI(Rcon):
         )
 
     def get_auto_mod_seeding_config(self) -> AutoModSeedingUserConfig:
-        return AutoModSeedingUserConfig.load_from_db()
+        server_info = server_info_for_rcon(self)
+        return AutoModSeedingUserConfig.load_from_db(
+            game=server_info.game, server_number=server_info.number
+        )
 
     def validate_auto_mod_seeding_config(
         self,
@@ -952,7 +963,10 @@ class RconAPI(Rcon):
         )
 
     def get_auto_mod_solo_tank_config(self) -> AutoModNoSoloTankUserConfig:
-        return AutoModNoSoloTankUserConfig.load_from_db()
+        server_info = server_info_for_rcon(self)
+        return AutoModNoSoloTankUserConfig.load_from_db(
+            game=server_info.game, server_number=server_info.number
+        )
 
     def validate_auto_mod_solo_tank_config(
         self,
@@ -1022,7 +1036,10 @@ class RconAPI(Rcon):
         )
 
     def get_tk_ban_on_connect_config(self) -> BanTeamKillOnConnectUserConfig:
-        return BanTeamKillOnConnectUserConfig.load_from_db()
+        server_info = server_info_for_rcon(self)
+        return BanTeamKillOnConnectUserConfig.load_from_db(
+            game=server_info.game, server_number=server_info.number
+        )
 
     def validate_tk_ban_on_connect_config(
         self,
@@ -1200,41 +1217,6 @@ class RconAPI(Rcon):
             reset_to_default=reset_to_default,
         )
 
-    def get_server_name_change_config(self) -> GtxServerNameChangeUserConfig:
-        return GtxServerNameChangeUserConfig.load_from_db()
-
-    def set_server_name_change_config(
-        self,
-        by: str,
-        config: dict[str, Any] | BaseUserConfig | None = None,
-        reset_to_default: bool = False,
-        **kwargs,
-    ) -> bool:
-        return self._validate_user_config(
-            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
-            by=by,
-            model=GtxServerNameChangeUserConfig,
-            data=config or kwargs,
-            dry_run=False,
-            reset_to_default=reset_to_default,
-        )
-
-    def validate_server_name_change_config(
-        self,
-        by: str,
-        config: dict[str, Any] | BaseUserConfig | None = None,
-        reset_to_default: bool = False,
-        **kwargs,
-    ) -> bool:
-        return self._validate_user_config(
-            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
-            by=by,
-            model=GtxServerNameChangeUserConfig,
-            data=config or kwargs,
-            dry_run=True,
-            reset_to_default=reset_to_default,
-        )
-
     def get_log_line_webhook_config(self) -> LogLineWebhookUserConfig:
         return LogLineWebhookUserConfig.load_from_db()
 
@@ -1374,10 +1356,6 @@ class RconAPI(Rcon):
             dry_run=True,
             reset_to_default=reset_to_default,
         )
-
-    # TODO: legacy remove this in a few releases
-    def get_scorebot_config(self) -> ScorebotUserConfig:
-        return ScorebotUserConfig.load_from_db()
 
     def get_scoreboard_config(self) -> ScoreboardUserConfig:
         return ScoreboardUserConfig.load_from_db()
@@ -1941,22 +1919,22 @@ class RconAPI(Rcon):
 
     def get_date_scoreboard(self, start: int, end: int):
         try:
-            start_date = datetime.fromtimestamp(int(start))
+            start_date = datetime.fromtimestamp(int(start), tz=UTC)
         except (ValueError, KeyError, TypeError) as e:
             logger.error(e)
-            start_date = datetime.now() - timedelta(minutes=60)
+            start_date = datetime.now(tz=UTC) - timedelta(minutes=60)
         try:
-            end_date = datetime.fromtimestamp(int(end))
+            end_date = datetime.fromtimestamp(int(end), tz=UTC)
         except (ValueError, KeyError, TypeError) as e:
             logger.error(e)
-            end_date = datetime.now()
+            end_date = datetime.now(tz=UTC)
 
         stats = TimeWindowStats()
 
         try:
             result = stats.get_players_stats_at_time(start_date, end_date)
-        except Exception as e:
-            logger.exception("Unable to produce date stats: %s", e)
+        except Exception:
+            logger.exception("Unable to produce date stats")
             result = {}
 
         return result
@@ -2075,12 +2053,12 @@ class RconAPI(Rcon):
 
         online_players = self.get_detailed_players()["players"]
 
-        squad_players = list(
+        squad_players = [
             online_players[id]
             for id in online_players
             if online_players[id]["team"] == team_name
             and online_players[id]["unit_name"] == squad_name
-        )
+        ]
 
         if not squad_players:
             raise HLLCommandFailedError(
@@ -2110,7 +2088,7 @@ class RconAPI(Rcon):
         Does not overwrite any existing non-null values.
         Returns the updated soldier as dict or None if not found.
         """
-        from rcon.models import enter_session, PlayerSoldier
+        from rcon.models import PlayerSoldier, enter_session
 
         with enter_session() as sess:
             soldier_db, changed = PlayerSoldier.update_missing_fields(
@@ -2150,7 +2128,7 @@ class RconAPI(Rcon):
         All fields can be updated, including setting them to null.
         Returns dict with account data and success message.
         """
-        from rcon.models import enter_session, PlayerAccount
+        from rcon.models import PlayerAccount, enter_session
 
         with enter_session() as sess:
             account_db = PlayerAccount.update_account(
@@ -2166,7 +2144,7 @@ class RconAPI(Rcon):
                 return HLLCommandFailedError(
                     f"Player {player_id} was not found. The account could not be updated."
                 )
-            
+
             return {
                 "account": account_db.to_dict(),
                 "msg": "Successfully updated account details.",

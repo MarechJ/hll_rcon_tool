@@ -12,6 +12,8 @@ class RealVipConfigType(TypedDict):
 
 
 class RealVipUserConfig(BaseUserConfig):
+    NAME = "RealVipUserConfig"
+
     enabled: bool = Field(default=False)
     desired_total_number_vips: int = Field(ge=0, default=5)
     minimum_number_vip_slots: int = Field(ge=0, default=1)
@@ -30,4 +32,4 @@ class RealVipUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(validated_conf.KEY(), validated_conf)
+            set_user_config(validated_conf.NAME, validated_conf)

@@ -1,21 +1,19 @@
 import os
 import re
 import socket
-from dataclasses import dataclass
-import colorlog
 from logging.config import dictConfig
-from subprocess import PIPE, run
+from subprocess import run
 
 from rcon.types import ServerInfo
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 
 try:
     TAG_VERSION = (
-        run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE)
+        run(["git", "describe", "--tags"], check=False, capture_output=True)
         .stdout.decode()
         .strip()
     )
-except Exception:
+except Exception:  # noqa
     TAG_VERSION = "unknown"
 
 try:
@@ -23,9 +21,8 @@ try:
     ENVIRONMENT = re.sub("[^0-9a-zA-Z]+", "", (config.short_name or "default").strip())[
         :64
     ]
-except Exception:
+except Exception:  # noqa
     ENVIRONMENT = "undefined"
-
 
 
 def get_server_info() -> ServerInfo:

@@ -2,21 +2,21 @@ import json
 import logging
 import re
 import shlex
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from functools import wraps
 from typing import Final
 
+from discord.utils import escape_markdown
 from discord_webhook import DiscordEmbed
 
-import rcon.steam_utils as steam_utils
-from discord.utils import escape_markdown
+from rcon import steam_utils
 from rcon.arguments import max_arg_index, replace_params
 from rcon.blacklist import (
     apply_blacklist_punishment,
     blacklist_or_ban,
     is_player_blacklisted,
 )
-from rcon.cache_utils import invalidates, get_redis_client
+from rcon.cache_utils import get_redis_client, invalidates
 from rcon.commands import HLLCommandFailedError
 from rcon.discord import get_prepared_discord_hooks, send_to_discord_audit
 from rcon.logs.loop import (
@@ -32,9 +32,8 @@ from rcon.maps import (
     get_theoretical_match_time,
 )
 from rcon.message_variables import format_message_string, populate_message_variables
-from rcon.models import PlayerID, PlayerSoldier, enter_session, GameLayout
+from rcon.models import GameLayout, PlayerID, PlayerSoldier, enter_session
 from rcon.player_history import (
-    _get_set_player,
     get_player,
     save_end_player_session,
     save_player,
@@ -72,8 +71,8 @@ from rcon.utils import DefaultStringFormat, MapsHistory, guess_map_from_log
 from rcon.vote_map import VoteMap
 from rcon.workers import (
     get_queue,
-    save_missing_match_logs_worker,
     record_stats_worker,
+    save_missing_match_logs_worker,
     temporary_broadcast,
     temporary_welcome,
     update_player_steaminfo_on_connect_worker,
@@ -210,11 +209,10 @@ def chat_rcon_command(
         arguments = msg[msg.find(triggering_word) + len(triggering_word) + 1 :]
         args = shlex.split(arguments)
         expected_argument_count = 0
-        for _, params in command.commands.items():
-            for _, v in params.items():
+        for params in command.commands.values():
+            for v in params.values():
                 a = max_arg_index(v)
-                if a > expected_argument_count:
-                    expected_argument_count = a
+                expected_argument_count = max(expected_argument_count, a)
         if len(args) != expected_argument_count:
             logger.info(
                 "provided message does not have expected number of arguments. Expected %d, got %d. Message: %s, Command: %s",
@@ -266,7 +264,9 @@ def remind_vote_map(_, struct_log):
 
 
 @on_match_start
-def reset_watch_killrate_cooldown(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
+def reset_watch_killrate_cooldown(
+    rcon: Rcon, struct_log: StructuredLogLineWithMetaData
+):
     """Reset the last reported time cache for new matches"""
     from rcon.watch_killrate import reset_cache
 
@@ -309,10 +309,16 @@ def handle_new_match_start(rcon: Rcon, struct_log):
                 )
 
         logger.debug("LOG MAP: %s\nCURRENT MAP: %s", log_map, current_map)
-        logger.debug("LOG TIME: %s\nNOW: %s", struct_log["event_time"].replace(tzinfo=UTC), datetime.now(tz=UTC))
+        logger.debug(
+            "LOG TIME: %s\nNOW: %s",
+            struct_log["event_time"].replace(tzinfo=UTC),
+            datetime.now(tz=UTC),
+        )
         guessed = True
         # Check that the log is less than 5min old
-        if (datetime.now(tz=UTC) - struct_log["event_time"].replace(tzinfo=UTC)).total_seconds() < 5 * 60:
+        if (
+            datetime.now(tz=UTC) - struct_log["event_time"].replace(tzinfo=UTC)
+        ).total_seconds() < 5 * 60:
             # then we use the current map to be more accurate
             if current_map.map.name == log_map.map.name:
                 map_to_save = current_map
@@ -333,26 +339,28 @@ def handle_new_match_start(rcon: Rcon, struct_log):
 
         # TODO added guess - check if it's already in there - set prev end if None
         maps_history = MapsHistory()
-        if len(maps_history) > 0:
-            if maps_history[0]["end"] is None and maps_history[0]["name"]:
-                maps_history.save_map_end(
-                    old_map=maps_history[0]["name"],
-                    end_timestamp=int(struct_log["timestamp_ms"] / 1000),
-                )
+        if (
+            len(maps_history) > 0
+            and maps_history[0]["end"] is None
+            and maps_history[0]["name"]
+        ):
+            maps_history.save_map_end(
+                old_map=maps_history[0]["name"],
+                end_timestamp=int(struct_log["timestamp_ms"] / 1000),
+            )
 
         game_layout: GameLayout = {"requested": [], "set": []}
         try:
             red = get_redis_client()
-            raw = red.getdel('GAME_LAYOUT')
+            raw = red.getdel("GAME_LAYOUT")
             loaded = json.loads(raw) if raw is not None else {}
             if isinstance(loaded, dict):
                 game_layout = {
                     "requested": loaded.get("requested", []),
                     "set": loaded.get("set", []),
                 }
-        except Exception as e:
-            logger.error("Could not fetch Game Layout", e)
-            pass
+        except Exception as e:  # noqa
+            logger.error("Could not fetch Game Layout: %s", e)
         maps_history.save_new_map(
             new_map=str(map_to_save),
             guessed=guessed,
@@ -360,9 +368,6 @@ def handle_new_match_start(rcon: Rcon, struct_log):
             game_layout=game_layout,
             match_time=match_time,
         )
-    except Exception as e:
-        logger.exception(e)
-        raise
     finally:
         prev_map = MapsHistory()[1]
         vm = VoteMap()
@@ -391,9 +396,7 @@ def record_map_end(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
     with invalidates(Rcon.get_map, Rcon.get_next_map, Rcon.get_gamestate):
         try:
             gamestate = rcon.get_gamestate()
-            current_map = rcon.game_profile.parse_layer(
-                gamestate["current_map"]["id"]
-            )
+            current_map = rcon.game_profile.parse_layer(gamestate["current_map"]["id"])
         except HLLCommandFailedError:
             current_map = rcon.game_profile.parse_layer(UNKNOWN_MAP_NAME)
             logger.error(
@@ -404,10 +407,16 @@ def record_map_end(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
     # Log map names are inconsistently formatted but should match the map name that each Layer has
     log_map = guess_map_from_log(struct_log, rcon.game_profile)
     logger.debug("LOG MAP: %s\nCURRENT MAP: %s", log_map, current_map)
-    logger.debug("LOG TIME: %s\nNOW: %s", struct_log["event_time"].replace(tzinfo=UTC), datetime.now(tz=UTC))
+    logger.debug(
+        "LOG TIME: %s\nNOW: %s",
+        struct_log["event_time"].replace(tzinfo=UTC),
+        datetime.now(tz=UTC),
+    )
     # The log event loop can receive and process old log lines sometimes
     # Check to make sure that if we're processing an old log line
-    if (datetime.now(tz=UTC) - struct_log["event_time"].replace(tzinfo=UTC)).total_seconds() < 60:
+    if (
+        datetime.now(tz=UTC) - struct_log["event_time"].replace(tzinfo=UTC)
+    ).total_seconds() < 60:
         # then we use the current map to be more accurate
         if current_map.map.name == log_map.map.name:
             logger.info("Recording map end: %s - [recent match]", current_map)
@@ -438,11 +447,16 @@ def should_ban(
     bans: SteamBansType | None,
     max_game_bans: float,
     max_days_since_ban: int,
-    player_flags: list[PlayerFlagType] = [],
-    whitelist_flags: list[str] = [],
+    player_flags: list[PlayerFlagType] | None = None,
+    whitelist_flags: list[str] | None = None,
 ) -> bool | None:
+    if player_flags is None:
+        player_flags = []
+    if whitelist_flags is None:
+        whitelist_flags = []
+
     if not bans:
-        return
+        return None
 
     if any(player_flag in whitelist_flags for player_flag in player_flags):
         return False
@@ -451,17 +465,14 @@ def should_ban(
         days_since_last_ban = int(bans["DaysSinceLastBan"])
         number_of_game_bans = int(bans.get("NumberOfGameBans", 0))
     except ValueError:  # In case DaysSinceLastBan can be null
-        return
+        return None
 
-    has_a_ban = bans.get("VACBanned") == True or number_of_game_bans >= max_game_bans
+    has_a_ban = bans.get("VACBanned") or number_of_game_bans >= max_game_bans
 
     if days_since_last_ban <= 0:
         return False
 
-    if days_since_last_ban <= max_days_since_ban and has_a_ban:
-        return True
-
-    return False
+    return days_since_last_ban <= max_days_since_ban and has_a_ban
 
 
 def ban_if_has_vac_bans(rcon: Rcon, player_id: str, name: str):
@@ -504,9 +515,7 @@ def ban_if_has_vac_bans(rcon: Rcon, player_id: str, name: str):
             )
             if config.auto_expire:
                 days_until_expire = max_days_since_ban - days_since_last_ban
-                expires_at = datetime.now(tz=timezone.utc) + timedelta(
-                    days=days_until_expire
-                )
+                expires_at = datetime.now(tz=UTC) + timedelta(days=days_until_expire)
             else:
                 expires_at = None
             blacklist_or_ban(
@@ -599,7 +608,11 @@ def update_player_steaminfo_on_connect(
         )
         return
 
-    logger.info("Queueing Steam enrichment for player %s %s", struct_log["player_name_1"], player_id)
+    logger.info(
+        "Queueing Steam enrichment for player %s %s",
+        struct_log["player_name_1"],
+        player_id,
+    )
     get_queue().enqueue(
         update_player_steaminfo_on_connect_worker,
         struct_log["player_name_1"],
@@ -659,7 +672,7 @@ def windows_store_player_check(rcon: Rcon, _, name: str, player_id: str):
                 reason=config.player_message,
                 by=config.audit_message_author,
             )
-    except Exception as e:
+    except Exception as e:  # noqa
         logger.error(
             "Could not %s whitespace name player %s/%s: %s",
             action_value,
@@ -704,8 +717,8 @@ def notify_camera(rcon: Rcon, struct_log):
     try:
         if hooks := get_prepared_discord_hooks(CameraWebhooksUserConfig):
             embeded = DiscordEmbed(
-                title=f'{escape_markdown(struct_log["player_name_1"])}  - {escape_markdown(struct_log["player_id_1"])}',
-                description=f'{short_name} - {struct_log["sub_content"]}',
+                title=f"{escape_markdown(struct_log['player_name_1'])}  - {escape_markdown(struct_log['player_id_1'])}",
+                description=f"{short_name} - {struct_log['sub_content']}",
                 color=242424,
             )
             for h in hooks:

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import unicodedata
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
-import unicodedata
 
 from rcon.maps import Environment, GameMode, Layer, Map, Team
 from rcon.types import GameEnum
@@ -21,8 +21,14 @@ class GameProfile:
     role_labels: Mapping[str, str] = field(default_factory=dict)
     role_ids: Mapping[str, int] = field(default_factory=dict)
     weapons: Mapping[str, WeaponType] = field(default_factory=dict)
+    weapon_ids: frozenset[str] = field(default_factory=frozenset)
     weapon_sides: Mapping[str, Team] = field(default_factory=dict)
     supported_game_modes: frozenset[GameMode] = field(default_factory=frozenset)
+
+    @property
+    def valid_weapon_ids(self) -> frozenset[str]:
+        """Weapon IDs accepted in config, independent of classification data."""
+        return self.weapon_ids or frozenset(self.weapons)
 
     def parse_layer(self, layer_name: str | Layer) -> Layer:
         return self.layer_parser(layer_name)

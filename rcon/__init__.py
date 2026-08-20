@@ -2,6 +2,19 @@ import os
 
 import rcon.settings
 
+__all__ = [
+    "auto_ban_if_tks_right_after_connection",
+    "auto_kick",
+    "handle_on_chat",
+    "handle_on_kill",
+    "handle_on_tk",
+    "hooks",
+    "rcon",
+    "update_kills",
+    "update_tks",
+    "watchdog",
+]
+
 # Allows importing the models in the maintenance container to run database migrations
 if not os.getenv("HLL_MAINTENANCE_CONTAINER") and not os.getenv(
     "HLL_WH_SERVICE_CONTAINER"

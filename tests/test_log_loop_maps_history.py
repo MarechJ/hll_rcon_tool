@@ -7,17 +7,17 @@ import pytest
 os.environ.setdefault("HLL_MAINTENANCE_CONTAINER", "1")
 os.environ.setdefault("SERVER_NUMBER", "1")
 
-from rcon.logs.loop import LogLoop
 from rcon.game.hll.profile import HLL_PROFILE
 from rcon.game.hllv.profile import HLLV_PROFILE
+from rcon.logs.loop import LogLoop
 from rcon.maps import GameMode
 from rcon.utils import default_player_info_dict
-
 
 OFFENSIVE_MAP = "carentan_offensive_us"
 
 
-def make_map_info(*, end=None, match_time=0):
+def make_map_info(*, end=None, match_time=0, cap_flips=None):
+    cap_flips = cap_flips or [{"allied_score": 0, "axis_score": 5, "ts": 0}]
     return {
         "name": OFFENSIVE_MAP,
         "start": 1_000,
@@ -25,7 +25,7 @@ def make_map_info(*, end=None, match_time=0):
         "guessed": False,
         "player_stats": {},
         "game_layout": {"requested": [], "set": []},
-        "cap_flips": [{"allied_score": 0, "axis_score": 5, "ts": 0}],
+        "cap_flips": cap_flips,
         "match_time": match_time,
     }
 
@@ -43,11 +43,11 @@ def make_gamestate(
     }
 
 
-def make_loop(gamestate):
+def make_loop(gamestate, now=1002):
     loop = object.__new__(LogLoop)
     loop.ACTIVE_MAP_INDEX = 0
     loop.CURR_MAP_END = 0
-    loop.now = 1_002
+    loop.now = now
     loop.rcon = Mock()
     loop.rcon.game_profile = HLL_PROFILE
     loop.rcon.get_gamestate.return_value = gamestate
@@ -58,17 +58,38 @@ def make_loop(gamestate):
 
 @patch("rcon.logs.loop.MapsHistory")
 def test_ended_match_is_not_mutated_by_next_match_score(maps_history_cls):
-    current_map = make_map_info(end=1_100, match_time=9_000)
+    current_map = make_map_info(
+        end=1_100,
+        match_time=9_000,
+        cap_flips=[{"allied_score": 4, "axis_score": 1, "ts": 1}],
+    )
     history = maps_history_cls.return_value
     history.get_current_map.return_value = current_map
-    loop = make_loop(make_gamestate(allied_score=5, axis_score=0))
+    gs = make_gamestate(allied_score=5, axis_score=0)
+    loop = make_loop(gs, now=1_002)
 
-    elapsed = loop.update_maps_history(prev_map_time_elapsed=98)
-
-    assert elapsed == 2
+    loop.update_maps_history(prev_map_time_elapsed=0)
     assert current_map["cap_flips"] == [
-        {"allied_score": 0, "axis_score": 5, "ts": 0}
+        {"allied_score": 4, "axis_score": 1, "ts": 1},
+        {"allied_score": 5, "axis_score": 0, "ts": 2},
     ]
+
+    gs["allied_score"] = 2
+    gs["axis_score"] = 2
+    loop.update_maps_history(prev_map_time_elapsed=100)
+    assert current_map["cap_flips"] == [
+        {"allied_score": 4, "axis_score": 1, "ts": 1},
+        {"allied_score": 5, "axis_score": 0, "ts": 2},
+    ]
+
+    gs["allied_score"] = 0
+    gs["axis_score"] = 5
+    loop.update_maps_history(prev_map_time_elapsed=100)
+    assert current_map["cap_flips"] == [
+        {"allied_score": 4, "axis_score": 1, "ts": 1},
+        {"allied_score": 5, "axis_score": 0, "ts": 2},
+    ]
+
     loop.get_detailed_players.assert_called_once()
     history.update.assert_called_once_with(0, current_map)
 
@@ -104,7 +125,7 @@ def test_offensive_match_time_normalizes_broken_server_default(maps_history_cls)
         "axis_score": 4,
         "ts": 2,
     }
-    assert history.update.call_count == 2
+    assert history.update.call_count == 1
     history.update.assert_called_with(0, current_map)
 
 
@@ -155,9 +176,7 @@ def test_offensive_initial_score_cannot_be_recorded_again(
     ("team", "expected_team_id"),
     (("allies", 1), ("axis", 2)),
 )
-def test_hllv_player_stats_use_normalized_logical_team_ids(
-    team, expected_team_id
-):
+def test_hllv_player_stats_use_normalized_logical_team_ids(team, expected_team_id):
     loop = object.__new__(LogLoop)
     loop.rcon = Mock(game_profile=HLLV_PROFILE)
     loop.now = 2_000

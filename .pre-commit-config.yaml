@@ -3,15 +3,11 @@ repos:
     rev: v4.4.0
     hooks:
       - id: check-yaml
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.12.0
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.18
     hooks:
-      - id: isort
-  - repo: https://github.com/psf/black
-    rev: 24.8.0
-    hooks:
-      - id: black
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v2.7.1"
-    hooks:
-      - id: prettier
+      # Run the linter.
+      - id: ruff-check
+        args: [ --fix ]
+      # Run the formatter.
+      - id: ruff-format

@@ -248,10 +248,6 @@ export const permissions = [
   },
   { permission: "add_group", description: "Can add group" },
   {
-    permission: "can_change_server_name_change_config",
-    description: "Can change server name change (GSP credentials!) config",
-  },
-  {
     permission: "can_change_watchlist_discord_webhooks_config",
     description: "Can change Discord player watchlist notification config",
   },
@@ -291,10 +287,6 @@ export const permissions = [
   {
     permission: "can_change_team_switch_cooldown",
     description: "Can change the team switch cooldown",
-  },
-  {
-    permission: "can_view_server_name_change_config",
-    description: "Can view server name change (GSP credentials!) config",
   },
   {
     permission: "view_djangoapikey",
@@ -426,8 +418,8 @@ export const permissions = [
     description: "Can delete steam player",
   },
   {
-    permission: "can_change_scorebot_config",
-    description: "Can change scorebot config",
+    permission: "can_change_scoreboard_config",
+    description: "Can change scoreboard config",
   },
   {
     permission: "can_view_standard_broadcast_messages",
@@ -612,8 +604,8 @@ export const permissions = [
     description: "Can upload a VIP list",
   },
   {
-    permission: "can_view_scorebot_config",
-    description: "Can view scorebot config",
+    permission: "can_view_scoreboard_config",
+    description: "Can view scoreboard config",
   },
   {
     permission: "can_delete_blacklist_records",

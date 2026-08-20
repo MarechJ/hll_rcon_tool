@@ -1,6 +1,6 @@
+from collections.abc import Callable
 from inspect import _empty, getdoc, signature, unwrap
 from logging import getLogger
-from typing import Callable
 
 from django.urls import path
 from django.views.decorators.csrf import csrf_exempt
@@ -41,9 +41,7 @@ def get_api_documentation(request):
 
         sig = signature(unwrap(func))
         for k, v in sig.parameters.items():
-            if k == "request":
-                continue
-            elif k == "self":
+            if k == "request" or k == "self":
                 continue
             expanded_args = {
                 "default": _get_empty(v.default),
@@ -137,10 +135,6 @@ endpoints: list[tuple[str, Callable]] = [
         user_settings.describe_camera_notification_config,
     ),
     ("describe_expired_vip_config", user_settings.describe_expired_vip_config),
-    (
-        "describe_server_name_change_config",
-        user_settings.describe_server_name_change_config,
-    ),
     (
         "describe_log_line_webhook_config",
         user_settings.describe_log_line_webhook_config,

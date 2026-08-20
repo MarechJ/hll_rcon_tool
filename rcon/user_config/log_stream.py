@@ -14,6 +14,8 @@ class LogStreamConfigType(TypedDict):
 
 
 class LogStreamUserConfig(BaseUserConfig):
+    NAME = "LogStreamUserConfig"
+
     enabled: bool = Field(default=False)
     stream_size: int = Field(ge=1, le=100_000, default=1000)
     startup_since_mins: int = Field(default=2)
@@ -36,4 +38,4 @@ class LogStreamUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(validated_conf.KEY(), validated_conf)
+            set_user_config(validated_conf.NAME, validated_conf)
