@@ -273,6 +273,7 @@ class LogLoop:
     # - If attacking's team manpower is depleted before capturing the point it's game over
 
     def update_maps_history(self, prev_map_time_elapsed: int) -> int:
+        record_stats = True
         started = time.perf_counter()
         gs = self.rcon.get_gamestate()
         maps_history = MapsHistory()
@@ -291,10 +292,11 @@ class LogLoop:
 
         map_has_ended = current_map["end"] is not None
         if map_has_ended:
-            logger.info("[MATCH ENDED]")
             # Let it record stats one more time
             if current_map["end"] == self.CURR_MAP_END:
+                record_stats = False
                 return current_map["end"] - map_start
+            logger.info("[MATCH ENDED] %s - %d:%d", current_map["name"], gs["allied_score"], gs["axis_score"])
             self.CURR_MAP_END = current_map["end"]
 
         if gs["current_map"]["id"] != current_map["name"]:
@@ -328,19 +330,15 @@ class LogLoop:
                 cached_game_mode, gs["match_time"]
             )
 
-        if not map_has_ended:
+        if record_stats:
             self.record_cap_flips(current_map, curr_map_time_elapsed, gs)
-            maps_history.update(self.ACTIVE_MAP_INDEX, current_map)
+            dp = self.get_detailed_players()
+            logger.info(
+                "RCON map/player polling completed in %.3fs",
+                time.perf_counter() - started,
+            )
+            self.record_player_stats(current_map, curr_map_time_elapsed, dp)
 
-        dp = self.get_detailed_players()
-        logger.info(
-            "RCON map/player polling completed in %.3fs",
-            time.perf_counter() - started,
-        )
-
-        # logger.debug("\n[MATCH RUNNING] - Recording stats")
-        # logger.debug("\n[MATCH RUNNING]\nMatch Start: %d\nMatch Time: %d\nRemaining Match Time: %d\nTime elapsed: %d\nTime elapsed(now-start): %d\n", current_map["start"], gs["match_time"], gs["time_remaining"].seconds, prev_map_time_elapsed, now - current_map["start"])
-        self.record_player_stats(current_map, curr_map_time_elapsed, dp)
         maps_history.update(self.ACTIVE_MAP_INDEX, current_map)
         return curr_map_time_elapsed
 
