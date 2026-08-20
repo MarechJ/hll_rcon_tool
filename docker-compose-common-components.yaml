@@ -46,6 +46,11 @@ services:
       context: .
       dockerfile: Dockerfile
     image: ${BACKEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
+    # Compose uses .env for interpolation but does not otherwise expose all of
+    # its values inside containers. Alembic needs to be aware of envs to migrate
+    # legacy structures to the correct scope instead of using dummy defaults
+    env_file:
+      - .env
     environment:
       HLL_MAINTENANCE_CONTAINER: true
       HLL_DB_USER: ${HLL_DB_USER}

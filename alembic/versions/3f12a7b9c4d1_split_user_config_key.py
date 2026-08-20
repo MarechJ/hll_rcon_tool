@@ -6,6 +6,8 @@ Create Date: 2026-08-17
 
 """
 
+import os
+
 from alembic import op
 import sqlalchemy as sa
 
@@ -18,9 +20,66 @@ depends_on = None
 
 
 UNIQUE_CONSTRAINT = "uq_user_config_game_server_number_name"
+MAX_SERVER_CONFIGURATIONS = 100
+GAME_IDS = {
+    "hll": 1,
+    "hllv": 2,
+}
+
+
+def _configured_server_games(environ=None):
+    environ = os.environ if environ is None else environ
+    server_games = {}
+
+    for index in range(1, MAX_SERVER_CONFIGURATIONS + 1):
+        suffix = "" if index == 1 else f"_{index}"
+        server_key = f"SERVER_NUMBER{suffix}"
+        game_key = f"HLL_GAME{suffix}"
+        raw_server_number = environ.get(server_key)
+        raw_game = environ.get(game_key)
+
+        if not raw_server_number:
+            if raw_game:
+                raise RuntimeError(f"{game_key} is set but {server_key} is missing")
+            continue
+
+        try:
+            server_number = int(raw_server_number)
+        except ValueError as error:
+            raise RuntimeError(
+                f"{server_key} must be an integer, got {raw_server_number!r}"
+            ) from error
+
+        if server_number < 1:
+            raise RuntimeError(
+                f"{server_key} must be greater than zero, got {server_number}"
+            )
+
+        # This mirrors `${HLL_GAME_N:-hll}` in the Compose services.
+        game = raw_game or "hll"
+        try:
+            game_id = GAME_IDS[game]
+        except KeyError as error:
+            raise RuntimeError(
+                f"{game_key} must be one of {sorted(GAME_IDS)}, got {game!r}"
+            ) from error
+
+        existing_game_id = server_games.get(server_number)
+        if existing_game_id is not None and existing_game_id != game_id:
+            raise RuntimeError(
+                f"Server number {server_number} is configured for multiple games"
+            )
+        server_games[server_number] = game_id
+
+    if not server_games:
+        raise RuntimeError("No server/game configuration was provided")
+
+    return server_games
 
 
 def upgrade():
+    server_games = _configured_server_games()
+
     op.add_column(
         "user_config",
         sa.Column("server_number", sa.Integer(), nullable=True),
@@ -30,8 +89,7 @@ def upgrade():
         sa.Column(
             "game",
             sa.Integer(),
-            nullable=False,
-            server_default="1",
+            nullable=True,
         ),
     )
     op.add_column(
@@ -72,7 +130,41 @@ def upgrade():
         """
     )
 
+    for server_number, game_id in server_games.items():
+        # Both values have been parsed as integers, so interpolating them is safe
+        # and also keeps Alembic's offline SQL output usable.
+        op.execute(
+            f"""
+            UPDATE user_config
+            SET game = {game_id}
+            WHERE server_number = {server_number}
+            """
+        )
+
+    op.execute(
+        """
+        DO $$
+        BEGIN
+            IF EXISTS (
+                SELECT 1
+                FROM user_config
+                WHERE game IS NULL
+            ) THEN
+                RAISE EXCEPTION
+                    'Cannot determine game for one or more user_config server numbers';
+            END IF;
+        END
+        $$;
+        """
+    )
+
     op.alter_column("user_config", "server_number", nullable=False)
+    op.alter_column(
+        "user_config",
+        "game",
+        nullable=False,
+        server_default="1",
+    )
     op.alter_column("user_config", "name", nullable=False)
     op.create_unique_constraint(
         UNIQUE_CONSTRAINT,
