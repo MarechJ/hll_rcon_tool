@@ -384,6 +384,7 @@ class LogLoop:
             return
 
         if layer.game_mode == GameMode.OFFENSIVE and cap_flips:
+            # TODO: Check this works with HLL:V
             initial_score = {
                 MapTeam.ALLIES: (0, 5),
                 MapTeam.AXIS: (5, 0),
@@ -398,7 +399,7 @@ class LogLoop:
                 return
 
         if len(cap_flips) == 0 or cap_flips[-1]["allied_score"] != gs["allied_score"] or cap_flips[-1]["axis_score"] != gs["axis_score"]:
-            logger.debug("[MATCH SCORE] - New cap flip recorded as the score has changed")
+            logger.debug("[MATCH SCORE] - New cap flip recorded %d:%d", gs["allied_score"], gs["axis_score"])
             cap_flips.append(MapScore(allied_score=gs["allied_score"], axis_score=gs["axis_score"], ts=sec_from_start))
 
     def record_player_stats(self, current_map: MapInfo, sec_from_start: int, dp: GetDetailedPlayers):
