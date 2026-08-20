@@ -27,6 +27,7 @@ from rcon.models import PlayerID, enter_session, install_unaccent
 from rcon.player_stats import live_stats_loop
 from rcon.rcon import get_rcon
 from rcon.steam_utils import enrich_db_users
+from rcon.types import GameEnum, ServerInfo
 from rcon.user_config.auto_settings import AutoSettingsConfig
 from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.user_config.webhooks import (
@@ -38,6 +39,13 @@ from rcon.utils import ApiKey
 from rcon.vote_map import VoteMap
 
 logger = logging.getLogger(__name__)
+
+
+def _current_game() -> str:
+    game = ServerInfo.from_env().game
+    if game is None:
+        raise ValueError("HLL_GAME is not set")
+    return game.value
 
 
 @click.group()
@@ -281,7 +289,16 @@ def _models_to_exclude():
     default=None,
     help="The server number to export for (if different)",
 )
-def get_user_setting(server: int, output: click.Path, output_server=None):
+@click.option(
+    "--game",
+    type=click.Choice([game.value for game in GameEnum]),
+    default=_current_game,
+    show_default="HLL_GAME",
+    help="Game whose settings should be exported.",
+)
+def get_user_setting(
+    server: int, output: click.Path, output_server=None, game=GameEnum.HLL_WW2.value
+):
     """Dump all user settings for SERVER to OUTPUT file.
 
     SERVER: The server number (SERVER_NUMBER as set in the compose files).
@@ -298,21 +315,29 @@ def get_user_setting(server: int, output: click.Path, output_server=None):
         for model in rcon.user_config.utils.all_subclasses(BaseUserConfig)
     }
 
-    # Since a CRCON install can have multiple servers, but get_server_number()
-    # depends on the environment, pass the server number to the tool
+    # CLI operations can target a scope other than the current process, so pass
+    # both identity dimensions explicitly.
     dump: dict[str, Any] = {}
     for model in keys_to_models.values():
-        key = key_format.format(server=server, cls_name=model.__name__)
-        output_key = key_format.format(server=output_server, cls_name=model.__name__)
-        value = rcon.user_config.utils.get_user_config(key)
+        output_key = key_format.format(server=output_server, cls_name=model.NAME)
+        value = rcon.user_config.utils.get_user_config(
+            model.NAME, game=game, server_number=server
+        )
         if value:
-            config = model.model_validate(value)
+            config = model.model_validate(
+                value,
+                context=rcon.user_config.utils.user_config_validation_context(
+                    game=game, server_number=server
+                ),
+            )
             dump[output_key] = config.model_dump()
 
-    # Auto settings are unique right now
+    # Keep the legacy export key format for backwards-compatible files.
     auto_settings_output_key = f"{output_server}_auto_settings"
     auto_settings_model = rcon.user_config.utils.get_user_config(
-        f"{server}_auto_settings"
+        AutoSettingsConfig.NAME,
+        game=game,
+        server_number=server,
     )
     if auto_settings_model:
         dump[auto_settings_output_key] = auto_settings_model
@@ -327,17 +352,27 @@ def get_user_setting(server: int, output: click.Path, output_server=None):
 @click.argument("server", type=int)
 @click.argument("input", type=click.Path())
 @click.option("--dry-run", type=bool, default=True, help="Validate settings only")
-def set_user_settings(server: int, input: click.Path, dry_run=True):
+@click.option(
+    "--game",
+    type=click.Choice([game.value for game in GameEnum]),
+    default=_current_game,
+    show_default="HLL_GAME",
+    help="Game whose settings should be imported.",
+)
+def set_user_settings(
+    server: int,
+    input: click.Path,
+    dry_run=True,
+    game=GameEnum.HLL_WW2.value,
+):
     """Set all (specified) user settings for SERVER from INPUT file.
 
     if DRY_RUN is not false, it will only validate the file.
-    No settings will be set unless the entire file validates correctly.*
-
-    *Auto settings are not validated
+    No settings will be set unless the entire file validates correctly.
 
     SERVER: The server number (SERVER_NUMBER as set in the compose files).
     """
-    # Auto settings are unique right now
+    # Keep accepting the legacy key in imported files.
     auto_settings_key = f"{server}_auto_settings"
 
     if dry_run:
@@ -345,7 +380,7 @@ def set_user_settings(server: int, input: click.Path, dry_run=True):
 
     config_models: dict[str, type[BaseUserConfig]] = {
         rcon.user_config.utils.USER_CONFIG_KEY_FORMAT.format(
-            server=server, cls_name=model.__name__
+            server=server, cls_name=model.NAME
         ): model
         for model in rcon.user_config.utils.all_subclasses(BaseUserConfig)
         if model.__name__ not in _models_to_exclude()
@@ -370,11 +405,23 @@ def set_user_settings(server: int, input: click.Path, dry_run=True):
     model: BaseUserConfig
     for key, payload in user_settings.items():
         if key == auto_settings_key:
+            try:
+                AutoSettingsConfig(game=game, server_number=server).validate_settings(
+                    payload
+                )
+            except (TypeError, ValueError) as e:
+                logger.error(e)
+                sys.exit(-1)
             continue
 
         cls = config_models[key]
         try:
-            model = cls(**payload)
+            model = cls.model_validate(
+                payload,
+                context=rcon.user_config.utils.user_config_validation_context(
+                    game=game, server_number=server
+                ),
+            )
             print(f"Successfully parsed {key} as {cls}")
         except pydantic.ValidationError as e:
             logger.error(e)
@@ -384,15 +431,17 @@ def set_user_settings(server: int, input: click.Path, dry_run=True):
 
     if not dry_run:
         for cls, model in parsed_models:
-            key = rcon.user_config.utils.USER_CONFIG_KEY_FORMAT.format(
-                server=server, cls_name=cls.__name__
+            print(f"setting game={game} server={server} class={cls.__name__}")
+            rcon.user_config.utils.set_user_config(
+                cls.NAME, model, game=game, server_number=server
             )
-            print(f"setting {key=} class={cls.__name__}")
-            rcon.user_config.utils.set_user_config(key, model)
 
         if auto_settings_key in user_settings:
             rcon.user_config.utils.set_user_config(
-                auto_settings_key, user_settings[auto_settings_key]
+                AutoSettingsConfig.NAME,
+                user_settings[auto_settings_key],
+                game=game,
+                server_number=server,
             )
 
     print("Done")
@@ -400,7 +449,14 @@ def set_user_settings(server: int, input: click.Path, dry_run=True):
 
 @cli.command(name="reset_user_settings")
 @click.argument("server", type=int)
-def reset_user_settings(server: int):
+@click.option(
+    "--game",
+    type=click.Choice([game.value for game in GameEnum]),
+    default=_current_game,
+    show_default="HLL_GAME",
+    help="Game whose settings should be reset.",
+)
+def reset_user_settings(server: int, game=GameEnum.HLL_WW2.value):
     """Reset all user settings for SERVER to their defaults.
 
     There is no way to undo this if you do not save your settings in advance!
@@ -408,7 +464,7 @@ def reset_user_settings(server: int):
     SERVER: The server number (SERVER_NUMBER as set in the compose files).
     """
     with enter_session() as sess:
-        AutoSettingsConfig().reset_settings(sess)
+        AutoSettingsConfig(game=game, server_number=server).reset_settings(sess)
         sess.commit()
 
     models: list[type[BaseUserConfig]] = [
@@ -419,11 +475,10 @@ def reset_user_settings(server: int):
 
     for cls in models:
         model = cls()
-        key = rcon.user_config.utils.USER_CONFIG_KEY_FORMAT.format(
-            server=server, cls_name=cls.__name__
+        print(f"Resetting game={game} server={server} class={cls.__name__}")
+        rcon.user_config.utils.set_user_config(
+            cls.NAME, model, game=game, server_number=server
         )
-        print(f"Resetting {key}")
-        rcon.user_config.utils.set_user_config(key, model)
 
     print("Done")
 

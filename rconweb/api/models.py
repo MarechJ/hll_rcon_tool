@@ -350,8 +350,8 @@ class RconUser(User):
                 "can_change_rcon_server_settings_config",
                 "Can change general CRCON server settings",
             ),
-            ("can_view_scorebot_config", "Can view scorebot config"),
-            ("can_change_scorebot_config", "Can change scorebot config"),
+            ("can_view_scoreboard_config", "Can view scoreboard config"),
+            ("can_change_scoreboard_config", "Can change scoreboard config"),
             (
                 "can_view_standard_broadcast_messages",
                 "Can view shared broadcast messages",

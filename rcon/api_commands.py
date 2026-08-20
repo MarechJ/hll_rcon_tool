@@ -56,7 +56,6 @@ from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.chat_commands import ChatCommandsUserConfig
 from rcon.user_config.expired_vips import ExpiredVipsUserConfig
-from rcon.user_config.legacy_scorebot import ScorebotUserConfig
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
 from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.user_config.name_kicks import NameKickUserConfig
@@ -71,7 +70,11 @@ from rcon.user_config.standard_messages import (
     StandardWelcomeMessagesUserConfig,
 )
 from rcon.user_config.steam import SteamUserConfig
-from rcon.user_config.utils import BaseUserConfig, validate_user_config
+from rcon.user_config.utils import (
+    BaseUserConfig,
+    server_info_for_rcon,
+    validate_user_config,
+)
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.vote_map import VoteMapUserConfig
 from rcon.user_config.watch_killrate import WatchKillRateUserConfig
@@ -157,8 +160,8 @@ class RconAPI(Rcon):
     def __init__(self, *args, pool_size: bool | None = None, **kwargs):
         super().__init__(*args, pool_size=pool_size, **kwargs)
 
-    @staticmethod
     def _validate_user_config(
+        self,
         command_name: str,
         by: str,
         model: type[BaseUserConfig],
@@ -166,12 +169,18 @@ class RconAPI(Rcon):
         dry_run: bool = True,
         reset_to_default: bool = False,
     ):
-        old_model = model.load_from_db()
+        server_info = server_info_for_rcon(self)
+        scope = {
+            "game": server_info.game,
+            "server_number": server_info.number,
+        }
+        old_model = model.load_from_db(**scope)
         res = validate_user_config(
             model=model,
             data=data,
             dry_run=dry_run,
             reset_to_default=reset_to_default,
+            **scope,
         )
 
         if res:
@@ -839,7 +848,10 @@ class RconAPI(Rcon):
         )
 
     def get_auto_mod_level_config(self) -> AutoModLevelUserConfig:
-        return AutoModLevelUserConfig.load_from_db()
+        server_info = server_info_for_rcon(self)
+        return AutoModLevelUserConfig.load_from_db(
+            game=server_info.game, server_number=server_info.number
+        )
 
     def validate_auto_mod_level_config(
         self,
@@ -874,7 +886,10 @@ class RconAPI(Rcon):
         )
 
     def get_auto_mod_no_leader_config(self) -> AutoModNoLeaderUserConfig:
-        return AutoModNoLeaderUserConfig.load_from_db()
+        server_info = server_info_for_rcon(self)
+        return AutoModNoLeaderUserConfig.load_from_db(
+            game=server_info.game, server_number=server_info.number
+        )
 
     def validate_auto_mod_no_leader_config(
         self,
@@ -909,7 +924,10 @@ class RconAPI(Rcon):
         )
 
     def get_auto_mod_seeding_config(self) -> AutoModSeedingUserConfig:
-        return AutoModSeedingUserConfig.load_from_db()
+        server_info = server_info_for_rcon(self)
+        return AutoModSeedingUserConfig.load_from_db(
+            game=server_info.game, server_number=server_info.number
+        )
 
     def validate_auto_mod_seeding_config(
         self,
@@ -944,7 +962,10 @@ class RconAPI(Rcon):
         )
 
     def get_auto_mod_solo_tank_config(self) -> AutoModNoSoloTankUserConfig:
-        return AutoModNoSoloTankUserConfig.load_from_db()
+        server_info = server_info_for_rcon(self)
+        return AutoModNoSoloTankUserConfig.load_from_db(
+            game=server_info.game, server_number=server_info.number
+        )
 
     def validate_auto_mod_solo_tank_config(
         self,
@@ -979,7 +1000,10 @@ class RconAPI(Rcon):
         )
 
     def get_tk_ban_on_connect_config(self) -> BanTeamKillOnConnectUserConfig:
-        return BanTeamKillOnConnectUserConfig.load_from_db()
+        server_info = server_info_for_rcon(self)
+        return BanTeamKillOnConnectUserConfig.load_from_db(
+            game=server_info.game, server_number=server_info.number
+        )
 
     def validate_tk_ban_on_connect_config(
         self,
@@ -1296,10 +1320,6 @@ class RconAPI(Rcon):
             dry_run=True,
             reset_to_default=reset_to_default,
         )
-
-    # TODO: legacy remove this in a few releases
-    def get_scorebot_config(self) -> ScorebotUserConfig:
-        return ScorebotUserConfig.load_from_db()
 
     def get_scoreboard_config(self) -> ScoreboardUserConfig:
         return ScoreboardUserConfig.load_from_db()

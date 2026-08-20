@@ -22,6 +22,8 @@ class LogLineWebhook(BaseModel):
 
 
 class LogLineWebhookUserConfig(BaseUserConfig):
+    NAME = "LogLineWebhookUserConfig"
+
     webhooks: list[LogLineWebhook] = Field(default_factory=list)
 
     @staticmethod
@@ -68,4 +70,4 @@ class LogLineWebhookUserConfig(BaseUserConfig):
         validated_conf = LogLineWebhookUserConfig(webhooks=validated_log_lines)
 
         if not dry_run:
-            set_user_config(LogLineWebhookUserConfig.KEY(), validated_conf)
+            set_user_config(LogLineWebhookUserConfig.NAME, validated_conf)

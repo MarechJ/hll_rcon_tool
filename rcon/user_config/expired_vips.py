@@ -12,6 +12,8 @@ class ExpiredVipsType(TypedDict):
 
 
 class ExpiredVipsUserConfig(BaseUserConfig):
+    NAME = "ExpiredVipsUserConfig"
+
     enabled: bool = Field(default=True)
     interval_minutes: int = Field(ge=1, default=60)
     discord_webhook_url: HttpUrl | None = Field(default=None)
@@ -38,4 +40,4 @@ class ExpiredVipsUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(ExpiredVipsUserConfig.KEY(), validated_conf)
+            set_user_config(ExpiredVipsUserConfig.NAME, validated_conf)

@@ -48,6 +48,8 @@ class AutoModNoSoloTankType(TypedDict):
 
 
 class AutoModNoSoloTankUserConfig(BaseUserConfig):
+    NAME = "AutoModNoSoloTankUserConfig"
+
     enabled: bool = Field(default=False)
     dry_run: bool = Field(default=False)
     discord_webhook_url: HttpUrl | None = Field(default=None)
@@ -113,4 +115,4 @@ class AutoModNoSoloTankUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(AutoModNoSoloTankUserConfig.KEY(), validated_conf)
+            set_user_config(AutoModNoSoloTankUserConfig.NAME, validated_conf)

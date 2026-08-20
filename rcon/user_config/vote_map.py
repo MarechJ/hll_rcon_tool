@@ -97,6 +97,8 @@ e.g. > !vm add car -> Carentan Warfare"""
 
 
 class VoteMapUserConfig(BaseUserConfig):
+    NAME = "VoteMapUserConfig"
+
     enabled: bool = Field(default=False)
     default_method: DefaultMethods = Field(
         default=DefaultMethods.least_played_suggestions
@@ -166,4 +168,4 @@ class VoteMapUserConfig(BaseUserConfig):
         validated_conf = VoteMapUserConfig.model_validate(filtered_values)
 
         if not dry_run:
-            set_user_config(VoteMapUserConfig.KEY(), validated_conf)
+            set_user_config(VoteMapUserConfig.NAME, validated_conf)

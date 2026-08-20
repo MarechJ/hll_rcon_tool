@@ -49,6 +49,8 @@ class RawAutoBroadCastMessage(BaseModel):
 
 
 class AutoBroadcastUserConfig(BaseUserConfig):
+    NAME = "AutoBroadcastUserConfig"
+
     enabled: bool = Field(
         default=False, strict=True, title="Enable", description="Enable auto broadcasts"
     )
@@ -100,4 +102,4 @@ class AutoBroadcastUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(AutoBroadcastUserConfig.KEY(), validated_conf)
+            set_user_config(AutoBroadcastUserConfig.NAME, validated_conf)

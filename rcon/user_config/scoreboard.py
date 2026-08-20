@@ -230,6 +230,8 @@ def seed_default_player_stat_displays():
 
 
 class ScoreboardUserConfig(BaseUserConfig):
+    NAME = "ScoreboardUserConfig"
+
     # TODO: update descriptions
     public_scoreboard_url: HttpUrl | None = Field(
         default=None, description="The URL of your public scoreboard/stats site"
@@ -426,4 +428,4 @@ class ScoreboardUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(validated_conf.KEY(), validated_conf)
+            set_user_config(validated_conf.NAME, validated_conf)

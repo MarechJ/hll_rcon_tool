@@ -92,6 +92,8 @@ class DiscordMentionWebhook(DiscordWebhook):
 
 
 class BaseMentionWebhookUserConfig(BaseUserConfig):
+    NAME = "BaseMentionWebhookUserConfig"
+
     hooks: list[DiscordMentionWebhook] = pydantic.Field(default_factory=list)
 
     @classmethod
@@ -110,10 +112,12 @@ class BaseMentionWebhookUserConfig(BaseUserConfig):
         validated_conf = cls(hooks=validated_hooks)
 
         if not dry_run:
-            set_user_config(validated_conf.KEY(), validated_conf)
+            set_user_config(validated_conf.NAME, validated_conf)
 
 
 class BaseWebhookUserConfig(BaseUserConfig):
+    NAME = "BaseWebhookUserConfig"
+
     hooks: list[DiscordWebhook] = pydantic.Field(default_factory=list)
 
     @classmethod
@@ -135,18 +139,20 @@ class BaseWebhookUserConfig(BaseUserConfig):
         validated_conf = cls(hooks=validated_hooks)
 
         if not dry_run:
-            set_user_config(validated_conf.KEY(), validated_conf)
+            set_user_config(validated_conf.NAME, validated_conf)
 
 
 class WatchlistWebhooksUserConfig(BaseMentionWebhookUserConfig):
-    pass
+    NAME = "WatchlistWebhooksUserConfig"
 
 
 class CameraWebhooksUserConfig(BaseMentionWebhookUserConfig):
-    pass
+    NAME = "CameraWebhooksUserConfig"
 
 
 class AdminPingWebhooksUserConfig(BaseMentionWebhookUserConfig):
+    NAME = "AdminPingWebhooksUserConfig"
+
     trigger_words: list[str] = pydantic.Field(default_factory=list)
 
     @pydantic.field_validator("trigger_words")
@@ -178,10 +184,12 @@ class AdminPingWebhooksUserConfig(BaseMentionWebhookUserConfig):
         )
 
         if not dry_run:
-            set_user_config(validated_conf.KEY(), validated_conf)
+            set_user_config(validated_conf.NAME, validated_conf)
 
 
 class ChatWebhooksUserConfig(BaseWebhookUserConfig):
+    NAME = "ChatWebhooksUserConfig"
+
     allow_mentions: bool = pydantic.Field(default=False)
 
     @staticmethod
@@ -201,14 +209,16 @@ class ChatWebhooksUserConfig(BaseWebhookUserConfig):
         )
 
         if not dry_run:
-            set_user_config(validated_conf.KEY(), validated_conf)
+            set_user_config(validated_conf.NAME, validated_conf)
 
 
 class AuditWebhooksUserConfig(BaseWebhookUserConfig):
-    pass
+    NAME = "AuditWebhooksUserConfig"
 
 
 class KillsWebhooksUserConfig(BaseWebhookUserConfig):
+    NAME = "KillsWebhooksUserConfig"
+
     send_kills: bool = pydantic.Field(default=False)
     send_team_kills: bool = pydantic.Field(default=True)
 
@@ -230,7 +240,7 @@ class KillsWebhooksUserConfig(BaseWebhookUserConfig):
         )
 
         if not dry_run:
-            set_user_config(validated_conf.KEY(), validated_conf)
+            set_user_config(validated_conf.NAME, validated_conf)
 
 
 def parse_raw_mention_hooks(

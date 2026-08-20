@@ -12,6 +12,8 @@ class RconConnectionSettingsType(TypedDict):
 
 
 class RconConnectionSettingsUserConfig(BaseUserConfig):
+    NAME = "RconConnectionSettingsUserConfig"
+
     # TODO: max open and threadpool seem redundant
     # TODO: been made entirely redundant since RCON V2, remove
     thread_pool_size: int = Field(ge=1, le=100, default=20)
@@ -35,4 +37,4 @@ class RconConnectionSettingsUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(RconConnectionSettingsUserConfig.KEY(), validated_conf)
+            set_user_config(RconConnectionSettingsUserConfig.NAME, validated_conf)

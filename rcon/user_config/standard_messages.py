@@ -13,10 +13,12 @@ from rcon.user_config.auto_broadcast import (
 )
 from rcon.user_config.utils import (
     BaseUserConfig,
+    GameSelector,
     _listType,
     get_user_config,
     key_check,
     set_user_config,
+    user_config_validation_context,
 )
 
 logger = getLogger(__name__)
@@ -31,6 +33,8 @@ class StandardBroadcastMessagesType(TypedDict):
 
 
 class BaseStandardMessageUserConfig(BaseUserConfig):
+    NAME = "BaseStandardMessageUserConfig"
+
     messages: list[str] = pydantic.Field(default_factory=list)
 
     @classmethod
@@ -46,22 +50,30 @@ class BaseStandardMessageUserConfig(BaseUserConfig):
         validated_conf = cls(messages=messages)
 
         if not dry_run:
-            set_user_config(validated_conf.KEY(), validated_conf)
+            set_user_config(validated_conf.NAME, validated_conf)
 
 
 class StandardWelcomeMessagesUserConfig(BaseStandardMessageUserConfig):
-    pass
+    NAME = "StandardWelcomeMessagesUserConfig"
 
 
 class StandardPunishmentMessagesUserConfig(BaseStandardMessageUserConfig):
-    pass
+    NAME = "StandardPunishmentMessagesUserConfig"
 
 
 class StandardBroadcastMessagesUserConfig(BaseUserConfig):
+    NAME = "StandardBroadcastMessagesUserConfig"
+
     messages: list[AutoBroadcastMessage] = Field(default_factory=list)
 
     @classmethod
-    def load_from_db(cls, default_on_validation_error: bool = True) -> Self:
+    def load_from_db(
+        cls,
+        default_on_validation_error: bool = True,
+        *,
+        game: GameSelector | None = None,
+        server_number: int | str | None = None,
+    ) -> Self:
         # This is a bandaid that allows us to port old style broadcasts which were
         # a list of strings in the format `time message`
 
@@ -72,7 +84,12 @@ class StandardBroadcastMessagesUserConfig(BaseUserConfig):
 
         # If the cache is unavailable, it will fall back to creating a default
         # model instance, but will not persist it to the database and overwrite settings
-        conf = get_user_config(cls.KEY(), default=None)
+        conf = get_user_config(
+            cls.NAME,
+            default=None,
+            game=game,
+            server_number=server_number,
+        )
         if conf is not None:
             try:
                 # This is the only difference between this and BaseUserConfig.load_from_db
@@ -91,16 +108,26 @@ class StandardBroadcastMessagesUserConfig(BaseUserConfig):
                     config = StandardBroadcastMessagesUserConfig(
                         messages=validated_messages
                     )
-                    StandardBroadcastMessagesUserConfig.save_to_db(
-                        values=config.model_dump()
+                    set_user_config(
+                        cls.NAME,
+                        config,
+                        game=game,
+                        server_number=server_number,
                     )
                     return config
                 else:
-                    return cls.model_validate(conf)
+                    return cls.model_validate(
+                        conf,
+                        context=user_config_validation_context(
+                            game=game,
+                            server_number=server_number,
+                        ),
+                    )
             except pydantic.ValidationError as e:
                 if default_on_validation_error:
                     logger.error(
-                        f"Error loading {cls.KEY()}, returning defaults, validation errors:"
+                        f"Error loading {cls.identity(game=game, server_number=server_number)}, "
+                        "returning defaults, validation errors:"
                     )
                     logger.error(e)
                     return cls()
@@ -117,7 +144,10 @@ class StandardBroadcastMessagesUserConfig(BaseUserConfig):
             # Now models are only persisted to the database when they're either explicitly seeded
             # during backend startup, or if the `save_to_db` method is explicitly called, for
             # instance through the API, or CLI
-            logger.error(f"{cls.KEY()} not found, returning defaults")
+            logger.error(
+                "%s not found, returning defaults",
+                cls.identity(game=game, server_number=server_number),
+            )
 
         return cls()
 
@@ -155,7 +185,7 @@ class StandardBroadcastMessagesUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(StandardBroadcastMessagesUserConfig.KEY(), validated_conf)
+            set_user_config(StandardBroadcastMessagesUserConfig.NAME, validated_conf)
 
 
 def get_all_message_types(

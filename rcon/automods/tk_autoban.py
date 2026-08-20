@@ -3,6 +3,7 @@ import logging
 
 from pydantic import HttpUrl
 
+from rcon.automods import server_info_for_automod
 from rcon.blacklist import blacklist_or_ban
 from rcon.discord import send_to_discord_audit
 from rcon.game_logs import get_recent_logs
@@ -30,7 +31,11 @@ def auto_ban_if_tks_right_after_connection(
     config: BanTeamKillOnConnectUserConfig | None = None,
 ) -> None | BlacklistRecordWithBlacklistType:
     if config is None:
-        config = BanTeamKillOnConnectUserConfig.load_from_db()
+        server_info = server_info_for_automod(rcon)
+        config = BanTeamKillOnConnectUserConfig.load_from_db(
+            game=server_info.game,
+            server_number=server_info.number,
+        )
     if not config or not config.enabled:
         return
 

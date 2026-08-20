@@ -1,9 +1,21 @@
 from typing import TypedDict
 
-from pydantic import BaseModel, Field, HttpUrl, field_serializer, field_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    HttpUrl,
+    ValidationInfo,
+    field_serializer,
+    field_validator,
+)
 
-from rcon.types import Roles
-from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
+from rcon.user_config.utils import (
+    BaseUserConfig,
+    key_check,
+    set_user_config,
+    validate_game_roles,
+    validate_game_weapons,
+)
 
 WARNING_MESSAGE = """Warning, {player_name}! You violate seeding rules on this server: {violation}
 You will be punished after {max_warnings} warnings (you already received {received_warnings}), then kicked.
@@ -28,7 +40,7 @@ ENFORCE_CAP_FIGHT_VIOLATION_MESSAGE = "Attacking 4th cap while seeding is not al
 class DisallowedRolesType(TypedDict):
     min_players: int
     max_players: int
-    roles: dict[Roles, str]
+    roles: dict[str, str]
     violation_message: str
 
 
@@ -53,7 +65,7 @@ class AutoModSeedingType(TypedDict):
     discord_webhook_url: HttpUrl | None
 
     whitelist_flags: list[str]
-    immune_roles: list[Roles]
+    immune_roles: list[str]
     immune_player_level: int
     dont_do_anything_below_this_number_of_players: int
 
@@ -96,7 +108,7 @@ class DisallowedRoles(BaseModel):
         title="Maximum Players",
         description="The maximum players on the server to enforce this rule",
     )
-    roles: dict[Roles, str] = Field(
+    roles: dict[str, str] = Field(
         default_factory=dict,
         title="Disallowed Roles",
         description="The list of roles that are not allowed while server is seeding",
@@ -106,6 +118,12 @@ class DisallowedRoles(BaseModel):
         title="Violation Message",
         description="The message send to the player when they use one of the disallowed roles",
     )
+
+    @field_validator("roles")
+    @classmethod
+    def validate_roles(cls, values, info: ValidationInfo):
+        validate_game_roles(values.keys(), info)
+        return values
 
 
 class DisallowedWeapons(BaseModel):
@@ -133,6 +151,12 @@ class DisallowedWeapons(BaseModel):
         title="Violation Message",
         description="The message send to the player when they use one of the disallowed roles",
     )
+
+    @field_validator("weapons")
+    @classmethod
+    def validate_weapons(cls, values, info: ValidationInfo):
+        validate_game_weapons(values.keys(), info)
+        return values
 
 
 class EnforceCapFight(BaseModel):
@@ -170,6 +194,8 @@ class EnforceCapFight(BaseModel):
 
 
 class AutoModSeedingUserConfig(BaseUserConfig):
+    NAME = "AutoModSeedingUserConfig"
+
     enabled: bool = Field(
         default=False,
         title="Enable",
@@ -191,7 +217,7 @@ class AutoModSeedingUserConfig(BaseUserConfig):
         title="Whitelist Flags",
         description="Players having one of the flags will be excluded from actions of the Automod",
     )
-    immune_roles: list[Roles] = Field(
+    immune_roles: list[str] = Field(
         default_factory=list,
         title="Immune Roles",
         description="Players playing these roles are exempted from actions done by the Automod",
@@ -326,12 +352,8 @@ class AutoModSeedingUserConfig(BaseUserConfig):
 
     @field_validator("immune_roles")
     @classmethod
-    def validate_roles(cls, vs):
-        validated_immune_roles: list[Roles] = []
-        for raw_role in vs:
-            validated_immune_roles.append(Roles(raw_role))
-
-        return validated_immune_roles
+    def validate_roles(cls, values, info: ValidationInfo):
+        return validate_game_roles(values, info)
 
     @staticmethod
     def save_to_db(values: AutoModSeedingType, dry_run=False):
@@ -394,4 +416,4 @@ class AutoModSeedingUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(AutoModSeedingUserConfig.KEY(), validated_conf)
+            set_user_config(AutoModSeedingUserConfig.NAME, validated_conf)

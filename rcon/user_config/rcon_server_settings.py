@@ -77,6 +77,8 @@ class MessageEnhancements(BaseModel):
 
 
 class RconServerSettingsUserConfig(BaseUserConfig):
+    NAME = "RconServerSettingsUserConfig"
+
     # Use a callable to defer calling get_server_number until it's used and not on import
     short_name: str = Field(default_factory=lambda: f"MyServer{get_server_number()}")
     server_url: HttpUrl | None = Field(default=None)
@@ -147,4 +149,4 @@ class RconServerSettingsUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(RconServerSettingsUserConfig.KEY(), validated_conf)
+            set_user_config(RconServerSettingsUserConfig.NAME, validated_conf)

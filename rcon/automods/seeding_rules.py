@@ -29,7 +29,7 @@ from rcon.cache_utils import get_redis_client
 from rcon.logs.loop import on_match_start
 from rcon.maps import GameMode
 from rcon.rcon import StructuredLogLineType
-from rcon.types import GameStateType, GetDetailedPlayer, Roles
+from rcon.types import GameStateType, GetDetailedPlayer
 from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig
 
 SEEDING_RULES_RESET_SECS = 120
@@ -377,12 +377,10 @@ class SeedingRulesAutomod:
                 if (
                     not self._is_seeding_rule_disabled("disallowed_roles")
                     and drc.min_players <= server_player_count < drc.max_players
-                    and Roles(aplayer.role) in drc.roles
+                    and aplayer.role in drc.roles
                 ):
                     violations.append(
-                        drc.violation_message.format(
-                            role=drc.roles.get(Roles(aplayer.role))
-                        )
+                        drc.violation_message.format(role=drc.roles.get(aplayer.role))
                     )
 
                 if game_state["game_mode"] != GameMode.WARFARE:

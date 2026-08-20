@@ -16,6 +16,8 @@ VALID_CONDITIONS = ("AND", "OR")
 
 
 class AutoVoteKickUserConfig(BaseUserConfig):
+    NAME = "AutoVoteKickUserConfig"
+
     enabled: bool = Field(
         default=False,
         strict=True,
@@ -64,4 +66,4 @@ class AutoVoteKickUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(AutoVoteKickUserConfig.KEY(), validated_conf)
+            set_user_config(AutoVoteKickUserConfig.NAME, validated_conf)

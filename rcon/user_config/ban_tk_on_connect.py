@@ -1,9 +1,21 @@
 from datetime import timedelta
 from typing import TypedDict
 
-from pydantic import BaseModel, Field, HttpUrl, field_serializer
+from pydantic import (
+    BaseModel,
+    Field,
+    HttpUrl,
+    ValidationInfo,
+    field_serializer,
+    field_validator,
+)
 
-from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
+from rcon.user_config.utils import (
+    BaseUserConfig,
+    key_check,
+    set_user_config,
+    validate_game_weapons,
+)
 
 DISCORD_WEBHOOK_MESSAGE = "{player} banned for TK right after connecting"
 MESSAGE = "Your first action on the server was a TEAM KILL you were banned as a result"
@@ -64,6 +76,8 @@ class TimeFrame(BaseModel):
 
 
 class BanTeamKillOnConnectUserConfig(BaseUserConfig):
+    NAME = "BanTeamKillOnConnectUserConfig"
+
     enabled: bool = Field(default=False)
     message: str = Field(default=MESSAGE)
     author_name: str = Field(default="HATERS GONNA HATE")
@@ -79,6 +93,11 @@ class BanTeamKillOnConnectUserConfig(BaseUserConfig):
     teamkill_tolerance_count: int = Field(ge=0, default=1)
     discord_webhook_url: HttpUrl | None = Field(default=None)
     discord_webhook_message: str = Field(default=DISCORD_WEBHOOK_MESSAGE)
+
+    @field_validator("excluded_weapons")
+    @classmethod
+    def validate_weapons(cls, values, info: ValidationInfo):
+        return validate_game_weapons(values, info)
 
     @field_serializer("discord_webhook_url")
     def serialize_server_url(self, discord_webhook_url: HttpUrl, _info):
@@ -129,4 +148,4 @@ class BanTeamKillOnConnectUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(BanTeamKillOnConnectUserConfig.KEY(), validated_conf)
+            set_user_config(BanTeamKillOnConnectUserConfig.NAME, validated_conf)

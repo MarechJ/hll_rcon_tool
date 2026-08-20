@@ -1,9 +1,20 @@
 from typing import Annotated, TypedDict
 
-from pydantic import BaseModel, BeforeValidator, Field, HttpUrl, field_serializer
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    Field,
+    HttpUrl,
+    ValidationInfo,
+    field_serializer,
+)
 
-from rcon.types import Roles
-from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
+from rcon.user_config.utils import (
+    BaseUserConfig,
+    key_check,
+    set_user_config,
+    validate_game_roles,
+)
 
 ANNOUNCE_MESSAGE = "This server is under level thresholds control.\n\n{min_level_msg}{max_level_msg}{level_thresholds_msg}\nThanks for understanding."
 FORCEKICK_MESSAGE = "You violated level thresholds rules on this server: {violation}."
@@ -56,7 +67,7 @@ class AutoModLevelType(TypedDict):
     max_level_message: str
     violation_message: str
     levelbug_enabled: bool
-    level_thresholds: dict[Roles, "Role"]
+    level_thresholds: dict[str, "Role"]
 
 
 class Role(BaseModel):
@@ -65,14 +76,15 @@ class Role(BaseModel):
     min_level: int = Field(ge=0, le=500)
 
 
-def validate_level_thresholds(vs):
+def validate_level_thresholds(vs, info: ValidationInfo):
     """Required to prevent validation errors for empty values"""
     if not vs or vs == []:
         return {}
 
-    validated_level_threshholds: dict[Roles, Role] = {}
+    validate_game_roles(vs.keys(), info)
+    validated_level_threshholds: dict[str, Role] = {}
     for raw_role, obj in vs.items():
-        validated_level_threshholds[Roles(raw_role)] = Role(
+        validated_level_threshholds[str(raw_role)] = Role(
             label=obj.get("label"),
             min_players=obj.get("min_players"),
             min_level=obj.get("min_level"),
@@ -82,6 +94,8 @@ def validate_level_thresholds(vs):
 
 
 class AutoModLevelUserConfig(BaseUserConfig):
+    NAME = "AutoModLevelUserConfig"
+
     enabled: bool = Field(
         default=False,
         title="Enable",
@@ -248,7 +262,7 @@ class AutoModLevelUserConfig(BaseUserConfig):
         description="Hell Let Loose players may suffer a level bug, meaning the game presents them with level 1, even though they've another level. Enabling this flag will exclude all level 1 players from level requirements enforced by the level Automod",
     )
     level_thresholds: Annotated[
-        dict[Roles, Role], BeforeValidator(validate_level_thresholds)
+        dict[str, Role], BeforeValidator(validate_level_thresholds)
     ] = Field(
         default_factory=dict,
         title="Role Level Thresholds",
@@ -305,4 +319,4 @@ class AutoModLevelUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(AutoModLevelUserConfig.KEY(), validated_conf)
+            set_user_config(AutoModLevelUserConfig.NAME, validated_conf)

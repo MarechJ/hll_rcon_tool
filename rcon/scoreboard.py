@@ -584,9 +584,9 @@ if __name__ == "__main__":
     )
 
     try:
-        logger.info("Attempting to start scorebot")
+        logger.info("Attempting to start scoreboard")
         Base.metadata.create_all(ENGINE)
         run()
     except Exception:
-        logger.exception("scorebot failed unexpectedly")
+        logger.exception("scoreboard failed unexpectedly")
         raise
