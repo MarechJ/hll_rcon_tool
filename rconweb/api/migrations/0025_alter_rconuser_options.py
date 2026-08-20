@@ -44,14 +44,6 @@ def restore_scorebot_permissions(apps, schema_editor):
         )
 
 
-def delete_legacy_scorebot_config(apps, schema_editor):
-    with schema_editor.connection.cursor() as cursor:
-        cursor.execute(
-            "DELETE FROM user_config WHERE key LIKE %s",
-            ["%ScorebotUserConfig"],
-        )
-
-
 class Migration(migrations.Migration):
     dependencies = [
         ("api", "0024_alter_rconuser_options"),
@@ -61,10 +53,6 @@ class Migration(migrations.Migration):
         migrations.RunPython(
             rename_scoreboard_permissions,
             restore_scorebot_permissions,
-        ),
-        migrations.RunPython(
-            delete_legacy_scorebot_config,
-            migrations.RunPython.noop,
         ),
         migrations.AlterModelOptions(
             name="rconuser",

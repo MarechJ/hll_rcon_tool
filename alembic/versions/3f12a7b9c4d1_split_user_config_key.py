@@ -130,6 +130,15 @@ def upgrade():
         """
     )
 
+    # User configs are owned by Alembic rather than Django. Remove the retired
+    # Scorebot config here while the table is being migrated to its new schema.
+    op.execute(
+        """
+        DELETE FROM user_config
+        WHERE name = 'ScorebotUserConfig'
+        """
+    )
+
     for server_number, game_id in server_games.items():
         # Both values have been parsed as integers, so interpolating them is safe
         # and also keeps Alembic's offline SQL output usable.
