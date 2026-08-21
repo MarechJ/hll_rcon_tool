@@ -47,6 +47,8 @@ class AutoModTeamBalanceType(TypedDict):
 
 
 class AutoModTeamBalanceUserConfig(BaseUserConfig):
+    NAME = "AutoModTeamBalanceUserConfig"
+
     """Move whole squads at match end to rebalance the teams after a steamroll.
 
     A steamroll is defined by match DURATION (fast matches) or repeated same-team
