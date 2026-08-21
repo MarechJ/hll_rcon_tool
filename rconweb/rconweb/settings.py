@@ -122,6 +122,7 @@ CHANNEL_LAYERS = {
             "hosts": [
                 {
                     "address": os.getenv("HLL_REDIS_URL"),
+                    "socket_timeout": None,
                 }
             ],
         },
