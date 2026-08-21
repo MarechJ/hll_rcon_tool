@@ -493,9 +493,9 @@ class TeamBalanceAutomod:
         diff_before = abs(source_total - dest_total)
 
         feasible: list[tuple] = []  # (num_squads, score_gap, subset)
-        improving: list[tuple] = (
-            []
-        )  # fallback: (headcount_gap, num_squads, score_gap, subset)
+        improving: list[
+            tuple
+        ] = []  # fallback: (headcount_gap, num_squads, score_gap, subset)
 
         for k in range(n + 1):
             for combo in combinations(range(n), k):
@@ -658,7 +658,8 @@ class TeamBalanceAutomod:
         delay = self.config.switch_delay_seconds
         if delay:
             self.logger.info(
-                "Team balance: notified selected players; switching in %s seconds", delay
+                "Team balance: notified selected players; switching in %s seconds",
+                delay,
             )
             timer = Timer(delay, self._switch_players, args=(rcon, moves, author))
             timer.daemon = True

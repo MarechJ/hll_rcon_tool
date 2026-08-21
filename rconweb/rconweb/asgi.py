@@ -16,6 +16,7 @@ from django.core.asgi import get_asgi_application
 
 django_asgi_app = get_asgi_application()
 
+
 def get_application():
     # These modules access Django settings during import.
     from api import barricade, log_stream
