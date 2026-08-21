@@ -152,6 +152,7 @@ export const cmd = {
   GET_SEEDING_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_auto_mod_seeding_config", ...params }),
   GET_NO_LEADER_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_auto_mod_no_leader_config", ...params }),
   GET_NO_SOLO_TANK_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_auto_mod_solo_tank_config", ...params }),
+  GET_TEAM_BALANCE_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_auto_mod_team_balance_config", ...params }),
   GET_LEVEL_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_auto_mod_level_config", ...params }),
   GET_NAME_KICKS_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_name_kick_config", ...params }),
   GET_VAC_CONFIG: (params) => requestFactory({ method: "GET", cmd: "get_vac_game_bans_config", ...params }),

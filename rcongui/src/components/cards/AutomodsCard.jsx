@@ -42,6 +42,14 @@ const AutomodsCard = () => {
     },
   });
 
+  const { data: teamBalance } = useQuery({
+    queryKey: ["settings", "automods", "team-balance"],
+    queryFn: async () => {
+      const result = await cmd.GET_TEAM_BALANCE_CONFIG();
+      return result;
+    },
+  });
+
   const { data: level } = useQuery({
     queryKey: ["settings", "automods", "level"],
     queryFn: async () => {
@@ -122,6 +130,14 @@ const AutomodsCard = () => {
       webhook: noSoloTank?.discord_webhook_url,
       category: 'Automods',
       path: '/settings/automods/no-solo-tank'
+    },
+    { 
+      key: 'team_balance', 
+      label: 'Team Balance', 
+      value: teamBalance?.enabled,
+      webhook: teamBalance?.discord_webhook_url,
+      category: 'Automods',
+      path: '/settings/automods/team-balance'
     },
     { 
       key: 'level', 

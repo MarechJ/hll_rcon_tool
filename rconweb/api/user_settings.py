@@ -8,6 +8,7 @@ from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig
 from rcon.user_config.auto_mod_solo_tank import AutoModNoSoloTankUserConfig
+from rcon.user_config.auto_mod_team_balance import AutoModTeamBalanceUserConfig
 from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.chat_commands import ChatCommandsUserConfig
@@ -132,6 +133,19 @@ def describe_auto_mod_solo_tank_config(request):
 
     return api_response(
         result=AutoModNoSoloTankUserConfig.model_json_schema(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@require_http_methods(["GET"])
+def describe_auto_mod_team_balance_config(request):
+    command_name = "describe_auto_mod_team_balance_config"
+
+    return api_response(
+        result=AutoModTeamBalanceUserConfig.model_json_schema(),
         command=command_name,
         failed=False,
     )
