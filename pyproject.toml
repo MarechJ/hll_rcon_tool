@@ -28,7 +28,7 @@ dependencies = [
     "pydantic==2.13.4",
     "python-dateutil==2.9.0.post0",
     "pytz>=2026.3.post1",
-    "redis==8.1.0",
+    "redis==7.4.1",
     "requests==2.34.2",
     "rq==2.10.0",
     "rq-scheduler==0.14.0",
