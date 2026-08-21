@@ -1,3 +1,9 @@
+import { getAllRoles } from "@/constants/roles";
+
+const availableRoles = getAllRoles()
+  .map(({ value }) => `'${value}'`)
+  .join(", ");
+
 const levelAutoModNotes = `
         {
             /* 
@@ -222,8 +228,7 @@ const levelAutoModNotes = `
                 Restricts access to roles when :
                 player's level is below 'min_level' AND server's players count is >= 'min_players'.
                 Available roles :
-                    'armycommander', 'officer', 'antitank', 'automaticrifleman', 'assault', 'heavymachinegunner',
-                    'support', 'sniper', 'spotter', 'rifleman', 'crewman', 'tankcommander', 'engineer', 'medic'.
+                    ${availableRoles}.
                 Label's values are the roles translations in your language.
                 - To disable, leave roles's value empty. ie. "level_thresholds: {}"
                 - To enable level enforcement at all times, set 'min_players' at 0.

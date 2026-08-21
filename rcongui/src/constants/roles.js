@@ -1,65 +1,60 @@
-export const ROLES = {
-  COMMANDER: "armycommander",
-  SQUAD_LEAD: "officer",
-  RIFLEMAN: "rifleman",
-  ENGINEER: "engineer",
-  MEDIC: "medic",
-  ANTI_TANK: "antitank",
-  AUTOMATIC_RIFLEMAN: "automaticrifleman",
-  ASSAULT: "assault",
-  MACHINE_GUNNER: "heavymachinegunner",
-  SUPPORT: "support",
-  SPOTTER: "spotter",
-  SNIPER: "sniper",
-  TANK_COMMANDER: "tankcommander",
-  CREWMAN: "crewman",
-  ARTILLERY_OBSERVER: "artilleryobserver",
-  OPERATOR: "operator",
-  GUNNER: "gunner",
-};
+import { runtimeConfig } from "@/config/runtimeConfig";
 
-export const ROLES_TO_LABELS = {
-  [ROLES.COMMANDER]: "Commander",
-  [ROLES.SQUAD_LEAD]: "Squad Lead",
-  [ROLES.RIFLEMAN]: "Rifleman",
-  [ROLES.ENGINEER]: "Engineer",
-  [ROLES.MEDIC]: "Medic",
-  [ROLES.ANTI_TANK]: "Anti-Tank",
-  [ROLES.AUTOMATIC_RIFLEMAN]: "Automatic Rifleman",
-  [ROLES.ASSAULT]: "Assault",
-  [ROLES.MACHINE_GUNNER]: "Machinegunner",
-  [ROLES.SUPPORT]: "Support",
-  [ROLES.SPOTTER]: "Spotter",
-  [ROLES.SNIPER]: "Sniper",
-  [ROLES.TANK_COMMANDER]: "Tank Commander",
-  [ROLES.CREWMAN]: "Crewman",
-  [ROLES.ARTILLERY_OBSERVER]: "Artillery Observer",
-  [ROLES.OPERATOR]: "Operator",
-  [ROLES.GUNNER]: "Gunner",
-};
-
-
-export const getAllRoles = () => [
-  { value: ROLES.COMMANDER, label: ROLES_TO_LABELS[ROLES.COMMANDER] },
-  { value: ROLES.SQUAD_LEAD, label: ROLES_TO_LABELS[ROLES.SQUAD_LEAD] },
-  { value: ROLES.RIFLEMAN, label: ROLES_TO_LABELS[ROLES.RIFLEMAN] },
-  { value: ROLES.ASSAULT, label: ROLES_TO_LABELS[ROLES.ASSAULT] },
-  { value: ROLES.AUTOMATIC_RIFLEMAN, label: ROLES_TO_LABELS[ROLES.AUTOMATIC_RIFLEMAN] },
-  { value: ROLES.MEDIC, label: ROLES_TO_LABELS[ROLES.MEDIC] },
-  { value: ROLES.SUPPORT, label: ROLES_TO_LABELS[ROLES.SUPPORT] },
-  { value: ROLES.MACHINE_GUNNER, label: ROLES_TO_LABELS[ROLES.MACHINE_GUNNER] },
-  { value: ROLES.ANTI_TANK, label: ROLES_TO_LABELS[ROLES.ANTI_TANK] },
-  { value: ROLES.ENGINEER, label: ROLES_TO_LABELS[ROLES.ENGINEER] },
-  { value: ROLES.TANK_COMMANDER, label: ROLES_TO_LABELS[ROLES.TANK_COMMANDER] },
-  { value: ROLES.CREWMAN, label: ROLES_TO_LABELS[ROLES.CREWMAN] },
-  { value: ROLES.SPOTTER, label: ROLES_TO_LABELS[ROLES.SPOTTER] },
-  { value: ROLES.SNIPER, label: ROLES_TO_LABELS[ROLES.SNIPER] },
-  { value: ROLES.ARTILLERY_OBSERVER, label: ROLES_TO_LABELS[ROLES.ARTILLERY_OBSERVER] },
-  { value: ROLES.OPERATOR, label: ROLES_TO_LABELS[ROLES.OPERATOR] },
-  { value: ROLES.GUNNER, label: ROLES_TO_LABELS[ROLES.GUNNER] },
+const HLL_ROLES = [
+  { value: "armycommander", label: "Commander" },
+  { value: "officer", label: "Squad Lead" },
+  { value: "rifleman", label: "Rifleman" },
+  { value: "assault", label: "Assault" },
+  { value: "automaticrifleman", label: "Automatic Rifleman" },
+  { value: "medic", label: "Medic" },
+  { value: "support", label: "Support" },
+  { value: "heavymachinegunner", label: "Machinegunner" },
+  { value: "antitank", label: "Anti-Tank" },
+  { value: "engineer", label: "Engineer" },
+  { value: "tankcommander", label: "Tank Commander" },
+  { value: "crewman", label: "Crewman" },
+  { value: "spotter", label: "Spotter" },
+  { value: "sniper", label: "Sniper" },
+  { value: "artilleryobserver", label: "Artillery Observer" },
+  { value: "operator", label: "Operator" },
+  { value: "gunner", label: "Gunner" },
 ];
 
-export const getRoleLabel = (roleValue) => {
-  return ROLES_TO_LABELS[roleValue] || roleValue;
+const HLLV_ROLES = [
+  { value: "armycommander", label: "Commander" },
+  { value: "squadleader", label: "Squad Leader" },
+  { value: "rifleman", label: "Rifleman" },
+  { value: "grenadier", label: "Grenadier" },
+  { value: "specialist", label: "Specialist" },
+  { value: "medic", label: "Medic" },
+  { value: "heavymachinegunner", label: "Machine Gunner" },
+  { value: "engineer", label: "Engineer" },
+  { value: "tankcommander", label: "Tank Commander" },
+  { value: "crewman", label: "Crewman" },
+  { value: "sniper", label: "Sniper" },
+  { value: "spotter", label: "Spotter" },
+  { value: "mortarobserver", label: "Mortar Observer" },
+  { value: "mortargunner", label: "Mortar Gunner" },
+  { value: "mortarsupport", label: "Mortar Support" },
+  { value: "helicopterpilot", label: "Helicopter Pilot" },
+  { value: "helicopterlogisticsofficer", label: "Helicopter Logistics Officer" },
+];
+
+const ROLES_BY_GAME = {
+  hll: HLL_ROLES,
+  hllv: HLLV_ROLES,
 };
 
+const LABELS_BY_GAME = Object.fromEntries(
+  Object.entries(ROLES_BY_GAME).map(([game, roles]) => [
+    game,
+    Object.fromEntries(roles.map(({ value, label }) => [value, label])),
+  ])
+);
+
+export const getAllRoles = () =>
+  ROLES_BY_GAME[runtimeConfig.HLL_GAME] ?? HLL_ROLES;
+
+export const getRoleLabel = (roleValue) =>
+  (LABELS_BY_GAME[runtimeConfig.HLL_GAME] ?? LABELS_BY_GAME.hll)[roleValue] ??
+  roleValue;

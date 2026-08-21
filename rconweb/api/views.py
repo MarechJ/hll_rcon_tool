@@ -29,10 +29,11 @@ from rcon.types import (
     PublicInfoPlayerType,
     PublicInfoScoreType,
     PublicInfoType,
+    ServerInfo,
 )
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.utils import InvalidKeysConfigurationError
-from rcon.utils import MapsHistory, get_server_number
+from rcon.utils import MapsHistory
 
 from .audit_log import auto_record_audit, record_audit
 from .auth import AUTHORIZATION, RconJsonResponse, api_response, login_required
@@ -359,12 +360,15 @@ def expose_api_endpoint(
 @require_http_methods(["GET"])
 def get_connection_info(request):
     config = RconServerSettingsUserConfig.load_from_db()
+    server = ServerInfo.from_env()
     return api_response(
         {
             "name": rcon_api.get_name(),
+            "short_name": config.short_name,
+            "game": server.game,
             "port": os.getenv("RCONWEB_PORT"),
             "link": str(config.server_url) if config.server_url else config.server_url,
-            "server_number": int(get_server_number()),
+            "server_number": server.number,
         },
         failed=False,
         command="get_connection_info",
