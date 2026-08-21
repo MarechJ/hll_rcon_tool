@@ -97,22 +97,26 @@ def upgrade():
         sa.Column("name", sa.String(), nullable=True),
     )
 
-    # Fail with a useful error instead of silently producing invalid data or
-    # failing later while converting the server number to an integer.
+    # This table historically accepted arbitrary JSON, so not every row is a
+    # user config. Discard rows that cannot be represented by the new schema
+    # before attempting to cast the server-number prefix.
     op.execute(
         """
-        DO $$
-        BEGIN
-            IF EXISTS (
-                SELECT 1
-                FROM user_config
-                WHERE key IS NULL OR key !~ '^[0-9]+_.+$'
-            ) THEN
-                RAISE EXCEPTION
-                    'Cannot split malformed user_config key; expected {server_number}_{name}';
-            END IF;
-        END
-        $$;
+        DELETE FROM user_config
+        WHERE key IS NULL OR key !~ '^[0-9]+_.+$'
+        """
+    )
+
+    # Valid-looking configs may belong to servers that have since been removed
+    # from the installation. Numeric avoids overflowing on an unusually large
+    # digit-only prefix; all retained values are configured integer IDs.
+    configured_server_numbers = ", ".join(
+        str(server_number) for server_number in sorted(server_games)
+    )
+    op.execute(
+        f"""
+        DELETE FROM user_config
+        WHERE split_part(key, '_', 1)::numeric NOT IN ({configured_server_numbers})
         """
     )
 
