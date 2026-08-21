@@ -362,6 +362,8 @@ def get_connection_info(request):
     return api_response(
         {
             "name": rcon_api.get_name(),
+            "short_name": config.short_name,
+            "game": os.getenv("HLL_GAME", "hll"),
             "port": os.getenv("RCONWEB_PORT"),
             "link": str(config.server_url) if config.server_url else config.server_url,
             "server_number": int(get_server_number()),
