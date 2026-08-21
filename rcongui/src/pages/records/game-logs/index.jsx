@@ -5,10 +5,13 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import {
   Autocomplete,
+  Avatar,
   Box,
   Button,
   Divider,
   IconButton,
+  ListItemAvatar,
+  ListItemText,
   Stack,
   TextField,
 } from "@mui/material";
@@ -233,8 +236,7 @@ const GameLogsPage = () => {
 
 const GameLogsForm = ({ fields, onSubmit }) => {
   const navigation = useNavigation();
-  const server = useGlobalStore((state) => state.serverState);
-  const otherServers = useGlobalStore((state) => state.servers);
+  const allServers = useGlobalStore((state) => state.servers);
   const [formFields, setFormFields] = useState({
     player_name: fields.player_name || "",
     player_id: fields.player_id || "",
@@ -251,15 +253,23 @@ const GameLogsForm = ({ fields, onSubmit }) => {
   const [actionInputValue, setActionInputValue] = useState("");
 
   const serverOptions = useMemo(() => {
-    if (!server || !otherServers) return [];
+    if (!allServers) return [];
 
-    const options = [server, ...otherServers].map((server) => ({
-      label: server.name,
+    const options = allServers.map((server) => ({
+      label: server.short_name ?? server.name,
       value: server.server_number,
+      game: server.game ?? "hll",
     }));
 
+    options.sort((a, b) => a.label.localeCompare(b.label))
+
     return options;
-  }, [server, otherServers]);
+  }, [allServers]);
+
+    const games = {
+      hll: "HLL:WW2",
+      hllv: "HLL: VIETNAM",
+    }
 
   const handleInputChange = (e) => {
     const { name, value, checked } = e.target;
@@ -394,8 +404,21 @@ const GameLogsForm = ({ fields, onSubmit }) => {
                 <MenuItem value={0}>All servers</MenuItem>
                 {serverOptions.map((option) => (
                   <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
+                  <ListItemAvatar>
+                    <Avatar alt={option.label ?? "<server_name>"} src={`/icons/games/${option.game}_logo.webp`} />
+                  </ListItemAvatar>
+                  <ListItemText
+                    sx={{
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                    primary={option.label}
+                    secondary={
+                      `[${option.value ?? "<server_number>"}] - ${games[option.game] ?? "<unknown_game>"}`
+                    }
+                  />
+                </MenuItem>
                 ))}
               </Select>
             </FormControl>

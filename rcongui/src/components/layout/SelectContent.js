@@ -5,9 +5,9 @@ import ListItemText from "@mui/material/ListItemText";
 import ListSubheader from "@mui/material/ListSubheader";
 import Select, { selectClasses } from "@mui/material/Select";
 import { styled } from "@mui/material/styles";
-import DevicesRoundedIcon from "@mui/icons-material/DevicesRounded";
 import { useGlobalStore } from "@/stores/global-state";
 import { useNavigate } from 'react-router-dom';
+import { Skeleton } from "@mui/material";
 
 const Avatar = styled(MuiAvatar)(({ theme }) => ({
   width: 28,
@@ -23,9 +23,13 @@ const ListItemAvatar = styled(MuiListItemAvatar)({
 });
 
 export default function SelectContent() {
-  const thisServer = useGlobalStore((state) => state.serverState);
-  const otherServers = useGlobalStore((state) => state.servers);
+  const servers = useGlobalStore((state) => state.servers);
+  const thisServer = servers.find(s => s.this_server)
   const navigate = useNavigate();
+  const games = {
+    hll: "HLL:WW2",
+    hllv: "HLL: VIETNAM",
+  }
 
   const handleChange = (servers) => (event) => {
     const serverNumber = Number(event.target.value);
@@ -54,13 +58,11 @@ export default function SelectContent() {
     }
   };
 
-  const servers = thisServer ? [thisServer, ...otherServers] : null;
-
   return (
     <Select
-      labelId="server-select"
-      id="server-simple-select"
-      value={thisServer?.server_number ?? ""}
+    labelId="server-select"
+    id="server-simple-select"
+    value={thisServer?.server_number ?? ""}
       onChange={handleChange(servers)}
       displayEmpty
       inputProps={{ "aria-label": "Select server" }}
@@ -89,12 +91,10 @@ export default function SelectContent() {
     >
       <ListSubheader sx={{ pt: 0 }}>Servers</ListSubheader>
       {servers ? (
-        servers.map((server) => (
+        servers.sort((a, b) => (a.short_name ?? a.name).localeCompare((b.short_name ?? b.name))).map((server) => (
           <MenuItem key={server.server_number} value={server.server_number}>
             <ListItemAvatar>
-              <Avatar alt={server.name ?? "<server_name>"}>
-                <DevicesRoundedIcon sx={{ fontSize: "1rem" }} />
-              </Avatar>
+              <Avatar alt={server.name ?? "<server_name>"} src={`/icons/games/${server.game}_logo.webp`} />
             </ListItemAvatar>
             <ListItemText
               sx={{
@@ -102,9 +102,9 @@ export default function SelectContent() {
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
               }}
-              primary={server.name ?? "<server_name>"}
+              primary={server.short_name ?? server.name ?? "<server_name>"}
               secondary={
-                `Server - ${server.server_number}` ?? "<server_number>"
+                `[${server.server_number ?? "<server_number>"}] - ${games[server.game] ?? "<unknown_game>"}`
               }
             />
           </MenuItem>
@@ -113,7 +113,7 @@ export default function SelectContent() {
         <MenuItem value={""}>
           <ListItemAvatar>
             <Avatar alt={"?"}>
-              <DevicesRoundedIcon sx={{ fontSize: "1rem" }} />
+              <Skeleton variant="circular" />
             </Avatar>
           </ListItemAvatar>
           <ListItemText
