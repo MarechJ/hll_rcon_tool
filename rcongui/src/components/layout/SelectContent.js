@@ -27,7 +27,7 @@ export default function SelectContent() {
   const thisServer = servers.find(s => s.this_server)
   const navigate = useNavigate();
   const games = {
-    hll: "HLL:WW2",
+    hll: "HLL: WW2",
     hllv: "HLL: VIETNAM",
   }
 

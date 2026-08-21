@@ -267,7 +267,7 @@ const GameLogsForm = ({ fields, onSubmit }) => {
   }, [allServers]);
 
     const games = {
-      hll: "HLL:WW2",
+      hll: "HLL: WW2",
       hllv: "HLL: VIETNAM",
     }
 
