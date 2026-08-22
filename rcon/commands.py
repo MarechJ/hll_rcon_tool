@@ -780,7 +780,9 @@ class ServerCtl:
         return sequence["maps"][next_index]
 
     def set_dynamic_weather_enabled(self, map_name: str, enabled: bool):
-        self.exchange("SetDynamicWeatherEnabled", 2, {"MapId": map_name, "Enable": enabled})
+        self.exchange(
+            "SetDynamicWeatherEnabled", 2, {"MapId": map_name, "Enable": enabled}
+        )
 
 
 class HLLServerCtl(ServerCtl):
@@ -831,10 +833,13 @@ class HLLVServerCtl(ServerCtl):
 
     def get_game_layouts(self):
         return self.exchange("GetSectorLayout", 2).content_dict["entries"]
-    
-    def get_game_layout(self, map_name: str) -> Optional[list[int]]: 
+
+    def get_game_layout(self, map_name: str) -> Optional[list[int]]:
         layouts = self.exchange("GetSectorLayout", 2).content_dict["entries"]
-        return next(iter([l["sectors"] for l in layouts if l["mapId"] == map_name]), None)
+        return next(
+            iter([l["sectors"] for l in layouts if l["mapId"] == map_name]), None
+        )
+
 
 if __name__ == "__main__":
     import rcon.settings

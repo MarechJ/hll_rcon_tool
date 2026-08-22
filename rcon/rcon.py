@@ -1311,7 +1311,9 @@ class Rcon(ServerCtl):
         self,
         objectives: Sequence[str | int | None],
         objective_rows: Sequence[Sequence[str | int]],
-        random_constraints: GameLayoutRandomConstraints = GameLayoutRandomConstraints(0),
+        random_constraints: GameLayoutRandomConstraints = GameLayoutRandomConstraints(
+            0
+        ),
     ) -> list[str | int]:
         if len(objectives) != 5:
             raise ValueError("5 objectives must be provided")
@@ -1369,9 +1371,13 @@ class Rcon(ServerCtl):
                 # Get the indices of the objectives of neighboring rows, if they are already determined
                 neighbors = []
                 if row > 0 and parsed_objs[row - 1] is not None:
-                    neighbors.append(objective_rows[row - 1].index(parsed_objs[row - 1]))
+                    neighbors.append(
+                        objective_rows[row - 1].index(parsed_objs[row - 1])
+                    )
                 if row < 4 and parsed_objs[row + 1] is not None:
-                    neighbors.append(objective_rows[row + 1].index(parsed_objs[row + 1]))
+                    neighbors.append(
+                        objective_rows[row + 1].index(parsed_objs[row + 1])
+                    )
 
                 # Skip this row for now if neither of its neighbors had their objective determined yet
                 if not neighbors:
@@ -1641,11 +1647,12 @@ class Rcon(ServerCtl):
 
 
 class HLLRcon(Rcon, HLLServerCtl):
-
     def set_game_layout(
         self,
         objectives: Sequence[str | int | None],
-        random_constraints: GameLayoutRandomConstraints = GameLayoutRandomConstraints(0),
+        random_constraints: GameLayoutRandomConstraints = GameLayoutRandomConstraints(
+            0
+        ),
     ):
         selected = self._generate_game_layout(
             objectives,
@@ -1660,12 +1667,34 @@ class HLLRcon(Rcon, HLLServerCtl):
 
 
 class HLLVRcon(Rcon, HLLVServerCtl):
+    def get_game_layout(self, map_name: str) -> Optional[list[str]]:
+        layout = super().get_game_layout(map_name)
+        if not layout:
+            return None
+        named_rows = self.get_objective_rows(map_name)
+        out: list[str] = []
+        for i, row in enumerate(named_rows):
+            out.append(row[layout[i]])
+        return out
+
+    def get_game_layouts(self) -> Optional[list[list[dict]]]:
+        layouts = super().get_game_layouts()
+        out = []
+        for l in layouts:
+            named_layout = []
+            named_rows = self.get_objective_rows(l["mapId"])
+            for i, row in enumerate(named_rows):
+                named_layout.append(row[l["sectors"][i]])
+            out.append({"mapId": l["mapId"], "sectors": named_layout})
+        return out
 
     def set_game_layout(
         self,
         map_name: str,
         objectives: Sequence[str | int | None],
-        random_constraints: GameLayoutRandomConstraints = GameLayoutRandomConstraints(0),
+        random_constraints: GameLayoutRandomConstraints = GameLayoutRandomConstraints(
+            0
+        ),
     ):
         objective_rows = self.get_objective_rows(map_name)
         selected = self._generate_game_layout(
@@ -1681,13 +1710,11 @@ class HLLVRcon(Rcon, HLLVServerCtl):
         HLLVServerCtl.set_game_layout(self, map_name, selected_indices)
         return selected
 
-    def get_objective_rows(self, map_name: str) -> List[List[str]]:
+    def get_objective_rows(self, map_name: str) -> list[list[str]]:
         try:
             layer = hllrcon.HLLVLayer.by_id(map_name)
         except ValueError as exc:
-            raise ValueError(
-                f"Unknown HLL Vietnam layer ID: {map_name!r}"
-            ) from exc
+            raise ValueError(f"Unknown HLL Vietnam layer ID: {map_name!r}") from exc
 
         if layer.map.id.casefold() == "unknown":
             raise ValueError(f"Unknown HLL Vietnam layer ID: {map_name!r}")
@@ -1699,10 +1726,7 @@ class HLLVRcon(Rcon, HLLVServerCtl):
                 for candidate in hllrcon.HLLVLayer.all()
                 if candidate.map == map_
                 and len(candidate.sectors) == 5
-                and all(
-                    len(sector.capture_zones) == 3
-                    for sector in candidate.sectors
-                )
+                and all(len(sector.capture_zones) == 3 for sector in candidate.sectors)
             ),
             None,
         )
