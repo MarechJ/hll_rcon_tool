@@ -595,7 +595,7 @@ class CachedLiveGameStats(TypedDict):
 
 class GameLayout(TypedDict):
     requested: Sequence[str | int | None]
-    set: list[str]
+    set: list[str | int]
 
 
 class MapScore(TypedDict):
