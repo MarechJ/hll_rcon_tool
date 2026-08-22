@@ -5,7 +5,7 @@ from collections.abc import Generator, Sequence
 from contextlib import contextmanager, nullcontext
 from datetime import timedelta
 from functools import wraps
-from typing import Generator, Optional, Sequence, Any, List
+from typing import Any
 
 from rcon.connection import Handle, HLLCommandError, HLLConnection, Response
 from rcon.game import get_game_profile
@@ -834,10 +834,13 @@ class HLLVServerCtl(ServerCtl):
     def get_game_layouts(self):
         return self.exchange("GetSectorLayout", 2).content_dict["entries"]
 
-    def get_game_layout(self, map_name: str) -> Optional[list[int]]:
+    def get_game_layout(self, map_name: str) -> list[int] | None:
         layouts = self.exchange("GetSectorLayout", 2).content_dict["entries"]
         return next(
-            iter([l["sectors"] for l in layouts if l["mapId"] == map_name]), None
+            iter(
+                [layout["sectors"] for layout in layouts if layout["mapId"] == map_name]
+            ),
+            None,
         )
 
 

@@ -8,9 +8,9 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from functools import cached_property
 from itertools import chain
-from typing import Iterable, List, Literal, Optional, Sequence, cast, overload
-import hllrcon
+from typing import Literal, Optional, cast, overload
 
+import hllrcon
 from dateutil import parser
 
 import rcon.settings
@@ -66,6 +66,8 @@ from rcon.utils import (
     get_server_number,
     parse_raw_player_info,
 )
+
+_DEFAULT_GAME_LAYOUT_RANDOM_CONSTRAINTS = GameLayoutRandomConstraints(0)
 
 PLAYER_ID = "player_id"
 NAME = "name"
@@ -1311,9 +1313,7 @@ class Rcon(ServerCtl):
         self,
         objectives: Sequence[str | int | None],
         objective_rows: Sequence[Sequence[str | int]],
-        random_constraints: GameLayoutRandomConstraints = GameLayoutRandomConstraints(
-            0
-        ),
+        random_constraints: GameLayoutRandomConstraints = _DEFAULT_GAME_LAYOUT_RANDOM_CONSTRAINTS,
     ) -> list[str | int]:
         if len(objectives) != 5:
             raise ValueError("5 objectives must be provided")
@@ -1650,9 +1650,7 @@ class HLLRcon(Rcon, HLLServerCtl):
     def set_game_layout(
         self,
         objectives: Sequence[str | int | None],
-        random_constraints: GameLayoutRandomConstraints = GameLayoutRandomConstraints(
-            0
-        ),
+        random_constraints: GameLayoutRandomConstraints = _DEFAULT_GAME_LAYOUT_RANDOM_CONSTRAINTS,
     ):
         selected = self._generate_game_layout(
             objectives,
@@ -1667,7 +1665,7 @@ class HLLRcon(Rcon, HLLServerCtl):
 
 
 class HLLVRcon(Rcon, HLLVServerCtl):
-    def get_game_layout(self, map_name: str) -> Optional[list[str]]:
+    def get_game_layout(self, map_name: str) -> list[str] | None:
         layout = super().get_game_layout(map_name)
         if not layout:
             return None
@@ -1677,24 +1675,22 @@ class HLLVRcon(Rcon, HLLVServerCtl):
             out.append(row[layout[i]])
         return out
 
-    def get_game_layouts(self) -> Optional[list[list[dict]]]:
+    def get_game_layouts(self) -> list[list[dict]] | None:
         layouts = super().get_game_layouts()
         out = []
-        for l in layouts:
+        for layout in layouts:
             named_layout = []
-            named_rows = self.get_objective_rows(l["mapId"])
+            named_rows = self.get_objective_rows(layout["mapId"])
             for i, row in enumerate(named_rows):
-                named_layout.append(row[l["sectors"][i]])
-            out.append({"mapId": l["mapId"], "sectors": named_layout})
+                named_layout.append(row[layout["sectors"][i]])
+            out.append({"mapId": layout["mapId"], "sectors": named_layout})
         return out
 
     def set_game_layout(
         self,
         map_name: str,
         objectives: Sequence[str | int | None],
-        random_constraints: GameLayoutRandomConstraints = GameLayoutRandomConstraints(
-            0
-        ),
+        random_constraints: GameLayoutRandomConstraints = _DEFAULT_GAME_LAYOUT_RANDOM_CONSTRAINTS,
     ):
         objective_rows = self.get_objective_rows(map_name)
         selected = self._generate_game_layout(

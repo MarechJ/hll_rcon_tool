@@ -1,10 +1,10 @@
 from collections.abc import Callable
-from typing import Any, TypeAlias
+from typing import Any
 
 from rcon.types import GameEnum
 
-EndpointPermission: TypeAlias = str | set[str] | list[str]
-EndpointDefinition: TypeAlias = tuple[EndpointPermission, list[str]]
+type EndpointPermission = str | set[str] | list[str]
+type EndpointDefinition = tuple[EndpointPermission, list[str]]
 
 
 GAME_ENDPOINTS: dict[GameEnum, dict[str, EndpointDefinition]] = {
