@@ -5,6 +5,7 @@ import { queryOptions } from "@tanstack/react-query";
 export const mapsManagerQueryKeys = {
   currentMap: [{ queryIdentifier: "get_map" }],
   maps: [{ queryIdentifier: "get_maps" }],
+  mapsWithObjectives: [{ queryIdentifier: "get_maps", include: "objectives" }],
   mapRotation: [{ queryIdentifier: "get_map_rotation" }],
   mapRotationShuffle: [{ queryIdentifier: "get_map_rotation_shuffle" }],
   gameState: [{ queryIdentifier: "get_gamestate" }],
@@ -13,6 +14,7 @@ export const mapsManagerQueryKeys = {
   votemapWhitelist: [{ queryIdentifier: "get_votemap_whitelist" }],
   votemapResults: [{ queryIdentifier: "get_votemap_results" }],
   objectives: [{ queryIdentifier: "get_objective_rows" }],
+  gameLayouts: [{ queryIdentifier: "get_game_layouts" }],
 };
 
 // Define query options for fetching data
@@ -27,6 +29,12 @@ export const mapsManagerQueryOptions = {
     queryOptions({
       queryKey: mapsManagerQueryKeys.maps,
       queryFn: cmd.GET_MAPS,
+    }),
+
+  mapsWithObjectives: () =>
+    queryOptions({
+      queryKey: mapsManagerQueryKeys.mapsWithObjectives,
+      queryFn: () => cmd.GET_MAPS({ params: { include: "objectives" } }),
     }),
 
   // Get current map rotation
@@ -55,12 +63,12 @@ export const mapsManagerQueryOptions = {
     queryOptions({
       queryKey: mapsManagerQueryKeys.votemapStatus,
       queryFn: async () => {
-        const updated = new Date()
-        const res = await cmd.GET_VOTEMAP_STATUS()
+        const updated = new Date();
+        const res = await cmd.GET_VOTEMAP_STATUS();
         return {
           ...res,
           updated,
-        }
+        };
       },
     }),
 
@@ -68,7 +76,7 @@ export const mapsManagerQueryOptions = {
     queryOptions({
       queryKey: mapsManagerQueryKeys.votemapResults,
       queryFn: async () => {
-        return await cmd.GET_VOTEMAP_RESULTS()
+        return await cmd.GET_VOTEMAP_RESULTS();
       },
     }),
 
@@ -89,6 +97,12 @@ export const mapsManagerQueryOptions = {
     queryOptions({
       queryKey: mapsManagerQueryKeys.objectives,
       queryFn: cmd.GET_MAP_OBJECTIVES,
+    }),
+
+  gameLayouts: () =>
+    queryOptions({
+      queryKey: mapsManagerQueryKeys.gameLayouts,
+      queryFn: cmd.GET_GAME_LAYOUTS,
     }),
 };
 
@@ -127,6 +141,22 @@ export const mapsManagerMutationOptions = {
       }),
   },
 
+  saveGameLayout: {
+    mutationFn: ({ map_name, objectives, random_constraints }) =>
+      cmd.SET_MAP_OBJECTIVES({
+        payload: { map_name, objectives, random_constraints },
+        throwRouteError: false,
+      }),
+  },
+
+  removeGameLayout: {
+    mutationFn: (mapName) =>
+      cmd.REMOVE_GAME_LAYOUT({
+        payload: { map_name: mapName },
+        throwRouteError: false,
+      }),
+  },
+
   resetVotemapState: {
     mutationFn: () =>
       cmd.RESET_VOTEMAP_STATE({
@@ -160,7 +190,7 @@ export const mapsManagerMutationOptions = {
   sendVotemapReminder: {
     mutationFn: () => cmd.SEND_VOTEMAP_REMINDER({ throwRouteError: false }),
   },
-  
+
   addMapToVotemap: {
     mutationFn: (map_name) =>
       cmd.ADD_MAP_TO_VOTEMAP({

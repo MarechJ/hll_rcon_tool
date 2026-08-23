@@ -1,6 +1,6 @@
 import { minWidth } from "@mui/system";
 import { getMapLayerImageSrc, getTacMapImageSrc } from "./helpers";
-import { styled } from "@mui/material";
+import { Skeleton, styled } from "@mui/material";
 
 const MapWrapper = styled("div")({
   position: "absolute",
@@ -128,18 +128,22 @@ const isButtonDisabled = (state, index, map, objectives) => {
 export function MapObjectivesPicker({ objectives, map, onClick, loading }) {
   return (
     <ObjectivesContainer>
-      <MapTitle>{map.pretty_name}</MapTitle>
+      <MapTitle>{loading ? "Loading..." : !map ? "Select map" : map.pretty_name}</MapTitle>
       <InteractiveContainer>
         <MapWrapper>
-          <MapImg
-            src={loading ? getMapLayerImageSrc(map) : getTacMapImageSrc(map)}
-            alt=""
-            draggable={false}
-          />
+          {loading || !map ? (
+            <Skeleton width={"100%"} height={"100%"} />
+          ) : (
+            <MapImg
+              src={getTacMapImageSrc(map)}
+              alt=""
+              draggable={false}
+            />
+          )}
         </MapWrapper>
         <ObjectivesGrid>
-          {loading ? (
-            <LoadingOverlay>LOADING...</LoadingOverlay>
+          {loading || !map ? (
+            <LoadingOverlay>{loading ? "Loading..." : "Map not selected"}</LoadingOverlay>
           ) : (
             objectives.flat().map((state, index) => {
               return (

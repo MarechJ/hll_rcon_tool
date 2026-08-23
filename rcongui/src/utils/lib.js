@@ -292,3 +292,16 @@ export const getColoredFactionIconSrc = (team) => {
 
   }
 }
+
+import { GAMES } from "@/constants/games";
+import { runtimeConfig } from "@/config/runtimeConfig";
+export const gameSwitch = (HLL_WW2_VALUE, HLL_VIETNAM_VALUE) => {
+  switch (runtimeConfig.HLL_GAME) {
+    case GAMES.HLL_WW2:
+      return HLL_WW2_VALUE
+    case GAMES.HLL_VIETNAM:
+      return HLL_VIETNAM_VALUE
+    default:
+      throw new Error(`${runtimeConfig.HLL_GAME} is unknown 'GAME' value`)
+  }
+}
