@@ -779,10 +779,14 @@ class ServerCtl:
         next_index = (sequence["current_index"] + 1) % len(sequence["maps"])
         return sequence["maps"][next_index]
 
-    def get_objective_row(self, row: int):
-        if not (0 <= row <= 4):
-            raise ValueError("Row must be between 0 and 4")
-        return self.get_objective_rows()[row]
+    def set_dynamic_weather_enabled(self, map_name: str, enabled: bool):
+        self.exchange(
+            "SetDynamicWeatherEnabled", 2, {"MapId": map_name, "Enable": enabled}
+        )
+
+
+class HLLServerCtl(ServerCtl):
+    """Hell Let Loose controller extension point."""
 
     def get_objective_rows(self) -> list[list[str]]:
         details = self.exchange("GetClientReferenceData", 2, "SetSectorLayout")
@@ -793,31 +797,51 @@ class ServerCtl:
             raise HLLCommandFailedError("Received unexpected response from server.")
         return [p["valueMember"].split(",") for p in parameters[:5]]
 
-    # TODO: HLLV: Objective names are replaced with indices (0 to 2)
     def set_game_layout(self, objectives: Sequence[str]):
         if len(objectives) != 5:
             raise ValueError("5 objectives must be provided")
-        response = self.exchange(
+        self.exchange(
             "SetSectorLayout",
             2,
             {f"Sector_{index}": value for index, value in enumerate(objectives, 1)},
         )
-        print(response.content)
         return list(objectives)
-
-    # TODO: HLLV: Add commands to get and remove sector layouts
-    def set_dynamic_weather_enabled(self, map_name: str, enabled: bool):
-        self.exchange(
-            "SetDynamicWeatherEnabled", 2, {"MapId": map_name, "Enable": enabled}
-        )
-
-
-class HLLServerCtl(ServerCtl):
-    """Hell Let Loose controller extension point."""
 
 
 class HLLVServerCtl(ServerCtl):
     """Hell Let Loose: Vietnam controller extension point."""
+
+    def set_game_layout(self, map_name: str, objectives: Sequence[int]):
+        if len(objectives) != 5:
+            raise ValueError("5 objectives must be provided")
+        self.exchange(
+            "SetSectorLayout",
+            2,
+            {
+                "MapId": map_name,
+                "Sector_1": objectives[0],
+                "Sector_2": objectives[1],
+                "Sector_3": objectives[2],
+                "Sector_4": objectives[3],
+                "Sector_5": objectives[4],
+            },
+        )
+        return list(objectives)
+
+    def remove_game_layout(self, map_name: str):
+        self.exchange("RemoveSectorLayout", 2, {"MapId": map_name})
+
+    def get_game_layouts(self):
+        return self.exchange("GetSectorLayout", 2).content_dict["entries"]
+
+    def get_game_layout(self, map_name: str) -> list[int] | None:
+        layouts = self.exchange("GetSectorLayout", 2).content_dict["entries"]
+        return next(
+            iter(
+                [layout["sectors"] for layout in layouts if layout["mapId"] == map_name]
+            ),
+            None,
+        )
 
 
 if __name__ == "__main__":

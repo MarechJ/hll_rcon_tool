@@ -94,10 +94,10 @@ logger = getLogger(__name__)
 
 PLAYER_ID = "player_id"
 
-CTL: Optional["RconAPI"] = None
+CTL: Optional["HLLRconAPI | HLLVRconAPI"] = None
 
 
-def create_rcon_api(credentials: ServerInfo) -> "RconAPI":
+def create_rcon_api(credentials: ServerInfo) -> "HLLRconAPI | HLLVRconAPI":
     """Construct the concrete API controller for the configured game."""
 
     controller_type = {
@@ -127,7 +127,9 @@ def parameter_aliases(alias_to_param: dict[str, str]):
     return decorator
 
 
-def get_rcon_api(credentials: ServerInfo | None = None) -> "RconAPI":
+def get_rcon_api(
+    credentials: ServerInfo | None = None,
+) -> "HLLRconAPI | HLLVRconAPI":
     """Return a initialized Rcon connection to the game server
 
     This maintains a single initialized instance across a Python interpreter
