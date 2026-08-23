@@ -24,7 +24,7 @@ from rcon.commands import (
     VipId,
 )
 from rcon.connection import HLLCommandError
-from rcon.maps import UNKNOWN_MAP_NAME, Layer, is_server_loading_map
+from rcon.maps import UNKNOWN_MAP_NAME, Layer, Map, is_server_loading_map
 from rcon.models import PlayerID, PlayerVIP, enter_session
 from rcon.perf_statistics import PerformanceStatistics
 from rcon.player_history import (
@@ -1020,8 +1020,32 @@ class Rcon(ServerCtl):
         }
 
     @ttl_cache(ttl=60 * 60 * 24)
-    def get_maps(self) -> list[Layer]:
-        return [self.game_profile.parse_layer(m) for m in super().get_maps()]
+    def get_maps(self, include: str | None = None) -> list[Layer]:
+        includes = (
+            [x.strip() for x in include.split(",") if x.strip()] if include else []
+        )
+        layers = [self.game_profile.parse_layer(m) for m in super().get_maps()]
+        if "objectives" not in includes:
+            return layers
+
+        objectives_by_map: dict[str, list[list[str]]] = {}
+        enriched_layers: list[Layer] = []
+        for layer in layers:
+            objectives = objectives_by_map.get(layer.map.id)
+            if objectives is None:
+                objectives = self._get_objective_rows_for_layer(layer)
+                objectives_by_map[layer.map.id] = objectives
+            enriched_layers.append(
+                layer.model_copy(
+                    update={
+                        "map": layer.map.model_copy(update={"objectives": objectives})
+                    }
+                )
+            )
+        return enriched_layers
+
+    def _get_objective_rows_for_layer(self, layer: Layer) -> list[list[str]]:
+        raise NotImplementedError
 
     # TODO: fix typing
     def get_server_settings(self):
@@ -1647,6 +1671,26 @@ class Rcon(ServerCtl):
 
 
 class HLLRcon(Rcon, HLLServerCtl):
+    def _get_objective_rows_for_layer(self, layer: Layer) -> list[list[str]]:
+        map_sectors = next(
+            (
+                candidate.sectors
+                for candidate in hllrcon.HLLLayer.all()
+                if candidate.map.id.casefold() == layer.map.id.casefold()
+                and len(candidate.sectors) == 5
+                and all(len(sector.capture_zones) == 3 for sector in candidate.sectors)
+            ),
+            None,
+        )
+        if map_sectors is None:
+            raise ValueError(
+                f"Map for layer {layer.id!r} does not define a 5x3 sector layout"
+            )
+        return [
+            [capture_zone.strongpoint.name for capture_zone in sector.capture_zones]
+            for sector in map_sectors
+        ]
+
     def set_game_layout(
         self,
         objectives: Sequence[str | int | None],
@@ -1665,6 +1709,26 @@ class HLLRcon(Rcon, HLLServerCtl):
 
 
 class HLLVRcon(Rcon, HLLVServerCtl):
+    def _get_objective_rows_for_layer(self, layer: Layer) -> list[list[str]]:
+        map_sectors = next(
+            (
+                candidate.sectors
+                for candidate in hllrcon.HLLVLayer.all()
+                if candidate.map.id.casefold() == layer.map.id.casefold()
+                and len(candidate.sectors) == 5
+                and all(len(sector.capture_zones) == 3 for sector in candidate.sectors)
+            ),
+            None,
+        )
+        if map_sectors is None:
+            raise ValueError(
+                f"Map for layer {layer.id!r} does not define a 5x3 sector layout"
+            )
+        return [
+            [capture_zone.strongpoint.name for capture_zone in sector.capture_zones]
+            for sector in map_sectors
+        ]
+
     def get_game_layout(self, map_name: str) -> list[str] | None:
         layout = super().get_game_layout(map_name)
         if not layout:
@@ -1708,34 +1772,19 @@ class HLLVRcon(Rcon, HLLVServerCtl):
 
     def get_objective_rows(self, map_name: str) -> list[list[str]]:
         try:
-            layer = hllrcon.HLLVLayer.by_id(map_name)
+            hllrcon_layer = hllrcon.HLLVLayer.by_id(map_name)
         except ValueError as exc:
             raise ValueError(f"Unknown HLL Vietnam layer ID: {map_name!r}") from exc
 
-        if layer.map.id.casefold() == "unknown":
+        if hllrcon_layer.map.id.casefold() == "unknown":
             raise ValueError(f"Unknown HLL Vietnam layer ID: {map_name!r}")
 
-        map_ = layer.map
-        map_sectors = next(
-            (
-                candidate.sectors
-                for candidate in hllrcon.HLLVLayer.all()
-                if candidate.map == map_
-                and len(candidate.sectors) == 5
-                and all(len(sector.capture_zones) == 3 for sector in candidate.sectors)
-            ),
-            None,
+        map_ = Map.from_hllrcon(hllrcon_layer.map)
+        layer = Layer.from_hllrcon(
+            hllrcon_layer,
+            map_catalog={map_.id.casefold(): map_},
         )
-        if map_sectors is None:
-            raise ValueError(
-                f"Map for layer {map_name!r} does not define a 5x3 sector layout"
-            )
-
-        objective_rows = [
-            [capture_zone.strongpoint.name for capture_zone in sector.capture_zones]
-            for sector in map_sectors
-        ]
-        return objective_rows
+        return self._get_objective_rows_for_layer(layer)
 
     def game_test_command(self) -> GameEnum:
         return GameEnum.HLL_VIETNAM
