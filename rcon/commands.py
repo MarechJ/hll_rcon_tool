@@ -473,9 +473,6 @@ class ServerCtl:
         self.exchange("SetAutoBalanceEnabled", 2, {"Enable": value})
         return True
 
-    def set_welcome_message(self, message):
-        self.exchange("SetWelcomeMessage", 2, {"Message": message})
-
     def set_map(self, map_name: str):
         self.exchange("ChangeMap", 2, {"MapName": map_name})
 
@@ -788,6 +785,9 @@ class ServerCtl:
 class HLLServerCtl(ServerCtl):
     """Hell Let Loose controller extension point."""
 
+    def set_welcome_message(self, message):
+        self.exchange("SetWelcomeMessage", 2, {"Message": message})
+
     def get_objective_rows(self) -> list[list[str]]:
         details = self.exchange("GetClientReferenceData", 2, "SetSectorLayout")
         parameters = details.content_dict["dialogueParameters"]
@@ -810,6 +810,9 @@ class HLLServerCtl(ServerCtl):
 
 class HLLVServerCtl(ServerCtl):
     """Hell Let Loose: Vietnam controller extension point."""
+
+    def set_welcome_message(self, message):
+        self.exchange("SetNoticeMessage", 2, {"Message": message})
 
     def set_game_layout(self, map_name: str, objectives: Sequence[int]):
         if len(objectives) != 5:
