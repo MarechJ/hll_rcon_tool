@@ -1,3 +1,5 @@
+import { runtimeConfig } from "@/config/runtimeConfig";
+import { GAMES } from "@/constants/games";
 import { json } from "react-router-dom";
 import { toast } from "react-toastify";
 
@@ -97,7 +99,25 @@ async function parseJsonResponse(response) {
   }
 }
 
-export const cmd = {
+const HLL_WW2_Commands = {
+  GET_MAP_OBJECTIVES: (params) => requestFactory({ method: "GET", cmd: "get_objective_rows", ...params }),
+  SET_MAP_OBJECTIVES: (params) => requestFactory({ method: "POST", cmd: "set_game_layout", ...params }),
+}
+
+const HLL_VIETNAM_Commands = {
+  GET_MAP_OBJECTIVES: (params) => requestFactory({ method: "GET", cmd: "get_objective_rows", ...params }),
+  SET_MAP_OBJECTIVES: (params) => requestFactory({ method: "POST", cmd: "set_game_layout", ...params }),
+  GET_GAME_LAYOUTS: (params) => requestFactory({ method: "GET", cmd: "get_game_layouts", ...params }),
+  GET_GAME_LAYOUT: (params) => requestFactory({ method: "GET", cmd: "get_game_layout", ...params }),
+  REMOVE_GAME_LAYOUT: (params) => requestFactory({ method: "POST", cmd: "remove_game_layout", ...params }),
+}
+
+const GAME_Commands = {
+  [GAMES.HLL_WW2]: HLL_WW2_Commands,
+  [GAMES.HLL_VIETNAM]: HLL_VIETNAM_Commands,
+};
+
+const SHARED_Commands = {
   ADD_CONSOLE_ADMIN: (params) => requestFactory({ method: "POST", cmd: "add_admin", ...params }),
   ADD_MAP_TO_VOTEMAP: (params) => requestFactory({ method: "POST", cmd: "add_map_to_votemap", ...params }),
   ADD_MESSAGE_TEMPLATE: (params) => requestFactory({ method: "POST", cmd: "add_message_template", ...params }),
@@ -145,7 +165,6 @@ export const cmd = {
   GET_CURRENT_MAP: (params) => requestFactory({ method: "GET", cmd: "get_map", ...params }),
   GET_MAPS: (params) => requestFactory({ method: "GET", cmd: "get_maps", ...params }),
   GET_MAP_ROTATION: (params) => requestFactory({ method: "GET", cmd: "get_map_rotation", ...params }),
-  GET_MAP_OBJECTIVES: (params) => requestFactory({ method: "GET", cmd: "get_objective_rows", ...params }),
   GET_MAP_ROTATION_SHUFFLE: (params) => requestFactory({ method: "GET", cmd: "get_map_shuffle_enabled", ...params }),
   GET_MESSAGE_TEMPLATE: (params) => requestFactory({ method: "GET", cmd: "get_message_template", ...params }),
   GET_MESSAGE_TEMPLATES: (params) => requestFactory({ method: "GET", cmd: "get_message_templates", ...params }),
@@ -199,7 +218,6 @@ export const cmd = {
   SET_DYNAMIC_WEATHER_ENABLED: (params) => requestFactory({ method: "POST", cmd: "set_dynamic_weather_enabled", ...params }),
   SET_IDLE_AUTOKICK_TIME: (params) => requestFactory({ method: "POST", cmd: "set_idle_autokick_time", ...params }),
   SET_MAP: (params) => requestFactory({ method: "POST", cmd: "set_map", ...params }),
-  SET_MAP_OBJECTIVES: (params) => requestFactory({ method: "POST", cmd: "set_game_layout", ...params }),
   SET_MAP_ROTATION: (params) => requestFactory({ method: "POST", cmd: "set_map_rotation", ...params }),
   SET_MAP_ROTATION_SHUFFLE: (params) => requestFactory({ method: "POST", cmd: "set_map_shuffle_enabled", ...params }),
   SET_MATCH_TIMER: (params) => requestFactory({ method: "POST", cmd: "set_match_timer", ...params }),
@@ -223,6 +241,11 @@ export const cmd = {
   DOWNLOAD_VIP_FILE: (params) => requestFactory({ method: "GET", cmd: "download_vips", ...params }),
   UPLOAD_VIP_FILE: (params) => requestFactory({ method: "POST", cmd: "upload_vips", ...params }),
   GET_UPLOAD_VIP_FILE_RESPONSE: (params) => requestFactory({ method: "GET", cmd: "upload_vips_result", ...params }),
+};
+
+export const cmd = {
+  ...SHARED_Commands,
+  ...(GAME_Commands[runtimeConfig.HLL_GAME] ?? {}),
 };
 
 export function execute(command, data) {
