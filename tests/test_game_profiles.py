@@ -15,7 +15,7 @@ from rcon.commands import HLLServerCtl, HLLVServerCtl
 from rcon.game import get_game_profile
 from rcon.game.hll.profile import HLL_PROFILE
 from rcon.game.hllv.profile import HLLV_PROFILE
-from rcon.maps import UNKNOWN_MAP_NAME, GameMode, Team, parse_map_string
+from rcon.maps import UNKNOWN_MAP_NAME, GameMode, Map, Team, parse_map_string
 from rcon.rcon import HLLRcon, HLLVRcon, Rcon, create_rcon
 from rcon.types import GameEnum, GameIntEnum, ServerInfo
 from rcon.utils import guess_map_from_log
@@ -346,6 +346,46 @@ def test_hllv_get_objective_rows_uses_core_map_sector_definitions():
         ["Jungle Hill", "Maintenance Market", "Communications Centre"],
     ]
     ctl.exchange.assert_not_called()
+
+
+def test_map_objectives_are_omitted_when_not_included():
+    map_ = Map.model_validate(HLL_PROFILE.maps["carentan"].model_dump())
+
+    assert "objectives" not in map_.model_dump()
+
+
+def test_hll_get_maps_can_include_objectives(monkeypatch):
+    ctl = object.__new__(HLLRcon)
+    ctl.game_profile = HLL_PROFILE
+    monkeypatch.setattr(
+        HLLServerCtl,
+        "get_maps",
+        lambda self: ["carentan_warfare", "CAR_S_1944_Day_P_Skirmish"],
+    )
+
+    result = HLLRcon.get_maps.__wrapped__(ctl, " layers, objectives, ")
+
+    assert result[0].map.objectives == result[1].map.objectives
+    assert result[0].map.objectives[0] == [
+        "Blactot",
+        "502nd Start",
+        "Farm Ruins",
+    ]
+    assert all(len(row) == 3 for row in result[1].map.objectives)
+
+
+def test_hllv_get_maps_can_include_objectives(monkeypatch):
+    ctl = object.__new__(HLLVRcon)
+    ctl.game_profile = HLLV_PROFILE
+    monkeypatch.setattr(
+        HLLVServerCtl,
+        "get_maps",
+        lambda self: ["wdeve_conquest_day"],
+    )
+
+    result = HLLVRcon.get_maps.__wrapped__(ctl, "objectives")
+
+    assert result[0].map.objectives == ctl.get_objective_rows(result[0].id)
 
 
 @pytest.mark.parametrize(
