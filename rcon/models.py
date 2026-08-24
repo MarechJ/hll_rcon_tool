@@ -34,7 +34,7 @@ from sqlalchemy.orm import (
     relationship,
     sessionmaker,
 )
-from sqlalchemy.schema import UniqueConstraint
+from sqlalchemy.schema import Index, UniqueConstraint
 
 from rcon.maps import Team
 from rcon.types import (
@@ -733,7 +733,37 @@ class PlayersAction(Base):
 
 class LogLine(Base):
     __tablename__ = "log_lines"
-    __table_args__ = (UniqueConstraint("event_time", "raw", name="unique_log_line"),)
+    __table_args__ = (
+        UniqueConstraint("event_time", "raw", name="unique_log_line"),
+        Index("ix_log_lines_server_event_time_id", "server", "event_time", "id"),
+        Index("ix_log_lines_type_event_time", "type", "event_time"),
+        Index(
+            "ix_log_lines_player1_steamid_event_time", "player1_steamid", "event_time"
+        ),
+        Index(
+            "ix_log_lines_player2_steamid_event_time", "player2_steamid", "event_time"
+        ),
+        Index("ix_log_lines_player1_name_event_time", "player1_name", "event_time"),
+        Index("ix_log_lines_player2_name_event_time", "player2_name", "event_time"),
+        Index(
+            "ix_log_lines_type_trgm",
+            "type",
+            postgresql_using="gin",
+            postgresql_ops={"type": "gin_trgm_ops"},
+        ),
+        Index(
+            "ix_log_lines_player1_name_trgm",
+            "player1_name",
+            postgresql_using="gin",
+            postgresql_ops={"player1_name": "gin_trgm_ops"},
+        ),
+        Index(
+            "ix_log_lines_player2_name_trgm",
+            "player2_name",
+            postgresql_using="gin",
+            postgresql_ops={"player2_name": "gin_trgm_ops"},
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     version: Mapped[int] = mapped_column(default=1)
@@ -744,11 +774,11 @@ class LogLine(Base):
     type: Mapped[str] = mapped_column(nullable=True)
     player1_name: Mapped[str] = mapped_column(nullable=True)
     player1_player_id: Mapped[int] = mapped_column(
-        "player1_steamid", ForeignKey("steam_id_64.id"), nullable=True, index=True
+        "player1_steamid", ForeignKey("steam_id_64.id"), nullable=True
     )
     player2_name: Mapped[str] = mapped_column(nullable=True)
     player2_player_id: Mapped[int] = mapped_column(
-        "player2_steamid", ForeignKey("steam_id_64.id"), nullable=True, index=True
+        "player2_steamid", ForeignKey("steam_id_64.id"), nullable=True
     )
     weapon: Mapped[str] = mapped_column()
     raw: Mapped[str] = mapped_column(nullable=False)
