@@ -1,27 +1,15 @@
 import { useRouteLoaderData } from "react-router-dom";
 import { useState } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Button,
-  Box,
-  Stack,
-  styled,
-  Typography,
-} from "@mui/material";
+import { Box, Stack, styled, Typography } from "@mui/material";
 import { MapList } from "../MapList";
 import { MapChangeListItem } from "../MapListItem";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { MapDetailsCardCompact } from "../MapDetailsCard";
 import { useGlobalStore } from "@/stores/global-state";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { mapsManagerMutationOptions, mapsManagerQueryKeys } from "../queries";
 import { toast } from "react-toastify";
 import { MapFilter } from "../MapFilter";
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import { MapChangeDialog } from "../MapChangeDialog";
 
 const MapListContainer = styled(Box)(({ theme }) => ({
   width: "100%",
@@ -40,7 +28,7 @@ const ActionsContainer = styled(Box)(({ theme }) => ({
     width: "50%",
     borderLeft: `1px solid ${theme.palette.divider}`,
     borderBottom: "none",
-},
+  },
 }));
 
 const MapListPage = () => {
@@ -52,7 +40,7 @@ const MapListPage = () => {
   const gameState = useGlobalStore((state) => state.gameState);
   const queryClient = useQueryClient();
 
-  const { mutate: changeMap } = useMutation({
+  const { mutate: changeMap, isPending: isChangingMap } = useMutation({
     ...mapsManagerMutationOptions.changeMap,
     onSuccess: (response) => {
       const mapName = response.arguments.map_name;
@@ -112,7 +100,9 @@ const MapListPage = () => {
         <ActionsContainer>
           {gameState && (
             <>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>Current map</Typography>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                Current map
+              </Typography>
               <MapChangeListItem
                 mapLayer={gameState.current_map}
                 key={gameState.current_map.id}
@@ -120,7 +110,9 @@ const MapListPage = () => {
                 icon={<RestartAltIcon />}
                 title={"Restart the current map"}
               />
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>Next map</Typography>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                Next map
+              </Typography>
               <MapChangeListItem
                 mapLayer={gameState.next_map}
                 key={gameState.next_map.id}
@@ -130,55 +122,14 @@ const MapListPage = () => {
           )}
         </ActionsContainer>
       </Stack>
-      {/* Confirmation Dialog */}
-      <Dialog
+      <MapChangeDialog
         open={confirmDialogOpen}
+        mapLayer={mapToConfirm}
         onClose={() => setConfirmDialogOpen(false)}
-        fullWidth
-        maxWidth="xs"
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle>
-          <div>Set current map: {mapToConfirm?.pretty_name}</div>
-          <div>Server: {serverState?.name || "this server"}</div>
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            This will set a 60 seconds timer and override the current active
-            map.
-          </DialogContentText>
-          {mapToConfirm && (
-            <Box
-              sx={{
-                mt: 2,
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-                p: 2,
-                borderRadius: 1,
-                border: "1px solid",
-                borderColor: "divider",
-              }}
-            >
-              <MapDetailsCardCompact mapLayer={mapToConfirm} />
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmDialogOpen(false)} color="inherit">
-            Cancel
-          </Button>
-          <Button
-            onClick={handleConfirmMapChange}
-            color="primary"
-            variant="contained"
-            startIcon={<CheckCircleIcon />}
-          >
-            Confirm
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onConfirm={handleConfirmMapChange}
+        pending={isChangingMap}
+        serverName={serverState?.name}
+      />
     </>
   );
 };

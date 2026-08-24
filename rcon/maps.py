@@ -40,6 +40,7 @@ class MapType(typing_extensions.TypedDict):
     allies: "FactionType"
     axis: "FactionType"
     orientation: str
+    objectives: typing_extensions.NotRequired[list[list[str]]]
 
 
 class LayerType(typing_extensions.TypedDict):
@@ -235,6 +236,9 @@ class Map(pydantic.BaseModel):
     allies: "Faction"
     axis: "Faction"
     orientation: Orientation
+    objectives: list[list[str]] | None = pydantic.Field(
+        default=None, exclude_if=lambda value: value is None
+    )
 
     def __str__(self) -> str:
         return self.id
