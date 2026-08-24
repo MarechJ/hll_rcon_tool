@@ -1,4 +1,4 @@
-import { createBrowserRouter, Link } from "react-router-dom";
+import { createBrowserRouter, Link, Navigate } from "react-router-dom";
 
 import Root from "./pages/root"
 import { loader as rootLoader } from "./pages/root"
@@ -14,8 +14,8 @@ import TeamView from "./pages/views/team";
 import PlayerRecords from "./pages/records/players"
 import { loader as playerRecordsLoader } from "./pages/records/players"
 
-import Blacklists from "./pages/records/blacklists/manage"
 import BlacklistRecords from "./pages/records/blacklists"
+import { loader as blacklistRecordsLoader } from "./pages/records/blacklists/loader"
 
 import GameLogsRecords from "./pages/records/game-logs"
 import { loader as gameLogsLoader } from "./pages/records/game-logs"
@@ -201,13 +201,14 @@ const router = createBrowserRouter([
                     {
                         path: 'blacklists',
                         handle: { crumb: () => <Link to={'/records/blacklists'}>Blacklists</Link> },
+                        loader: blacklistRecordsLoader,
                         element: <BlacklistRecords />,
                         errorElement: <RouteError />,
                     },
                     {
                         path: 'blacklists/manage',
                         handle: { crumb: () => [<Link to={'/records/blacklists'}>Blacklists</Link>, <span>Manage</span>] },
-                        element: <Blacklists />,
+                        element: <Navigate to="/records/blacklists" replace />,
                         errorElement: <RouteError />,
                     },
                     {
