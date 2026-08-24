@@ -701,6 +701,15 @@ class PlayerName(Base):
 
 class PlayerSession(Base):
     __tablename__ = "player_sessions"
+    __table_args__ = (
+        Index(
+            "ix_player_sessions_playersteamid_id_end_start_created",
+            "playersteamid_id",
+            "end",
+            "start",
+            "created",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     player_id_id: Mapped[int] = mapped_column(
