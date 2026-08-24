@@ -9,18 +9,19 @@ from rcon.cache_utils import get_redis_client
 from rcon.rcon import Rcon, get_rcon
 from rcon.types import StructuredLogLineWithMetaData
 from rcon.user_config.log_stream import LogStreamUserConfig
-from rcon.utils import Stream, StreamOlderElement, StreamID, StreamNoElements
+from rcon.utils import Stream, StreamID, StreamNoElements, StreamOlderElement
 
 logger = logging.getLogger(__name__)
+
 
 class LogStream:
     # Each CRCON uses its own redis database, no need for keys to be unique across servers
     def __init__(
-            self,
-            rcon: Rcon | None = None,
-            red: redis.StrictRedis | None = None,
-            key="log_stream",
-            maxlen: int | None = None,
+        self,
+        rcon: Rcon | None = None,
+        red: redis.StrictRedis | None = None,
+        key="log_stream",
+        maxlen: int | None = None,
     ) -> None:
         config = LogStreamUserConfig.load_from_db()
         self.rcon = rcon or get_rcon()
@@ -51,19 +52,21 @@ class LogStream:
         ] = []
 
         for log in reversed(logs):
-            timestamp = datetime.datetime.fromtimestamp(log["timestamp_ms"] / 1000, tz=datetime.UTC)
+            timestamp = datetime.datetime.fromtimestamp(
+                log["timestamp_ms"] / 1000, tz=datetime.UTC
+            )
             buckets[timestamp].append(log)
 
-        for timestamp in buckets.keys():
-            ordered_logs.append((timestamp, buckets[timestamp]))
+        for timestamp, log in buckets.items():
+            ordered_logs.append((timestamp, log))
 
         return ordered_logs
 
     def run(
-            self,
-            loop_frequency_secs: int | None = None,
-            initial_since_min: int | None = None,
-            active_since_min: int | None = None,
+        self,
+        loop_frequency_secs: int | None = None,
+        initial_since_min: int | None = None,
+        active_since_min: int | None = None,
     ):
         """Poll the game server and add new logs to the stream"""
 
@@ -96,7 +99,7 @@ class LogStream:
             logs = self.rcon.get_structured_logs(since_min_ago=since_min)["logs"]
 
     def logs_since(
-            self, last_seen: StreamID | None = None, block_ms=500
+        self, last_seen: StreamID | None = None, block_ms=500
     ) -> list[tuple[StreamID, StructuredLogLineWithMetaData]]:
         """Return a list of logs more recent than the last_seen ID"""
         try:
