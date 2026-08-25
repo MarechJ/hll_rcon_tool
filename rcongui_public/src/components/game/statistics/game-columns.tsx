@@ -275,7 +275,7 @@ function pointColumns(completed: boolean): ColumnDef<Player>[] {
         const { t } = useTranslation('game')
         return (
           <Header
-            src={'/icons/metrics/offensive.png'}
+            src={'/icons/metrics/offense.png'}
             desc={t('playersTable.offense')}
             className={"text-right"}
             onClick={() => {
@@ -294,7 +294,7 @@ function pointColumns(completed: boolean): ColumnDef<Player>[] {
         const { t } = useTranslation('game')
         return (
           <Header
-            src={'/icons/metrics/defensive.png'}
+            src={'/icons/metrics/defense.png'}
             desc={t('playersTable.defense')}
             className={"text-right"}
             onClick={() => {
