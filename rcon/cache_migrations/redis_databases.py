@@ -2,7 +2,6 @@
 
 import redis
 
-
 GLOBAL_REDIS_DATABASE = 0
 
 
