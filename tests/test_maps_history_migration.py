@@ -113,6 +113,17 @@ def test_populated_database_discovery_includes_all_server_databases():
     assert _populated_database_numbers(client) == [1, 3, 7]
 
 
+def test_populated_database_discovery_requires_opt_in_for_global_database():
+    client = fakeredis.FakeRedis(db=0)
+    client.info = lambda section: {
+        "db0": {"keys": 2},
+        "db1": {"keys": 4},
+    }
+
+    assert _populated_database_numbers(client) == [1]
+    assert _populated_database_numbers(client, include_global_database=True) == [0, 1]
+
+
 def test_maintenance_migrates_maps_history_in_every_populated_database(monkeypatch):
     discovery_client = fakeredis.FakeRedis(db=0)
     discovery_client.info = lambda section: {
