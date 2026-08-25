@@ -18,6 +18,7 @@ import { BlacklistRecordCards, BlacklistRecordsTable } from "./BlacklistRecordVi
 import {
   blacklistMutationOptions, blacklistQueryKeys, blacklistQueryOptions, getBlacklistRecordFilters,
 } from "./queries";
+import { useAppStore } from "@/stores/app-state";
 
 const mutationError = (error) => toast.error(error?.message ?? "The blacklist operation failed.");
 
@@ -25,7 +26,8 @@ export default function BlacklistRecords() {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const filters = getBlacklistRecordFilters(searchParams);
-  const [view, setView] = useState("cards");
+  const view = useAppStore((state) => state.blacklistView);
+  const setView = useAppStore((state) => state.setBlacklistView);
   const [recordDialog, setRecordDialog] = useState(null);
   const [listDialog, setListDialog] = useState(null);
   const [confirmation, setConfirmation] = useState(null);
