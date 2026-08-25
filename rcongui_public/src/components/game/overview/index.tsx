@@ -2,7 +2,7 @@ import { GameMode, MapLayer, MapTeam } from '@/types/mapLayer'
 import { Arrow, RectangleNeutral } from './shapes'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '@/hooks/use-theme-provider'
-import { getDarkTeamIconSrc, getLightTeamIconSrc } from '@/lib/utils'
+import { getDarkFactionIconSrc, getLightFactionIconSrc } from '@/constants/factions'
 import { FactionEnum } from '@/types/player'
 import { MatchScore } from '@/types/api'
 import { cn } from '@/lib/utils'
@@ -211,7 +211,7 @@ export default function GameOverview({
   const { t } = useTranslation('game')
   const theme = useTheme()
 
-  const getTeamIconSrc = theme.theme === "dark" ? getLightTeamIconSrc : getDarkTeamIconSrc
+  const getFactionIconSrc = theme.theme === "dark" ? getLightFactionIconSrc : getDarkFactionIconSrc
 
   const displayArrows = () => {
     if (score.allies === undefined || score.axis === undefined) return null
@@ -231,7 +231,7 @@ export default function GameOverview({
       <div className="flex flex-row justify-center items-center lg:px-2">
         <div className="flex flex-row justify-between basis-full">
           <div className="flex justify-start size-12 lg:size-16">
-            <img src={getTeamIconSrc(allies.name)} alt={allies.team} width={64} height={64} />
+            <img src={getFactionIconSrc(allies.name)} alt={allies.team} width={64} height={64} />
           </div>
           <div className="flex flex-col text-right flex-grow">
             <div className="text-lg lg:text-2xl font-bold uppercase">{t(allies.team)}</div>
@@ -263,7 +263,7 @@ export default function GameOverview({
             </div>
           </div>
           <div className="flex justify-start size-12 lg:size-16">
-            <img src={getTeamIconSrc(axis.name)} alt={axis.team} width={64} height={64} style={{ maxWidth: 'none' }} />
+            <img src={getFactionIconSrc(axis.name)} alt={axis.team} width={64} height={64} style={{ maxWidth: 'none' }} />
           </div>
         </div>
       </div>
