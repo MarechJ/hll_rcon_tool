@@ -928,6 +928,52 @@ class PlayerStats(Base):
     map: Mapped[Maps] = relationship(back_populates="player_stats")
 
     def detect_team(self) -> PlayerTeamAssociation:
+        # Unit history is a direct record of the player's team and is therefore
+        # more reliable than inferring it from weapons. Each entry applies until
+        # the next one; unassigned and offline spans are excluded.
+        unit_team_map = {1: Team.ALLIES, 2: Team.AXIS}
+        ordered_units = sorted(self.units or [], key=lambda unit: unit["ts"])
+        team_seconds = {Team.ALLIES: 0, Team.AXIS: 0}
+        unit_teams = set()
+        match_time = self.map.match_time if self.map is not None else None
+        for index, unit in enumerate(ordered_units):
+            team = unit_team_map.get(unit["team"])
+            if team is None:
+                continue
+            unit_teams.add(team)
+            end = (
+                ordered_units[index + 1]["ts"]
+                if index + 1 < len(ordered_units)
+                else match_time
+            )
+            if end is not None:
+                team_seconds[team] += max(0, end - unit["ts"])
+
+        if len(unit_teams) > 1:
+            allies_seconds = team_seconds[Team.ALLIES]
+            axis_seconds = team_seconds[Team.AXIS]
+            total_seconds = allies_seconds + axis_seconds
+            if allies_seconds == axis_seconds:
+                side = Team.UNKNOWN
+                ratio = 50
+            elif allies_seconds > axis_seconds:
+                side = Team.ALLIES
+                ratio = round(allies_seconds / total_seconds * 100, 2)
+            else:
+                side = Team.AXIS
+                ratio = round(axis_seconds / total_seconds * 100, 2)
+            return PlayerTeamAssociation(
+                side=side,
+                confidence=PlayerTeamConfidence.MIXED,
+                ratio=ratio,
+            )
+        if unit_teams:
+            return PlayerTeamAssociation(
+                side=unit_teams.pop(),
+                confidence=PlayerTeamConfidence.STRONG,
+                ratio=100,
+            )
+
         def get_value(item):
             return item[1]
 

@@ -4,7 +4,13 @@ import pytest
 
 os.environ["HLL_MAINTENANCE_CONTAINER"] = "1"
 from rcon.maps import Team
-from rcon.models import PlayerID, PlayerSoldier, PlayerStats, calc_weapon_type_usage
+from rcon.models import (
+    Maps,
+    PlayerID,
+    PlayerSoldier,
+    PlayerStats,
+    calc_weapon_type_usage,
+)
 from rcon.player_stats import BaseStats
 from rcon.types import PlayerTeamAssociation, PlayerTeamConfidence
 
@@ -61,6 +67,79 @@ def test_detects_no_kills_no_deaths():
 
     assert p.detect_team() == PlayerTeamAssociation(
         side=Team.UNKNOWN, confidence=PlayerTeamConfidence.STRONG, ratio=0
+    )
+
+
+@pytest.mark.parametrize("team_id, expected", [(1, Team.ALLIES), (2, Team.AXIS)])
+def test_detects_team_from_units_before_weapons(team_id, expected):
+    p = PlayerStats(
+        units=[{"ts": 10, "team": team_id, "squad": 1, "role": 1}],
+        weapons={"M1A1 THOMPSON": 1_000},
+        death_by_weapons={},
+    )
+
+    assert p.detect_team() == PlayerTeamAssociation(
+        side=expected, confidence=PlayerTeamConfidence.STRONG, ratio=100
+    )
+
+
+def test_detects_mixed_team_from_units():
+    p = PlayerStats(
+        units=[
+            {"ts": 10, "team": 1, "squad": 1, "role": 1},
+            {"ts": 20, "team": 2, "squad": 1, "role": 1},
+            {"ts": 30, "team": -111, "squad": -111, "role": -111},
+        ],
+        weapons={"M1A1 THOMPSON": 1_000},
+        death_by_weapons={},
+    )
+
+    assert p.detect_team() == PlayerTeamAssociation(
+        side=Team.UNKNOWN, confidence=PlayerTeamConfidence.MIXED, ratio=50
+    )
+
+
+def test_detects_mixed_team_ratio_from_time_played():
+    p = PlayerStats(
+        units=[
+            {"ts": 10, "team": 1, "squad": 1, "role": 1},
+            {"ts": 20, "team": 2, "squad": 1, "role": 1},
+            {"ts": 50, "team": -111, "squad": -111, "role": -111},
+        ],
+        weapons={"M1A1 THOMPSON": 1_000},
+        death_by_weapons={},
+    )
+
+    assert p.detect_team() == PlayerTeamAssociation(
+        side=Team.AXIS, confidence=PlayerTeamConfidence.MIXED, ratio=75
+    )
+
+
+def test_detects_mixed_team_ratio_through_match_end():
+    p = PlayerStats(
+        units=[
+            {"ts": 10, "team": 1, "squad": 1, "role": 1},
+            {"ts": 20, "team": 2, "squad": 1, "role": 1},
+        ],
+        weapons={},
+        death_by_weapons={},
+    )
+    p.map = Maps(match_time=50)
+
+    assert p.detect_team() == PlayerTeamAssociation(
+        side=Team.AXIS, confidence=PlayerTeamConfidence.MIXED, ratio=75
+    )
+
+
+def test_detect_team_uses_weapons_when_units_have_no_team():
+    p = PlayerStats(
+        units=[{"ts": 10, "team": -111, "squad": -111, "role": -111}],
+        weapons={"M1A1 THOMPSON": 1},
+        death_by_weapons={},
+    )
+
+    assert p.detect_team() == PlayerTeamAssociation(
+        side=Team.ALLIES, confidence=PlayerTeamConfidence.STRONG, ratio=100
     )
 
 
