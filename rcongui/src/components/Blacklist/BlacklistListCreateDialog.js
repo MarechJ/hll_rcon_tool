@@ -5,7 +5,7 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
-import { Checkbox, FormControl, FormControlLabel, FormGroup, InputLabel, MenuItem, Select, Switch, Typography } from '@mui/material';
+import { Alert, Checkbox, Divider, FormControl, FormControlLabel, FormGroup, InputLabel, MenuItem, Paper, Select, Stack, Switch, Typography } from '@mui/material';
 import Grid from "@mui/material/Grid2";
 import {Fragment, useEffect, useState} from "react";
 
@@ -68,11 +68,14 @@ export default function BlacklistListCreateDialog({
   }
 
   return (
-    (<Dialog
+    <Dialog
         open={open}
         onClose={handleClose}
+        fullWidth
+        maxWidth="sm"
         PaperProps={{
           component: 'form',
+          sx: { borderRadius: 2 },
           onSubmit: (event) => {
             event.preventDefault();
             const data = {
@@ -85,80 +88,86 @@ export default function BlacklistListCreateDialog({
           },
         }}
       >
-      <DialogTitle>{titleText}</DialogTitle>
-      <DialogContent>
-        <DialogContentText>
-          Blacklists are collections of ban-like records to provide both greater flexibility and
-          scalability than regular bans.
-        </DialogContentText>
+      <DialogTitle sx={{ px: 3, pt: 3, pb: 1 }}>{titleText}</DialogTitle>
+      <DialogContent sx={{ px: 3, py: 2 }}>
+        <Stack spacing={2.5}>
+          <DialogContentText>
+            Blacklists are collections of ban-like records that provide greater flexibility and scalability than regular bans.
+          </DialogContentText>
 
-        <Grid container justifyContent="space-between" spacing={4}>
-          <Grid size={6}>
-            <TextField
-              required
-              id="name"
-              name="name"
-              label="Name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              fullWidth
-              variant="standard"
-            />
-          </Grid>
-          <Grid size={6}>
-            <FormControl required fullWidth>
-              <InputLabel>Sync Method</InputLabel>
-              <Select
-                label="Sync Method"
-                value={syncMethod}
-                onChange={(e) => setSyncMethod(e.target.value)}
-              >
-                {Object.entries(SYNC_METHODS).map(([value, name]) => (
-                  <MenuItem key={value} value={value}>{name}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
-          <Typography variant="caption">
-            {SYNC_METHOD_DESCRIPTIONS[syncMethod]}
-          </Typography>
-        <br/>
-        <Typography variant="h6">Servers</Typography>
-
-        <Grid container alignContent="flex-start">
-          <Grid size={6}>
-            <FormGroup>
-              {Object.entries(servers).map(([number, name]) => (
-                <FormControlLabel key={number} label={name} control={
-                  <Checkbox
-                    checked={serverNumbers === null || serverNumbers.includes(parseInt(number))}
-                    disabled={serverNumbers === null}
-                    onChange={(e) => toggleServer(parseInt(number), e.target.checked)}
-                  />
-                }/>
-              ))}
-            </FormGroup>
-          </Grid>
-          <Grid size={6}>
-            <FormControlLabel
-              label="Enable on all servers"
-              control={
-              <Switch
-                checked={serverNumbers === null}
-                onChange={(e) => toggleAllServers(e.target.checked)}
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                required
+                id="name"
+                name="name"
+                label="Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                fullWidth
               />
-            }/>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <FormControl required fullWidth>
+                <InputLabel id="blacklist-sync-method-label">Sync method</InputLabel>
+                <Select
+                  labelId="blacklist-sync-method-label"
+                  label="Sync method"
+                  value={syncMethod}
+                  onChange={(e) => setSyncMethod(e.target.value)}
+                >
+                  {Object.entries(SYNC_METHODS).map(([value, label]) => (
+                    <MenuItem key={value} value={value}>{label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
           </Grid>
-        </Grid>
 
+          {syncMethod && <Alert severity="info">{SYNC_METHOD_DESCRIPTIONS[syncMethod]}</Alert>}
+
+          <Paper variant="outlined" sx={{ p: 2, bgcolor: "background.default" }}>
+            <Stack spacing={1.5}>
+              <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "flex-start", sm: "center" }} justifyContent="space-between" gap={1}>
+                <Typography variant="subtitle1" fontWeight={600}>Servers</Typography>
+                <FormControlLabel
+                  label="Enable on all servers"
+                  control={
+                    <Switch
+                      checked={serverNumbers === null}
+                      onChange={(e) => toggleAllServers(e.target.checked)}
+                    />
+                  }
+                />
+              </Stack>
+              <Divider />
+              <FormGroup>
+                <Grid container spacing={0.5}>
+                  {Object.entries(servers).map(([number, serverName]) => (
+                    <Grid key={number} size={{ xs: 12, sm: 6 }}>
+                      <FormControlLabel
+                        label={serverName}
+                        control={
+                          <Checkbox
+                            checked={serverNumbers === null || serverNumbers.includes(parseInt(number))}
+                            disabled={serverNumbers === null}
+                            onChange={(e) => toggleServer(parseInt(number), e.target.checked)}
+                          />
+                        }
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
+              </FormGroup>
+            </Stack>
+          </Paper>
+        </Stack>
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ px: 3, py: 2 }}>
         <Button onClick={handleClose}>Cancel</Button>
-        <Button type="submit" disabled={name === "" || syncMethod === ""}>{submitText}</Button>
+        <Button variant="contained" type="submit" disabled={name === "" || syncMethod === ""}>{submitText}</Button>
       </DialogActions>
-    </Dialog>)
+    </Dialog>
   );
 }
 

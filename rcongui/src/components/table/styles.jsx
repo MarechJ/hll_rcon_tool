@@ -19,6 +19,18 @@ export function getVariantWidth(variant) {
       return "24ch";
     case "content":
       return "auto";
+    case "recordPlayer":
+      return "30ch";
+    case "recordList":
+      return "26ch";
+    case "recordAdmin":
+      return "18ch";
+    case "recordDate":
+      return "18ch";
+    case "recordExpiry":
+      return "18ch";
+    case "recordActions":
+      return "12ch";
     default:
       return "auto";
   }
@@ -40,6 +52,18 @@ export function getVariantMinWidth(variant) {
       return "24ch";
     case "content":
       return "50ch";
+    case "recordPlayer":
+      return "24ch";
+    case "recordList":
+      return "18ch";
+    case "recordAdmin":
+      return "14ch";
+    case "recordDate":
+      return "16ch";
+    case "recordExpiry":
+      return "16ch";
+    case "recordActions":
+      return "10ch";
     default:
       return "auto";
   }

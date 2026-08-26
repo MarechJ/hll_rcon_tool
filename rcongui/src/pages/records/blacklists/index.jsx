@@ -1,236 +1,186 @@
 import {
-  Button,
-  LinearProgress,
+  Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogContentText,
+  DialogTitle, LinearProgress, Paper, Stack, ToggleButton, ToggleButtonGroup, Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
-import BlacklistRecordsSearch from "@/components/Blacklist/BlacklistRecordsSearch";
+import AddIcon from "@mui/icons-material/Add";
+import GridViewIcon from "@mui/icons-material/GridView";
+import TableRowsIcon from "@mui/icons-material/TableRows";
+import Pagination from "@mui/material/Pagination";
+import { useCallback, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
+import BlacklistRecordCreateDialog from "@/components/Blacklist/BlacklistRecordCreateDialog";
+import BlacklistListCreateDialog from "@/components/Blacklist/BlacklistListCreateDialog";
+import BlacklistFilters from "./BlacklistFilters";
+import BlacklistListPanel from "./BlacklistListPanel";
+import { BlacklistRecordCards, BlacklistRecordsTable } from "./BlacklistRecordViews";
 import {
-  addPlayerToBlacklist,
-  get,
-  getBlacklists,
-  handle_http_errors,
-  showResponse,
-} from "@/utils/fetchUtils";
-import Pagination from '@mui/material/Pagination';
-import BlacklistRecordGrid from "@/components/Blacklist/BlacklistRecordGrid";
-import { List, fromJS } from "immutable";
-import { BlacklistRecordCreateButton } from "@/components/Blacklist/BlacklistRecordCreateDialog";
-import { Skeleton } from '@mui/material';
-import { Link } from "react-router-dom";
-import {useEffect, useState} from "react";
+  blacklistMutationOptions, blacklistQueryKeys, blacklistQueryOptions, getBlacklistRecordFilters,
+} from "./queries";
+import { useAppStore } from "@/stores/app-state";
 
-async function getBlacklistRecords(searchParams) {
-  let path = "get_blacklist_records?" + new URLSearchParams(
-    Object.entries(searchParams)
-      .filter(([_, v]) => v || v === 0)
-  );
-  const response = await get(path)
-  return showResponse(response, "get_blacklist_records")
-}
+const mutationError = (error) => toast.error(error?.message ?? "The blacklist operation failed.");
 
-const MyPagination = ({ pageSize, total, page, setPage }) => (
-  <Pagination
-    count={Math.ceil(total / pageSize)}
-    page={page}
-    onChange={(e, val) => setPage(val)}
-    variant="outlined"
-    color="standard"
-    showFirstButton
-    showLastButton
-  />
-);
+export default function BlacklistRecords() {
+  const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filters = getBlacklistRecordFilters(searchParams);
+  const view = useAppStore((state) => state.blacklistView);
+  const setView = useAppStore((state) => state.setBlacklistView);
+  const [recordDialog, setRecordDialog] = useState(null);
+  const [listDialog, setListDialog] = useState(null);
+  const [confirmation, setConfirmation] = useState(null);
 
-const BlacklistRecords = () => {
-  // inital state, first render
-  const [isLoading, setIsLoading] = useState(true);
-  // when fetching loading records
-  const [isFetching, setIsFetching] = useState(false);
-  const [blacklists, setBlacklists] = useState([]);
-  const [records, setRecords] = useState(List());
-  const [totalRecords, setTotalRecords] = useState(0);
-  const [page, setPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState({
-    player_id: undefined,
-    reason: undefined,
-    blacklist_id: undefined,
-    exclude_expired: false,
-    page_size: 50,
+  const { data: blacklists = [] } = useQuery(blacklistQueryOptions.lists());
+  const { data: servers = {} } = useQuery(blacklistQueryOptions.servers());
+  const { data: recordPage = { records: [], total: 0 }, isLoading, isFetching, error } =
+    useQuery(blacklistQueryOptions.records(filters));
+
+  const refreshRecords = () => queryClient.invalidateQueries({
+    queryKey: [{ queryIdentifier: "get_blacklist_records" }],
   });
+  const refreshLists = () => {
+    queryClient.invalidateQueries({ queryKey: blacklistQueryKeys.lists });
+    refreshRecords();
+  };
 
-  useEffect(() => {
-    if (!blacklists.length) {
-      loadBlacklists();
-    }
-    loadRecords();
-  }, [searchQuery, page]);
+  const createList = useMutation({ ...blacklistMutationOptions.createList, onSuccess: () => { toast.success("Blacklist created."); refreshLists(); }, onError: mutationError });
+  const editList = useMutation({ ...blacklistMutationOptions.editList, onSuccess: () => { toast.success("Blacklist updated."); refreshLists(); }, onError: mutationError });
+  const deleteList = useMutation({ ...blacklistMutationOptions.deleteList, onSuccess: () => { toast.success("Blacklist deleted."); refreshLists(); }, onError: mutationError });
+  const createRecord = useMutation({ ...blacklistMutationOptions.createRecord, onSuccess: () => { toast.success("Blacklist record created."); refreshRecords(); }, onError: mutationError });
+  const editRecord = useMutation({ ...blacklistMutationOptions.editRecord, onSuccess: () => { toast.success("Blacklist record updated."); refreshRecords(); }, onError: mutationError });
+  const expireRecord = useMutation({ ...blacklistMutationOptions.expireRecord, onSuccess: () => { toast.success("Blacklist record expired."); refreshRecords(); }, onError: mutationError });
+  const deleteRecord = useMutation({ ...blacklistMutationOptions.deleteRecord, onSuccess: () => { toast.success("Blacklist record deleted."); refreshRecords(); }, onError: mutationError });
 
-  async function loadBlacklists() {
-    setBlacklists(await getBlacklists());
-  }
-
-  async function loadRecords() {
-    setIsFetching(true);
-    try {
-      const data = await getBlacklistRecords({ ...searchQuery, page });
-      const records = data.result;
-      if (records) {
-        setRecords(fromJS(records.records));
-        setTotalRecords(records.total);
+  const setFilters = (nextFilters) => {
+    const nextParams = new URLSearchParams();
+    Object.entries(nextFilters).forEach(([key, value]) => {
+      if (value !== "" && value !== false && value !== null && value !== undefined) {
+        nextParams.set(key, String(value));
       }
-      setIsFetching(false);
-      // delay UI, this can be removed along with skeletons
-      await new Promise((res) => setTimeout(res, 500));
-      setIsLoading(false);
-    } catch (error) {
-      handle_http_errors(error);
-    }
-  }
+    });
+    setSearchParams(nextParams);
+  };
 
-  async function createRecord(recordDetails) {
-    await addPlayerToBlacklist(recordDetails);
-    loadRecords();
-  }
+  const openRecordEditor = useCallback((record) => setRecordDialog({
+    mode: "edit",
+    record,
+    initialValues: {
+      recordId: record.id,
+      blacklistId: record.blacklist?.id,
+      playerId: record.player_id,
+      expiresAt: record.expires_at,
+      reason: record.reason,
+    },
+  }), []);
+  const requestExpire = useCallback((record) => setConfirmation({ kind: "expire-record", item: record }), []);
+  const requestDeleteRecord = useCallback((record) => setConfirmation({ kind: "delete-record", item: record }), []);
 
-  // If you don't like the loading skeletons, just return `null`
-  if (isLoading) {
-    return (
-      (<Grid container spacing={4} justifyContent="center">
-        <Grid
-          size={{
-            xl: 6,
-            xs: 12
-          }}>
-          <Skeleton variant="rectangular" height={140} />
-        </Grid>
-        <Grid
-          container
-          justifyContent="center"
-          spacing={2}
-          size={{
-            xl: 3,
-            xs: 12
-          }}>
-          <Grid size={{
-            xl: 12
-          }}>
-            <Skeleton
-              variant="rectangular"
-              width={200}
-              height={42}
-              style={{ margin: "0 auto", borderRadius: 5 }}
-            />
-          </Grid>
-          <Grid size={{
-            xl: 12
-          }}>
-            <Skeleton
-              variant="rectangular"
-              width={155}
-              height={42}
-              style={{ margin: "0 auto", borderRadius: 5 }}
-            />
-          </Grid>
-        </Grid>
-        <Grid size={12}>
-          <Skeleton
-            variant="rectangular"
-            width={360}
-            height={32}
-            style={{ margin: "0 auto" }}
-          />
-        </Grid>
-        <Grid size={12}>
-          <Skeleton variant="rectangular" height={140} />
-        </Grid>
-        <Grid size={12}>
-          <Skeleton
-            variant="rectangular"
-            width={360}
-            height={32}
-            style={{ margin: "0 auto" }}
-          />
-        </Grid>
-      </Grid>)
-    );
-  }
+  const submitRecord = (data) => {
+    if (recordDialog?.mode === "edit") editRecord.mutate({ id: recordDialog.record.id, ...data });
+    else createRecord.mutate(data);
+  };
+  const submitList = (data) => {
+    if (listDialog?.mode === "edit") editList.mutate({ id: listDialog.blacklist.id, ...data });
+    else createList.mutate(data);
+  };
+  const confirmAction = () => {
+    if (confirmation.kind === "delete-list") deleteList.mutate(confirmation.item);
+    if (confirmation.kind === "delete-record") deleteRecord.mutate(confirmation.item);
+    if (confirmation.kind === "expire-record") expireRecord.mutate(confirmation.item);
+    setConfirmation(null);
+  };
+
+  const totalPages = Math.max(1, Math.ceil(Number(recordPage.total ?? 0) / filters.page_size));
+  const records = recordPage.records ?? [];
+  const mutationPending = [createList, editList, deleteList, createRecord, editRecord, expireRecord, deleteRecord]
+    .some((mutation) => mutation.isPending);
 
   return (
-    (<Grid container spacing={4} justifyContent="center">
-      <Grid
-        size={{
-          xl: 6,
-          xs: 12
-        }}>
-        <BlacklistRecordsSearch
-          blacklists={blacklists}
-          onSearch={setSearchQuery}
-          disabled={isLoading || isFetching}
-        />
-      </Grid>
-      <Grid
-        size={{
-          xl: 3,
-          xs: 12
-        }}>
-        <Grid
-          container
-          spacing={3}
-          alignContent="center"
-          alignItems="center"
-          justifyContent="center"
-          style={{ paddingTop: 6 }}
-        >
-          <Grid size={{
-            xl: 12
-          }}>
-            <BlacklistRecordCreateButton
-              blacklists={blacklists}
-              onSubmit={createRecord}
-            >
-              Create New Record
-            </BlacklistRecordCreateButton>
-          </Grid>
-          <Grid size={{
-            xl: 12
-          }}>
-            <Button
-              component={Link}
-              to={"manage"}
-              variant="contained"
-              color="primary"
-              size="large"
-            >
-              Manage Lists
-            </Button>
-          </Grid>
-        </Grid>
-      </Grid>
-      <Grid size={12}>
-        <MyPagination
-          pageSize={searchQuery.page_size}
-          page={page}
-          setPage={setPage}
-          total={totalRecords}
-        />
-      </Grid>
-      <Grid size={12}>
-        {isFetching ? <LinearProgress color="secondary" /> : ""}
-        <BlacklistRecordGrid
-          blacklists={blacklists}
-          records={records}
-          onRefresh={loadRecords}
-        />
-      </Grid>
-      <Grid size={12}>
-        <MyPagination
-          pageSize={searchQuery.page_size}
-          page={page}
-          setPage={setPage}
-          total={totalRecords}
-        />
-      </Grid>
-    </Grid>)
+    <Stack spacing={1.5} sx={{ mt: 2 }}>
+      <Box sx={{ height: 2 }}>
+        {mutationPending && <LinearProgress sx={{ height: 2 }} />}
+      </Box>
+      {error && <Alert severity="error">{error.message}</Alert>}
+      <Stack direction={{ xs: "column", lg: "row" }} spacing={1.5} alignItems="flex-start">
+        <Stack component="aside" spacing={1.5} sx={{ width: { xs: "100%", lg: 320 }, flexShrink: 0 }}>
+          <Paper variant="outlined" sx={{ p: 2 }}>
+            <Typography variant="h6" sx={{ mb: 2 }}>Search records</Typography>
+            <BlacklistFilters filters={filters} blacklists={blacklists} disabled={isFetching} onSubmit={setFilters} />
+          </Paper>
+          <BlacklistListPanel
+            blacklists={blacklists}
+            servers={servers}
+            onCreate={() => setListDialog({ mode: "create" })}
+            onEdit={(blacklist) => setListDialog({ mode: "edit", blacklist })}
+            onDelete={(blacklist) => setConfirmation({ kind: "delete-list", item: blacklist })}
+          />
+        </Stack>
+
+        <Stack component="main" spacing={1} sx={{ width: "100%", minWidth: 0 }}>
+          <Paper variant="outlined" sx={{ p: 1 }}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
+              <ToggleButtonGroup exclusive size="small" value={view} onChange={(_, value) => value && setView(value)} aria-label="Record view">
+                <ToggleButton value="cards"><GridViewIcon sx={{ mr: { xs: 0, sm: 1 } }} /><Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>Card view</Box></ToggleButton>
+                <ToggleButton value="table"><TableRowsIcon sx={{ mr: { xs: 0, sm: 1 } }} /><Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>Table view</Box></ToggleButton>
+              </ToggleButtonGroup>
+              <Button variant="contained" startIcon={<AddIcon />} onClick={() => setRecordDialog({ mode: "create" })}>New record</Button>
+            </Stack>
+          </Paper>
+
+          <Box sx={{ height: 2 }}>
+            {isFetching && view === "cards" && <LinearProgress sx={{ height: 2 }} />}
+          </Box>
+          {view === "cards" ? (
+            <BlacklistRecordCards records={records} onEdit={openRecordEditor} onExpire={requestExpire} onDelete={requestDeleteRecord} />
+          ) : (
+            <BlacklistRecordsTable records={records} isLoading={isLoading} isFetching={isFetching} onEdit={openRecordEditor} onExpire={requestExpire} onDelete={requestDeleteRecord} />
+          )}
+
+          <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1} flexWrap="wrap" sx={{ pt: 1 }}>
+            <Typography variant="body2" color="text.secondary">{Number(recordPage.total ?? 0).toLocaleString()} records</Typography>
+            <Pagination count={totalPages} page={Math.min(filters.page, totalPages)} onChange={(_, page) => setFilters({ ...filters, page })} disabled={isFetching} showFirstButton showLastButton />
+          </Stack>
+        </Stack>
+      </Stack>
+
+      <BlacklistRecordCreateDialog
+        open={Boolean(recordDialog)}
+        setOpen={(open) => !open && setRecordDialog(null)}
+        blacklists={blacklists}
+        onSubmit={submitRecord}
+        initialValues={recordDialog?.initialValues}
+        titleText={recordDialog?.mode === "edit" ? "Edit Blacklist Record" : "Create Blacklist Record"}
+        submitText={recordDialog?.mode === "edit" ? "Save" : "Create Record"}
+        disablePlayerId={recordDialog?.mode === "edit"}
+      />
+      <BlacklistListCreateDialog
+        open={Boolean(listDialog)}
+        setOpen={(open) => !open && setListDialog(null)}
+        servers={servers}
+        onSubmit={submitList}
+        initialValues={listDialog?.mode === "edit" ? {
+          name: listDialog.blacklist.name,
+          servers: listDialog.blacklist.servers,
+          syncMethod: listDialog.blacklist.sync,
+        } : undefined}
+        titleText={listDialog?.mode === "edit" ? "Edit Blacklist" : "Create Blacklist"}
+        submitText={listDialog?.mode === "edit" ? "Save" : "Create List"}
+      />
+      <Dialog open={Boolean(confirmation)} onClose={() => setConfirmation(null)}>
+        <DialogTitle>{confirmation?.kind === "expire-record" ? "Expire blacklist record?" : "Permanently delete?"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {confirmation?.kind === "delete-list"
+              ? `This will permanently delete “${confirmation.item.name}” and all its records.`
+              : confirmation?.kind === "delete-record"
+              ? `This will permanently delete record #${confirmation.item.id}.`
+              : "The player will no longer be actively blacklisted by this record."}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions><Button onClick={() => setConfirmation(null)}>Cancel</Button><Button color="secondary" onClick={confirmAction}>Confirm</Button></DialogActions>
+      </Dialog>
+    </Stack>
   );
 }
-
-export default BlacklistRecords;
