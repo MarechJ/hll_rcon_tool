@@ -14,7 +14,7 @@ dependencies = [
     "discord-py==2.7.1",
     # discord-webhook[async]
     "discord-webhook",
-    "django==4.2.30",
+    "django==6.1",
     "django-cors-headers==4.9.0",
     "django-ratelimit>=4.1.0",
     "gunicorn>=26.0.0",
