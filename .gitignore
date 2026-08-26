@@ -151,4 +151,4 @@ certs/
 supervisor_data/
 
 # Logs
-logs/
+/logs/

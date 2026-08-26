@@ -98,7 +98,7 @@ def test_votemap_state_instantiation_does_not_run_migrations():
     assert client.get(VotemapKeys.VERSION) is None
 
 
-def test_maintenance_migrates_votemap_state_in_every_populated_database(monkeypatch):
+def test_maintenance_migrates_votemap_state_only_in_server_databases(monkeypatch):
     discovery_client = _client()
     discovery_client.info = lambda section: {
         "db1": {"keys": 2},
@@ -117,5 +117,8 @@ def test_maintenance_migrates_votemap_state_in_every_populated_database(monkeypa
         lambda _client, database: clients[database],
     )
 
-    assert migrate_all_votemap_states("redis://unused/0") == (3, 3)
-    assert all(client.get(VotemapKeys.VERSION) == b"1" for client in clients.values())
+    assert migrate_all_votemap_states("redis://unused/0") == (2, 2)
+    assert clients[0].get(VotemapKeys.VERSION) is None
+    assert all(
+        clients[database].get(VotemapKeys.VERSION) == b"1" for database in (1, 7)
+    )

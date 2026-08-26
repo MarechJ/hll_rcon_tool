@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { debounce } from "lodash";
+import React, { useEffect, useRef, useState } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { cmd } from "@/utils/fetchUtils";
 import Typography from "@mui/material/Typography";
 import {
   Avatar,
   Box,
+  Button,
   ClickAwayListener,
   Paper,
   Popper,
@@ -35,75 +36,70 @@ const SuggestionItem = styled(Box)(({ theme }) => ({
 export default function PlayerSearchField({
   onSelect,
   disableAddBtn = false,
+  nameValue,
+  onNameInputChange,
+  idValue,
+  onIdInputChange,
+  disabled = false,
+  required = false,
+  allowIdOnlyAdd = false,
+  addButtonFullWidth = false,
   ...props
 }) {
-  const [suggestions, setSuggestions] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
   const [nameInputValue, setNameInputValue] = useState("");
   const [idInputValue, setIdInputValue] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState({ name: "", id: "" });
+  const displayedNameValue = nameValue ?? nameInputValue;
+  const displayedIdValue = idValue ?? idInputValue;
 
   const nameInputRef = useRef(null);
   const idInputRef = useRef(null);
-  const nameRef = useRef(nameInputValue);
-  const idRef = useRef(idInputValue);
-
   useEffect(() => {
-    debouncedFetchSuggestions();
-    nameRef.current = nameInputValue;
-  }, [nameInputValue]);
+    const timeout = window.setTimeout(() => {
+      setDebouncedSearch({ name: displayedNameValue.trim(), id: displayedIdValue.trim() });
+    }, 600);
+    return () => window.clearTimeout(timeout);
+  }, [displayedNameValue, displayedIdValue]);
 
-  useEffect(() => {
-    debouncedFetchSuggestions();
-    idRef.current = idInputValue;
-  }, [idInputValue]);
-
-  const fetchSuggestions = async () => {
-    setSuggestions([]);
-
-    if (!nameRef.current && !idRef.current) {
-      setIsOpen(false);
-      return;
-    }
-
-    const params = {
-      payload: {
-        page_size: 15,
-        page: 1,
-        player_name: nameRef.current,
-        player_id: idRef.current,
-        ignore_accent: true,
-      },
-    };
-
-    const response = await cmd.GET_PLAYERS_RECORDS(params);
-    if (response?.result?.failed) {
-      return;
-    }
-    setSuggestions(response.result.players);
-    setIsOpen(true);
-  };
-
-  const debouncedFetchSuggestions = useMemo(
-    () => debounce(fetchSuggestions, 600),
-    []
-  );
+  const { data: suggestions = [] } = useQuery({
+    queryKey: ["players", "search", debouncedSearch],
+    queryFn: async () => {
+      const response = await cmd.GET_PLAYERS_RECORDS({
+        payload: {
+          page_size: 15,
+          page: 1,
+          player_name: debouncedSearch.name,
+          player_id: debouncedSearch.id,
+          ignore_accent: true,
+        },
+        throwRouteError: false,
+      });
+      return response?.result?.players ?? [];
+    },
+    enabled: !disabled && Boolean(debouncedSearch.name || debouncedSearch.id),
+    placeholderData: keepPreviousData,
+  });
 
   const handleInputChange = (event) => {
     const value = event.target.value;
     if (event.target.name === "hll_player_name") {
       setNameInputValue(value);
+      onNameInputChange?.(value);
       setAnchorEl(nameInputRef.current);
     } else {
       setIdInputValue(value);
+      onIdInputChange?.(value);
       setAnchorEl(idInputRef.current);
     }
+    setIsOpen(Boolean(value));
   };
 
   const handlePlayerSelect = (selectedPlayer) => {
     onSelect(selectedPlayer);
-    setNameInputValue("");
-    setIdInputValue("");
+    if (nameValue === undefined) setNameInputValue("");
+    if (idValue === undefined) setIdInputValue("");
     setIsOpen(false);
   };
 
@@ -118,39 +114,66 @@ export default function PlayerSearchField({
           ref={nameInputRef}
           fullWidth
           label={"Name"}
-          value={nameInputValue}
+          value={displayedNameValue}
           name="hll_player_name"
           onChange={handleInputChange}
           type={"search"}
           placeholder={"Enter player name"}
+          disabled={disabled}
+          required={required}
         />
         <TextField
           ref={idInputRef}
           fullWidth
           label={"Player ID"}
-          value={idInputValue}
+          value={displayedIdValue}
           name="hll_player_id"
           onChange={handleInputChange}
           type={"search"}
           placeholder={"Enter player ID"}
+          disabled={disabled}
+          required={required}
         />
-        {!disableAddBtn && (
+        {!disableAddBtn && !addButtonFullWidth && (
           <Tooltip title="Create">
             <span>
               <IconButton
                 color="primary"
                 onClick={() =>
                   handlePlayerSelect({
-                    player_id: idInputValue,
-                    name: nameInputValue,
+                    player_id: displayedIdValue,
+                    name: displayedNameValue,
                   })
                 }
-                disabled={!nameInputValue || !idInputValue}
+                disabled={
+                  disabled ||
+                  !displayedIdValue ||
+                  (!allowIdOnlyAdd && !displayedNameValue)
+                }
               >
                 <AddCircleOutline />
               </IconButton>
             </span>
           </Tooltip>
+        )}
+        {!disableAddBtn && addButtonFullWidth && (
+          <Button
+            type="button"
+            variant="outlined"
+            fullWidth
+            startIcon={<AddCircleOutline />}
+            onClick={() => handlePlayerSelect({
+              player_id: displayedIdValue,
+              name: displayedNameValue,
+            })}
+            disabled={
+              disabled ||
+              !displayedIdValue ||
+              (!allowIdOnlyAdd && !displayedNameValue)
+            }
+          >
+            Add player
+          </Button>
         )}
         <Popper
           open={isOpen && suggestions.length > 0}

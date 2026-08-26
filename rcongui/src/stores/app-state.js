@@ -23,6 +23,8 @@ export const useAppStore = create(
             [groupName]: !state.groupOpenState?.[groupName],
           },
         })),
+      blacklistView: "cards",
+      setBlacklistView: (view) => set({ blacklistView: view })
     }),
     {
       name: withPrefix("app"),

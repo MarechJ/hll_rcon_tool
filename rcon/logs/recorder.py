@@ -1,10 +1,8 @@
 import datetime
 import logging
-import os
 import time
-from typing import Callable, Iterable
+from collections.abc import Callable, Iterable
 
-from django.template.context_processors import tz
 from sqlalchemy import desc
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.exc import IntegrityError
@@ -19,8 +17,15 @@ from rcon.utils import get_server_number
 
 logger = logging.getLogger(__name__)
 
+
 class LogRecorder:
-    def __init__(self, dump_frequency_seconds=10, log_history_fn: Callable[[], Iterable[StructuredLogLineWithMetaData]] = LogLoop.get_log_history_list):
+    def __init__(
+        self,
+        dump_frequency_seconds=10,
+        log_history_fn: Callable[
+            [], Iterable[StructuredLogLineWithMetaData]
+        ] = LogLoop.get_log_history_list,
+    ):
         self.dump_frequency_seconds = dump_frequency_seconds
         self.server_id = get_server_number()
         self.log_history_fn = log_history_fn
@@ -42,13 +47,22 @@ class LogRecorder:
             if not isinstance(log, dict):
                 logger.warning("Log is invalid, not a dict: %s", log)
                 continue
-            if last_log and log["event_time"] == last_log.event_time and '] ' + log["line_without_time"] in last_log.raw:
-                logger.debug("This log is the same as the last saved log, skipping saving the rest of the logs\n%s", log)
+            if (
+                last_log
+                and log["event_time"] == last_log.event_time
+                and "] " + log["line_without_time"] in last_log.raw
+            ):
+                logger.debug(
+                    "This log is the same as the last saved log, skipping saving the rest of the logs\n%s",
+                    log,
+                )
                 break
             to_store.append(log)
         return to_store
 
-    def _collect_player_ids(self, sess: Session, logs: list[StructuredLogLineWithMetaData]) -> dict[str, PlayerID | None]:
+    def _collect_player_ids(
+        self, sess: Session, logs: list[StructuredLogLineWithMetaData]
+    ) -> dict[str, PlayerID | None]:
         players: dict[str, PlayerID | None] = {}
         names: dict[str, str | None] = {}
         for log in logs:
@@ -63,13 +77,18 @@ class LogRecorder:
         # the player id is stored in the db
         # or the logs did not arrive in chronological order e.g. KILL log before CONNECTED log
         # where PlayerID is only created on CONNECTED log trigger
-        unique_player_ids = set(players.keys( ))
-        pid_query = sess.query(PlayerID).filter(PlayerID.player_id.in_(list(players.keys())))
+        unique_player_ids = set(players.keys())
+        pid_query = sess.query(PlayerID).filter(
+            PlayerID.player_id.in_(list(players.keys()))
+        )
         for pid in pid_query:
             players[pid.player_id] = pid
             unique_player_ids.remove(pid.player_id)
         if len(unique_player_ids) != 0:
-            logger.info("[MISSING PlayerID Records] - Creating PlayerID records\nMissing: %s", unique_player_ids)
+            logger.info(
+                "[MISSING PlayerID Records] - Creating PlayerID records\nMissing: %s",
+                unique_player_ids,
+            )
             for player_id in unique_player_ids:
                 pid = _get_set_player(sess, player_id, names[player_id])
                 players[pid.player_id] = pid
@@ -108,7 +127,6 @@ class LogRecorder:
                 }
             )
 
-
         try:
             if sess.get_bind().dialect.name == "postgresql":
                 statement = postgresql_insert(LogLine).values(rows)
@@ -126,7 +144,9 @@ class LogRecorder:
     def run(self, run_immediately=False, one_off=False):
         last_run = datetime.datetime.now(tz=datetime.UTC)
         if run_immediately or one_off:
-            last_run = last_run - datetime.timedelta(seconds=self.dump_frequency_seconds + 1)
+            last_run = last_run - datetime.timedelta(
+                seconds=self.dump_frequency_seconds + 1
+            )
 
         while True:
             now = datetime.datetime.now(tz=datetime.UTC)
