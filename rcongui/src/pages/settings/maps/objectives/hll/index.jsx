@@ -5,8 +5,8 @@ import {
   flip,
   generateObjectivesGrid,
   getSelectedObjectives,
+  isNotSupportedGameMode,
   reduceToInts,
-  unifiedGamemodeName,
 } from "../helpers";
 import {
   Box,
@@ -199,8 +199,8 @@ function HLLMapObjectivesPage() {
     refetchObjectiveNames();
   }, [currentMap, gameState?.current_map]);
 
-  if (unifiedGamemodeName(currentMap.game_mode) === "skirmish") {
-    throw new Error("skirmish")
+  if (isNotSupportedGameMode(currentMap)) {
+    throw new Error("unsupported_mode")
   }
 
   return (
