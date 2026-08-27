@@ -237,6 +237,7 @@ export const ThresholdsInput = ({ keyName, title, value: pairs, onChange }) => {
           </Grid>
           <Grid size={2}>
             <Button
+              color="error"
               size="small"
               onClick={() => removeThreshold(index)}
               sx={{ minWidth: "auto" }}

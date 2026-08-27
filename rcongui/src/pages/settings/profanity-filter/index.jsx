@@ -36,7 +36,10 @@ export const loader = async () => {
 
 export const action = async ({ request }) => {
   const { profanities, ...rest } = Object.fromEntries(await request.formData());
-  const payload = { profanities: profanities.length ? profanities.split(",") : [], ...rest };
+  const payload = {
+    profanities: profanities.length ? profanities.split(",") : [],
+    ...rest,
+  };
   const result = await cmd.SET_PROFANITIES({ payload });
   return result;
 };
@@ -71,7 +74,7 @@ const ProfanityFilter = () => {
   };
 
   const handleAddProfanity = () => {
-    const word = newProfanity.trim()
+    const word = newProfanity.trim();
     if (word) {
       setProfanities((prev) => [word, ...prev]);
       setNewProfanity("");
@@ -243,7 +246,7 @@ const ProfanityFilter = () => {
           <Button
             onClick={handleDeleteSelectedProfanities}
             variant="contained"
-            color="warning"
+            color="error"
             disabled={!checked.length}
             sx={{ minWidth: "fit-content" }}
           >
@@ -267,6 +270,7 @@ const ProfanityFilter = () => {
                 disablePadding
                 secondaryAction={
                   <IconButton
+                    color="error"
                     onClick={() => handleDeleteSingleProfanity(index)}
                   >
                     <DeleteIcon />

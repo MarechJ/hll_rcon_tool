@@ -14,15 +14,23 @@ import {
   faMemory,
 } from "@fortawesome/free-solid-svg-icons";
 import { byUsage } from "./utils";
+import { useTheme } from "@mui/material/styles";
 
 const SystemUsage = () => {
+  const theme = useTheme();
   const { data: system, isLoading } = useQuery({
     queryKey: [{ queryIdentified: "get_system_usage" }],
     queryFn: cmd.GET_SYSTEM_USAGE,
     refetchInterval: 15 * 1000,
   });
 
-  if (isLoading || !system || !system.cpu_usage || !system.ram_usage || !system.disk_usage)
+  if (
+    isLoading ||
+    !system ||
+    !system.cpu_usage ||
+    !system.ram_usage ||
+    !system.disk_usage
+  )
     return (
       <ListItem
         sx={{
@@ -71,7 +79,7 @@ const SystemUsage = () => {
               >
                 <FontAwesomeIcon
                   icon={faMicrochip}
-                  color={byUsage(system.cpu_usage.percent)}
+                  color={byUsage(system.cpu_usage.percent, theme)}
                 />
                 <div>{`${system.cpu_usage.percent}%`}</div>
               </Stack>
@@ -93,7 +101,7 @@ const SystemUsage = () => {
               >
                 <FontAwesomeIcon
                   icon={faMemory}
-                  color={byUsage(system.ram_usage.percent)}
+                  color={byUsage(system.ram_usage.percent, theme)}
                 />
                 <div>{`${system.ram_usage.percent}%`}</div>
               </Stack>
@@ -115,7 +123,7 @@ const SystemUsage = () => {
               >
                 <FontAwesomeIcon
                   icon={faHardDrive}
-                  color={byUsage(system.disk_usage.percent)}
+                  color={byUsage(system.disk_usage.percent, theme)}
                 />
                 <div>{`${system.disk_usage.percent}%`}</div>
               </Stack>

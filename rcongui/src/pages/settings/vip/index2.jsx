@@ -393,7 +393,7 @@ const VipPage = () => {
           <Button
             onClick={handleDeleteSelectedItems}
             variant="contained"
-            color="warning"
+            color="error"
             disabled={!checked.size}
             sx={{ minWidth: "fit-content" }}
           >
@@ -426,6 +426,7 @@ const VipPage = () => {
                       <AccountCircleIcon />
                     </IconButton>
                     <IconButton
+                      color="error"
                       onClick={() => handleDeleteSingleItem(vip.player_id)}
                     >
                       <DeleteIcon />

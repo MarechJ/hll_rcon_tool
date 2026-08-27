@@ -30,7 +30,6 @@ export const LogActionQuerySelectionMenu = ({
   onToggle,
   toggleValue,
 }) => {
-
   const {
     search,
     setSearch,
@@ -61,14 +60,14 @@ export const LogActionQuerySelectionMenu = ({
         fullWidth
       >
         <ToggleButton
-          sx={{ borderRadius: 0 }}
+          sx={{ borderRadius: "0 !important" }}
           value="on"
           aria-label="filter by action"
         >
           ON
         </ToggleButton>
         <ToggleButton
-          sx={{ borderRadius: 0 }}
+          sx={{ borderRadius: "0 !important" }}
           value="off"
           aria-label="filter by action"
         >
@@ -81,10 +80,16 @@ export const LogActionQuerySelectionMenu = ({
         onOpen={handleOpen}
         onClose={onClose}
         renderButton={(props) => (
-          <Button variant="outlined" fullWidth disableRipple color="inherit" {...props}>
+          <Button
+            variant="outlined"
+            fullWidth
+            disableRipple
+            color="inherit"
+            {...props}
+          >
             Open Selection
           </Button>
-        )} 
+        )}
       >
         <SearchInput
           ref={searchInputRef}
