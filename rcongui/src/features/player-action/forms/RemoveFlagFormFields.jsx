@@ -1,4 +1,4 @@
-import {Fragment, useEffect, useState} from "react";
+import { Fragment, useEffect, useState } from "react";
 import {
   Stack,
   ListItem,
@@ -32,6 +32,7 @@ export const RemoveFlagFormFields = ({ contextData, action, recipients }) => {
             <ListItem
               secondaryAction={
                 <IconButton
+                  color="error"
                   edge="end"
                   aria-label="delete"
                   title="Remove Flag"
@@ -54,7 +55,9 @@ export const RemoveFlagFormFields = ({ contextData, action, recipients }) => {
                 </IconButton>
               }
             >
-              <ListItemAvatar>{<Emoji emoji={flag.flag} size={24} />}</ListItemAvatar>
+              <ListItemAvatar>
+                {<Emoji emoji={flag.flag} size={24} />}
+              </ListItemAvatar>
               <ListItemText primary={flag.comment} secondary={flag.modified} />
             </ListItem>
           </Fragment>

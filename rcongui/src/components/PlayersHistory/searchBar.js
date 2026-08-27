@@ -13,11 +13,11 @@ import {
   TextField,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import {DesktopDateTimePicker} from '@mui/x-date-pickers/DesktopDateTimePicker';
-import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
-import {LocalizationProvider} from '@mui/x-date-pickers/LocalizationProvider';
+import { DesktopDateTimePicker } from "@mui/x-date-pickers/DesktopDateTimePicker";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import Grid from "@mui/material/Grid2";
-import {lazy, Suspense, useEffect, useState} from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 
 const EmojiPicker = lazy(() => import("@emoji-mart/react"));
 
@@ -46,11 +46,11 @@ const SearchBar = ({
   const [data, setData] = useState({});
 
   useEffect(() => {
-    import('@emoji-mart/data').then((d) => setData(d.default));
+    import("@emoji-mart/data").then((d) => setData(d.default));
   }, []);
 
   return (
-    (<form>
+    <form>
       <Grid
         container
         spacing={1}
@@ -110,15 +110,17 @@ const SearchBar = ({
               <CardHeader
                 title="Pick emojis"
                 action={
-                  <IconButton onClick={() => setShowEmojiPicker(false)} size="large">
-                    <CloseIcon/>
+                  <IconButton
+                    onClick={() => setShowEmojiPicker(false)}
+                    size="large"
+                  >
+                    <CloseIcon />
                   </IconButton>
                 }
               />
               <CardContent>
                 <Suspense>
                   <EmojiPicker
-                    style={{border: '1px solid red'}}
                     dynamicWidth={true}
                     perLine={8}
                     data={data}
@@ -154,7 +156,7 @@ const SearchBar = ({
             <DesktopDateTimePicker
               label="Last seen from"
               onChange={(value) => console.log(value)} // send value to hook form
-              format='LLL'
+              format="LLL"
             />
           </LocalizationProvider>
         </Grid>
@@ -171,7 +173,7 @@ const SearchBar = ({
             <DesktopDateTimePicker
               label="Last seen until"
               onChange={(value) => console.log(value)} // send value to hook form
-              format='LLL'
+              format="LLL"
             />
           </LocalizationProvider>
         </Grid>
@@ -204,8 +206,9 @@ const SearchBar = ({
         <Grid
           size={{
             xs: 4,
-            xl: 1
-          }}>
+            xl: 1,
+          }}
+        >
           <FormControl fullWidth>
             <InputLabel>Page size</InputLabel>
             <Select
@@ -239,7 +242,7 @@ const SearchBar = ({
           </Button>
         </Grid>
       </Grid>
-    </form>)
+    </form>
   );
 };
 

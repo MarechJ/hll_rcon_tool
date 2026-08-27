@@ -23,7 +23,7 @@ function SortableRotationItem({ item, onRemove, isNext }) {
     transition,
     zIndex: isDragging ? 10 : 1,
     opacity: isDragging ? 0.8 : 1,
-    touchAction: "manipulation"
+    touchAction: "manipulation",
   };
 
   return (
@@ -67,7 +67,11 @@ function SortableRotationItem({ item, onRemove, isNext }) {
       <Stack direction={"row"} gap={0.25} alignItems={"center"}>
         {isNext && <Chip color="secondary" label="Next" />}
         <Tooltip title="Remove from rotation">
-          <IconButton size="small" onClick={() => onRemove(mapLayer)} color="error">
+          <IconButton
+            size="small"
+            onClick={() => onRemove(mapLayer)}
+            color="error"
+          >
             <CloseIcon fontSize="small" />
           </IconButton>
         </Tooltip>

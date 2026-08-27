@@ -73,7 +73,9 @@ function LogsTable({
 
   const tableConfig = useLogsTableStore();
   const searchParams = useLogsSearchStore();
-  const setParamsFilterEnabled = useLogsSearchStore((state) => state.setEnabled);
+  const setParamsFilterEnabled = useLogsSearchStore(
+    (state) => state.setEnabled
+  );
 
   const [playerOptions, setPlayerOptions] = useState({});
 
@@ -210,10 +212,13 @@ function LogsTable({
     {}
   );
 
-  const searchQueryParamsOptions = Object.entries(logActions).reduce((acc, [name]) => {
-    acc[name] = searchParams.actions.includes(name);
-    return acc;
-  }, {});
+  const searchQueryParamsOptions = Object.entries(logActions).reduce(
+    (acc, [name]) => {
+      acc[name] = searchParams.actions.includes(name);
+      return acc;
+    },
+    {}
+  );
 
   const handleTeamSelect = (team) => {
     handleFilterChange(() => {
@@ -286,7 +291,12 @@ function LogsTable({
             <SettingsIcon sx={{ fontSize: "1rem" }} />
           </IconButton>
         </TableToolbar>
-        <LiveLogsTable table={table} config={tableConfig} isFetching={isFetching} isLoading={isLoading} />
+        <LiveLogsTable
+          table={table}
+          config={tableConfig}
+          isFetching={isFetching}
+          isLoading={isLoading}
+        />
         <TableToolbar
           sx={{
             borderBottomWidth: "1px",
@@ -362,6 +372,7 @@ function LogsTable({
                   disableGutters={true}
                   secondaryAction={
                     <IconButton
+                      color="error"
                       edge="end"
                       aria-label="delete"
                       onClick={() => handleQueryActionParamSelect(action)}

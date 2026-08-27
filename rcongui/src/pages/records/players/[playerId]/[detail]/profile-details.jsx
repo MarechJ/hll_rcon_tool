@@ -16,10 +16,10 @@ import { useEditSoldierModal } from "@/hooks/useEditSoldierModal";
 import MilitaryTechIcon from "@mui/icons-material/MilitaryTech";
 import CopyableText from "@/components/shared/CopyableText";
 import { useEditAccountModal } from "@/hooks/useEditAccountModal";
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import { CountryFlag } from "@/components/shared/CountryFlag";
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
 import PlatformChip from "@/components/player/profile/Platform";
 import LevelChip from "@/components/player/profile/Level";
 
@@ -43,14 +43,19 @@ const SoldierCard = ({ profile }) => {
   const { openModal: editSoldier, modal: soldierEditForm } =
     useEditSoldierModal(profile.player_id, soldier);
 
-  if (!soldier) return null
+  if (!soldier) return null;
 
   return (
     <>
       <Card>
         <CardHeader
           title={
-            <Stack direction={"row"} gap={1} alignItems={"center"} fontSize={"1rem"}>
+            <Stack
+              direction={"row"}
+              gap={1}
+              alignItems={"center"}
+              fontSize={"1rem"}
+            >
               <MilitaryTechIcon sx={{ width: "1rem", height: "1rem" }} />
               Soldier
             </Stack>
@@ -90,13 +95,20 @@ const SoldierCard = ({ profile }) => {
               <Box sx={{ color: (theme) => theme.palette.text.secondary }}>
                 Level:
               </Box>
-              <Box><LevelChip level={soldier["level"]} /></Box>
+              <Box>
+                <LevelChip level={soldier["level"]} />
+              </Box>
             </ListItem>
             <ListItem sx={{ display: "flex", justifyContent: "space-between" }}>
               <Box sx={{ color: (theme) => theme.palette.text.secondary }}>
                 Platform:
               </Box>
-              <Box><PlatformChip platform={soldier["platform"]} playerId={profile.player_id} /></Box>
+              <Box>
+                <PlatformChip
+                  platform={soldier["platform"]}
+                  playerId={profile.player_id}
+                />
+              </Box>
             </ListItem>
             <ListItem sx={{ display: "flex", justifyContent: "space-between" }}>
               <Box sx={{ color: (theme) => theme.palette.text.secondary }}>
@@ -123,14 +135,19 @@ const AccountCard = ({ profile }) => {
   const { openModal: editSoldier, modal: accountEditForm } =
     useEditAccountModal(profile.player_id, account);
 
-  if (!account) return null
+  if (!account) return null;
 
   return (
     <>
       <Card>
         <CardHeader
           title={
-            <Stack direction={"row"} gap={1} alignItems={"center"} fontSize={"1rem"}>
+            <Stack
+              direction={"row"}
+              gap={1}
+              alignItems={"center"}
+              fontSize={"1rem"}
+            >
               <AccountCircleIcon sx={{ width: "1rem", height: "1rem" }} />
               Account
             </Stack>
@@ -153,21 +170,31 @@ const AccountCard = ({ profile }) => {
                 Name:
               </Box>
               <Box>
-                {account["name"] ? (<CopyableText
-                  text={account["name"]}
-                  label={account["name"]}
-                  position="start"
-                />) : "-"}
+                {account["name"] ? (
+                  <CopyableText
+                    text={account["name"]}
+                    label={account["name"]}
+                    position="start"
+                  />
+                ) : (
+                  "-"
+                )}
               </Box>
             </ListItem>
             <ListItem sx={{ display: "flex", justifyContent: "space-between" }}>
               <Box sx={{ color: (theme) => theme.palette.text.secondary }}>
                 Country:
               </Box>
-              <Box>{account["country"]
-                ? <><CountryFlag country={account["country"]} /> {account["country"]}</>
-                : "-"
-              }</Box>
+              <Box>
+                {account["country"] ? (
+                  <>
+                    <CountryFlag country={account["country"]} />{" "}
+                    {account["country"]}
+                  </>
+                ) : (
+                  "-"
+                )}
+              </Box>
             </ListItem>
             <ListItem sx={{ display: "flex", justifyContent: "space-between" }}>
               <Box sx={{ color: (theme) => theme.palette.text.secondary }}>
@@ -180,18 +207,28 @@ const AccountCard = ({ profile }) => {
                 Discord ID:
               </Box>
               <Box>
-                {account["discord_id"] ? (<CopyableText
-                  text={account["discord_id"]}
-                  label={account["discord_id"]}
-                  position="start"
-                />) : "-"}
+                {account["discord_id"] ? (
+                  <CopyableText
+                    text={account["discord_id"]}
+                    label={account["discord_id"]}
+                    position="start"
+                  />
+                ) : (
+                  "-"
+                )}
               </Box>
             </ListItem>
             <ListItem sx={{ display: "flex", justifyContent: "space-between" }}>
               <Box sx={{ color: (theme) => theme.palette.text.secondary }}>
                 Membership:
               </Box>
-              <Box>{account["is_member"] ? <CheckCircleIcon style={{color: "green"}} /> : <CancelIcon style={{color: "red"}} />}</Box>
+              <Box>
+                {account["is_member"] ? (
+                  <CheckCircleIcon sx={{ color: "success.main" }} />
+                ) : (
+                  <CancelIcon sx={{ color: "error.main" }} />
+                )}
+              </Box>
             </ListItem>
           </List>
         </CardContent>

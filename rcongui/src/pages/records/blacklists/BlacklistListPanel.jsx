@@ -28,7 +28,13 @@ function serverLabel(blacklist, servers) {
   return servers[serverNumber] ?? `#${serverNumber}`;
 }
 
-export default function BlacklistListPanel({ blacklists, servers, onCreate, onEdit, onDelete }) {
+export default function BlacklistListPanel({
+  blacklists,
+  servers,
+  onCreate,
+  onEdit,
+  onDelete,
+}) {
   const [menu, setMenu] = useState(null);
 
   const closeMenu = () => setMenu(null);
@@ -36,9 +42,21 @@ export default function BlacklistListPanel({ blacklists, servers, onCreate, onEd
   return (
     <Card sx={{ px: 0.5 }} variant="outlined">
       <CardContent>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 0.5, px: 1 }}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{ mb: 0.5, px: 1 }}
+        >
           <Typography variant="h6">Blacklist lists</Typography>
-          <Button size="small" variant="contained" startIcon={<AddIcon />} onClick={onCreate}>New</Button>
+          <Button
+            size="small"
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={onCreate}
+          >
+            New
+          </Button>
         </Stack>
         <List sx={{ gap: 1 }}>
           {blacklists.map((blacklist) => (
@@ -49,7 +67,9 @@ export default function BlacklistListPanel({ blacklists, servers, onCreate, onEd
                   <span>
                     <IconButton
                       size="large"
-                      onClick={(event) => setMenu({ anchor: event.currentTarget, blacklist })}
+                      onClick={(event) =>
+                        setMenu({ anchor: event.currentTarget, blacklist })
+                      }
                       aria-label={`Actions for ${blacklist.name}`}
                       sx={{ p: 0.75, color: "text.secondary" }}
                     >
@@ -87,7 +107,9 @@ export default function BlacklistListPanel({ blacklists, servers, onCreate, onEd
                     >
                       {serverLabel(blacklist, servers)}
                     </Typography>
-                    <Typography variant="caption">{SYNC_METHODS[blacklist.sync] ?? blacklist.sync}</Typography>
+                    <Typography variant="caption">
+                      {SYNC_METHODS[blacklist.sync] ?? blacklist.sync}
+                    </Typography>
                   </Stack>
                 }
               />
@@ -96,18 +118,31 @@ export default function BlacklistListPanel({ blacklists, servers, onCreate, onEd
         </List>
       </CardContent>
       <Menu anchorEl={menu?.anchor} open={Boolean(menu)} onClose={closeMenu}>
-        <MenuItem onClick={() => { onEdit(menu.blacklist); closeMenu(); }}>
+        <MenuItem
+          onClick={() => {
+            onEdit(menu.blacklist);
+            closeMenu();
+          }}
+        >
           <EditIcon color="primary" fontSize="small" sx={{ mr: 1 }} /> Edit
         </MenuItem>
         <MenuItem
           disabled={menu?.blacklist.id === 0}
-          onClick={() => { onDelete(menu.blacklist); closeMenu(); }}
+          sx={{ color: "error.main" }}
+          onClick={() => {
+            onDelete(menu.blacklist);
+            closeMenu();
+          }}
         >
-          <DeleteIcon color="error" fontSize="small" sx={{ mr: 1 }} /> Delete
+          <DeleteIcon fontSize="small" sx={{ mr: 1 }} /> Delete
         </MenuItem>
       </Menu>
       {blacklists.length === 0 && (
-        <Box sx={{ p: 2 }}><Typography color="text.secondary">No blacklist lists found.</Typography></Box>
+        <Box sx={{ p: 2 }}>
+          <Typography color="text.secondary">
+            No blacklist lists found.
+          </Typography>
+        </Box>
       )}
     </Card>
   );

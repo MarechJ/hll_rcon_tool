@@ -1,5 +1,6 @@
 import Grid from "@mui/material/Grid2";
 import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import moment from "moment";
 
 export const PlayerSighthings = ({ player }) => {
@@ -19,9 +20,9 @@ export const PlayerSighthings = ({ player }) => {
   let vipDisplay;
   if (vip_expiration?.isBefore(moment.now())) {
     vipDisplay = (
-      <small style={{ color: "red" }}>
+      <Typography component="span" variant="caption" color="error.main">
         VIP expired {humanizedExpiration} ago
-      </small>
+      </Typography>
     );
   } else if (vip_expiration?.isSameOrAfter(moment().add(100, "years"))) {
     vipDisplay = <small>VIP Never Expires</small>;
@@ -30,11 +31,7 @@ export const PlayerSighthings = ({ player }) => {
   }
 
   return (
-    (<Grid
-        container
-        justifyContent="space-between"
-        spacing={0}
-      >
+    <Grid container justifyContent="space-between" spacing={0}>
       {vip_expiration ? (
         <Grid size={12}>
           <Tooltip title={vip_expiration.format("LLLL")} arrow>
@@ -58,6 +55,6 @@ export const PlayerSighthings = ({ player }) => {
           </small>
         </Tooltip>
       </Grid>
-    </Grid>)
+    </Grid>
   );
 };

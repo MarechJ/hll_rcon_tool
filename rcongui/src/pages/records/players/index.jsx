@@ -6,10 +6,7 @@ import {
   Typography,
   Divider,
 } from "@mui/material";
-import {
-  useLoaderData,
-  useNavigation,
-} from "react-router-dom";
+import { useLoaderData, useNavigation } from "react-router-dom";
 import { useMemo, useState, memo, useCallback, useEffect } from "react";
 import PlayerCard from "@/components/shared/card/PlayerCard";
 import NavPagination from "@/pages/stats/games/nav-pagination";
@@ -28,10 +25,7 @@ const PlayersGrid = memo(
     return (
       <Grid container spacing={1} {...props}>
         {players.map((player) => (
-          <Grid
-            key={player.player_id}
-            size={{ xs: 12, sm: 6, md: "auto" }}
-          >
+          <Grid key={player.player_id} size={{ xs: 12, sm: 6, md: "auto" }}>
             <MemoizedPlayerCard
               player={player}
               selected={selectedIds.has(player.player_id)}
@@ -172,13 +166,15 @@ export default function PlayersRecords() {
     setSelectedPlayerIds((prev) => {
       // Check if all current page players are already selected
       const currentPageIds = new Set(players.map((p) => p.player_id));
-      const allCurrentPageSelected = players.every((p) => prev.has(p.player_id));
-      
+      const allCurrentPageSelected = players.every((p) =>
+        prev.has(p.player_id)
+      );
+
       if (allCurrentPageSelected && players.length > 0) {
         // All current page players are selected, return unchanged
         return prev;
       }
-      
+
       // Add all current page players to existing selection
       const newSet = new Set(prev);
       for (const player of players) {
@@ -189,8 +185,8 @@ export default function PlayersRecords() {
   }, [players]);
 
   const handleUnselectAllPlayers = () => {
-    setSelectedPlayerIds(new Set())
-  }
+    setSelectedPlayerIds(new Set());
+  };
 
   // Convert Set to array of player objects for ActionBar
   // Uses cache to include players from all pages, not just current page
@@ -200,13 +196,13 @@ export default function PlayersRecords() {
       const cachedPlayer = playerCache.get(playerId);
       if (cachedPlayer) {
         // Ensure the player has a name field for ActionForm
-        const playerName = 
+        const playerName =
           cachedPlayer.name ??
           cachedPlayer.account?.name ??
           cachedPlayer.names?.[0]?.name ??
           cachedPlayer.soldier?.name ??
           playerId;
-        
+
         result.push({
           ...cachedPlayer,
           name: playerName,
@@ -237,12 +233,24 @@ export default function PlayersRecords() {
           component="section"
           id="players-section"
           spacing={1}
-          sx={{ width: "100%" }}
+          sx={{ width: "100%", minWidth: 0 }}
         >
           <Stack direction={"row"} spacing={1} alignItems={"center"}>
             <Typography>Selected: {selectedPlayerIds.size}</Typography>
-            <Button size="small" variant="outlined" onClick={handleSelectAllPlayers}>Select All</Button>
-            <Button size="small" variant="outlined" onClick={handleUnselectAllPlayers}>Unselect All</Button>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={handleSelectAllPlayers}
+            >
+              Select All
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={handleUnselectAllPlayers}
+            >
+              Unselect All
+            </Button>
             <Divider flexItem orientation="vertical" />
             <NavPagination
               page={page}

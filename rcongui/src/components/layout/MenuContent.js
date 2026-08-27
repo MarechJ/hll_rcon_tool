@@ -7,16 +7,26 @@ import Stack from "@mui/material/Stack";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { Link } from "react-router-dom";
-import { Collapse, TextField, InputAdornment, IconButton, Box } from "@mui/material";
+import {
+  Collapse,
+  TextField,
+  InputAdornment,
+  IconButton,
+  Box,
+} from "@mui/material";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAppStore } from "@/stores/app-state";
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
 
 const NavigationLink = ({ to, icon, text, onClick }) => {
-
   return (
-    <ListItem key={to} onClick={onClick} disablePadding sx={{ display: "block" }}>
+    <ListItem
+      key={to}
+      onClick={onClick}
+      disablePadding
+      sx={{ display: "block" }}
+    >
       <ListItemButton component={Link} to={to}>
         {icon && <ListItemIcon>{icon}</ListItemIcon>}
         <ListItemText primary={text} />
@@ -25,7 +35,15 @@ const NavigationLink = ({ to, icon, text, onClick }) => {
   );
 };
 
-const Group = ({ groupName, icon, level = 1, open, forceOpen = false, onToggle, children }) => {
+const Group = ({
+  groupName,
+  icon,
+  level = 1,
+  open,
+  forceOpen = false,
+  onToggle,
+  children,
+}) => {
   const isOpen = forceOpen || open;
 
   return (
@@ -59,7 +77,10 @@ export default function MenuContent({ navigationTree, isMobile }) {
     if (typeof navigator === "undefined") return false;
     const ua = navigator.userAgent || "";
     const uaPlatform = navigator.userAgentData?.platform || "";
-    return /mac|iphone|ipad|ipod/i.test(uaPlatform) || /Mac OS X|Macintosh|iPhone|iPad|iPod/i.test(ua);
+    return (
+      /mac|iphone|ipad|ipod/i.test(uaPlatform) ||
+      /Mac OS X|Macintosh|iPhone|iPad|iPod/i.test(ua)
+    );
   }, []);
 
   const keyHintLabel = isApplePlatform ? "⌘K" : "Ctrl+K";
@@ -82,7 +103,8 @@ export default function MenuContent({ navigationTree, isMobile }) {
     };
 
     window.addEventListener("keydown", onKeyDown, { capture: true });
-    return () => window.removeEventListener("keydown", onKeyDown, { capture: true });
+    return () =>
+      window.removeEventListener("keydown", onKeyDown, { capture: true });
   }, [isApplePlatform]);
 
   const toggleGroup = (groupName) => {
@@ -109,8 +131,10 @@ export default function MenuContent({ navigationTree, isMobile }) {
       .map((group) => {
         // Check if group has a name (it's a group)
         if ("name" in group) {
-          const groupNameMatches = group.name.toLowerCase().includes(lowerSearchTerm);
-          
+          const groupNameMatches = group.name
+            .toLowerCase()
+            .includes(lowerSearchTerm);
+
           // Filter links that match
           const matchingLinks = group.links.filter((link) =>
             link.name.toLowerCase().includes(lowerSearchTerm)
@@ -203,7 +227,7 @@ export default function MenuContent({ navigationTree, isMobile }) {
                   </Box>
                 </InputAdornment>
               ),
-            }
+            },
           }}
         />
         {isMobile && (

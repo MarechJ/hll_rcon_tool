@@ -12,7 +12,12 @@ import {
 import { useEffect, useState } from "react";
 import { DEFAULT_RECORD_FILTERS } from "./queries";
 
-export default function BlacklistFilters({ filters, blacklists, disabled, onSubmit }) {
+export default function BlacklistFilters({
+  filters,
+  blacklists,
+  disabled,
+  onSubmit,
+}) {
   const [values, setValues] = useState(filters);
 
   useEffect(() => setValues(filters), [filters]);
@@ -69,7 +74,9 @@ export default function BlacklistFilters({ filters, blacklists, disabled, onSubm
           onChange={(event) => update("page_size", Number(event.target.value))}
         >
           {[10, 20, 50, 100, 200].map((size) => (
-            <MenuItem key={size} value={size}>{size}</MenuItem>
+            <MenuItem key={size} value={size}>
+              {size}
+            </MenuItem>
           ))}
         </Select>
       </FormControl>
@@ -77,13 +84,21 @@ export default function BlacklistFilters({ filters, blacklists, disabled, onSubm
         control={
           <Switch
             checked={!values.exclude_expired}
-            onChange={(event) => update("exclude_expired", !event.target.checked)}
+            onChange={(event) =>
+              update("exclude_expired", !event.target.checked)
+            }
           />
         }
         label="Show expired records"
       />
       <Stack spacing={1}>
-        <Button type="button" variant="contained" color="secondary" onClick={reset} disabled={disabled}>
+        <Button
+          type="button"
+          variant="outlined"
+          color="secondary"
+          onClick={reset}
+          disabled={disabled}
+        >
           Reset
         </Button>
         <Button type="submit" variant="contained" disabled={disabled}>

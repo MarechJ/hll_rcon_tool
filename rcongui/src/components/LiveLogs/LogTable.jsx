@@ -1,21 +1,36 @@
 import {
+  Box,
+  Button,
+  MenuItem,
+  Select,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography,
+} from "@mui/material";
+import {
+  flexRender,
   getCoreRowModel,
-  getSortedRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
+  getSortedRowModel,
   useReactTable,
-  flexRender,
 } from "@tanstack/react-table";
 import { useState } from "react";
 
-// Implementation of Tanstack React Table v8 using basic HTML table elements
 export default function LogTable({ data, columns }) {
   const [sorting, setSorting] = useState([]);
   const [filtering, setFiltering] = useState([]);
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 100,
-  })
+  });
+
   const table = useReactTable({
     data,
     columns,
@@ -26,119 +41,145 @@ export default function LogTable({ data, columns }) {
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
     onColumnFiltersChange: setFiltering,
-    state: {
-      sorting,
-      filtering,
-      pagination,
-    },
+    state: { sorting, filtering, pagination },
   });
 
   return (
-    <div>
-      <table style={{ width: "100%", fontSize: "12px" }}>
-        <thead>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <th key={header.id} style={{ width: header.column.getSize() }}>
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.length ? (
-            table.getRowModel().rows.map((row) => (
-              <tr key={row.id} data-state={row.getIsSelected() && "selected"}>
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} style={{ width: cell.column.getSize() }}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
+    <Stack gap={1}>
+      <TableContainer
+        sx={(theme) => ({
+          overflowX: "auto",
+          border: `1px solid ${theme.palette.divider}`,
+          borderRadius: 0,
+        })}
+      >
+        <Table size="small" sx={{ tableLayout: "fixed" }}>
+          <TableHead>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableCell
+                    key={header.id}
+                    sx={{
+                      width: header.column.getSize(),
+                      bgcolor: "background.paper",
+                    }}
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                  </TableCell>
                 ))}
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan={columns.length}>No results.</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-      {/* TODO: Replace tailwind className with MUI sx prop */}
-      <div sx={{ height: "8px" }} />
-      <div sx={{ display: "flex", justifyContent: "center", flexGap: 2 }}>
-        <button
-          className="border rounded p-1"
-          sx={{ border: "1px solid", borderRadius: "4px", padding: "4px" }}
-          onClick={() => table.firstPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          {'<<'}
-        </button>
-        <button
-          className="border rounded p-1"
-          sx={{ border: "1px solid", borderRadius: "4px", padding: "4px" }}
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          {'<'}
-        </button>
-        <button
-          className="border rounded p-1"
-          sx={{ border: "1px solid", borderRadius: "4px", padding: "4px" }}
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          {'>'}
-        </button>
-        <button
-          className="border rounded p-1"
-          sx={{ border: "1px solid", borderRadius: "4px", padding: "4px" }}
-          onClick={() => table.lastPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          {'>>'}
-        </button>
-        <span sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <div>Page</div>
-          <strong>
-            {table.getState().pagination.pageIndex + 1} of{' '}
-            {table.getPageCount().toLocaleString()}
-          </strong>
-        </span>
-        <span sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          | Go to page:
-          <input
-            type="number"
-            min="1"
-            max={table.getPageCount()}
-            defaultValue={table.getState().pagination.pageIndex + 1}
-            onChange={e => {
-              const page = e.target.value ? Number(e.target.value) - 1 : 0
-              table.setPageIndex(page)
-            }}
-            sx={{ border: "1px solid", borderRadius: "4px", padding: "4px", width: "16ch" }}
-          />
-        </span>
-        <select
-          value={table.getState().pagination.pageSize}
-          onChange={e => {
-            table.setPageSize(Number(e.target.value))
+              </TableRow>
+            ))}
+          </TableHead>
+          <TableBody>
+            {table.getRowModel().rows.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id} hover>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell
+                      key={cell.id}
+                      sx={{ width: cell.column.getSize() }}
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} align="center">
+                  No results.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      <Stack
+        direction={{ xs: "column", md: "row" }}
+        alignItems={{ xs: "stretch", md: "center" }}
+        justifyContent="center"
+        gap={1}
+      >
+        <Stack direction="row" gap={0.5}>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => table.firstPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            First
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            Previous
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Next
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => table.lastPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Last
+          </Button>
+        </Stack>
+
+        <Typography variant="body2" sx={{ whiteSpace: "nowrap" }}>
+          Page <strong>{table.getState().pagination.pageIndex + 1}</strong> of{" "}
+          {table.getPageCount().toLocaleString()}
+        </Typography>
+
+        <TextField
+          type="number"
+          label="Go to page"
+          value={table.getState().pagination.pageIndex + 1}
+          onChange={(event) => {
+            const page = event.target.value
+              ? Number(event.target.value) - 1
+              : 0;
+            table.setPageIndex(page);
           }}
-        >
-          {[10, 20, 30, 40, 50].map(pageSize => (
-            <option key={pageSize} value={pageSize}>
-              Show {pageSize}
-            </option>
-          ))}
-        </select>
-      </div>
-    </div>
+          slotProps={{
+            htmlInput: { min: 1, max: Math.max(1, table.getPageCount()) },
+          }}
+          sx={{ width: 120 }}
+        />
+
+        <Box>
+          <Select
+            value={table.getState().pagination.pageSize}
+            onChange={(event) => table.setPageSize(Number(event.target.value))}
+            aria-label="Rows per page"
+          >
+            {[10, 20, 30, 40, 50, 100].map((pageSize) => (
+              <MenuItem key={pageSize} value={pageSize}>
+                Show {pageSize}
+              </MenuItem>
+            ))}
+          </Select>
+        </Box>
+      </Stack>
+    </Stack>
   );
 }

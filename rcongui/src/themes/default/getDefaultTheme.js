@@ -1,9 +1,10 @@
 import {
   dataDisplayCustomizations,
+  datePickersCustomizations,
   feedbackCustomizations,
+  inputsCustomizations,
   navigationCustomizations,
   surfacesCustomizations,
-  // inputsCustomizations,
 } from "./customizations";
 
 async function getColorPrimitives(schemeName) {
@@ -14,12 +15,21 @@ async function getColorPrimitives(schemeName) {
       return import("./primitives/highContrast");
     case "lime":
       return import("./primitives/lime");
+    case "hellLetLoose":
+      return import("./primitives/hellLetLoose");
+    case "hellLetLooseVietnam":
+      return import("./primitives/hellLetLooseVietnam");
+    case "aiSlopperino":
+      return import("./primitives/aiSlopperino");
     default:
       return import("./primitives/default");
   }
 }
 
-export default async function getDefaultTheme(themeComponents, selectedScheme = "default") {
+export default async function getDefaultTheme(
+  themeComponents,
+  selectedScheme = "default"
+) {
   const {
     brand,
     gray,
@@ -30,6 +40,7 @@ export default async function getDefaultTheme(themeComponents, selectedScheme = 
     shadows,
     shape,
     colorSchemes,
+    components: schemeComponents = {},
   } = await getColorPrimitives(selectedScheme);
 
   const colors = { brand, gray, green, orange, red };
@@ -46,11 +57,12 @@ export default async function getDefaultTheme(themeComponents, selectedScheme = 
     shape,
     components: {
       ...dataDisplayCustomizations(colors),
+      ...datePickersCustomizations(colors),
       ...feedbackCustomizations(colors),
+      ...inputsCustomizations(colors),
       ...navigationCustomizations(colors),
       ...surfacesCustomizations(colors),
-      // This needs to be worked on
-      // ...inputsCustomizations(colors),
+      ...schemeComponents,
       ...themeComponents,
     },
   };

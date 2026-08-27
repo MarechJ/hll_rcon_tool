@@ -140,11 +140,11 @@ const SearchWrapper = styled(Box)({
   width: "100%",
 });
 
-const StyledTextField = styled(TextField)((theme) => ({
+const StyledTextField = styled(TextField)({
   "& .MuiOutlinedInput-root, & .MuiOutlinedInput-notchedOutline": {
     borderRadius: 0,
   },
-}));
+});
 
 function EditorActions({ editor, actions }) {
   const canBeSaved = editor.title.trim() && editor.content.trim();
@@ -156,6 +156,7 @@ function EditorActions({ editor, actions }) {
         display: "flex",
         flexWrap: "wrap",
         padding: theme.spacing(1),
+        gap: 0.5,
         borderRadius: 0,
       })}
     >
@@ -209,7 +210,7 @@ function EditorActions({ editor, actions }) {
       {editor.mode !== MODE.CREATE && editor.id !== 0 && (
         <>
           <Button
-            color="warning"
+            color="error"
             type="submit"
             name="intent"
             value={INTENT.DELETE}
