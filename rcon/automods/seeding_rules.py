@@ -208,8 +208,8 @@ class SeedingRulesAutomod:
             )
             self.red.delete(redis_key)
         else:
-            self.red.setex(
-                redis_key, SEEDING_RULES_RESET_SECS, pickle.dumps(watch_status)
+            self.red.set(
+                redis_key, pickle.dumps(watch_status), ex=SEEDING_RULES_RESET_SECS
             )
 
     def get_message(
@@ -261,7 +261,7 @@ class SeedingRulesAutomod:
             return message
 
     def _disable_for_round(self, rule: str):
-        self.red.setex(disabled_rule_key(rule), 3 * 60 * 60, "1")
+        self.red.set(disabled_rule_key(rule), "1", ex=3 * 60 * 60)
 
     def _enable_for_round(self, rule: str):
         self.red.delete(disabled_rule_key(rule))
