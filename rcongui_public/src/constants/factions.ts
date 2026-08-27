@@ -6,6 +6,7 @@ export const FACTIONS = {
   SOV: 'sov',
   US: 'us',
   CAN: 'can',
+  NVA: 'nva',
 } as const
 
 export type Faction = (typeof FACTIONS)[keyof typeof FACTIONS]
@@ -18,6 +19,7 @@ const FACTIONS_LABELS: Record<Faction, string> = {
   [FACTIONS.SOV]: 'Soviet Union',
   [FACTIONS.US]: 'United States',
   [FACTIONS.CAN]: 'Canada',
+  [FACTIONS.NVA]: 'North Vietnamese Army',
 }
 
 export function normalizeFaction(platform?: string | null): Faction | undefined {
@@ -38,6 +40,7 @@ const FACTION_TO_ICON_NAME: Record<Faction, string> = {
   [FACTIONS.SOV]: 'rus',
   [FACTIONS.US]: 'us',
   [FACTIONS.CAN]: 'can',
+  [FACTIONS.NVA]: 'nva',
 }
 
 export const getLightFactionIconSrc = (faction: Faction) => `/icons/teams/${FACTION_TO_ICON_NAME[faction]}.webp`
