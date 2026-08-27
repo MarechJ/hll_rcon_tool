@@ -25,6 +25,14 @@ from rcon.user_config.seed_vip import SeedVIPUserConfig
 
 logger = getLogger(__name__)
 
+DRY_RUN_DISCORD_PREFIX = (
+    "🧪 **DRY RUN – SIMULATION**\nNo VIPs or in-game reward messages will be sent.\n\n"
+)
+
+
+def format_discord_message(message: str, dry_run: bool) -> str:
+    return f"{DRY_RUN_DISCORD_PREFIX}{message}" if dry_run else message
+
 
 def run():
     config = SeedVIPUserConfig.load_from_db()
@@ -172,8 +180,11 @@ def run():
                         f"Making embed for `{config.player_messages.seeding_complete_message}`"
                     )
                     embed = make_seed_announcement_embed(
-                        message=config.player_messages.seeding_complete_message,
-                        current_map=rcon_api.current_map.pretty_name,
+                        message=format_discord_message(
+                            config.player_messages.seeding_complete_message,
+                            config.dry_run,
+                        ),
+                        current_map=gamestate["current_map"]["pretty_name"],
                         time_remaining=gamestate["raw_time_remaining"],
                         player_count_message=config.player_messages.player_count_message,
                         num_allied_players=gamestate["num_allied_players"],
@@ -239,10 +250,13 @@ def run():
                     prev_announced_bucket = next_player_bucket
 
                     embed = make_seed_announcement_embed(
-                        message=config.player_messages.seeding_in_progress_message.format(
-                            player_count=total_players
+                        message=format_discord_message(
+                            config.player_messages.seeding_in_progress_message.format(
+                                player_count=total_players
+                            ),
+                            config.dry_run,
                         ),
-                        current_map=rcon_api.current_map.pretty_name,
+                        current_map=gamestate["current_map"]["pretty_name"],
                         time_remaining=gamestate["raw_time_remaining"],
                         player_count_message=config.player_messages.player_count_message,
                         num_allied_players=gamestate["num_allied_players"],
