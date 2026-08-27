@@ -3,12 +3,13 @@ import { Stack, Typography, Button, Paper } from "@mui/material";
 
 export default function RouteError() {
   const error = useRouteError();
-  const isSkirmishMode =
-    error.message === "skirmish" ||
-    error?.data?.command === "get_objective_rows" &&
-    error?.data?.text === "get objectiverow_0";
+  // The backend throws a HTTP 400 (bad request) if the game mode doesn't support
+  // selecting the objectives
+  const isUnsupportedMode =
+    error.message === "unsupported_mode" ||
+    (error?.data?.command === "get_objective_rows" && error?.status === 400);
   // other error let handle higher error handler
-  if (!isSkirmishMode) throw error;
+  if (!isUnsupportedMode) throw error;
   return (
     <Stack
       id="error-page"
@@ -23,7 +24,7 @@ export default function RouteError() {
     >
       <Typography variant="h1">Unsupported mode</Typography>
       <Typography variant="h2">
-        Changing objectives is not supported in Skirmish mode.
+        Changing objectives is not supported in this game mode.
       </Typography>
       <Button
         variant="contained"
