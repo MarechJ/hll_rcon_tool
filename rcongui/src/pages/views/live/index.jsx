@@ -8,7 +8,11 @@ import { useQuery } from "@tanstack/react-query";
 import PlayersTable from "./players-table";
 import LogsTable from "./logs-table";
 import { logsColumns } from "./logs-columns";
-import { useLogsSearchStore, usePlayersTableStore, useLogsTableStore } from "@/stores/table-config";
+import {
+  useLogsSearchStore,
+  usePlayersTableStore,
+  useLogsTableStore,
+} from "@/stores/table-config";
 import { teamsLiveQueryOptions } from "@/queries/teams-live-query";
 import { normalizePlayerProfile } from "@/utils/lib";
 import {
@@ -20,16 +24,22 @@ import {
 } from "@tanstack/react-table";
 import Grid from "@mui/material/Grid2";
 import InfoPanel from "./info-panel";
-import { Box, Stack, ToggleButton, ToggleButtonGroup, Tooltip } from '@mui/material';
-import TableChartIcon from '@mui/icons-material/TableChart';
-import ScoreboardIcon from '@mui/icons-material/Scoreboard';
-import AssessmentIcon from '@mui/icons-material/Assessment';
+import {
+  Box,
+  Stack,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
+} from "@mui/material";
+import TableChartIcon from "@mui/icons-material/TableChart";
+import ScoreboardIcon from "@mui/icons-material/Scoreboard";
+import AssessmentIcon from "@mui/icons-material/Assessment";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import DisbandSquadDialog from "@/features/player-action/DisbandSquad";
 import MessageAllDialog from "@/features/player-action/MessageAll";
 
 const interval = 15 * 1000; // 15 seconds
-const UNASSIGNED = "unassigned"
+const UNASSIGNED = "unassigned";
 
 export const loader = async () => {
   const response = await cmd.GET_LIVE_LOGS({
@@ -68,7 +78,7 @@ const Live = () => {
 
   // ---------------- LOGS DATA -----------------
   const logsSearchParams = useLogsSearchStore();
-  const setSearchParams = useLogsSearchStore(state => state.setSearchParams);
+  const setSearchParams = useLogsSearchStore((state) => state.setSearchParams);
 
   const { data: logsView, isFetching: isLogsFetching } = useQuery({
     queryKey: [
@@ -85,8 +95,12 @@ const Live = () => {
       cmd.GET_LIVE_LOGS({
         payload: {
           end: logsSearchParams.limit,
-          filter_action: logsSearchParams.enabled ? logsSearchParams.actions : [],
-          filter_player: logsSearchParams.enabled ? logsSearchParams.players : [],
+          filter_action: logsSearchParams.enabled
+            ? logsSearchParams.actions
+            : [],
+          filter_player: logsSearchParams.enabled
+            ? logsSearchParams.players
+            : [],
           inclusive_filter: logsSearchParams.inclusive_filter,
         },
       }),
@@ -135,15 +149,19 @@ const Live = () => {
   const [playersRowSelection, setPlayersRowSelection] = useState({});
   const [playersColumnFilters, setPlayersColumnFilters] = useState([]);
   const playersTableConfig = usePlayersTableStore();
-  const setPlayersTableConfig = usePlayersTableStore(state => state.setConfig);
+  const setPlayersTableConfig = usePlayersTableStore(
+    (state) => state.setConfig
+  );
 
   const playersColumnVisibility = playersTableConfig.columnVisibility;
 
   const handlePlayersColumnVisibilityChange = (columnId, isVisible) => {
     setPlayersTableConfig((prev) => {
       const columnVisibility = { ...prev.columnVisibility };
-      columnVisibility[columnId] === false ? delete columnVisibility[columnId] : columnVisibility[columnId] = isVisible;
-      return { ...prev, columnVisibility }
+      columnVisibility[columnId] === false
+        ? delete columnVisibility[columnId]
+        : (columnVisibility[columnId] = isVisible);
+      return { ...prev, columnVisibility };
     });
   };
 
@@ -171,16 +189,18 @@ const Live = () => {
   // ---------------- LOGS TABLE STATE -----------------
   const [logsFiltering, setLogsFiltering] = useState([]);
   const logsTableConfig = useLogsTableStore();
-  const setLogsTableConfig = useLogsTableStore(state => state.setConfig);
-  const setPagination = useLogsTableStore(state => state.setPagination);
+  const setLogsTableConfig = useLogsTableStore((state) => state.setConfig);
+  const setPagination = useLogsTableStore((state) => state.setPagination);
 
   const logsColumnVisibility = logsTableConfig.columnVisibility;
 
   const handleLogsColumnVisibilityChange = (columnId, isVisible) => {
     setLogsTableConfig((prev) => {
       const columnVisibility = { ...prev.columnVisibility };
-      columnVisibility[columnId] === false ? delete columnVisibility[columnId] : columnVisibility[columnId] = isVisible;
-      return { ...prev, columnVisibility }
+      columnVisibility[columnId] === false
+        ? delete columnVisibility[columnId]
+        : (columnVisibility[columnId] = isVisible);
+      return { ...prev, columnVisibility };
     });
   };
 
@@ -220,7 +240,11 @@ const Live = () => {
   }, [playersRowSelection, playersTable.getSelectedRowModel().rows]);
 
   // Add visibility state
-  const [visibleElements, setVisibleElements] = useState(['players', 'logs', 'header']);
+  const [visibleElements, setVisibleElements] = useState([
+    "players",
+    "logs",
+    "header",
+  ]);
 
   const handleVisibility = (event, newVisibility) => {
     console.log(newVisibility);
@@ -232,105 +256,131 @@ const Live = () => {
   };
 
   return (
-      
-      <Grid container spacing={1}>
-
-        <Grid size={12} sx={{ bgcolor: 'background.paper' }}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
-            <DebouncedSearchInput
-              placeholder="Global Search"
-              onChange={handleSearch}
-            />
-            <ToggleButtonGroup
-                value={visibleElements}
-                onChange={handleVisibility}
-                aria-label="visible elements"
-                multiple
-                size="small"
-                sx={{ 
-                  '& .MuiToggleButton-root': {
-                    border: 'none',
-                    p: 0.5,
-                    color: 'text.secondary',
-                    '&.Mui-selected': {
-                      bgcolor: 'transparent',
-                      color: 'text.primary',
-                    }
-                  }
-                }}
-              >
-                <Tooltip title={visibleElements.includes('players') ? 'Hide Players' : 'Show Players'}>
-                  <span>
-                    <ToggleButton value="players">
-                      <TableChartIcon sx={{ fontSize: { xs: '1rem', lg: '1.25rem' } }} />
-                    </ToggleButton>
-                  </span>
-                </Tooltip>
-                <Tooltip title={visibleElements.includes('logs') ? 'Hide Logs' : 'Show Logs'}>
-                  <span>
-                    <ToggleButton value="logs">
-                      <AssessmentIcon sx={{ fontSize: { xs: '1rem', lg: '1.25rem' } }} />
-                    </ToggleButton>
-                  </span>
-                </Tooltip>
-                <Tooltip title={visibleElements.includes('header') ? 'Hide Header' : 'Show Header'}>
-                  <span>
-                    <ToggleButton value="header">
-                      <ScoreboardIcon sx={{ fontSize: { xs: '1rem', lg: '1.25rem' } }} />
-                    </ToggleButton>
-                  </span>
-                </Tooltip>
+    <Grid container spacing={1} sx={{ width: "100%", minWidth: 0 }}>
+      <Grid size={12} sx={{ bgcolor: "background.paper" }}>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          spacing={1}
+        >
+          <DebouncedSearchInput
+            placeholder="Global Search"
+            onChange={handleSearch}
+          />
+          <ToggleButtonGroup
+            value={visibleElements}
+            onChange={handleVisibility}
+            aria-label="visible elements"
+            multiple
+            size="small"
+            sx={{
+              "& .MuiToggleButton-root": {
+                border: "none",
+                p: 0.5,
+                color: "text.secondary",
+                "&.Mui-selected": {
+                  bgcolor: "transparent",
+                  color: "text.primary",
+                },
+              },
+            }}
+          >
+            <Tooltip
+              title={
+                visibleElements.includes("players")
+                  ? "Hide Players"
+                  : "Show Players"
+              }
+            >
+              <span>
+                <ToggleButton value="players">
+                  <TableChartIcon
+                    sx={{ fontSize: { xs: "1rem", lg: "1.25rem" } }}
+                  />
+                </ToggleButton>
+              </span>
+            </Tooltip>
+            <Tooltip
+              title={
+                visibleElements.includes("logs") ? "Hide Logs" : "Show Logs"
+              }
+            >
+              <span>
+                <ToggleButton value="logs">
+                  <AssessmentIcon
+                    sx={{ fontSize: { xs: "1rem", lg: "1.25rem" } }}
+                  />
+                </ToggleButton>
+              </span>
+            </Tooltip>
+            <Tooltip
+              title={
+                visibleElements.includes("header")
+                  ? "Hide Header"
+                  : "Show Header"
+              }
+            >
+              <span>
+                <ToggleButton value="header">
+                  <ScoreboardIcon
+                    sx={{ fontSize: { xs: "1rem", lg: "1.25rem" } }}
+                  />
+                </ToggleButton>
+              </span>
+            </Tooltip>
           </ToggleButtonGroup>
-          </Stack>
-          <InfoPanel gameData={gameData} playersData={playersData} />
-          <Stack direction="row" alignItems="center" spacing={1}>
-              <MessageAllDialog />
-              <DisbandSquadDialog />
-          </Stack>
-        </Grid>
-
-        {visibleElements.includes('header') && (
-          <Grid size={12}>
-            <Header data={gameData} />
-          </Grid>
-        )}
-        
-        {visibleElements.includes('players') && (
-          <Grid
-            size={{
-              xs: 12,
-              lg: !visibleElements.includes('logs') ? "grow" : "auto",
-            }}
-          >
-            <PlayersTable
-              table={playersTable}
-              teamData={teamData}
-              selectedPlayers={selectedPlayers}
-              onColumnVisibilityChange={handlePlayersColumnVisibilityChange}
-              isFetching={isTeamFetching}
-            />
-          </Grid>
-        )}
-        
-        {visibleElements.includes('logs') && (
-          <Grid
-            size={{
-              xs: 12,
-              lg: "grow",
-            }}
-          >
-            <LogsTable
-              table={logsTable}
-              logsViewData={logsView}
-              searchParams={logsSearchParams}
-              setSearchParams={setSearchParams}
-              onColumnVisibilityChange={handleLogsColumnVisibilityChange}
-              isFetching={isLogsFetching}
-            />
-          </Grid>
-        )}
+        </Stack>
+        <InfoPanel gameData={gameData} playersData={playersData} />
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <MessageAllDialog />
+          <DisbandSquadDialog />
+        </Stack>
       </Grid>
 
+      {visibleElements.includes("header") && (
+        <Grid size={12}>
+          <Header data={gameData} />
+        </Grid>
+      )}
+
+      {visibleElements.includes("players") && (
+        <Grid
+          size={{
+            xs: 12,
+            lg: visibleElements.includes("logs") ? 7 : 12,
+          }}
+          sx={{ minWidth: 0, overflow: "hidden" }}
+        >
+          <PlayersTable
+            table={playersTable}
+            teamData={teamData}
+            selectedPlayers={selectedPlayers}
+            onColumnVisibilityChange={handlePlayersColumnVisibilityChange}
+            isFetching={isTeamFetching}
+          />
+        </Grid>
+      )}
+
+      {visibleElements.includes("logs") && (
+        <Grid
+          size={{
+            xs: 12,
+            lg: visibleElements.includes("players") ? 5 : 12,
+          }}
+          sx={{ minWidth: 0, overflow: "hidden" }}
+        >
+          <LogsTable
+            table={logsTable}
+            logsViewData={logsView}
+            searchParams={logsSearchParams}
+            setSearchParams={setSearchParams}
+            onColumnVisibilityChange={handleLogsColumnVisibilityChange}
+            isFetching={isLogsFetching}
+          />
+        </Grid>
+      )}
+    </Grid>
   );
 };
 

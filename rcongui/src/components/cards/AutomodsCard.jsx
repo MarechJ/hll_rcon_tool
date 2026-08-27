@@ -12,9 +12,9 @@ import {
 } from "@mui/material";
 import { Link } from "react-router-dom";
 import { useMemo } from "react";
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import WebhookIcon from '@mui/icons-material/Webhook';
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
+import WebhookIcon from "@mui/icons-material/Webhook";
 
 const AutomodsCard = () => {
   // Fetch all automod settings
@@ -91,61 +91,61 @@ const AutomodsCard = () => {
   });
 
   const automodSettings = [
-    { 
-      key: 'seeding', 
-      label: 'Seeding', 
+    {
+      key: "seeding",
+      label: "Seeding",
       value: seeding?.enabled,
       webhook: seeding?.discord_webhook_url,
-      category: 'Automods',
-      path: '/settings/automods/seeding'
+      category: "Automods",
+      path: "/settings/automods/seeding",
     },
-    { 
-      key: 'seeding_reward', 
-      label: 'Seed VIP Reward', 
+    {
+      key: "seeding_reward",
+      label: "Seed VIP Reward",
       value: seedingReward?.enabled,
       webhook: seedingReward?.discord_webhook_url,
-      category: 'Others',
-      path: '/settings/others/seed-vip'
+      category: "Others",
+      path: "/settings/others/seed-vip",
     },
-    { 
-      key: 'no_leader', 
-      label: 'No Leader', 
+    {
+      key: "no_leader",
+      label: "No Leader",
       value: noLeader?.enabled,
       webhook: noLeader?.discord_webhook_url,
-      category: 'Automods',
-      path: '/settings/automods/no-leader'
+      category: "Automods",
+      path: "/settings/automods/no-leader",
     },
-    { 
-      key: 'no_solo_tank', 
-      label: 'No Solo Tank', 
+    {
+      key: "no_solo_tank",
+      label: "No Solo Tank",
       value: noSoloTank?.enabled,
       webhook: noSoloTank?.discord_webhook_url,
-      category: 'Automods',
-      path: '/settings/automods/no-solo-tank'
+      category: "Automods",
+      path: "/settings/automods/no-solo-tank",
     },
-    { 
-      key: 'level', 
-      label: 'Level', 
+    {
+      key: "level",
+      label: "Level",
       value: level?.enabled,
       webhook: level?.discord_webhook_url,
-      category: 'Automods',
-      path: '/settings/automods/level'
+      category: "Automods",
+      path: "/settings/automods/level",
     },
-    { 
-      key: 'chat_commands', 
-      label: 'Chat Commands', 
+    {
+      key: "chat_commands",
+      label: "Chat Commands",
       value: chatCommands?.enabled,
       webhook: chatCommands?.discord_webhook_url,
-      category: 'Others',
-      path: '/settings/others/chat-commands'
+      category: "Others",
+      path: "/settings/others/chat-commands",
     },
-    { 
-      key: 'rcon_commands', 
-      label: 'RCON Commands', 
+    {
+      key: "rcon_commands",
+      label: "RCON Commands",
       value: rconCommands?.enabled,
       webhook: rconCommands?.discord_webhook_url,
-      category: 'Others',
-      path: '/settings/others/rcon-chat-commands'
+      category: "Others",
+      path: "/settings/others/rcon-chat-commands",
     },
   ];
 
@@ -153,11 +153,11 @@ const AutomodsCard = () => {
   const groupedAutomods = useMemo(() => {
     const groups = {
       ENABLED: [],
-      DISABLED: []
+      DISABLED: [],
     };
 
-    automodSettings.forEach(setting => {
-      const status = setting.value ? 'ENABLED' : 'DISABLED';
+    automodSettings.forEach((setting) => {
+      const status = setting.value ? "ENABLED" : "DISABLED";
       groups[status].push(setting);
     });
 
@@ -167,22 +167,30 @@ const AutomodsCard = () => {
   // Helper function to get status color
   const getStatusColor = (status) => {
     switch (status) {
-      case 'ENABLED':
-        return (theme) => theme.palette.mode === 'dark' ? '#4caf50' : '#2e7d32';
-      case 'DISABLED':
-        return (theme) => theme.palette.mode === 'dark' ? '#f44336' : '#d32f2f';
+      case "ENABLED":
+        return "success.main";
+      case "DISABLED":
+        return "error.main";
       default:
-        return 'text.secondary';
+        return "text.secondary";
     }
   };
 
   // Helper function to get status icon
   const StatusIcon = ({ status }) => {
     switch (status) {
-      case 'ENABLED':
-        return <CheckCircleIcon sx={{ fontSize: '1.2rem', color: getStatusColor(status) }} />;
-      case 'DISABLED':
-        return <CancelIcon sx={{ fontSize: '1.2rem', color: getStatusColor(status) }} />;
+      case "ENABLED":
+        return (
+          <CheckCircleIcon
+            sx={{ fontSize: "1.2rem", color: getStatusColor(status) }}
+          />
+        );
+      case "DISABLED":
+        return (
+          <CancelIcon
+            sx={{ fontSize: "1.2rem", color: getStatusColor(status) }}
+          />
+        );
       default:
         return null;
     }
@@ -193,26 +201,26 @@ const AutomodsCard = () => {
       component={Link}
       to={automod.path}
       sx={{
-        display: 'flex',
-        alignItems: 'center',
+        display: "flex",
+        alignItems: "center",
         gap: 0.75,
         py: 0.25,
         px: 0.5,
-        color: 'text.primary',
-        textDecoration: 'none',
+        color: "text.primary",
+        textDecoration: "none",
         borderRadius: 1,
-        '&:hover': {
-          bgcolor: 'action.hover'
-        }
+        "&:hover": {
+          bgcolor: "action.hover",
+        },
       }}
     >
-      <StatusIcon status={automod.value ? 'ENABLED' : 'DISABLED'} />
+      <StatusIcon status={automod.value ? "ENABLED" : "DISABLED"} />
       <Typography variant="body2" sx={{ fontWeight: 500, flexGrow: 1 }}>
         {automod.label}
       </Typography>
       {automod.webhook && (
         <Tooltip title="Webhook configured">
-          <WebhookIcon sx={{ fontSize: '1rem', color: 'primary.main' }} />
+          <WebhookIcon sx={{ fontSize: "1rem", color: "primary.main" }} />
         </Tooltip>
       )}
     </Box>
@@ -220,21 +228,21 @@ const AutomodsCard = () => {
 
   const AutomodGroup = ({ status, automods }) => (
     <Box>
-      <Typography 
-        variant="subtitle2" 
-        color="text.secondary" 
-        sx={{ 
+      <Typography
+        variant="subtitle2"
+        color="text.secondary"
+        sx={{
           mb: 0.5,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 0.5 
+          display: "flex",
+          alignItems: "center",
+          gap: 0.5,
         }}
       >
         <StatusIcon status={status} />
         {status} ({automods.length})
       </Typography>
       <Stack spacing={0.25}>
-        {automods.map(automod => (
+        {automods.map((automod) => (
           <AutomodItem key={automod.key} automod={automod} />
         ))}
       </Stack>
@@ -257,4 +265,4 @@ const AutomodsCard = () => {
   );
 };
 
-export default AutomodsCard; 
+export default AutomodsCard;

@@ -202,7 +202,10 @@ function SavedLayouts({
           <EditIcon fontSize="small" sx={{ mr: 1 }} />
           Edit
         </MenuItem>
-        <MenuItem onClick={() => runAction(onDelete)}>
+        <MenuItem
+          sx={{ color: "error.main" }}
+          onClick={() => runAction(onDelete)}
+        >
           <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
           Delete
         </MenuItem>

@@ -46,7 +46,11 @@ const TableColumnSelection = ({ table, onColumnVisibilityChange }) => {
             disableGutters
             sx={{ "& .MuiButtonBase-root": { opacity: 1 } }}
           >
-            <ListItemButton onClick={() => onColumnVisibilityChange(column.id, !column.getIsVisible())}>
+            <ListItemButton
+              onClick={() =>
+                onColumnVisibilityChange(column.id, !column.getIsVisible())
+              }
+            >
               <ListItemIcon>
                 <Checkbox
                   edge="start"

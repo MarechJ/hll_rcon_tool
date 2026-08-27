@@ -16,6 +16,7 @@ const ConfirmButton = ({
   confirmText = "Confirm",
   cancelText = "Cancel",
   buttonProps = {},
+  confirmButtonProps = {},
   disabled = false,
 }) => {
   const [open, setOpen] = useState(false);
@@ -47,10 +48,13 @@ const ConfirmButton = ({
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)} color="warning">
-            {cancelText}
-          </Button>
-          <Button onClick={handleConfirm} color="primary" autoFocus>
+          <Button onClick={() => setOpen(false)}>{cancelText}</Button>
+          <Button
+            color={confirmButtonProps.color ?? buttonProps.color ?? "primary"}
+            {...confirmButtonProps}
+            onClick={handleConfirm}
+            autoFocus
+          >
             {confirmText}
           </Button>
         </DialogActions>
@@ -59,4 +63,4 @@ const ConfirmButton = ({
   );
 };
 
-export default ConfirmButton; 
+export default ConfirmButton;

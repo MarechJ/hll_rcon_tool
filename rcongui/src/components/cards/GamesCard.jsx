@@ -51,115 +51,128 @@ const GamesCard = ({ games }) => {
                   py: { xs: 1.5, sm: 1 },
                 }}
               >
-                  <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: { xs: 0, sm: 1 } }}>
-                    <img
-                      src={"/maps/icons/" + matchMap.image_name}
-                      width={size}
-                      height={size * ratio}
-                      alt=""
-                      style={{ borderRadius: 2 }}
-                    />
-                    <Box sx={{ display: "flex", flexDirection: "column" }}>
-                      <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                        {matchMap.map.pretty_name}
-                      </Typography>
-                      <Typography
-                        variant="subtitle2"
-                        sx={{
-                          borderRadius: 1,
-                          fontSize: "0.75rem",
-                          fontWeight: 500,
-                          lineHeight: 1,
-                        }}
-                      >
-                        {matchMap.game_mode[0].toUpperCase() +
-                          matchMap.game_mode.slice(1)}{" "}
-                      </Typography>
-                    </Box>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: { xs: "column", sm: "row" },
+                    gap: { xs: 0, sm: 1 },
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src={"/maps/icons/" + matchMap.image_name}
+                    width={size}
+                    height={size * ratio}
+                    alt=""
+                    sx={{ borderRadius: "2px" }}
+                  />
+                  <Box sx={{ display: "flex", flexDirection: "column" }}>
+                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                      {matchMap.map.pretty_name}
+                    </Typography>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        fontSize: "0.75rem",
+                        fontWeight: 500,
+                        lineHeight: 1,
+                      }}
+                    >
+                      {matchMap.game_mode[0].toUpperCase() +
+                        matchMap.game_mode.slice(1)}{" "}
+                    </Typography>
                   </Box>
+                </Box>
 
-                  <Box sx={{ flexGrow: 1 }}></Box>
+                <Box sx={{ flexGrow: 1 }}></Box>
 
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: { xs: "column", sm: "row" },
+                  }}
+                >
                   <Box
                     sx={{
                       display: "flex",
-                      flexDirection: { xs: "column", sm: "row" },
+                      flexDirection: "column",
+                      width: "180px",
                     }}
                   >
                     <Box
                       sx={{
                         display: "flex",
-                        flexDirection: "column",
-                        width: "180px"
+                        flexDirection: "row",
+                        gap: 0.5,
+                        alignItems: "center",
                       }}
                     >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          flexDirection: "row",
-                          gap: 0.5,
-                          alignItems: "center",
-                        }}
-                      >
-                        <StopCircleIcon sx={{ width: 16, height: 16 }} />
-                        <Typography
-                          variant="subtitle2"
-                          sx={{
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {dayjs(game.end).format("lll")}
-                        </Typography>
-                      </Box>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          flexDirection: "row",
-                          gap: 0.5,
-                          alignItems: "center",
-                        }}
-                      >
-                        <PlayCircleIcon sx={{ width: 16, height: 16 }} />
-                        <Typography
-                          variant="subtitle2"
-                          sx={{
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {dayjs(game.start).format("lll")}
-                        </Typography>
-                      </Box>
-                    </Box>
-                    <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 1, justifyContent: "space-between", flexGrow: 1 }}>
+                      <StopCircleIcon sx={{ width: 16, height: 16 }} />
                       <Typography
-                        variant="h6"
+                        variant="subtitle2"
                         sx={{
                           whiteSpace: "nowrap",
-                          width: "50px",
-                          fontSize: "1.25rem",
-                          color:
-                            game.result?.allied > game.result?.axis
-                              ? "success.main"
-                              : game.result?.allied < game.result?.axis
-                              ? "error.main"
-                              : "text.primary",
                         }}
                       >
-                        {game.result?.allied ?? "?"} -{" "}
-                        {game.result?.axis ?? "?"}
+                        {dayjs(game.end).format("lll")}
                       </Typography>
+                    </Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "row",
+                        gap: 0.5,
+                        alignItems: "center",
+                      }}
+                    >
+                      <PlayCircleIcon sx={{ width: 16, height: 16 }} />
                       <Typography
+                        variant="subtitle2"
                         sx={{
-                          color: (theme) => getDurationColor(duration),
-                          fontWeight: 500,
-                          width: "70px",
+                          whiteSpace: "nowrap",
                         }}
                       >
-                        {duration ? `${duration} min` : "In Progress"}
+                        {dayjs(game.start).format("lll")}
                       </Typography>
                     </Box>
                   </Box>
-
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 1,
+                      justifyContent: "space-between",
+                      flexGrow: 1,
+                    }}
+                  >
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        whiteSpace: "nowrap",
+                        width: "50px",
+                        fontSize: "1.25rem",
+                        color:
+                          game.result?.allied > game.result?.axis
+                            ? "success.main"
+                            : game.result?.allied < game.result?.axis
+                            ? "error.main"
+                            : "text.primary",
+                      }}
+                    >
+                      {game.result?.allied ?? "?"} - {game.result?.axis ?? "?"}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        color: (theme) => getDurationColor(duration),
+                        fontWeight: 500,
+                        width: "70px",
+                      }}
+                    >
+                      {duration ? `${duration} min` : "In Progress"}
+                    </Typography>
+                  </Box>
+                </Box>
               </ListItem>
             );
           })}

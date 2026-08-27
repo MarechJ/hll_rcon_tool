@@ -1,18 +1,21 @@
-import * as React from 'react';
-import Button from '@mui/material/Button';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-import ColorLensIcon from '@mui/icons-material/ColorLens';
-import CheckIcon from '@mui/icons-material/Check';
+import * as React from "react";
+import Button from "@mui/material/Button";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import ColorLensIcon from "@mui/icons-material/ColorLens";
+import CheckIcon from "@mui/icons-material/Check";
 import { useAppStore } from "@/stores/app-state";
 
 const schemes = [
-  { name: 'Default', value: 'default' },
-  { name: 'GitHub', value: 'github' },
-  { name: 'Lime', value: 'lime' },
-  { name: 'High Contrast', value: 'highContrast' },
+  { name: "Default", value: "default" },
+  { name: "GitHub", value: "github" },
+  { name: "Lime", value: "lime" },
+  { name: "High Contrast", value: "highContrast" },
+  { name: "Hell Let Loose (WWII)", value: "hellLetLoose" },
+  { name: "Hell Let Loose Vietnam", value: "hellLetLooseVietnam" },
+  { name: "AI Slopperino", value: "aiSlopperino" },
 ];
 
 export default function ColorSchemeSelector() {
@@ -31,7 +34,6 @@ export default function ColorSchemeSelector() {
 
   const handleSchemeSelect = (scheme) => {
     setColorScheme(scheme);
-    console.log(scheme);
     handleClose();
   };
 
@@ -53,7 +55,7 @@ export default function ColorSchemeSelector() {
         onClose={handleClose}
         slotProps={{
           paper: {
-            variant: 'outlined',
+            variant: "outlined",
             elevation: 0,
             sx: {
               minWidth: 180,
@@ -68,7 +70,11 @@ export default function ColorSchemeSelector() {
             selected={colorScheme === scheme.value}
             onClick={() => handleSchemeSelect(scheme.value)}
           >
-            <ListItemIcon sx={{ visibility: colorScheme === scheme.value ? 'visible' : 'hidden' }}>
+            <ListItemIcon
+              sx={{
+                visibility: colorScheme === scheme.value ? "visible" : "hidden",
+              }}
+            >
               <CheckIcon fontSize="small" />
             </ListItemIcon>
             <ListItemText>{scheme.name}</ListItemText>
@@ -77,4 +83,4 @@ export default function ColorSchemeSelector() {
       </Menu>
     </React.Fragment>
   );
-} 
+}
