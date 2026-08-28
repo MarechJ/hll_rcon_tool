@@ -656,12 +656,25 @@ class Rcon(ServerCtl):
 
         return sorted(player_dicts, key=lambda d: d[NAME])
 
+    def add_vip_to_gameserver(
+        self,
+        player_id: str,
+        description: str,
+    ) -> bool:
+        """Add or update VIP on the gameserver without modifying VIP tables."""
+        with invalidates(Rcon.get_vip_ids):
+            return super().add_vip(player_id, description)
+
+    def remove_vip_from_gameserver(self, player_id: str) -> bool:
+        """Remove VIP from the gameserver without modifying VIP tables."""
+        with invalidates(Rcon.get_vip_ids):
+            return super().remove_vip(player_id)
+
     def remove_vip(self, player_id) -> bool:
         """Removes VIP status on the game server and removes their PlayerVIP record."""
 
         # Remove VIP before anything else in case we have errors
-        with invalidates(Rcon.get_vip_ids):
-            result = super().remove_vip(player_id)
+        result = self.remove_vip_from_gameserver(player_id)
 
         server_number = get_server_number()
         with enter_session() as session:
@@ -698,9 +711,11 @@ class Rcon(ServerCtl):
         self, player_id: str, description: str, expiration: str | None = None
     ) -> bool:
         """Adds VIP status on the game server and adds or updates their PlayerVIP record."""
-        with invalidates(Rcon.get_vip_ids):
-            # Add VIP before anything else in case we have errors
-            result = super().add_vip(player_id, description)
+        # Add VIP before anything else in case we have errors
+        result = self.add_vip_to_gameserver(
+            player_id=player_id,
+            description=description,
+        )
 
         expiration = expiration or ""
         # postgres and Python have different max date limits
