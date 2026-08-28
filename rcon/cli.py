@@ -37,6 +37,7 @@ from rcon.user_config.webhooks import (
 )
 from rcon.utils import ApiKey, get_server_number
 from rcon.vip_sync_runner import synchronize_gameserver_vips
+from rcon.vip_sync_service import VipSyncDatabaseUnavailableError
 from rcon.vote_map import VoteMap
 
 logger = logging.getLogger(__name__)
@@ -143,10 +144,13 @@ def run_vip_list_sync(
     if server_number is None:
         server_number = int(get_server_number())
 
-    result = synchronize_gameserver_vips(
-        server_number=server_number,
-        dry_run=not apply_changes,
-    )
+    try:
+        result = synchronize_gameserver_vips(
+            server_number=server_number,
+            dry_run=not apply_changes,
+        )
+    except VipSyncDatabaseUnavailableError as exc:
+        raise click.ClickException(str(exc)) from exc
 
     summary = {
         "server_number": server_number,

@@ -12,6 +12,10 @@ from rcon.vip import get_vip_lists_for_server
 from rcon.vip_sync import VipSyncPlan, VipSyncRecord, build_vip_sync_plan
 
 
+class VipSyncDatabaseUnavailableError(RuntimeError):
+    """Raised when the VIP List database schema is unavailable."""
+
+
 class VipRconReader(Protocol):
     def get_vip_ids(self) -> Sequence[VipIdType]: ...
 
@@ -69,11 +73,18 @@ def build_database_vip_sync_plan(
 ) -> VipSyncPlan:
     """Build a synchronization plan from database state without RCON writes."""
     timestamp = timestamp or datetime.now(tz=UTC)
+    records: list[VipSyncRecord] | None = None
+    sync_methods: list[VipListSyncMethod] | None = None
 
     with enter_session() as sess:
         records, sync_methods = load_database_sync_state(
             sess,
             server_number=server_number,
+        )
+
+    if records is None or sync_methods is None:
+        raise VipSyncDatabaseUnavailableError(
+            "VIP List tables are unavailable; apply database migrations first."
         )
 
     return build_vip_sync_plan(

@@ -1,7 +1,13 @@
+from contextlib import contextmanager
 from datetime import UTC, datetime
 from types import SimpleNamespace
 
+import pytest
+from sqlalchemy.exc import ProgrammingError
+
+import rcon.vip_sync_service as service_module
 from rcon.vip_sync_service import (
+    VipSyncDatabaseUnavailableError,
     database_record_to_sync_record,
     get_record_player_name,
     read_gameserver_vips,
@@ -82,3 +88,40 @@ def test_reads_empty_hllv_comment():
     )
 
     assert read_gameserver_vips(rcon) == {"00025182eb1149fabc454d25847b690e": ""}
+
+
+def test_database_plan_reports_unavailable_schema(monkeypatch):
+    @contextmanager
+    def suppress_programming_error():
+        try:
+            yield SimpleNamespace()
+        except ProgrammingError:
+            pass
+
+    def fail_to_load(*args, **kwargs):
+        raise ProgrammingError(
+            "SELECT * FROM vip_list",
+            {},
+            RuntimeError("relation vip_list does not exist"),
+        )
+
+    monkeypatch.setattr(
+        service_module,
+        "enter_session",
+        suppress_programming_error,
+    )
+    monkeypatch.setattr(
+        service_module,
+        "load_database_sync_state",
+        fail_to_load,
+    )
+
+    with pytest.raises(
+        VipSyncDatabaseUnavailableError,
+        match="apply database migrations first",
+    ):
+        service_module.build_database_vip_sync_plan(
+            gameserver_vips={},
+            server_number=1,
+            timestamp=NOW,
+        )

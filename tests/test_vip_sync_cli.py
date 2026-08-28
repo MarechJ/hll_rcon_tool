@@ -6,6 +6,7 @@ from click.testing import CliRunner
 import rcon.cli as cli_module
 from rcon.vip_sync import VipSyncAdd
 from rcon.vip_sync_executor import VipSyncFailure
+from rcon.vip_sync_service import VipSyncDatabaseUnavailableError
 
 
 def make_result(
@@ -153,3 +154,29 @@ def test_vip_list_sync_rejects_invalid_server_number():
 
     assert result.exit_code != 0
     assert "33 is not in the range 1<=x<=32" in result.output
+
+
+def test_vip_list_sync_reports_missing_database_schema(monkeypatch):
+    def fail_sync(**kwargs):
+        raise VipSyncDatabaseUnavailableError(
+            "VIP List tables are unavailable; apply database migrations first."
+        )
+
+    monkeypatch.setattr(
+        cli_module,
+        "synchronize_gameserver_vips",
+        fail_sync,
+    )
+
+    result = CliRunner().invoke(
+        cli_module.cli,
+        [
+            "vip-list-sync",
+            "--server-number",
+            "1",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "VIP List tables are unavailable" in result.output
+    assert "UnboundLocalError" not in result.output
