@@ -1,0 +1,71 @@
+from uuid import uuid4
+
+from rcon.api_commands import RconAPI
+from rcon.types import VipListSyncMethod
+
+
+def test_vip_list_api_crud():
+    api = object.__new__(RconAPI)
+    player_id = "0002" + uuid4().hex[4:]
+    list_id = None
+    record_id = None
+
+    try:
+        created = api.create_vip_list(
+            name=f"API Test {uuid4().hex}",
+            sync=VipListSyncMethod.IGNORE_UNKNOWN,
+            servers=[1],
+        )
+        list_id = created["id"]
+
+        assert api.get_vip_list(list_id) == created
+        assert created in api.get_vip_lists()
+        assert created in api.get_vip_lists_for_server(server_number=1)
+        assert created not in api.get_vip_lists_for_server(server_number=2)
+
+        edited_list = api.edit_vip_list(
+            vip_list_id=list_id,
+            name="API Test Edited",
+            sync=VipListSyncMethod.REMOVE_UNKNOWN,
+            servers=[1, 2],
+        )
+        assert edited_list["name"] == "API Test Edited"
+        assert edited_list["sync"] == VipListSyncMethod.REMOVE_UNKNOWN
+        assert edited_list["servers"] == [1, 2]
+
+        record = api.add_vip_list_record(
+            player_id=player_id,
+            vip_list_id=list_id,
+            description="API integration test",
+            notes="Created through RconAPI",
+            admin_name="pytest",
+        )
+        record_id = record["id"]
+
+        assert api.get_vip_list_record(record_id) == record
+        assert api.get_player_vip_list_record(player_id, list_id) == record
+        assert record in api.get_player_vip_records(player_id)
+        assert record in api.get_active_vip_records(list_id)
+
+        edited_record = api.edit_vip_list_record(
+            record_id=record_id,
+            active=False,
+            notes="Inactive through RconAPI",
+            admin_name="pytest",
+        )
+        assert edited_record["is_active"] is False
+        assert edited_record["notes"] == "Inactive through RconAPI"
+        assert edited_record in api.get_inactive_vip_records(list_id)
+
+        assert api.delete_vip_list_record(record_id) is True
+        record_id = None
+        assert api.get_player_vip_list_record(player_id, list_id) is None
+
+        assert api.delete_vip_list(list_id) is True
+        list_id = None
+
+    finally:
+        if record_id is not None:
+            api.delete_vip_list_record(record_id)
+        if list_id is not None:
+            api.delete_vip_list(list_id)
