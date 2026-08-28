@@ -304,6 +304,7 @@ class RconAPI(Rcon):
         page = int(page)
         if blacklist_id is not None:
             blacklist_id = int(blacklist_id)
+        exclude_expired = exclude_expired.lower() == "true"
         with enter_session() as sess:
             records, total = blacklist.search_blacklist_records(
                 sess,

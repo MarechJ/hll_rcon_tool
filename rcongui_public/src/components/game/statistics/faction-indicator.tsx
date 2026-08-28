@@ -1,27 +1,27 @@
 import React from 'react'
 import { FactionEnum, StatusEnum } from '@/types/player'
-import { cn, getDarkTeamIconSrc, getLightTeamIconSrc } from '@/lib/utils'
+import { cn } from '@/lib/utils'
+import { Faction, getDarkFactionIconSrc, getLightFactionIconSrc } from '@/constants/factions'
 import { useTheme } from '@/hooks/use-theme-provider'
-import { BotIcon } from 'lucide-react'
 import { Avatar, AvatarBadge, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 type FactionIndicatorProps = {
-  faction?: FactionEnum | null
+  faction?: Faction | null
   status?: StatusEnum | null
 } & React.HTMLAttributes<HTMLSpanElement>
 
 export function FactionIndicator({ faction, status, className, ...props }: FactionIndicatorProps) {
   const theme = useTheme()
-  const getTeamIconSrc = theme.theme === 'dark' ? getLightTeamIconSrc : getDarkTeamIconSrc
+  const getFactionIconSrc = theme.theme === 'dark' ? getLightFactionIconSrc : getDarkFactionIconSrc
   return (
     <Avatar size="sm" className={cn('overflow-visible', className)} {...props}>
-      <AvatarImage
+      {faction && (<AvatarImage
         className="rounded-full"
-        src={getTeamIconSrc(faction ?? "lobby")}
+        src={getFactionIconSrc(faction)}
         width={20}
         height={20}
         alt={faction ?? "lobby"}
-      />
+      />)}
       <AvatarFallback></AvatarFallback>
       {status !== undefined &&
         (status === StatusEnum.ONLINE ? (
