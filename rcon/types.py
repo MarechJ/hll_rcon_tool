@@ -729,6 +729,31 @@ class PlayerVIPType(TypedDict):
     expiration: datetime.datetime
 
 
+class VipListSyncMethod(str, enum.Enum):
+    IGNORE_UNKNOWN = "ignore_unknown"
+    REMOVE_UNKNOWN = "remove_unknown"
+
+
+class VipListType(TypedDict):
+    id: int
+    name: str
+    sync: VipListSyncMethod
+    servers: list[int] | None
+
+
+class VipListRecordType(TypedDict):
+    id: int
+    vip_list_id: int
+    player_id: str
+    admin_name: str
+    created_at: datetime.datetime
+    is_active: bool
+    is_expired: bool
+    expires_at: datetime.datetime | None
+    description: str | None
+    notes: str | None
+
+
 class PlayerSoldierType(TypedDict):
     eos_id: str | None
     name: str | None
