@@ -67,6 +67,29 @@ def test_vip_list_crud_and_server_scope(vip_list_ids):
 @pytest.mark.parametrize(
     "player_id",
     [
+        "",
+        "player-id",
+        "88d99bf432e8de4f58c43d1c2d22",
+    ],
+)
+def test_rejects_unsupported_player_id(vip_list_ids, player_id):
+    created = create_vip_list(
+        name=f"Invalid ID test {uuid4().hex}",
+        servers=[1],
+    )
+    vip_list_id = created["id"]
+    vip_list_ids.append(vip_list_id)
+
+    with pytest.raises(ValueError, match="Player ID must be"):
+        add_record_to_vip_list(
+            player_id=player_id,
+            vip_list_id=vip_list_id,
+        )
+
+
+@pytest.mark.parametrize(
+    "player_id",
+    [
         pytest.param("76561199999999998", id="hll-steam64"),
         pytest.param("0002" + uuid4().hex[4:], id="hllv-eos"),
     ],

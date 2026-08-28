@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from rcon.commands import HLLCommandFailedError
 from rcon.models import PlayerID, VipList, VipListRecord, enter_session
 from rcon.player_history import _get_set_player
+from rcon.player_id_utils import is_supported_player_id
 from rcon.types import VipListRecordType, VipListSyncMethod, VipListType
 from rcon.utils import MISSING, MissingType
 
@@ -252,8 +253,11 @@ def add_record_to_vip_list(
 ) -> VipListRecordType:
     """Add one player to a VIP list."""
     player_id = player_id.strip()
-    if not player_id:
-        raise ValueError("Player ID must not be empty")
+    if not is_supported_player_id(player_id):
+        raise ValueError(
+            "Player ID must be a 17-digit Steam64 ID or "
+            "a 32-character hexadecimal network ID"
+        )
     if not isinstance(active, bool):
         raise TypeError("active must be a boolean")
 
