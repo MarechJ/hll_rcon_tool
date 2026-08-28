@@ -64,7 +64,17 @@ def test_vip_list_crud_and_server_scope(vip_list_ids):
         assert vip_list_id in {item.id for item in get_vip_lists_for_server(sess, 32)}
 
 
-def test_vip_record_crud_and_duplicate_protection(vip_list_ids):
+@pytest.mark.parametrize(
+    "player_id",
+    [
+        pytest.param("76561199999999998", id="hll-steam64"),
+        pytest.param("0002" + uuid4().hex[4:], id="hllv-eos"),
+    ],
+)
+def test_vip_record_crud_and_duplicate_protection(
+    vip_list_ids,
+    player_id,
+):
     source = create_vip_list(
         name=f"Source {uuid4().hex}",
         servers=[1],
@@ -77,7 +87,6 @@ def test_vip_record_crud_and_duplicate_protection(vip_list_ids):
     target_id = target["id"]
     vip_list_ids.extend([source_id, target_id])
 
-    player_id = "0002" + uuid4().hex[4:]
     expiration = datetime(2032, 1, 1, tzinfo=UTC)
 
     record = add_record_to_vip_list(
