@@ -6,7 +6,6 @@ from typing import Literal, Protocol
 
 from rcon.vip_sync import VipSyncAdd, VipSyncPlan
 
-
 logger = getLogger(__name__)
 
 

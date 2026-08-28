@@ -4,7 +4,6 @@ import re
 
 from rcon.steam_utils import is_steam_id_64
 
-
 NETWORK_PLAYER_ID_PATTERN = re.compile(r"^[0-9a-fA-F]{32}$")
 
 

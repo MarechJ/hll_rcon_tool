@@ -7,7 +7,6 @@ from rcon.vip_sync import (
     build_vip_sync_plan,
 )
 
-
 NOW = datetime(2030, 1, 1, tzinfo=UTC)
 
 

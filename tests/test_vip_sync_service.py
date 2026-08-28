@@ -7,7 +7,6 @@ from rcon.vip_sync_service import (
     read_gameserver_vips,
 )
 
-
 NOW = datetime(2030, 1, 1, tzinfo=UTC)
 
 

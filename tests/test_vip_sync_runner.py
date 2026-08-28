@@ -3,7 +3,6 @@ from datetime import UTC, datetime
 from rcon.vip_sync import VipSyncAdd, VipSyncPlan
 from rcon.vip_sync_runner import synchronize_gameserver_vips
 
-
 NOW = datetime(2030, 1, 1, tzinfo=UTC)
 
 

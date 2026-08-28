@@ -114,14 +114,11 @@ def build_vip_sync_plan(
         expected_description = get_gameserver_description(top_record)
         current_description = gameserver_vips.get(player_id)
 
-        if current_description is None:
-            to_add.append(
-                VipSyncAdd(
-                    player_id=player_id,
-                    description=expected_description,
-                )
-            )
-        elif current_description and current_description != expected_description:
+        if (
+            current_description is None
+            or current_description
+            and current_description != expected_description
+        ):
             to_add.append(
                 VipSyncAdd(
                     player_id=player_id,
