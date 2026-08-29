@@ -6,6 +6,8 @@ export const vipQueryKeys = {
   list: [{ queryIdentifier: "get_vip_ids" }],
   add: [{ queryIdentifier: "add_vip" }],
   remove: [{ queryIdentifier: "remove_vip" }],
+  syncPlan: [{ queryIdentifier: "get_vip_sync_plan" }],
+  synchronize: [{ queryIdentifier: "synchronize_vip_lists" }],
 };
 
 export const vipQueryOptions = {
@@ -13,6 +15,16 @@ export const vipQueryOptions = {
     queryOptions({
       queryKey: vipQueryKeys.list,
       queryFn: () => cmd.GET_VIPS(),
+    }),
+  syncPlan: () =>
+    queryOptions({
+      queryKey: vipQueryKeys.syncPlan,
+      queryFn: () =>
+        cmd.GET_VIP_SYNC_PLAN({
+          throwRouteError: false,
+        }),
+      enabled: false,
+      retry: false,
     }),
 };
 
@@ -32,5 +44,13 @@ export const vipMutationOptions = {
     mutationKey: vipQueryKeys.remove,
     mutationFn: ({ player_id, forward = false }) =>
       cmd.DELETE_VIP({ payload: { player_id, forward } }),
+  },
+  synchronize: {
+    mutationKey: vipQueryKeys.synchronize,
+    mutationFn: () =>
+      cmd.SYNCHRONIZE_VIP_LISTS({
+        payload: {},
+        throwRouteError: false,
+      }),
   },
 };

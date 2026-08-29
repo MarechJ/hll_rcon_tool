@@ -31,6 +31,7 @@ const VipTable = memo(
     isFetching,
     handleBulkRemove,
     editSelected,
+    readOnly = false,
   }) => {
     const [pagination, setPagination] = useState({
       pageIndex: 0,
@@ -72,34 +73,36 @@ const VipTable = memo(
         component="section"
         sx={{ width: "100%", bgcolor: "background.paper" }}
       >
-        <Stack
-          direction="row"
-          alignItems="center"
-          spacing={1}
-          sx={{ width: "100%", p: 1 }}
-        >
-          <Button
-            disabled={selectedRows === 0 || isFetching}
-            variant="contained"
-            color="primary"
-            size="small"
-            onClick={() => editSelected(table)}
+        {!readOnly && (
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={1}
+            sx={{ width: "100%", p: 1 }}
           >
-            Edit Selected
-          </Button>
-          <ConfirmButton
-            buttonText="Remove Selected"
-            title="Remove Selected VIPs?"
-            description={`Are you sure you want to remove ${selectedRows} selected VIP(s)?`}
-            onConfirm={() => handleBulkRemove(table)}
-            disabled={selectedRows === 0 || isFetching}
-            buttonProps={{
-              variant: "contained",
-              color: "error",
-              size: "small",
-            }}
-          />
-        </Stack>
+            <Button
+              disabled={selectedRows === 0 || isFetching}
+              variant="contained"
+              color="primary"
+              size="small"
+              onClick={() => editSelected(table)}
+            >
+              Edit Selected
+            </Button>
+            <ConfirmButton
+              buttonText="Remove Selected"
+              title="Remove Selected VIPs?"
+              description={`Are you sure you want to remove ${selectedRows} selected VIP(s)?`}
+              onConfirm={() => handleBulkRemove(table)}
+              disabled={selectedRows === 0 || isFetching}
+              buttonProps={{
+                variant: "contained",
+                color: "error",
+                size: "small",
+              }}
+            />
+          </Stack>
+        )}
         <TableToolbar>
           <Stack
             direction="row"
@@ -133,9 +136,11 @@ const VipTable = memo(
             spacing={2}
             sx={{ width: "100%", p: 1 }}
           >
-            <Typography variant="body2">
-              {selectedRows} / {rowsCount} selected
-            </Typography>
+            {!readOnly && (
+              <Typography variant="body2">
+                {selectedRows} / {rowsCount} selected
+              </Typography>
+            )}
             <Box sx={{ flexGrow: 1 }} />
             <TablePagination table={table} />
           </Stack>
