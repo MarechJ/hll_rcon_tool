@@ -12,7 +12,13 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from rcon.commands import HLLCommandFailedError
-from rcon.models import PlayerID, VipList, VipListRecord, enter_session
+from rcon.models import (
+    PlayerID,
+    VipList,
+    VipListDefault,
+    VipListRecord,
+    enter_session,
+)
 from rcon.player_history import _get_set_player
 from rcon.player_id_utils import is_supported_player_id
 from rcon.types import VipListRecordType, VipListSyncMethod, VipListType
@@ -39,6 +45,75 @@ def get_vip_lists_for_server(
         for vip_list in get_vip_lists(sess)
         if vip_list.servers is None or server_number in vip_list.get_server_numbers()
     ]
+
+
+def get_default_vip_list(
+    sess: Session,
+    server_number: int,
+) -> VipList | None:
+    """Return the default VIP list configured for one server."""
+    if server_number < 1 or server_number > 32:
+        raise ValueError("Server number must be between 1 and 32")
+
+    default = sess.get(VipListDefault, server_number)
+    return default.vip_list if default is not None else None
+
+
+def set_default_vip_list(
+    server_number: int,
+    vip_list_id: int,
+) -> VipListType:
+    """Set the default VIP list for one server."""
+    if server_number < 1 or server_number > 32:
+        raise ValueError("Server number must be between 1 and 32")
+
+    with enter_session() as sess:
+        vip_list = get_vip_list(
+            sess,
+            vip_list_id=vip_list_id,
+            strict=True,
+        )
+        assert vip_list is not None
+
+        server_numbers = vip_list.get_server_numbers()
+        if server_numbers is not None and server_number not in server_numbers:
+            raise HLLCommandFailedError(
+                f"VIP list {vip_list_id} does not apply to server {server_number}"
+            )
+
+        default = sess.get(VipListDefault, server_number)
+        if default is None:
+            default = VipListDefault(
+                server_number=server_number,
+                vip_list=vip_list,
+            )
+            sess.add(default)
+        else:
+            default.vip_list = vip_list
+
+        sess.commit()
+        logger.info(
+            "Set VIP list ID %s as default for server %s",
+            vip_list_id,
+            server_number,
+        )
+        return vip_list.to_dict()
+
+
+def clear_default_vip_list(server_number: int) -> bool:
+    """Clear the default VIP list configured for one server."""
+    if server_number < 1 or server_number > 32:
+        raise ValueError("Server number must be between 1 and 32")
+
+    with enter_session() as sess:
+        default = sess.get(VipListDefault, server_number)
+        if default is None:
+            return False
+
+        sess.delete(default)
+        sess.commit()
+        logger.info("Cleared default VIP list for server %s", server_number)
+        return True
 
 
 def get_vip_list(

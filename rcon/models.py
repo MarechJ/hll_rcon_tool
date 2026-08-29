@@ -1184,6 +1184,11 @@ class VipList(Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
+    defaults: Mapped[list["VipListDefault"]] = relationship(
+        back_populates="vip_list",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
 
     def get_server_numbers(self) -> set[int] | None:
         if self.servers is None:
@@ -1203,6 +1208,22 @@ class VipList(Base):
             "sync": self.sync,
             "servers": sorted(server_numbers) if server_numbers is not None else None,
         }
+
+
+class VipListDefault(Base):
+    __tablename__ = "vip_list_default"
+
+    server_number: Mapped[int] = mapped_column(
+        primary_key=True,
+        autoincrement=False,
+    )
+    vip_list_id: Mapped[int] = mapped_column(
+        ForeignKey("vip_list.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    vip_list: Mapped[VipList] = relationship(back_populates="defaults")
 
 
 class VipListRecord(Base):

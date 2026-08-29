@@ -8,6 +8,7 @@ from rcon.models import PlayerID, PlayerName, enter_session
 from rcon.types import VipListSyncMethod
 from rcon.vip import (
     add_record_to_vip_list,
+    clear_default_vip_list,
     create_vip_list,
     delete_vip_list,
     delete_vip_list_record,
@@ -16,11 +17,13 @@ from rcon.vip import (
     edit_vip_list_record,
     edit_vip_list_records,
     get_active_vip_records,
+    get_default_vip_list,
     get_inactive_vip_records,
     get_player_vip_list_record,
     get_vip_list,
     get_vip_lists_for_server,
     get_vip_record,
+    set_default_vip_list,
 )
 
 
@@ -345,3 +348,75 @@ def test_bulk_vip_record_operations_are_atomic(vip_list_ids):
     with enter_session() as sess:
         assert get_vip_record(sess, record_ids[0]) is None
         assert get_vip_record(sess, record_ids[1]) is None
+
+
+def test_default_vip_list_per_server(vip_list_ids):
+    first = create_vip_list(
+        name=f"Default first {uuid4().hex}",
+        servers=[1],
+    )
+    second = create_vip_list(
+        name=f"Default second {uuid4().hex}",
+        servers=[1, 2],
+    )
+    incompatible = create_vip_list(
+        name=f"Default incompatible {uuid4().hex}",
+        servers=[2],
+    )
+    first_id = first["id"]
+    second_id = second["id"]
+    incompatible_id = incompatible["id"]
+    vip_list_ids.extend([first_id, second_id, incompatible_id])
+
+    with enter_session() as sess:
+        assert get_default_vip_list(sess, 1) is None
+
+    assert set_default_vip_list(1, first_id) == first
+
+    with enter_session() as sess:
+        default = get_default_vip_list(sess, 1)
+        assert default is not None
+        assert default.id == first_id
+
+    assert set_default_vip_list(1, second_id) == second
+    assert set_default_vip_list(2, second_id) == second
+
+    with enter_session() as sess:
+        server_one_default = get_default_vip_list(sess, 1)
+        server_two_default = get_default_vip_list(sess, 2)
+        assert server_one_default is not None
+        assert server_two_default is not None
+        assert server_one_default.id == second_id
+        assert server_two_default.id == second_id
+
+    with pytest.raises(
+        HLLCommandFailedError,
+        match="does not apply to server 1",
+    ):
+        set_default_vip_list(1, incompatible_id)
+
+    with pytest.raises(
+        HLLCommandFailedError,
+        match="does not apply to server 2",
+    ):
+        set_default_vip_list(2, first_id)
+
+    with pytest.raises(ValueError, match="between 1 and 32"):
+        set_default_vip_list(0, first_id)
+
+    with pytest.raises(ValueError, match="between 1 and 32"):
+        set_default_vip_list(33, first_id)
+
+    assert clear_default_vip_list(1) is True
+    assert clear_default_vip_list(1) is False
+
+    with enter_session() as sess:
+        assert get_default_vip_list(sess, 1) is None
+        default = get_default_vip_list(sess, 2)
+        assert default is not None
+        assert default.id == second_id
+
+    assert delete_vip_list(second_id) is True
+
+    with enter_session() as sess:
+        assert get_default_vip_list(sess, 2) is None

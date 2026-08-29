@@ -424,6 +424,53 @@ class RconAPI(Rcon):
                 )
             ]
 
+    def get_default_vip_list(
+        self,
+        server_number: int | None = None,
+    ) -> VipListType | None:
+        """Return the default VIP list for one CRCON server number."""
+        if server_number is None:
+            server_number = server_info_for_rcon(self).number
+        if server_number is None:
+            raise ValueError("Server number is not configured")
+
+        with enter_session() as sess:
+            vip_list = vip.get_default_vip_list(
+                sess,
+                server_number=int(server_number),
+            )
+            return vip_list.to_dict() if vip_list is not None else None
+
+    def set_default_vip_list(
+        self,
+        vip_list_id: int,
+        server_number: int | None = None,
+    ) -> VipListType:
+        """Set the default VIP list for one CRCON server number."""
+        if server_number is None:
+            server_number = server_info_for_rcon(self).number
+        if server_number is None:
+            raise ValueError("Server number is not configured")
+
+        return vip.set_default_vip_list(
+            server_number=int(server_number),
+            vip_list_id=int(vip_list_id),
+        )
+
+    def clear_default_vip_list(
+        self,
+        server_number: int | None = None,
+    ) -> bool:
+        """Clear the default VIP list for one CRCON server number."""
+        if server_number is None:
+            server_number = server_info_for_rcon(self).number
+        if server_number is None:
+            raise ValueError("Server number is not configured")
+
+        return vip.clear_default_vip_list(
+            server_number=int(server_number),
+        )
+
     def get_vip_list(self, vip_list_id: int) -> VipListType:
         """Return one VIP list."""
         with enter_session() as sess:

@@ -34,6 +34,19 @@ def test_vip_list_api_crud():
         assert edited_list["sync"] == VipListSyncMethod.REMOVE_UNKNOWN
         assert edited_list["servers"] == [1, 2]
 
+        assert api.get_default_vip_list(server_number=1) is None
+        assert (
+            api.set_default_vip_list(
+                vip_list_id=list_id,
+                server_number=1,
+            )
+            == edited_list
+        )
+        assert api.get_default_vip_list(server_number=1) == edited_list
+        assert api.clear_default_vip_list(server_number=1) is True
+        assert api.clear_default_vip_list(server_number=1) is False
+        assert api.get_default_vip_list(server_number=1) is None
+
         record = api.add_vip_list_record(
             player_id=player_id,
             vip_list_id=list_id,
