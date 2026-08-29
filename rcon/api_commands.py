@@ -100,6 +100,46 @@ PLAYER_ID = "player_id"
 CTL: Optional["HLLRconAPI | HLLVRconAPI"] = None
 
 
+def _serialize_vip_sync_result(result) -> dict[str, Any]:
+    """Convert a VIP synchronization result into an API-safe dictionary."""
+    return {
+        "plan": {
+            "to_add": [
+                {
+                    "player_id": item.player_id,
+                    "description": item.description,
+                }
+                for item in result.plan.to_add
+            ],
+            "to_remove": sorted(result.plan.to_remove),
+            "unchanged": sorted(result.plan.unchanged),
+            "unknown": sorted(result.plan.unknown),
+        },
+        "execution": {
+            "dry_run": result.execution.dry_run,
+            "added": sorted(result.execution.added),
+            "removed": sorted(result.execution.removed),
+            "skipped_additions": [
+                {
+                    "player_id": item.player_id,
+                    "description": item.description,
+                }
+                for item in result.execution.skipped_additions
+            ],
+            "skipped_removals": sorted(result.execution.skipped_removals),
+            "failures": [
+                {
+                    "action": failure.action,
+                    "player_id": failure.player_id,
+                    "error": failure.error,
+                }
+                for failure in result.execution.failures
+            ],
+            "successful": result.execution.successful,
+        },
+    }
+
+
 def create_rcon_api(credentials: ServerInfo) -> "HLLRconAPI | HLLVRconAPI":
     """Construct the concrete API controller for the configured game."""
 
@@ -662,6 +702,44 @@ class RconAPI(Rcon):
     def delete_vip_list_record(self, record_id: int) -> bool:
         """Delete one VIP list record."""
         return vip.delete_vip_list_record(record_id=int(record_id))
+
+    def get_vip_sync_plan(
+        self,
+        server_number: int | None = None,
+    ) -> dict[str, Any]:
+        """Preview synchronization between VIP lists and the gameserver."""
+        from rcon.vip_sync_runner import synchronize_gameserver_vips
+
+        if server_number is None:
+            server_number = server_info_for_rcon(self).number
+        if server_number is None:
+            raise ValueError("Server number is not configured")
+
+        result = synchronize_gameserver_vips(
+            server_number=int(server_number),
+            rcon=self,
+            dry_run=True,
+        )
+        return _serialize_vip_sync_result(result)
+
+    def synchronize_vip_lists(
+        self,
+        server_number: int | None = None,
+    ) -> dict[str, Any]:
+        """Synchronize the gameserver with all applicable VIP lists."""
+        from rcon.vip_sync_runner import synchronize_gameserver_vips
+
+        if server_number is None:
+            server_number = server_info_for_rcon(self).number
+        if server_number is None:
+            raise ValueError("Server number is not configured")
+
+        result = synchronize_gameserver_vips(
+            server_number=int(server_number),
+            rcon=self,
+            dry_run=False,
+        )
+        return _serialize_vip_sync_result(result)
 
     def unblacklist_player(self, player_id: str) -> bool:
         """Expires all blacklists of a player and unbans them from all servers.
