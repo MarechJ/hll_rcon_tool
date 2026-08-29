@@ -73,4 +73,92 @@ export const vipListMutationOptions = {
         throwRouteError: false,
       }),
   },
+  deleteList: {
+    mutationFn: (vipList) =>
+      cmd.DELETE_VIP_LIST({
+        payload: { vip_list_id: vipList.id },
+        throwRouteError: false,
+      }),
+  },
+  createRecord: {
+    mutationFn: (data) =>
+      cmd.ADD_VIP_LIST_RECORD({
+        payload: {
+          player_id: data.playerId,
+          vip_list_id: data.vipListId,
+          description: data.description || null,
+          active: data.active,
+          expires_at:
+            data.expiresAt?.toISOString?.() ??
+            data.expiresAt ??
+            null,
+          notes: data.notes || null,
+        },
+        throwRouteError: false,
+      }),
+  },
+  editRecord: {
+    mutationFn: ({ id, ...data }) =>
+      cmd.EDIT_VIP_LIST_RECORD({
+        payload: {
+          record_id: id,
+          vip_list_id: data.vipListId,
+          description: data.description || null,
+          active: data.active,
+          expires_at:
+            data.expiresAt?.toISOString?.() ??
+            data.expiresAt ??
+            null,
+          notes: data.notes || null,
+        },
+        throwRouteError: false,
+      }),
+  },
+  deleteRecord: {
+    mutationFn: (record) =>
+      cmd.DELETE_VIP_LIST_RECORD({
+        payload: { record_id: record.id },
+        throwRouteError: false,
+      }),
+  },
+  bulkEditRecords: {
+    mutationFn: (data) => {
+      const payload = {
+        record_ids: data.recordIds,
+      };
+
+      if (data.vipListId !== undefined) {
+        payload.vip_list_id = data.vipListId;
+      }
+      if (data.description !== undefined) {
+        payload.description = data.description;
+      }
+      if (data.notes !== undefined) {
+        payload.notes = data.notes;
+      }
+      if (data.active !== undefined) {
+        payload.active = data.active;
+      }
+      if (data.expiresAt !== undefined) {
+        payload.expires_at =
+          data.expiresAt?.toISOString?.() ??
+          data.expiresAt ??
+          null;
+      }
+
+      return cmd.EDIT_VIP_LIST_RECORDS({
+        payload,
+        throwRouteError: false,
+      });
+    },
+  },
+  bulkDeleteRecords: {
+    mutationFn: (recordIds) =>
+      cmd.DELETE_VIP_LIST_RECORDS({
+        payload: {
+          record_ids: recordIds,
+        },
+        throwRouteError: false,
+      }),
+  },
 };
