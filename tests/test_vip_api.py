@@ -4,7 +4,7 @@ from rcon.api_commands import RconAPI
 from rcon.types import VipListSyncMethod
 
 
-def test_vip_list_api_crud():
+def test_vip_list_api_crud(isolated_default_vip_lists):
     api = object.__new__(RconAPI)
     player_id = "0002" + uuid4().hex[4:]
     list_id = None

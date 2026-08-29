@@ -350,7 +350,10 @@ def test_bulk_vip_record_operations_are_atomic(vip_list_ids):
         assert get_vip_record(sess, record_ids[1]) is None
 
 
-def test_default_vip_list_per_server(vip_list_ids):
+def test_default_vip_list_per_server(
+    vip_list_ids,
+    isolated_default_vip_lists,
+):
     first = create_vip_list(
         name=f"Default first {uuid4().hex}",
         servers=[1],
