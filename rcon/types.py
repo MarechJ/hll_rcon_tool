@@ -745,6 +745,7 @@ class VipListRecordType(TypedDict):
     id: int
     vip_list_id: int
     player_id: str
+    player_name: str | None
     admin_name: str
     created_at: datetime.datetime
     is_active: bool

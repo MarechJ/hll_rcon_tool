@@ -1248,16 +1248,19 @@ class VipListRecord(Base):
         return self.expires_at is not None and self.expires_at <= datetime.now(tz=UTC)
 
     def to_dict(self) -> VipListRecordType:
+        player_name = self.player.names[0].name if self.player.names else None
+
         return {
             "id": self.id,
             "vip_list_id": self.vip_list_id,
             "player_id": self.player.player_id,
+            "player_name": player_name,
             "admin_name": self.admin_name,
             "created_at": self.created_at,
             "is_active": self.active,
             "is_expired": self.is_expired(),
             "expires_at": self.expires_at,
-            "description": self.description,
+            "description": self.description if player_name is None else None,
             "notes": self.notes,
         }
 

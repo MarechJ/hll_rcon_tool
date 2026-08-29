@@ -8,6 +8,7 @@ def test_vip_list_api_crud():
     api = object.__new__(RconAPI)
     player_id = "0002" + uuid4().hex[4:]
     list_id = None
+    target_list_id = None
     record_id = None
 
     try:
@@ -57,6 +58,50 @@ def test_vip_list_api_crud():
         assert edited_record["notes"] == "Inactive through RconAPI"
         assert edited_record in api.get_inactive_vip_records(list_id)
 
+        bulk_edited = api.edit_vip_list_records(
+            record_ids=[record_id],
+            active=True,
+            notes="Bulk edit through RconAPI",
+            admin_name="pytest bulk",
+        )
+        assert len(bulk_edited) == 1
+        assert bulk_edited[0]["is_active"] is True
+        assert bulk_edited[0]["notes"] == "Bulk edit through RconAPI"
+
+        target_list = api.create_vip_list(
+            name=f"API Target {uuid4().hex}",
+            sync=VipListSyncMethod.IGNORE_UNKNOWN,
+            servers=[1],
+        )
+        target_list_id = target_list["id"]
+
+        bulk_moved = api.edit_vip_list_records(
+            record_ids=[record_id],
+            vip_list_id=target_list_id,
+            admin_name="pytest move",
+        )
+        assert bulk_moved[0]["vip_list_id"] == target_list_id
+        assert bulk_moved[0]["notes"] == "Bulk edit through RconAPI"
+
+        second_record = api.add_vip_list_record(
+            player_id="0002" + uuid4().hex[4:],
+            vip_list_id=list_id,
+            description="Bulk delete API test",
+            admin_name="pytest",
+        )
+        assert api.delete_vip_list_records([record_id, second_record["id"]]) == 2
+        record_id = None
+
+        assert api.get_player_vip_list_record(player_id, list_id) is None
+
+        third_record = api.add_vip_list_record(
+            player_id="0002" + uuid4().hex[4:],
+            vip_list_id=list_id,
+            description="Single delete API test",
+            admin_name="pytest",
+        )
+        record_id = third_record["id"]
+
         assert api.delete_vip_list_record(record_id) is True
         record_id = None
         assert api.get_player_vip_list_record(player_id, list_id) is None
@@ -69,3 +114,5 @@ def test_vip_list_api_crud():
             api.delete_vip_list_record(record_id)
         if list_id is not None:
             api.delete_vip_list(list_id)
+        if target_list_id is not None:
+            api.delete_vip_list(target_list_id)

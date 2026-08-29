@@ -585,6 +585,33 @@ class RconAPI(Rcon):
             admin_name=admin_name,
         )
 
+    def edit_vip_list_records(
+        self,
+        record_ids: Sequence[int],
+        vip_list_id: int | MissingType = MISSING,
+        description: str | None | MissingType = MISSING,
+        active: bool | MissingType = MISSING,
+        expires_at: datetime | None | MissingType = MISSING,
+        notes: str | None | MissingType = MISSING,
+        admin_name: str = "CRCON",
+    ) -> list[VipListRecordType]:
+        """Atomically edit selected fields on multiple VIP list records."""
+        return vip.edit_vip_list_records(
+            record_ids=[int(record_id) for record_id in record_ids],
+            vip_list_id=(int(vip_list_id) if vip_list_id is not MISSING else MISSING),
+            description=description,
+            active=active,
+            expires_at=expires_at,
+            notes=notes,
+            admin_name=admin_name,
+        )
+
+    def delete_vip_list_records(self, record_ids: Sequence[int]) -> int:
+        """Atomically delete multiple VIP list records."""
+        return vip.delete_vip_list_records(
+            record_ids=[int(record_id) for record_id in record_ids],
+        )
+
     def delete_vip_list_record(self, record_id: int) -> bool:
         """Delete one VIP list record."""
         return vip.delete_vip_list_record(record_id=int(record_id))

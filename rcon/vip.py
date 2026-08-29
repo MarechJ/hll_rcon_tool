@@ -288,7 +288,7 @@ def add_record_to_vip_list(
             vip_list=vip_list,
             admin_name=admin_name.strip() or "CRCON",
             active=active,
-            description=description,
+            description=description if not player.names else None,
             notes=notes,
             expires_at=expires_at,
         )
@@ -340,6 +340,11 @@ def edit_vip_list_record(
             record.vip_list = target_list
 
         if description is not MISSING:
+            if record.player.names:
+                raise HLLCommandFailedError(
+                    "Description is only available for players without "
+                    "a known player name"
+                )
             record.description = description
         if active is not MISSING:
             if not isinstance(active, bool):
@@ -357,6 +362,146 @@ def edit_vip_list_record(
             logger.info("Edited VIP list record ID %s", record.id)
 
         return record.to_dict()
+
+
+def _normalize_vip_record_ids(record_ids: Sequence[int]) -> list[int]:
+    """Normalize and validate record IDs for an atomic bulk operation."""
+    normalized = list(dict.fromkeys(int(record_id) for record_id in record_ids))
+
+    if not normalized:
+        raise ValueError("At least one VIP list record ID is required")
+    if any(record_id < 1 for record_id in normalized):
+        raise ValueError("VIP list record IDs must be positive integers")
+
+    return normalized
+
+
+def _get_vip_records_for_bulk_operation(
+    sess: Session,
+    record_ids: Sequence[int],
+) -> list[VipListRecord]:
+    """Load every requested record or fail before changing any record."""
+    normalized_ids = _normalize_vip_record_ids(record_ids)
+    records_by_id = {
+        record.id: record
+        for record in sess.scalars(
+            select(VipListRecord).where(VipListRecord.id.in_(normalized_ids))
+        ).all()
+    }
+    missing_ids = [
+        record_id for record_id in normalized_ids if record_id not in records_by_id
+    ]
+
+    if missing_ids:
+        raise HLLCommandFailedError(
+            "No VIP list records found with IDs "
+            + ", ".join(str(record_id) for record_id in missing_ids)
+        )
+
+    return [records_by_id[record_id] for record_id in normalized_ids]
+
+
+def edit_vip_list_records(
+    record_ids: Sequence[int],
+    vip_list_id: int | MissingType = MISSING,
+    description: str | None | MissingType = MISSING,
+    active: bool | MissingType = MISSING,
+    expires_at: datetime | None | MissingType = MISSING,
+    notes: str | None | MissingType = MISSING,
+    admin_name: str = "CRCON",
+) -> list[VipListRecordType]:
+    """Atomically edit selected fields on multiple VIP list records."""
+    if (
+        vip_list_id is MISSING
+        and description is MISSING
+        and active is MISSING
+        and expires_at is MISSING
+        and notes is MISSING
+    ):
+        raise ValueError("At least one field must be selected for bulk editing")
+    if active is not MISSING and not isinstance(active, bool):
+        raise TypeError("active must be a boolean")
+
+    with enter_session() as sess:
+        records = _get_vip_records_for_bulk_operation(sess, record_ids)
+        normalized_admin_name = admin_name.strip() or "CRCON"
+
+        target_list = None
+        if vip_list_id is not MISSING:
+            target_list = get_vip_list(
+                sess,
+                vip_list_id=vip_list_id,
+                strict=True,
+            )
+            assert target_list is not None
+
+            selected_record_ids = {record.id for record in records}
+            selected_player_ids = {record.player_id_id for record in records}
+            duplicate_player_ids = set(
+                sess.scalars(
+                    select(VipListRecord.player_id_id)
+                    .where(VipListRecord.vip_list_id == vip_list_id)
+                    .where(VipListRecord.player_id_id.in_(selected_player_ids))
+                    .where(VipListRecord.id.not_in(selected_record_ids))
+                ).all()
+            )
+            if duplicate_player_ids:
+                conflicting_players = sorted(
+                    record.player.player_id
+                    for record in records
+                    if record.player_id_id in duplicate_player_ids
+                )
+                raise HLLCommandFailedError(
+                    "Players already have records on VIP list "
+                    f"{vip_list_id}: {', '.join(conflicting_players)}"
+                )
+
+        if description is not MISSING:
+            named_records = [record for record in records if record.player.names]
+            if named_records:
+                raise HLLCommandFailedError(
+                    "Description is only available for players without "
+                    "a known player name; affected record IDs: "
+                    + ", ".join(str(record.id) for record in named_records)
+                )
+
+        for record in records:
+            if target_list is not None:
+                record.vip_list = target_list
+            if description is not MISSING:
+                record.description = description
+            if active is not MISSING:
+                record.active = active
+            if expires_at is not MISSING:
+                record.expires_at = expires_at
+            if notes is not MISSING:
+                record.notes = notes
+            record.admin_name = normalized_admin_name
+
+        sess.commit()
+        result = [record.to_dict() for record in records]
+        logger.info(
+            "Bulk edited VIP list record IDs %s",
+            [record.id for record in records],
+        )
+        return result
+
+
+def delete_vip_list_records(record_ids: Sequence[int]) -> int:
+    """Atomically delete multiple VIP list records."""
+    with enter_session() as sess:
+        records = _get_vip_records_for_bulk_operation(sess, record_ids)
+
+        for record in records:
+            sess.delete(record)
+
+        deleted_count = len(records)
+        sess.commit()
+        logger.info(
+            "Bulk deleted VIP list record IDs %s",
+            [record.id for record in records],
+        )
+        return deleted_count
 
 
 def delete_vip_list_record(record_id: int) -> bool:

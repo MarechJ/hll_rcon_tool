@@ -4,19 +4,22 @@ from uuid import uuid4
 import pytest
 
 from rcon.commands import HLLCommandFailedError
-from rcon.models import enter_session
+from rcon.models import PlayerID, PlayerName, enter_session
 from rcon.types import VipListSyncMethod
 from rcon.vip import (
     add_record_to_vip_list,
     create_vip_list,
     delete_vip_list,
     delete_vip_list_record,
+    delete_vip_list_records,
     edit_vip_list,
     edit_vip_list_record,
+    edit_vip_list_records,
     get_active_vip_records,
     get_inactive_vip_records,
     get_player_vip_list_record,
     get_vip_list,
+    get_vip_record,
     get_vip_lists_for_server,
 )
 
@@ -184,3 +187,161 @@ def test_vip_record_crud_and_duplicate_protection(
 
     assert delete_vip_list_record(record_id) is True
     assert delete_vip_list_record(record_id) is False
+
+
+def test_vip_record_uses_known_player_name(vip_list_ids):
+    created = create_vip_list(
+        name=f"Known player name {uuid4().hex}",
+        servers=[1],
+    )
+    vip_list_id = created["id"]
+    vip_list_ids.append(vip_list_id)
+    player_id = "0002" + uuid4().hex[4:]
+
+    with enter_session() as sess:
+        player = PlayerID(player_id=player_id)
+        sess.add(player)
+        sess.flush()
+        sess.add(
+            PlayerName(
+                player=player,
+                name="Known Player",
+            )
+        )
+
+    record = add_record_to_vip_list(
+        player_id=player_id,
+        vip_list_id=vip_list_id,
+        description="Manual fallback must not be used",
+        admin_name="pytest",
+    )
+
+    assert record["player_name"] == "Known Player"
+    assert record["description"] is None
+
+    with pytest.raises(
+        HLLCommandFailedError,
+        match="known player name",
+    ):
+        edit_vip_list_record(
+            record_id=record["id"],
+            description="Not allowed",
+        )
+
+    with pytest.raises(
+        HLLCommandFailedError,
+        match="known player name",
+    ):
+        edit_vip_list_records(
+            [record["id"]],
+            description="Not allowed in bulk",
+        )
+
+
+def test_bulk_vip_record_operations_are_atomic(vip_list_ids):
+    created = create_vip_list(
+        name=f"Bulk operations {uuid4().hex}",
+        servers=[1],
+    )
+    vip_list_id = created["id"]
+    vip_list_ids.append(vip_list_id)
+
+    records = [
+        add_record_to_vip_list(
+            player_id="0002" + uuid4().hex[4:],
+            vip_list_id=vip_list_id,
+            description=f"Original {index}",
+            notes=f"Original note {index}",
+            admin_name="pytest",
+        )
+        for index in range(2)
+    ]
+    record_ids = [record["id"] for record in records]
+    missing_id = max(record_ids) + 1_000_000
+
+    target = create_vip_list(
+        name=f"Bulk target {uuid4().hex}",
+        servers=[1],
+    )
+    target_id = target["id"]
+    vip_list_ids.append(target_id)
+
+    with pytest.raises(HLLCommandFailedError, match=str(missing_id)):
+        edit_vip_list_records(
+            [record_ids[0], missing_id],
+            active=False,
+            notes="Must not be applied",
+            admin_name="pytest bulk",
+        )
+
+    with enter_session() as sess:
+        unchanged = get_vip_record(sess, record_ids[0], strict=True)
+        assert unchanged is not None
+        assert unchanged.active is True
+        assert unchanged.notes == "Original note 0"
+
+    expiration = datetime(2035, 1, 1, tzinfo=UTC)
+    edited = edit_vip_list_records(
+        record_ids,
+        description="Bulk description",
+        active=False,
+        expires_at=expiration,
+        notes="Bulk note",
+        admin_name="pytest bulk",
+    )
+
+    assert [record["id"] for record in edited] == record_ids
+    assert all(record["description"] == "Bulk description" for record in edited)
+    assert all(record["is_active"] is False for record in edited)
+    assert all(record["expires_at"] == expiration for record in edited)
+    assert all(record["notes"] == "Bulk note" for record in edited)
+    assert all(record["admin_name"] == "pytest bulk" for record in edited)
+
+    duplicate = add_record_to_vip_list(
+        player_id=records[0]["player_id"],
+        vip_list_id=target_id,
+        description="Target duplicate",
+        admin_name="pytest",
+    )
+
+    with pytest.raises(
+        HLLCommandFailedError,
+        match="already have records",
+    ):
+        edit_vip_list_records(
+            record_ids,
+            vip_list_id=target_id,
+            admin_name="pytest move",
+        )
+
+    with enter_session() as sess:
+        assert all(
+            get_vip_record(sess, record_id, strict=True).vip_list_id == vip_list_id
+            for record_id in record_ids
+        )
+
+    assert delete_vip_list_record(duplicate["id"]) is True
+
+    moved = edit_vip_list_records(
+        record_ids,
+        vip_list_id=target_id,
+        admin_name="pytest move",
+    )
+    assert all(record["vip_list_id"] == target_id for record in moved)
+    assert all(record["description"] == "Bulk description" for record in moved)
+    assert all(record["notes"] == "Bulk note" for record in moved)
+    assert all(record["is_active"] is False for record in moved)
+    assert all(record["admin_name"] == "pytest move" for record in moved)
+
+    with pytest.raises(HLLCommandFailedError, match=str(missing_id)):
+        delete_vip_list_records([record_ids[0], missing_id])
+
+    with enter_session() as sess:
+        assert get_vip_record(sess, record_ids[0]) is not None
+        assert get_vip_record(sess, record_ids[1]) is not None
+
+    assert delete_vip_list_records(record_ids) == 2
+
+    with enter_session() as sess:
+        assert get_vip_record(sess, record_ids[0]) is None
+        assert get_vip_record(sess, record_ids[1]) is None
