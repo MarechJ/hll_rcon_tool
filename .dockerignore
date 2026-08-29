@@ -17,3 +17,6 @@ rcongui/node_modules/
 
 rcongui_public/dist/
 rcongui_public/node_modules/
+
+# Local development environments
+.venv/
