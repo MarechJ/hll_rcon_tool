@@ -828,4 +828,32 @@ export const permissions = [
     permission: "can_change_watch_killrate_config",
     description: "Can change the Watch KillRate config",
   },
+  {
+    permission: "can_view_vip_lists",
+    description: "Can view VIP lists and their records",
+  },
+  {
+    permission: "can_create_vip_lists",
+    description: "Can create VIP lists",
+  },
+  {
+    permission: "can_change_vip_lists",
+    description: "Can change VIP lists",
+  },
+  {
+    permission: "can_delete_vip_lists",
+    description: "Can delete VIP lists",
+  },
+  {
+    permission: "can_add_vip_list_records",
+    description: "Can add players to VIP lists",
+  },
+  {
+    permission: "can_change_vip_list_records",
+    description: "Can change VIP list records",
+  },
+  {
+    permission: "can_delete_vip_list_records",
+    description: "Can remove players from VIP lists",
+  },
 ];
