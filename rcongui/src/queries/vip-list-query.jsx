@@ -48,3 +48,29 @@ export const vipListQueryOptions = {
       select: (data) => (Array.isArray(data) ? data : []),
     }),
 };
+
+export const vipListMutationOptions = {
+  createList: {
+    mutationFn: (data) =>
+      cmd.CREATE_VIP_LIST({
+        payload: {
+          name: data.name,
+          servers: data.servers,
+          sync: data.sync,
+        },
+        throwRouteError: false,
+      }),
+  },
+  editList: {
+    mutationFn: ({ id, ...data }) =>
+      cmd.EDIT_VIP_LIST({
+        payload: {
+          vip_list_id: id,
+          name: data.name,
+          servers: data.servers,
+          sync: data.sync,
+        },
+        throwRouteError: false,
+      }),
+  },
+};

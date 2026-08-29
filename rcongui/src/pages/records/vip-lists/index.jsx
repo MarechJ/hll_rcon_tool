@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import {
   Alert,
   Box,
@@ -7,6 +11,7 @@ import {
   Chip,
   CircularProgress,
   Divider,
+  LinearProgress,
   Paper,
   Stack,
   Table,
@@ -17,8 +22,17 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
 import dayjs from "dayjs";
-import { vipListQueryOptions } from "@/queries/vip-list-query";
+import { toast } from "react-toastify";
+import { useAuth } from "@/hooks/useAuth";
+import VipListDialog from "@/components/VipList/VipListDialog";
+import {
+  vipListMutationOptions,
+  vipListQueryKeys,
+  vipListQueryOptions,
+} from "@/queries/vip-list-query";
 
 const formatSyncMethod = (value) =>
   String(value ?? "")
@@ -128,8 +142,77 @@ function RecordTable({ title, records, loading, emptyText }) {
   );
 }
 
+const hasPermission = (permissions, permission) =>
+  Boolean(
+    permissions?.is_superuser ||
+      permissions?.permissions?.some(
+        (entry) => entry.permission === permission
+      )
+  );
+
 export default function VipListsPage() {
+  const queryClient = useQueryClient();
+  const { permissions } = useAuth();
   const [selectedListId, setSelectedListId] = useState(null);
+  const [listDialog, setListDialog] = useState(null);
+
+  const canCreateLists = hasPermission(
+    permissions,
+    "can_create_vip_lists"
+  );
+  const canChangeLists = hasPermission(
+    permissions,
+    "can_change_vip_lists"
+  );
+
+  const refreshLists = () =>
+    queryClient.invalidateQueries({
+      queryKey: vipListQueryKeys.lists,
+    });
+
+  const mutationError = (error) =>
+    toast.error(
+      error?.message ?? "The VIP list operation failed."
+    );
+
+  const createList = useMutation({
+    ...vipListMutationOptions.createList,
+    onSuccess: async () => {
+      toast.success("VIP list created.");
+      await refreshLists();
+    },
+    onError: mutationError,
+  });
+
+  const editList = useMutation({
+    ...vipListMutationOptions.editList,
+    onSuccess: async () => {
+      toast.success("VIP list updated.");
+      await refreshLists();
+    },
+    onError: mutationError,
+  });
+
+  const submitList = async (data) => {
+    if (listDialog?.mode === "edit") {
+      await editList.mutateAsync({
+        id: listDialog.vipList.id,
+        ...data,
+      });
+    } else {
+      const response = await createList.mutateAsync(data);
+      const createdList = response?.result ?? response;
+
+      if (Number.isInteger(createdList?.id)) {
+        setSelectedListId(createdList.id);
+      }
+    }
+
+    setListDialog(null);
+  };
+
+  const listMutationPending =
+    createList.isPending || editList.isPending;
 
   const {
     data: lists = [],
@@ -175,12 +258,30 @@ export default function VipListsPage() {
 
   return (
     <Stack spacing={2}>
-      <Stack>
-        <Typography variant="h4">VIP Lists</Typography>
-        <Typography color="text.secondary">
-          Database-backed VIP lists for HLL and HLL: Vietnam.
-        </Typography>
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={1}
+        alignItems={{ xs: "flex-start", sm: "center" }}
+      >
+        <Box sx={{ flexGrow: 1 }}>
+          <Typography variant="h4">VIP Lists</Typography>
+          <Typography color="text.secondary">
+            Database-backed VIP lists for HLL and HLL: Vietnam.
+          </Typography>
+        </Box>
+
+        {canCreateLists && (
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setListDialog({ mode: "create" })}
+          >
+            Create list
+          </Button>
+        )}
       </Stack>
+
+      {listMutationPending && <LinearProgress />}
 
       {error && (
         <Alert severity="error">
@@ -242,6 +343,19 @@ export default function VipListsPage() {
                     label={formatSyncMethod(selectedList.sync)}
                     variant="outlined"
                   />
+                  {canChangeLists && (
+                    <Button
+                      startIcon={<EditIcon />}
+                      onClick={() =>
+                        setListDialog({
+                          mode: "edit",
+                          vipList: selectedList,
+                        })
+                      }
+                    >
+                      Edit
+                    </Button>
+                  )}
                 </Stack>
               </Paper>
             )}
@@ -262,6 +376,30 @@ export default function VipListsPage() {
           </Stack>
         </Stack>
       )}
+
+      <VipListDialog
+        open={Boolean(listDialog)}
+        initialValues={
+          listDialog?.mode === "edit"
+            ? {
+                name: listDialog.vipList.name,
+                sync: listDialog.vipList.sync,
+                servers: listDialog.vipList.servers,
+              }
+            : undefined
+        }
+        title={
+          listDialog?.mode === "edit"
+            ? "Edit VIP list"
+            : "Create VIP list"
+        }
+        submitLabel={
+          listDialog?.mode === "edit" ? "Save" : "Create list"
+        }
+        loading={listMutationPending}
+        onClose={() => setListDialog(null)}
+        onSubmit={submitList}
+      />
     </Stack>
   );
 }
