@@ -19,8 +19,8 @@ from rcon.vip import (
     get_inactive_vip_records,
     get_player_vip_list_record,
     get_vip_list,
-    get_vip_record,
     get_vip_lists_for_server,
+    get_vip_record,
 )
 
 
