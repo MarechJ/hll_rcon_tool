@@ -10,10 +10,10 @@ from rcon.vip import (
     add_record_to_vip_list,
     clear_default_vip_list,
     create_vip_list,
-    delete_vip_list,
-    delete_vip_list_record,
     deactivate_all_default_vip_records,
     deactivate_default_vip_record,
+    delete_vip_list,
+    delete_vip_list_record,
     delete_vip_list_records,
     edit_vip_list,
     edit_vip_list_record,
@@ -54,6 +54,7 @@ def test_vip_list_crud_and_server_scope(vip_list_ids):
     with enter_session() as sess:
         assert get_vip_list(sess, vip_list_id, strict=True) is not None
         assert vip_list_id in {item.id for item in get_vip_lists_for_server(sess, 1)}
+        assert vip_list_id in {item.id for item in get_vip_lists_for_server(sess, "1")}
         assert vip_list_id in {item.id for item in get_vip_lists_for_server(sess, 2)}
         assert vip_list_id not in {
             item.id for item in get_vip_lists_for_server(sess, 3)

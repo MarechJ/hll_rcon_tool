@@ -27,6 +27,19 @@ from rcon.utils import MISSING, MissingType
 logger = getLogger(__name__)
 
 
+def _normalize_server_number(server_number: int | str) -> int:
+    """Return a validated integer gameserver number."""
+    try:
+        normalized = int(server_number)
+    except (TypeError, ValueError):
+        raise ValueError("Server number must be between 1 and 32") from None
+
+    if normalized < 1 or normalized > 32:
+        raise ValueError("Server number must be between 1 and 32")
+
+    return normalized
+
+
 def get_vip_lists(sess: Session) -> Sequence[VipList]:
     """Return all VIP lists ordered by database ID."""
     return sess.scalars(select(VipList).order_by(VipList.id)).all()
@@ -34,11 +47,10 @@ def get_vip_lists(sess: Session) -> Sequence[VipList]:
 
 def get_vip_lists_for_server(
     sess: Session,
-    server_number: int,
+    server_number: int | str,
 ) -> list[VipList]:
     """Return all VIP lists that apply to a server."""
-    if server_number < 1 or server_number > 32:
-        raise ValueError("Server number must be between 1 and 32")
+    server_number = _normalize_server_number(server_number)
 
     return [
         vip_list
@@ -49,23 +61,21 @@ def get_vip_lists_for_server(
 
 def get_default_vip_list(
     sess: Session,
-    server_number: int,
+    server_number: int | str,
 ) -> VipList | None:
     """Return the default VIP list configured for one server."""
-    if server_number < 1 or server_number > 32:
-        raise ValueError("Server number must be between 1 and 32")
+    server_number = _normalize_server_number(server_number)
 
     default = sess.get(VipListDefault, server_number)
     return default.vip_list if default is not None else None
 
 
 def set_default_vip_list(
-    server_number: int,
+    server_number: int | str,
     vip_list_id: int,
 ) -> VipListType:
     """Set the default VIP list for one server."""
-    if server_number < 1 or server_number > 32:
-        raise ValueError("Server number must be between 1 and 32")
+    server_number = _normalize_server_number(server_number)
 
     with enter_session() as sess:
         vip_list = get_vip_list(
@@ -100,10 +110,9 @@ def set_default_vip_list(
         return vip_list.to_dict()
 
 
-def clear_default_vip_list(server_number: int) -> bool:
+def clear_default_vip_list(server_number: int | str) -> bool:
     """Clear the default VIP list configured for one server."""
-    if server_number < 1 or server_number > 32:
-        raise ValueError("Server number must be between 1 and 32")
+    server_number = _normalize_server_number(server_number)
 
     with enter_session() as sess:
         default = sess.get(VipListDefault, server_number)
@@ -262,7 +271,7 @@ def get_player_vip_list_records(
     *,
     include_expired: bool = True,
     include_inactive: bool = True,
-    server_number: int | None = None,
+    server_number: int | str | None = None,
 ) -> Sequence[VipListRecord]:
     """Return VIP list records associated with a player."""
     stmt = (
@@ -287,8 +296,7 @@ def get_player_vip_list_records(
 
     if server_number is None:
         return records
-    if server_number < 1 or server_number > 32:
-        raise ValueError("Server number must be between 1 and 32")
+    server_number = _normalize_server_number(server_number)
 
     return [
         record
