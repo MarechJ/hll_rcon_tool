@@ -1,18 +1,16 @@
 import datetime
 import logging
 import os
-from collections import defaultdict
 from datetime import UTC
 
-from dateutil import parser, relativedelta
+from dateutil import parser
 from django import forms
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon.discord import send_to_discord_audit
-from rcon.models import PlayerID, PlayerVIP, enter_session
 from rcon.steam_utils import is_steam_id_64
-from rcon.utils import get_server_number
+from rcon.utils import INDEFINITE_VIP_DATE
 from rcon.win_store_utils import is_windows_store_id
 from rcon.workers import get_job_results, worker_bulk_vip
 
@@ -123,24 +121,14 @@ def upload_vips_result(request):
 @require_http_methods(["GET"])
 def download_vips(request):
     vips = rcon_api.get_vip_ids()
-    vip_lines: list[str]
 
-    # Treating anyone without an explicit expiration date as having indefinite VIP access
-    expiration_lookup: dict[str, datetime.datetime] = defaultdict(
-        lambda: datetime.datetime.now(tz=UTC) + relativedelta.relativedelta(years=200)
-    )
-    with enter_session() as session:
-        players = (
-            session.query(PlayerID)
-            .join(PlayerVIP)
-            .filter(PlayerVIP.server_number == get_server_number())
-            .all()
-        )
-        for player in players:
-            expiration_lookup[player.player_id] = player.vip.expiration
-
+    # Preserve the legacy text format while sourcing expiration timestamps
+    # from the effective VIP Lists state returned by get_vip_ids().
     vip_lines = [
-        f"{vip['player_id']} {vip['name']} {expiration_lookup[vip['player_id']].isoformat()}"
+        (
+            f"{vip['player_id']} {vip['name']} "
+            f"{(vip['vip_expiration'] or INDEFINITE_VIP_DATE).isoformat()}"
+        )
         for vip in vips
     ]
 
