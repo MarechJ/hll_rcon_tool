@@ -25,13 +25,12 @@ from rcon.commands import (
 )
 from rcon.connection import HLLCommandError
 from rcon.maps import UNKNOWN_MAP_NAME, Layer, Map, is_server_loading_map
-from rcon.models import PlayerID, PlayerVIP, enter_session
+from rcon.models import enter_session
 from rcon.perf_statistics import PerformanceStatistics
 from rcon.player_history import (
     get_player_profile,
     get_profiles,
     safe_save_player_action,
-    save_player,
 )
 from rcon.types import (
     AdminType,
@@ -629,32 +628,31 @@ class Rcon(ServerCtl):
 
     @ttl_cache(ttl=60 * 5)
     def get_vip_ids(self) -> list[VipIdType]:
-        res: list[VipId] = super().get_vip_ids()
-        player_dicts = []
+        """Return gameserver VIPs with expiration from effective VIP lists."""
+        from rcon.vip import get_effective_vip_records
 
-        vip_expirations: dict[str, datetime]
+        gameserver_vips: list[VipId] = super().get_vip_ids()
+        server_number = get_server_number()
+
         with enter_session() as session:
-            server_number = get_server_number()
-
-            players: list[PlayerVIP] = (
-                session.query(PlayerVIP)
-                .filter(PlayerVIP.server_number == server_number)
-                .all()
+            effective_records = get_effective_vip_records(
+                session,
+                server_number=server_number,
             )
             vip_expirations = {
-                player.player.player_id: player.expiration for player in players
+                player_id: record.expires_at
+                for player_id, record in effective_records.items()
             }
 
-        for item in res:
-            player: VipIdType = {
+        result: list[VipIdType] = [
+            {
                 PLAYER_ID: item[PLAYER_ID],
                 NAME: item["name"],
-                "vip_expiration": None,
+                "vip_expiration": vip_expirations.get(item[PLAYER_ID]),
             }
-            player["vip_expiration"] = vip_expirations.get(item[PLAYER_ID], None)
-            player_dicts.append(player)
-
-        return sorted(player_dicts, key=lambda d: d[NAME])
+            for item in gameserver_vips
+        ]
+        return sorted(result, key=lambda item: item[NAME])
 
     def add_vip_to_gameserver(
         self,
@@ -670,126 +668,94 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_vip_ids):
             return super().remove_vip(player_id)
 
-    def remove_vip(self, player_id) -> bool:
-        """Removes VIP status on the game server and removes their PlayerVIP record."""
-
-        # Remove VIP before anything else in case we have errors
-        result = self.remove_vip_from_gameserver(player_id)
+    def remove_vip(self, player_id: str) -> bool:
+        """Deactivate VIP in the default list and synchronize the gameserver."""
+        from rcon.vip import deactivate_default_vip_record
+        from rcon.vip_sync_runner import synchronize_gameserver_vips
 
         server_number = get_server_number()
-        with enter_session() as session:
-            player: PlayerID | None = (
-                session.query(PlayerID)
-                .filter(PlayerID.player_id == player_id)
-                .one_or_none()
+        changed = deactivate_default_vip_record(
+            player_id=player_id,
+            server_number=server_number,
+        )
+        if not changed:
+            logger.warning(
+                "Player %s has no record in the default VIP list for server %s",
+                player_id,
+                server_number,
             )
-            if player and player.vip:
-                logger.info(
-                    f"Removed VIP from {player_id} expired: {player.vip.expiration}"
-                )
-                # TODO: This is an incredibly dumb fix because I can't get
-                # the changes to persist otherwise
-                vip_record: PlayerVIP | None = (
-                    session.query(PlayerVIP)
-                    .filter(
-                        PlayerVIP.player_id_id == player.id,
-                        PlayerVIP.server_number == server_number,
-                    )
-                    .one_or_none()
-                )
-                session.delete(vip_record)
-            elif player and not player.vip:
-                logger.warning(f"{player_id} has no PlayerVIP record")
-            else:
-                # This is okay since you can give VIP to someone who has never been on a game server
-                # or that your instance of CRCON hasn't seen before, but you might want to prune these
-                logger.warning(f"{player_id} has no PlayerSteamID record")
+            return False
 
-        return result
+        result = synchronize_gameserver_vips(
+            server_number=server_number,
+            rcon=self,
+            dry_run=False,
+        )
+        return result.execution.successful
 
     def add_vip(
-        self, player_id: str, description: str, expiration: str | None = None
+        self,
+        player_id: str,
+        description: str,
+        expiration: str | None = None,
     ) -> bool:
-        """Adds VIP status on the game server and adds or updates their PlayerVIP record."""
-        # Add VIP before anything else in case we have errors
-        result = self.add_vip_to_gameserver(
-            player_id=player_id,
-            description=description,
-        )
+        """Upsert VIP in the default list and synchronize the gameserver."""
+        from rcon.vip import upsert_default_vip_record
+        from rcon.vip_sync_runner import synchronize_gameserver_vips
 
-        expiration = expiration or ""
-        # postgres and Python have different max date limits
-        # https://docs.python.org/3.8/library/datetime.html#datetime.MAXYEAR
-        # https://www.postgresql.org/docs/12/datatype-datetime.html
+        expires_at: datetime | None
+        if not expiration:
+            expires_at = None
+        else:
+            try:
+                parsed_expiration = parser.parse(expiration)
+            except (parser.ParserError, OverflowError):
+                logger.warning(
+                    "Unable to parse expiration=%r for description=%r player_id=%r; "
+                    "treating VIP as indefinite",
+                    expiration,
+                    description,
+                    player_id,
+                )
+                expires_at = None
+            else:
+                expires_at = (
+                    None
+                    if parsed_expiration == INDEFINITE_VIP_DATE
+                    else parsed_expiration
+                )
 
         server_number = get_server_number()
-        # If we're unable to parse the date, treat them as indefinite VIPs
-        expiration_date: str | datetime
-        try:
-            expiration_date = parser.parse(expiration)
-        except (parser.ParserError, OverflowError):
-            logger.warning(
-                f"Unable to parse {expiration=} for {description=} {player_id=}"
-            )
-            # For our purposes (human lifespans) we can use 200 years in the future as
-            # the equivalent of indefinite VIP access
-            expiration_date = INDEFINITE_VIP_DATE
+        upsert_default_vip_record(
+            player_id=player_id,
+            server_number=server_number,
+            description=description,
+            expires_at=expires_at,
+        )
 
-        # Find a player and update their expiration date if it exists or create a new record if not
-        with enter_session() as session:
-            player: PlayerID | None = (
-                session.query(PlayerID)
-                .filter(PlayerID.player_id == player_id)
-                .one_or_none()
-            )
-            if player is None:
-                # If a player has never been on the server before and their record is
-                # being created from a VIP list upload, their alias will be saved with
-                # whatever name is in the upload file which may have metadata in it since
-                # people use the free form name field in VIP uploads to store stuff
-                save_player(player_name=description, player_id=player_id)
-                # Can't use a return value from save_player or it's not bound
-                # to the session https://docs.sqlalchemy.org/en/20/errors.html#error-bhk3
-                player = (
-                    session.query(PlayerID)
-                    .filter(PlayerID.player_id == player_id)
-                    .one()
-                )
-
-            vip_record: PlayerVIP | None = (
-                session.query(PlayerVIP)
-                .filter(
-                    PlayerVIP.server_number == server_number,
-                    PlayerVIP.player_id_id == player.id,
-                )
-                .one_or_none()
-            )
-
-            if vip_record is None:
-                vip_record = PlayerVIP(
-                    expiration=expiration_date,
-                    player_id_id=player.id,
-                    server_number=server_number,
-                )
-                logger.info(
-                    f"Added new PlayerVIP record {player.player_id=} {expiration_date=}"
-                )
-                session.add(vip_record)
-            else:
-                previous_expiration = vip_record.expiration.isoformat()
-                vip_record.expiration = expiration_date
-                logger.info(
-                    f"Modified PlayerVIP record {player.player_id=} {vip_record.expiration} {previous_expiration=}"
-                )
-
-        return result
+        result = synchronize_gameserver_vips(
+            server_number=server_number,
+            rcon=self,
+            dry_run=False,
+        )
+        return result.execution.successful
 
     def remove_all_vips(self) -> bool:
-        vips = self.get_vip_ids()
-        for vip in vips:
-            self.remove_vip(vip[PLAYER_ID])
+        """Deactivate all default-list VIPs and synchronize the gameserver."""
+        from rcon.vip import deactivate_all_default_vip_records
+        from rcon.vip_sync_runner import synchronize_gameserver_vips
 
-        return True
+        server_number = get_server_number()
+        deactivate_all_default_vip_records(
+            server_number=server_number,
+        )
+
+        result = synchronize_gameserver_vips(
+            server_number=server_number,
+            rcon=self,
+            dry_run=False,
+        )
+        return result.execution.successful
 
     def message_player(
         self,

@@ -5,7 +5,7 @@ CRUD operations.
 """
 
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import UTC, datetime
 from logging import getLogger
 
 from sqlalchemy import func, or_, select
@@ -614,3 +614,171 @@ def delete_vip_list_record(record_id: int) -> bool:
         sess.commit()
         logger.info("Deleted VIP list record ID %s", record_id)
         return True
+
+
+def get_effective_vip_records(
+    sess: Session,
+    server_number: int,
+    timestamp: datetime | None = None,
+) -> dict[str, VipListRecord]:
+    """Return the highest-priority active VIP record per player for a server."""
+    timestamp = timestamp or datetime.now(tz=UTC)
+    effective: dict[str, VipListRecord] = {}
+
+    for vip_list in get_vip_lists_for_server(
+        sess,
+        server_number=server_number,
+    ):
+        for record in vip_list.records:
+            if not record.active:
+                continue
+            if record.expires_at is not None and record.expires_at <= timestamp:
+                continue
+
+            player_id = record.player.player_id
+            current = effective.get(player_id)
+            if current is None:
+                effective[player_id] = record
+                continue
+
+            if current.expires_at == record.expires_at:
+                if record.created_at > current.created_at:
+                    effective[player_id] = record
+            elif record.expires_at is None:
+                effective[player_id] = record
+            elif (
+                current.expires_at is not None
+                and record.expires_at > current.expires_at
+            ):
+                effective[player_id] = record
+
+    return effective
+
+
+def upsert_default_vip_record(
+    player_id: str,
+    server_number: int,
+    description: str | None = None,
+    expires_at: datetime | None = None,
+    admin_name: str = "Legacy VIP API",
+) -> VipListRecordType:
+    """Create or update a player's record in the server's default VIP list."""
+    player_id = player_id.strip()
+    if not is_supported_player_id(player_id):
+        raise ValueError(
+            "Player ID must be a 17-digit Steam64 ID or "
+            "a 32-character hexadecimal network ID"
+        )
+
+    with enter_session() as sess:
+        default_list = get_default_vip_list(
+            sess,
+            server_number=server_number,
+        )
+        if default_list is None:
+            raise HLLCommandFailedError(
+                f"No default VIP list configured for server {server_number}"
+            )
+
+        player = _get_set_player(sess, player_id)
+        if player is None:
+            raise RuntimeError("Unable to create PlayerID database record")
+
+        record = get_player_vip_list_record(
+            sess,
+            player_id=player_id,
+            vip_list_id=default_list.id,
+        )
+        if record is None:
+            record = VipListRecord(
+                player=player,
+                vip_list=default_list,
+                admin_name=admin_name.strip() or "Legacy VIP API",
+                active=True,
+                description=description if not player.names else None,
+                expires_at=expires_at,
+            )
+            sess.add(record)
+        else:
+            record.admin_name = admin_name.strip() or "Legacy VIP API"
+            record.active = True
+            record.description = description if not player.names else None
+            record.expires_at = expires_at
+
+        sess.commit()
+        result = record.to_dict()
+        logger.info(
+            "Upserted player %s in default VIP list ID %s for server %s",
+            player_id,
+            default_list.id,
+            server_number,
+        )
+        return result
+
+
+def deactivate_default_vip_record(
+    player_id: str,
+    server_number: int,
+    admin_name: str = "Legacy VIP API",
+) -> bool:
+    """Deactivate a player's record in the server's default VIP list."""
+    with enter_session() as sess:
+        default_list = get_default_vip_list(
+            sess,
+            server_number=server_number,
+        )
+        if default_list is None:
+            raise HLLCommandFailedError(
+                f"No default VIP list configured for server {server_number}"
+            )
+
+        record = get_player_vip_list_record(
+            sess,
+            player_id=player_id,
+            vip_list_id=default_list.id,
+        )
+        if record is None:
+            return False
+
+        record.active = False
+        record.admin_name = admin_name.strip() or "Legacy VIP API"
+        sess.commit()
+        logger.info(
+            "Deactivated player %s in default VIP list ID %s for server %s",
+            player_id,
+            default_list.id,
+            server_number,
+        )
+        return True
+
+
+def deactivate_all_default_vip_records(
+    server_number: int,
+    admin_name: str = "Legacy VIP API",
+) -> int:
+    """Deactivate all active records in the server's default VIP list."""
+    with enter_session() as sess:
+        default_list = get_default_vip_list(
+            sess,
+            server_number=server_number,
+        )
+        if default_list is None:
+            raise HLLCommandFailedError(
+                f"No default VIP list configured for server {server_number}"
+            )
+
+        records = [record for record in default_list.records if record.active]
+        normalized_admin_name = admin_name.strip() or "Legacy VIP API"
+
+        for record in records:
+            record.active = False
+            record.admin_name = normalized_admin_name
+
+        sess.commit()
+        logger.info(
+            "Deactivated %s records in default VIP list ID %s for server %s",
+            len(records),
+            default_list.id,
+            server_number,
+        )
+        return len(records)

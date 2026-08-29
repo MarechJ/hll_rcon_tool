@@ -12,18 +12,22 @@ from rcon.vip import (
     create_vip_list,
     delete_vip_list,
     delete_vip_list_record,
+    deactivate_all_default_vip_records,
+    deactivate_default_vip_record,
     delete_vip_list_records,
     edit_vip_list,
     edit_vip_list_record,
     edit_vip_list_records,
     get_active_vip_records,
     get_default_vip_list,
+    get_effective_vip_records,
     get_inactive_vip_records,
     get_player_vip_list_record,
     get_vip_list,
     get_vip_lists_for_server,
     get_vip_record,
     set_default_vip_list,
+    upsert_default_vip_record,
 )
 
 
@@ -441,3 +445,77 @@ def test_default_vip_list_per_server(
 
     with enter_session() as sess:
         assert get_default_vip_list(sess, 2) is None
+
+
+def test_default_vip_record_compatibility_helpers(
+    vip_list_ids,
+    isolated_default_vip_lists,
+):
+    default_list = create_vip_list(
+        name=f"Default compatibility {uuid4().hex}",
+        servers=[1],
+    )
+    secondary_list = create_vip_list(
+        name=f"Secondary compatibility {uuid4().hex}",
+        servers=[1],
+    )
+    vip_list_ids.extend([default_list["id"], secondary_list["id"]])
+    set_default_vip_list(1, default_list["id"])
+
+    player_id = "0002" + uuid4().hex[4:]
+    finite_expiration = datetime(2030, 1, 1, tzinfo=UTC)
+
+    created = upsert_default_vip_record(
+        player_id=player_id,
+        server_number=1,
+        description="Legacy API",
+        expires_at=finite_expiration,
+    )
+    updated = upsert_default_vip_record(
+        player_id=player_id,
+        server_number=1,
+        description="Legacy API updated",
+        expires_at=finite_expiration,
+    )
+
+    assert updated["id"] == created["id"]
+    assert updated["is_active"] is True
+
+    add_record_to_vip_list(
+        player_id=player_id,
+        vip_list_id=secondary_list["id"],
+        expires_at=None,
+        admin_name="Secondary source",
+    )
+
+    with enter_session() as sess:
+        effective = get_effective_vip_records(
+            sess,
+            server_number=1,
+        )
+        assert effective[player_id].vip_list_id == secondary_list["id"]
+
+    assert deactivate_default_vip_record(player_id, 1) is True
+
+    with enter_session() as sess:
+        default_record = get_player_vip_list_record(
+            sess,
+            player_id=player_id,
+            vip_list_id=default_list["id"],
+        )
+        assert default_record is not None
+        assert default_record.active is False
+
+        effective = get_effective_vip_records(
+            sess,
+            server_number=1,
+        )
+        assert effective[player_id].vip_list_id == secondary_list["id"]
+
+    upsert_default_vip_record(
+        player_id=player_id,
+        server_number=1,
+        expires_at=finite_expiration,
+    )
+    assert deactivate_all_default_vip_records(1) == 1
+    assert deactivate_all_default_vip_records(1) == 0
