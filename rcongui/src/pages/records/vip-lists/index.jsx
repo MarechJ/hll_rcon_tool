@@ -38,6 +38,8 @@ const formatExpiration = (expiresAt) => {
 };
 
 function RecordTable({ title, records, loading, emptyText }) {
+  const safeRecords = Array.isArray(records) ? records : [];
+
   return (
     <Paper component="section" variant="outlined">
       <Stack
@@ -47,7 +49,7 @@ function RecordTable({ title, records, loading, emptyText }) {
         sx={{ p: 2 }}
       >
         <Typography variant="h6">{title}</Typography>
-        <Chip label={records.length} size="small" />
+        <Chip label={safeRecords.length} size="small" />
       </Stack>
       <Divider />
 
@@ -55,7 +57,7 @@ function RecordTable({ title, records, loading, emptyText }) {
         <Stack alignItems="center" sx={{ p: 4 }}>
           <CircularProgress size={28} />
         </Stack>
-      ) : records.length === 0 ? (
+      ) : safeRecords.length === 0 ? (
         <Typography color="text.secondary" sx={{ p: 3 }}>
           {emptyText}
         </Typography>
@@ -72,7 +74,7 @@ function RecordTable({ title, records, loading, emptyText }) {
               </TableRow>
             </TableHead>
             <TableBody>
-              {records.map((record) => {
+              {safeRecords.map((record) => {
                 const active = record.is_active && !record.is_expired;
                 return (
                   <TableRow key={record.id} hover>

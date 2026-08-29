@@ -13,6 +13,7 @@ export const vipListQueryOptions = {
     queryOptions({
       queryKey: vipListQueryKeys.lists,
       queryFn: () => cmd.GET_VIP_LISTS(),
+      select: (data) => (Array.isArray(data) ? data : []),
     }),
 
   list: (vipListId) =>
@@ -33,6 +34,7 @@ export const vipListQueryOptions = {
           params: { vip_list_id: vipListId },
         }),
       enabled: Number.isInteger(vipListId),
+      select: (data) => (Array.isArray(data) ? data : []),
     }),
 
   inactiveRecords: (vipListId) =>
@@ -43,5 +45,6 @@ export const vipListQueryOptions = {
           params: { vip_list_id: vipListId },
         }),
       enabled: Number.isInteger(vipListId),
+      select: (data) => (Array.isArray(data) ? data : []),
     }),
 };
