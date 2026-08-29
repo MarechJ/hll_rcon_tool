@@ -391,6 +391,24 @@ def test_default_vip_list_per_server(vip_list_ids):
 
     with pytest.raises(
         HLLCommandFailedError,
+        match="default for server #2",
+    ):
+        edit_vip_list(
+            second_id,
+            servers=[1],
+        )
+
+    with enter_session() as sess:
+        unchanged_default_list = get_vip_list(
+            sess,
+            second_id,
+            strict=True,
+        )
+        assert unchanged_default_list is not None
+        assert unchanged_default_list.get_server_numbers() == {1, 2}
+
+    with pytest.raises(
+        HLLCommandFailedError,
         match="does not apply to server 1",
     ):
         set_default_vip_list(1, incompatible_id)

@@ -181,6 +181,26 @@ def edit_vip_list(
             vip_list.sync = sync
 
         if servers is not MISSING:
+            incompatible_default_servers = (
+                sorted(
+                    default.server_number
+                    for default in vip_list.defaults
+                    if default.server_number not in servers
+                )
+                if servers is not None
+                else []
+            )
+            if incompatible_default_servers:
+                server_label = ", ".join(
+                    f"#{server_number}"
+                    for server_number in incompatible_default_servers
+                )
+                raise HLLCommandFailedError(
+                    f"VIP list {vip_list_id} is the default for "
+                    f"server {server_label}. Remove the default assignment "
+                    "before changing the list's server scope."
+                )
+
             vip_list.set_server_numbers(servers)
 
         if sess.is_modified(vip_list):

@@ -3,6 +3,7 @@ import { cmd } from "@/utils/fetchUtils";
 
 export const vipListQueryKeys = {
   lists: [{ queryIdentifier: "get_vip_lists" }],
+  defaultList: [{ queryIdentifier: "get_default_vip_list" }],
   list: [{ queryIdentifier: "get_vip_list" }],
   activeRecords: [{ queryIdentifier: "get_active_vip_records" }],
   inactiveRecords: [{ queryIdentifier: "get_inactive_vip_records" }],
@@ -14,6 +15,20 @@ export const vipListQueryOptions = {
       queryKey: vipListQueryKeys.lists,
       queryFn: () => cmd.GET_VIP_LISTS(),
       select: (data) => (Array.isArray(data) ? data : []),
+    }),
+
+  defaultList: (serverNumber) =>
+    queryOptions({
+      queryKey: [
+        ...vipListQueryKeys.defaultList,
+        serverNumber ?? "current",
+      ],
+      queryFn: () =>
+        cmd.GET_DEFAULT_VIP_LIST(
+          Number.isInteger(serverNumber)
+            ? { params: { server_number: serverNumber } }
+            : {}
+        ),
     }),
 
   list: (vipListId) =>
@@ -72,6 +87,34 @@ export const vipListMutationOptions = {
         },
         throwRouteError: false,
       }),
+  },
+  setDefaultList: {
+    mutationFn: ({ vipListId, serverNumber }) => {
+      const payload = { vip_list_id: vipListId };
+
+      if (Number.isInteger(serverNumber)) {
+        payload.server_number = serverNumber;
+      }
+
+      return cmd.SET_DEFAULT_VIP_LIST({
+        payload,
+        throwRouteError: false,
+      });
+    },
+  },
+  clearDefaultList: {
+    mutationFn: (serverNumber) => {
+      const payload = {};
+
+      if (Number.isInteger(serverNumber)) {
+        payload.server_number = serverNumber;
+      }
+
+      return cmd.CLEAR_DEFAULT_VIP_LIST({
+        payload,
+        throwRouteError: false,
+      });
+    },
   },
   deleteList: {
     mutationFn: (vipList) =>

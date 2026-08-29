@@ -33,9 +33,12 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import StarIcon from "@mui/icons-material/Star";
+import StarBorderIcon from "@mui/icons-material/StarBorder";
 import dayjs from "dayjs";
 import { toast } from "react-toastify";
 import { useAuth } from "@/hooks/useAuth";
+import { useGlobalStore } from "@/stores/global-state";
 import VipListDialog from "@/components/VipList/VipListDialog";
 import VipListBulkDialog from "@/components/VipList/VipListBulkDialog";
 import VipListRecordDialog from "@/components/VipList/VipListRecordDialog";
@@ -377,6 +380,8 @@ const hasPermission = (permissions, permission) =>
 export default function VipListsPage() {
   const queryClient = useQueryClient();
   const { permissions } = useAuth();
+  const serverStatus = useGlobalStore((state) => state.status);
+  const serverNumber = serverStatus?.server_number;
   const [selectedListId, setSelectedListId] = useState(null);
   const [listDialog, setListDialog] = useState(null);
   const [recordDialog, setRecordDialog] = useState(null);
@@ -412,6 +417,14 @@ export default function VipListsPage() {
   const refreshLists = () =>
     queryClient.invalidateQueries({
       queryKey: vipListQueryKeys.lists,
+    });
+
+  const refreshDefaultList = () =>
+    queryClient.invalidateQueries({
+      queryKey: [
+        ...vipListQueryKeys.defaultList,
+        serverNumber ?? "current",
+      ],
     });
 
   const refreshRecords = () => {
@@ -450,12 +463,42 @@ export default function VipListsPage() {
     onError: mutationError,
   });
 
+  const setDefaultList = useMutation({
+    ...vipListMutationOptions.setDefaultList,
+    onSuccess: async () => {
+      toast.success(
+        `Default VIP list set for ${
+          Number.isInteger(serverNumber)
+            ? `server #${serverNumber}`
+            : "the current server"
+        }.`
+      );
+      await refreshDefaultList();
+    },
+    onError: mutationError,
+  });
+
+  const clearDefaultList = useMutation({
+    ...vipListMutationOptions.clearDefaultList,
+    onSuccess: async () => {
+      toast.success(
+        `Default VIP list removed for ${
+          Number.isInteger(serverNumber)
+            ? `server #${serverNumber}`
+            : "the current server"
+        }.`
+      );
+      await refreshDefaultList();
+    },
+    onError: mutationError,
+  });
+
   const deleteList = useMutation({
     ...vipListMutationOptions.deleteList,
     onSuccess: async () => {
       setSelectedListId(null);
       toast.success("VIP list deleted.");
-      await refreshLists();
+      await Promise.all([refreshLists(), refreshDefaultList()]);
     },
     onError: mutationError,
   });
@@ -504,17 +547,30 @@ export default function VipListsPage() {
   });
 
   const submitList = async (data) => {
+    const { setAsDefault, ...listData } = data;
+
     if (listDialog?.mode === "edit") {
       await editList.mutateAsync({
         id: listDialog.vipList.id,
-        ...data,
+        ...listData,
       });
     } else {
-      const response = await createList.mutateAsync(data);
+      const response = await createList.mutateAsync(listData);
       const createdList = response?.result ?? response;
 
       if (Number.isInteger(createdList?.id)) {
         setSelectedListId(createdList.id);
+
+        if (setAsDefault) {
+          try {
+            await setDefaultList.mutateAsync({
+              vipListId: createdList.id,
+              serverNumber,
+            });
+          } catch {
+            // The list remains created and the mutation displays the error.
+          }
+        }
       }
     }
 
@@ -583,7 +639,7 @@ export default function VipListsPage() {
     setBulkDialogOpen(false);
   };
 
-  const confirmDelete = async () => {
+  const confirmAction = async () => {
     const pendingConfirmation = confirmation;
     setConfirmation(null);
 
@@ -592,6 +648,15 @@ export default function VipListsPage() {
         await deleteList.mutateAsync(pendingConfirmation.item);
       } else if (pendingConfirmation?.kind === "record") {
         await deleteRecord.mutateAsync(pendingConfirmation.item);
+      } else if (pendingConfirmation?.kind === "set-default") {
+        await setDefaultList.mutateAsync({
+          vipListId: pendingConfirmation.item.id,
+          serverNumber: pendingConfirmation.serverNumber,
+        });
+      } else if (pendingConfirmation?.kind === "clear-default") {
+        await clearDefaultList.mutateAsync(
+          pendingConfirmation.serverNumber
+        );
       }
     } catch {
       // The mutation already displays the API error.
@@ -601,6 +666,8 @@ export default function VipListsPage() {
   const listMutationPending =
     createList.isPending ||
     editList.isPending ||
+    setDefaultList.isPending ||
+    clearDefaultList.isPending ||
     deleteList.isPending;
   const recordMutationPending =
     createRecord.isPending ||
@@ -616,6 +683,12 @@ export default function VipListsPage() {
     isLoading: listsLoading,
     error: listsError,
   } = useQuery(vipListQueryOptions.lists());
+
+  const {
+    data: defaultList = null,
+    isLoading: defaultListLoading,
+    error: defaultListError,
+  } = useQuery(vipListQueryOptions.defaultList(serverNumber));
 
   useEffect(() => {
     if (
@@ -643,7 +716,11 @@ export default function VipListsPage() {
     error: inactiveError,
   } = useQuery(vipListQueryOptions.inactiveRecords(selectedListId));
 
-  const error = listsError || activeError || inactiveError;
+  const error =
+    listsError ||
+    defaultListError ||
+    activeError ||
+    inactiveError;
 
   const selectedRecords = useMemo(() => {
     const selectedSet = new Set(selectedRecordIds);
@@ -658,7 +735,53 @@ export default function VipListsPage() {
     setBulkDialogOpen(false);
   }, [selectedListId]);
 
-  if (listsLoading) {
+  const selectedListIsDefault =
+    selectedList?.id === defaultList?.id;
+  const selectedListAppliesToCurrentServer =
+    !Number.isInteger(serverNumber) ||
+    selectedList?.servers === null ||
+    selectedList?.servers?.includes(serverNumber);
+  const serverLabel = Number.isInteger(serverNumber)
+    ? `server #${serverNumber}`
+    : "the current server";
+
+  const confirmationIsDelete =
+    confirmation?.kind === "list" ||
+    confirmation?.kind === "record";
+  const confirmationTitle =
+    confirmation?.kind === "list"
+      ? "Delete VIP list?"
+      : confirmation?.kind === "record"
+      ? "Delete VIP record?"
+      : confirmation?.kind === "set-default"
+      ? `Set default for ${
+          Number.isInteger(confirmation?.serverNumber)
+            ? `server #${confirmation.serverNumber}`
+            : "the current server"
+        }?`
+      : `Remove default for ${
+          Number.isInteger(confirmation?.serverNumber)
+            ? `server #${confirmation.serverNumber}`
+            : "the current server"
+        }?`;
+  const confirmationText =
+    confirmation?.kind === "list"
+      ? `This permanently deletes “${confirmation.item.name}” and all records contained in it. No gameserver synchronization is performed.`
+      : confirmation?.kind === "record"
+      ? `This permanently deletes VIP record #${confirmation?.item?.id}. No gameserver synchronization is performed.`
+      : confirmation?.kind === "set-default"
+      ? `“${confirmation?.item?.name}” will become the default destination for new VIP records on ${
+          Number.isInteger(confirmation?.serverNumber)
+            ? `server #${confirmation.serverNumber}`
+            : "the current server"
+        }. Existing records and the gameserver are not changed.`
+      : `${
+          Number.isInteger(confirmation?.serverNumber)
+            ? `Server #${confirmation.serverNumber}`
+            : "The current server"
+        } will no longer have a default VIP list. Existing records and the gameserver are not changed.`;
+
+  if (listsLoading || defaultListLoading) {
     return (
       <Stack alignItems="center" sx={{ p: 6 }}>
         <CircularProgress />
@@ -725,7 +848,26 @@ export default function VipListsPage() {
                   }}
                 >
                   <Stack alignItems="flex-start">
-                    <Typography variant="body2">{vipList.name}</Typography>
+                    <Stack
+                      direction="row"
+                      spacing={0.75}
+                      alignItems="center"
+                    >
+                      <Typography variant="body2">{vipList.name}</Typography>
+                      {vipList.id === defaultList?.id && (
+                        <Chip
+                          icon={<StarIcon />}
+                          label={
+                            Number.isInteger(serverNumber)
+                              ? `Default #${serverNumber}`
+                              : "Default"
+                          }
+                          color="warning"
+                          variant="outlined"
+                          size="small"
+                        />
+                      )}
+                    </Stack>
                     <Typography variant="caption">
                       {formatServers(vipList.servers)}
                     </Typography>
@@ -749,10 +891,58 @@ export default function VipListsPage() {
                       {formatServers(selectedList.servers)}
                     </Typography>
                   </Box>
+                  {selectedListIsDefault && (
+                    <Chip
+                      icon={<StarIcon />}
+                      label={`Default for ${serverLabel}`}
+                      color="warning"
+                      variant="outlined"
+                    />
+                  )}
                   <Chip
                     label={formatSyncMethod(selectedList.sync)}
                     variant="outlined"
                   />
+                  {canChangeLists &&
+                    (selectedListIsDefault ? (
+                      <Button
+                        color="warning"
+                        startIcon={<StarIcon />}
+                        onClick={() =>
+                          setConfirmation({
+                            kind: "clear-default",
+                            item: selectedList,
+                            serverNumber,
+                          })
+                        }
+                      >
+                        Remove default
+                      </Button>
+                    ) : (
+                      <Tooltip
+                        title={
+                          selectedListAppliesToCurrentServer
+                            ? `Use this list for new VIP records on ${serverLabel}`
+                            : `This list does not apply to ${serverLabel}`
+                        }
+                      >
+                        <span>
+                          <Button
+                            startIcon={<StarBorderIcon />}
+                            disabled={!selectedListAppliesToCurrentServer}
+                            onClick={() =>
+                              setConfirmation({
+                                kind: "set-default",
+                                item: selectedList,
+                                serverNumber,
+                              })
+                            }
+                          >
+                            Set as default
+                          </Button>
+                        </span>
+                      </Tooltip>
+                    ))}
                   {canAddRecords && (
                     <Button
                       variant="contained"
@@ -948,6 +1138,10 @@ export default function VipListsPage() {
           listDialog?.mode === "edit" ? "Save" : "Create list"
         }
         loading={listMutationPending}
+        serverNumber={serverNumber}
+        allowDefaultSelection={
+          listDialog?.mode === "create" && canChangeLists
+        }
         onClose={() => setListDialog(null)}
         onSubmit={submitList}
       />
@@ -958,17 +1152,9 @@ export default function VipListsPage() {
           mutationPending ? undefined : () => setConfirmation(null)
         }
       >
-        <DialogTitle>
-          {confirmation?.kind === "list"
-            ? "Delete VIP list?"
-            : "Delete VIP record?"}
-        </DialogTitle>
+        <DialogTitle>{confirmationTitle}</DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            {confirmation?.kind === "list"
-              ? `This permanently deletes “${confirmation.item.name}” and all records contained in it. No gameserver synchronization is performed.`
-              : `This permanently deletes VIP record #${confirmation?.item?.id}. No gameserver synchronization is performed.`}
-          </DialogContentText>
+          <DialogContentText>{confirmationText}</DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button
@@ -978,12 +1164,16 @@ export default function VipListsPage() {
             Cancel
           </Button>
           <Button
-            color="error"
+            color={confirmationIsDelete ? "error" : "primary"}
             variant="contained"
-            onClick={confirmDelete}
+            onClick={confirmAction}
             disabled={mutationPending}
           >
-            Delete permanently
+            {confirmation?.kind === "set-default"
+              ? "Set default"
+              : confirmation?.kind === "clear-default"
+              ? "Remove default"
+              : "Delete permanently"}
           </Button>
         </DialogActions>
       </Dialog>

@@ -58,6 +58,8 @@ export default function VipListDialog({
   title,
   submitLabel,
   loading,
+  serverNumber,
+  allowDefaultSelection = false,
   onClose,
   onSubmit,
 }) {
@@ -66,6 +68,7 @@ export default function VipListDialog({
   const [allServers, setAllServers] = useState(true);
   const [serverNumbers, setServerNumbers] = useState("");
   const [serverError, setServerError] = useState("");
+  const [setAsDefault, setSetAsDefault] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -79,7 +82,12 @@ export default function VipListDialog({
       Array.isArray(servers) ? servers.join(", ") : ""
     );
     setServerError("");
+    setSetAsDefault(false);
   }, [initialValues, open]);
+
+  const serverLabel = Number.isInteger(serverNumber)
+    ? `server #${serverNumber}`
+    : "the current server";
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -96,11 +104,24 @@ export default function VipListDialog({
       }
     }
 
+    if (
+      setAsDefault &&
+      Number.isInteger(serverNumber) &&
+      servers !== null &&
+      !servers.includes(serverNumber)
+    ) {
+      setServerError(
+        `Include server #${serverNumber} or apply the list to all servers before setting it as default.`
+      );
+      return;
+    }
+
     try {
       await onSubmit({
         name: name.trim(),
         sync,
         servers,
+        setAsDefault,
       });
     } catch {
       // The mutation displays the API error and keeps the dialog open.
@@ -187,6 +208,28 @@ export default function VipListDialog({
               }
               disabled={loading}
             />
+          )}
+
+          {allowDefaultSelection && (
+            <>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={setAsDefault}
+                    onChange={(event) =>
+                      setSetAsDefault(event.target.checked)
+                    }
+                    disabled={loading}
+                  />
+                }
+                label={`Set as default VIP list for ${serverLabel}`}
+              />
+              <Alert severity="info">
+                New VIP records created from live-player and automated
+                workflows can use this list after those integrations are
+                enabled. Existing records and the gameserver are not changed.
+              </Alert>
+            </>
           )}
         </Stack>
       </DialogContent>
