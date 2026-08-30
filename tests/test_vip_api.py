@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from rcon.api_commands import RconAPI
@@ -129,3 +130,79 @@ def test_vip_list_api_crud(isolated_default_vip_lists):
             api.delete_vip_list(list_id)
         if target_list_id is not None:
             api.delete_vip_list(target_list_id)
+
+
+def test_vip_list_record_upsert_reactivates_without_duplicate(
+    isolated_default_vip_lists,
+):
+    api = object.__new__(RconAPI)
+    player_id = "0002" + uuid4().hex[4:]
+    list_id = None
+    record_id = None
+
+    first_expiration = datetime(2035, 1, 1, 12, 0, tzinfo=UTC)
+    second_expiration = datetime(2036, 2, 2, 13, 30, tzinfo=UTC)
+
+    try:
+        vip_list = api.create_vip_list(
+            name=f"API Upsert Test {uuid4().hex}",
+            sync=VipListSyncMethod.IGNORE_UNKNOWN,
+            servers=[1],
+        )
+        list_id = vip_list["id"]
+
+        created = api.upsert_vip_list_record(
+            player_id=player_id,
+            vip_list_id=list_id,
+            description="Seed VIP integration test",
+            expires_at=first_expiration,
+            notes="Initial Seed VIP reward",
+            admin_name="Seed VIP Reward",
+        )
+        record_id = created["id"]
+
+        assert created["vip_list_id"] == list_id
+        assert created["player_id"] == player_id
+        assert created["is_active"] is True
+        assert created["expires_at"] == first_expiration
+        assert created["notes"] == "Initial Seed VIP reward"
+        assert created["admin_name"] == "Seed VIP Reward"
+
+        deactivated = api.edit_vip_list_record(
+            record_id=record_id,
+            active=False,
+            notes="Temporarily inactive",
+            admin_name="pytest",
+        )
+        assert deactivated["is_active"] is False
+
+        reactivated = api.upsert_vip_list_record(
+            player_id=player_id,
+            vip_list_id=list_id,
+            description="Updated Seed VIP integration test",
+            expires_at=second_expiration,
+            notes="Renewed Seed VIP reward",
+            admin_name="Seed VIP Reward",
+        )
+
+        assert reactivated["id"] == record_id
+        assert reactivated["vip_list_id"] == list_id
+        assert reactivated["player_id"] == player_id
+        assert reactivated["is_active"] is True
+        assert reactivated["expires_at"] == second_expiration
+        assert reactivated["notes"] == "Renewed Seed VIP reward"
+        assert reactivated["admin_name"] == "Seed VIP Reward"
+
+        matching_records = [
+            record
+            for record in api.get_player_vip_records(player_id)
+            if record["vip_list_id"] == list_id
+        ]
+        assert len(matching_records) == 1
+        assert matching_records[0]["id"] == record_id
+
+    finally:
+        if record_id is not None:
+            api.delete_vip_list_record(record_id)
+        if list_id is not None:
+            api.delete_vip_list(list_id)

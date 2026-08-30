@@ -457,6 +457,76 @@ def add_record_to_vip_list(
         return result
 
 
+def upsert_vip_list_record(
+    player_id: str,
+    vip_list_id: int,
+    description: str | None = None,
+    expires_at: datetime | None = None,
+    notes: str | None = None,
+    admin_name: str = "CRCON",
+) -> VipListRecordType:
+    """Create or reactivate one player record on a specific VIP list."""
+    player_id = player_id.strip()
+    if not is_supported_player_id(player_id):
+        raise ValueError(
+            "Player ID must be a 17-digit Steam64 ID or "
+            "a 32-character hexadecimal network ID"
+        )
+
+    with enter_session() as sess:
+        vip_list = get_vip_list(
+            sess,
+            vip_list_id=int(vip_list_id),
+            strict=True,
+        )
+        assert vip_list is not None
+
+        record = get_player_vip_list_record(
+            sess,
+            player_id=player_id,
+            vip_list_id=vip_list.id,
+        )
+        created = record is None
+
+        if created:
+            player = _get_set_player(sess, player_id)
+            if player is None:
+                raise RuntimeError("Unable to create PlayerID database record")
+
+            record = VipListRecord(
+                player=player,
+                vip_list=vip_list,
+                admin_name=admin_name.strip() or "CRCON",
+                active=True,
+                description=description if not player.names else None,
+                notes=notes,
+                expires_at=expires_at,
+            )
+            sess.add(record)
+        else:
+            record.active = True
+            record.expires_at = expires_at
+            record.notes = notes
+            record.admin_name = admin_name.strip() or "CRCON"
+
+            if not record.player.names:
+                record.description = description
+
+        changed = created or sess.is_modified(record)
+
+        if changed:
+            sess.commit()
+            logger.info(
+                "%s player %s on VIP list ID %s",
+                "Created" if created else "Updated",
+                player_id,
+                vip_list.id,
+            )
+            _notify_vip_sync(vip_list.servers)
+
+        return record.to_dict()
+
+
 def edit_vip_list_record(
     record_id: int,
     vip_list_id: int | MissingType = MISSING,

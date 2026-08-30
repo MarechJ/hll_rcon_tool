@@ -651,6 +651,25 @@ class RconAPI(Rcon):
             admin_name=admin_name,
         )
 
+    def upsert_vip_list_record(
+        self,
+        player_id: str,
+        vip_list_id: int,
+        description: str | None = None,
+        expires_at: datetime | None = None,
+        notes: str | None = None,
+        admin_name: str = "CRCON",
+    ) -> VipListRecordType:
+        """Create or reactivate a player on a specific VIP list."""
+        return vip.upsert_vip_list_record(
+            player_id=player_id,
+            vip_list_id=int(vip_list_id),
+            description=description,
+            expires_at=expires_at,
+            notes=notes,
+            admin_name=admin_name,
+        )
+
     def edit_vip_list_record(
         self,
         record_id: int,

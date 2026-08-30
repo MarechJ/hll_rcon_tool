@@ -666,6 +666,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.synchronize_vip_lists: "api.can_change_vip_lists",
     rcon_api.remove_unknown_vip_from_gameserver: "api.can_change_vip_lists",
     rcon_api.create_vip_list: "api.can_create_vip_lists",
+    rcon_api.upsert_vip_list_record: "api.can_change_vip_lists",
     rcon_api.edit_vip_list: "api.can_change_vip_lists",
     rcon_api.set_default_vip_list: "api.can_change_vip_lists",
     rcon_api.clear_default_vip_list: "api.can_change_vip_lists",

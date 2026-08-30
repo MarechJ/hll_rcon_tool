@@ -199,6 +199,7 @@ const SHARED_Commands = {
   SYNCHRONIZE_VIP_LISTS: (params) => requestFactory({ method: "POST", cmd: "synchronize_vip_lists", ...params }),
   REMOVE_UNKNOWN_VIP_FROM_GAMESERVER: (params) => requestFactory({ method: "POST", cmd: "remove_unknown_vip_from_gameserver", ...params }),
   GET_VIP_LISTS: (params) => requestFactory({ method: "GET", cmd: "get_vip_lists", ...params }),
+  GET_VIP_LISTS_FOR_SERVER: (params) => requestFactory({ method: "GET", cmd: "get_vip_lists_for_server", ...params }),
   GET_DEFAULT_VIP_LIST: (params) => requestFactory({ method: "GET", cmd: "get_default_vip_list", ...params }),
   GET_VIP_LIST: (params) => requestFactory({ method: "GET", cmd: "get_vip_list", ...params }),
   GET_ACTIVE_VIP_RECORDS: (params) => requestFactory({ method: "GET", cmd: "get_active_vip_records", ...params }),

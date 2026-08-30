@@ -8,9 +8,9 @@ from rcon.discord import send_to_discord_audit
 from rcon.models import enter_session
 from rcon.rcon import Rcon, get_rcon
 from rcon.user_config.expired_vips import ExpiredVipsUserConfig
+from rcon.utils import get_server_number
 from rcon.vip import get_vip_lists_for_server
 from rcon.vip_sync_runner import synchronize_gameserver_vips
-from rcon.utils import get_server_number
 
 SERVICE_NAME = "ExpiringVIPs"
 logger = logging.getLogger(__name__)

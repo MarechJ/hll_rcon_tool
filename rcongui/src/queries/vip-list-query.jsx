@@ -3,6 +3,7 @@ import { cmd } from "@/utils/fetchUtils";
 
 export const vipListQueryKeys = {
   lists: [{ queryIdentifier: "get_vip_lists" }],
+  applicableLists: [{ queryIdentifier: "get_vip_lists_for_server" }],
   defaultList: [{ queryIdentifier: "get_default_vip_list" }],
   list: [{ queryIdentifier: "get_vip_list" }],
   activeRecords: [{ queryIdentifier: "get_active_vip_records" }],
@@ -14,6 +15,21 @@ export const vipListQueryOptions = {
     queryOptions({
       queryKey: vipListQueryKeys.lists,
       queryFn: () => cmd.GET_VIP_LISTS(),
+      select: (data) => (Array.isArray(data) ? data : []),
+    }),
+
+  applicableLists: (serverNumber) =>
+    queryOptions({
+      queryKey: [
+        ...vipListQueryKeys.applicableLists,
+        serverNumber ?? "current",
+      ],
+      queryFn: () =>
+        cmd.GET_VIP_LISTS_FOR_SERVER(
+          Number.isInteger(serverNumber)
+            ? { params: { server_number: serverNumber } }
+            : {}
+        ),
       select: (data) => (Array.isArray(data) ? data : []),
     }),
 

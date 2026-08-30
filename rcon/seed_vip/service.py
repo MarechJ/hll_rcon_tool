@@ -11,7 +11,6 @@ from rcon.api_commands import get_rcon_api
 from rcon.seed_vip.utils import (
     calc_vip_expiration_timestamp,
     collect_steam_ids,
-    filter_indefinite_vip_steam_ids,
     get_gamestate,
     get_next_player_bucket,
     get_online_players,
@@ -19,6 +18,7 @@ from rcon.seed_vip.utils import (
     is_seeded,
     make_seed_announcement_embed,
     message_players,
+    resolve_reward_vip_list,
     reward_players,
 )
 from rcon.user_config.seed_vip import SeedVIPUserConfig
@@ -118,17 +118,31 @@ def run():
             if is_seeding and is_seeded(config=config, gamestate=gamestate):
                 st = seeded_timestamp = datetime.now(tz=UTC)
                 logger.info(f"Server seeded at {st.isoformat()}")
-                # Use the full VIP list for logic so offline VIPs are respected
+                # Preserve the full set of qualified players before filtering.
+                qualified_player_ids = set(to_add_vip_steam_ids)
+                online_player_ids = {
+                    player.player_id for player in online_players.players.values()
+                }
+
+                # Players who were online when seeded but did not meet the
+                # configured requirements. Existing VIPs which qualified are
+                # deliberately not included in this group.
+                no_reward_steam_ids = online_player_ids - qualified_player_ids
+
+                # get_vip_ids returns the effective VIP state for this server.
+                # Any effective VIP is skipped, regardless of its source,
+                # expiration, or target list.
                 all_vips = get_vips(rcon=rcon_api)
+                existing_vip_ids = qualified_player_ids & set(all_vips)
+                to_add_vip_steam_ids = qualified_player_ids - existing_vip_ids
 
-                # no vip reward needed for indefinite vip holders (using full list)
-                indefinite_vip_steam_ids = filter_indefinite_vip_steam_ids(all_vips)
-                to_add_vip_steam_ids -= indefinite_vip_steam_ids
-
-                # Players who were online when we seeded but didn't meet the criteria for VIP
-                no_reward_steam_ids = {
-                    p.player_id for p in online_players.players.values()
-                } - to_add_vip_steam_ids
+                if existing_vip_ids:
+                    logger.info(
+                        "Skipping %s qualified players with an existing "
+                        "effective VIP: %s",
+                        len(existing_vip_ids),
+                        sorted(existing_vip_ids),
+                    )
 
                 expiration_timestamps = defaultdict(
                     lambda time=st, cfg=config: calc_vip_expiration_timestamp(
@@ -137,31 +151,35 @@ def run():
                         from_time=time,
                     )
                 )
-                for player in all_vips.values():
-                    expiration_timestamps[player.player.player_id] = (
-                        calc_vip_expiration_timestamp(
-                            config=config,
-                            expiration=player.expiration_date if player else None,
-                            from_time=st,
-                        )
-                    )
 
-                # Add or update VIP in CRCON using full VIP map
-                reward_players(
+                target_vip_list = resolve_reward_vip_list(
                     rcon=rcon_api,
                     config=config,
-                    to_add_vip_steam_ids=to_add_vip_steam_ids,
-                    current_vips=all_vips,
-                    players_lookup=player_name_lookup,
-                    expiration_timestamps=expiration_timestamps,
                 )
+                rewarded_player_ids: set[str] = set()
 
-                # Message those who earned VIP
+                if target_vip_list is not None:
+                    rewarded_player_ids = reward_players(
+                        rcon=rcon_api,
+                        config=config,
+                        vip_list_id=int(target_vip_list["id"]),
+                        to_add_vip_steam_ids=to_add_vip_steam_ids,
+                        current_vips=all_vips,
+                        players_lookup=player_name_lookup,
+                        expiration_timestamps=expiration_timestamps,
+                    )
+                elif to_add_vip_steam_ids:
+                    logger.error(
+                        "Seed VIP rewards were not written because no valid "
+                        "target VIP list is available"
+                    )
+
+                # Only players whose write succeeded receive a reward message.
                 message_players(
                     rcon=rcon_api,
                     config=config,
                     message=config.player_messages.reward_player_message,
-                    steam_ids=to_add_vip_steam_ids,
+                    steam_ids=rewarded_player_ids,
                     expiration_timestamps=expiration_timestamps,
                 )
 
