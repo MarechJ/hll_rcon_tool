@@ -24,8 +24,8 @@ def test_legacy_get_vip_ids_uses_effective_list_expirations(monkeypatch):
         parent_class,
         "get_vip_ids",
         lambda self: [
-            {"player_id": "player-2", "name": "Bravo"},
-            {"player_id": "player-1", "name": "Alpha"},
+            {"player_id": "player-2", "name": ""},
+            {"player_id": "player-1", "name": ""},
             {"player_id": "unknown", "name": "Charlie"},
         ],
     )
@@ -39,8 +39,18 @@ def test_legacy_get_vip_ids_uses_effective_list_expirations(monkeypatch):
         vip_module,
         "get_effective_vip_records",
         lambda sess, server_number: {
-            "player-1": SimpleNamespace(expires_at=expiration),
-            "player-2": SimpleNamespace(expires_at=None),
+            "player-1": SimpleNamespace(
+                expires_at=expiration,
+                player=SimpleNamespace(
+                    names=[SimpleNamespace(name="Alpha from database")]
+                ),
+                description="Alpha manual fallback",
+            ),
+            "player-2": SimpleNamespace(
+                expires_at=None,
+                player=SimpleNamespace(names=[]),
+                description="Bravo from description",
+            ),
         },
     )
 
@@ -50,12 +60,12 @@ def test_legacy_get_vip_ids_uses_effective_list_expirations(monkeypatch):
     assert ctl.get_vip_ids() == [
         {
             "player_id": "player-1",
-            "name": "Alpha",
+            "name": "Alpha from database",
             "vip_expiration": expiration,
         },
         {
             "player_id": "player-2",
-            "name": "Bravo",
+            "name": "Bravo from description",
             "vip_expiration": None,
         },
         {

@@ -64,7 +64,7 @@ const vipColumns = [
             }}
             onClick={() => handleOpenProfile(row.original.player_id)}
           >
-            {row.original.name}
+            {row.original.name || row.original.player_id}
           </Typography>
           <CopyableText
             text={row.original.player_id}

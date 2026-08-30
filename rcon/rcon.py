@@ -643,16 +643,27 @@ class Rcon(ServerCtl):
                 player_id: record.expires_at
                 for player_id, record in effective_records.items()
             }
+            vip_names = {}
+            for player_id, record in effective_records.items():
+                player = getattr(record, "player", None)
+                names = getattr(player, "names", ())
+                database_name = names[0].name if names else ""
+                vip_names[player_id] = (
+                    database_name or getattr(record, "description", None) or ""
+                )
 
         result: list[VipIdType] = [
             {
                 PLAYER_ID: item[PLAYER_ID],
-                NAME: item["name"],
+                NAME: item["name"] or vip_names.get(item[PLAYER_ID], ""),
                 "vip_expiration": vip_expirations.get(item[PLAYER_ID]),
             }
             for item in gameserver_vips
         ]
-        return sorted(result, key=lambda item: item[NAME])
+        return sorted(
+            result,
+            key=lambda item: item[NAME] or item[PLAYER_ID],
+        )
 
     def add_vip_to_gameserver(
         self,

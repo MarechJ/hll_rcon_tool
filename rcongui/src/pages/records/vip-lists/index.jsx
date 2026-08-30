@@ -853,7 +853,9 @@ export default function VipListsPage() {
                       spacing={0.75}
                       alignItems="center"
                     >
-                      <Typography variant="body2">{vipList.name}</Typography>
+                      <Typography variant="body2">
+                        {`${vipList.name} (ID ${vipList.id})`}
+                      </Typography>
                       {vipList.id === defaultList?.id && (
                         <Chip
                           icon={<StarIcon />}
@@ -886,7 +888,9 @@ export default function VipListsPage() {
                   alignItems={{ xs: "flex-start", sm: "center" }}
                 >
                   <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="h5">{selectedList.name}</Typography>
+                    <Typography variant="h5">
+                      {`${selectedList.name} (ID ${selectedList.id})`}
+                    </Typography>
                     <Typography color="text.secondary">
                       {formatServers(selectedList.servers)}
                     </Typography>
