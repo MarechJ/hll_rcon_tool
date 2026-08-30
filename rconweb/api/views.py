@@ -957,6 +957,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.synchronize_vip_lists: ["POST"],
     rcon_api.remove_unknown_vip_from_gameserver: ["POST"],
     rcon_api.create_vip_list: ["POST"],
+    rcon_api.upsert_vip_list_record: ["POST"],
     rcon_api.edit_vip_list: ["POST"],
     rcon_api.set_default_vip_list: ["POST"],
     rcon_api.clear_default_vip_list: ["POST"],
