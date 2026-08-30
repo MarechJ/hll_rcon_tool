@@ -26,6 +26,45 @@ from rcon.utils import MISSING, MissingType
 
 logger = getLogger(__name__)
 
+ALL_VIP_SERVERS_MASK = 2**32 - 1
+
+
+def _merge_vip_server_masks(*server_masks: int | None) -> int:
+    """Merge VIP server masks, treating None as all configured servers."""
+    if any(server_mask is None for server_mask in server_masks):
+        return ALL_VIP_SERVERS_MASK
+
+    merged_mask = 0
+    for server_mask in server_masks:
+        assert server_mask is not None
+        merged_mask |= int(server_mask)
+
+    return merged_mask
+
+
+def _notify_vip_sync(server_mask: int | None) -> None:
+    """Request synchronization without rolling back committed DB changes."""
+    normalized_mask = ALL_VIP_SERVERS_MASK if server_mask is None else int(server_mask)
+    if normalized_mask == 0:
+        return
+
+    try:
+        from rcon.vip_sync_handler import VipSyncCommandHandler
+
+        subscribers = VipSyncCommandHandler.send(normalized_mask)
+        logger.info(
+            "Published VIP synchronization request for server mask %s "
+            "to %s subscriber(s)",
+            normalized_mask,
+            subscribers,
+        )
+    except Exception:
+        logger.exception(
+            "Unable to publish VIP synchronization request for server mask %s; "
+            "the committed database change will be recovered by periodic sync",
+            normalized_mask,
+        )
+
 
 def _normalize_server_number(server_number: int | str) -> int:
     """Return a validated integer gameserver number."""
@@ -179,6 +218,7 @@ def edit_vip_list(
             strict=True,
         )
         assert vip_list is not None
+        old_server_mask = vip_list.servers
 
         if name is not MISSING:
             normalized_name = name.strip()
@@ -213,8 +253,15 @@ def edit_vip_list(
             vip_list.set_server_numbers(servers)
 
         if sess.is_modified(vip_list):
+            new_server_mask = vip_list.servers
             sess.commit()
             logger.info("Edited VIP list ID %s", vip_list.id)
+            _notify_vip_sync(
+                _merge_vip_server_masks(
+                    old_server_mask,
+                    new_server_mask,
+                )
+            )
 
         return vip_list.to_dict()
 
@@ -230,9 +277,11 @@ def delete_vip_list(vip_list_id: int) -> bool:
         if vip_list is None:
             return False
 
+        server_mask = vip_list.servers
         sess.delete(vip_list)
         sess.commit()
         logger.info("Deleted VIP list ID %s", vip_list_id)
+        _notify_vip_sync(server_mask)
         return True
 
 
@@ -397,6 +446,7 @@ def add_record_to_vip_list(
         )
         sess.add(record)
         sess.commit()
+        _notify_vip_sync(vip_list.servers)
 
         result = record.to_dict()
         logger.info(
@@ -420,6 +470,7 @@ def edit_vip_list_record(
     with enter_session() as sess:
         record = get_vip_record(sess, record_id=record_id, strict=True)
         assert record is not None
+        old_server_mask = record.vip_list.servers
 
         if vip_list_id is not MISSING and vip_list_id != record.vip_list_id:
             target_list = get_vip_list(
@@ -461,8 +512,15 @@ def edit_vip_list_record(
         record.admin_name = admin_name.strip() or "CRCON"
 
         if sess.is_modified(record):
+            new_server_mask = record.vip_list.servers
             sess.commit()
             logger.info("Edited VIP list record ID %s", record.id)
+            _notify_vip_sync(
+                _merge_vip_server_masks(
+                    old_server_mask,
+                    new_server_mask,
+                )
+            )
 
         return record.to_dict()
 
@@ -527,6 +585,7 @@ def edit_vip_list_records(
 
     with enter_session() as sess:
         records = _get_vip_records_for_bulk_operation(sess, record_ids)
+        old_server_masks = [record.vip_list.servers for record in records]
         normalized_admin_name = admin_name.strip() or "CRCON"
 
         target_list = None
@@ -587,6 +646,12 @@ def edit_vip_list_records(
             "Bulk edited VIP list record IDs %s",
             [record.id for record in records],
         )
+        _notify_vip_sync(
+            _merge_vip_server_masks(
+                *old_server_masks,
+                *(record.vip_list.servers for record in records),
+            )
+        )
         return result
 
 
@@ -594,6 +659,9 @@ def delete_vip_list_records(record_ids: Sequence[int]) -> int:
     """Atomically delete multiple VIP list records."""
     with enter_session() as sess:
         records = _get_vip_records_for_bulk_operation(sess, record_ids)
+        server_mask = _merge_vip_server_masks(
+            *(record.vip_list.servers for record in records)
+        )
 
         for record in records:
             sess.delete(record)
@@ -604,6 +672,7 @@ def delete_vip_list_records(record_ids: Sequence[int]) -> int:
             "Bulk deleted VIP list record IDs %s",
             [record.id for record in records],
         )
+        _notify_vip_sync(server_mask)
         return deleted_count
 
 
@@ -618,9 +687,11 @@ def delete_vip_list_record(record_id: int) -> bool:
         if record is None:
             return False
 
+        server_mask = record.vip_list.servers
         sess.delete(record)
         sess.commit()
         logger.info("Deleted VIP list record ID %s", record_id)
+        _notify_vip_sync(server_mask)
         return True
 
 
@@ -652,9 +723,7 @@ def get_effective_vip_records(
             if current.expires_at == record.expires_at:
                 if record.created_at > current.created_at:
                     effective[player_id] = record
-            elif record.expires_at is None:
-                effective[player_id] = record
-            elif (
+            elif record.expires_at is None or (
                 current.expires_at is not None
                 and record.expires_at > current.expires_at
             ):

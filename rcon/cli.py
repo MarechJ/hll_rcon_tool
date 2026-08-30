@@ -36,6 +36,7 @@ from rcon.user_config.webhooks import (
     BaseWebhookUserConfig,
 )
 from rcon.utils import ApiKey, get_server_number
+from rcon.vip_sync_handler import VipSyncCommandHandler
 from rcon.vip_sync_runner import synchronize_gameserver_vips
 from rcon.vip_sync_service import VipSyncDatabaseUnavailableError
 from rcon.vote_map import VoteMap
@@ -206,6 +207,11 @@ def run_automod():
 @cli.command(name="blacklists")
 def run_blacklists():
     BlacklistCommandHandler().run()
+
+
+@cli.command(name="vip-list-sync-handler")
+def run_vip_list_sync_handler():
+    VipSyncCommandHandler().run()
 
 
 @cli.command(name="log_recorder")
