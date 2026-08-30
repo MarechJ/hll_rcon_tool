@@ -6,7 +6,7 @@ from logging import getLogger
 from typing import Any, Literal, Optional
 
 import rcon.settings
-from rcon import blacklist, game_logs, maps, player_history, webhook_service
+from rcon import blacklist, game_logs, maps, player_history, vip, webhook_service
 from rcon.audit import ingame_mods, online_mods
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.commands import HLLCommandFailedError
@@ -45,6 +45,9 @@ from rcon.types import (
     PlayerFlagType,
     PlayerProfileTypeEnriched,
     ServerInfo,
+    VipListRecordType,
+    VipListSyncMethod,
+    VipListType,
 )
 from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
 from rcon.user_config.auto_kick import AutoVoteKickUserConfig
@@ -86,7 +89,7 @@ from rcon.user_config.webhooks import (
     KillsWebhooksUserConfig,
     WatchlistWebhooksUserConfig,
 )
-from rcon.utils import MISSING
+from rcon.utils import MISSING, MissingType
 from rcon.vote_map import VoteMap
 from rcon.watchlist import PlayerWatch
 
@@ -95,6 +98,46 @@ logger = getLogger(__name__)
 PLAYER_ID = "player_id"
 
 CTL: Optional["HLLRconAPI | HLLVRconAPI"] = None
+
+
+def _serialize_vip_sync_result(result) -> dict[str, Any]:
+    """Convert a VIP synchronization result into an API-safe dictionary."""
+    return {
+        "plan": {
+            "to_add": [
+                {
+                    "player_id": item.player_id,
+                    "description": item.description,
+                }
+                for item in result.plan.to_add
+            ],
+            "to_remove": sorted(result.plan.to_remove),
+            "unchanged": sorted(result.plan.unchanged),
+            "unknown": sorted(result.plan.unknown),
+        },
+        "execution": {
+            "dry_run": result.execution.dry_run,
+            "added": sorted(result.execution.added),
+            "removed": sorted(result.execution.removed),
+            "skipped_additions": [
+                {
+                    "player_id": item.player_id,
+                    "description": item.description,
+                }
+                for item in result.execution.skipped_additions
+            ],
+            "skipped_removals": sorted(result.execution.skipped_removals),
+            "failures": [
+                {
+                    "action": failure.action,
+                    "player_id": failure.player_id,
+                    "error": failure.error,
+                }
+                for failure in result.execution.failures
+            ],
+            "successful": result.execution.successful,
+        },
+    }
 
 
 def create_rcon_api(credentials: ServerInfo) -> "HLLRconAPI | HLLVRconAPI":
@@ -396,6 +439,404 @@ class RconAPI(Rcon):
             record_id: The ID of the record
         """
         return blacklist.remove_record_from_blacklist(record_id)
+
+    def get_vip_lists(self) -> list[VipListType]:
+        """Return all configured VIP lists."""
+        with enter_session() as sess:
+            return [vip_list.to_dict() for vip_list in vip.get_vip_lists(sess)]
+
+    def get_vip_lists_for_server(
+        self,
+        server_number: int | None = None,
+    ) -> list[VipListType]:
+        """Return VIP lists applying to one CRCON server number."""
+        if server_number is None:
+            server_number = server_info_for_rcon(self).number
+        if server_number is None:
+            raise ValueError("Server number is not configured")
+
+        with enter_session() as sess:
+            return [
+                vip_list.to_dict()
+                for vip_list in vip.get_vip_lists_for_server(
+                    sess,
+                    server_number=int(server_number),
+                )
+            ]
+
+    def get_default_vip_list(
+        self,
+        server_number: int | None = None,
+    ) -> VipListType | None:
+        """Return the default VIP list for one CRCON server number."""
+        if server_number is None:
+            server_number = server_info_for_rcon(self).number
+        if server_number is None:
+            raise ValueError("Server number is not configured")
+
+        with enter_session() as sess:
+            vip_list = vip.get_default_vip_list(
+                sess,
+                server_number=int(server_number),
+            )
+            return vip_list.to_dict() if vip_list is not None else None
+
+    def set_default_vip_list(
+        self,
+        vip_list_id: int,
+        server_number: int | None = None,
+    ) -> VipListType:
+        """Set the default VIP list for one CRCON server number."""
+        if server_number is None:
+            server_number = server_info_for_rcon(self).number
+        if server_number is None:
+            raise ValueError("Server number is not configured")
+
+        return vip.set_default_vip_list(
+            server_number=int(server_number),
+            vip_list_id=int(vip_list_id),
+        )
+
+    def clear_default_vip_list(
+        self,
+        server_number: int | None = None,
+    ) -> bool:
+        """Clear the default VIP list for one CRCON server number."""
+        if server_number is None:
+            server_number = server_info_for_rcon(self).number
+        if server_number is None:
+            raise ValueError("Server number is not configured")
+
+        return vip.clear_default_vip_list(
+            server_number=int(server_number),
+        )
+
+    def get_vip_list(self, vip_list_id: int) -> VipListType:
+        """Return one VIP list."""
+        with enter_session() as sess:
+            vip_list = vip.get_vip_list(
+                sess,
+                vip_list_id=int(vip_list_id),
+                strict=True,
+            )
+            assert vip_list is not None
+            return vip_list.to_dict()
+
+    def create_vip_list(
+        self,
+        name: str,
+        sync: VipListSyncMethod = VipListSyncMethod.IGNORE_UNKNOWN,
+        servers: Sequence[int] | None = None,
+    ) -> VipListType:
+        """Create an empty VIP list without synchronizing the gameserver."""
+        return vip.create_vip_list(
+            name=name,
+            sync=VipListSyncMethod(sync.lower()),
+            servers=servers,
+        )
+
+    def edit_vip_list(
+        self,
+        vip_list_id: int,
+        name: str | MissingType = MISSING,
+        sync: VipListSyncMethod | MissingType = MISSING,
+        servers: Sequence[int] | None | MissingType = MISSING,
+    ) -> VipListType:
+        """Edit a VIP list without synchronizing the gameserver."""
+        if sync is not MISSING:
+            sync = VipListSyncMethod(sync.lower())
+
+        return vip.edit_vip_list(
+            vip_list_id=int(vip_list_id),
+            name=name,
+            sync=sync,
+            servers=servers,
+        )
+
+    def delete_vip_list(self, vip_list_id: int) -> bool:
+        """Delete a VIP list and its records."""
+        return vip.delete_vip_list(vip_list_id=int(vip_list_id))
+
+    def get_vip_list_record(self, record_id: int) -> VipListRecordType:
+        """Return one VIP list record."""
+        with enter_session() as sess:
+            record = vip.get_vip_record(
+                sess,
+                record_id=int(record_id),
+                strict=True,
+            )
+            assert record is not None
+            return record.to_dict()
+
+    def get_player_vip_list_record(
+        self,
+        player_id: str,
+        vip_list_id: int,
+    ) -> VipListRecordType | None:
+        """Return a player's record on one VIP list."""
+        with enter_session() as sess:
+            record = vip.get_player_vip_list_record(
+                sess,
+                player_id=player_id,
+                vip_list_id=int(vip_list_id),
+            )
+            return record.to_dict() if record else None
+
+    def get_player_vip_records(
+        self,
+        player_id: str,
+        include_expired: bool = True,
+        include_inactive: bool = True,
+        server_number: int | None = None,
+    ) -> list[VipListRecordType]:
+        """Return VIP list records belonging to one player."""
+        with enter_session() as sess:
+            return [
+                record.to_dict()
+                for record in vip.get_player_vip_list_records(
+                    sess,
+                    player_id=player_id,
+                    include_expired=include_expired,
+                    include_inactive=include_inactive,
+                    server_number=server_number,
+                )
+            ]
+
+    def get_active_vip_records(
+        self,
+        vip_list_id: int,
+    ) -> list[VipListRecordType]:
+        """Return active, non-expired records from one VIP list."""
+        with enter_session() as sess:
+            return [
+                record.to_dict()
+                for record in vip.get_active_vip_records(
+                    sess,
+                    vip_list_id=int(vip_list_id),
+                )
+            ]
+
+    def get_inactive_vip_records(
+        self,
+        vip_list_id: int,
+    ) -> list[VipListRecordType]:
+        """Return inactive or expired records from one VIP list."""
+        with enter_session() as sess:
+            return [
+                record.to_dict()
+                for record in vip.get_inactive_vip_records(
+                    sess,
+                    vip_list_id=int(vip_list_id),
+                )
+            ]
+
+    def add_vip_list_record(
+        self,
+        player_id: str,
+        vip_list_id: int,
+        description: str | None = None,
+        active: bool = True,
+        expires_at: datetime | None = None,
+        notes: str | None = None,
+        admin_name: str = "CRCON",
+    ) -> VipListRecordType:
+        """Add a player to a VIP list without synchronizing the gameserver."""
+        return vip.add_record_to_vip_list(
+            player_id=player_id,
+            vip_list_id=int(vip_list_id),
+            description=description,
+            active=active,
+            expires_at=expires_at,
+            notes=notes,
+            admin_name=admin_name,
+        )
+
+    def upsert_vip_list_record(
+        self,
+        player_id: str,
+        vip_list_id: int,
+        description: str | None = None,
+        expires_at: datetime | None = None,
+        notes: str | None = None,
+        admin_name: str = "CRCON",
+    ) -> VipListRecordType:
+        """Create or reactivate a player on a specific VIP list."""
+        return vip.upsert_vip_list_record(
+            player_id=player_id,
+            vip_list_id=int(vip_list_id),
+            description=description,
+            expires_at=expires_at,
+            notes=notes,
+            admin_name=admin_name,
+        )
+
+    def edit_vip_list_record(
+        self,
+        record_id: int,
+        vip_list_id: int | MissingType = MISSING,
+        description: str | None | MissingType = MISSING,
+        active: bool | MissingType = MISSING,
+        expires_at: datetime | None | MissingType = MISSING,
+        notes: str | None | MissingType = MISSING,
+        admin_name: str = "CRCON",
+    ) -> VipListRecordType:
+        """Edit a VIP list record without synchronizing the gameserver."""
+        return vip.edit_vip_list_record(
+            record_id=int(record_id),
+            vip_list_id=vip_list_id,
+            description=description,
+            active=active,
+            expires_at=expires_at,
+            notes=notes,
+            admin_name=admin_name,
+        )
+
+    def edit_vip_list_records(
+        self,
+        record_ids: Sequence[int],
+        vip_list_id: int | MissingType = MISSING,
+        description: str | None | MissingType = MISSING,
+        active: bool | MissingType = MISSING,
+        expires_at: datetime | None | MissingType = MISSING,
+        notes: str | None | MissingType = MISSING,
+        admin_name: str = "CRCON",
+    ) -> list[VipListRecordType]:
+        """Atomically edit selected fields on multiple VIP list records."""
+        return vip.edit_vip_list_records(
+            record_ids=[int(record_id) for record_id in record_ids],
+            vip_list_id=(int(vip_list_id) if vip_list_id is not MISSING else MISSING),
+            description=description,
+            active=active,
+            expires_at=expires_at,
+            notes=notes,
+            admin_name=admin_name,
+        )
+
+    def delete_vip_list_records(self, record_ids: Sequence[int]) -> int:
+        """Atomically delete multiple VIP list records."""
+        return vip.delete_vip_list_records(
+            record_ids=[int(record_id) for record_id in record_ids],
+        )
+
+    def delete_vip_list_record(self, record_id: int) -> bool:
+        """Delete one VIP list record."""
+        return vip.delete_vip_list_record(record_id=int(record_id))
+
+    def get_vip_sync_plan(
+        self,
+        server_number: int | None = None,
+    ) -> dict[str, Any]:
+        """Preview synchronization between VIP lists and the gameserver."""
+        from rcon.vip_sync_runner import synchronize_gameserver_vips
+
+        if server_number is None:
+            server_number = server_info_for_rcon(self).number
+        if server_number is None:
+            raise ValueError("Server number is not configured")
+
+        result = synchronize_gameserver_vips(
+            server_number=int(server_number),
+            rcon=self,
+            dry_run=True,
+        )
+        return _serialize_vip_sync_result(result)
+
+    def synchronize_vip_lists(
+        self,
+        server_number: int | None = None,
+    ) -> dict[str, Any]:
+        """Synchronize the gameserver with all applicable VIP lists."""
+        from rcon.vip_sync_runner import synchronize_gameserver_vips
+
+        if server_number is None:
+            server_number = server_info_for_rcon(self).number
+        if server_number is None:
+            raise ValueError("Server number is not configured")
+
+        result = synchronize_gameserver_vips(
+            server_number=int(server_number),
+            rcon=self,
+            dry_run=False,
+            trigger="manual",
+        )
+        return _serialize_vip_sync_result(result)
+
+    def get_vip_sync_status(
+        self,
+        server_number: int | None = None,
+    ) -> dict[str, Any]:
+        """Return the most recently recorded synchronization status."""
+        from rcon.vip_sync_status import get_vip_sync_status
+
+        if server_number is None:
+            server_number = server_info_for_rcon(self).number
+        if server_number is None:
+            raise ValueError("Server number is not configured")
+
+        normalized_server_number = int(server_number)
+        status = get_vip_sync_status(normalized_server_number)
+
+        if status is not None:
+            return status
+
+        return {
+            "server_number": normalized_server_number,
+            "state": "never",
+            "trigger": None,
+            "started_at": None,
+            "completed_at": None,
+            "last_success_at": None,
+            "added": 0,
+            "removed": 0,
+            "failures": [],
+        }
+
+    def remove_unknown_vip_from_gameserver(
+        self,
+        player_id: str,
+        server_number: int | None = None,
+    ) -> dict[str, Any]:
+        """Remove one VIP only when it is still unknown to configured lists."""
+        from rcon.vip_sync_runner import synchronize_gameserver_vips
+
+        if server_number is None:
+            server_number = server_info_for_rcon(self).number
+        if server_number is None:
+            raise ValueError("Server number is not configured")
+
+        normalized_server_number = int(server_number)
+        normalized_player_id = str(player_id).strip()
+        if not normalized_player_id:
+            raise ValueError("Player ID must not be empty")
+
+        preview = synchronize_gameserver_vips(
+            server_number=normalized_server_number,
+            rcon=self,
+            dry_run=True,
+        )
+
+        if normalized_player_id not in preview.plan.unknown:
+            raise ValueError(
+                "VIP is not an unknown gameserver entry and was not removed"
+            )
+
+        removed = self.remove_vip_from_gameserver(
+            player_id=normalized_player_id,
+        )
+        if not removed:
+            raise RuntimeError("Gameserver did not remove the VIP")
+
+        refreshed = synchronize_gameserver_vips(
+            server_number=normalized_server_number,
+            rcon=self,
+            dry_run=True,
+        )
+
+        return {
+            "player_id": normalized_player_id,
+            "removed": True,
+            "plan": _serialize_vip_sync_result(refreshed)["plan"],
+        }
 
     def unblacklist_player(self, player_id: str) -> bool:
         """Expires all blacklists of a player and unbans them from all servers.

@@ -116,6 +116,11 @@ export const navMenus = [
         icon: <GradeIcon />,
       },
       {
+        name: "VIP Lists",
+        to: "/records/vip-lists",
+        icon: <GradeIcon />,
+      },
+      {
         name: "Blacklist",
         to: "/records/blacklists",
         icon: <AccountBalanceIcon />,

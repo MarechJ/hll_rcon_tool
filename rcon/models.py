@@ -12,6 +12,7 @@ import pydantic
 from sqlalchemy import (
     JSON,
     TIMESTAMP,
+    BigInteger,
     Engine,
     Enum,
     ForeignKey,
@@ -75,6 +76,9 @@ from rcon.types import (
     SteamPlayerSummaryType,
     StructuredLogLineWithMetaData,
     UnitHistoryEntry,
+    VipListRecordType,
+    VipListSyncMethod,
+    VipListType,
     WatchListType,
 )
 from rcon.tz_unaware_column import UTCDateTime
@@ -186,6 +190,9 @@ class PlayerID(Base):
         back_populates="player",
         cascade="all, delete-orphan",
         lazy="dynamic",
+    )
+    vip_list_records: Mapped[list["VipListRecord"]] = relationship(
+        back_populates="player"
     )
     optins: Mapped[list["PlayerOptins"]] = relationship(back_populates="player")
     account: Mapped["PlayerAccount"] = relationship(back_populates="player")
@@ -1157,6 +1164,125 @@ class PlayerVIP(Base):
         return {
             "server_number": self.server_number,
             "expiration": self.expiration,
+        }
+
+
+class VipList(Base):
+    __tablename__ = "vip_list"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(nullable=False)
+    sync: Mapped[VipListSyncMethod] = mapped_column(
+        Enum(VipListSyncMethod, name="viplistsyncmethod"),
+        default=VipListSyncMethod.IGNORE_UNKNOWN,
+        nullable=False,
+    )
+    servers: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+
+    records: Mapped[list["VipListRecord"]] = relationship(
+        back_populates="vip_list",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    defaults: Mapped[list["VipListDefault"]] = relationship(
+        back_populates="vip_list",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+    def get_server_numbers(self) -> set[int] | None:
+        if self.servers is None:
+            return None
+        return mask_to_server_numbers(self.servers)
+
+    def set_server_numbers(self, server_numbers: Sequence[int] | None) -> None:
+        self.servers = (
+            None if server_numbers is None else server_numbers_to_mask(*server_numbers)
+        )
+
+    def to_dict(self) -> VipListType:
+        server_numbers = self.get_server_numbers()
+        return {
+            "id": self.id,
+            "name": self.name,
+            "sync": self.sync,
+            "servers": sorted(server_numbers) if server_numbers is not None else None,
+        }
+
+
+class VipListDefault(Base):
+    __tablename__ = "vip_list_default"
+
+    server_number: Mapped[int] = mapped_column(
+        primary_key=True,
+        autoincrement=False,
+    )
+    vip_list_id: Mapped[int] = mapped_column(
+        ForeignKey("vip_list.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    vip_list: Mapped[VipList] = relationship(back_populates="defaults")
+
+
+class VipListRecord(Base):
+    __tablename__ = "vip_list_record"
+    __table_args__ = (
+        UniqueConstraint(
+            "player_id_id",
+            "vip_list_id",
+            name="unique_vip_player_id_vip_list",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    admin_name: Mapped[str] = mapped_column(nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        default=lambda: datetime.now(tz=UTC),
+        nullable=False,
+    )
+    active: Mapped[bool] = mapped_column(default=True, nullable=False)
+    description: Mapped[str | None]
+    notes: Mapped[str | None]
+    expires_at: Mapped[datetime | None] = mapped_column(
+        TIMESTAMP(timezone=True),
+        nullable=True,
+    )
+
+    player_id_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"),
+        nullable=False,
+        index=True,
+    )
+    vip_list_id: Mapped[int] = mapped_column(
+        ForeignKey("vip_list.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    player: Mapped[PlayerID] = relationship(back_populates="vip_list_records")
+    vip_list: Mapped[VipList] = relationship(back_populates="records")
+
+    def is_expired(self) -> bool:
+        return self.expires_at is not None and self.expires_at <= datetime.now(tz=UTC)
+
+    def to_dict(self) -> VipListRecordType:
+        player_name = self.player.names[0].name if self.player.names else None
+
+        return {
+            "id": self.id,
+            "vip_list_id": self.vip_list_id,
+            "player_id": self.player.player_id,
+            "player_name": player_name,
+            "admin_name": self.admin_name,
+            "created_at": self.created_at,
+            "is_active": self.active,
+            "is_expired": self.is_expired(),
+            "expires_at": self.expires_at,
+            "description": self.description if player_name is None else None,
+            "notes": self.notes,
         }
 
 

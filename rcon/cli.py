@@ -35,7 +35,10 @@ from rcon.user_config.webhooks import (
     BaseUserConfig,
     BaseWebhookUserConfig,
 )
-from rcon.utils import ApiKey
+from rcon.utils import ApiKey, get_server_number
+from rcon.vip_sync_handler import VipSyncCommandHandler
+from rcon.vip_sync_runner import synchronize_gameserver_vips
+from rcon.vip_sync_service import VipSyncDatabaseUnavailableError
 from rcon.vote_map import VoteMap
 
 logger = logging.getLogger(__name__)
@@ -118,6 +121,66 @@ def run_expiring_vips():
     rcon.expiring_vips.service.run()
 
 
+@cli.command(name="vip-list-sync")
+@click.option(
+    "--apply",
+    "apply_changes",
+    is_flag=True,
+    help="Apply the synchronization plan to the gameserver.",
+)
+@click.option(
+    "--server-number",
+    type=click.IntRange(min=1, max=32),
+    default=None,
+    help="CRCON server number. Defaults to SERVER_NUMBER.",
+)
+def run_vip_list_sync(
+    apply_changes: bool,
+    server_number: int | None,
+):
+    """Plan or apply VIP List synchronization.
+
+    The command is a dry-run unless --apply is explicitly supplied.
+    """
+    if server_number is None:
+        server_number = int(get_server_number())
+
+    try:
+        result = synchronize_gameserver_vips(
+            server_number=server_number,
+            dry_run=not apply_changes,
+        )
+    except VipSyncDatabaseUnavailableError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    summary = {
+        "server_number": server_number,
+        "dry_run": result.execution.dry_run,
+        "planned_additions": len(result.plan.to_add),
+        "planned_removals": len(result.plan.to_remove),
+        "added": sorted(result.execution.added),
+        "removed": sorted(result.execution.removed),
+        "skipped_additions": len(result.execution.skipped_additions),
+        "skipped_removals": len(result.execution.skipped_removals),
+        "failures": [
+            {
+                "action": failure.action,
+                "player_id": failure.player_id,
+                "error": failure.error,
+            }
+            for failure in result.execution.failures
+        ],
+    }
+
+    click.echo(json.dumps(summary, sort_keys=True))
+
+    if not result.execution.successful:
+        raise click.ClickException(
+            f"VIP synchronization completed with "
+            f"{len(result.execution.failures)} failure(s)"
+        )
+
+
 @cli.command(name="seed_vip")
 def run_seed_vip():
     try:
@@ -144,6 +207,11 @@ def run_automod():
 @cli.command(name="blacklists")
 def run_blacklists():
     BlacklistCommandHandler().run()
+
+
+@cli.command(name="vip-list-sync-handler")
+def run_vip_list_sync_handler():
+    VipSyncCommandHandler().run()
 
 
 @cli.command(name="log_recorder")
