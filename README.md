@@ -15,6 +15,8 @@ An extended RCON tool for [Hell Let Loose](https://www.hellletloose.com/), meant
 
 ## Documentation
 
+The generated [CRCON API reference](https://marechj.github.io/hll_rcon_tool/) covers both Hell Let Loose and Hell Let Loose: Vietnam endpoints, request examples, permissions, and response schemas.
+
 <table>
   <tbody>
     <tr>
