@@ -2,20 +2,26 @@ import { useEffect, useState } from "react";
 import {
   Alert,
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Divider,
   FormControl,
   FormControlLabel,
+  FormGroup,
   InputLabel,
   MenuItem,
+  Paper,
   Select,
   Stack,
   Switch,
   TextField,
+  Typography,
 } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 
 const SYNC_METHODS = {
   ignore_unknown: "Ignore unknown VIPs",
@@ -29,29 +35,6 @@ const SYNC_DESCRIPTIONS = {
     "During synchronization, VIPs not covered by a configured list may be removed from the gameserver.",
 };
 
-function parseServerNumbers(value) {
-  const tokens = value.trim().split(/[\s,;]+/).filter(Boolean);
-
-  if (tokens.length === 0) {
-    throw new Error("Enter at least one server number.");
-  }
-
-  const numbers = tokens.map(Number);
-
-  if (
-    numbers.some(
-      (number) =>
-        !Number.isInteger(number) || number < 1 || number > 32
-    )
-  ) {
-    throw new Error(
-      "Server numbers must be whole numbers between 1 and 32."
-    );
-  }
-
-  return [...new Set(numbers)].sort((left, right) => left - right);
-}
-
 export default function VipListDialog({
   open,
   initialValues,
@@ -59,14 +42,14 @@ export default function VipListDialog({
   submitLabel,
   loading,
   serverNumber,
+  servers = {},
   allowDefaultSelection = false,
   onClose,
   onSubmit,
 }) {
   const [name, setName] = useState("");
   const [sync, setSync] = useState("ignore_unknown");
-  const [allServers, setAllServers] = useState(true);
-  const [serverNumbers, setServerNumbers] = useState("");
+  const [serverNumbers, setServerNumbers] = useState(null);
   const [serverError, setServerError] = useState("");
   const [setAsDefault, setSetAsDefault] = useState(false);
 
@@ -77,9 +60,12 @@ export default function VipListDialog({
 
     setName(initialValues?.name ?? "");
     setSync(initialValues?.sync ?? "ignore_unknown");
-    setAllServers(servers === null);
     setServerNumbers(
-      Array.isArray(servers) ? servers.join(", ") : ""
+      Array.isArray(servers)
+        ? [...new Set(servers.map(Number))]
+            .filter(Number.isInteger)
+            .sort((left, right) => left - right)
+        : null
     );
     setServerError("");
     setSetAsDefault(false);
@@ -89,26 +75,53 @@ export default function VipListDialog({
     ? `server #${serverNumber}`
     : "the current server";
 
+  const knownServerNumbers = Object.keys(servers)
+    .map(Number)
+    .filter(Number.isInteger)
+    .sort((left, right) => left - right);
+
+  const toggleAllServers = (enabled) => {
+    if (enabled) {
+      setServerNumbers(null);
+    } else {
+      const initialSelection =
+        knownServerNumbers.length > 0
+          ? knownServerNumbers
+          : Number.isInteger(serverNumber)
+          ? [serverNumber]
+          : [];
+
+      setServerNumbers(initialSelection);
+    }
+
+    setServerError("");
+  };
+
+  const toggleServer = (number, enabled) => {
+    const selected = Array.isArray(serverNumbers) ? [...serverNumbers] : [];
+
+    const next = enabled
+      ? [...new Set([...selected, number])]
+      : selected.filter((candidate) => candidate !== number);
+
+    setServerNumbers(next.sort((left, right) => left - right));
+    setServerError("");
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setServerError("");
 
-    let servers = null;
-
-    if (!allServers) {
-      try {
-        servers = parseServerNumbers(serverNumbers);
-      } catch (error) {
-        setServerError(error.message);
-        return;
-      }
+    if (Array.isArray(serverNumbers) && serverNumbers.length === 0) {
+      setServerError("Select at least one server.");
+      return;
     }
 
     if (
       setAsDefault &&
       Number.isInteger(serverNumber) &&
-      servers !== null &&
-      !servers.includes(serverNumber)
+      serverNumbers !== null &&
+      !serverNumbers.includes(serverNumber)
     ) {
       setServerError(
         `Include server #${serverNumber} or apply the list to all servers before setting it as default.`
@@ -120,7 +133,7 @@ export default function VipListDialog({
       await onSubmit({
         name: name.trim(),
         sync,
-        servers,
+        servers: serverNumbers,
         setAsDefault,
       });
     } catch {
@@ -172,43 +185,73 @@ export default function VipListDialog({
             </Select>
           </FormControl>
 
-          <Alert
-            severity={sync === "remove_unknown" ? "warning" : "info"}
-          >
+          <Alert severity={sync === "remove_unknown" ? "warning" : "info"}>
             {SYNC_DESCRIPTIONS[sync]}
           </Alert>
 
-          <FormControlLabel
-            control={
-              <Switch
-                checked={allServers}
-                onChange={(event) => {
-                  setAllServers(event.target.checked);
-                  setServerError("");
-                }}
-                disabled={loading}
-              />
-            }
-            label="Apply to all CRCON servers"
-          />
+          <Paper
+            variant="outlined"
+            sx={{ p: 2, bgcolor: "background.default" }}
+          >
+            <Stack spacing={1.5}>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                alignItems={{ xs: "flex-start", sm: "center" }}
+                justifyContent="space-between"
+                gap={1}
+              >
+                <Typography variant="subtitle1" fontWeight={600}>
+                  Servers
+                </Typography>
+                <FormControlLabel
+                  label="Enable on all servers"
+                  control={
+                    <Switch
+                      checked={serverNumbers === null}
+                      onChange={(event) =>
+                        toggleAllServers(event.target.checked)
+                      }
+                      disabled={loading}
+                    />
+                  }
+                />
+              </Stack>
 
-          {!allServers && (
-            <TextField
-              required
-              label="Server numbers"
-              value={serverNumbers}
-              onChange={(event) => {
-                setServerNumbers(event.target.value);
-                setServerError("");
-              }}
-              error={Boolean(serverError)}
-              helperText={
-                serverError ||
-                "Comma-separated CRCON server numbers, for example: 1, 2, 4"
-              }
-              disabled={loading}
-            />
-          )}
+              <Divider />
+
+              {knownServerNumbers.length === 0 ? (
+                <Alert severity="warning">
+                  No CRCON servers are currently available for selection.
+                </Alert>
+              ) : (
+                <FormGroup>
+                  <Grid container spacing={0.5}>
+                    {knownServerNumbers.map((number) => (
+                      <Grid key={number} size={{ xs: 12, sm: 6 }}>
+                        <FormControlLabel
+                          label={servers[number]}
+                          control={
+                            <Checkbox
+                              checked={
+                                serverNumbers === null ||
+                                serverNumbers.includes(number)
+                              }
+                              disabled={loading || serverNumbers === null}
+                              onChange={(event) =>
+                                toggleServer(number, event.target.checked)
+                              }
+                            />
+                          }
+                        />
+                      </Grid>
+                    ))}
+                  </Grid>
+                </FormGroup>
+              )}
+
+              {serverError && <Alert severity="error">{serverError}</Alert>}
+            </Stack>
+          </Paper>
 
           {allowDefaultSelection && (
             <>
@@ -216,18 +259,16 @@ export default function VipListDialog({
                 control={
                   <Switch
                     checked={setAsDefault}
-                    onChange={(event) =>
-                      setSetAsDefault(event.target.checked)
-                    }
+                    onChange={(event) => setSetAsDefault(event.target.checked)}
                     disabled={loading}
                   />
                 }
                 label={`Set as default VIP list for ${serverLabel}`}
               />
               <Alert severity="info">
-                New VIP records created from live-player and automated
-                workflows can use this list after those integrations are
-                enabled. Existing records and the gameserver are not changed.
+                New VIP records created from live-player and automated workflows
+                can use this list after those integrations are enabled. Existing
+                records and the gameserver are not changed.
               </Alert>
             </>
           )}

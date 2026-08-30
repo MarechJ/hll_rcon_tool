@@ -1,9 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Alert,
   Box,
@@ -18,9 +14,11 @@ import {
   DialogTitle,
   Divider,
   IconButton,
+  InputAdornment,
   LinearProgress,
   Paper,
   Stack,
+  TextField,
   Table,
   TableBody,
   TableCell,
@@ -35,6 +33,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import StarIcon from "@mui/icons-material/Star";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
+import SearchIcon from "@mui/icons-material/Search";
 import dayjs from "dayjs";
 import { toast } from "react-toastify";
 import { useAuth } from "@/hooks/useAuth";
@@ -85,15 +84,15 @@ const downloadTextFile = (filename, content, type) => {
   URL.revokeObjectURL(url);
 };
 
-const csvValue = (value) =>
-  `"${String(value ?? "").replaceAll('"', '""')}"`;
+const csvValue = (value) => `"${String(value ?? "").replaceAll('"', '""')}"`;
 
 const exportVipRecords = (format, vipList, records) => {
   const exportedAt = new Date().toISOString();
-  const safeName = String(vipList.name)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "") || `vip-list-${vipList.id}`;
+  const safeName =
+    String(vipList.name)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || `vip-list-${vipList.id}`;
 
   const exportedRecords = records.map((record) => ({
     record_id: record.id,
@@ -168,10 +167,8 @@ function RecordTable({
     selectedSet.has(record.id)
   ).length;
   const allVisibleSelected =
-    safeRecords.length > 0 &&
-    selectedVisibleCount === safeRecords.length;
-  const someVisibleSelected =
-    selectedVisibleCount > 0 && !allVisibleSelected;
+    safeRecords.length > 0 && selectedVisibleCount === safeRecords.length;
+  const someVisibleSelected = selectedVisibleCount > 0 && !allVisibleSelected;
 
   return (
     <Paper component="section" variant="outlined">
@@ -205,10 +202,7 @@ function RecordTable({
                       checked={allVisibleSelected}
                       indeterminate={someVisibleSelected}
                       onChange={(event) =>
-                        onToggleRecords(
-                          safeRecords,
-                          event.target.checked
-                        )
+                        onToggleRecords(safeRecords, event.target.checked)
                       }
                       inputProps={{
                         "aria-label": `Select all records in ${title}`,
@@ -221,9 +215,7 @@ function RecordTable({
                 <TableCell>Expiration</TableCell>
                 <TableCell>Added by</TableCell>
                 <TableCell>Notes</TableCell>
-                {showActions && (
-                  <TableCell align="right">Actions</TableCell>
-                )}
+                {showActions && <TableCell align="right">Actions</TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -240,10 +232,7 @@ function RecordTable({
                         <Checkbox
                           checked={selectedSet.has(record.id)}
                           onChange={(event) =>
-                            onToggleRecord(
-                              record.id,
-                              event.target.checked
-                            )
+                            onToggleRecord(record.id, event.target.checked)
                           }
                           inputProps={{
                             "aria-label": `Select VIP record ${record.id}`,
@@ -292,10 +281,7 @@ function RecordTable({
                             />
                           </Stack>
                         ) : (
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                          >
+                          <Typography variant="body2" color="text.secondary">
                             Unknown player
                           </Typography>
                         )}
@@ -372,39 +358,56 @@ function RecordTable({
 const hasPermission = (permissions, permission) =>
   Boolean(
     permissions?.is_superuser ||
-      permissions?.permissions?.some(
-        (entry) => entry.permission === permission
-      )
+      permissions?.permissions?.some((entry) => entry.permission === permission)
   );
 
 export default function VipListsPage() {
   const queryClient = useQueryClient();
   const { permissions } = useAuth();
   const serverStatus = useGlobalStore((state) => state.status);
+  const availableServers = useGlobalStore((state) => state.servers);
   const serverNumber = serverStatus?.server_number;
+
+  const serverOptions = useMemo(() => {
+    const options = {};
+
+    if (Array.isArray(availableServers)) {
+      for (const server of availableServers) {
+        const number = Number(server?.server_number);
+
+        if (Number.isInteger(number)) {
+          options[number] =
+            server?.name || server?.short_name || `Server #${number}`;
+        }
+      }
+    }
+
+    if (Number.isInteger(serverNumber) && options[serverNumber] === undefined) {
+      options[serverNumber] =
+        serverStatus?.name ||
+        serverStatus?.short_name ||
+        `Server #${serverNumber}`;
+    }
+
+    return options;
+  }, [
+    availableServers,
+    serverNumber,
+    serverStatus?.name,
+    serverStatus?.short_name,
+  ]);
   const [selectedListId, setSelectedListId] = useState(null);
   const [listDialog, setListDialog] = useState(null);
   const [recordDialog, setRecordDialog] = useState(null);
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const [selectedRecordIds, setSelectedRecordIds] = useState([]);
+  const [recordSearch, setRecordSearch] = useState("");
   const [confirmation, setConfirmation] = useState(null);
 
-  const canCreateLists = hasPermission(
-    permissions,
-    "can_create_vip_lists"
-  );
-  const canChangeLists = hasPermission(
-    permissions,
-    "can_change_vip_lists"
-  );
-  const canDeleteLists = hasPermission(
-    permissions,
-    "can_delete_vip_lists"
-  );
-  const canAddRecords = hasPermission(
-    permissions,
-    "can_add_vip_list_records"
-  );
+  const canCreateLists = hasPermission(permissions, "can_create_vip_lists");
+  const canChangeLists = hasPermission(permissions, "can_change_vip_lists");
+  const canDeleteLists = hasPermission(permissions, "can_delete_vip_lists");
+  const canAddRecords = hasPermission(permissions, "can_add_vip_list_records");
   const canChangeRecords = hasPermission(
     permissions,
     "can_change_vip_list_records"
@@ -421,10 +424,7 @@ export default function VipListsPage() {
 
   const refreshDefaultList = () =>
     queryClient.invalidateQueries({
-      queryKey: [
-        ...vipListQueryKeys.defaultList,
-        serverNumber ?? "current",
-      ],
+      queryKey: [...vipListQueryKeys.defaultList, serverNumber ?? "current"],
     });
 
   const refreshRecords = () => {
@@ -441,9 +441,7 @@ export default function VipListsPage() {
   };
 
   const mutationError = (error) =>
-    toast.error(
-      error?.message ?? "The VIP list operation failed."
-    );
+    toast.error(error?.message ?? "The VIP list operation failed.");
 
   const createList = useMutation({
     ...vipListMutationOptions.createList,
@@ -610,14 +608,8 @@ export default function VipListsPage() {
 
   const submitBulkOperation = async (operation) => {
     if (operation.kind === "export") {
-      exportVipRecords(
-        operation.format,
-        selectedList,
-        selectedRecords
-      );
-      toast.success(
-        `Exported ${selectedRecords.length} VIP records.`
-      );
+      exportVipRecords(operation.format, selectedList, selectedRecords);
+      toast.success(`Exported ${selectedRecords.length} VIP records.`);
       setBulkDialogOpen(false);
       return;
     }
@@ -625,11 +617,7 @@ export default function VipListsPage() {
     if (operation.kind === "delete") {
       await bulkDeleteRecords.mutateAsync(operation.recordIds);
     } else {
-      const {
-        kind,
-        action,
-        ...data
-      } = operation;
+      const { kind, action, ...data } = operation;
 
       await bulkEditRecords.mutateAsync(data);
     }
@@ -654,9 +642,7 @@ export default function VipListsPage() {
           serverNumber: pendingConfirmation.serverNumber,
         });
       } else if (pendingConfirmation?.kind === "clear-default") {
-        await clearDefaultList.mutateAsync(
-          pendingConfirmation.serverNumber
-        );
+        await clearDefaultList.mutateAsync(pendingConfirmation.serverNumber);
       }
     } catch {
       // The mutation already displays the API error.
@@ -675,8 +661,7 @@ export default function VipListsPage() {
     deleteRecord.isPending ||
     bulkEditRecords.isPending ||
     bulkDeleteRecords.isPending;
-  const mutationPending =
-    listMutationPending || recordMutationPending;
+  const mutationPending = listMutationPending || recordMutationPending;
 
   const {
     data: lists = [],
@@ -716,11 +701,38 @@ export default function VipListsPage() {
     error: inactiveError,
   } = useQuery(vipListQueryOptions.inactiveRecords(selectedListId));
 
-  const error =
-    listsError ||
-    defaultListError ||
-    activeError ||
-    inactiveError;
+  const error = listsError || defaultListError || activeError || inactiveError;
+
+  const filterRecords = (records) => {
+    const search = recordSearch.trim().toLocaleLowerCase();
+
+    if (search === "") return records;
+
+    return records.filter((record) =>
+      [
+        record.id,
+        record.player_id,
+        record.player_name,
+        record.description,
+        record.notes,
+        record.admin_name,
+      ].some((value) =>
+        String(value ?? "")
+          .toLocaleLowerCase()
+          .includes(search)
+      )
+    );
+  };
+
+  const filteredActiveRecords = useMemo(
+    () => filterRecords(activeRecords),
+    [activeRecords, recordSearch]
+  );
+
+  const filteredInactiveRecords = useMemo(
+    () => filterRecords(inactiveRecords),
+    [inactiveRecords, recordSearch]
+  );
 
   const selectedRecords = useMemo(() => {
     const selectedSet = new Set(selectedRecordIds);
@@ -732,11 +744,11 @@ export default function VipListsPage() {
 
   useEffect(() => {
     setSelectedRecordIds([]);
+    setRecordSearch("");
     setBulkDialogOpen(false);
   }, [selectedListId]);
 
-  const selectedListIsDefault =
-    selectedList?.id === defaultList?.id;
+  const selectedListIsDefault = selectedList?.id === defaultList?.id;
   const selectedListAppliesToCurrentServer =
     !Number.isInteger(serverNumber) ||
     selectedList?.servers === null ||
@@ -746,8 +758,7 @@ export default function VipListsPage() {
     : "the current server";
 
   const confirmationIsDelete =
-    confirmation?.kind === "list" ||
-    confirmation?.kind === "record";
+    confirmation?.kind === "list" || confirmation?.kind === "record";
   const confirmationTitle =
     confirmation?.kind === "list"
       ? "Delete VIP list?"
@@ -770,7 +781,9 @@ export default function VipListsPage() {
       : confirmation?.kind === "record"
       ? `This permanently deletes VIP record #${confirmation?.item?.id}. No gameserver synchronization is performed.`
       : confirmation?.kind === "set-default"
-      ? `“${confirmation?.item?.name}” will become the default destination for new VIP records on ${
+      ? `“${
+          confirmation?.item?.name
+        }” will become the default destination for new VIP records on ${
           Number.isInteger(confirmation?.serverNumber)
             ? `server #${confirmation.serverNumber}`
             : "the current server"
@@ -848,11 +861,7 @@ export default function VipListsPage() {
                   }}
                 >
                   <Stack alignItems="flex-start">
-                    <Stack
-                      direction="row"
-                      spacing={0.75}
-                      alignItems="center"
-                    >
+                    <Stack direction="row" spacing={0.75} alignItems="center">
                       <Typography variant="body2">
                         {`${vipList.name} (ID ${vipList.id})`}
                       </Typography>
@@ -951,9 +960,7 @@ export default function VipListsPage() {
                     <Button
                       variant="contained"
                       startIcon={<AddIcon />}
-                      onClick={() =>
-                        setRecordDialog({ mode: "create" })
-                      }
+                      onClick={() => setRecordDialog({ mode: "create" })}
                     >
                       Add record
                     </Button>
@@ -989,47 +996,78 @@ export default function VipListsPage() {
               </Paper>
             )}
 
+            <Paper variant="outlined" sx={{ p: 2 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Search VIP records"
+                placeholder="Player name, Steam/EOS ID, description, notes or administrator"
+                value={recordSearch}
+                onChange={(event) => setRecordSearch(event.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                }}
+                helperText={
+                  recordSearch.trim() === ""
+                    ? `${
+                        activeRecords.length + inactiveRecords.length
+                      } records in this list`
+                    : `${
+                        filteredActiveRecords.length +
+                        filteredInactiveRecords.length
+                      } of ${
+                        activeRecords.length + inactiveRecords.length
+                      } records shown`
+                }
+              />
+            </Paper>
+
             {selectedRecordIds.length > 0 && (
-                <Paper variant="outlined" sx={{ p: 2 }}>
-                  <Stack
-                    direction={{ xs: "column", sm: "row" }}
-                    spacing={1}
-                    alignItems={{ xs: "stretch", sm: "center" }}
+              <Paper variant="outlined" sx={{ p: 2 }}>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1}
+                  alignItems={{ xs: "stretch", sm: "center" }}
+                >
+                  <Box sx={{ flexGrow: 1 }}>
+                    <Typography fontWeight={600}>
+                      {selectedRecordIds.length} records selected
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Selection includes active, inactive and expired records in
+                      this VIP list.
+                    </Typography>
+                  </Box>
+                  <Button
+                    onClick={() => setSelectedRecordIds([])}
+                    disabled={recordMutationPending}
                   >
-                    <Box sx={{ flexGrow: 1 }}>
-                      <Typography fontWeight={600}>
-                        {selectedRecordIds.length} records selected
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                      >
-                        Selection includes active, inactive and expired
-                        records in this VIP list.
-                      </Typography>
-                    </Box>
-                    <Button
-                      onClick={() => setSelectedRecordIds([])}
-                      disabled={recordMutationPending}
-                    >
-                      Clear selection
-                    </Button>
-                    <Button
-                      variant="contained"
-                      onClick={() => setBulkDialogOpen(true)}
-                      disabled={recordMutationPending}
-                    >
-                      Bulk actions
-                    </Button>
-                  </Stack>
-                </Paper>
-              )}
+                    Clear selection
+                  </Button>
+                  <Button
+                    variant="contained"
+                    onClick={() => setBulkDialogOpen(true)}
+                    disabled={recordMutationPending}
+                  >
+                    Bulk actions
+                  </Button>
+                </Stack>
+              </Paper>
+            )}
 
             <RecordTable
               title="Active records"
-              records={activeRecords}
+              records={filteredActiveRecords}
               loading={activeLoading}
-              emptyText="This list has no active VIP records."
+              emptyText={
+                recordSearch.trim() === ""
+                  ? "This list has no active VIP records."
+                  : "No active VIP records match the search."
+              }
               selectable
               selectedRecordIds={selectedRecordIds}
               onToggleRecord={toggleRecord}
@@ -1056,9 +1094,13 @@ export default function VipListsPage() {
 
             <RecordTable
               title="Inactive and expired records"
-              records={inactiveRecords}
+              records={filteredInactiveRecords}
               loading={inactiveLoading}
-              emptyText="This list has no inactive or expired records."
+              emptyText={
+                recordSearch.trim() === ""
+                  ? "This list has no inactive or expired records."
+                  : "No inactive or expired VIP records match the search."
+              }
               selectable
               selectedRecordIds={selectedRecordIds}
               onToggleRecord={toggleRecord}
@@ -1093,10 +1135,7 @@ export default function VipListsPage() {
         records={selectedRecords}
         canChange={canChangeRecords}
         canDelete={canDeleteRecords}
-        loading={
-          bulkEditRecords.isPending ||
-          bulkDeleteRecords.isPending
-        }
+        loading={bulkEditRecords.isPending || bulkDeleteRecords.isPending}
         onClose={() => setBulkDialogOpen(false)}
         onSubmit={submitBulkOperation}
       />
@@ -1134,27 +1173,20 @@ export default function VipListsPage() {
             : undefined
         }
         title={
-          listDialog?.mode === "edit"
-            ? "Edit VIP list"
-            : "Create VIP list"
+          listDialog?.mode === "edit" ? "Edit VIP list" : "Create VIP list"
         }
-        submitLabel={
-          listDialog?.mode === "edit" ? "Save" : "Create list"
-        }
+        submitLabel={listDialog?.mode === "edit" ? "Save" : "Create list"}
         loading={listMutationPending}
         serverNumber={serverNumber}
-        allowDefaultSelection={
-          listDialog?.mode === "create" && canChangeLists
-        }
+        servers={serverOptions}
+        allowDefaultSelection={listDialog?.mode === "create" && canChangeLists}
         onClose={() => setListDialog(null)}
         onSubmit={submitList}
       />
 
       <Dialog
         open={Boolean(confirmation)}
-        onClose={
-          mutationPending ? undefined : () => setConfirmation(null)
-        }
+        onClose={mutationPending ? undefined : () => setConfirmation(null)}
       >
         <DialogTitle>{confirmationTitle}</DialogTitle>
         <DialogContent>
