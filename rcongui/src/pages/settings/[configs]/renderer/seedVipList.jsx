@@ -10,6 +10,7 @@ import {
 import {
   and,
   rankWith,
+  schemaMatches,
   scopeEndsWith,
   uiTypeIs,
 } from "@jsonforms/core";
@@ -28,6 +29,7 @@ const SeedVipListRenderer = ({
   description,
   errors,
   enabled,
+  schema,
 }) => {
   const {
     data: vipLists = [],
@@ -41,7 +43,10 @@ const SeedVipListRenderer = ({
     isError: defaultFailed,
   } = useQuery(vipListQueryOptions.defaultList());
 
-  const selectedId = data == null ? null : Number(data);
+  const vipListPath = `${path}.vip_list_id`;
+  const selectedValue = data?.vip_list_id;
+  const selectedId =
+    selectedValue == null ? null : Number(selectedValue);
   const selectedList =
     selectedId === null
       ? null
@@ -49,7 +54,9 @@ const SeedVipListRenderer = ({
   const invalidSelection = selectedId !== null && !selectedList;
   const loading = listsLoading || defaultLoading;
   const failed = listsFailed || defaultFailed;
-  const fieldLabel = label || "Seed VIP reward list";
+  const fieldLabel = "Seed VIP reward list";
+  const fieldDescription =
+    schema?.properties?.vip_list_id?.description || description;
 
   return (
     <Stack spacing={1.25} sx={{ mt: 1 }}>
@@ -65,7 +72,7 @@ const SeedVipListRenderer = ({
           value={selectedId ?? DEFAULT_VALUE}
           onChange={(event) =>
             handleChange(
-              path,
+              vipListPath,
               event.target.value === DEFAULT_VALUE
                 ? null
                 : Number(event.target.value)
@@ -93,7 +100,9 @@ const SeedVipListRenderer = ({
           ))}
         </Select>
 
-        {description && <FormHelperText>{description}</FormHelperText>}
+        {fieldDescription && (
+          <FormHelperText>{fieldDescription}</FormHelperText>
+        )}
         {errors && <FormHelperText error>{errors}</FormHelperText>}
       </FormControl>
 
@@ -125,7 +134,12 @@ export const seedVipListTester = rankWith(
   20,
   and(
     uiTypeIs("Control"),
-    scopeEndsWith("reward/properties/vip_list_id")
+    scopeEndsWith("reward"),
+    schemaMatches(
+      (schema) =>
+        schema?.type === "object" &&
+        Object.hasOwn(schema.properties ?? {}, "vip_list_id")
+    )
   )
 );
 
