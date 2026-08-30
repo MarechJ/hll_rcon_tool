@@ -5,7 +5,7 @@ import sys
 import traceback
 from collections.abc import Callable
 from functools import wraps
-from subprocess import run
+from importlib.metadata import PackageNotFoundError, version
 from typing import Any
 
 import psutil
@@ -83,8 +83,11 @@ def set_temp_msg(request, func, name):
 @csrf_exempt
 @require_http_methods(["GET"])
 def get_version(request):
-    res = run(["git", "describe", "--tags"], check=False, capture_output=True)
-    return api_response(res.stdout.decode(), failed=False, command="get_version")
+    try:
+        tag_version = f"v{version('hll-rcon-tool')}"
+    except PackageNotFoundError:
+        tag_version = "unknown"
+    return api_response(tag_version, failed=False, command="get_version")
 
 
 @csrf_exempt

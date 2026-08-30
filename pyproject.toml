@@ -1,6 +1,6 @@
 [project]
 name = "hll_rcon_tool"
-version = "0.0.1"
+dynamic = ["version"]
 target-version = ['py312']
 requires-python = ">=3.12"
 dependencies = [
@@ -56,3 +56,19 @@ dev = [
     "fakeredis==2.37.1",
     "pre-commit>=4.6.2",
 ]
+
+[build-system]
+requires = ["hatchling", "uv-dynamic-versioning"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["rcon", "rconweb"]
+
+[tool.hatch.version]
+source = "uv-dynamic-versioning"
+
+[tool.uv-dynamic-versioning]
+fallback-version = "0.0.0+unknown"
+
+[tool.uv]
+cache-keys = [{ file = "pyproject.toml" }, { git = { commit = true, tags = true } }]
