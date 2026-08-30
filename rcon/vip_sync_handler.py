@@ -96,6 +96,7 @@ class VipSyncCommandHandler:
                 server_number=self.server_number,
                 rcon=self.rcon,
                 dry_run=False,
+                trigger=trigger,
             )
 
             logger.info(

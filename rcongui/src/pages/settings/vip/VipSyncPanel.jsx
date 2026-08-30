@@ -15,6 +15,8 @@ import SyncIcon from "@mui/icons-material/Sync";
 import PreviewIcon from "@mui/icons-material/Preview";
 import { useAuth } from "@/hooks/useAuth";
 import ConfirmButton from "@/components/shared/ConfirmButton";
+import UnknownVipList from "./UnknownVipList";
+import VipSyncStatus from "./VipSyncStatus";
 import { queryClient } from "@/queryClient";
 import {
   vipMutationOptions,
@@ -25,9 +27,7 @@ import {
 const hasPermission = (permissions, permission) =>
   Boolean(
     permissions?.is_superuser ||
-      permissions?.permissions?.some(
-        (entry) => entry.permission === permission
-      )
+      permissions?.permissions?.some((entry) => entry.permission === permission)
   );
 
 const getErrorMessage = (error, fallback) =>
@@ -75,6 +75,15 @@ const VipSyncPanel = () => {
   } = useQuery(vipQueryOptions.syncPlan());
 
   const {
+    data: syncStatus,
+    error: syncStatusError,
+    refetch: loadSyncStatus,
+  } = useQuery({
+    ...vipQueryOptions.syncStatus(),
+    enabled: canPreview,
+  });
+
+  const {
     mutate: synchronize,
     isPending: synchronizeLoading,
     error: synchronizeError,
@@ -83,6 +92,22 @@ const VipSyncPanel = () => {
     onSuccess: async (result) => {
       setLastExecution(result.execution);
 
+      await queryClient.invalidateQueries({
+        queryKey: vipQueryKeys.list,
+      });
+
+      await Promise.all([loadPreview(), loadSyncStatus()]);
+    },
+  });
+
+  const {
+    mutate: removeUnknown,
+    isPending: removeUnknownLoading,
+    variables: removeUnknownVariables,
+    error: removeUnknownError,
+  } = useMutation({
+    ...vipMutationOptions.removeUnknown,
+    onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: vipQueryKeys.list,
       });
@@ -97,7 +122,7 @@ const VipSyncPanel = () => {
   const unknown = plan?.unknown ?? [];
   const unchanged = plan?.unchanged ?? [];
   const pendingChanges = additions.length + removals.length;
-  const busy = previewLoading || synchronizeLoading;
+  const busy = previewLoading || synchronizeLoading || removeUnknownLoading;
 
   return (
     <Paper component="section" variant="outlined">
@@ -184,6 +209,17 @@ const VipSyncPanel = () => {
           </Alert>
         )}
 
+        {removeUnknownError && (
+          <Alert severity="error">
+            {getErrorMessage(
+              removeUnknownError,
+              "The unknown VIP could not be removed."
+            )}
+          </Alert>
+        )}
+
+        <VipSyncStatus status={syncStatus} error={syncStatusError} />
+
         {plan && (
           <>
             <Divider />
@@ -204,10 +240,18 @@ const VipSyncPanel = () => {
               <Chip label={`${unchanged.length} unchanged`} color="info" />
             </Stack>
 
-            {pendingChanges === 0 && (
+            {pendingChanges === 0 && unknown.length === 0 && (
               <Alert severity="success">
                 The gameserver VIP state already matches the configured VIP
                 lists.
+              </Alert>
+            )}
+
+            {pendingChanges === 0 && unknown.length > 0 && (
+              <Alert severity="warning">
+                No managed changes are pending. Unknown gameserver VIPs are
+                ignored by the current list synchronization mode and can be
+                removed individually below.
               </Alert>
             )}
 
@@ -221,10 +265,12 @@ const VipSyncPanel = () => {
               items={removals}
               color="error"
             />
-            <DetailList
-              title="Unknown gameserver VIPs"
+            <UnknownVipList
               items={unknown}
-              color="warning"
+              canRemove={canSynchronize}
+              busy={busy}
+              removingPlayerId={removeUnknownVariables?.player_id}
+              onRemove={(playerId) => removeUnknown({ player_id: playerId })}
             />
           </>
         )}

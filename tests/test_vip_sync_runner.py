@@ -92,3 +92,186 @@ def test_runner_applies_only_when_explicitly_enabled(monkeypatch):
         ("add", "add-1", "Player"),
         ("remove", "remove-1"),
     ]
+
+
+def _empty_sync_plan():
+    from rcon.vip_sync import VipSyncPlan
+
+    return VipSyncPlan(
+        to_add=(),
+        to_remove=frozenset(),
+        unchanged=frozenset(),
+        unknown=frozenset(),
+    )
+
+
+def _empty_execution(*, dry_run):
+    from rcon.vip_sync_executor import VipSyncExecutionResult
+
+    return VipSyncExecutionResult(
+        dry_run=dry_run,
+        added=frozenset(),
+        removed=frozenset(),
+        skipped_additions=(),
+        skipped_removals=frozenset(),
+        failures=(),
+    )
+
+
+def test_runner_dry_run_does_not_record_status(monkeypatch):
+    import rcon.vip_sync_runner as runner_module
+    import rcon.vip_sync_status as status_module
+
+    monkeypatch.setattr(
+        runner_module,
+        "read_gameserver_vips",
+        lambda rcon: [],
+    )
+    monkeypatch.setattr(
+        runner_module,
+        "build_database_vip_sync_plan",
+        lambda **kwargs: _empty_sync_plan(),
+    )
+    monkeypatch.setattr(
+        runner_module,
+        "execute_vip_sync_plan",
+        lambda **kwargs: _empty_execution(dry_run=True),
+    )
+
+    def unexpected_status_write(*args, **kwargs):
+        raise AssertionError("Dry-run attempted to write synchronization status")
+
+    monkeypatch.setattr(
+        status_module,
+        "record_vip_sync_started",
+        unexpected_status_write,
+    )
+    monkeypatch.setattr(
+        status_module,
+        "record_vip_sync_completed",
+        unexpected_status_write,
+    )
+    monkeypatch.setattr(
+        status_module,
+        "record_vip_sync_failed",
+        unexpected_status_write,
+    )
+
+    result = runner_module.synchronize_gameserver_vips(
+        server_number=2,
+        rcon=object(),
+        dry_run=True,
+        trigger="manual",
+    )
+
+    assert result.execution.dry_run is True
+
+
+def test_runner_records_real_sync_lifecycle(monkeypatch):
+    import rcon.vip_sync_runner as runner_module
+    import rcon.vip_sync_status as status_module
+
+    events = []
+
+    monkeypatch.setattr(
+        runner_module,
+        "read_gameserver_vips",
+        lambda rcon: [],
+    )
+    monkeypatch.setattr(
+        runner_module,
+        "build_database_vip_sync_plan",
+        lambda **kwargs: _empty_sync_plan(),
+    )
+    monkeypatch.setattr(
+        runner_module,
+        "execute_vip_sync_plan",
+        lambda **kwargs: _empty_execution(dry_run=False),
+    )
+    monkeypatch.setattr(
+        status_module,
+        "record_vip_sync_started",
+        lambda **kwargs: events.append(("started", kwargs)),
+    )
+    monkeypatch.setattr(
+        status_module,
+        "record_vip_sync_completed",
+        lambda **kwargs: events.append(("completed", kwargs)),
+    )
+    monkeypatch.setattr(
+        status_module,
+        "record_vip_sync_failed",
+        lambda **kwargs: events.append(("failed", kwargs)),
+    )
+
+    result = runner_module.synchronize_gameserver_vips(
+        server_number=3,
+        rcon=object(),
+        dry_run=False,
+        trigger="notification",
+    )
+
+    assert result.execution.successful is True
+    assert [event[0] for event in events] == [
+        "started",
+        "completed",
+    ]
+    assert events[0][1] == {
+        "server_number": 3,
+        "trigger": "notification",
+    }
+    assert events[1][1]["server_number"] == 3
+    assert events[1][1]["trigger"] == "notification"
+    assert events[1][1]["execution"] is result.execution
+
+
+def test_runner_records_failure_before_execution(monkeypatch):
+    import rcon.vip_sync_runner as runner_module
+    import rcon.vip_sync_status as status_module
+
+    events = []
+    expected_error = RuntimeError("RCON unavailable")
+
+    def fail_read(rcon):
+        raise expected_error
+
+    monkeypatch.setattr(
+        runner_module,
+        "read_gameserver_vips",
+        fail_read,
+    )
+    monkeypatch.setattr(
+        status_module,
+        "record_vip_sync_started",
+        lambda **kwargs: events.append(("started", kwargs)),
+    )
+    monkeypatch.setattr(
+        status_module,
+        "record_vip_sync_completed",
+        lambda **kwargs: events.append(("completed", kwargs)),
+    )
+    monkeypatch.setattr(
+        status_module,
+        "record_vip_sync_failed",
+        lambda **kwargs: events.append(("failed", kwargs)),
+    )
+
+    import pytest
+
+    with pytest.raises(RuntimeError, match="RCON unavailable"):
+        runner_module.synchronize_gameserver_vips(
+            server_number=4,
+            rcon=object(),
+            dry_run=False,
+            trigger="periodic",
+        )
+
+    assert [event[0] for event in events] == [
+        "started",
+        "failed",
+    ]
+    assert events[1][1] == {
+        "server_number": 4,
+        "trigger": "periodic",
+        "error": expected_error,
+    }

@@ -738,8 +738,86 @@ class RconAPI(Rcon):
             server_number=int(server_number),
             rcon=self,
             dry_run=False,
+            trigger="manual",
         )
         return _serialize_vip_sync_result(result)
+
+    def get_vip_sync_status(
+        self,
+        server_number: int | None = None,
+    ) -> dict[str, Any]:
+        """Return the most recently recorded synchronization status."""
+        from rcon.vip_sync_status import get_vip_sync_status
+
+        if server_number is None:
+            server_number = server_info_for_rcon(self).number
+        if server_number is None:
+            raise ValueError("Server number is not configured")
+
+        normalized_server_number = int(server_number)
+        status = get_vip_sync_status(normalized_server_number)
+
+        if status is not None:
+            return status
+
+        return {
+            "server_number": normalized_server_number,
+            "state": "never",
+            "trigger": None,
+            "started_at": None,
+            "completed_at": None,
+            "last_success_at": None,
+            "added": 0,
+            "removed": 0,
+            "failures": [],
+        }
+
+    def remove_unknown_vip_from_gameserver(
+        self,
+        player_id: str,
+        server_number: int | None = None,
+    ) -> dict[str, Any]:
+        """Remove one VIP only when it is still unknown to configured lists."""
+        from rcon.vip_sync_runner import synchronize_gameserver_vips
+
+        if server_number is None:
+            server_number = server_info_for_rcon(self).number
+        if server_number is None:
+            raise ValueError("Server number is not configured")
+
+        normalized_server_number = int(server_number)
+        normalized_player_id = str(player_id).strip()
+        if not normalized_player_id:
+            raise ValueError("Player ID must not be empty")
+
+        preview = synchronize_gameserver_vips(
+            server_number=normalized_server_number,
+            rcon=self,
+            dry_run=True,
+        )
+
+        if normalized_player_id not in preview.plan.unknown:
+            raise ValueError(
+                "VIP is not an unknown gameserver entry and was not removed"
+            )
+
+        removed = self.remove_vip_from_gameserver(
+            player_id=normalized_player_id,
+        )
+        if not removed:
+            raise RuntimeError("Gameserver did not remove the VIP")
+
+        refreshed = synchronize_gameserver_vips(
+            server_number=normalized_server_number,
+            rcon=self,
+            dry_run=True,
+        )
+
+        return {
+            "player_id": normalized_player_id,
+            "removed": True,
+            "plan": _serialize_vip_sync_result(refreshed)["plan"],
+        }
 
     def unblacklist_player(self, player_id: str) -> bool:
         """Expires all blacklists of a player and unbans them from all servers.

@@ -32,6 +32,7 @@ def synchronize_gameserver_vips(
     rcon: VipRconClient | None = None,
     timestamp: datetime | None = None,
     dry_run: bool = True,
+    trigger: str = "manual",
 ) -> VipSyncRunResult:
     """Read, plan and optionally apply VIP synchronization."""
     if rcon is None:
@@ -39,17 +40,45 @@ def synchronize_gameserver_vips(
 
         rcon = get_rcon_api()
 
-    gameserver_vips = read_gameserver_vips(rcon)
-    plan = build_database_vip_sync_plan(
-        gameserver_vips=gameserver_vips,
-        server_number=server_number,
-        timestamp=timestamp,
-    )
-    execution = execute_vip_sync_plan(
-        plan=plan,
-        rcon=rcon,
-        dry_run=dry_run,
-    )
+    if not dry_run:
+        from rcon.vip_sync_status import (
+            record_vip_sync_completed,
+            record_vip_sync_failed,
+            record_vip_sync_started,
+        )
+
+        record_vip_sync_started(
+            server_number=server_number,
+            trigger=trigger,
+        )
+
+    try:
+        gameserver_vips = read_gameserver_vips(rcon)
+        plan = build_database_vip_sync_plan(
+            gameserver_vips=gameserver_vips,
+            server_number=server_number,
+            timestamp=timestamp,
+        )
+        execution = execute_vip_sync_plan(
+            plan=plan,
+            rcon=rcon,
+            dry_run=dry_run,
+        )
+    except Exception as exc:
+        if not dry_run:
+            record_vip_sync_failed(
+                server_number=server_number,
+                trigger=trigger,
+                error=exc,
+            )
+        raise
+
+    if not dry_run:
+        record_vip_sync_completed(
+            server_number=server_number,
+            trigger=trigger,
+            execution=execution,
+        )
 
     return VipSyncRunResult(
         plan=plan,

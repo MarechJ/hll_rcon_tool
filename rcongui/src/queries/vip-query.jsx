@@ -7,7 +7,9 @@ export const vipQueryKeys = {
   add: [{ queryIdentifier: "add_vip" }],
   remove: [{ queryIdentifier: "remove_vip" }],
   syncPlan: [{ queryIdentifier: "get_vip_sync_plan" }],
+  syncStatus: [{ queryIdentifier: "get_vip_sync_status" }],
   synchronize: [{ queryIdentifier: "synchronize_vip_lists" }],
+  removeUnknown: [{ queryIdentifier: "remove_unknown_vip_from_gameserver" }],
 };
 
 export const vipQueryOptions = {
@@ -24,6 +26,16 @@ export const vipQueryOptions = {
           throwRouteError: false,
         }),
       enabled: false,
+      retry: false,
+    }),
+  syncStatus: () =>
+    queryOptions({
+      queryKey: vipQueryKeys.syncStatus,
+      queryFn: () =>
+        cmd.GET_VIP_SYNC_STATUS({
+          throwRouteError: false,
+        }),
+      refetchInterval: 10000,
       retry: false,
     }),
 };
@@ -50,6 +62,14 @@ export const vipMutationOptions = {
     mutationFn: () =>
       cmd.SYNCHRONIZE_VIP_LISTS({
         payload: {},
+        throwRouteError: false,
+      }),
+  },
+  removeUnknown: {
+    mutationKey: vipQueryKeys.removeUnknown,
+    mutationFn: ({ player_id }) =>
+      cmd.REMOVE_UNKNOWN_VIP_FROM_GAMESERVER({
+        payload: { player_id },
         throwRouteError: false,
       }),
   },
