@@ -9,6 +9,8 @@ export function getVariantWidth(variant) {
       return "1.25em";
     case "short":
       return "4em";
+    case "unit":
+      return "12ch";
     case "time":
       return "16ch";
     case "name":
@@ -42,6 +44,8 @@ export function getVariantMinWidth(variant) {
       return "1.25em";
     case "short":
       return "4em";
+    case "unit":
+      return "12ch";
     case "time":
       return "16ch";
     case "name":
