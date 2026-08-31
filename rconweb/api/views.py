@@ -18,7 +18,6 @@ from django.http import (
     HttpResponseNotAllowed,
 )
 from django.views.decorators.csrf import csrf_exempt
-from rconweb.settings import TAG_VERSION
 
 from rcon.api_commands import get_rcon_api
 from rcon.commands import HLLCommandFailedError
@@ -34,6 +33,7 @@ from rcon.types import (
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.utils import InvalidKeysConfigurationError
 from rcon.utils import MapsHistory
+from rconweb.settings import TAG_VERSION
 
 from .audit_log import auto_record_audit, record_audit
 from .auth import AUTHORIZATION, RconJsonResponse, api_response, login_required
