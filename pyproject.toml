@@ -55,4 +55,5 @@ dev = [
     "ruff==0.15.18",
     "fakeredis==2.37.1",
     "pre-commit>=4.6.2",
+    "pytest-cov>=7.1.0",
 ]
