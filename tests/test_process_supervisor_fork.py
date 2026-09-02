@@ -9,7 +9,11 @@ os.environ.setdefault("HLL_MAINTENANCE_CONTAINER", "1")
 os.environ.setdefault("SERVER_NUMBER", "1")
 
 from rcon.process_supervisor.config import ProgramConfig
-from rcon.process_supervisor.preload import PRELOAD_MODULES, ensure_forkserver, fork_enabled
+from rcon.process_supervisor.preload import (
+    PRELOAD_MODULES,
+    ensure_forkserver,
+    fork_enabled,
+)
 from rcon.process_supervisor.process import ForkedChild, ManagedProcess
 from rcon.process_supervisor.registry import command_extra, worker_argv
 
@@ -47,7 +51,7 @@ def test_fork_enabled_false_on_windows(monkeypatch):
 
 
 def test_ensure_forkserver_caches_context(monkeypatch):
-    import rcon.process_supervisor.preload as preload
+    from rcon.process_supervisor import preload
 
     monkeypatch.setattr(preload, "_FORKSERVER_CONTEXT", None)
     ctx = mock.Mock(name="forkserver")

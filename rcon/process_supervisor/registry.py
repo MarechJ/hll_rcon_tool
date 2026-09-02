@@ -5,11 +5,6 @@ from __future__ import annotations
 import sys
 
 from rcon.process_supervisor.config import ProgramConfig
-from rcon.process_supervisor.programs import (
-    LOG_LOOP_HOOK_MODULES,
-    _parse_log_recorder_args,
-    ensure_log_loop_hooks,
-)
 
 
 def has_adapter(name: str) -> bool:

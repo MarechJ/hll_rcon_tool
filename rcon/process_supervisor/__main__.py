@@ -37,7 +37,9 @@ def main(argv: list[str] | None = None) -> int:
             level=logging.INFO,
             format="[%(asctime)s][%(levelname)s] %(name)s | %(message)s",
         )
-        logging.error("Configuration file not found: %s", args.config)
+        logging.getLogger(__name__).error(
+            "Configuration file not found: %s", args.config
+        )
         return 1
 
     config = load_config(args.config)

@@ -26,7 +26,6 @@ def main(argv: list[str] | None = None) -> int:
     name, extra = _parse_argv(args)
 
     import rcon.settings  # noqa: F401 - configures logging from child env
-
     from rcon.models import install_unaccent
     from rcon.process_supervisor.registry import run_program
 

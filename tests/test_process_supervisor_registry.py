@@ -7,8 +7,8 @@ os.environ.setdefault("HLL_MAINTENANCE_CONTAINER", "1")
 os.environ.setdefault("SERVER_NUMBER", "1")
 
 from rcon.process_supervisor.config import ProgramConfig
+from rcon.process_supervisor.programs import _parse_log_recorder_args
 from rcon.process_supervisor.registry import (
-    _parse_log_recorder_args,
     adapter_names,
     command_extra,
     run_program,

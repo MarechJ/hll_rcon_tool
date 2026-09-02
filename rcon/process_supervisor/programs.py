@@ -134,7 +134,8 @@ def run_scoreboard() -> None:
 
     from sqlalchemy import create_engine
 
-    from rcon.scoreboard import Base, run as scoreboard_run
+    from rcon.scoreboard import Base
+    from rcon.scoreboard import run as scoreboard_run
 
     volume_path = scoreboard_pathlib.Path("/scoreboard_db")
     if not volume_path.exists():

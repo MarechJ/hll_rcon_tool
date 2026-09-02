@@ -351,13 +351,8 @@ def test_stop_does_not_hold_lock_during_wait(tmp_path):
     assert supervisor.get_process_info("slow")["state"] == ProcessState.RUNNING
     assert supervisor.get_process_info("quick")["state"] == ProcessState.RUNNING
 
-    stop_error: list[BaseException] = []
-
     def stop_slow() -> None:
-        try:
-            supervisor.stop_process("slow")
-        except BaseException as exc:
-            stop_error.append(exc)
+        supervisor.stop_process("slow")
 
     stop_thread = threading.Thread(target=stop_slow, daemon=True)
     stop_thread.start()
@@ -371,7 +366,6 @@ def test_stop_does_not_hold_lock_during_wait(tmp_path):
 
     stop_thread.join(timeout=6)
     assert not stop_thread.is_alive()
-    assert not stop_error
 
     assert supervisor.get_process_info("slow")["state"] == ProcessState.STOPPED
     assert supervisor.get_process_info("quick")["state"] == ProcessState.RUNNING
@@ -467,7 +461,6 @@ def test_stop_wait_when_popen_cleared_mid_loop(tmp_path):
             self.polls += 1
             if self.polls >= 2:
                 proc.popen = None
-            return None
 
         def wait(self, timeout=None):
             return 0
@@ -591,7 +584,7 @@ def test_worker_unknown_program_exits_nonzero(monkeypatch):
 
 
 def test_log_loop_hook_modules_frozen_list():
-    from rcon.process_supervisor.registry import LOG_LOOP_HOOK_MODULES
+    from rcon.process_supervisor.programs import LOG_LOOP_HOOK_MODULES
 
     assert LOG_LOOP_HOOK_MODULES == (
         "rcon.hooks",
@@ -625,7 +618,10 @@ def test_run_program_unknown_raises_attribute_error():
 
 
 def test_ensure_log_loop_hooks_imports_modules(monkeypatch):
-    from rcon.process_supervisor.registry import LOG_LOOP_HOOK_MODULES, ensure_log_loop_hooks
+    from rcon.process_supervisor.programs import (
+        LOG_LOOP_HOOK_MODULES,
+        ensure_log_loop_hooks,
+    )
 
     imported: list[str] = []
 

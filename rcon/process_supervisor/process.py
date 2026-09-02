@@ -18,7 +18,7 @@ from rcon.process_supervisor.registry import (
     ini_command_looks_like_python,
     worker_argv,
 )
-from rcon.process_supervisor.states import ProcessState, STATENAME
+from rcon.process_supervisor.states import STATENAME, ProcessState
 from rcon.process_supervisor.worker.fork_child import fork_main
 
 logger = logging.getLogger(__name__)
@@ -89,7 +89,6 @@ class ManagedProcess:
     spawn_time: float = 0.0
     retries_remaining: int = field(init=False)
     manual_stop: bool = False
-    _log_handle: object | None = None
     _backoff_until: float = 0.0
 
     def __post_init__(self) -> None:
@@ -150,15 +149,15 @@ class ManagedProcess:
                     self.config.command,
                 )
             if extra is None or not fork_enabled():
-                self._log_handle = open(self.log_file, "ab", buffering=0)
-                self.popen = subprocess.Popen(
-                    worker_argv(self.config),
-                    cwd=self.config.directory,
-                    env=child_env,
-                    stdout=self._log_handle,
-                    stderr=subprocess.STDOUT,
-                    start_new_session=True,
-                )
+                with self.log_file.open("ab", buffering=0) as log_handle:
+                    self.popen = subprocess.Popen(
+                        worker_argv(self.config),
+                        cwd=self.config.directory,
+                        env=child_env,
+                        stdout=log_handle,
+                        stderr=subprocess.STDOUT,
+                        start_new_session=True,
+                    )
             else:
                 ctx = ensure_forkserver()
                 proc = ctx.Process(
@@ -178,7 +177,6 @@ class ManagedProcess:
             self.spawnerr = str(exc)
             logger.error("Failed to spawn '%s': %s", self.config.name, exc)
             self.state = ProcessState.BACKOFF
-            self._close_log_handle()
             return
 
         self.pid = self.popen.pid
@@ -379,12 +377,3 @@ class ManagedProcess:
         self.stop_time = int(time.time())
         self.pid = 0
         self.popen = None
-        self._close_log_handle()
-
-    def _close_log_handle(self) -> None:
-        if self._log_handle is not None:
-            try:
-                self._log_handle.close()
-            except OSError:
-                pass
-            self._log_handle = None

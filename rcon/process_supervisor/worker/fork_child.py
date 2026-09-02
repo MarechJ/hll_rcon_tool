@@ -49,7 +49,6 @@ def fork_main(
             os.chdir(directory)
 
         import rcon.settings  # noqa: F401
-
         from rcon.models import install_unaccent
 
         install_unaccent()
