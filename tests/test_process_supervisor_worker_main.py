@@ -15,7 +15,10 @@ def test_parse_argv_requires_name():
 
 
 def test_parse_argv_with_separator():
-    assert _parse_argv(["log_recorder", "--", "-i", "10"]) == ("log_recorder", ["-i", "10"])
+    assert _parse_argv(["log_recorder", "--", "-i", "10"]) == (
+        "log_recorder",
+        ["-i", "10"],
+    )
 
 
 def test_parse_argv_without_separator():

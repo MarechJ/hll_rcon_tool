@@ -75,7 +75,9 @@ def test_cron_still_uses_popen_with_ini_command(tmp_path, monkeypatch):
         environment={"LOGGING_FILENAME": "cron.log"},
         startsecs=0,
     )
-    process = ManagedProcess(config=config, base_environ={"LOGGING_PATH": str(tmp_path)})
+    process = ManagedProcess(
+        config=config, base_environ={"LOGGING_PATH": str(tmp_path)}
+    )
     popen_mock = mock.Mock(pid=456)
     ctor = mock.Mock(return_value=popen_mock)
     warning = mock.Mock()
@@ -95,7 +97,9 @@ def test_python_ini_without_adapter_warns_and_execs_ini(tmp_path, monkeypatch):
         environment={"LOGGING_FILENAME": "custom_loop.log"},
         startsecs=0,
     )
-    process = ManagedProcess(config=config, base_environ={"LOGGING_PATH": str(tmp_path)})
+    process = ManagedProcess(
+        config=config, base_environ={"LOGGING_PATH": str(tmp_path)}
+    )
     popen_mock = mock.Mock(pid=789)
     ctor = mock.Mock(return_value=popen_mock)
     warning = mock.Mock()
@@ -117,7 +121,9 @@ def test_registered_spawn_uses_fork_when_enabled(tmp_path, monkeypatch):
         environment={"LOGGING_FILENAME": "broadcasts.log"},
         startsecs=0,
     )
-    process = ManagedProcess(config=config, base_environ={"LOGGING_PATH": str(tmp_path)})
+    process = ManagedProcess(
+        config=config, base_environ={"LOGGING_PATH": str(tmp_path)}
+    )
     monkeypatch.setattr("rcon.process_supervisor.process.fork_enabled", lambda: True)
 
     proc_instance = mock.Mock()
@@ -125,7 +131,9 @@ def test_registered_spawn_uses_fork_when_enabled(tmp_path, monkeypatch):
     proc_instance.exitcode = None
     process_class = mock.Mock(return_value=proc_instance)
     ctx = mock.Mock(Process=process_class)
-    monkeypatch.setattr("rcon.process_supervisor.process.ensure_forkserver", lambda: ctx)
+    monkeypatch.setattr(
+        "rcon.process_supervisor.process.ensure_forkserver", lambda: ctx
+    )
 
     popen_ctor = mock.Mock()
     monkeypatch.setattr("rcon.process_supervisor.process.subprocess.Popen", popen_ctor)
@@ -147,7 +155,9 @@ def test_registered_spawn_uses_popen_when_fork_disabled(tmp_path, monkeypatch):
         environment={"LOGGING_FILENAME": "log_recorder.log"},
         startsecs=0,
     )
-    process = ManagedProcess(config=config, base_environ={"LOGGING_PATH": str(tmp_path)})
+    process = ManagedProcess(
+        config=config, base_environ={"LOGGING_PATH": str(tmp_path)}
+    )
     monkeypatch.setattr("rcon.process_supervisor.process.fork_enabled", lambda: False)
 
     popen_mock = mock.Mock(pid=321)
@@ -168,7 +178,9 @@ def test_fork_main_sets_env_and_runs_program(monkeypatch):
     monkeypatch.setattr(fork_child.os, "open", lambda *_a, **_k: 99)
     monkeypatch.setattr(fork_child.os, "dup2", lambda *_a, **_k: None)
     monkeypatch.setattr(fork_child.os, "close", lambda *_a, **_k: None)
-    monkeypatch.setattr(fork_child.os, "_exit", lambda code: (_ for _ in ()).throw(SystemExit(code)))
+    monkeypatch.setattr(
+        fork_child.os, "_exit", lambda code: (_ for _ in ()).throw(SystemExit(code))
+    )
 
     install = mock.Mock()
     monkeypatch.setattr("rcon.models.install_unaccent", install)
@@ -209,7 +221,9 @@ def test_fork_main_chdirs_and_maps_systemexit_codes(monkeypatch):
         "rcon.process_supervisor.registry.run_program",
         mock.Mock(side_effect=lambda *_: raise_exit(None)),
     )
-    monkeypatch.setattr(fork_child.os, "_exit", lambda code: (_ for _ in ()).throw(SystemExit(code)))
+    monkeypatch.setattr(
+        fork_child.os, "_exit", lambda code: (_ for _ in ()).throw(SystemExit(code))
+    )
     with pytest.raises(SystemExit) as none_code:
         fork_child.fork_main("broadcasts", [], env, "/tmp/demo.log", "/tmp")
     assert none_code.value.code == 0
@@ -248,7 +262,9 @@ def test_fork_main_unhandled_exception_exits_one(monkeypatch):
         "rcon.process_supervisor.registry.run_program",
         mock.Mock(side_effect=RuntimeError("boom")),
     )
-    monkeypatch.setattr(fork_child.os, "_exit", lambda code: (_ for _ in ()).throw(SystemExit(code)))
+    monkeypatch.setattr(
+        fork_child.os, "_exit", lambda code: (_ for _ in ()).throw(SystemExit(code))
+    )
 
     with pytest.raises(SystemExit) as exc:
         fork_child.fork_main("broadcasts", [], env, "/tmp/demo.log", None)

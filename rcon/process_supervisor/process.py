@@ -99,7 +99,11 @@ class ManagedProcess:
         return STATENAME[self.state]
 
     def is_running(self) -> bool:
-        return self.state in {ProcessState.STARTING, ProcessState.RUNNING, ProcessState.STOPPING}
+        return self.state in {
+            ProcessState.STARTING,
+            ProcessState.RUNNING,
+            ProcessState.STOPPING,
+        }
 
     def process_info(self, now: int | None = None) -> dict[str, object]:
         current = now if now is not None else int(time.time())

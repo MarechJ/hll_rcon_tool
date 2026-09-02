@@ -147,9 +147,7 @@ def run_scoreboard() -> None:
     db_path = scoreboard_pathlib.Path("/scoreboard_db") / scoreboard_pathlib.Path(
         "./scoreboard.db"
     )
-    engine = create_engine(
-        f"sqlite:///file:{db_path}?mode=rwc&uri=true", echo=False
-    )
+    engine = create_engine(f"sqlite:///file:{db_path}?mode=rwc&uri=true", echo=False)
     try:
         logger.info("Attempting to start scoreboard")
         Base.metadata.create_all(engine)

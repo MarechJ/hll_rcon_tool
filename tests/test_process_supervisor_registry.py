@@ -141,7 +141,9 @@ def test_run_program_log_stream_failure_exits(monkeypatch):
 
 def test_run_program_log_recorder(monkeypatch):
     recorder = mock.Mock()
-    monkeypatch.setattr("rcon.logs.recorder.LogRecorder", mock.Mock(return_value=recorder))
+    monkeypatch.setattr(
+        "rcon.logs.recorder.LogRecorder", mock.Mock(return_value=recorder)
+    )
     run_program("log_recorder", ["-i", "20", "-n"])
     recorder.run.assert_called_once_with(run_immediately=True)
 

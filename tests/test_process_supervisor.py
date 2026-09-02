@@ -28,11 +28,16 @@ from rcon.process_supervisor.states import ProcessState
 
 
 def test_interpolate_env_variable():
-    assert interpolate("foo_%(ENV_SERVER_NUMBER)s.log", {"SERVER_NUMBER": "3"}) == "foo_3.log"
+    assert (
+        interpolate("foo_%(ENV_SERVER_NUMBER)s.log", {"SERVER_NUMBER": "3"})
+        == "foo_3.log"
+    )
 
 
 def test_parse_environment():
-    assert parse_environment("LOGGING_FILENAME=a.log,HLL_DB_DISABLE_CONNECTION_POOL=1") == {
+    assert parse_environment(
+        "LOGGING_FILENAME=a.log,HLL_DB_DISABLE_CONNECTION_POOL=1"
+    ) == {
         "LOGGING_FILENAME": "a.log",
         "HLL_DB_DISABLE_CONNECTION_POOL": "1",
     }
@@ -154,7 +159,9 @@ def test_arbiter_logs_spawn_and_stop_to_logfile(tmp_path):
     assert "Stopped process 'demo' via RPC" in contents
 
 
-def _make_supervisor(tmp_path: Path, command: list[str], **overrides) -> ProcessSupervisor:
+def _make_supervisor(
+    tmp_path: Path, command: list[str], **overrides
+) -> ProcessSupervisor:
     program = {
         "name": "demo",
         "command": command,
@@ -661,7 +668,9 @@ def test_supervisor_main_starts_and_shuts_down(tmp_path, monkeypatch):
 
     monkeypatch.setattr(supervisor_main, "load_config", lambda _path: supervisor.config)
     monkeypatch.setattr(supervisor_main, "configure_logging", lambda _config: None)
-    monkeypatch.setattr(supervisor_main, "ProcessSupervisor", lambda _config: supervisor)
+    monkeypatch.setattr(
+        supervisor_main, "ProcessSupervisor", lambda _config: supervisor
+    )
     monkeypatch.setattr(
         supervisor_main,
         "start_rpc_server",
@@ -740,7 +749,9 @@ def test_registered_program_spawns_worker_argv(tmp_path, monkeypatch):
         environment={"LOGGING_FILENAME": "broadcasts.log"},
         startsecs=0,
     )
-    process = ManagedProcess(config=config, base_environ={"LOGGING_PATH": str(tmp_path)})
+    process = ManagedProcess(
+        config=config, base_environ={"LOGGING_PATH": str(tmp_path)}
+    )
     process.spawn()
     assert process.popen is not None
     assert process.popen.args == worker_argv(config)
@@ -756,7 +767,9 @@ def test_spawn_failure_sets_backoff(tmp_path, monkeypatch):
         environment={"LOGGING_FILENAME": "demo.log"},
         startsecs=0,
     )
-    process = ManagedProcess(config=config, base_environ={"LOGGING_PATH": str(tmp_path)})
+    process = ManagedProcess(
+        config=config, base_environ={"LOGGING_PATH": str(tmp_path)}
+    )
     monkeypatch.setattr(
         "rcon.process_supervisor.process.subprocess.Popen",
         mock.Mock(side_effect=OSError("spawn failed")),
@@ -775,7 +788,9 @@ def test_start_already_running_raises(tmp_path):
         environment={"LOGGING_FILENAME": "demo.log"},
         startsecs=0,
     )
-    process = ManagedProcess(config=config, base_environ={"LOGGING_PATH": str(tmp_path)})
+    process = ManagedProcess(
+        config=config, base_environ={"LOGGING_PATH": str(tmp_path)}
+    )
     process.spawn()
     with pytest.raises(RuntimeError, match="already started"):
         process.start()
@@ -791,7 +806,9 @@ def test_process_info_descriptions(tmp_path):
         environment={"LOGGING_FILENAME": "demo.log"},
         startsecs=0,
     )
-    process = ManagedProcess(config=config, base_environ={"LOGGING_PATH": str(tmp_path)})
+    process = ManagedProcess(
+        config=config, base_environ={"LOGGING_PATH": str(tmp_path)}
+    )
     assert process.process_info()["description"] == "Not started"
 
     process.state = ProcessState.FATAL
@@ -812,7 +829,9 @@ def test_autorestart_always_and_never(tmp_path):
         autorestart=True,
         startsecs=0,
     )
-    process = ManagedProcess(config=always, base_environ={"LOGGING_PATH": str(tmp_path)})
+    process = ManagedProcess(
+        config=always, base_environ={"LOGGING_PATH": str(tmp_path)}
+    )
     assert process._should_autorestart(0) is True
 
     never = ProgramConfig(
@@ -835,7 +854,9 @@ def test_backoff_manual_stop_becomes_stopped(tmp_path):
         environment={"LOGGING_FILENAME": "demo.log"},
         startsecs=0,
     )
-    process = ManagedProcess(config=config, base_environ={"LOGGING_PATH": str(tmp_path)})
+    process = ManagedProcess(
+        config=config, base_environ={"LOGGING_PATH": str(tmp_path)}
+    )
     process.state = ProcessState.BACKOFF
     process.manual_stop = True
     process._retry_from_backoff()

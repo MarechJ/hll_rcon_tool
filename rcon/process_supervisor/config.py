@@ -72,7 +72,9 @@ class ProgramConfig:
     stopwaitsecs: int = 10
     directory: str | None = None
 
-    def child_environ(self, base_environ: dict[str, str] | None = None) -> dict[str, str]:
+    def child_environ(
+        self, base_environ: dict[str, str] | None = None
+    ) -> dict[str, str]:
         env = dict(base_environ if base_environ is not None else os.environ)
         env.update(self.environment)
         return env
@@ -115,7 +117,9 @@ def _split_command(command: str) -> list[str]:
     return shlex.split(command, posix=True)
 
 
-def load_config(path: str | Path, environ: dict[str, str] | None = None) -> SupervisorConfig:
+def load_config(
+    path: str | Path, environ: dict[str, str] | None = None
+) -> SupervisorConfig:
     """Load program definitions from a supervisord INI file."""
 
     env = dict(environ if environ is not None else os.environ)

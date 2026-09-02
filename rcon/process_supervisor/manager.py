@@ -22,9 +22,13 @@ logger = logging.getLogger(__name__)
 
 
 class ProcessSupervisor:
-    def __init__(self, config: SupervisorConfig, base_environ: dict[str, str] | None = None):
+    def __init__(
+        self, config: SupervisorConfig, base_environ: dict[str, str] | None = None
+    ):
         self.config = config
-        self.base_environ = dict(base_environ if base_environ is not None else os.environ)
+        self.base_environ = dict(
+            base_environ if base_environ is not None else os.environ
+        )
         self._lock = threading.RLock()
         self._processes: dict[str, ManagedProcess] = {
             name: ManagedProcess(program, self.base_environ)

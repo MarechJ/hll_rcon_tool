@@ -10,7 +10,9 @@ logger = logging.getLogger(__name__)
 
 def _parse_argv(argv: list[str]) -> tuple[str, list[str]]:
     if not argv:
-        raise SystemExit("usage: python -m rcon.process_supervisor.worker NAME [-- extra...]")
+        raise SystemExit(
+            "usage: python -m rcon.process_supervisor.worker NAME [-- extra...]"
+        )
 
     if "--" in argv:
         separator = argv.index("--")
