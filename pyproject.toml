@@ -32,7 +32,7 @@ dependencies = [
     "rq==2.11.0",
     "rq-scheduler==0.14.0",
     "sentry-sdk[django]==2.59.0",
-    "simplejson==4.1.1",
+    "simplejson==4.1.2",
     "sqlalchemy==2.0.49",
     "steam==1.4.4",
     "supervisor>=4.3.0",
