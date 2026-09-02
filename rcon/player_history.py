@@ -65,16 +65,12 @@ def get_player_profile(player_id: str, nb_sessions: int):
         return player.to_dict(limit_sessions=nb_sessions)
 
 
-def get_player_profile_by_player_ids(sess, player_ids):
+def get_player_soldier_info_by_ids(sess, player_ids):
+    """Lightweight lookup for stats code — only soldier + steaminfo are ever read."""
     return (
         sess.query(PlayerID)
         .filter(PlayerID.player_id.in_(player_ids))
         .options(
-            selectinload(PlayerID.names),
-            selectinload(PlayerID.received_actions),
-            selectinload(PlayerID.blacklists),
-            selectinload(PlayerID.flags),
-            selectinload(PlayerID.watchlist),
             selectinload(PlayerID.steaminfo),
             selectinload(PlayerID.soldier),
         )
@@ -90,18 +86,30 @@ def get_player_profile_by_id(id, nb_sessions):
         return player.to_dict(limit_sessions=nb_sessions)
 
 
-def _get_profiles(sess, player_ids, nb_sessions=0):
+def _get_profiles(sess, player_ids):
+    """Full profile rows — result is passed through PlayerID.to_dict()."""
     return (
         sess.query(PlayerID)
         .filter(PlayerID.player_id.in_(player_ids))
-        .options(selectinload(PlayerID.soldier))
+        # All relations used in PlayerID.to_dict should be loaded here to avoid lazyloading
+        .options(
+            selectinload(PlayerID.names),
+            selectinload(PlayerID.sessions),
+            selectinload(PlayerID.received_actions),
+            selectinload(PlayerID.blacklists),
+            selectinload(PlayerID.flags),
+            selectinload(PlayerID.watchlist),
+            selectinload(PlayerID.steaminfo),
+            selectinload(PlayerID.soldier),
+            selectinload(PlayerID.account),
+        )
         .all()
     )
 
 
 def get_profiles(player_ids, nb_sessions=1):
     with enter_session() as sess:
-        players = _get_profiles(sess, player_ids, nb_sessions)
+        players = _get_profiles(sess, player_ids)
 
         return [p.to_dict(limit_sessions=nb_sessions) for p in players]
 
@@ -273,6 +281,8 @@ def get_players_by_appearance(
                 selectinload(PlayerID.flags),
                 selectinload(PlayerID.watchlist),
                 selectinload(PlayerID.steaminfo),
+                selectinload(PlayerID.soldier),
+                selectinload(PlayerID.account),
             )
             .all()
         )
