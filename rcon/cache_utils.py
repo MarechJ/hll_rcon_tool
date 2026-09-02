@@ -158,7 +158,7 @@ class RedisCached:
                 return val
 
             try:
-                self.red.setex(key, self.ttl_seconds, self.serializer(val))
+                self.red.set(key, self.serializer(val), ex=self.ttl_seconds)
                 # logger.debug("Cache SET for %s", self.key(*args, **kwargs))
             except redis.exceptions.RedisError:
                 logger.exception("Unable to set cache")
