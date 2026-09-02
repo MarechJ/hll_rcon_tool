@@ -57,6 +57,11 @@ export const automods = [
     command: "auto_mod_solo_tank_config",
     name: "No Solo Tank Auto Mod",
   },
+  {
+    path: "/settings/automods/team-balance",
+    command: "auto_mod_team_balance_config",
+    name: "Team Balance Auto Mod",
+  },
 ];
 
 export const others = [
