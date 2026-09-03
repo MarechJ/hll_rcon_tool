@@ -5,76 +5,97 @@ set -x
 
 env
 # Only run the database migrations in the maintenance container
-if [ "$1" == 'maintenance' ]
-then
-  alembic upgrade head
-  # Convert old stye player IDs to new style (md5 hash)
-  # TODO: we can eventually remove this in a few releases once old installs have updated their game servers and CRCON
-  # SERVER_NUMBER is mandatory and not otherwise set in the maintenance container; only want it to run once
-  # LOGGING_PATH and LOGGING_FILENAME need to be passed to get it to log to the directory that is bind mounted
-  SERVER_NUMBER=1 LOGGING_PATH=/logs/ LOGGING_FILENAME=startup.log python -m rcon.cli merge_duplicate_player_ids
-  SERVER_NUMBER=1 LOGGING_PATH=/logs/ LOGGING_FILENAME=startup.log python -m rcon.cli convert_win_player_ids
-  # Upgrade durable Redis structures before any server-specific container starts.
-  # The command discovers every populated logical Redis database so multi-server
-  # installations are migrated in the same maintenance pass.
-  SERVER_NUMBER=1 LOGGING_PATH=/logs/ LOGGING_FILENAME=startup.log python -m rcon.cache_migrations
-  cd rconweb
-  ./manage.py makemigrations --no-input
-  ./manage.py migrate --noinput
-  # Create this file after migrations which is how Docker determines the container is healthy
-  touch maintenance-container-healthy
-  # Keep the container running until it's explicitly created again
-  sleep infinity
+if [ "$1" == 'maintenance' ]; then
+    alembic upgrade head
+    # Convert old stye player IDs to new style (md5 hash)
+    # TODO: we can eventually remove this in a few releases once old installs have updated their game servers and CRCON
+    # SERVER_NUMBER is mandatory and not otherwise set in the maintenance container; only want it to run once
+    # LOGGING_PATH and LOGGING_FILENAME need to be passed to get it to log to the directory that is bind mounted
+    SERVER_NUMBER=1 LOGGING_PATH=/logs/ LOGGING_FILENAME=startup.log python -m rcon.cli merge_duplicate_player_ids
+    SERVER_NUMBER=1 LOGGING_PATH=/logs/ LOGGING_FILENAME=startup.log python -m rcon.cli convert_win_player_ids
+    # Upgrade durable Redis structures before any server-specific container starts.
+    # The command discovers every populated logical Redis database so multi-server
+    # installations are migrated in the same maintenance pass.
+    SERVER_NUMBER=1 LOGGING_PATH=/logs/ LOGGING_FILENAME=startup.log python -m rcon.cache_migrations
+    cd rconweb
+    ./manage.py makemigrations --no-input
+    ./manage.py migrate --noinput
+    # Create this file after migrations which is how Docker determines the container is healthy
+    touch /code/maintenance-container-healthy
+    # Keep the container running until it's explicitly created again
+    sleep infinity
 fi
 
 # Check if we're in the webhook_service container
-if [ "$1" == 'webhook_service' ]
-then
-  LOGGING_PATH=/logs/ LOGGING_FILENAME=webhook_service.log python -m rcon.webhook_service
+if [ "$1" == 'webhook_service' ]; then
+    exec env LOGGING_PATH=/logs/ LOGGING_FILENAME=webhook_service.log python -m rcon.webhook_service
 fi
 
 # Check if we're in a backend container
-if [ "$1" == 'web' ]
-then
-  # If the database password isn't set, bail early
-  if [ "$HLL_DB_PASSWORD" == '' ]
-  then
-      echo "HLL_DB_PASSWORD not set"
-      exit 0
-  fi
-  if [ "$HLL_HOST" == '' ]
-  then
-      exit 0
-  fi
+if [ "$1" == 'web' ]; then
+    # If the database password isn't set, bail early
+    if [ "$HLL_DB_PASSWORD" == '' ]; then
+        echo "HLL_DB_PASSWORD not set"
+        exit 1
+    fi
+    if [ "$HLL_HOST" == '' ]; then
+        echo "HLL_HOST not set"
+        exit 1
+    fi
 
-  python -m rcon.user_config.seed_db
-  SERVER_NUMBER=${SERVER_NUMBER} LOGGING_PATH=/logs/ LOGGING_FILENAME=api_${SERVER_NUMBER}.log python -m rcon.cli remove_orphaned_map_ids
-  SERVER_NUMBER=${SERVER_NUMBER} LOGGING_PATH=/logs/ LOGGING_FILENAME=api_${SERVER_NUMBER}.log python -m rcon.cli clear_maps_cache
-  ./manage.py register_api
-  cd rconweb
-  ./manage.py collectstatic --noinput
-  # If DONT_SEED_ADMIN_USER is not set to any value
-  if [[ -z "$DONT_SEED_ADMIN_USER" ]]
-  then
-    echo "from django.contrib.auth.models import User; User.objects.create_superuser('admin', 'admin@example.com', 'admin') if not User.objects.filter(username='admin').first() else None" | python manage.py shell
-  fi
-  export LOGGING_FILENAME=api_$SERVER_NUMBER.log
-  daphne -b 0.0.0.0 -p 8001 rconweb.asgi:application &
-  # Successfully running gunicorn will create the pid file which is how Docker determines the container is healthy
-  gunicorn --preload --pid gunicorn.pid -w $NB_API_WORKERS -k gthread --threads $NB_API_THREADS -t 120 -b 0.0.0.0 rconweb.wsgi
-  cd ..
-  ./manage.py unregister_api
-else
-if [ "$1" == 'debug' ]
-then
-  tail -f manage.py
+    python -m rcon.user_config.seed_db
+    SERVER_NUMBER="${SERVER_NUMBER}" LOGGING_PATH=/logs/ LOGGING_FILENAME="api_${SERVER_NUMBER}.log" python -m rcon.cli remove_orphaned_map_ids
+    SERVER_NUMBER="${SERVER_NUMBER}" LOGGING_PATH=/logs/ LOGGING_FILENAME="api_${SERVER_NUMBER}.log" python -m rcon.cli clear_maps_cache
+    ./manage.py register_api
+    cd rconweb
+    ./manage.py collectstatic --noinput
+    # If DONT_SEED_ADMIN_USER is not set to any value
+    if [[ -z "$DONT_SEED_ADMIN_USER" ]]; then
+        echo "from django.contrib.auth.models import User; User.objects.create_superuser('admin', 'admin@example.com', 'admin') if not User.objects.filter(username='admin').first() else None" | python manage.py shell
+    fi
+    export LOGGING_FILENAME="api_${SERVER_NUMBER}.log"
+
+    daphne -b 0.0.0.0 -p 8001 rconweb.asgi:application &
+    DAPHNE_PID=$!
+
+    gunicorn --preload -w "${NB_API_WORKERS:-1}" -k gthread \
+        --threads "${NB_API_THREADS:-8}" -t 120 -b 0.0.0.0 rconweb.wsgi &
+    GUNICORN_PID=$!
+
+    cleanup() {
+        trap - TERM INT EXIT
+        rm -f /code/backend-container-healthy
+        kill -TERM "$GUNICORN_PID" "$DAPHNE_PID" 2>/dev/null || true
+        wait "$GUNICORN_PID" "$DAPHNE_PID" 2>/dev/null || true
+    }
+    trap cleanup TERM INT EXIT
+
+    # Give both processes a moment to actually come up before declaring healthy
+    sleep 2
+    if kill -0 "$DAPHNE_PID" 2>/dev/null && kill -0 "$GUNICORN_PID" 2>/dev/null; then
+        touch /code/backend-container-healthy
+    else
+        echo "daphne or gunicorn failed to start" >&2
+    fi
+
+    wait -n "$DAPHNE_PID" "$GUNICORN_PID" || true
+
+    cleanup
+    cd ..
+    ./manage.py unregister_api
 fi
-if [ "$HLL_HOST" == '' ]
-then
-    exit 0
-fi
-  sleep 10
-  env >> /etc/environment
-  export LOGGING_FILENAME=supervisor_$SERVER_NUMBER.log
-  supervisord -c /config/supervisord_$SERVER_NUMBER.conf || supervisord -c /config/supervisord.conf
+
+if [ "$1" == 'supervisor' ]; then
+    if [ "$HLL_HOST" == '' ]; then
+        echo "HLL_HOST not set"
+        exit 1
+    fi
+    sleep 10
+    env >> /etc/environment
+    export LOGGING_FILENAME="supervisor_${SERVER_NUMBER}.log"
+    if [ -f "/config/supervisord_${SERVER_NUMBER}.conf" ]; then
+        exec supervisord -c "/config/supervisord_${SERVER_NUMBER}.conf"
+    else
+        exec supervisord -c /config/supervisord.conf
+    fi
 fi
