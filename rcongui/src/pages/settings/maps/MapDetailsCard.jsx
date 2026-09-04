@@ -19,7 +19,12 @@ export function MapDetailsCard({ mapLayer }) {
         component="img"
         src={getMapLayerImageSrc(mapLayer)}
         alt={mapLayer.map.pretty_name}
-        sx={{ width: 48, height: 32, borderRadius: 1, objectFit: "cover" }}
+        sx={{
+          width: 48,
+          height: 32,
+          borderRadius: 1,
+          objectFit: "cover",
+        }}
       />
       <Stack direction={"row"} flexWrap={"wrap"} alignItems={"center"}>
         <Typography
@@ -88,7 +93,12 @@ export function MapDetailsCardCompact({ mapLayer }) {
         component="img"
         src={getMapLayerImageSrc(mapLayer)}
         alt={mapLayer.map.pretty_name}
-        sx={{ width: 48, height: 32, borderRadius: 1, objectFit: "cover" }}
+        sx={{
+          width: 48,
+          height: 32,
+          borderRadius: 1,
+          objectFit: "cover",
+        }}
       />
       <Stack sx={{ textTransform: "uppercase" }}>
         <Typography fontWeight="medium" fontSize={12}>

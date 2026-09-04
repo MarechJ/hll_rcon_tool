@@ -5,16 +5,11 @@ const TableAddons = ({ children }) => {
     <Box>
       <Stack direction="row" spacing={1} alignItems="center">
         <ButtonGroup
-          style={{ marginLeft: 0 }}
-          sx={{
-            "& .MuiButton-root": {
-              borderRadius: 0,
-            },
-          }}
+          sx={{ ml: 0, "& .MuiButton-root": { borderRadius: "0 !important" } }}
           variant="outlined"
           size="small"
         >
-            {children}
+          {children}
         </ButtonGroup>
       </Stack>
     </Box>

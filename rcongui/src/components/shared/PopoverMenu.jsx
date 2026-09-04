@@ -5,18 +5,14 @@ import Box from "@mui/material/Box";
 import { Fragment, useState } from "react";
 
 const StyledPopper = styled(Popper)(({ theme }) => ({
-  border: `1px solid #e1e4e8`,
-  boxShadow: `0 8px 24px rgba(149, 157, 165, 0.2)`,
+  overflow: "hidden",
+  border: `1px solid ${theme.palette.divider}`,
+  boxShadow: theme.shadows[4],
   backgroundColor: theme.palette.background.paper,
   borderRadius: 0,
   width: 300,
   zIndex: theme.zIndex.modal,
   fontSize: 12,
-  ...theme.applyStyles("dark", {
-    border: `1px solid #30363d`,
-    boxShadow: `0 8px 24px rgb(1, 4, 9)`,
-    color: "#c9d1d9",
-  }),
 }));
 
 export const PopoverMenu = ({
@@ -69,12 +65,9 @@ export const PopoverMenu = ({
           <div>
             <Box
               sx={(t) => ({
-                borderBottom: `1px solid #30363d`,
+                borderBottom: `1px solid ${t.palette.divider}`,
                 padding: "8px 10px",
                 fontWeight: 600,
-                ...t.applyStyles("light", {
-                  borderBottom: `1px solid #eaecef`,
-                }),
               })}
             >
               {description}

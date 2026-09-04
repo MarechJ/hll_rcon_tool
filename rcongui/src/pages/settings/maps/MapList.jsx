@@ -1,7 +1,7 @@
 import {
   Box,
+  Button,
   Divider,
-  IconButton,
   Stack,
   Tooltip,
   Typography,
@@ -134,24 +134,28 @@ export const MapWhitelistList = ({
               }}
             >
               <Tooltip title="Reset changes">
-                <IconButton
+                <Button
                   variant="outlined"
                   size={"small"}
-                  color="error"
+                  color="warning"
+                  aria-label="Reset changes"
+                  sx={{ minWidth: 30, px: 0.75 }}
                   onClick={onReset}
                 >
                   <ReplayIcon />
-                </IconButton>
+                </Button>
               </Tooltip>
               <Tooltip title="Clear">
-                <IconButton
+                <Button
                   variant="outlined"
                   size={"small"}
                   color="error"
+                  aria-label="Clear"
+                  sx={{ minWidth: 30, px: 0.75 }}
                   onClick={onClear}
                 >
                   <DeleteIcon />
-                </IconButton>
+                </Button>
               </Tooltip>
               <CopyToClipboardButton
                 iconOnly={true}
@@ -171,15 +175,17 @@ export const MapWhitelistList = ({
                 size={"small"}
               />
               <Tooltip title="Save">
-                <IconButton
+                <Button
                   variant="contained"
                   size={"small"}
                   color="primary"
+                  aria-label="Save"
+                  sx={{ minWidth: 30, px: 0.75 }}
                   disabled={isDisabled}
                   onClick={onSave}
                 >
                   <SaveIcon />
-                </IconButton>
+                </Button>
               </Tooltip>
             </Box>
           </Stack>

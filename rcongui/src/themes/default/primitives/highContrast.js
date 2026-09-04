@@ -1,442 +1,271 @@
-import { createTheme, alpha } from '@mui/material/styles';
+import { alpha, createTheme } from "@mui/material/styles";
 
 const defaultTheme = createTheme();
 
-const customShadows = [...defaultTheme.shadows];
-
+// High Contrast is an accessibility scheme, not a grayscale novelty theme.
+// Semantic hues remain distinct while every foreground/background pairing is
+// intentionally separated by a strong luminance difference.
 export const brand = {
-  50: 'hsl(0, 0%, 100%)',    // Pure white
-  100: 'hsl(0, 0%, 96%)',
-  200: 'hsl(0, 0%, 92%)',
-  300: 'hsl(0, 0%, 87%)',
-  400: 'hsl(0, 0%, 82%)',
-  500: 'hsl(0, 0%, 77%)',    // Main variant
-  600: 'hsl(0, 0%, 72%)',
-  700: 'hsl(0, 0%, 67%)',
-  800: 'hsl(0, 0%, 62%)',
-  900: 'hsl(0, 0%, 57%)',
+  50: "#eef6ff",
+  100: "#d8ebff",
+  200: "#b5d9ff",
+  300: "#86c0ff",
+  400: "#55a5ff",
+  500: "#167fe5",
+  600: "#0057b8",
+  700: "#003f8f",
+  800: "#002d69",
+  900: "#001d47",
 };
 
 export const gray = {
-  50: 'hsl(0, 0%, 100%)',    // Pure white
-  100: 'hsl(0, 0%, 95%)',    // Very light gray
-  200: 'hsl(0, 0%, 90%)',    // Light gray
-  300: 'hsl(0, 0%, 80%)',    // Medium light gray
-  400: 'hsl(0, 0%, 70%)',    // Medium gray
-  500: 'hsl(0, 0%, 60%)',    // Medium dark gray
-  600: 'hsl(0, 0%, 40%)',    // Dark gray
-  700: 'hsl(0, 0%, 20%)',    // Very dark gray
-  800: 'hsl(0, 0%, 10%)',    // Almost black
-  900: 'hsl(0, 0%, 0%)',     // Pure black
+  50: "#ffffff",
+  100: "#f2f2f2",
+  200: "#dddddd",
+  300: "#c2c2c2",
+  400: "#929292",
+  500: "#6b6b6b",
+  600: "#494949",
+  700: "#2d2d2d",
+  800: "#151515",
+  900: "#000000",
 };
 
 export const green = {
-  50: 'hsl(0, 0%, 96%)',     // Nearly white
-  100: 'hsl(0, 0%, 92%)',
-  200: 'hsl(0, 0%, 87%)',
-  300: 'hsl(0, 0%, 82%)',
-  400: 'hsl(0, 0%, 77%)',
-  500: 'hsl(0, 0%, 72%)',    // Main variant
-  600: 'hsl(0, 0%, 67%)',
-  700: 'hsl(0, 0%, 62%)',
-  800: 'hsl(0, 0%, 57%)',
-  900: 'hsl(0, 0%, 52%)',
-};
-
-export const red = {
-  50: 'hsl(0, 0%, 98%)',     // Nearly white
-  100: 'hsl(0, 0%, 95%)',
-  200: 'hsl(0, 0%, 90%)',
-  300: 'hsl(0, 0%, 85%)',
-  400: 'hsl(0, 0%, 80%)',
-  500: 'hsl(0, 0%, 75%)',    // Main variant
-  600: 'hsl(0, 0%, 70%)',
-  700: 'hsl(0, 0%, 65%)',
-  800: 'hsl(0, 0%, 60%)',
-  900: 'hsl(0, 0%, 55%)',
+  50: "#e9f8ed",
+  100: "#c9efd3",
+  200: "#99dfa9",
+  300: "#72ff9f",
+  400: "#22c962",
+  500: "#007a35",
+  600: "#00622a",
+  700: "#004b20",
+  800: "#003817",
+  900: "#00260f",
 };
 
 export const orange = {
-  50: 'hsl(0, 0%, 97%)',     // Nearly white
-  100: 'hsl(0, 0%, 93%)',
-  200: 'hsl(0, 0%, 88%)',
-  300: 'hsl(0, 0%, 83%)',
-  400: 'hsl(0, 0%, 78%)',
-  500: 'hsl(0, 0%, 73%)',    // Main variant
-  600: 'hsl(0, 0%, 68%)',
-  700: 'hsl(0, 0%, 63%)',
-  800: 'hsl(0, 0%, 58%)',
-  900: 'hsl(0, 0%, 53%)',
+  50: "#fff6df",
+  100: "#ffe6a3",
+  200: "#ffd261",
+  300: "#ffcf4a",
+  400: "#e99b00",
+  500: "#9a5700",
+  600: "#814600",
+  700: "#683700",
+  800: "#4f2900",
+  900: "#351b00",
 };
 
-export const yellow = {
-  50: 'hsl(0, 0%, 99%)',     // Nearly white
-  100: 'hsl(0, 0%, 94%)',
-  200: 'hsl(0, 0%, 89%)',
-  300: 'hsl(0, 0%, 84%)',
-  400: 'hsl(0, 0%, 79%)',
-  500: 'hsl(0, 0%, 74%)',    // Main variant
-  600: 'hsl(0, 0%, 69%)',
-  700: 'hsl(0, 0%, 64%)',
-  800: 'hsl(0, 0%, 59%)',
-  900: 'hsl(0, 0%, 54%)',
+export const red = {
+  50: "#ffedf0",
+  100: "#ffd2da",
+  200: "#ffacba",
+  300: "#ff8fa3",
+  400: "#eb4867",
+  500: "#b00020",
+  600: "#93001a",
+  700: "#760015",
+  800: "#590010",
+  900: "#3d000b",
 };
 
-export const blue = {
-  50: 'hsl(0, 0%, 95%)',     // Nearly white
-  100: 'hsl(0, 0%, 91%)',
-  200: 'hsl(0, 0%, 86%)',
-  300: 'hsl(0, 0%, 81%)',
-  400: 'hsl(0, 0%, 76%)',
-  500: 'hsl(0, 0%, 71%)',    // Main variant
-  600: 'hsl(0, 0%, 66%)',
-  700: 'hsl(0, 0%, 61%)',
-  800: 'hsl(0, 0%, 56%)',
-  900: 'hsl(0, 0%, 51%)',
+const lightPalette = {
+  common: { black: "#000000", white: "#ffffff" },
+  primary: {
+    light: brand[500],
+    main: brand[700],
+    dark: brand[900],
+    contrastText: "#ffffff",
+  },
+  secondary: {
+    light: "#7844a8",
+    main: "#52227d",
+    dark: "#351050",
+    contrastText: "#ffffff",
+  },
+  info: {
+    light: brand[500],
+    main: brand[700],
+    dark: brand[900],
+    contrastText: "#ffffff",
+  },
+  warning: {
+    light: orange[400],
+    main: orange[600],
+    dark: orange[900],
+    contrastText: "#ffffff",
+  },
+  error: {
+    light: red[400],
+    main: red[500],
+    dark: red[800],
+    contrastText: "#ffffff",
+  },
+  success: {
+    light: green[400],
+    main: green[600],
+    dark: green[900],
+    contrastText: "#ffffff",
+  },
+  grey: gray,
+  divider: "#000000",
+  background: { default: "#ffffff", paper: "#f2f2f2" },
+  text: {
+    primary: "#000000",
+    secondary: "#2d2d2d",
+    disabled: "#494949",
+    warning: orange[700],
+    red: red[700],
+    orange: orange[700],
+    green: green[700],
+    blue: brand[800],
+  },
+  action: {
+    active: "#000000",
+    hover: alpha("#000000", 0.12),
+    selected: alpha("#003f8f", 0.18),
+    disabled: "#494949",
+    disabledBackground: "#dddddd",
+    focus: alpha("#003f8f", 0.25),
+  },
+  baseShadow: "0 0 0 1px #000000, 0 5px 16px rgba(0,0,0,.22)",
 };
 
-export const getDesignTokens = (mode) => {
-  customShadows[1] =
-    mode === 'dark'
-      ? 'hsla(220, 30%, 5%, 0.7) 0px 4px 16px 0px, hsla(220, 25%, 10%, 0.8) 0px 8px 16px -5px'
-      : 'hsla(220, 30%, 5%, 0.07) 0px 4px 16px 0px, hsla(220, 25%, 10%, 0.07) 0px 8px 16px -5px';
-
-  return {
-    palette: {
-      mode,
-      primary: {
-        light: brand[200],
-        main: brand[400],
-        dark: brand[700],
-        contrastText: brand[50],
-        ...(mode === 'dark' && {
-          contrastText: brand[50],
-          light: brand[300],
-          main: brand[400],
-          dark: brand[700],
-        }),
-      },
-      info: {
-        light: brand[100],
-        main: brand[300],
-        dark: brand[600],
-        contrastText: gray[50],
-        ...(mode === 'dark' && {
-          contrastText: brand[300],
-          light: brand[500],
-          main: brand[700],
-          dark: brand[900],
-        }),
-      },
-      warning: {
-        light: orange[300],
-        main: orange[400],
-        dark: orange[800],
-        ...(mode === 'dark' && {
-          light: orange[400],
-          main: orange[500],
-          dark: orange[700],
-        }),
-      },
-      error: {
-        light: red[300],
-        main: red[400],
-        dark: red[800],
-        ...(mode === 'dark' && {
-          light: red[400],
-          main: red[500],
-          dark: red[700],
-        }),
-      },
-      success: {
-        light: green[300],
-        main: green[400],
-        dark: green[800],
-        ...(mode === 'dark' && {
-          light: green[400],
-          main: green[500],
-          dark: green[700],
-        }),
-      },
-      grey: {
-        ...gray,
-      },
-      divider: mode === 'dark' ? alpha(gray[700], 0.6) : alpha(gray[300], 0.4),
-      background: {
-        default: 'hsl(0, 0%, 99%)',
-        paper: 'hsl(220, 35%, 97%)',
-        ...(mode === 'dark' && { default: gray[900], paper: 'hsl(220, 30%, 7%)' }),
-      },
-      text: {
-        primary: gray[800],
-        secondary: gray[600],
-        warning: orange[400],
-        ...(mode === 'dark' && {
-          primary: 'hsl(0, 0%, 100%)',
-          secondary: gray[400],
-        }),
-      },
-      action: {
-        hover: alpha(gray[200], 0.2),
-        selected: `${alpha(gray[200], 0.3)}`,
-        ...(mode === 'dark' && {
-          hover: alpha(gray[600], 0.2),
-          selected: alpha(gray[600], 0.3),
-        }),
-      },
-    },
-    typography: {
-      fontFamily: 'Inter, sans-serif',
-      h1: {
-        fontSize: defaultTheme.typography.pxToRem(48),
-        fontWeight: 600,
-        lineHeight: 1.2,
-        letterSpacing: -0.5,
-      },
-      h2: {
-        fontSize: defaultTheme.typography.pxToRem(36),
-        fontWeight: 600,
-        lineHeight: 1.2,
-      },
-      h3: {
-        fontSize: defaultTheme.typography.pxToRem(30),
-        lineHeight: 1.2,
-      },
-      h4: {
-        fontSize: defaultTheme.typography.pxToRem(24),
-        fontWeight: 600,
-        lineHeight: 1.5,
-      },
-      h5: {
-        fontSize: defaultTheme.typography.pxToRem(20),
-        fontWeight: 600,
-      },
-      h6: {
-        fontSize: defaultTheme.typography.pxToRem(18),
-        fontWeight: 600,
-      },
-      subtitle1: {
-        fontSize: defaultTheme.typography.pxToRem(18),
-      },
-      subtitle2: {
-        fontSize: defaultTheme.typography.pxToRem(14),
-        fontWeight: 500,
-      },
-      body1: {
-        fontSize: defaultTheme.typography.pxToRem(14),
-      },
-      body2: {
-        fontSize: defaultTheme.typography.pxToRem(14),
-        fontWeight: 400,
-      },
-      caption: {
-        fontSize: defaultTheme.typography.pxToRem(12),
-        fontWeight: 400,
-      },
-    },
-    shape: {
-      borderRadius: 8,
-    },
-    shadows: customShadows,
-  };
+const darkPalette = {
+  common: { black: "#000000", white: "#ffffff" },
+  primary: {
+    light: brand[200],
+    main: brand[300],
+    dark: brand[500],
+    contrastText: "#000000",
+  },
+  secondary: {
+    light: "#f0c4ff",
+    main: "#dfa0ff",
+    dark: "#b869e0",
+    contrastText: "#000000",
+  },
+  info: {
+    light: "#b9f3ff",
+    main: "#71e5ff",
+    dark: "#2cb9d4",
+    contrastText: "#000000",
+  },
+  warning: {
+    light: "#ffe79a",
+    main: "#ffcf4a",
+    dark: "#d69b00",
+    contrastText: "#000000",
+  },
+  error: {
+    light: "#ffc0cb",
+    main: red[300],
+    dark: red[400],
+    contrastText: "#000000",
+  },
+  success: {
+    light: "#bdffcf",
+    main: green[300],
+    dark: green[400],
+    contrastText: "#000000",
+  },
+  grey: gray,
+  divider: "#ffffff",
+  background: { default: "#000000", paper: "#151515" },
+  text: {
+    primary: "#ffffff",
+    secondary: "#f2f2f2",
+    disabled: "#c2c2c2",
+    warning: "#ffcf4a",
+    red: "#ff8fa3",
+    orange: "#ffcf4a",
+    green: "#72ff9f",
+    blue: "#86c0ff",
+  },
+  action: {
+    active: "#ffffff",
+    hover: alpha("#ffffff", 0.16),
+    selected: alpha("#86c0ff", 0.24),
+    disabled: "#c2c2c2",
+    disabledBackground: "#2d2d2d",
+    focus: alpha("#86c0ff", 0.34),
+  },
+  baseShadow: "0 0 0 1px #ffffff, 0 6px 20px rgba(255,255,255,.14)",
 };
 
 export const colorSchemes = {
-  light: {
-    palette: {
-      common: {
-        black: '#000',
-        white: '#fff',
-      },
-      primary: {
-        light: brand[400],     // Darker light shade
-        main: brand[600],      // Darker main color
-        dark: brand[800],      // Darker shade
-        contrastText: '#fff',
-      },
-      secondary: {
-        light: gray[500],      // Darker light gray
-        main: gray[700],       // Darker medium gray
-        dark: gray[900],       // Darkest gray
-        contrastText: '#fff',
-      },
-      info: {
-        light: brand[400],     // Darker light blue
-        main: brand[600],      // Darker medium blue
-        dark: brand[800],      // Darker blue
-        contrastText: '#fff',
-      },
-      warning: {
-        light: orange[400],    // Darker light orange
-        main: orange[600],     // Darker medium orange
-        dark: orange[800],     // Darker orange
-        contrastText: '#000',
-      },
-      error: {
-        light: red[400],       // Darker light red
-        main: red[600],        // Darker medium red
-        dark: red[800],        // Darker red
-        contrastText: '#fff',
-      },
-      success: {
-        light: green[400],     // Darker light green
-        main: green[600],      // Darker medium green
-        dark: green[800],      // Darker green
-        contrastText: '#fff',
-      },
-      grey: gray,
-      divider: alpha(gray[400], 0.4),
-      background: {
-        default: gray[50],     // Very light gray
-        paper: gray[100],      // Light gray
-      },
-      text: {
-        primary: gray[900],    // Very dark gray
-        secondary: gray[700],  // Dark gray
-        warning: orange[600],  // Darker warning text
-        red: red[900],
-        orange: orange[900],
-        green: green[900],
-        blue: blue[900],
-      },
-      action: {
-        active: alpha(gray[900], 0.7),
-        hover: alpha(gray[200], 0.3),
-        selected: alpha(gray[300], 0.4),
-        disabled: alpha(gray[900], 0.4),
-        disabledBackground: alpha(gray[200], 0.5),
-        focus: alpha(gray[300], 0.4),
-      },
-    },
-  },
-  dark: {
-    palette: {
-      common: {
-        black: '#000',
-        white: '#fff',
-      },
-      primary: {
-        light: brand[300],
-        main: brand[400],
-        dark: brand[600],
-        contrastText: '#fff',
-      },
-      secondary: {
-        light: gray[300],
-        main: gray[400],
-        dark: gray[600],
-        contrastText: '#000',
-      },
-      info: {
-        light: brand[300],
-        main: brand[400],
-        dark: brand[600],
-        contrastText: '#fff',
-      },
-      warning: {
-        light: orange[300],
-        main: orange[400],
-        dark: orange[600],
-        contrastText: '#000',
-      },
-      error: {
-        light: red[300],
-        main: red[400],
-        dark: red[600],
-        contrastText: '#fff',
-      },
-      success: {
-        light: green[300],
-        main: green[400],
-        dark: green[600],
-        contrastText: '#000',
-      },
-      grey: gray,
-      divider: alpha(gray[400], 0.3),
-      background: {
-        default: gray[900],
-        paper: gray[800],
-      },
-      text: {
-        primary: '#fff',
-        secondary: gray[200],
-        disabled: alpha('#fff', 0.5),
-        red: red[400],
-        orange: orange[400],
-        green: green[400],
-        blue: blue[400],
-      },
-      action: {
-        active: alpha('#fff', 0.8),
-        hover: alpha(gray[600], 0.3),
-        selected: alpha(gray[600], 0.4),
-        disabled: alpha('#fff', 0.3),
-        disabledBackground: alpha(gray[800], 0.5),
-        focus: alpha(gray[600], 0.4),
-      },
-    },
-  },
+  light: { palette: lightPalette },
+  dark: { palette: darkPalette },
 };
 
 export const typography = {
-  fontFamily: 'Inter, sans-serif',
+  fontFamily: "Montserrat, Roboto, Arial, sans-serif",
   h1: {
     fontSize: defaultTheme.typography.pxToRem(48),
-    fontWeight: 600,
-    lineHeight: 1.2,
-    letterSpacing: -0.5,
+    fontWeight: 700,
+    lineHeight: 1.15,
   },
   h2: {
     fontSize: defaultTheme.typography.pxToRem(36),
-    fontWeight: 600,
+    fontWeight: 700,
     lineHeight: 1.2,
   },
   h3: {
     fontSize: defaultTheme.typography.pxToRem(30),
+    fontWeight: 700,
     lineHeight: 1.2,
   },
   h4: {
     fontSize: defaultTheme.typography.pxToRem(24),
-    fontWeight: 600,
-    lineHeight: 1.5,
+    fontWeight: 700,
+    lineHeight: 1.35,
   },
-  h5: {
-    fontSize: defaultTheme.typography.pxToRem(20),
-    fontWeight: 600,
-  },
-  h6: {
-    fontSize: defaultTheme.typography.pxToRem(18),
-    fontWeight: 600,
-  },
-  subtitle1: {
-    fontSize: defaultTheme.typography.pxToRem(18),
-  },
-  subtitle2: {
-    fontSize: defaultTheme.typography.pxToRem(14),
-    fontWeight: 500,
-  },
-  body1: {
-    fontSize: defaultTheme.typography.pxToRem(16),
-    lineHeight: 1.6,
-  },
-  body2: {
-    fontSize: defaultTheme.typography.pxToRem(16),
-    lineHeight: 1.6,
-  },
-  caption: {
-    fontSize: defaultTheme.typography.pxToRem(12),
-    fontWeight: 400,
-  },
+  h5: { fontSize: defaultTheme.typography.pxToRem(20), fontWeight: 700 },
+  h6: { fontSize: defaultTheme.typography.pxToRem(18), fontWeight: 700 },
+  subtitle1: { fontSize: defaultTheme.typography.pxToRem(18), fontWeight: 600 },
+  subtitle2: { fontSize: defaultTheme.typography.pxToRem(14), fontWeight: 700 },
+  body1: { fontSize: defaultTheme.typography.pxToRem(16), lineHeight: 1.65 },
+  body2: { fontSize: defaultTheme.typography.pxToRem(16), lineHeight: 1.65 },
+  caption: { fontSize: defaultTheme.typography.pxToRem(13), fontWeight: 500 },
+  button: { fontWeight: 700, letterSpacing: 0.2 },
 };
 
-export const shape = {
-  borderRadius: 8,
-};
+export const shape = { borderRadius: 2 };
 
-const defaultShadows = [
-  'none',
-  'var(--template-palette-baseShadow)',
+export const shadows = [
+  "none",
+  "var(--template-palette-baseShadow)",
   ...defaultTheme.shadows.slice(2),
 ];
 
-export const shadows = defaultShadows;
+export const components = {
+  MuiCssBaseline: {
+    styleOverrides: (theme) => ({
+      "body :focus-visible": {
+        outline: `3px solid ${theme.palette.primary.main}`,
+        outlineOffset: 3,
+      },
+      "body .Mui-disabled": { opacity: 1 },
+      "body .MuiButton-root.Mui-disabled, body .MuiIconButton-root.Mui-disabled":
+        {
+          color: theme.palette.action.disabled,
+          backgroundColor: theme.palette.action.disabledBackground,
+          border: `1px dashed ${theme.palette.text.primary}`,
+        },
+      "body .MuiInputBase-root.Mui-disabled": {
+        color: theme.palette.text.disabled,
+        WebkitTextFillColor: theme.palette.text.disabled,
+      },
+      "body a": { textDecorationThickness: "2px" },
+      "@media (prefers-reduced-motion: reduce)": {
+        "*, *::before, *::after": {
+          scrollBehavior: "auto !important",
+          transitionDuration: "0.01ms !important",
+          animationDuration: "0.01ms !important",
+          animationIterationCount: "1 !important",
+        },
+      },
+    }),
+  },
+};

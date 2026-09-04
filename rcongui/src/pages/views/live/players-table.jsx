@@ -13,15 +13,23 @@ import TableColumnSelection from "@/components/table/TableColumnSelection";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import { usePlayersTableStore } from "@/stores/table-config";
 
-const PlayersTable = ({ table, teamData, selectedPlayers, onColumnVisibilityChange, isFetching }) => {
+const PlayersTable = ({
+  table,
+  teamData,
+  selectedPlayers,
+  onColumnVisibilityChange,
+  isFetching,
+}) => {
   const [tableConfigDrawerOpen, setTableConfigDrawerOpen] = useState(false);
-  
+
   const tableConfig = usePlayersTableStore();
-  const setConfig = usePlayersTableStore(state => state.setConfig);
-  const setExpandedView = usePlayersTableStore(state => state.setExpandedView);
+  const setConfig = usePlayersTableStore((state) => state.setConfig);
+  const setExpandedView = usePlayersTableStore(
+    (state) => state.setExpandedView
+  );
 
   const handleTableConfigClick = () => {
-    setTableConfigDrawerOpen(prev => !prev);
+    setTableConfigDrawerOpen((prev) => !prev);
   };
 
   return (
@@ -54,7 +62,11 @@ const PlayersTable = ({ table, teamData, selectedPlayers, onColumnVisibilityChan
             }}
           />
           <Box sx={{ flexGrow: 1 }} />
-          <Divider flexItem orientation="vertical" sx={{ marginLeft: 0, marginRight: 0 }} />
+          <Divider
+            flexItem
+            orientation="vertical"
+            sx={{ marginLeft: 0, marginRight: 0 }}
+          />
           <IconButton
             size="small"
             aria-label={tableConfig.expandedView ? "Collapse" : "Expand"}
@@ -74,7 +86,10 @@ const PlayersTable = ({ table, teamData, selectedPlayers, onColumnVisibilityChan
               <UnfoldMoreIcon sx={{ fontSize: "1rem" }} />
             )}
           </IconButton>
-          <TableColumnSelection table={table} onColumnVisibilityChange={onColumnVisibilityChange} />
+          <TableColumnSelection
+            table={table}
+            onColumnVisibilityChange={onColumnVisibilityChange}
+          />
           <IconButton
             size="small"
             aria-label="Table settings"

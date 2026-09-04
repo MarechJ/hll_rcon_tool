@@ -294,8 +294,16 @@ const AuditLogsPage = () => {
         </Stack>
       </Form>
 
-      <Stack component="section" id="audit-logs-section" spacing={1} direction={{ xs: "column", lg: "row" }}>
-        <Stack direction="column" sx={{ width: "100%", order: { xs: 2, lg: 1 } }}>
+      <Stack
+        component="section"
+        id="audit-logs-section"
+        spacing={1}
+        direction={{ xs: "column", lg: "row" }}
+      >
+        <Stack
+          direction="column"
+          sx={{ width: "100%", order: { xs: 2, lg: 1 } }}
+        >
           <TableToolbar>
             <TablePageSizeSelect
               pageSize={page_size}
@@ -312,11 +320,7 @@ const AuditLogsPage = () => {
               size="small"
               variant="contained"
               color="primary"
-              sx={{
-                "&.MuiIconButton-root": {
-                  borderRadius: 0,
-                },
-              }}
+              sx={{ "&.MuiIconButton-root": { borderRadius: 0 } }}
               onClick={handleDownload}
             >
               <DownloadIcon />
@@ -341,8 +345,7 @@ const AuditLogsPage = () => {
           sx={{
             order: { xs: 1, lg: 2 },
             maxWidth: 700,
-            width: (theme) =>
-              theme.breakpoints.down("lg") ? "100%" : "auto",
+            width: (theme) => (theme.breakpoints.down("lg") ? "100%" : "auto"),
           }}
         >
           <AuditLogCard

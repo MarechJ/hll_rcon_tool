@@ -10,7 +10,7 @@ import { generatePlayerActions } from "@/features/player-action/actions";
 import { TablePagination } from "@/components/table/TablePagination";
 import { TableToolbar } from "@/components/table/TableToolbar";
 import { Box, Typography } from "@mui/material";
-import {downloadGame} from "@/features/download-game";
+import { downloadGame } from "@/features/download-game";
 import { useGameDetailsTableStore } from "@/stores/table-config";
 
 const renderSubComponent = ({ row }) => {
@@ -59,17 +59,17 @@ const renderSubComponent = ({ row }) => {
   );
 
   const players = Object.entries(row.original.most_killed || {}).map(
-      ([player, kills]) => (
-          <Box
-              key={player}
-              sx={{ display: "flex", justifyContent: "space-between", py: 0.5 }}
-          >
-              <Typography variant="body2">{player}:</Typography>
-              <Typography variant="body2" sx={{ ml: 2 }}>
-                  {kills}
-              </Typography>
-          </Box>
-      )
+    ([player, kills]) => (
+      <Box
+        key={player}
+        sx={{ display: "flex", justifyContent: "space-between", py: 0.5 }}
+      >
+        <Typography variant="body2">{player}:</Typography>
+        <Typography variant="body2" sx={{ ml: 2 }}>
+          {kills}
+        </Typography>
+      </Box>
+    )
   );
 
   const weapons = Object.entries(row.original.weapons || {}).map(
@@ -115,7 +115,12 @@ const renderSubComponent = ({ row }) => {
   );
 
   return (
-    <Box sx={{ p: 2, maxWidth: { xs: (theme) => theme.breakpoints.values.sm, lg: "100%" } }}>
+    <Box
+      sx={{
+        p: 2,
+        maxWidth: { xs: (theme) => theme.breakpoints.values.sm, lg: "100%" },
+      }}
+    >
       <Box
         sx={{
           display: "grid",
@@ -130,13 +135,17 @@ const renderSubComponent = ({ row }) => {
       </Box>
 
       <Box
-        sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" }, gap: { xs: 2, md: 4 } }}
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
+          gap: { xs: 2, md: 4 },
+        }}
       >
         <Box>
-            <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                Kills by Player
-            </Typography>
-            {players}
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            Kills by Player
+          </Typography>
+          {players}
         </Box>
         <Box>
           <Typography variant="subtitle2" sx={{ mb: 1 }}>
@@ -164,10 +173,10 @@ const renderSubComponent = ({ row }) => {
 const PlayersTable = ({ table, selectedPlayers }) => {
   const [tableConfigDrawerOpen, setTableConfigDrawerOpen] = useState(false);
   const tableConfig = useGameDetailsTableStore();
-  const setConfig = useGameDetailsTableStore(state => state.setConfig);
+  const setConfig = useGameDetailsTableStore((state) => state.setConfig);
 
   const handleTableConfigClick = () => {
-    setTableConfigDrawerOpen(prev => !prev);
+    setTableConfigDrawerOpen((prev) => !prev);
   };
 
   return (
