@@ -35,7 +35,7 @@
     "offense": "进攻",
     "defense": "防守",
     "support": "支援",
-    "utility": "工���",
+    "utility": "工具",
     "diff": "差值",
     "status": "状态"
   },
@@ -83,7 +83,7 @@
     },
     "streak": {
       "title": "{{player}}：{{title}}",
-      "ended": "{{player}}：连杀在{{count}}次击杀时终结",
+      "ended": "{{player}}：连杀在{{count}}次击杀时被终结",
       "titles": {
         "unstoppable": "势不可挡",
         "impressive": "令人惊叹",
@@ -101,12 +101,12 @@
       "support": "支援兵",
       "heavymachinegunner": "机枪兵",
       "antitank": "反坦克兵",
-      "engineer": "工程兵",
+      "engineer": "工兵",
       "officer": "军官",
       "sniper": "狙击手",
       "crewman": "坦克乘员",
       "tankcommander": "坦克指挥官",
-      "armycommander": "总指挥",
+      "armycommander": "指挥官",
       "artilleryobserver": "炮兵观察员",
       "operator": "操作员",
       "gunner": "炮手"
@@ -115,7 +115,7 @@
   "score": {
     "killstreak": "连杀",
     "deathstreak": "连死",
-    "teamkills": "友军伤害",
+    "teamkills": "友军击杀",
     "k/d": "击杀/死亡比"
   },
   "downloadTable": "下载表格"
