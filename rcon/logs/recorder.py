@@ -37,7 +37,7 @@ class LogRecorder:
         last_log = (
             sess.query(LogLine)
             .filter(LogLine.server == self.server_id)
-            .order_by(desc(LogLine.event_time))
+            .order_by(desc(LogLine.event_time), desc(LogLine.id))
             .limit(1)
             .one_or_none()
         )
@@ -58,6 +58,7 @@ class LogRecorder:
                 )
                 break
             to_store.append(log)
+        to_store.reverse()
         return to_store
 
     def _collect_player_ids(
