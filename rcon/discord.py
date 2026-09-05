@@ -130,7 +130,9 @@ def send_to_discord_audit(
 
     if webhookurls is None:
         config = AuditWebhooksUserConfig.load_from_db()
-        webhookurls = [hook.url for hook in config.hooks]
+        webhook_destinations = [(hook.url, hook.thread_id) for hook in config.hooks]
+    else:
+        webhook_destinations = [(url, None) for url in webhookurls]
 
     server_config = RconServerSettingsUserConfig.load_from_db()
 
@@ -138,7 +140,7 @@ def send_to_discord_audit(
     if flatten:
         message = message.replace("\n", " ")
     logger.info("Audit: [%s] %s, %s", by, command_name, message.replace("\n", " "))
-    if not webhookurls:
+    if not webhook_destinations:
         logger.debug("No webhooks set for audit log")
         return
     try:
@@ -149,8 +151,9 @@ def send_to_discord_audit(
             DiscordWebhook(
                 url=str(url),
                 content=content,
+                thread_id=thread_id,
             )
-            for url in webhookurls
+            for url, thread_id in webhook_destinations
             if url
         ]
 
