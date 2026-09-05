@@ -28,6 +28,8 @@ import { LogActionHighlightMenu } from "@/components/table/selection/LogActionHi
 import LiveLogsTable from "@/components/live-logs/LiveLogsTable";
 import TableColumnSelection from "@/components/table/TableColumnSelection";
 import { LogTeamSelectionMenu } from "@/components/table/selection/LogTeamSelectionMenu";
+import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
+import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 
 const logActions = Object.entries(_logActions).reduce((acc, [name]) => {
   acc[name] = false;
@@ -72,8 +74,11 @@ function LogsTable({
   const [tableConfigDrawerOpen, setTableConfigDrawerOpen] = useState(false);
 
   const tableConfig = useLogsTableStore();
+  const setExpandedView = useLogsTableStore((state) => state.setExpandedView);
   const searchParams = useLogsSearchStore();
-  const setParamsFilterEnabled = useLogsSearchStore((state) => state.setEnabled);
+  const setParamsFilterEnabled = useLogsSearchStore(
+    (state) => state.setEnabled
+  );
 
   const [playerOptions, setPlayerOptions] = useState({});
 
@@ -210,10 +215,13 @@ function LogsTable({
     {}
   );
 
-  const searchQueryParamsOptions = Object.entries(logActions).reduce((acc, [name]) => {
-    acc[name] = searchParams.actions.includes(name);
-    return acc;
-  }, {});
+  const searchQueryParamsOptions = Object.entries(logActions).reduce(
+    (acc, [name]) => {
+      acc[name] = searchParams.actions.includes(name);
+      return acc;
+    },
+    {}
+  );
 
   const handleTeamSelect = (team) => {
     handleFilterChange(() => {
@@ -272,6 +280,25 @@ function LogsTable({
             orientation="vertical"
             sx={{ marginLeft: 0, marginRight: 0 }}
           />
+          <IconButton
+            size="small"
+            aria-label={
+              tableConfig.expandedView ? "Hide player IDs" : "Show player IDs"
+            }
+            aria-description={
+              tableConfig.expandedView
+                ? "Hide player IDs below log names"
+                : "Show player IDs below log names"
+            }
+            sx={{ p: 0.5, borderRadius: 0 }}
+            onClick={() => setExpandedView(!tableConfig.expandedView)}
+          >
+            {tableConfig.expandedView ? (
+              <UnfoldLessIcon sx={{ fontSize: "1rem" }} />
+            ) : (
+              <UnfoldMoreIcon sx={{ fontSize: "1rem" }} />
+            )}
+          </IconButton>
           <TableColumnSelection
             table={table}
             onColumnVisibilityChange={onColumnVisibilityChange}
@@ -286,7 +313,12 @@ function LogsTable({
             <SettingsIcon sx={{ fontSize: "1rem" }} />
           </IconButton>
         </TableToolbar>
-        <LiveLogsTable table={table} config={tableConfig} isFetching={isFetching} isLoading={isLoading} />
+        <LiveLogsTable
+          table={table}
+          config={tableConfig}
+          isFetching={isFetching}
+          isLoading={isLoading}
+        />
         <TableToolbar
           sx={{
             borderBottomWidth: "1px",
