@@ -1,5 +1,5 @@
 import re
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 import pydantic
 
@@ -19,8 +19,17 @@ class WebhookType(TypedDict):
     url: pydantic.HttpUrl
 
 
+class AuditWebhookType(TypedDict):
+    url: pydantic.HttpUrl
+    thread_id: NotRequired[str | None]
+
+
 class RawWebhookType(TypedDict):
     hooks: list[WebhookType]
+
+
+class RawAuditWebhookType(TypedDict):
+    hooks: list[AuditWebhookType]
 
 
 class RawWebhookMentionType(TypedDict):
@@ -46,6 +55,16 @@ class DiscordWebhook(pydantic.BaseModel):
     @pydantic.field_serializer("url")
     def serialize_url(self, server_url: pydantic.HttpUrl, _info):
         return str(server_url)
+
+
+class AuditDiscordWebhook(DiscordWebhook):
+    """A Discord audit webhook with an optional destination thread."""
+
+    thread_id: str | None = pydantic.Field(
+        default=None,
+        description="Discord thread ID to send audit messages to",
+        pattern=r"^\d+$",
+    )
 
 
 class DiscordMentionWebhook(DiscordWebhook):
@@ -212,8 +231,39 @@ class ChatWebhooksUserConfig(BaseWebhookUserConfig):
             set_user_config(validated_conf.NAME, validated_conf)
 
 
-class AuditWebhooksUserConfig(BaseWebhookUserConfig):
+class AuditWebhooksUserConfig(BaseUserConfig):
     NAME = "AuditWebhooksUserConfig"
+
+    hooks: list[AuditDiscordWebhook] = pydantic.Field(default_factory=list)
+
+    @classmethod
+    def save_to_db(cls, values: RawAuditWebhookType, dry_run=False) -> None:
+        key_check(
+            RawAuditWebhookType.__required_keys__,
+            RawAuditWebhookType.__optional_keys__,
+            values.keys(),
+        )
+        raw_hooks: list[AuditWebhookType] = values.get("hooks")
+        _listType(values=raw_hooks)
+
+        for obj in raw_hooks:
+            key_check(
+                AuditWebhookType.__required_keys__,
+                AuditWebhookType.__optional_keys__,
+                obj.keys(),
+            )
+
+        validated_hooks = [
+            AuditDiscordWebhook(
+                url=obj.get("url"),
+                thread_id=obj.get("thread_id"),
+            )
+            for obj in raw_hooks
+        ]
+        validated_conf = cls(hooks=validated_hooks)
+
+        if not dry_run:
+            set_user_config(validated_conf.NAME, validated_conf)
 
 
 class KillsWebhooksUserConfig(BaseWebhookUserConfig):
