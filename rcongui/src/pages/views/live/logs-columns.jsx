@@ -5,9 +5,28 @@ import { generatePlayerActions } from "@/features/player-action/actions";
 import { LogMessage } from "@/components/shared/LogMessage";
 import { getLogTeam, getTeamColor } from "@/utils/lib";
 import { Box } from "@mui/material";
+import { Stack } from "@mui/material";
 import { blue, red } from "@mui/material/colors";
+import CopyableText from "@/components/shared/CopyableText";
 
 const TIME_FORMAT = "HH:mm:ss, MMM DD";
+
+const PlayerNameWithId = ({ children, playerId }) => (
+  <Stack sx={{ textAlign: "left" }}>
+    {children}
+    <CopyableText
+      text={playerId}
+      size="0.65em"
+      sx={{
+        fontSize: "0.65em",
+        color: "text.secondary",
+        '[data-expanded-view="false"] &': {
+          display: "none",
+        },
+      }}
+    />
+  </Stack>
+);
 
 const playerNameFilter = (row, columnId, filterValue = []) => {
   // If no filter value, show all rows
@@ -98,7 +117,9 @@ export const logsColumns = [
             name: row.original.player_name_1,
           }}
           renderButton={(props) => (
-            <TextButton {...props}>{row.original.player_name_1}</TextButton>
+            <PlayerNameWithId playerId={row.original.player_id_1}>
+              <TextButton {...props}>{row.original.player_name_1}</TextButton>
+            </PlayerNameWithId>
           )}
         />
       ) : row.original.player_name_1 ? (
@@ -109,6 +130,39 @@ export const logsColumns = [
     meta: {
       variant: "action",
     },
+  },
+  {
+    header: "This Player (Colored)",
+    id: "player_name_1_colored",
+    accessorFn: (log) => log.player_name_1,
+    cell: ({ row }) => {
+      const name = row.original.player_name_1;
+      const playerId = row.original.player_id_1;
+      const color = getTeamColor(getLogTeam(row.original));
+      return name && playerId ? (
+        <ActionMenuButton
+          actions={generatePlayerActions({
+            multiAction: false,
+            onlineAction: true,
+          })}
+          withProfile
+          recipients={{ player_id: playerId, name }}
+          renderButton={(props) => (
+            <PlayerNameWithId playerId={playerId}>
+              <TextButton {...props} sx={{ color }}>
+                {name}
+              </TextButton>
+            </PlayerNameWithId>
+          )}
+        />
+      ) : name ? (
+        <Box component="span" sx={{ color }}>
+          {name}
+        </Box>
+      ) : null;
+    },
+    filterFn: playerNameFilter,
+    meta: { variant: "action" },
   },
   {
     header: "Action",
@@ -139,7 +193,9 @@ export const logsColumns = [
             name: row.original.player_name_2,
           }}
           renderButton={(props) => (
-            <TextButton {...props}>{row.original.player_name_2}</TextButton>
+            <PlayerNameWithId playerId={row.original.player_id_2}>
+              <TextButton {...props}>{row.original.player_name_2}</TextButton>
+            </PlayerNameWithId>
           )}
         />
       ) : row.original.player_name_2 ? (
@@ -151,11 +207,65 @@ export const logsColumns = [
     },
   },
   {
+    header: "That Player (Colored)",
+    id: "player_name_2_colored",
+    accessorFn: (log) => log.player_name_2,
+    filterFn: playerNameFilter,
+    cell: ({ row }) => {
+      const name = row.original.player_name_2;
+      const playerId = row.original.player_id_2;
+      const firstTeam = getLogTeam(row.original);
+      const secondTeam =
+        row.original.action === "TEAM KILL"
+          ? firstTeam
+          : firstTeam === "Axis"
+          ? "Allies"
+          : firstTeam === "Allies"
+          ? "Axis"
+          : undefined;
+      const color = getTeamColor(secondTeam);
+      return name && playerId ? (
+        <ActionMenuButton
+          actions={generatePlayerActions({
+            multiAction: false,
+            onlineAction: true,
+          })}
+          withProfile
+          recipients={{ player_id: playerId, name }}
+          renderButton={(props) => (
+            <PlayerNameWithId playerId={playerId}>
+              <TextButton {...props} sx={{ color }}>
+                {name}
+              </TextButton>
+            </PlayerNameWithId>
+          )}
+        />
+      ) : name ? (
+        <Box component="span" sx={{ color }}>
+          {name}
+        </Box>
+      ) : null;
+    },
+    meta: { variant: "name" },
+  },
+  {
+    header: "Message (Colored, No IDs)",
+    id: "message_colored",
+    accessorKey: "message",
+    cell: ({ row }) => {
+      return (
+        <LogMessage log={row.original} colored={true} include_ids={false} />
+      );
+    },
+  },
+  {
     header: "Message",
     id: "message_with_id",
     accessorKey: "message",
     cell: ({ row }) => {
-      return <LogMessage log={row.original} colored={true} include_ids = {true}/>;
+      return (
+        <LogMessage log={row.original} colored={true} include_ids={true} />
+      );
     },
   },
   {

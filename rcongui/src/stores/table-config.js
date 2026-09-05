@@ -44,6 +44,9 @@ export const useLogsTableStore = create(
       columnVisibility: {
         player_name_2: false,
         player_name_1: false,
+        player_name_2_colored: false,
+        player_name_1_colored: false,
+        message_colored: false,
         message: false,
         short_message: false,
         full_message: false,
@@ -57,6 +60,7 @@ export const useLogsTableStore = create(
       },
       actions: [],
       highlighted: false,
+      expandedView: false,
       fontSize: "small",
       density: "dense",
       pagination: {
@@ -75,6 +79,7 @@ export const useLogsTableStore = create(
       setFilters: (filters) => set({ filters }),
       setActions: (actions) => set({ actions }),
       setHighlighted: (highlighted) => set({ highlighted }),
+      setExpandedView: (expanded) => set({ expandedView: expanded }),
       setConfig: (config) => set(config),
       setPagination: (pagination) => set({ pagination }),
     }),
