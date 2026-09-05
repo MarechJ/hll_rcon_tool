@@ -76,5 +76,14 @@ fi
   sleep 10
   env >> /etc/environment
   export LOGGING_FILENAME=supervisor_$SERVER_NUMBER.log
-  supervisord -c /config/supervisord_$SERVER_NUMBER.conf || supervisord -c /config/supervisord.conf
+  case "${CRCON_USE_PROCESS_SUPERVISOR:-0}" in
+    1|true|TRUE|yes|YES|on|ON)
+      echo "Starting Python process supervisor (CRCON_USE_PROCESS_SUPERVISOR=${CRCON_USE_PROCESS_SUPERVISOR})"
+      python -m rcon.process_supervisor -c /config/supervisord_$SERVER_NUMBER.conf || python -m rcon.process_supervisor -c /config/supervisord.conf
+      ;;
+    *)
+      echo "Starting Supervisord (CRCON_USE_PROCESS_SUPERVISOR=${CRCON_USE_PROCESS_SUPERVISOR:-unset})"
+      supervisord -c /config/supervisord_$SERVER_NUMBER.conf || supervisord -c /config/supervisord.conf
+      ;;
+  esac
 fi
