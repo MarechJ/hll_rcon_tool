@@ -102,7 +102,7 @@ class DiscordWebhookHandler:
 
     @staticmethod
     def _make_hook(hooks: Iterable[DiscordWebhook] | Iterable[DiscordMentionWebhook]):
-        return [make_hook(hook.url) for hook in hooks]
+        return [make_hook(hook.url, thread_id=hook.thread_id) for hook in hooks]
 
     def create_chat_embed(self, log, allow_mentions=False) -> DiscordEmbed:
         message = log["sub_content"]
