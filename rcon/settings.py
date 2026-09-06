@@ -1,19 +1,15 @@
 import os
 import re
 import socket
+from importlib.metadata import PackageNotFoundError, version
 from logging.config import dictConfig
-from subprocess import run
 
 from rcon.types import ServerInfo
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 
 try:
-    TAG_VERSION = (
-        run(["git", "describe", "--tags"], check=False, capture_output=True)
-        .stdout.decode()
-        .strip()
-    )
-except Exception:  # noqa
+    TAG_VERSION = f"v{version('hll-rcon-tool')}"
+except PackageNotFoundError:
     TAG_VERSION = "unknown"
 
 try:
