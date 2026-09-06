@@ -71,7 +71,7 @@ class NoSoloTankAutomod:
             )
             self.red.delete(redis_key)
         else:
-            self.red.setex(redis_key, SOLO_TANK_RESET_SECS, pickle.dumps(watch_status))
+            self.red.set(redis_key, pickle.dumps(watch_status), ex=SOLO_TANK_RESET_SECS)
 
     def get_message(
         self, watch_status: WatchStatus, aplayer: PunishPlayer, method: ActionMethod
