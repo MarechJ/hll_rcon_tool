@@ -653,7 +653,7 @@ class ServerCtl:
     @_escape_params
     def add_vip(self, player_id: str, description: str) -> bool:
         return self.exchange_success(
-            "AddVip", 2, {"PlayerId": player_id, "Comment": description}
+            "AddVip", 2, {"PlayerId": player_id, "Description": description}
         )
 
     def remove_vip(self, player_id) -> bool:
