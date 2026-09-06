@@ -17,7 +17,9 @@ const PlayerNameWithId = ({ children, playerId }) => (
     <CopyableText
       text={playerId}
       size="0.65em"
+      iconSize="0.9rem"
       sx={{
+        width: "fit-content",
         fontSize: "0.65em",
         color: "text.secondary",
         '[data-expanded-view="false"] &': {
