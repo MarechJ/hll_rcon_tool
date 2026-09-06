@@ -37,19 +37,21 @@ def fork_main(
     name: str,
     extra: list[str],
     env: dict[str, str],
-    log_path: str,
+    stdio_path: str,
     directory: str | None,
 ) -> None:
     try:
         os.environ.clear()
         os.environ.update(env)
         os.setsid()
-        _redirect_stdio(log_path)
+        _redirect_stdio(stdio_path)
         if directory:
             os.chdir(directory)
 
-        import rcon.settings  # noqa: F401
         from rcon.models import install_unaccent
+        from rcon.process_supervisor.child_logging import configure_child_logging
+
+        configure_child_logging()
 
         install_unaccent()
         reset_inherited_resources()

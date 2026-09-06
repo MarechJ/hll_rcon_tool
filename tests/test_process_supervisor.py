@@ -1,4 +1,5 @@
 import importlib
+import logging
 import os
 import sys
 from unittest import mock
@@ -704,6 +705,80 @@ def test_program_config_default_log_path():
     program = ProgramConfig(name="demo", command=["/bin/true"])
     path = program.log_path({"LOGGING_PATH": "/tmp/logs"})
     assert path == Path("/tmp/logs/demo.log")
+
+
+def test_program_config_stdio_log_path():
+    program = ProgramConfig(
+        name="log_event_loop",
+        command=["/bin/true"],
+        environment={"LOGGING_FILENAME": "log_event_loop_11.log"},
+    )
+    child_env = program.child_environ({"LOGGING_PATH": "/logs"})
+    assert program.log_path(child_env) == Path("/logs/log_event_loop_11.log")
+    assert program.stdio_log_path(child_env) == Path(
+        "/logs/log_event_loop_11.stdout.log"
+    )
+
+
+def test_configure_child_logging_moves_file_handler(tmp_path, monkeypatch):
+    monkeypatch.setenv("LOGGING_PATH", str(tmp_path))
+    monkeypatch.setenv("LOGGING_FILENAME", "supervisor_1.log")
+    from rcon.process_supervisor.child_logging import configure_child_logging
+
+    configure_child_logging()
+    logging.getLogger("rcon").info("from-supervisor-config")
+
+    monkeypatch.setenv("LOGGING_FILENAME", "log_event_loop.log")
+    configure_child_logging()
+    logging.getLogger("rcon").info("from-child-config")
+
+    supervisor = (tmp_path / "supervisor_1.log").read_text()
+    child = (tmp_path / "log_event_loop.log").read_text()
+    assert "from-supervisor-config" in supervisor
+    assert "from-child-config" not in supervisor
+    assert "from-child-config" in child
+    assert child.count("from-child-config") == 1
+    assert "\x1b[" not in child
+
+
+def test_configure_child_logging_walks_handlers_and_logger_shapes(
+    tmp_path, monkeypatch
+):
+    import copy
+
+    import rcon.settings
+    from rcon.process_supervisor.child_logging import configure_child_logging
+
+    monkeypatch.setenv("LOGGING_PATH", str(tmp_path))
+    monkeypatch.setenv("LOGGING_FILENAME", "child.log")
+    monkeypatch.setenv("LOGGING_LEVEL", "WARNING")
+    monkeypatch.setenv("COMMANDS_LOGLEVEL", "ERROR")
+
+    cfg = copy.deepcopy(rcon.settings.LOGGING)
+    cfg["handlers"]["extra_file"] = {
+        "level": "DEBUG",
+        "class": "logging.FileHandler",
+        "formatter": "file",
+        "filename": str(tmp_path / "stale.log"),
+    }
+    cfg["loggers"]["rcon.extra"] = {
+        "handlers": ["console", "extra_file"],
+        "level": "DEBUG",
+        "propagate": False,
+    }
+    cfg["loggers"]["rcon.extra_commands"] = {"level": "DEBUG"}
+    monkeypatch.setattr(rcon.settings, "LOGGING", cfg)
+
+    configure_child_logging()
+    logging.getLogger("rcon.extra").warning("extra-logger")
+
+    child = (tmp_path / "child.log").read_text()
+    assert "extra-logger" in child
+    stale = tmp_path / "stale.log"
+    assert not stale.exists() or "extra-logger" not in stale.read_text()
+    assert logging.getLogger("rcon.extra").level == logging.WARNING
+    assert logging.getLogger("rcon.extra_commands").level == logging.ERROR
+    assert logging.getLogger("rcon.rcon").level == logging.ERROR
 
 
 def test_load_config_port_without_host(tmp_path):

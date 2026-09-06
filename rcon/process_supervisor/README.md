@@ -59,10 +59,12 @@ Fork is disabled on Windows. Do not fork from the RPC-threaded arbiter; the fork
 
 ### After fork (`worker/fork_child.py`)
 
+Forkserver preload of `rcon.maps` already imported `rcon.settings` with the arbiter’s `LOGGING_FILENAME`, so each child must reconfigure logging after swapping env.
+
 1. Replace `os.environ` with the program’s child env.
 2. `os.setsid()` (new process group for `killpg` on stop).
-3. Redirect stdout/stderr to the program log file.
-4. Import `rcon.settings` (logging from child env).
+3. Redirect stdout/stderr to `{LOGGING_FILENAME stem}.stdout.log` (prints/tracebacks; not the FileHandler path).
+4. `configure_child_logging()` in `child_logging.py`: close inherited handlers, deepcopy `rcon.settings.LOGGING`, rewrite every FileHandler `filename` from the child env, set levels (`handlers` present → `LOGGING_LEVEL`, level-only → `COMMANDS_LOGLEVEL`), then `dictConfig`.
 5. `install_unaccent()`, then drop inherited SQLAlchemy engine and Redis pools; recreate the Redis pool in **bytes** mode (same order as a fresh interpreter). That does not flush Redis keys.
 6. `registry.run_program(name, extra)` → `programs.run_<name>()` (or `run_log_recorder(extra)`).
 

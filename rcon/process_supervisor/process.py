@@ -140,6 +140,7 @@ class ManagedProcess:
 
         child_env = self.config.child_environ(self.base_environ)
         self.log_file = self.config.log_path(child_env)
+        stdio_file = self.config.stdio_log_path(child_env)
         self.log_file.parent.mkdir(parents=True, exist_ok=True)
         self.spawnerr = ""
 
@@ -153,7 +154,7 @@ class ManagedProcess:
                     self.config.command,
                 )
             if extra is None or not fork_enabled():
-                with self.log_file.open("ab", buffering=0) as log_handle:
+                with stdio_file.open("ab", buffering=0) as log_handle:
                     self.popen = subprocess.Popen(
                         worker_argv(self.config),
                         cwd=self.config.directory,
@@ -170,7 +171,7 @@ class ManagedProcess:
                         self.config.name,
                         extra,
                         child_env,
-                        str(self.log_file),
+                        str(stdio_file),
                         self.config.directory,
                     ),
                     daemon=False,

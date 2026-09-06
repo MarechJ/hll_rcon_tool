@@ -145,6 +145,7 @@ def test_registered_spawn_uses_fork_when_enabled(tmp_path, monkeypatch):
     assert kwargs["target"].__name__ == "fork_main"
     assert kwargs["daemon"] is False
     assert kwargs["args"][0] == "broadcasts"
+    assert kwargs["args"][3] == str(tmp_path / "broadcasts.stdout.log")
     proc_instance.start.assert_called_once()
 
 
@@ -181,6 +182,10 @@ def test_fork_main_sets_env_and_runs_program(monkeypatch):
     monkeypatch.setattr(
         fork_child.os, "_exit", lambda code: (_ for _ in ()).throw(SystemExit(code))
     )
+    configure = mock.Mock()
+    monkeypatch.setattr(
+        "rcon.process_supervisor.child_logging.configure_child_logging", configure
+    )
 
     install = mock.Mock()
     monkeypatch.setattr("rcon.models.install_unaccent", install)
@@ -190,10 +195,11 @@ def test_fork_main_sets_env_and_runs_program(monkeypatch):
     monkeypatch.setattr("rcon.process_supervisor.registry.run_program", run_program)
 
     with pytest.raises(SystemExit) as exc:
-        fork_child.fork_main("broadcasts", [], env, "/tmp/demo.log", None)
+        fork_child.fork_main("broadcasts", [], env, "/tmp/demo.stdout.log", None)
 
     assert exc.value.code == 0
     assert fork_child.os.environ["LOGGING_FILENAME"] == "demo.log"
+    configure.assert_called_once_with()
     install.assert_called_once_with()
     reset.assert_called_once_with()
     run_program.assert_called_once_with("broadcasts", [])
@@ -211,6 +217,9 @@ def test_fork_main_chdirs_and_maps_systemexit_codes(monkeypatch):
     monkeypatch.setattr(fork_child.os, "chdir", chdir)
     close = mock.Mock()
     monkeypatch.setattr(fork_child.os, "close", close)
+    monkeypatch.setattr(
+        "rcon.process_supervisor.child_logging.configure_child_logging", lambda: None
+    )
     monkeypatch.setattr("rcon.models.install_unaccent", lambda: None)
     monkeypatch.setattr(fork_child, "reset_inherited_resources", lambda: None)
 
@@ -225,7 +234,7 @@ def test_fork_main_chdirs_and_maps_systemexit_codes(monkeypatch):
         fork_child.os, "_exit", lambda code: (_ for _ in ()).throw(SystemExit(code))
     )
     with pytest.raises(SystemExit) as none_code:
-        fork_child.fork_main("broadcasts", [], env, "/tmp/demo.log", "/tmp")
+        fork_child.fork_main("broadcasts", [], env, "/tmp/demo.stdout.log", "/tmp")
     assert none_code.value.code == 0
     chdir.assert_called_once_with("/tmp")
     close.assert_not_called()
@@ -235,7 +244,7 @@ def test_fork_main_chdirs_and_maps_systemexit_codes(monkeypatch):
         mock.Mock(side_effect=lambda *_: raise_exit(7)),
     )
     with pytest.raises(SystemExit) as int_code:
-        fork_child.fork_main("broadcasts", [], env, "/tmp/demo.log", None)
+        fork_child.fork_main("broadcasts", [], env, "/tmp/demo.stdout.log", None)
     assert int_code.value.code == 7
 
     monkeypatch.setattr(
@@ -243,7 +252,7 @@ def test_fork_main_chdirs_and_maps_systemexit_codes(monkeypatch):
         mock.Mock(side_effect=lambda *_: raise_exit("fail")),
     )
     with pytest.raises(SystemExit) as str_code:
-        fork_child.fork_main("broadcasts", [], env, "/tmp/demo.log", None)
+        fork_child.fork_main("broadcasts", [], env, "/tmp/demo.stdout.log", None)
     assert str_code.value.code == 1
 
 
@@ -256,6 +265,9 @@ def test_fork_main_unhandled_exception_exits_one(monkeypatch):
     monkeypatch.setattr(fork_child.os, "open", lambda *_a, **_k: 99)
     monkeypatch.setattr(fork_child.os, "dup2", lambda *_a, **_k: None)
     monkeypatch.setattr(fork_child.os, "close", lambda *_a, **_k: None)
+    monkeypatch.setattr(
+        "rcon.process_supervisor.child_logging.configure_child_logging", lambda: None
+    )
     monkeypatch.setattr("rcon.models.install_unaccent", lambda: None)
     monkeypatch.setattr(fork_child, "reset_inherited_resources", lambda: None)
     monkeypatch.setattr(
@@ -267,7 +279,7 @@ def test_fork_main_unhandled_exception_exits_one(monkeypatch):
     )
 
     with pytest.raises(SystemExit) as exc:
-        fork_child.fork_main("broadcasts", [], env, "/tmp/demo.log", None)
+        fork_child.fork_main("broadcasts", [], env, "/tmp/demo.stdout.log", None)
     assert exc.value.code == 1
 
 

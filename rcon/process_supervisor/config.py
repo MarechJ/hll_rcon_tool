@@ -86,6 +86,10 @@ class ProgramConfig:
             return Path(logging_path) / logging_filename
         return Path(logging_path) / f"{self.name}.log"
 
+    def stdio_log_path(self, child_environ: dict[str, str]) -> Path:
+        app_log = self.log_path(child_environ)
+        return app_log.with_name(app_log.stem + ".stdout.log")
+
 
 def parse_byte_size(value: str) -> int:
     """Parse Supervisord-style size strings (e.g. ``50MB``) to bytes."""
