@@ -5,7 +5,7 @@ import sys
 import traceback
 from collections.abc import Callable
 from functools import wraps
-from subprocess import run
+from importlib.metadata import PackageNotFoundError, version
 from typing import Any
 
 import psutil
@@ -18,7 +18,6 @@ from django.http import (
     HttpResponseNotAllowed,
 )
 from django.views.decorators.csrf import csrf_exempt
-from rconweb.settings import TAG_VERSION
 
 from rcon.api_commands import get_rcon_api
 from rcon.commands import HLLCommandFailedError
@@ -34,6 +33,7 @@ from rcon.types import (
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.utils import InvalidKeysConfigurationError
 from rcon.utils import MapsHistory
+from rconweb.settings import TAG_VERSION
 
 from .audit_log import auto_record_audit, record_audit
 from .auth import AUTHORIZATION, RconJsonResponse, api_response, login_required
@@ -83,8 +83,11 @@ def set_temp_msg(request, func, name):
 @csrf_exempt
 @require_http_methods(["GET"])
 def get_version(request):
-    res = run(["git", "describe", "--tags"], check=False, capture_output=True)
-    return api_response(res.stdout.decode(), failed=False, command="get_version")
+    try:
+        tag_version = f"v{version('hll-rcon-tool')}"
+    except PackageNotFoundError:
+        tag_version = "unknown"
+    return api_response(tag_version, failed=False, command="get_version")
 
 
 @csrf_exempt

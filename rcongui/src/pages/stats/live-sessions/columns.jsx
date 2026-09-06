@@ -121,7 +121,7 @@ export const columns = [
       );
     },
     meta: {
-      variant: "short",
+      variant: "unit",
     },
   },
   {
@@ -132,7 +132,15 @@ export const columns = [
       const themedImg = useThemedImages();
       const iconKey = row.original.type ?? row.original.role;
 
-      return row.team !== "neutral" ? (
+      if (row.original.team === "neutral" || !iconKey) {
+        return (
+          <Center>
+            <Square />
+          </Center>
+        );
+      }
+
+      return (
         <Center>
           <Square>
             <img
@@ -144,7 +152,7 @@ export const columns = [
             />
           </Square>
         </Center>
-      ) : null;
+      );
     },
     meta: {
       variant: "icon",
@@ -212,7 +220,7 @@ export const columns = [
             textOverflow: "ellipsis",
             overflow: "hidden",
             textWrap: "nowrap",
-            width: "20ch",
+            width: "30ch",
           }}
         >
           <span>{row.original.name}</span>
