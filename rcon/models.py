@@ -161,7 +161,9 @@ class PlayerID(Base):
     # # TODO: This is a temporary Steam ID column so that we can store the Steam ID somewhere for Vietnam servers.
     # This enables us in the future to retroactively merge the Vietnam and WW2 player data into a single player profile.
     steam_id: Mapped[str | None]
-    created: Mapped[datetime] = mapped_column(UTCDateTime, default=datetime.utcnow)
+    created: Mapped[datetime] = mapped_column(
+        UTCDateTime, default=lambda: datetime.now(UTC)
+    )
     names: Mapped[list["PlayerName"]] = relationship(
         back_populates="player",
         order_by="nullslast(desc(PlayerName.last_seen))",
@@ -511,8 +513,12 @@ class SteamInfo(Base):
         index=True,
         unique=True,
     )
-    created: Mapped[datetime] = mapped_column(UTCDateTime, default=datetime.utcnow)
-    updated: Mapped[datetime] = mapped_column(UTCDateTime, onupdate=datetime.utcnow)
+    created: Mapped[datetime] = mapped_column(
+        UTCDateTime, default=lambda: datetime.now(UTC)
+    )
+    updated: Mapped[datetime] = mapped_column(
+        UTCDateTime, onupdate=lambda: datetime.now(UTC)
+    )
     profile: Mapped[SteamPlayerSummaryType] = mapped_column(default=JSONB.NULL)
     country: Mapped[str | None] = mapped_column(index=True)
     bans: Mapped[SteamBansType] = mapped_column(default=JSONB.NULL)
@@ -548,7 +554,9 @@ class WatchList(Base):
     __tablename__ = "player_watchlist"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    modified: Mapped[datetime] = mapped_column(UTCDateTime, default=datetime.utcnow)
+    modified: Mapped[datetime] = mapped_column(
+        UTCDateTime, default=lambda: datetime.now(UTC)
+    )
     player_id_id: Mapped[int] = mapped_column(
         "playersteamid_id",
         ForeignKey("steam_id_64.id"),
@@ -617,7 +625,9 @@ class PlayerFlag(Base):
     )
     flag: Mapped[str] = mapped_column(nullable=False, index=True)
     comment: Mapped[str] = mapped_column(String, nullable=True)
-    modified: Mapped[datetime] = mapped_column(UTCDateTime, default=datetime.utcnow)
+    modified: Mapped[datetime] = mapped_column(
+        UTCDateTime, default=lambda: datetime.now(UTC)
+    )
 
     player: Mapped[PlayerID] = relationship(back_populates="flags")
 
@@ -644,7 +654,9 @@ class PlayerOptins(Base):
     )
     optin_name: Mapped[str] = mapped_column(nullable=False, index=True)
     optin_value: Mapped[str] = mapped_column(nullable=True)
-    modified: Mapped[datetime] = mapped_column(UTCDateTime, default=datetime.utcnow)
+    modified: Mapped[datetime] = mapped_column(
+        UTCDateTime, default=lambda: datetime.now(UTC)
+    )
 
     player: Mapped[PlayerID] = relationship(back_populates="optins")
 
@@ -668,8 +680,12 @@ class PlayerName(Base):
         "playersteamid_id", ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
     name: Mapped[str] = mapped_column(nullable=False)
-    created: Mapped[datetime] = mapped_column(UTCDateTime, default=datetime.utcnow)
-    last_seen: Mapped[datetime] = mapped_column(UTCDateTime, default=datetime.utcnow)
+    created: Mapped[datetime] = mapped_column(
+        UTCDateTime, default=lambda: datetime.now(UTC)
+    )
+    last_seen: Mapped[datetime] = mapped_column(
+        UTCDateTime, default=lambda: datetime.now(UTC)
+    )
 
     player: Mapped[PlayerID] = relationship(back_populates="names")
 
@@ -692,7 +708,9 @@ class PlayerSession(Base):
     )
     start: Mapped[datetime] = mapped_column(UTCDateTime)
     end: Mapped[datetime] = mapped_column(UTCDateTime)
-    created: Mapped[datetime] = mapped_column(UTCDateTime, default=datetime.utcnow)
+    created: Mapped[datetime] = mapped_column(
+        UTCDateTime, default=lambda: datetime.now(UTC)
+    )
     server_number: Mapped[int] = mapped_column()
     server_name: Mapped[str] = mapped_column()
 
@@ -718,7 +736,9 @@ class PlayersAction(Base):
     )
     reason: Mapped[str] = mapped_column()
     by: Mapped[str] = mapped_column()
-    time: Mapped[datetime] = mapped_column(UTCDateTime, default=datetime.utcnow)
+    time: Mapped[datetime] = mapped_column(
+        UTCDateTime, default=lambda: datetime.now(UTC)
+    )
 
     player: Mapped[PlayerID] = relationship(back_populates="received_actions")
 
@@ -737,7 +757,9 @@ class LogLine(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     version: Mapped[int] = mapped_column(default=1)
-    creation_time: Mapped[datetime] = mapped_column(TIMESTAMP, default=datetime.utcnow)
+    creation_time: Mapped[datetime] = mapped_column(
+        TIMESTAMP, default=lambda: datetime.now(UTC)
+    )
     event_time: Mapped[datetime] = mapped_column(
         UTCDateTime, nullable=False, index=True
     )
@@ -820,7 +842,9 @@ class Maps(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    creation_time: Mapped[datetime] = mapped_column(TIMESTAMP, default=datetime.utcnow)
+    creation_time: Mapped[datetime] = mapped_column(
+        TIMESTAMP, default=lambda: datetime.now(UTC)
+    )
     start: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False, index=True)
     end: Mapped[datetime] = mapped_column(UTCDateTime, index=True)
     server_number: Mapped[int] = mapped_column(index=True)
@@ -1042,7 +1066,9 @@ class PlayerStats(Base):
 class PlayerComment(Base):
     __tablename__ = "player_comments"
     id: Mapped[int] = mapped_column(primary_key=True)
-    creation_time: Mapped[datetime] = mapped_column(TIMESTAMP, default=datetime.utcnow)
+    creation_time: Mapped[datetime] = mapped_column(
+        TIMESTAMP, default=lambda: datetime.now(UTC)
+    )
     by: Mapped[str] = mapped_column()
     player_id_id: Mapped[int] = mapped_column(
         "playersteamid_id", ForeignKey("steam_id_64.id"), nullable=False, index=True
@@ -1068,7 +1094,9 @@ class ServerCount(Base):
     )
     id: Mapped[int] = mapped_column(primary_key=True)
     server_number: Mapped[int] = mapped_column()
-    creation_time: Mapped[datetime] = mapped_column(TIMESTAMP, default=datetime.utcnow)
+    creation_time: Mapped[datetime] = mapped_column(
+        TIMESTAMP, default=lambda: datetime.now(UTC)
+    )
     datapoint_time: Mapped[datetime] = mapped_column(TIMESTAMP, unique=True, index=True)
     map_id: Mapped[int] = mapped_column(
         ForeignKey("map_history.id"), nullable=False, index=True
@@ -1166,7 +1194,7 @@ class AuditLog(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(nullable=False, index=True)
     creation_time: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True), default=datetime.utcnow
+        TIMESTAMP(timezone=True), default=lambda: datetime.now(UTC)
     )
     # Not making this unique (even though it should be) to avoid breaking existing CRCONs
     command: Mapped[str] = mapped_column(nullable=False, index=True)
@@ -1399,10 +1427,10 @@ class MessageTemplate(Base):
         Enum(MessageTemplateCategory)
     )
     created_at: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True), default=datetime.utcnow
+        TIMESTAMP(timezone=True), default=lambda: datetime.now(UTC)
     )
     updated_at: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True), default=datetime.utcnow
+        TIMESTAMP(timezone=True), default=lambda: datetime.now(UTC)
     )
     updated_by: Mapped[str]
 
