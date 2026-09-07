@@ -72,8 +72,8 @@ class NoLeaderAutomod:
             )
             self.red.delete(redis_key)
         else:
-            self.red.setex(
-                redis_key, LEADER_WATCH_RESET_SECS, pickle.dumps(watch_status)
+            self.red.set(
+                redis_key, pickle.dumps(watch_status), ex=LEADER_WATCH_RESET_SECS
             )
 
     def get_message(

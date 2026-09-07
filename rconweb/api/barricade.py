@@ -4,13 +4,13 @@ from datetime import UTC, datetime
 from logging import getLogger
 
 import pydantic
+from api.auth import APITokenAuthMiddleware
 from cachetools import TTLCache
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.urls import path
 from sqlalchemy import exists, func
 
-from api.auth import APITokenAuthMiddleware
 from rcon import models
 from rcon.barricade import (
     GROUP_NAME,

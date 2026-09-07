@@ -185,7 +185,7 @@ def send_log_line_webhook_message(
 
     mentions = webhook.user_mentions + webhook.role_mentions
 
-    wh = make_hook(webhook.url)
+    wh = make_hook(webhook.url, thread_id=webhook.thread_id)
     if not wh:
         logger.error("Error creating discord webhook for: %s", webhook.url)
         return
