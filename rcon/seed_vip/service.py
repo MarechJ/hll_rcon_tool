@@ -26,7 +26,7 @@ from rcon.user_config.seed_vip import SeedVIPUserConfig
 logger = getLogger(__name__)
 
 DRY_RUN_DISCORD_PREFIX = (
-    "🧪 **DRY RUN – SIMULATION**\nNo VIPs or in-game reward messages will be sent.\n\n"
+    "🧪 **DRY RUN – SIMULATION** "
 )
 
 
