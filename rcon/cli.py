@@ -597,11 +597,11 @@ def _merge_duplicate_player_ids(existing_ids: set[str] | None = None):
                 {"ids": ids},
             )
             session.execute(
-                text("DELETE FROM player_soldier WHERE player_id_id = ANY(:ids)"),
+                text("DELETE FROM player_soldier WHERE playersteamid_id = ANY(:ids)"),
                 {"ids": ids},
             )
             session.execute(
-                text("DELETE FROM player_account WHERE player_id_id = ANY(:ids)"),
+                text("DELETE FROM player_account WHERE playersteamid_id = ANY(:ids)"),
                 {"ids": ids},
             )
             session.execute(
