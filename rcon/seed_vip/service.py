@@ -25,9 +25,7 @@ from rcon.user_config.seed_vip import SeedVIPUserConfig
 
 logger = getLogger(__name__)
 
-DRY_RUN_DISCORD_PREFIX = (
-    "🧪 **DRY RUN – SIMULATION** "
-)
+DRY_RUN_DISCORD_PREFIX = "🧪 **DRY RUN – SIMULATION** "
 
 
 def format_discord_message(message: str, dry_run: bool) -> str:
