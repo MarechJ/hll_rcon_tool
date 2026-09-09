@@ -1746,11 +1746,13 @@ def get_opposite_side(team: Team) -> Literal[Team.AXIS, Team.ALLIES]:
 def sort_maps_by_gamemode(maps: Sequence[Layer]) -> list[Layer]:
     warfare = [m for m in maps if m.game_mode == GameMode.WARFARE]
     offensive = [m for m in maps if m.game_mode == GameMode.OFFENSIVE]
+    conquest = [m for m in maps if m.game_mode == GameMode.CONQUEST]
+    domination = [m for m in maps if m.game_mode == GameMode.DOMINATION]
     skirmish = [m for m in maps if m.game_mode == GameMode.SKIRMISH]
     phased = [m for m in maps if m.game_mode == GameMode.PHASED]
     majority = [m for m in maps if m.game_mode == GameMode.MAJORITY]
 
-    return warfare + offensive + skirmish + phased + majority
+    return warfare + offensive + conquest + domination + skirmish + phased + majority
 
 
 def numbered_maps(maps: list[Layer]) -> dict[str, Layer]:
@@ -1765,6 +1767,12 @@ def categorize_maps(maps: Iterable[Layer]) -> dict[GameMode, list[Layer]]:
             map_ for map_ in maps if map_.game_mode == GameMode.OFFENSIVE
         ],
         GameMode.WARFARE: [map_ for map_ in maps if map_.game_mode == GameMode.WARFARE],
+        GameMode.CONQUEST: [
+            map_ for map_ in maps if map_.game_mode == GameMode.CONQUEST
+        ],
+        GameMode.DOMINATION: [
+            map_ for map_ in maps if map_.game_mode == GameMode.DOMINATION
+        ],
         GameMode.SKIRMISH: [
             map_ for map_ in maps if map_.game_mode == GameMode.SKIRMISH
         ],
