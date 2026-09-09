@@ -5,7 +5,7 @@ target-version = ['py312']
 requires-python = ">=3.12"
 dependencies = [
     # Alembic does not use semantic versioning, so be careful with the version numbers https://alembic.sqlalchemy.org/en/latest/front.html#versioning-scheme
-    "alembic==1.19.1",
+    "alembic==1.19.2",
     "channels==4.3.2",
     "channels-redis==4.3.0",
     "click==8.5.0",
