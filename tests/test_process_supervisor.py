@@ -76,7 +76,9 @@ def test_load_config_parses_programs(tmp_path):
 
 
 def test_load_repo_supervisord_conf():
-    config_path = Path(__file__).resolve().parents[1] / "config" / "supervisord.conf"
+    config_path = (
+        Path(__file__).resolve().parents[1] / "config" / "default-supervisord.conf"
+    )
     env = {
         "SERVER_NUMBER": "1",
         "HLL_REDIS_URL": "redis://localhost:6379/0",
@@ -516,7 +518,9 @@ def test_autostart_on_run(tmp_path):
 
 
 def _repo_supervisord_config() -> SupervisorConfig:
-    config_path = Path(__file__).resolve().parents[1] / "config" / "supervisord.conf"
+    config_path = (
+        Path(__file__).resolve().parents[1] / "config" / "default-supervisord.conf"
+    )
     env = {
         "SERVER_NUMBER": "1",
         "HLL_REDIS_URL": "redis://localhost:6379/0",
