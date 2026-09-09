@@ -29,7 +29,7 @@ dependencies = [
     "pytz>=2026.3.post1",
     "redis==8.1.0",
     "requests==2.34.2",
-    "rq==2.11.0",
+    "rq==2.12.0",
     "rq-scheduler==0.14.0",
     "sentry-sdk[django]==2.68.1",
     "simplejson==4.1.2",
