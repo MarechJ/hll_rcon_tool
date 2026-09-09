@@ -5,6 +5,9 @@ db_data/
 dev.env
 broadcasts.txt
 config/nginx.conf
+config/logrotate.conf
+config/supervisord.conf
+config/supervisord_[0-9]*.conf
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

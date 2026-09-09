@@ -95,8 +95,10 @@ if [ "$1" == 'supervisor' ]; then
     export LOGGING_FILENAME="supervisor_${SERVER_NUMBER}.log"
     if [ -f "/config/supervisord_${SERVER_NUMBER}.conf" ]; then
         SUPERVISOR_CONF="/config/supervisord_${SERVER_NUMBER}.conf"
-    else
+    elif [ -f /config/supervisord.conf ]; then
         SUPERVISOR_CONF=/config/supervisord.conf
+    else
+        SUPERVISOR_CONF=/config/default-supervisord.conf
     fi
     case "${CRCON_USE_PROCESS_SUPERVISOR:-0}" in
         1|true|TRUE|yes|YES|on|ON)
