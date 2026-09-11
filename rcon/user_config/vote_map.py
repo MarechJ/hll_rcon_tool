@@ -12,6 +12,8 @@ class VoteMapType(TypedDict):
     number_last_played_to_exclude: int
     num_warfare_options: int
     num_offensive_options: int
+    num_conquest_options: int
+    num_domination_options: int
     num_skirmish_control_options: int
     consider_offensive_same_map: bool
     consider_skirmishes_as_same_map: bool
@@ -106,6 +108,8 @@ class VoteMapUserConfig(BaseUserConfig):
     number_last_played_to_exclude: int = Field(ge=0, default=3)
     num_warfare_options: int = Field(ge=0, default=4)
     num_offensive_options: int = Field(ge=0, default=2)
+    num_conquest_options: int = Field(ge=0, default=0)
+    num_domination_options: int = Field(ge=0, default=0)
     num_skirmish_control_options: int = Field(ge=0, default=1)
     consider_offensive_same_map: bool = Field(default=True)
     consider_skirmishes_as_same_map: bool = Field(default=True)

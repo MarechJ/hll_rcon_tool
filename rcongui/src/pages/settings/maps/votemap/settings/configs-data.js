@@ -1,5 +1,6 @@
 export const padlockConfigs = [
     { name: "allow_opt_out", label: "Allow user to opt-out of vote map reminders by typing !votemap never" },
+    { name: "allow_vip_only", label: "Allow votemap to VIP players only" },
     { name: "consider_offensive_same_map", label: "Consider offensive maps as being the same when excluding:" },
     { name: "consider_skirmishes_as_same_map", label: "Consider skirmish maps as being the same when excluding:" },
     { name: "consider_environment_as_same_map", label: "Consider maps with different environment(day, ...) as being the same when excluding:" },
@@ -11,7 +12,6 @@ export const padlockConfigs = [
     { name: "allow_multiple_maps_with_same_environment", label: "Allow multiple maps with different environment in the selection eg. day, night, ..." },
     { name: "remind_on_match_start", label: "Send reminder on match start" },
     { name: "remind_on_match_end", label: "Send reminder on match end" },
-    { name: "allow_vip_only", label: "Allow votemap to VIP players only" },
 ];
 
 export const messageFieldConfigs = [
@@ -63,6 +63,16 @@ export const textFieldConfigs = [
         name: "num_offensive_options",
         label: "Offensive",
         helperText: "Number of offensive maps to offer",
+    },
+    {
+        name: "num_conquest_options",
+        label: "Conquest",
+        helperText: "Number of conquest maps to offer",
+    },
+    {
+        name: "num_domination_options",
+        label: "Domination",
+        helperText: "Number of domination maps to offer",
     },
     {
         name: "num_skirmish_control_options",
