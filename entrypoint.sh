@@ -95,7 +95,9 @@ if [ "$1" == 'supervisor' ]; then
     export LOGGING_FILENAME="supervisor_${SERVER_NUMBER}.log"
     if [ -f "/config/supervisord_${SERVER_NUMBER}.conf" ]; then
         exec supervisord -c "/config/supervisord_${SERVER_NUMBER}.conf"
-    else
+    elif [ -f /config/supervisord.conf ]; then
         exec supervisord -c /config/supervisord.conf
+    else
+        exec supervisord -c /config/default-supervisord.conf
     fi
 fi

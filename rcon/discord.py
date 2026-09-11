@@ -47,13 +47,17 @@ logger = logging.getLogger(__name__)
 DISCORD_WEBHOOK_TIMEOUT_SECONDS = 10
 
 
-def make_hook(webhook_url) -> DiscordWebhook | None:
+def make_hook(webhook_url, thread_id: str | None = None) -> DiscordWebhook | None:
     webhook_id, webhook_token = parse_webhook_url(webhook_url)
     if not all([webhook_id, webhook_token]):
         return None
 
     # Keep webhook delivery from blocking the caller indefinitely.
-    return DiscordWebhook(url=str(webhook_url), timeout=DISCORD_WEBHOOK_TIMEOUT_SECONDS)
+    return DiscordWebhook(
+        url=str(webhook_url),
+        thread_id=thread_id,
+        timeout=DISCORD_WEBHOOK_TIMEOUT_SECONDS,
+    )
 
 
 def make_allowed_mentions(user_ids, role_ids):
@@ -78,6 +82,7 @@ def get_prepared_discord_hooks(
     return [
         DiscordWebhook(
             url=str(hook.url),
+            thread_id=hook.thread_id,
             allowed_mentions=make_allowed_mentions(
                 hook.user_mentions, hook.role_mentions
             ),
@@ -130,7 +135,9 @@ def send_to_discord_audit(
 
     if webhookurls is None:
         config = AuditWebhooksUserConfig.load_from_db()
-        webhookurls = [hook.url for hook in config.hooks]
+        webhook_destinations = [(hook.url, hook.thread_id) for hook in config.hooks]
+    else:
+        webhook_destinations = [(url, None) for url in webhookurls]
 
     server_config = RconServerSettingsUserConfig.load_from_db()
 
@@ -138,7 +145,7 @@ def send_to_discord_audit(
     if flatten:
         message = message.replace("\n", " ")
     logger.info("Audit: [%s] %s, %s", by, command_name, message.replace("\n", " "))
-    if not webhookurls:
+    if not webhook_destinations:
         logger.debug("No webhooks set for audit log")
         return
     try:
@@ -149,8 +156,9 @@ def send_to_discord_audit(
             DiscordWebhook(
                 url=str(url),
                 content=content,
+                thread_id=thread_id,
             )
-            for url in webhookurls
+            for url, thread_id in webhook_destinations
             if url
         ]
 

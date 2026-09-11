@@ -36,7 +36,7 @@ const LiveLogsTable = ({ table, config = {}, isFetching }) => {
       }}
     >
       {isFetching && <LinearProgress sx={{ position: "absolute", top: 0, left: 0, width: "100%", height: "2px" }} />}
-      <StyledLogsTable density={config.density} fontSize={config.fontSize} className={config.highlighted ? "highlighted" : null}>
+      <StyledLogsTable density={config.density} fontSize={config.fontSize} className={config.highlighted ? "highlighted" : null} data-expanded-view={String(config.expandedView)}>
         <StyledThead>
           {table.getHeaderGroups().map((headerGroup) => (
             <StyledTr key={headerGroup.id}>
