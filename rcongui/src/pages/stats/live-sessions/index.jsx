@@ -25,7 +25,7 @@ const LiveSessionsPage = () => {
 
   const tableConfig = useLiveSessionsTableStore();
   const [tableConfigDrawerOpen, setTableConfigDrawerOpen] = useState(false);
-  const setConfig = useLiveSessionsTableStore(state => state.setConfig);
+  const setConfig = useLiveSessionsTableStore((state) => state.setConfig);
 
   const playersData = useMemo(() => {
     if (!data) return [];
@@ -109,7 +109,9 @@ const LiveSessionsPage = () => {
           disabled={
             !table.getIsSomePageRowsSelected() && !table.getIsAllRowsSelected()
           }
-          recipients={table.getSelectedRowModel().rows.map((row) => row.original)}
+          recipients={table
+            .getSelectedRowModel()
+            .rows.map((row) => row.original)}
           orientation="horizontal"
           disableRipple={true}
           sx={{

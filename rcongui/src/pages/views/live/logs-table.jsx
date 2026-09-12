@@ -394,6 +394,7 @@ function LogsTable({
                   disableGutters={true}
                   secondaryAction={
                     <IconButton
+                      color="error"
                       edge="end"
                       aria-label="delete"
                       onClick={() => handleQueryActionParamSelect(action)}

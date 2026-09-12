@@ -5,17 +5,28 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
-import { Alert, Chip, Divider, FormControl, InputLabel, MenuItem, Paper, Select, Stack, Typography } from "@mui/material";
+import {
+  Alert,
+  Chip,
+  Divider,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Paper,
+  Select,
+  Stack,
+  Typography,
+} from "@mui/material";
 import { cmd } from "@/utils/fetchUtils";
 import { TimePickerButtons } from "@/components/shared/TimePickerButtons";
 import Grid from "@mui/material/Grid2";
-import {Fragment, useEffect, useState} from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTemplates } from "@/hooks/useTemplates";
-import dayjs from 'dayjs';
-import { DesktopDateTimePicker } from '@mui/x-date-pickers/DesktopDateTimePicker';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import dayjs from "dayjs";
+import { DesktopDateTimePicker } from "@mui/x-date-pickers/DesktopDateTimePicker";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import PlayerSearchField from "@/components/form/custom/PlayerSearchField";
 
 const presetTimes = [
@@ -52,7 +63,11 @@ function BlacklistServerWarning({ blacklist, currentServer }) {
     )}]`;
   }
 
-  return text ? <Alert severity="warning" sx={{ whiteSpace: "pre-line" }}>{text}</Alert> : null;
+  return text ? (
+    <Alert severity="warning" sx={{ whiteSpace: "pre-line" }}>
+      {text}
+    </Alert>
+  ) : null;
 }
 
 export default function BlacklistRecordCreateDialog({
@@ -108,10 +123,13 @@ export default function BlacklistRecordCreateDialog({
         );
         if (blacklist) setBlacklist(blacklist);
       }
-      if (initialValues.playerId !== undefined) setPlayerId(initialValues.playerId);
+      if (initialValues.playerId !== undefined)
+        setPlayerId(initialValues.playerId);
       if (initialValues.expiresAt !== undefined) {
         setExpiresAt(
-          initialValues.expiresAt === null ? null : dayjs(initialValues.expiresAt)
+          initialValues.expiresAt === null
+            ? null
+            : dayjs(initialValues.expiresAt)
         );
       }
       if (initialValues.reason !== undefined) setReason(initialValues.reason);
@@ -139,14 +157,17 @@ export default function BlacklistRecordCreateDialog({
       maxWidth="sm"
       PaperProps={{
         component: "form",
-        sx: { borderRadius: 2 },
         onSubmit: (event) => {
           event.preventDefault();
           if (!blacklist) return;
-          const playerIds = Array.from(new Set([
-            ...selectedPlayers.map((player) => player.player_id),
-            ...(playerId.trim() && playerName.trim() ? [playerId.trim()] : []),
-          ]));
+          const playerIds = Array.from(
+            new Set([
+              ...selectedPlayers.map((player) => player.player_id),
+              ...(playerId.trim() && playerName.trim()
+                ? [playerId.trim()]
+                : []),
+            ])
+          );
           const data = {
             blacklistId: blacklist.id,
             playerId: playerIds[0] ?? playerId,
@@ -163,7 +184,8 @@ export default function BlacklistRecordCreateDialog({
       <DialogContent sx={{ px: 3, py: 2 }}>
         <Stack spacing={2.5}>
           <DialogContentText>
-            By blacklisting a player you are revoking their access to one or more servers.
+            By blacklisting a player you are revoking their access to one or
+            more servers.
           </DialogContentText>
 
           <FormControl required fullWidth>
@@ -175,122 +197,157 @@ export default function BlacklistRecordCreateDialog({
               onChange={(e) => setBlacklist(e.target.value)}
             >
               {blacklists?.map((b) => (
-                <MenuItem key={b.id} value={b}>{b.name}</MenuItem>
+                <MenuItem key={b.id} value={b}>
+                  {b.name}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
 
           {blacklist && (
-            <BlacklistServerWarning blacklist={blacklist} currentServer={currentServer} />
+            <BlacklistServerWarning
+              blacklist={blacklist}
+              currentServer={currentServer}
+            />
           )}
-              {hasManyIDs ? (
-                <TextField
-                  required
-                  multiline
-                  minRows={3}
-                  id="playerId"
-                  name="playerId"
-                  label="Player IDs"
-                  value={playerId}
-                  onChange={(e) => setPlayerId(e.target.value)}
-                  fullWidth
-                  disabled={disablePlayerId}
+          {hasManyIDs ? (
+            <TextField
+              required
+              multiline
+              minRows={3}
+              id="playerId"
+              name="playerId"
+              label="Player IDs"
+              value={playerId}
+              onChange={(e) => setPlayerId(e.target.value)}
+              fullWidth
+              disabled={disablePlayerId}
+            />
+          ) : (
+            <PlayerSearchField
+              required={selectedPlayers.length === 0}
+              nameValue={playerName}
+              onNameInputChange={setPlayerName}
+              idValue={playerId}
+              onIdInputChange={setPlayerId}
+              onSelect={addSelectedPlayer}
+              addButtonFullWidth
+              disabled={disablePlayerId}
+              direction="column"
+            />
+          )}
+          {!disablePlayerId && selectedPlayers.length > 0 && (
+            <Stack direction="row" gap={0.75} flexWrap="wrap" useFlexGap>
+              {selectedPlayers.map((player) => (
+                <Chip
+                  key={player.player_id}
+                  label={
+                    player.name === player.player_id
+                      ? player.player_id
+                      : `${player.name} · ${player.player_id}`
+                  }
+                  onDelete={() =>
+                    setSelectedPlayers((current) =>
+                      current.filter(
+                        (selected) => selected.player_id !== player.player_id
+                      )
+                    )
+                  }
                 />
+              ))}
+            </Stack>
+          )}
+
+          <Paper
+            variant="outlined"
+            sx={{ p: 2, bgcolor: "background.default" }}
+          >
+            <Stack spacing={1.5}>
+              <Typography variant="subtitle1" fontWeight={600}>
+                Expiration
+              </Typography>
+              {expiresAt !== null ? (
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DesktopDateTimePicker
+                    onChange={(value) => setExpiresAt(value)}
+                    value={expiresAt}
+                    id="expiresAt"
+                    name="expiresAt"
+                    format="LLL"
+                    ampm={false}
+                    slotProps={{
+                      textField: {
+                        helperText: "The date this action will expire.",
+                        fullWidth: true,
+                      },
+                    }}
+                    maxDate={dayjs("3000-01-01T00:00:00+00:00")}
+                    disablePast={!disablePlayerId}
+                  />
+                </LocalizationProvider>
               ) : (
-                <PlayerSearchField
-                  required={selectedPlayers.length === 0}
-                  nameValue={playerName}
-                  onNameInputChange={setPlayerName}
-                  idValue={playerId}
-                  onIdInputChange={setPlayerId}
-                  onSelect={addSelectedPlayer}
-                  addButtonFullWidth
-                  disabled={disablePlayerId}
-                  direction="column"
-                />
+                <Alert severity="info">
+                  This blacklist record never expires.
+                </Alert>
               )}
-              {!disablePlayerId && selectedPlayers.length > 0 && (
-                <Stack direction="row" gap={0.75} flexWrap="wrap" useFlexGap>
-                  {selectedPlayers.map((player) => (
-                    <Chip
-                      key={player.player_id}
-                      label={player.name === player.player_id ? player.player_id : `${player.name} · ${player.player_id}`}
-                      onDelete={() => setSelectedPlayers((current) =>
-                        current.filter((selected) => selected.player_id !== player.player_id)
-                      )}
+              <Grid container spacing={1}>
+                {presetTimes.map(([amount, unit], index) => (
+                  <Grid key={unit + index} size={{ xs: 12, sm: 6 }}>
+                    <TimePickerButtons
+                      amount={amount}
+                      unit={unit}
+                      expirationTimestamp={expiresAt ?? dayjs()}
+                      setExpirationTimestamp={setExpiresAt}
                     />
-                  ))}
-                </Stack>
-              )}
-
-              <Paper variant="outlined" sx={{ p: 2, bgcolor: "background.default" }}>
-                <Stack spacing={1.5}>
-                  <Typography variant="subtitle1" fontWeight={600}>Expiration</Typography>
-                  {expiresAt !== null ? (
-                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                      <DesktopDateTimePicker
-                        onChange={(value) => setExpiresAt(value)}
-                        value={expiresAt}
-                        id="expiresAt"
-                        name="expiresAt"
-                        format="LLL"
-                        ampm={false}
-                        slotProps={{ textField: { helperText: "The date this action will expire.", fullWidth: true } }}
-                        maxDate={dayjs("3000-01-01T00:00:00+00:00")}
-                        disablePast={!disablePlayerId}
-                      />
-                    </LocalizationProvider>
-                  ) : (
-                    <Alert severity="info">This blacklist record never expires.</Alert>
-                  )}
-                  <Grid container spacing={1}>
-                    {presetTimes.map(([amount, unit], index) => (
-                      <Grid key={unit + index} size={{ xs: 12, sm: 6 }}>
-                        <TimePickerButtons
-                          amount={amount}
-                          unit={unit}
-                          expirationTimestamp={expiresAt ?? dayjs()}
-                          setExpirationTimestamp={setExpiresAt}
-                        />
-                      </Grid>
-                    ))}
                   </Grid>
-                  <Button variant="outlined" color="secondary" onClick={() => setExpiresAt(null)}>
-                    Never expires
-                  </Button>
-                </Stack>
-              </Paper>
+                ))}
+              </Grid>
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={() => setExpiresAt(null)}
+              >
+                Never expires
+              </Button>
+            </Stack>
+          </Paper>
 
-              <Divider />
-              <Stack spacing={1.5}>
-                <TextField
-                  required
-                  multiline
-                  rows={5}
-                  id="reason"
-                  name="reason"
-                  label="Reason"
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  fullWidth
-                  helperText="Available variables: {player_id}, {player_name}, {banned_at}, {banned_until}, {expires_at}, {duration}, {expires}, {ban_id}, {blacklist_name}"
-                />
-                <FormControl fullWidth>
-                  <InputLabel id="blacklist-reason-template-label">Reason template</InputLabel>
-                  <Select
-                    labelId="blacklist-reason-template-label"
-                    id="saved-reasons-select"
-                    label="Reason template"
-                    value={selectedTemplate}
-                    onChange={handleTemplateChange}
-                  >
-                    <MenuItem value=""><em>Select a saved reason</em></MenuItem>
-                    {reasonTemplates.map((template, index) => (
-                      <MenuItem key={template.id} value={String(index)}>{template.title}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Stack>
+          <Divider />
+          <Stack spacing={1.5}>
+            <TextField
+              required
+              multiline
+              rows={5}
+              id="reason"
+              name="reason"
+              label="Reason"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              fullWidth
+              helperText="Available variables: {player_id}, {player_name}, {banned_at}, {banned_until}, {expires_at}, {duration}, {expires}, {ban_id}, {blacklist_name}"
+            />
+            <FormControl fullWidth>
+              <InputLabel id="blacklist-reason-template-label">
+                Reason template
+              </InputLabel>
+              <Select
+                labelId="blacklist-reason-template-label"
+                id="saved-reasons-select"
+                label="Reason template"
+                value={selectedTemplate}
+                onChange={handleTemplateChange}
+              >
+                <MenuItem value="">
+                  <em>Select a saved reason</em>
+                </MenuItem>
+                {reasonTemplates.map((template, index) => (
+                  <MenuItem key={template.id} value={String(index)}>
+                    {template.title}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Stack>
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>

@@ -10,7 +10,12 @@ import {
 } from "@mui/material";
 import { PopoverMenu } from "@/components/shared/PopoverMenu";
 import FilterListIcon from "@mui/icons-material/FilterList";
-import { Tooltip, Button, ToggleButton, ToggleButtonGroup } from "@mui/material";
+import {
+  Tooltip,
+  Button,
+  ToggleButton,
+  ToggleButtonGroup,
+} from "@mui/material";
 import { logActions } from "@/utils/lib";
 import { useSelectionMenu } from "@/hooks/useSelectionMenu";
 import { SearchInput } from "@/components/shared/SearchInput";
@@ -79,14 +84,14 @@ export const LogActionSelectionMenu = ({
         fullWidth
       >
         <ToggleButton
-          sx={{ borderRadius: 0 }}
+          sx={{ borderRadius: "0 !important" }}
           value="on"
           aria-label="filter by action"
         >
           ON
         </ToggleButton>
         <ToggleButton
-          sx={{ borderRadius: 0 }}
+          sx={{ borderRadius: "0 !important" }}
           value="off"
           aria-label="filter by action"
         >

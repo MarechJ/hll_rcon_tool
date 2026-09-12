@@ -5,7 +5,6 @@ import TimerOffIcon from "@mui/icons-material/TimerOff";
 import DeleteIcon from "@mui/icons-material/Delete";
 import Grid from "@mui/material/Grid2";
 
-
 const BlacklistRecordActionRow = ({
   isExpired,
   onEdit,
@@ -13,32 +12,29 @@ const BlacklistRecordActionRow = ({
   onDelete,
 }) => {
   return (
-    (<Grid container justifyContent="center">
+    <Grid container justifyContent="center">
       <Grid>
         <ButtonGroup size="small" variant="text">
           <Button>
-            <Tooltip
-              title="Edit this record"
-              arrow
-            >
+            <Tooltip title="Edit this record" arrow>
               <EditIcon size="small" onClick={onEdit} />
             </Tooltip>
           </Button>
 
-          <Button disabled={isExpired}>
+          <Button color="warning" disabled={isExpired} onClick={onExpire}>
             <Tooltip title="Expire this record" arrow>
-              <TimerOffIcon size="small" onClick={onExpire} />
+              <TimerOffIcon size="small" />
             </Tooltip>
           </Button>
 
-          <Button>
+          <Button color="error" onClick={onDelete}>
             <Tooltip title="Delete this record" arrow>
-              <DeleteIcon size="small" onClick={onDelete} />
+              <DeleteIcon size="small" />
             </Tooltip>
           </Button>
         </ButtonGroup>
       </Grid>
-    </Grid>)
+    </Grid>
   );
 };
 

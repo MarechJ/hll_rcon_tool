@@ -1,4 +1,11 @@
-import { Box, Typography, Stack, Tooltip, IconButton } from "@mui/material";
+import {
+  Box,
+  Button,
+  Divider,
+  Typography,
+  Stack,
+  Tooltip,
+} from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import {
@@ -43,7 +50,7 @@ export function SortableRotationList({
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
-    useSensor(TouchSensor),
+    useSensor(TouchSensor)
   );
 
   // Handle drag end event
@@ -111,24 +118,28 @@ export function SortableRotationList({
               }}
             >
               <Tooltip title="Reset changes">
-                <IconButton
+                <Button
                   variant="outlined"
                   size={"small"}
-                  color="error"
+                  color="warning"
+                  aria-label="Reset changes"
+                  sx={{ minWidth: 30, px: 0.75 }}
                   onClick={onReset}
                 >
                   <ReplayIcon />
-                </IconButton>
+                </Button>
               </Tooltip>
               <Tooltip title="Clear">
-                <IconButton
+                <Button
                   variant="outlined"
                   size={"small"}
                   color="error"
+                  aria-label="Clear"
+                  sx={{ minWidth: 30, px: 0.75 }}
                   onClick={onClear}
                 >
                   <DeleteIcon />
-                </IconButton>
+                </Button>
               </Tooltip>
               <CopyToClipboardButton
                 iconOnly={true}
@@ -148,15 +159,17 @@ export function SortableRotationList({
                 size={"small"}
               />
               <Tooltip title="Save">
-                <IconButton
+                <Button
                   variant="contained"
                   size={"small"}
                   color="primary"
+                  aria-label="Save"
+                  sx={{ minWidth: 30, px: 0.75 }}
                   disabled={isDisabled}
                   onClick={onSave}
                 >
                   <SaveIcon />
-                </IconButton>
+                </Button>
               </Tooltip>
             </Box>
           </Stack>
@@ -175,14 +188,14 @@ export function SortableRotationList({
               strategy={verticalListSortingStrategy}
             >
               {maps.map((item, index, tempRotation) => {
-                console.log(tempRotation, params, index)
+                console.log(tempRotation, params, index);
                 let isNext = false;
                 if (tempRotation.length === 1) {
-                  isNext = true
+                  isNext = true;
                 } else if (params.currentMapIndex === params.nextMapIndex) {
-                  isNext = (index + 1) === params.nextMapIndex
+                  isNext = index + 1 === params.nextMapIndex;
                 } else {
-                  isNext = index === params.nextMapIndex
+                  isNext = index === params.nextMapIndex;
                 }
 
                 return (
@@ -192,7 +205,7 @@ export function SortableRotationList({
                     onRemove={onRemove}
                     isNext={isNext}
                   />
-                )
+                );
               })}
             </SortableContext>
           </DndContext>

@@ -1,16 +1,17 @@
-import {useState} from "react";
+import { useState } from "react";
 import Badge from "@mui/material/Badge";
-import {Comment, Send} from "@mui/icons-material";
-import {Box, Button, Chip, Drawer, TextField,} from "@mui/material";
+import { Comment, Send } from "@mui/icons-material";
+import { Box, Button, Chip, Drawer, TextField } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import moment from "moment";
 import Grid from "@mui/material/Grid2";
 
-const ChatContent = ({data, handleMessageSend}) => {
+const ChatContent = ({ data, handleMessageSend }) => {
   const [comment, setComment] = useState("");
 
-  return (<Box paddingLeft={2}>
+  return (
+    <Box paddingLeft={2}>
       <Grid
         container
         justifyContent="flex-start"
@@ -21,7 +22,7 @@ const ChatContent = ({data, handleMessageSend}) => {
       >
         {data?.map((message, index) => {
           return (
-            (<Grid key={index}>
+            <Grid key={index}>
               <Grid
                 container
                 justifyContent="flex-start"
@@ -31,19 +32,17 @@ const ChatContent = ({data, handleMessageSend}) => {
               >
                 <Grid>
                   <Chip
-                    style={{height: "auto", paddingTop: "-10px"}}
+                    sx={{ height: "auto" }}
                     color="primary"
                     label={
-                      <Typography align="left">
-                        {message.content}
-                      </Typography>
-                    }/>
+                      <Typography align="left">{message.content}</Typography>
+                    }
+                  />
                 </Grid>
                 <Grid>
                   <Typography
                     variant="caption"
                     display="block"
-
                     color="textSecondary"
                   >
                     {moment
@@ -54,7 +53,7 @@ const ChatContent = ({data, handleMessageSend}) => {
                   </Typography>
                 </Grid>
               </Grid>
-            </Grid>)
+            </Grid>
           );
         })}
       </Grid>
@@ -63,7 +62,6 @@ const ChatContent = ({data, handleMessageSend}) => {
         justifyContent="flex-start"
         alignContent="flex-start"
         alignItems="center"
-
       >
         <Grid size={10}>
           <TextField
@@ -86,7 +84,7 @@ const ChatContent = ({data, handleMessageSend}) => {
                 setComment("");
               }}
             >
-              <Send/>
+              <Send />
             </Button>
           </Box>
         </Grid>
@@ -95,7 +93,7 @@ const ChatContent = ({data, handleMessageSend}) => {
   );
 };
 
-const ChatWidget = ({data, handleMessageSend}) => {
+const ChatWidget = ({ data, handleMessageSend }) => {
   const [open, setOpen] = useState(false);
 
   const handleChange = (reason) => {
@@ -106,24 +104,20 @@ const ChatWidget = ({data, handleMessageSend}) => {
   };
   // TODO replace with builtin speeddial from MUI
   return (
-    (<div>
+    <div>
       <Badge color="secondary" overlap="circular" badgeContent={data?.length}>
         <Grid container>
-          <IconButton onClick={handleChange} size="large">
-            <Comment style={{color: "white"}}/>
+          <IconButton onClick={handleChange} size="large" color="primary">
+            <Comment />
           </IconButton>
         </Grid>
       </Badge>
       <Drawer anchor="right" open={open} onClose={handleChange}>
-        <ChatContent
-          data={data}
-          handleMessageSend={handleMessageSend}
-
-        />
+        <ChatContent data={data} handleMessageSend={handleMessageSend} />
       </Drawer>
-    </div>)
+    </div>
   );
 };
 
 export default ChatWidget;
-export {ChatWidget, ChatContent};
+export { ChatWidget, ChatContent };

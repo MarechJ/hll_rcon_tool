@@ -1,9 +1,18 @@
 import { styled } from "@mui/material/styles";
-import { Card, CardHeader, Tabs, Tab, List, ListItem, Divider, Box } from "@mui/material";
+import {
+  Card,
+  CardHeader,
+  Tabs,
+  Tab,
+  List,
+  ListItem,
+  Divider,
+  Box,
+} from "@mui/material";
 import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
 import dayjs from "dayjs";
 import { logActions } from "@/utils/lib";
-import {Fragment, useState} from "react";
+import { Fragment, useState } from "react";
 
 // Styled components
 const StyledCard = styled(Card)({
@@ -81,11 +90,11 @@ const LogsCard = ({ logs }) => {
     };
 
     return (
-      <span 
+      <span
         onClick={handleClick}
-        style={{ 
-          cursor: 'pointer',
-          textDecoration: 'underline',
+        style={{
+          cursor: "pointer",
+          textDecoration: "underline",
         }}
       >
         {children}
@@ -95,10 +104,7 @@ const LogsCard = ({ logs }) => {
 
   return (
     <StyledCard>
-      <CardHeader 
-        title="Logs" 
-        titleTypographyProps={{ variant: "h6" }} 
-      />
+      <CardHeader title="Logs" titleTypographyProps={{ variant: "h6" }} />
       <Tabs
         value={selectedTab}
         onChange={handleTabChange}
@@ -107,16 +113,17 @@ const LogsCard = ({ logs }) => {
         aria-label="log groups"
       >
         {sortedLogs.map((group, index) => (
-          <Tab 
-            key={group.group} 
-            label={`${logActions[group.group] || ""} ${group.group} (${group.logs.length})`}
+          <Tab
+            key={group.group}
+            label={`${logActions[group.group] || ""} ${group.group} (${
+              group.logs.length
+            })`}
           />
         ))}
       </Tabs>
       <ScrollableContent>
         <List disablePadding>
           {sortedLogs[selectedTab]?.logs.map((log, index) => {
-
             const Message = () => {
               const output = [];
               let message = removePlayerIds(log.message);
@@ -124,49 +131,86 @@ const LogsCard = ({ logs }) => {
               // In between each element of the array, add the player link
               message.forEach((part, index) => {
                 if (index % 2 === 0) {
-                  output.push(<Fragment key={index + "a" + "user_1"}>{part}</Fragment>);
+                  output.push(
+                    <Fragment key={index + "a" + "user_1"}>{part}</Fragment>
+                  );
                 } else {
                   if (log.user_1?.id) {
-                    output.push(<PlayerLink playerId={log.user_1?.id} key={index + "b" + "user_1"}>{log.user_1?.name}</PlayerLink>);
+                    output.push(
+                      <PlayerLink
+                        playerId={log.user_1?.id}
+                        key={index + "b" + "user_1"}
+                      >
+                        {log.user_1?.name}
+                      </PlayerLink>
+                    );
                   } else {
-                    output.push(<Fragment key={index + "b" + "user_1"}>{log.user_1?.name}</Fragment>);
+                    output.push(
+                      <Fragment key={index + "b" + "user_1"}>
+                        {log.user_1?.name}
+                      </Fragment>
+                    );
                   }
-                  output.push(<Fragment key={index + "c" + "user_1"}>{part}</Fragment>);
+                  output.push(
+                    <Fragment key={index + "c" + "user_1"}>{part}</Fragment>
+                  );
                 }
               });
 
-              if (message[message.length - 1] && message[message.length - 1] !== "") {
-                let messageEnd = message[message.length - 1].split(log.user_2?.name);
+              if (
+                message[message.length - 1] &&
+                message[message.length - 1] !== ""
+              ) {
+                let messageEnd = message[message.length - 1].split(
+                  log.user_2?.name
+                );
                 output.pop();
                 messageEnd.forEach((part, index) => {
                   if (index % 2 === 0) {
-                    output.push(<Fragment key={index + "a" + "user_2"}>{part}</Fragment>);
+                    output.push(
+                      <Fragment key={index + "a" + "user_2"}>{part}</Fragment>
+                    );
                   } else {
                     if (log.user_2?.id) {
-                      output.push(<PlayerLink playerId={log.user_2?.id} key={index + "b" + log.user_2?.id}>{log.user_2?.name}</PlayerLink>);
+                      output.push(
+                        <PlayerLink
+                          playerId={log.user_2?.id}
+                          key={index + "b" + log.user_2?.id}
+                        >
+                          {log.user_2?.name}
+                        </PlayerLink>
+                      );
                     } else {
-                      output.push(<Fragment key={index + "b" + log.user_2?.id}>{log.user_2?.name}</Fragment>);
+                      output.push(
+                        <Fragment key={index + "b" + log.user_2?.id}>
+                          {log.user_2?.name}
+                        </Fragment>
+                      );
                     }
-                    output.push(<Fragment key={index + "c" + log.user_2?.id}>{part}</Fragment>);
+                    output.push(
+                      <Fragment key={index + "c" + log.user_2?.id}>
+                        {part}
+                      </Fragment>
+                    );
                   }
                 });
-
               }
 
-              return <Box sx={{ whiteSpace: "nowrap" }}>{output}</Box>
-            }
+              return <Box sx={{ whiteSpace: "nowrap" }}>{output}</Box>;
+            };
 
             return (
-              (
-                <StyledListItem
-                  key={index}
-                >
-                  <Box component="span" sx={{ width: 125, minWidth: 125 }}>{dayjs.utc(log.timestamp).tz(Intl.DateTimeFormat().resolvedOptions().timeZone).format(TIME_FORMAT)}</Box>
-                  <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
-                  <Message />
-                </StyledListItem>
-              )
-            )
+              <StyledListItem key={index}>
+                <Box component="span" sx={{ width: 125, minWidth: 125 }}>
+                  {dayjs
+                    .utc(log.timestamp)
+                    .tz(Intl.DateTimeFormat().resolvedOptions().timeZone)
+                    .format(TIME_FORMAT)}
+                </Box>
+                <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
+                <Message />
+              </StyledListItem>
+            );
           })}
         </List>
       </ScrollableContent>

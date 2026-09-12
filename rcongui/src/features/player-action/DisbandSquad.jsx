@@ -39,8 +39,8 @@ const logger = debug("DISBAND SQUAD DIALOG");
 
 // Disband Squad Dialog with react-hook-form integration
 export default function DisbandSquadDialog() {
-  const themedImg = useThemedImages()
-  const theme = useTheme()
+  const themedImg = useThemedImages();
+  const theme = useTheme();
   const UNASSIGNED = "unassigned";
   const [PENDING, ERROR, SUCCESS] = [0, 1, 2];
   const [dialogOpen, setDialogOpen] = React.useState(false);
@@ -287,7 +287,7 @@ export default function DisbandSquadDialog() {
               divider={<Divider flexItem orientation="vertical" />}
               sx={{
                 border: (theme) => `1px solid ${theme.palette.divider}`,
-                borderRadius: 2,
+                borderRadius: 1,
               }}
             >
               {["allies", "axis"].map((team) => {
@@ -420,7 +420,9 @@ export default function DisbandSquadDialog() {
                                       height={16}
                                     />
                                     <img
-                                      src={themedImg.getRoleIconSrc(option.type)}
+                                      src={themedImg.getRoleIconSrc(
+                                        option.type
+                                      )}
                                       width={16}
                                       height={16}
                                     />

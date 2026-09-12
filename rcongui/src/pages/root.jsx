@@ -3,7 +3,6 @@ import { Container, Box, Stack, alpha } from "@mui/material";
 import AppNavbar from "@/components/layout/AppNavbar";
 import Header from "@/components/layout/Header";
 import SideMenu from "@/components/layout/SideMenu";
-import { ToastContainer } from "react-toastify";
 import { Outlet, redirect } from "react-router-dom";
 import { cmd } from "@/utils/fetchUtils";
 import "react-toastify/dist/ReactToastify.css";
@@ -11,6 +10,7 @@ import { ActionDialogProvider } from "@/hooks/useActionDialog";
 import { PlayerSidebarProvider } from "@/hooks/usePlayerSidebar";
 import { useAppStore } from "@/stores/app-state";
 import NavigationProgress from "@/components/layout/NavigationProgress";
+import ThemedToastContainer from "@/components/layout/ThemedToastContainer";
 
 export const loader = async () => {
   return null;
@@ -59,9 +59,9 @@ export default function Root() {
             }}
           >
             <Header />
-            <Container 
+            <Container
               maxWidth={widthMode}
-              sx={{ 
+              sx={{
                 display: "flex",
                 flexDirection: "column",
                 flexGrow: 1,
@@ -78,7 +78,7 @@ export default function Root() {
           </Stack>
         </Box>
       </Box>
-      <ToastContainer />
+      <ThemedToastContainer />
     </>
   );
 }

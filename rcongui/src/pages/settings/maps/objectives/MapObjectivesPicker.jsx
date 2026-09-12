@@ -1,14 +1,14 @@
-import { minWidth } from "@mui/system";
-import { getMapLayerImageSrc, getTacMapImageSrc } from "./helpers";
-import { Skeleton, styled } from "@mui/material";
+import { getTacMapImageSrc } from "./helpers";
+import { styled } from "@mui/material";
 
-const MapWrapper = styled("div")({
+const MapWrapper = styled("div")(({ theme }) => ({
   position: "absolute",
   top: 0,
   left: 0,
   width: "100%",
   height: "100%",
-});
+  backgroundColor: theme.palette.background.default,
+}));
 
 const MapImg = styled("img")({
   width: "100%",
@@ -42,23 +42,24 @@ const ObjectivesContainer = styled("div")(({ theme }) => ({
   maxWidth: theme.breakpoints.values.md,
 }));
 
-const InteractiveContainer = styled("div")(({ theme }) => ({
+const InteractiveContainer = styled("div")({
   position: "relative",
   aspectRatio: "1 / 1",
-}));
+});
 
-const LoadingOverlay = styled("div")({
+const LoadingOverlay = styled("div")(({ theme }) => ({
   display: "grid",
   alignContent: "center",
   justifyItems: "center",
   fontSize: 32,
   fontWeight: "bold",
-  background: "rgba(0, 0, 0, 0.6)",
+  color: theme.palette.text.primary,
+  backgroundColor: theme.palette.background.default,
   gridRowStart: 1,
   gridColumnStart: 1,
   gridColumnEnd: 6,
   gridRowEnd: 6,
-});
+}));
 
 const ControlButton = styled("button", {
   shouldForwardProp: (props) => props !== "state",
@@ -128,22 +129,20 @@ const isButtonDisabled = (state, index, map, objectives) => {
 export function MapObjectivesPicker({ objectives, map, onClick, loading }) {
   return (
     <ObjectivesContainer>
-      <MapTitle>{loading ? "Loading..." : !map ? "Select map" : map.pretty_name}</MapTitle>
+      <MapTitle>
+        {loading ? "Loading..." : !map ? "Select map" : map.pretty_name}
+      </MapTitle>
       <InteractiveContainer>
         <MapWrapper>
-          {loading || !map ? (
-            <Skeleton width={"100%"} height={"100%"} />
-          ) : (
-            <MapImg
-              src={getTacMapImageSrc(map)}
-              alt=""
-              draggable={false}
-            />
+          {!loading && map && (
+            <MapImg src={getTacMapImageSrc(map)} alt="" draggable={false} />
           )}
         </MapWrapper>
         <ObjectivesGrid>
           {loading || !map ? (
-            <LoadingOverlay>{loading ? "Loading..." : "Map not selected"}</LoadingOverlay>
+            <LoadingOverlay>
+              {loading ? "Loading..." : "Map not selected"}
+            </LoadingOverlay>
           ) : (
             objectives.flat().map((state, index) => {
               return (

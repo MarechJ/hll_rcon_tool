@@ -5,7 +5,6 @@ import {
   DialogContent,
   Typography,
   Tooltip,
-  IconButton,
 } from "@mui/material";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
@@ -30,16 +29,18 @@ export default function CopyToClipboardButton({
 
   return (
     <>
-      <Tooltip title={isCopied ? "Copied!" : (title ?? null)}>
+      <Tooltip title={isCopied ? "Copied!" : title ?? null}>
         {iconOnly ? (
-          <IconButton
+          <Button
             variant="outlined"
             color="warning"
+            aria-label={isCopied ? "Copied" : "Copy to clipboard"}
+            sx={{ minWidth: 30, px: 0.75 }}
             onClick={handleClick}
             {...props}
           >
             {isCopied ? <DoneAllIcon /> : <ContentCopyIcon />}
-          </IconButton>
+          </Button>
         ) : (
           <Button
             variant="outlined"

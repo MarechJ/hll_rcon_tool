@@ -128,7 +128,7 @@ export const StyledTable = styled("table", {
     "& th": {
       ...getDensityPadding(density, theme),
       verticalAlign: "middle",
-      height: "3rem",  
+      height: "3rem",
     },
     "& tbody tr": {
       verticalAlign: "top",
@@ -206,7 +206,10 @@ export const SortableHeader =
   (text, title) =>
   ({ column }) => {
     return (
-      <HeaderButton onClick={column.getToggleSortingHandler()} title={title || ""}>
+      <HeaderButton
+        onClick={column.getToggleSortingHandler()}
+        title={title || ""}
+      >
         {text}
         {column.getIsSorted() &&
           (column.getIsSorted() === "asc" ? (

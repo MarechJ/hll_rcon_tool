@@ -5,47 +5,47 @@ import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import CheckIcon from "@mui/icons-material/Check";
-import { green } from "@mui/material/colors";
 
 const PaginationItem = styled((props) => (
   <Button size="small" component={Link} {...props} />
-))({
-  width: 20,
-  height: 20,
+))(({ theme }) => ({
+  minWidth: 32,
+  width: 32,
+  height: 32,
   borderRadius: 0,
-});
+}));
 
 const PaginationPrevious = styled((props) => (
   <IconButton size="small" component={Link} {...props}>
     <KeyboardArrowLeftIcon />
   </IconButton>
-))({
-  width: 20,
-  height: 20,
+))(({ theme }) => ({
+  width: 32,
+  height: 32,
   borderRadius: 0,
-  p: 2,
-});
+  padding: theme.spacing(0.5),
+}));
 
 const PaginationNext = styled((props) => (
   <IconButton size="small" component={Link} {...props}>
     <KeyboardArrowRightIcon />
   </IconButton>
-))({
-  width: 20,
-  height: 20,
+))(({ theme }) => ({
+  width: 32,
+  height: 32,
   borderRadius: 0,
-  p: 2,
-});
+  padding: theme.spacing(0.5),
+}));
 
 const PaginationEllipsis = styled((props) => (
   <IconButton {...props}>
     <MoreHorizIcon />
   </IconButton>
-))({
-  width: 40,
-  height: 20,
+))(({ theme }) => ({
+  width: 36,
+  height: 32,
   borderRadius: 0,
-});
+}));
 
 export default function NavPagination({ page, maxPages, disabled, ...props }) {
   const [insertCustom, setInsertCustom] = useState(false);
@@ -77,12 +77,7 @@ export default function NavPagination({ page, maxPages, disabled, ...props }) {
   if (maxPages === 0) return null;
 
   return (
-    <Stack
-      direction={"row"}
-      alignItems={"center"}
-      gap={0.5}      
-      {...props}
-    >
+    <Stack direction={"row"} alignItems={"center"} gap={0.5} {...props}>
       {page > 1 && <PaginationPrevious to={goToPage(page - 1)} />}
       <PaginationItem
         variant={page === 1 ? "contained" : "outlined"}
@@ -102,7 +97,7 @@ export default function NavPagination({ page, maxPages, disabled, ...props }) {
       )}
       {page > 1 && page < maxPages && (
         <PaginationItem
-          variant={page === page ? "contained" : "outlined"}
+          variant="contained"
           to={goToPage(page)}
           disabled={disabled}
         >
@@ -112,9 +107,14 @@ export default function NavPagination({ page, maxPages, disabled, ...props }) {
       {page !== maxPages - 1 && page !== maxPages && (
         <div>
           {!insertCustom ? (
-              <PaginationEllipsis onClick={() => setInsertCustom(true)} />
+            <PaginationEllipsis onClick={() => setInsertCustom(true)} />
           ) : (
-            <Stack direction={"row"} gap={0.5} alignItems={"center"} sx={{ px: 2 }}>
+            <Stack
+              direction={"row"}
+              gap={0.5}
+              alignItems={"center"}
+              sx={{ px: 2 }}
+            >
               <Input
                 placeholder={"..."}
                 value={customPageValue}
@@ -126,12 +126,12 @@ export default function NavPagination({ page, maxPages, disabled, ...props }) {
               />
               <Button
                 variant={"outlined"}
+                color="success"
                 size={"small"}
                 sx={{
-                  color: green[800],
-                  "&:hover": { color: green[600] },
-                  width: 20,
-                  height: 20,
+                  minWidth: 32,
+                  width: 32,
+                  height: 32,
                   borderRadius: 0,
                 }}
                 LinkComponent={Link}

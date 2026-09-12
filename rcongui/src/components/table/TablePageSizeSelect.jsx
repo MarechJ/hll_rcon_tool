@@ -11,36 +11,28 @@ export const TablePageSizeSelect = ({
       aria-label="Page Size"
       onChange={(e) => setPageSize(e.target.value)}
       size="small"
-      MenuProps={{
-        PaperProps: {
-          sx: {
-            borderRadius: 0,
-          },
-        },
-      }}
+      MenuProps={{ PaperProps: { sx: { borderRadius: 0 } } }}
       sx={{
-        "& .MuiPaper-root": {
+        "& .MuiPaper-root": { borderRadius: 0 },
+        "& .MuiSelect-select": {
+          padding: "4px 32px 4px 8px",
+          minWidth: "40px",
+          backgroundColor: "background.default",
           borderRadius: 0,
         },
-        '& .MuiSelect-select': {
-          padding: '4px 32px 4px 8px',
-          minWidth: '40px',
-          backgroundColor: (theme) => theme.palette.background.default,
-          borderRadius: 0,
-        },
-        '& .MuiOutlinedInput-notchedOutline, & .MuiList-root': {
+        "& .MuiOutlinedInput-notchedOutline, & .MuiList-root": {
           borderRadius: 0,
         },
       }}
     >
       {options.map((option) => (
-        <MenuItem 
-          key={option} 
+        <MenuItem
+          key={option}
           value={option}
           dense
-          sx={{ 
+          sx={{
             py: 0.5,
-            minHeight: 'auto',
+            minHeight: "auto",
             borderRadius: 0,
           }}
         >

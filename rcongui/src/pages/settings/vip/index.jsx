@@ -503,7 +503,11 @@ const VipPageContent = () => {
         </Stack>
         <Stack spacing={2} sx={{ bgcolor: "background.paper", p: 2 }}>
           <Typography variant="h6">Search Player</Typography>
-          <PlayerSearchField onSelect={handleOnPlayerSelect} disableAddBtn={true} direction={"column"} />
+          <PlayerSearchField
+            onSelect={handleOnPlayerSelect}
+            disableAddBtn={true}
+            direction={"column"}
+          />
         </Stack>
         <Stack spacing={2} sx={{ bgcolor: "background.paper", p: 2 }}>
           <Typography variant="h6">Add VIP</Typography>
@@ -542,7 +546,7 @@ const VipPageContent = () => {
             handleChange={setVipIndefinitely}
             label="Never expires"
           />
-          <Button variant="contained" color="primary" onClick={handleClear}>
+          <Button variant="outlined" color="secondary" onClick={handleClear}>
             Clear
           </Button>
           <Button

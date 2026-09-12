@@ -22,13 +22,17 @@ export default function MapAutocomplete({ options, selected, onSelect }) {
           sx={{ "& > img": { mr: 2, flexShrink: 0 } }}
           {...props}
         >
-          <img
+          <Box
+            component="img"
             loading="lazy"
             width="40"
             height="24"
             src={getMapLayerImageSrc(option)}
             alt={option?.pretty_name || option?.name}
-            style={{ objectFit: "cover", borderRadius: "2px" }}
+            sx={{
+              objectFit: "cover",
+              borderRadius: "2px",
+            }}
           />
           {option?.pretty_name || option?.name}
         </Box>
