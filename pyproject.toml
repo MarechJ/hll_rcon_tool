@@ -5,7 +5,7 @@ target-version = ['py312']
 requires-python = ">=3.12"
 dependencies = [
     # Alembic does not use semantic versioning, so be careful with the version numbers https://alembic.sqlalchemy.org/en/latest/front.html#versioning-scheme
-    "alembic==1.19.2",
+    "alembic==1.20.0",
     "channels==4.3.2",
     "channels-redis==4.3.0",
     "click==8.5.0",
@@ -23,8 +23,8 @@ dependencies = [
     "humanize==4.16.0",
     "orjson==3.12.0",
     "psutil==7.2.2",
-    "psycopg2-binary>=2.9.12",
-    "pydantic==2.13.4",
+    "psycopg2-binary>=2.9.13",
+    "pydantic==2.13.5",
     "python-dateutil==2.9.0.post0",
     "pytz>=2026.3.post1",
     "redis==8.1.0",
@@ -52,7 +52,7 @@ discord-webhook = { git = "https://github.com/cemathey/python-discord-webhook", 
 dev = [
     "cachetools==7.1.7",
     "pytest==9.1.1",
-    "ruff==0.16.5",
+    "ruff==0.16.7",
     "fakeredis==2.37.1",
     "pre-commit>=4.6.2",
 ]
