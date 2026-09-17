@@ -94,10 +94,20 @@ if [ "$1" == 'supervisor' ]; then
     env >> /etc/environment
     export LOGGING_FILENAME="supervisor_${SERVER_NUMBER}.log"
     if [ -f "/config/supervisord_${SERVER_NUMBER}.conf" ]; then
-        exec supervisord -c "/config/supervisord_${SERVER_NUMBER}.conf"
+        SUPERVISOR_CONF="/config/supervisord_${SERVER_NUMBER}.conf"
     elif [ -f /config/supervisord.conf ]; then
-        exec supervisord -c /config/supervisord.conf
+        SUPERVISOR_CONF=/config/supervisord.conf
     else
-        exec supervisord -c /config/default-supervisord.conf
+        SUPERVISOR_CONF=/config/default-supervisord.conf
     fi
+    case "${CRCON_USE_PROCESS_SUPERVISOR:-0}" in
+        1|true|TRUE|yes|YES|on|ON)
+            echo "Starting Python process supervisor (CRCON_USE_PROCESS_SUPERVISOR=${CRCON_USE_PROCESS_SUPERVISOR})"
+            exec python -m rcon.process_supervisor -c "$SUPERVISOR_CONF"
+            ;;
+        *)
+            echo "Starting Supervisord (CRCON_USE_PROCESS_SUPERVISOR=${CRCON_USE_PROCESS_SUPERVISOR:-unset})"
+            exec supervisord -c "$SUPERVISOR_CONF"
+            ;;
+    esac
 fi
