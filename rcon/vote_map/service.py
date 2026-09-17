@@ -220,6 +220,24 @@ class VoteMap:
                     join_char="\n",
                 )
                 text.append(f"OFFENSIVES:\n{vote_options}")
+            if len(categorized[maps.GameMode.CONQUEST]):
+                vote_options = VoteMap.join_vote_options(
+                    selection=categorized[maps.GameMode.CONQUEST],
+                    maps_to_numbers=maps_to_numbers,
+                    ranked_votes=ranked_votes,
+                    total_votes=total_vote_counts,
+                    join_char="\n",
+                )
+                text.append(f"CONQUESTS:\n{vote_options}")
+            if len(categorized[maps.GameMode.DOMINATION]):
+                vote_options = VoteMap.join_vote_options(
+                    selection=categorized[maps.GameMode.DOMINATION],
+                    maps_to_numbers=maps_to_numbers,
+                    ranked_votes=ranked_votes,
+                    total_votes=total_vote_counts,
+                    join_char="\n",
+                )
+                text.append(f"DOMINATIONS:\n{vote_options}")
             if len(categorized[maps.GameMode.SKIRMISH]):
                 vote_options = VoteMap.join_vote_options(
                     selection=categorized[maps.GameMode.SKIRMISH],
@@ -984,6 +1002,8 @@ class VoteMap:
         number_last_played_to_exclude: int,
         num_warfare_options: int,
         num_offensive_options: int,
+        num_conquest_options: int,
+        num_domination_options: int,
         num_skirmish_control_options: int,
         consider_offensive_same_map: bool,
         consider_skirmishes_as_same_map: bool,
@@ -1002,6 +1022,8 @@ class VoteMap:
             number_last_played_to_exclude=number_last_played_to_exclude,
             num_warfare_options=num_warfare_options,
             num_offensive_options=num_offensive_options,
+            num_conquest_options=num_conquest_options,
+            num_domination_options=num_domination_options,
             num_skirmish_control_options=num_skirmish_control_options,
             consider_offensive_same_map=consider_offensive_same_map,
             consider_skirmishes_as_same_map=consider_skirmishes_as_same_map,
@@ -1235,9 +1257,9 @@ class VoteMapCommandHandler:
             and (attackers := self.__get_next_param(params, "allies")) not in teams
         ):
             raise InvalidMapParam(
-                f"""INVALID ATTACK TEAM\n                    
+                f"""INVALID ATTACK TEAM\n
                 When choosing the Offensive mode, you must specify attacking team to select environment.\n
-                => {map_tag} {game_mode} <{" | ".join(teams)}> [env]\n                    
+                => {map_tag} {game_mode} <{" | ".join(teams)}> [env]\n
                 OPTIONS:
                 {"\n".join(teams)}"""
             )
