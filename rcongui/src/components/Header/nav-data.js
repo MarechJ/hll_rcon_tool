@@ -244,6 +244,11 @@ export const navMenus = [
         icon: <NoTransferIcon />,
       },
       {
+        name: "Team Balance",
+        to: "/settings/automods/team-balance",
+        icon: <GroupsIcon />,
+      },
+      {
         name: "VAC/Game Bans",
         to: "/settings/others/vac-bans",
         icon: <AccountBalanceIcon />,

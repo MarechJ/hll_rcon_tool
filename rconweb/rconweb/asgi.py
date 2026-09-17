@@ -16,12 +16,17 @@ from django.core.asgi import get_asgi_application
 
 django_asgi_app = get_asgi_application()
 
-# This has to be imported *after* setting DJANGO_SETTINGS_MODULE
-from api import barricade, log_stream
 
-application = ProtocolTypeRouter(
-    {
-        "http": django_asgi_app,
-        "websocket": URLRouter(log_stream.urlpatterns + barricade.urlpatterns),
-    }
-)
+def get_application():
+    # These modules access Django settings during import.
+    from api import barricade, log_stream
+
+    return ProtocolTypeRouter(
+        {
+            "http": django_asgi_app,
+            "websocket": URLRouter(log_stream.urlpatterns + barricade.urlpatterns),
+        }
+    )
+
+
+application = get_application()
