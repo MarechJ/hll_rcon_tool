@@ -209,9 +209,9 @@ export default function GameOverview({
   remainingTime,
 }: GameOverviewProps) {
   const { t } = useTranslation('game')
-  const theme = useTheme()
+  const { resolvedTheme } = useTheme()
 
-  const getFactionIconSrc = theme.theme === "dark" ? getLightFactionIconSrc : getDarkFactionIconSrc
+  const getFactionIconSrc = resolvedTheme === "dark" ? getLightFactionIconSrc : getDarkFactionIconSrc
 
   const displayArrows = () => {
     if (score.allies === undefined || score.axis === undefined) return null
