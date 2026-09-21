@@ -592,6 +592,7 @@ MAPS = {
     )
 }
 
+// TODO: Add Conquest Layers
 LAYERS = {
     layer.id.lower(): layer
     for layer in (
