@@ -348,9 +348,15 @@ const Live = () => {
         <Grid
           size={{
             xs: 12,
-            lg: visibleElements.includes("logs") ? 7 : 12,
+            lg: !visibleElements.includes("logs") ? "grow" : "auto",
           }}
-          sx={{ minWidth: 0, overflow: "hidden" }}
+          sx={{
+            minWidth: 0,
+            overflow: "hidden",
+            maxWidth: visibleElements.includes("logs")
+              ? { lg: "calc((100% - 8px) * 7 / 12)" }
+              : undefined,
+          }}
         >
           <PlayersTable
             table={playersTable}
@@ -366,9 +372,14 @@ const Live = () => {
         <Grid
           size={{
             xs: 12,
-            lg: visibleElements.includes("players") ? 5 : 12,
+            lg: "grow",
           }}
-          sx={{ minWidth: 0, overflow: "hidden" }}
+          sx={{
+            minWidth: visibleElements.includes("players")
+              ? { xs: 0, lg: "calc((100% - 8px) * 5 / 12)" }
+              : 0,
+            overflow: "hidden",
+          }}
         >
           <LogsTable
             table={logsTable}
