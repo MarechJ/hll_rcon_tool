@@ -1,5 +1,6 @@
 import datetime
 import hashlib
+import json
 import logging
 import os
 from concurrent.futures import as_completed
@@ -164,10 +165,15 @@ def save_missing_match_logs_worker(map_info: MapInfo) -> Job:
     )
 
 
-def unique_id(text: str, length: int = 16) -> str:
-    """
-    Create a short, unique ID from any text (timestamp + message content).
-    """
+def unique_id(
+    event_time: datetime.datetime, action: str, message: str, length: int = 16
+) -> str:
+    """Identify an event independently of the changing relative age in its raw log."""
+    if event_time.tzinfo is None:
+        event_time = event_time.replace(tzinfo=datetime.UTC)
+    text = json.dumps(
+        [event_time.astimezone(datetime.UTC).isoformat(), action, message]
+    )
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:length]
 
 
@@ -194,8 +200,8 @@ def save_missing_match_logs(map_: MapInfo):
                 )
 
         # Adding 1 more minute to the query just to be sure no logs are missed by a few seconds
-        minutes_from_now = 1 + (
-            (datetime.datetime.now(tz=datetime.UTC) - match_start).seconds // 60
+        minutes_from_now = 1 + int(
+            (datetime.datetime.now(tz=datetime.UTC) - match_start).total_seconds() // 60
         )
 
         rcon_logs = get_rcon().get_structured_logs(since_min_ago=minutes_from_now)
@@ -229,11 +235,18 @@ def save_missing_match_logs(map_: MapInfo):
             rcon_match_logs[0]["raw"],
         )
 
-        id_to_log = {unique_id(log["message"]): log for log in rcon_match_logs}
+        id_to_log = {
+            unique_id(log["event_time"], log["action"], log["message"]): log
+            for log in rcon_match_logs
+        }
 
         logger.info("CACHE logs count: %d", len(match_redis_logs))
-        for log in match_redis_logs:
-            if not id_to_log.get(unique_id(log["message"])):
+        cache_log_ids = {
+            unique_id(log["event_time"], log["action"], log["message"])
+            for log in match_redis_logs
+        }
+        for log_id, log in id_to_log.items():
+            if log_id not in cache_log_ids:
                 logger.warning("Missing log - CACHE: %s", log)
 
         with enter_session() as sess:
@@ -247,9 +260,13 @@ def save_missing_match_logs(map_: MapInfo):
                 limit=99999999,
             )
             logger.info("DATABASE logs count: %d", len(db_match_logs))
+            db_log_ids = {
+                unique_id(log.event_time, log.type, log.content)
+                for log in db_match_logs
+            }
             logs_to_store = []
-            for log in db_match_logs:
-                if not id_to_log.get(unique_id(log.content)):
+            for log_id, log in id_to_log.items():
+                if log_id not in db_log_ids:
                     logger.warning("Missing log - DATABASE: %s", log)
                     logs_to_store.append(log)
             if logs_to_store:
