@@ -49,6 +49,8 @@ def test_version_zero_map_is_normalized_to_current_schema():
     assert item["game_layout"] == {"requested": [], "set": []}
     assert item["cap_flips"] == []
     assert item["match_time"] == 0
+    assert item["initial_morale"] is None
+    assert item["morale_history"] == []
 
     player_id = "76561198178339671"
     player = item["player_stats"][player_id]
@@ -77,6 +79,18 @@ def test_newer_map_schema_is_rejected():
         migrate_map_info({"_schema_version": MAPS_HISTORY_SCHEMA_VERSION + 1})
 
 
+def test_version_one_migration_preserves_scores_without_inventing_morale():
+    original = {
+        "_schema_version": 1,
+        "cap_flips": [{"ts": 5, "allied_score": 3, "axis_score": 2}],
+    }
+    migrated = migrate_map_info(original)
+    assert migrated["cap_flips"] == original["cap_flips"]
+    assert migrated["morale_history"] == []
+    assert migrated["initial_morale"] is None
+    assert "morale_history" not in original
+
+
 def test_redis_migration_is_atomic_and_does_not_replace_backup_on_restart():
     client = fakeredis.FakeRedis()
     client.lock = lambda *args, **kwargs: nullcontext()
@@ -85,7 +99,10 @@ def test_redis_migration_is_atomic_and_does_not_replace_backup_on_restart():
     history = SimpleNamespace(red=client, key="maps_history", max_len=500)
 
     assert migrate_maps_history(history) == 1
-    assert orjson.loads(client.lindex("maps_history", 0))["_schema_version"] == 1
+    assert (
+        orjson.loads(client.lindex("maps_history", 0))["_schema_version"]
+        == MAPS_HISTORY_SCHEMA_VERSION
+    )
     backup = client.lrange("maps_history:backup_previous", 0, -1)
     assert backup == [raw_item]
 
@@ -101,6 +118,39 @@ def test_schema_marker_skips_reading_items_on_later_maintenance_runs():
     history = SimpleNamespace(red=client, key="maps_history", max_len=500)
 
     assert migrate_maps_history(history) == 0
+
+
+def test_redis_migration_upgrades_version_one_marker():
+    client = fakeredis.FakeRedis()
+    client.lock = lambda *args, **kwargs: nullcontext()
+    old_item = maps_history_migrations._migrate_to_v1(LEGACY_MAP_VALUE)
+    client.rpush("maps_history", orjson.dumps(old_item))
+    client.set("maps_history:schema_version", 1)
+    history = SimpleNamespace(red=client, key="maps_history", max_len=500)
+
+    assert migrate_maps_history(history) == 1
+    migrated = orjson.loads(client.lindex("maps_history", 0))
+    assert migrated["morale_history"] == []
+    assert migrated["initial_morale"] is None
+    assert int(client.get("maps_history:schema_version")) == MAPS_HISTORY_SCHEMA_VERSION
+
+
+def test_new_match_morale_survives_storage_and_public_history(monkeypatch):
+    from rcon.utils import MapsHistory
+
+    client = fakeredis.FakeRedis()
+    monkeypatch.setattr("rcon.utils.get_redis_pool", lambda: client.connection_pool)
+    history = MapsHistory()
+    new_map = history.save_new_map("carentan_warfare", initial_morale=100)
+    assert new_map["morale_history"] == []
+    assert history.get_current_map()["initial_morale"] == 100
+    new_map["morale_history"].append({"ts": 20, "allied_morale": 80, "axis_morale": 70})
+    history.update(0, new_map)
+    history.save_map_end(end_timestamp=200)
+    public_map = history.get_safe_history()[0]
+    assert public_map["morale_history"] == new_map["morale_history"]
+    assert public_map["initial_morale"] == 100
+    assert "player_stats" not in public_map
 
 
 def test_populated_database_discovery_includes_all_server_databases():

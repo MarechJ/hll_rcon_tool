@@ -149,6 +149,12 @@ def get_public_info(request):
         "max_player_count": max_players,
         "player_count_by_team": players,
         "score": score,
+        "allied_morale": gamestate["allied_morale"],
+        "axis_morale": gamestate["axis_morale"],
+        "initial_morale": gamestate["initial_morale"],
+        "morale_history": cached_cur_map.get("morale_history", [])
+        if cached_cur_map
+        else [],
         "cap_flips": cap_flips,
         "match_time": match_time,
         "time_remaining": gamestate["time_remaining"].total_seconds(),

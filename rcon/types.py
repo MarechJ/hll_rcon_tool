@@ -609,6 +609,12 @@ class MapResult(TypedDict):
     allied: int
 
 
+class MapMorale(TypedDict):
+    ts: int
+    allied_morale: int
+    axis_morale: int
+
+
 class MapInfoWithoutPlayerStats(TypedDict):
     _schema_version: NotRequired[int]
     name: str
@@ -617,6 +623,8 @@ class MapInfoWithoutPlayerStats(TypedDict):
     guessed: bool
     game_layout: GameLayout
     cap_flips: list[MapScore]
+    morale_history: list[MapMorale]
+    initial_morale: int | None
     match_time: int
 
 
@@ -1036,6 +1044,10 @@ class PublicInfoType(TypedDict):
     max_player_count: int
     player_count_by_team: PublicInfoPlayerType
     score: PublicInfoScoreType
+    allied_morale: int
+    axis_morale: int
+    initial_morale: int
+    morale_history: list[MapMorale]
     time_remaining: float
     vote_status: VoteMapStatus
     name: PublicInfoNameType
