@@ -35,7 +35,11 @@ const PlayersTable = ({
   return (
     <>
       <TeamSelectionToolbar table={table} teamData={teamData} />
-      <Stack direction="column" spacing={0}>
+      <Stack
+        direction="column"
+        spacing={0}
+        sx={{ "& th, & td": { whiteSpace: "nowrap" } }}
+      >
         <TableToolbar>
           <ActionMenuButton
             actions={generatePlayerActions({
