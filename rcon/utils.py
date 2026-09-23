@@ -8,6 +8,7 @@ from itertools import islice
 from typing import (
     Any,
     TypeVar,
+    cast,
     overload,
 )
 
@@ -31,6 +32,7 @@ from rcon.types import (
     GameEnum,
     GetDetailedPlayer,
     MapInfo,
+    MapInfoWithoutPlayerStats,
     PlayerInfoType,
     PlayerStat,
     PlayerStatsType,
@@ -363,6 +365,16 @@ class LogsHistory(FixedLenList[StructuredLogLineWithMetaData]):
 class MapsHistory(FixedLenList[MapInfo]):
     def __init__(self, key="maps_history", max_len=500):
         super().__init__(key, max_len)
+
+    def get_safe_history(self) -> list[MapInfoWithoutPlayerStats]:
+        """Exclude player_stats from the dataset. Used for public endpoints"""
+        return [
+            cast(
+                MapInfoWithoutPlayerStats,
+                {key: value for key, value in entry.items() if key != "player_stats"},
+            )
+            for entry in self[:]
+        ]
 
     def get_current_map(self) -> MapInfo | None:
         try:
