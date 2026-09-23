@@ -2,6 +2,9 @@ from enum import Enum
 
 from rcon.maps import Team
 
+# NOTE: Kill logs for rifles with grenade launchers
+# use the same weapon name for bullet kills and grenade kills.
+
 
 class WeaponType(Enum):
     Infantry = "infantry"
@@ -19,6 +22,7 @@ class WeaponType(Enum):
 
 
 SOVIET_WEAPONS = {
+    "ROKS-2": WeaponType.Infantry,
     "PPSH 41": WeaponType.Infantry,
     "PPSH 41 W/DRUM": WeaponType.Infantry,
     "SVT40": WeaponType.Infantry,
@@ -142,12 +146,18 @@ US_WEAPONS = {
     "M1A1 THOMPSON": WeaponType.Infantry,
     "M3 GREASE GUN": WeaponType.Infantry,
     "M1 GARAND": WeaponType.Infantry,
+    # Rifle Grenade
+    "M1 GARAND W/ M7 RGL": WeaponType.Infantry,
     "M1 CARBINE": WeaponType.Infantry,
     "M1918A2 BAR": WeaponType.Infantry,
     "M97 TRENCH GUN": WeaponType.Infantry,
     "BROWNING M1919": WeaponType.MachineGun,
+    # renamed to M1903 SPRINGFIELD
     "M1919 SPRINGFIELD": WeaponType.Sniper,
+    # renamed to M1903A3 SPRINGFIELD in U21
     "M1903 SPRINGFIELD": WeaponType.Sniper,
+    "M1903A4_SPRINGFIELD": WeaponType.Sniper,
+    "M1903A3 SPRINGFIELD": WeaponType.Infantry,
     "COLT M1911": WeaponType.Infantry,
     "M2 FLAMETHROWER": WeaponType.Infantry,
     "M3 KNIFE": WeaponType.Infantry,
@@ -191,7 +201,6 @@ US_WEAPONS = {
     "HULL M1919 [M4A3 (105mm)]": WeaponType.Armor,
 }
 
-# Preliminary based on experimental branch
 CA_WEAPONS = {
     "Rifle No.4 Mk I": WeaponType.Infantry,
     "Lanchester": WeaponType.Infantry,
@@ -208,6 +217,8 @@ CA_WEAPONS = {
     "Satchel": WeaponType.Satchel,
     "FLAMETHROWER": WeaponType.Infantry,
     "SMLE No.1 Mk III": WeaponType.Infantry,
+    # Rifle Grenade
+    "SMLE No.1 Mk III EY": WeaponType.Infantry,
     "Rifle No.4 Mk I Sniper": WeaponType.Sniper,
     "Canadian Sten Mk.II": WeaponType.Infantry,
     "FN-Inglis No 2 MK I": WeaponType.Infantry,
@@ -238,11 +249,12 @@ CA_WEAPONS = {
     "M2 Browning [Half-track]": WeaponType.Armor,
 }
 
-
 AXIS_WEAPONS = {
     "MP40": WeaponType.Infantry,
     "GEWEHR 43": WeaponType.Infantry,
     "KARABINER 98K": WeaponType.Infantry,
+    # Rifle Grenade
+    "KARABINER 98K W/ SCHIESSBECHER": WeaponType.Infantry,
     "STG44": WeaponType.Infantry,
     "FG42": WeaponType.Infantry,
     "MG34": WeaponType.MachineGun,
