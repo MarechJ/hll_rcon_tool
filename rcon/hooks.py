@@ -276,6 +276,8 @@ def reset_watch_killrate_cooldown(
 @on_match_start
 def handle_new_match_start(rcon: Rcon, struct_log):
     log_map = guess_map_from_log(struct_log, rcon.game_profile)
+    initial_morale = None
+    gamestate = None
     try:
         logger.info("New match started recording map %s", struct_log)
         with invalidates(Rcon.get_map, Rcon.get_next_map, Rcon.get_gamestate):
@@ -323,6 +325,8 @@ def handle_new_match_start(rcon: Rcon, struct_log):
             if current_map.map.name == log_map.map.name:
                 map_to_save = current_map
                 guessed = False
+                if gamestate and current_map.game_mode == gamestate["game_mode"]:
+                    initial_morale = gamestate["initial_morale"]
             else:
                 map_to_save = log_map
                 logger.warning(
@@ -367,6 +371,7 @@ def handle_new_match_start(rcon: Rcon, struct_log):
             start_timestamp=int(struct_log["timestamp_ms"] / 1000),
             game_layout=game_layout,
             match_time=match_time,
+            initial_morale=initial_morale,
         )
     finally:
         prev_map = MapsHistory()[1]

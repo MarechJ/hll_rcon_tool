@@ -942,7 +942,7 @@ requires-dist = [
     { name = "django-cors-headers", specifier = "==4.9.0" },
     { name = "django-ratelimit", specifier = ">=4.1.0" },
     { name = "gunicorn", specifier = ">=26.2.0" },
-    { name = "hllrcon", specifier = ">=2.0.0.5" },
+    { name = "hllrcon", specifier = ">=2.0.0.6" },
     { name = "httpx", specifier = "==0.28.1" },
     { name = "humanize", specifier = "==4.16.0" },
     { name = "orjson", specifier = "==3.12.0" },
@@ -973,15 +973,15 @@ dev = [
 
 [[package]]
 name = "hllrcon"
-version = "2.0.0.5"
+version = "2.0.0.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/20/d6/6f5ae14858a55959e05b0ff3d6f93eb6c17a54eea55e33166cfacee9fee2/hllrcon-2.0.0.5.tar.gz", hash = "sha256:cd9d2b8cee03671a597900764d5b7b47b2ed4b8ffce1bd60fca17ff9b752b2c0", size = 232342, upload-time = "2026-09-16T11:56:08.271Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/40/63/e973a1e56a6bcd50b86318a0741a7d83998c8d382051796ddfb60d1bc557/hllrcon-2.0.0.6.tar.gz", hash = "sha256:a940acf591f2fd610d8dc483527f72ee7e307c80701567b64a63b87c88473af9", size = 233603, upload-time = "2026-09-23T12:16:16.015Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3f/43/2b1abefd27e53319bc4b127533932189af88f26ddda7f89896ea4d314ca6/hllrcon-2.0.0.5-py3-none-any.whl", hash = "sha256:661e5bb528d08b9f0bb287caebfb15e7c35b191dcf65a1599c0f31aee9096b76", size = 121232, upload-time = "2026-09-16T11:56:06.699Z" },
+    { url = "https://files.pythonhosted.org/packages/f9/8b/0508c14086cc65740568b8aef634e4f61315b61a00661326b9ed32afbd66/hllrcon-2.0.0.6-py3-none-any.whl", hash = "sha256:e06c36640737206480a777bc6e9a85a3c88bf0754a386617313881be20567bb0", size = 122407, upload-time = "2026-09-23T12:16:14.278Z" },
 ]
 
 [[package]]

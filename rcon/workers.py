@@ -21,7 +21,7 @@ from rcon.models import Maps, PlayerStats, enter_session
 from rcon.player_history import get_player
 from rcon.player_stats import TimeWindowStats
 from rcon.rcon import get_rcon
-from rcon.types import GameLayout, MapInfo, MapScore, PlayerStat
+from rcon.types import GameLayout, MapInfo, MapMorale, MapScore, PlayerStat
 from rcon.utils import (
     GAME_LOG_STAT_FIELDS,
     INDEFINITE_VIP_DATE,
@@ -127,6 +127,8 @@ def get_or_create_map(
     game_layout: GameLayout,
     cap_flips: list[MapScore],
     match_time: int,
+    morale_history: list[MapMorale],
+    initial_morale: int | None,
 ):
     map_ = (
         sess.query(Maps)
@@ -150,6 +152,8 @@ def get_or_create_map(
         map_name=map_name,
         game_layout=game_layout,
         cap_flips=cap_flips,
+        morale_history=morale_history,
+        initial_morale=initial_morale,
         match_time=match_time,
         game=GAME_ID,
     )
@@ -332,6 +336,7 @@ def clear_stats_cache(map: Maps, map_info: MapInfo | None):
         return
     map_to_update["player_stats"] = {}
     map_to_update["cap_flips"] = []
+    map_to_update["morale_history"] = []
     maps_history.update(map_index, map_to_update)
 
 
@@ -354,6 +359,8 @@ def _record_stats(map_info: MapInfo):
             map_name=map_info["name"],
             game_layout=map_info.get("game_layout", GameLayout(requested=[], set=[])),
             cap_flips=map_info.get("cap_flips", []),
+            morale_history=map_info.get("morale_history", []),
+            initial_morale=map_info.get("initial_morale"),
             match_time=map_info["match_time"],
         )
         record_stats_from_map(sess, map_, map_info)
