@@ -45,7 +45,10 @@ class ProcessSupervisor:
     def get_all_process_info(self) -> list[dict[str, object]]:
         with self._lock:
             now = int(time.time())
-            return [proc.process_info(now) for proc in self._processes.values()]
+            return [
+                self._processes[name].process_info(now)
+                for name in sorted(self._processes)
+            ]
 
     def get_process_info(self, name: str) -> dict[str, object]:
         with self._lock:
