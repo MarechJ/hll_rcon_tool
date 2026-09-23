@@ -602,7 +602,7 @@ LAYERS = {
             id=UNKNOWN_MAP_NAME, map=MAPS[UNKNOWN_MAP_NAME], game_mode=GameMode.WARFARE
         ),
         Layer(
-            id="car_l_1944_conquest_day",
+            id="CAR_L_1944_Conquest_Day",
             map=MAPS["carentan"],
             game_mode=GameMode.CONQUEST,
             environment=Environment.DAY,
@@ -614,19 +614,19 @@ LAYERS = {
             environment=Environment.DAY,
         ),
         Layer(
-            id="oma_l_1944_conquest_day",
+            id="OMA_L_1944_Conquest_Day",
             map=MAPS["omahabeach"],
             game_mode=GameMode.CONQUEST,
             environment=Environment.DAY,
         ),
         Layer(
-            id="smdm_l_1944_conquest_day",
+            id="SMDM_L_1944_Conquest_Day",
             map=MAPS["stmariedumont"],
             game_mode=GameMode.CONQUEST,
             environment=Environment.DAY,
         ),
         Layer(
-            id="sme_l_1944_conquest_day",
+            id="SME_L_1944_Conquest_Day",
             map=MAPS["stmereeglise"],
             game_mode=GameMode.CONQUEST,
             environment=Environment.DAY,
