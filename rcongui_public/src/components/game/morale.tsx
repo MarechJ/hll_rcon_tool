@@ -2,7 +2,9 @@ import { useTranslation } from 'react-i18next'
 import { PublicInfo } from '@/types/api'
 import { cn } from '@/lib/utils'
 
-export type MoraleState = Pick<PublicInfo, 'allied_morale' | 'axis_morale' | 'initial_morale'>
+export type MoraleState = Pick<PublicInfo, 'allied_morale' | 'axis_morale'> & {
+  initial_morale: number | null
+}
 
 export function Morale({ morale }: { morale: MoraleState }) {
   const { t } = useTranslation('game')
@@ -23,10 +25,10 @@ export function Morale({ morale }: { morale: MoraleState }) {
               <span className="uppercase text-muted-foreground">{name}</span>
               <span className="font-bold">
                 {Number.isFinite(value) ? value : '—'}
-                {Number.isFinite(initial) && initial > 0 && <span className="font-normal text-muted-foreground"> / {initial}</span>}
+                {initial !== null && Number.isFinite(initial) && initial > 0 && <span className="font-normal text-muted-foreground"> / {initial}</span>}
               </span>
             </div>
-            {Number.isFinite(value) && Number.isFinite(initial) && initial > 0 && (
+            {Number.isFinite(value) && initial !== null && Number.isFinite(initial) && initial > 0 && (
               <div
                 role="meter"
                 className="h-[6px] overflow-hidden bg-secondary"

@@ -42,6 +42,8 @@ export type ScoreboardMap = {
 // Fix after https://github.com/MarechJ/hll_rcon_tool/issues/657 issue has been resolved
 export type ScoreboardMapStats = Omit<ScoreboardMap, 'player_stats'> & {
   player_stats: Player[]
+  morale_history: MatchMorale[]
+  initial_morale: number | null
   // map_name: string;
 }
 

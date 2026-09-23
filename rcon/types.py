@@ -651,6 +651,9 @@ class MapsType(TypedDict):
     game_layout: GameLayout
     player_stats: list[PlayerStatsType]
     cap_flips: list[MapScore]
+    morale_history: list[MapMorale]
+    initial_morale: int | None
+    match_time: int
 
 
 class PlayerCommentType(TypedDict):

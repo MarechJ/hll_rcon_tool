@@ -49,6 +49,7 @@ from rcon.types import (
     GameIntEnum,
     GameLayout,
     GetDetailedPlayer,
+    MapMorale,
     MapScore,
     MapsType,
     MessageTemplateCategory,
@@ -894,6 +895,10 @@ class Maps(Base):
         JSON, nullable=False, default=GameLayout
     )
     cap_flips: Mapped[list[MapScore]] = mapped_column(JSON, nullable=False, default=[])
+    morale_history: Mapped[list[MapMorale]] = mapped_column(
+        JSON, nullable=False, default=list, server_default="[]"
+    )
+    initial_morale: Mapped[int | None] = mapped_column(nullable=True)
     match_time: Mapped[int] = mapped_column(default=0)
     game: Mapped[int] = mapped_column(
         default=GameIntEnum.HLL_WW2.value, server_default=str(GameIntEnum.HLL_WW2.value)
@@ -919,6 +924,8 @@ class Maps(Base):
             ),
             "game_layout": self.game_layout,
             "cap_flips": self.cap_flips,
+            "morale_history": self.morale_history,
+            "initial_morale": self.initial_morale,
             "match_time": self.match_time,
             "player_stats": (
                 []
