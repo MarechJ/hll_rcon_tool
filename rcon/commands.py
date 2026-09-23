@@ -650,12 +650,6 @@ class ServerCtl:
     def remove_admin(self, player_id) -> bool:
         return self.exchange_success("RemoveAdmin", 2, {"PlayerId": player_id})
 
-    @_escape_params
-    def add_vip(self, player_id: str, description: str) -> bool:
-        return self.exchange_success(
-            "AddVip", 2, {"PlayerId": player_id, "Description": description}
-        )
-
     def remove_vip(self, player_id) -> bool:
         return self.exchange_success("RemoveVip", 2, {"PlayerId": player_id})
 
@@ -785,6 +779,12 @@ class ServerCtl:
 class HLLServerCtl(ServerCtl):
     """Hell Let Loose controller extension point."""
 
+    @_escape_params
+    def add_vip(self, player_id: str, description: str) -> bool:
+        return self.exchange_success(
+            "AddVip", 2, {"PlayerId": player_id, "Comment": description}
+        )
+
     def set_welcome_message(self, message):
         self.exchange("SetWelcomeMessage", 2, {"Message": message})
 
@@ -810,6 +810,12 @@ class HLLServerCtl(ServerCtl):
 
 class HLLVServerCtl(ServerCtl):
     """Hell Let Loose: Vietnam controller extension point."""
+
+    @_escape_params
+    def add_vip(self, player_id: str, description: str) -> bool:
+        return self.exchange_success(
+            "AddVip", 2, {"PlayerId": player_id, "Description": description}
+        )
 
     def set_welcome_message(self, message):
         self.exchange("SetNoticeMessage", 2, {"Message": message})
