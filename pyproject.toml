@@ -17,7 +17,7 @@ dependencies = [
     "django==4.2.30",
     "django-cors-headers==4.9.0",
     "django-ratelimit>=4.1.0",
-    "gunicorn>=26.0.0",
+    "gunicorn>=26.2.0",
     "hllrcon>=2.0.0.4",
     "httpx==0.28.1",
     "humanize==4.16.0",
