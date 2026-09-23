@@ -3,7 +3,7 @@ import { Board } from './Board';
 import Grid from "@mui/material/Grid2"
 import { TeamDesktop, TeamMobile } from './Team';
 import { styled } from '@mui/material';
-import { Skeleton } from '@mui/material';
+import { Box, LinearProgress, Skeleton, Typography } from '@mui/material';
 
 /*
 For later use:
@@ -40,6 +40,40 @@ const StyledSkeleton = styled(Skeleton)(() => ({
   minHeight: '4',
   margin: '0 1rem',
 }));
+
+const Morale = ({ data }) => {
+  if (data.current_map.game_mode !== 'conquest') return null;
+
+  const initial = data.initial_morale;
+  return (
+    <Box sx={{ px: 1, py: 0.5 }}>
+      <Typography variant="caption" component="div" textAlign="center">Morale</Typography>
+      <Box sx={{ display: 'flex', gap: 2 }}>
+        {[
+          ['Allies', data.allied_morale, 'info'],
+          ['Axis', data.axis_morale, 'error'],
+        ].map(([team, value, color]) => (
+          <Box key={team} sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="caption" component="div" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+              {team}: {Number.isFinite(value) ? value : '—'}
+              {Number.isFinite(initial) && initial > 0 ? ` / ${initial}` : ''}
+            </Typography>
+            {Number.isFinite(value) && Number.isFinite(initial) && initial > 0 && (
+              <LinearProgress
+                variant="determinate"
+                color={color}
+                value={Math.min(100, Math.max(0, value / initial * 100))}
+                aria-label={`${team} morale`}
+                aria-valuetext={`${value} / ${initial}`}
+                sx={{ height: 6, borderRadius: 1 }}
+              />
+            )}
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  );
+};
   
 const DesktopHeader = ({ data }) => {
   return (
@@ -55,7 +89,7 @@ const DesktopHeader = ({ data }) => {
         {data ? <TeamDesktop data={data.allies} /> : <StyledSkeleton />}
       </Grid>
       <Grid size={4}>
-        {data ? <Board data={data} /> : <StyledSkeleton />}
+        {data ? <><Board data={data} /><Morale data={data} /></> : <StyledSkeleton />}
       </Grid>
       <Grid
         size={4}
@@ -75,7 +109,7 @@ const MobileHeader = ({ data }) => {
   return (
     <MobileHeaderWrapper container component={'header'}>
       <Grid size={12}>
-        {data ? <Board data={data} /> : <StyledSkeleton />}
+        {data ? <><Board data={data} /><Morale data={data} /></> : <StyledSkeleton />}
       </Grid>
       <Grid size={6} sx={{ borderRight: '1px solid', borderRightColor: (theme) => theme.palette.divider }}>
         {data ? (
