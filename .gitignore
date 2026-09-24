@@ -1,5 +1,6 @@
 # Compose files are templated now
 compose.yaml
+compose.override.yaml
 db_data/
 .env
 dev.env
