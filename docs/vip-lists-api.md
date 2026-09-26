@@ -338,7 +338,7 @@ GET /api/get_vip_lists_for_server?server_number=2
 | --- | --- | --- | --- |
 | `POST /api/create_vip_list` | `api.can_create_vip_lists` | `{"name": string, "sync"?: "ignore_unknown" \| "remove_unknown", "servers"?: integer[] \| null, "flags"?: string[], "default_expiration_seconds"?: integer \| null, "expired_retention_days"?: integer \| null}` | `VipList` |
 | `POST /api/edit_vip_list` | `api.can_change_vip_lists` | `{"vip_list_id": integer, "name"?: string, "sync"?: "ignore_unknown" \| "remove_unknown", "servers"?: integer[] \| null, "flags"?: string[], "default_expiration_seconds"?: integer \| null, "expired_retention_days"?: integer \| null}` | `VipList` |
-| `POST /api/apply_vip_list_expiration` | `api.can_change_vip_list_records` | `{"vip_list_id": integer, "expected_expiration_seconds": integer \| null, "include_expired"?: boolean}` | Number of changed records |
+| `POST /api/apply_vip_list_expiration` | `api.can_change_vip_list_records` | `{"vip_list_id": integer, "expected_expiration_seconds": integer \| null, "include_expired"?: boolean, "include_inactive"?: boolean}` | Number of changed records |
 | `POST /api/delete_vip_list` | `api.can_delete_vip_lists` | `{"vip_list_id": integer}` | `boolean` |
 
 `servers: null` applies a list to all configured servers. Omitting `servers` while

@@ -185,7 +185,7 @@ function RecordTable({
         case "list":
           return listNames[record.vip_list_id] ?? "";
         case "status":
-          return record.is_expired ? "Expired" : record.is_active ? "Active" : "Inactive";
+          return !record.is_active ? "Inactive" : record.is_expired ? "Expired" : "Active";
         case "expiration":
           return record.expires_at ?? "9999";
         case "admin":
@@ -361,6 +361,8 @@ function RecordTable({
                         label={
                           active
                             ? "Active"
+                            : !record.is_active
+                            ? "Inactive"
                             : record.is_expired
                             ? "Expired"
                             : "Inactive"
@@ -368,7 +370,7 @@ function RecordTable({
                         color={
                           active
                             ? "success"
-                            : record.is_expired
+                            : record.is_active && record.is_expired
                             ? "warning"
                             : "default"
                         }
@@ -706,6 +708,7 @@ export default function VipListsPage() {
           vipListId: pendingConfirmation.item.id,
           expectedExpirationSeconds: pendingConfirmation.item.default_expiration_seconds,
           includeExpired: pendingConfirmation.includeExpired ?? false,
+          includeInactive: pendingConfirmation.includeInactive ?? false,
         });
         setConfirmation(null);
       } catch {
@@ -817,8 +820,8 @@ export default function VipListsPage() {
     return records.filter((record) => {
       const active = record.is_active && !record.is_expired;
       if (statusFilter === "active" && !active) return false;
-      if (statusFilter === "expired" && !record.is_expired) return false;
-      if (statusFilter === "inactive" && (active || record.is_expired)) return false;
+      if (statusFilter === "expired" && (record.is_active === false || !record.is_expired)) return false;
+      if (statusFilter === "inactive" && record.is_active) return false;
       if (search === "") return true;
       return [
         record.id,
@@ -864,6 +867,11 @@ export default function VipListsPage() {
 
   const confirmationIsDelete =
     confirmation?.kind === "list" || confirmation?.kind === "record";
+  const durationRecordCount = activeRecords.length + inactiveRecords.filter(
+    (record) =>
+      (record.is_active ? confirmation?.includeExpired && record.is_expired :
+        confirmation?.includeInactive && (confirmation?.includeExpired || !record.is_expired))
+  ).length;
   const confirmationTitle =
     confirmation?.kind === "list"
       ? "Delete VIP list?"
@@ -886,7 +894,7 @@ export default function VipListsPage() {
     confirmation?.kind === "list"
       ? `This permanently deletes “${confirmation.item.name}” and all records contained in it. No gameserver synchronization is performed.`
       : confirmation?.kind === "apply-expiration"
-      ? `${activeRecords.length + (confirmation.includeExpired ? inactiveRecords.filter((record) => record.is_active && record.is_expired).length : 0)} record(s) in “${confirmation.item.name}” will ${confirmation.item.default_expiration_seconds === 0 ? "be set to never expire" : `expire ${formatDuration(confirmation.item.default_expiration_seconds)} after confirmation`}. Inactive records remain unchanged. Affected gameservers will be notified.`
+      ? `${durationRecordCount} record(s) in “${confirmation.item.name}” will ${confirmation.item.default_expiration_seconds === 0 ? "be set to never expire" : `expire ${formatDuration(confirmation.item.default_expiration_seconds)} after confirmation`}. Record activation states remain unchanged. Affected gameservers will be notified.`
       : confirmation?.kind === "record"
       ? `This permanently deletes VIP record #${confirmation?.item?.id}. No gameserver synchronization is performed.`
       : confirmation?.kind === "set-default"
@@ -1048,8 +1056,13 @@ export default function VipListsPage() {
                     <Button
                       disabled={selectedList.default_expiration_seconds === null || activeLoading || inactiveLoading ||
                         (activeRecords.length === 0 &&
-                          !inactiveRecords.some((record) => record.is_active && record.is_expired))}
-                      onClick={() => setConfirmation({ kind: "apply-expiration", item: selectedList })}
+                          inactiveRecords.length === 0)}
+                      onClick={() => setConfirmation({
+                        kind: "apply-expiration",
+                        item: selectedList,
+                        includeExpired: true,
+                        includeInactive: true,
+                      })}
                     >
                       Apply duration to existing
                     </Button>
@@ -1314,7 +1327,22 @@ export default function VipListsPage() {
               </Button>
               {confirmation.includeExpired && (
                 <Alert severity="warning">
-                  This also renews expired records that are still marked active.
+                  This also updates expired records.
+                </Alert>
+              )}
+              <Button
+                variant={confirmation.includeInactive ? "contained" : "outlined"}
+                color="warning"
+                onClick={() => setConfirmation({
+                  ...confirmation,
+                  includeInactive: !confirmation.includeInactive,
+                })}
+              >
+                {confirmation.includeInactive ? "Include deactivated: yes" : "Include deactivated: no"}
+              </Button>
+              {confirmation.includeInactive && (
+                <Alert severity="info">
+                  Deactivated records keep their inactive state after the expiration is updated.
                 </Alert>
               )}
             </Stack>
@@ -1331,10 +1359,10 @@ export default function VipListsPage() {
             color={confirmationIsDelete ? "error" : "primary"}
             variant="contained"
             onClick={confirmAction}
-            disabled={mutationPending}
+            disabled={mutationPending || (confirmation?.kind === "apply-expiration" && durationRecordCount === 0)}
           >
             {confirmation?.kind === "apply-expiration"
-              ? "Apply to active records"
+              ? "Apply duration to selected records"
               : confirmation?.kind === "set-default"
               ? "Set default"
               : confirmation?.kind === "clear-default"

@@ -570,10 +570,14 @@ class RconAPI(Rcon):
         vip_list_id: int,
         expected_expiration_seconds: int | None,
         include_expired: bool = False,
+        include_inactive: bool = False,
     ) -> int:
-        """Explicitly apply the list duration to existing active records."""
+        """Explicitly apply the list duration to existing records."""
         return vip.apply_vip_list_expiration(
-            int(vip_list_id), expected_expiration_seconds, include_expired
+            int(vip_list_id),
+            expected_expiration_seconds,
+            include_expired,
+            include_inactive,
         )
 
     def delete_vip_list(self, vip_list_id: int) -> bool:

@@ -281,14 +281,17 @@ def apply_vip_list_expiration(
     vip_list_id: int,
     expected_expiration_seconds: int | None,
     include_expired: bool = False,
+    include_inactive: bool = False,
 ) -> int:
-    """Apply the configured duration to existing active records.
+    """Apply the configured duration to existing records.
 
-    Expired records are only reactivated when explicitly requested. Inactive
-    records are never activated.
+    Expired and inactive records are only included when explicitly requested.
+    This operation never changes a record's active state.
     """
     if not isinstance(include_expired, bool):
         raise TypeError("include_expired must be a boolean")
+    if not isinstance(include_inactive, bool):
+        raise TypeError("include_inactive must be a boolean")
     with enter_session() as sess:
         vip_list = get_vip_list(sess, vip_list_id, strict=True)
         assert vip_list is not None
@@ -297,10 +300,9 @@ def apply_vip_list_expiration(
         if expected_expiration_seconds is None:
             raise HLLCommandFailedError("VIP list has no default duration to apply")
         now = datetime.now(UTC)
-        stmt = select(VipListRecord).where(
-            VipListRecord.vip_list_id == vip_list_id,
-            VipListRecord.active.is_(True),
-        )
+        stmt = select(VipListRecord).where(VipListRecord.vip_list_id == vip_list_id)
+        if not include_inactive:
+            stmt = stmt.where(VipListRecord.active.is_(True))
         if not include_expired:
             stmt = stmt.where(
                 or_(VipListRecord.expires_at.is_(None), VipListRecord.expires_at > now)

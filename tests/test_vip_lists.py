@@ -87,6 +87,30 @@ def test_no_default_and_never_expire_are_distinct(vip_list_ids):
         apply_vip_list_expiration(listing["id"], 0)
 
 
+def test_apply_duration_to_deactivated_expired_record_preserves_state(vip_list_ids):
+    listing = create_vip_list(
+        f"Inactive duration {uuid4().hex}", default_expiration_seconds=86400
+    )
+    vip_list_ids.append(listing["id"])
+    record = add_record_to_vip_list(
+        "76561199988877762",
+        listing["id"],
+        active=False,
+        expires_at=datetime.now(UTC) - timedelta(days=2),
+    )
+    assert apply_vip_list_expiration(listing["id"], 86400, include_expired=True) == 0
+    assert (
+        apply_vip_list_expiration(
+            listing["id"], 86400, include_expired=True, include_inactive=True
+        )
+        == 1
+    )
+    with enter_session() as sess:
+        updated = get_vip_record(sess, record["id"])
+        assert updated.active is False
+        assert updated.expires_at > datetime.now(UTC)
+
+
 def test_list_flags_preserve_manual_flags_and_other_lists(vip_list_ids):
     player_id = "76561199988877765"
     first = create_vip_list(f"Flag first {uuid4().hex}", flags=["🔫", "member"])

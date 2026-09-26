@@ -168,12 +168,13 @@ export const vipListMutationOptions = {
       }),
   },
   applyExpiration: {
-    mutationFn: ({ vipListId, expectedExpirationSeconds, includeExpired }) =>
+    mutationFn: ({ vipListId, expectedExpirationSeconds, includeExpired, includeInactive }) =>
       cmd.APPLY_VIP_LIST_EXPIRATION({
         payload: {
           vip_list_id: vipListId,
           expected_expiration_seconds: expectedExpirationSeconds,
           include_expired: Boolean(includeExpired),
+          include_inactive: Boolean(includeInactive),
         },
         throwRouteError: false,
       }),
