@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#151713" />
+    <meta
+      name="description"
+      content="CRCON project overview and complete API reference for Hell Let Loose and Hell Let Loose: Vietnam servers."
+    />
+    <title>CRCON Documentation</title>
+    <link rel="icon" type="image/webp" href="assets/hll-logo.webp" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="api-data.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="topbar">
+      <a class="brand" href="#overview" aria-label="CRCON documentation home">
+        <span class="brand-mark">C</span>
+        <span>CRCON <b>Docs</b></span>
+      </a>
+      <nav class="primary-nav" aria-label="Primary navigation">
+        <a href="#overview" data-route-link="overview">Overview</a>
+        <a href="#api" data-route-link="api">API reference</a>
+        <a href="#schemas" data-route-link="schemas">Schemas</a>
+      </nav>
+      <div class="top-actions">
+        <div class="game-switch" role="group" aria-label="Select game">
+          <button type="button" data-game="hll" aria-pressed="true">HLL</button>
+          <button type="button" data-game="hllv" aria-pressed="false">HLLV</button>
+        </div>
+        <a class="github-link" href="https://github.com/MarechJ/hll_rcon_tool">GitHub</a>
+      </div>
+    </header>
+
+    <main id="main-content">
+      <section class="page overview-page" data-route="overview">
+        <div class="hero">
+          <div class="hero-media" aria-hidden="true"></div>
+          <div class="hero-shade" aria-hidden="true"></div>
+          <div class="hero-inner">
+            <p class="eyebrow">HTTP API reference</p>
+            <h1>CRCON API</h1>
+            <p class="hero-copy">
+              Request formats, authentication methods, examples, and schemas for Hell Let Loose
+              and Hell Let Loose: Vietnam servers.
+            </p>
+            <div class="hero-actions">
+              <a class="button primary" href="#quickstart">Get started</a>
+              <a class="button secondary" href="#api">Browse endpoints</a>
+            </div>
+            <div class="hero-meta" aria-label="Documentation coverage">
+              <span><strong id="hero-endpoint-count">0</strong> endpoints</span>
+              <span><strong id="hero-schema-count">0</strong> schemas</span>
+              <span class="game-support"><img src="assets/hll-logo.webp" alt="" /> HLL</span>
+              <span class="game-support"><img src="assets/hllv-logo.webp" alt="" /> HLLV</span>
+            </div>
+          </div>
+        </div>
+
+        <section class="api-guide" id="quickstart" aria-labelledby="quickstart-heading">
+          <div class="section-inner guide-shell">
+            <header class="guide-header">
+              <p class="section-label">Quick start</p>
+              <h2 id="quickstart-heading">Using the API</h2>
+              <p>Replace <code>crcon.example.com</code> with the host and port of your CRCON installation. All routes are available below the <code>/api/</code> prefix.</p>
+            </header>
+
+            <section class="guide-section public-example" aria-labelledby="public-example-heading">
+              <div class="guide-copy">
+                <span class="step-number">01</span>
+                <div>
+                  <h3 id="public-example-heading">Try a public endpoint</h3>
+                  <p><code>get_public_info</code> returns the current map, player counts, score, match time, vote status, and server identity without requiring a login.</p>
+                  <p class="small-note">The other public routes are <code>get_version</code>, <code>get_api_documentation</code>, <code>is_logged_in</code>, <code>login</code>, and <code>logout</code>. A reverse proxy may still restrict them.</p>
+                  <a class="text-link" href="#api/get_public_info">Open endpoint reference <span>→</span></a>
+                </div>
+              </div>
+              <div class="code-window">
+                <div class="code-title"><span>Public request · cURL</span><button type="button" data-copy-target="public-code">Copy</button></div>
+                <pre id="public-code"><code>curl "https://crcon.example.com/api/get_public_info" \
+  -H "Accept: application/json"</code></pre>
+              </div>
+            </section>
+
+            <section class="guide-section" aria-labelledby="authentication-heading">
+              <div class="guide-copy">
+                <span class="step-number">02</span>
+                <div>
+                  <h3 id="authentication-heading">Authenticate</h3>
+                  <p>All other endpoints require a CRCON user and that user's permissions. Choose a session cookie for interactive tools or a bearer token for unattended clients.</p>
+                </div>
+              </div>
+              <div class="auth-methods">
+                <article>
+                  <p class="method-label">Session cookie</p>
+                  <h4>Log in through <code>/api/login</code></h4>
+                  <p>POST a username and password, then reuse the returned <code>sessionid</code> cookie on later requests to the same CRCON host.</p>
+                  <ul>
+                    <li>Postman and Insomnia retain it in their cookie jars automatically.</li>
+                    <li>In cURL, use <code>-c</code> to save the cookie and <code>-b</code> to send it.</li>
+                    <li>In Python, use one <code>requests.Session</code>; in browser code, set <code>credentials: "include"</code>.</li>
+                  </ul>
+                  <div class="code-window compact-code">
+                    <div class="code-title"><span>cURL session</span><button type="button" data-copy-target="session-code">Copy</button></div>
+                    <pre id="session-code"><code>curl -c crcon.cookies \
+  -X POST "https://crcon.example.com/api/login" \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"PASSWORD"}'
+
+curl -b crcon.cookies \
+  "https://crcon.example.com/api/get_gamestate"</code></pre>
+                  </div>
+                </article>
+                <article>
+                  <p class="method-label">Bearer token</p>
+                  <h4>Generate a token from <code>/accounts</code></h4>
+                  <p>A CRCON administrator generates the token for a user from the Accounts page. The token acts with that user's permissions.</p>
+                  <ul>
+                    <li>Best suited to bots, monitoring, scheduled scripts, and CI jobs.</li>
+                    <li>Treat it like a password and store it in a secret manager or environment variable.</li>
+                    <li>Send it as <code>Authorization: Bearer TOKEN</code> on every request.</li>
+                  </ul>
+                  <div class="code-window compact-code">
+                    <div class="code-title"><span>Bearer request</span><button type="button" data-copy-target="bearer-code">Copy</button></div>
+                    <pre id="bearer-code"><code>curl "https://crcon.example.com/api/get_gamestate" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Accept: application/json"</code></pre>
+                  </div>
+                </article>
+              </div>
+            </section>
+
+            <section class="guide-section response-guide" aria-labelledby="response-guide-heading">
+              <div class="guide-copy">
+                <span class="step-number">03</span>
+                <div>
+                  <h3 id="response-guide-heading">Read the response</h3>
+                  <p>JSON endpoints use the same envelope. Endpoint pages document the request and the type placed in <code>result</code>; check <code>failed</code> and <code>error</code> before consuming it.</p>
+                  <a class="text-link" href="#schemas/ApiResponse">View envelope schema <span>→</span></a>
+                </div>
+              </div>
+              <div class="code-window">
+                <div class="code-title"><span>Shared JSON envelope</span><button type="button" data-copy-target="envelope-code">Copy</button></div>
+                <pre id="envelope-code"><code>{
+  "result": {},
+  "command": "get_public_info",
+  "arguments": {},
+  "failed": false,
+  "error": null,
+  "forward_results": null,
+  "version": "v12.x"
+}</code></pre>
+              </div>
+            </section>
+          </div>
+        </section>
+      </section>
+
+      <section class="page docs-page" data-route="api" hidden>
+        <aside class="docs-sidebar" aria-label="API endpoints">
+          <div class="sidebar-head">
+            <label for="endpoint-search">Search endpoints</label>
+            <div class="search-box"><span aria-hidden="true">⌕</span><input id="endpoint-search" type="search" placeholder="Name, path, permission…" autocomplete="off" /></div>
+            <div class="sidebar-filter"><span id="endpoint-result-count"></span><button type="button" id="clear-search" hidden>Clear</button></div>
+          </div>
+          <nav id="endpoint-nav"></nav>
+        </aside>
+        <div class="reference-content" id="endpoint-content" tabindex="-1"></div>
+        <aside class="on-this-page" aria-label="On this page">
+          <p>On this page</p>
+          <nav id="endpoint-toc"></nav>
+        </aside>
+      </section>
+
+      <section class="page schemas-page" data-route="schemas" hidden>
+        <div class="schemas-shell">
+          <header class="schemas-header">
+            <p class="section-label">Data contracts</p>
+            <h1>Schemas</h1>
+            <p>Typed response objects and configuration models referenced by the CRCON API.</p>
+            <label class="schema-search" for="schema-search"><span>Search</span><input id="schema-search" type="search" placeholder="Find a schema or field" /></label>
+          </header>
+          <div id="schema-list" class="schema-list"></div>
+        </div>
+      </section>
+    </main>
+
+    <div class="toast" id="copy-toast" role="status" aria-live="polite">Copied to clipboard</div>
+    <noscript>This documentation requires JavaScript to render the generated API catalog.</noscript>
+  </body>
+</html>
