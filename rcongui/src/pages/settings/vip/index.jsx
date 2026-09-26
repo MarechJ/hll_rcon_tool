@@ -16,6 +16,7 @@ import vipColumns from "./vip-columns";
 import VipTable from "./vip-table";
 import VipDownload from "./VipDownload";
 import VipSyncPanel from "./VipSyncPanel";
+import VipManagementTabs from "@/components/VipManagementTabs";
 import { vipQueryOptions } from "@/queries/vip-query";
 import debug from "@/utils/debug";
 
@@ -44,7 +45,8 @@ const VipPageContent = () => {
   } = useQuery(vipQueryOptions.list());
 
   return (
-    <Stack spacing={1} sx={{ mt: 2 }}>
+    <Stack spacing={2}>
+      <VipManagementTabs />
       <VipSyncPanel />
 
       <Stack
@@ -66,7 +68,7 @@ const VipPageContent = () => {
 
           <Typography variant="body2" color="text.secondary">
             This page shows the VIPs currently reported by this
-            gameserver. VIP records are managed under VIP Lists.
+            gameserver. Manage records in the VIP Lists tab.
           </Typography>
 
           <Typography>

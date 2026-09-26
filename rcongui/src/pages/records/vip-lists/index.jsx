@@ -49,6 +49,7 @@ import { useGlobalStore } from "@/stores/global-state";
 import VipListDialog from "@/components/VipList/VipListDialog";
 import VipListBulkDialog from "@/components/VipList/VipListBulkDialog";
 import VipListRecordDialog from "@/components/VipList/VipListRecordDialog";
+import VipManagementTabs from "@/components/VipManagementTabs";
 import { PlayerDrawerLink } from "@/components/shared/PlayerDrawerLink";
 import {
   vipListMutationOptions,
@@ -458,6 +459,7 @@ export default function VipListsPage() {
     serverStatus?.short_name,
   ]);
   const [selectedListId, setSelectedListId] = useState(null);
+  const [listSort, setListSort] = useState("name");
   const [listDialog, setListDialog] = useState(null);
   const [recordDialog, setRecordDialog] = useState(null);
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
@@ -757,6 +759,22 @@ export default function VipListsPage() {
     error: listsError,
   } = useQuery(vipListQueryOptions.lists());
 
+  const sortedLists = useMemo(() => {
+    const result = [...lists];
+    if (listSort === "name") {
+      result.sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" }) || a.id - b.id
+      );
+    } else if (listSort === "name-desc") {
+      result.sort((a, b) =>
+        b.name.localeCompare(a.name, undefined, { numeric: true, sensitivity: "base" }) || a.id - b.id
+      );
+    } else {
+      result.sort((a, b) => a.id - b.id);
+    }
+    return result;
+  }, [lists, listSort]);
+
   const {
     data: defaultList = null,
     isLoading: defaultListLoading,
@@ -768,9 +786,9 @@ export default function VipListsPage() {
       lists.length > 0 &&
       !lists.some((vipList) => vipList.id === selectedListId)
     ) {
-      setSelectedListId(lists[0].id);
+      setSelectedListId(sortedLists[0].id);
     }
-  }, [lists, selectedListId]);
+  }, [lists, sortedLists, selectedListId]);
 
   const selectedList = useMemo(
     () => lists.find((vipList) => vipList.id === selectedListId) ?? null,
@@ -921,6 +939,7 @@ export default function VipListsPage() {
 
   return (
     <Stack spacing={2}>
+      <VipManagementTabs />
       <Stack
         direction={{ xs: "column", sm: "row" }}
         spacing={1}
@@ -961,11 +980,22 @@ export default function VipListsPage() {
             variant="outlined"
             sx={{ width: { xs: "100%", lg: 300 }, flexShrink: 0, p: 1 }}
           >
-            <Typography variant="subtitle2" sx={{ px: 1, py: 0.5 }}>
-              Lists
-            </Typography>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 1, pb: 0.5 }}>
+              <Typography variant="subtitle2">Lists</Typography>
+              <Select
+                size="small"
+                value={listSort}
+                onChange={(event) => setListSort(event.target.value)}
+                inputProps={{ "aria-label": "Sort VIP lists" }}
+                sx={{ minWidth: 130 }}
+              >
+                <MenuItem value="name">Name A–Z</MenuItem>
+                <MenuItem value="name-desc">Name Z–A</MenuItem>
+                <MenuItem value="id">Created order</MenuItem>
+              </Select>
+            </Stack>
             <Stack spacing={0.5}>
-              {lists.map((vipList) => (
+              {sortedLists.map((vipList) => (
                 <Button
                   key={vipList.id}
                   variant={selectedListId === vipList.id ? "contained" : "text"}

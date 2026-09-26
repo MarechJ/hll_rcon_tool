@@ -194,14 +194,14 @@ const router = createBrowserRouter([
                     },
                     {
                         path: 'vips',
-                        handle: { crumb: () => <Link to={'/records/vips'}>Vips</Link> },
+                        handle: { crumb: () => <Link to={'/records/vip-lists'}>VIP Management</Link> },
                         loader: vipLoader,
                         element: <VipSettings />,
                         errorElement: <RouteError />,
                     },
                     {
                         path: 'vip-lists',
-                        handle: { crumb: () => <Link to={'/records/vip-lists'}>VIP Lists</Link> },
+                        handle: { crumb: () => <Link to={'/records/vip-lists'}>VIP Management</Link> },
                         element: <VipListsPage />,
                         errorElement: <RouteError />,
                     },
