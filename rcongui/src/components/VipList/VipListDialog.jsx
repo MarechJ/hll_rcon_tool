@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import {
   Alert,
+  Box,
   Button,
   Checkbox,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -16,12 +18,18 @@ import {
   MenuItem,
   Paper,
   Select,
+  Skeleton,
   Stack,
   Switch,
   TextField,
   Typography,
+  useTheme,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
+import emojiData from "@emoji-mart/data/sets/15/twitter.json";
+import Emoji from "@/components/shared/Emoji";
+
+const EmojiPicker = lazy(() => import("@emoji-mart/react"));
 
 const SYNC_METHODS = {
   ignore_unknown: "Ignore unknown VIPs",
@@ -47,11 +55,13 @@ export default function VipListDialog({
   onClose,
   onSubmit,
 }) {
+  const theme = useTheme();
   const [name, setName] = useState("");
   const [sync, setSync] = useState("ignore_unknown");
   const [expiredRetentionDays, setExpiredRetentionDays] = useState(null);
   const [defaultExpirationSeconds, setDefaultExpirationSeconds] = useState(null);
-  const [flagsText, setFlagsText] = useState("");
+  const [flags, setFlags] = useState([]);
+  const [showFlagPicker, setShowFlagPicker] = useState(false);
   const [serverNumbers, setServerNumbers] = useState(null);
   const [serverError, setServerError] = useState("");
   const [setAsDefault, setSetAsDefault] = useState(false);
@@ -65,7 +75,8 @@ export default function VipListDialog({
     setSync(initialValues?.sync ?? "ignore_unknown");
     setExpiredRetentionDays(initialValues?.expiredRetentionDays ?? null);
     setDefaultExpirationSeconds(initialValues?.defaultExpirationSeconds ?? null);
-    setFlagsText((initialValues?.flags ?? []).join("\n"));
+    setFlags(initialValues?.flags ?? []);
+    setShowFlagPicker(false);
     setServerNumbers(
       Array.isArray(servers)
         ? [...new Set(servers.map(Number))]
@@ -141,7 +152,7 @@ export default function VipListDialog({
         sync,
         expiredRetentionDays,
         defaultExpirationSeconds,
-        flags: [...new Set(flagsText.split("\n").map((flag) => flag.trim()).filter(Boolean))],
+        flags,
         servers: serverNumbers,
         setAsDefault,
       });
@@ -227,12 +238,13 @@ export default function VipListDialog({
             <Select
               labelId="vip-list-default-duration-label"
               label="Default VIP duration"
-              value={defaultExpirationSeconds ?? "never"}
+              value={defaultExpirationSeconds ?? "none"}
               onChange={(event) => setDefaultExpirationSeconds(
-                event.target.value === "never" ? null : Number(event.target.value)
+                event.target.value === "none" ? null : Number(event.target.value)
               )}
             >
-              <MenuItem value="never">Never expires</MenuItem>
+              <MenuItem value="none">No default duration</MenuItem>
+              <MenuItem value={0}>Never expires</MenuItem>
               <MenuItem value={7200}>2 hours</MenuItem>
               <MenuItem value={86400}>1 day</MenuItem>
               <MenuItem value={604800}>7 days</MenuItem>
@@ -241,19 +253,46 @@ export default function VipListDialog({
             </Select>
           </FormControl>
           <Typography variant="body2" color="text.secondary">
-            Applies to new records only. Use the separate action on the list page
-            to update existing active records.
+            No default leaves the expiration to each record. Never expires sets
+            new records to an unlimited duration and can also be applied to
+            existing active records using the separate action.
           </Typography>
 
-          <TextField
-            label="Player flags"
-            multiline
-            minRows={2}
-            value={flagsText}
-            onChange={(event) => setFlagsText(event.target.value)}
-            disabled={loading}
-            helperText="One flag per line. Active members receive these global player flags; manual flags are preserved."
-          />
+          <Stack spacing={1}>
+            <Typography variant="subtitle1">Player flags</Typography>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+              {flags.map((flag) => (
+                <Chip
+                  key={flag}
+                  label={<Emoji emoji={flag} size={24} />}
+                  aria-label={`Remove flag ${flag}`}
+                  onDelete={loading ? undefined : () => setFlags((current) => current.filter((item) => item !== flag))}
+                />
+              ))}
+              <Button type="button" variant="outlined" disabled={loading} onClick={() => setShowFlagPicker((value) => !value)}>
+                {showFlagPicker ? "Close emoji picker" : "Add flag"}
+              </Button>
+            </Box>
+            {showFlagPicker && (
+              <Suspense fallback={<Skeleton variant="rectangular" height={400} />}>
+                <Box sx={{ "& em-emoji-picker": { width: "100%" } }}>
+                  <EmojiPicker
+                    set="twitter"
+                    theme={theme.palette.mode}
+                    dynamicWidth={true}
+                    data={emojiData}
+                    onEmojiSelect={(emoji) => {
+                      setFlags((current) => current.includes(emoji.native) ? current : [...current, emoji.native]);
+                      setShowFlagPicker(false);
+                    }}
+                  />
+                </Box>
+              </Suspense>
+            )}
+            <Typography variant="body2" color="text.secondary">
+              Active members receive these global player flags; manual flags are preserved.
+            </Typography>
+          </Stack>
 
           <Paper
             variant="outlined"

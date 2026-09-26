@@ -198,10 +198,10 @@ def _validate_default_expiration_seconds(value: int | None) -> int | None:
     if (
         isinstance(value, bool)
         or not isinstance(value, int)
-        or value < 1
+        or value < 0
         or value > 315360000
     ):
-        raise ValueError("Default VIP duration must be between 1 second and 10 years")
+        raise ValueError("Default VIP duration must be between 0 and 10 years")
     return value
 
 
@@ -274,9 +274,7 @@ def reconcile_vip_list_flags(sess: Session, player_ids: set[int] | None = None) 
 
 def _list_expiration(vip_list: VipList) -> datetime | None:
     seconds = vip_list.default_expiration_seconds
-    return (
-        datetime.now(UTC) + timedelta(seconds=seconds) if seconds is not None else None
-    )
+    return datetime.now(UTC) + timedelta(seconds=seconds) if seconds else None
 
 
 def apply_vip_list_expiration(
@@ -296,6 +294,8 @@ def apply_vip_list_expiration(
         assert vip_list is not None
         if vip_list.default_expiration_seconds != expected_expiration_seconds:
             raise HLLCommandFailedError("VIP list duration changed; review it again")
+        if expected_expiration_seconds is None:
+            raise HLLCommandFailedError("VIP list has no default duration to apply")
         now = datetime.now(UTC)
         stmt = select(VipListRecord).where(
             VipListRecord.vip_list_id == vip_list_id,
@@ -308,7 +308,7 @@ def apply_vip_list_expiration(
         records = sess.scalars(stmt).all()
         expires_at = (
             now + timedelta(seconds=expected_expiration_seconds)
-            if expected_expiration_seconds is not None
+            if expected_expiration_seconds
             else None
         )
         changed = 0

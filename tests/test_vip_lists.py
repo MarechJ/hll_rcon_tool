@@ -60,6 +60,33 @@ def test_list_default_duration_requires_explicit_apply_to_existing(vip_list_ids)
     assert apply_vip_list_expiration(listing["id"], 86400, include_expired=True) == 1
 
 
+def test_no_default_and_never_expire_are_distinct(vip_list_ids):
+    listing = create_vip_list(f"Duration modes {uuid4().hex}")
+    vip_list_ids.append(listing["id"])
+    assert listing["default_expiration_seconds"] is None
+    with pytest.raises(HLLCommandFailedError, match="no default duration"):
+        apply_vip_list_expiration(listing["id"], None)
+
+    listing = edit_vip_list(listing["id"], default_expiration_seconds=0)
+    assert listing["default_expiration_seconds"] == 0
+    record = add_record_to_vip_list(
+        "76561199988877764",
+        listing["id"],
+        expires_at=datetime.now(UTC) + timedelta(days=1),
+    )
+    assert record["expires_at"] is not None
+    assert apply_vip_list_expiration(listing["id"], 0) == 1
+    with enter_session() as sess:
+        assert get_vip_record(sess, record["id"]).expires_at is None
+    record = add_record_to_vip_list("76561199988877763", listing["id"])
+    assert record["expires_at"] is None
+    assert apply_vip_list_expiration(listing["id"], 0) == 0
+
+    edit_vip_list(listing["id"], default_expiration_seconds=None)
+    with pytest.raises(HLLCommandFailedError, match="duration changed"):
+        apply_vip_list_expiration(listing["id"], 0)
+
+
 def test_list_flags_preserve_manual_flags_and_other_lists(vip_list_ids):
     player_id = "76561199988877765"
     first = create_vip_list(f"Flag first {uuid4().hex}", flags=["🔫", "member"])

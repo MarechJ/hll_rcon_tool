@@ -98,7 +98,7 @@ are positive integers.
     },
     "flags": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 64}, "maxItems": 20, "uniqueItems": true},
     "expired_retention_days": {"type": ["integer", "null"], "minimum": 0, "maximum": 3650},
-    "default_expiration_seconds": {"type": ["integer", "null"], "minimum": 1, "maximum": 315360000},
+    "default_expiration_seconds": {"type": ["integer", "null"], "minimum": 0, "maximum": 315360000},
     "servers": {
       "oneOf": [
         {"type": "null"},
@@ -125,8 +125,11 @@ operations. If another list still grants the same flag, it stays. Automatic
 expiration and deletions remove only flags created by list management.
 
 `default_expiration_seconds` is the default lifetime for new list records;
-`null` means indefinite. Callers can override it by explicitly supplying
-`expires_at` (including `null`). Editing the list does not change existing
+`null` means no list default, `0` explicitly means never expires, and a positive
+value supplies a duration in seconds. Both `null` and `0` leave new records
+without an expiration unless the caller supplies one. The bulk apply action is
+available for `0` and positive values, but not for `null`. Callers can override
+it by explicitly supplying `expires_at` (including `null`). Editing the list does not change existing
 records. `expired_retention_days` independently controls cleanup after expiry.
 
 ### `VipListRecord`

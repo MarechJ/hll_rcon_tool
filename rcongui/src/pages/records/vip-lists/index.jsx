@@ -886,7 +886,7 @@ export default function VipListsPage() {
     confirmation?.kind === "list"
       ? `This permanently deletes “${confirmation.item.name}” and all records contained in it. No gameserver synchronization is performed.`
       : confirmation?.kind === "apply-expiration"
-      ? `${activeRecords.length + (confirmation.includeExpired ? inactiveRecords.filter((record) => record.is_active && record.is_expired).length : 0)} record(s) in “${confirmation.item.name}” will ${confirmation.item.default_expiration_seconds === null ? "be set to never expire" : `expire ${formatDuration(confirmation.item.default_expiration_seconds)} after confirmation`}. Inactive records remain unchanged. Affected gameservers will be notified.`
+      ? `${activeRecords.length + (confirmation.includeExpired ? inactiveRecords.filter((record) => record.is_active && record.is_expired).length : 0)} record(s) in “${confirmation.item.name}” will ${confirmation.item.default_expiration_seconds === 0 ? "be set to never expire" : `expire ${formatDuration(confirmation.item.default_expiration_seconds)} after confirmation`}. Inactive records remain unchanged. Affected gameservers will be notified.`
       : confirmation?.kind === "record"
       ? `This permanently deletes VIP record #${confirmation?.item?.id}. No gameserver synchronization is performed.`
       : confirmation?.kind === "set-default"
@@ -1035,6 +1035,8 @@ export default function VipListsPage() {
                   />
                   <Chip
                     label={selectedList.default_expiration_seconds === null
+                      ? "New VIPs: no default duration"
+                      : selectedList.default_expiration_seconds === 0
                       ? "New VIPs: never expire"
                       : `New VIPs: ${formatDuration(selectedList.default_expiration_seconds)}`}
                     variant="outlined"
@@ -1044,7 +1046,7 @@ export default function VipListsPage() {
                   ))}
                   {canChangeRecords && (
                     <Button
-                      disabled={activeLoading || inactiveLoading ||
+                      disabled={selectedList.default_expiration_seconds === null || activeLoading || inactiveLoading ||
                         (activeRecords.length === 0 &&
                           !inactiveRecords.some((record) => record.is_active && record.is_expired))}
                       onClick={() => setConfirmation({ kind: "apply-expiration", item: selectedList })}
