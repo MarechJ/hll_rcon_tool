@@ -64,7 +64,7 @@
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.53.0",
     "react-markdown": "^9.0.1",
-    "react-router-dom": "^6.30.4",
+    "react-router-dom": "^6.30.6",
     "react-toastify": "^11.0.5",
     "react-window": "^1.8.10",
     "remark-gfm": "^4.0.0",
@@ -72,8 +72,8 @@
     "zustand": "^5.0.0"
   },
   "devDependencies": {
-    "@faker-js/faker": "^9.4.0",
-    "@testing-library/jest-dom": "^4.2.4",
+    "@faker-js/faker": "^10.5.0",
+    "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
     "@types/lodash": "^4.17.13",

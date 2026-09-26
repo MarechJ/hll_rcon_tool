@@ -1,5 +1,5 @@
 import re
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 import pydantic
 
@@ -11,12 +11,14 @@ DISCORD_ROLE_ID_PATTERN = re.compile(r"<@&\d+>")
 
 class WebhookMentionType(TypedDict):
     url: pydantic.HttpUrl
+    thread_id: NotRequired[str | None]
     user_mentions: list[str]
     role_mentions: list[str]
 
 
 class WebhookType(TypedDict):
     url: pydantic.HttpUrl
+    thread_id: NotRequired[str | None]
 
 
 class RawWebhookType(TypedDict):
@@ -42,6 +44,11 @@ class KillsWebhookType(RawWebhookType):
 
 class DiscordWebhook(pydantic.BaseModel):
     url: pydantic.HttpUrl
+    thread_id: str | None = pydantic.Field(
+        default=None,
+        description="Discord thread ID to send webhook messages to",
+        pattern=r"^\d+$",
+    )
 
     @pydantic.field_serializer("url")
     def serialize_url(self, server_url: pydantic.HttpUrl, _info):
@@ -135,7 +142,10 @@ class BaseWebhookUserConfig(BaseUserConfig):
                 WebhookType.__required_keys__, WebhookType.__optional_keys__, obj.keys()
             )
 
-        validated_hooks = [DiscordWebhook(url=obj.get("url")) for obj in raw_hooks]
+        validated_hooks = [
+            DiscordWebhook(url=obj.get("url"), thread_id=obj.get("thread_id"))
+            for obj in raw_hooks
+        ]
         validated_conf = cls(hooks=validated_hooks)
 
         if not dry_run:
@@ -202,7 +212,10 @@ class ChatWebhooksUserConfig(BaseWebhookUserConfig):
                 WebhookType.__required_keys__, WebhookType.__optional_keys__, obj.keys()
             )
 
-        validated_hooks = [DiscordWebhook(url=obj.get("url")) for obj in raw_hooks]
+        validated_hooks = [
+            DiscordWebhook(url=obj.get("url"), thread_id=obj.get("thread_id"))
+            for obj in raw_hooks
+        ]
         validated_conf = ChatWebhooksUserConfig(
             allow_mentions=values.get("allow_mentions"),
             hooks=validated_hooks,
@@ -232,7 +245,10 @@ class KillsWebhooksUserConfig(BaseWebhookUserConfig):
                 WebhookType.__required_keys__, WebhookType.__optional_keys__, obj.keys()
             )
 
-        validated_hooks = [DiscordWebhook(url=obj.get("url")) for obj in raw_hooks]
+        validated_hooks = [
+            DiscordWebhook(url=obj.get("url"), thread_id=obj.get("thread_id"))
+            for obj in raw_hooks
+        ]
         validated_conf = KillsWebhooksUserConfig(
             send_kills=values.get("send_kills"),
             send_team_kills=values.get("send_team_kills"),
@@ -255,6 +271,7 @@ def parse_raw_mention_hooks(
 
         h = DiscordMentionWebhook(
             url=raw_hook.get("url"),
+            thread_id=raw_hook.get("thread_id"),
             user_mentions=list(user_ids),
             role_mentions=list(role_ids),
         )

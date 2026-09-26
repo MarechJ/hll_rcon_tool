@@ -12,6 +12,12 @@ export interface MatchScore {
   ts: number
 }
 
+export interface MatchMorale {
+  allied_morale: number
+  axis_morale: number
+  ts: number
+}
+
 export type ScoreboardMap = {
   id: number
   creation_time: string
@@ -36,6 +42,8 @@ export type ScoreboardMap = {
 // Fix after https://github.com/MarechJ/hll_rcon_tool/issues/657 issue has been resolved
 export type ScoreboardMapStats = Omit<ScoreboardMap, 'player_stats'> & {
   player_stats: Player[]
+  morale_history: MatchMorale[]
+  initial_morale: number | null
   // map_name: string;
 }
 
@@ -54,6 +62,10 @@ export type Broken_CRCON_Response<T> = Omit<CRCON_Response<T>, 'error'> & {
 }
 
 export type PublicInfo = {
+  allied_morale: number
+  axis_morale: number
+  initial_morale: number
+  morale_history: MatchMorale[]
   max_player_count: number
   player_count: number
   player_count_by_team: {

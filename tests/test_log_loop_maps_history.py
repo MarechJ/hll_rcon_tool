@@ -40,6 +40,9 @@ def make_gamestate(
         "match_time": 5_400,
         "allied_score": allied_score,
         "axis_score": axis_score,
+        "initial_morale": 100,
+        "allied_morale": 90,
+        "axis_morale": 80,
     }
 
 
@@ -54,6 +57,48 @@ def make_loop(gamestate, now=1002):
     loop.get_detailed_players = Mock(return_value={"players": {}, "fail_count": 0})
     loop.record_player_stats = Mock()
     return loop
+
+
+def test_morale_is_sampled_only_with_accepted_score_changes():
+    current_map = make_map_info()
+    current_map["name"] = "CAR_L_1944_Conquest_Day"
+    current_map["cap_flips"] = []
+    gs = make_gamestate(map_id=current_map["name"], allied_score=0, axis_score=5)
+    gs["game_mode"] = GameMode.CONQUEST
+    loop = make_loop(gs)
+
+    loop.record_cap_flips(current_map, 0, gs)
+    gs["allied_morale"] = 70
+    loop.record_cap_flips(current_map, 10, gs)
+    gs.update(allied_score=1, axis_score=4, axis_morale=60)
+    loop.record_cap_flips(current_map, 20, gs)
+
+    assert current_map["initial_morale"] == 100
+    assert current_map["morale_history"] == [
+        {"ts": 0, "allied_morale": 90, "axis_morale": 80},
+        {"ts": 20, "allied_morale": 70, "axis_morale": 60},
+    ]
+
+
+@pytest.mark.parametrize(
+    "game_mode", [mode for mode in GameMode if mode != GameMode.CONQUEST]
+)
+def test_other_modes_record_scores_without_morale_history(game_mode):
+    current_map = make_map_info()
+    current_map["cap_flips"] = []
+    current_map["morale_history"] = []
+    gs = make_gamestate(allied_score=2, axis_score=2)
+    gs["game_mode"] = game_mode
+    loop = make_loop(gs)
+    loop.rcon.game_profile = Mock()
+    loop.rcon.game_profile.parse_layer.return_value = Mock(game_mode=game_mode)
+
+    loop.record_cap_flips(current_map, 0, gs)
+    gs.update(allied_score=3, axis_score=2, allied_morale=70)
+    loop.record_cap_flips(current_map, 20, gs)
+
+    assert len(current_map["cap_flips"]) == 2
+    assert current_map["morale_history"] == []
 
 
 @patch("rcon.logs.loop.MapsHistory")

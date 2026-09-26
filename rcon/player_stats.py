@@ -15,7 +15,7 @@ from rcon.cache_utils import get_redis_client
 from rcon.game_logs import get_historical_logs_records, get_recent_logs
 from rcon.maps import parse_layer
 from rcon.models import enter_session
-from rcon.player_history import _get_profiles, get_player_profile_by_player_ids
+from rcon.player_history import get_player_soldier_info_by_ids
 from rcon.rcon import get_rcon
 from rcon.types import (
     STAT_DISPLAY_LOOKUP,
@@ -432,8 +432,8 @@ class LiveStats(BaseStats):
         with enter_session() as sess:
             id_to_PlayerID = {
                 profile.player_id: profile
-                for profile in _get_profiles(
-                    sess, [p[PLAYER_ID] for p in players], nb_sessions=1
+                for profile in get_player_soldier_info_by_ids(
+                    sess, [p[PLAYER_ID] for p in players]
                 )
             }
             logger.info(
@@ -657,7 +657,7 @@ class TimeWindowStats(BaseStats):
         with enter_session() as sess:
             profiles_by_id = {
                 profile.player_id: profile
-                for profile in get_player_profile_by_player_ids(
+                for profile in get_player_soldier_info_by_ids(
                     sess, [p[PLAYER_ID] for p in players]
                 )
             }

@@ -1,4 +1,4 @@
-import { alpha } from '@mui/material/styles';
+import { alpha } from "@mui/material/styles";
 
 /* eslint-disable import/prefer-default-export */
 export const surfacesCustomizations = ({ gray }) => ({
@@ -10,21 +10,21 @@ export const surfacesCustomizations = ({ gray }) => ({
     styleOverrides: {
       root: ({ theme }) => ({
         padding: 4,
-        overflow: 'clip',
+        overflow: "clip",
         backgroundColor: theme.palette.background.default,
-        border: '1px solid',
+        border: "1px solid",
         borderColor: theme.palette.divider,
-        ':before': {
-          backgroundColor: 'transparent',
+        ":before": {
+          backgroundColor: "transparent",
         },
-        '&:not(:last-of-type)': {
-          borderBottom: 'none',
+        "&:not(:last-of-type)": {
+          borderBottom: "none",
         },
-        '&:first-of-type': {
+        "&:first-of-type": {
           borderTopLeftRadius: theme.shape.borderRadius,
           borderTopRightRadius: theme.shape.borderRadius,
         },
-        '&:last-of-type': {
+        "&:last-of-type": {
           borderBottomLeftRadius: theme.shape.borderRadius,
           borderBottomRightRadius: theme.shape.borderRadius,
         },
@@ -34,24 +34,32 @@ export const surfacesCustomizations = ({ gray }) => ({
   MuiAccordionSummary: {
     styleOverrides: {
       root: ({ theme }) => ({
-        border: 'none',
-        borderRadius: 8,
-        '&:hover': { backgroundColor: gray[50] },
-        '&:focus-visible': { backgroundColor: 'transparent' },
-        ...theme.applyStyles('dark', {
-          '&:hover': { backgroundColor: gray[800] },
+        border: "none",
+        borderRadius: theme.shape.borderRadius,
+        "&:hover": { backgroundColor: gray[50] },
+        "&:focus-visible": { backgroundColor: "transparent" },
+        ...theme.applyStyles("dark", {
+          "&:hover": { backgroundColor: gray[800] },
         }),
       }),
     },
   },
   MuiAccordionDetails: {
     styleOverrides: {
-      root: { mb: 20, border: 'none' },
+      root: { marginBottom: 20, border: "none" },
     },
   },
   MuiPaper: {
     defaultProps: {
       elevation: 0,
+    },
+    styleOverrides: {
+      root: {
+        backgroundImage: "none",
+      },
+      outlined: ({ theme }) => ({
+        borderColor: theme.palette.divider,
+      }),
     },
   },
   MuiCard: {
@@ -60,24 +68,24 @@ export const surfacesCustomizations = ({ gray }) => ({
         return {
           padding: 16,
           gap: 16,
-          transition: 'all 100ms ease',
-          backgroundColor: gray[50],
+          transition: "all 100ms ease",
+          backgroundColor: theme.palette.background.paper,
           borderRadius: theme.shape.borderRadius,
           border: `1px solid ${theme.palette.divider}`,
-          boxShadow: 'none',
-          ...theme.applyStyles('dark', {
+          boxShadow: "none",
+          ...theme.applyStyles("dark", {
             backgroundColor: gray[800],
           }),
           variants: [
             {
               props: {
-                variant: 'outlined',
+                variant: "outlined",
               },
               style: {
                 border: `1px solid ${theme.palette.divider}`,
-                boxShadow: 'none',
-                background: 'hsl(0, 0%, 100%)',
-                ...theme.applyStyles('dark', {
+                boxShadow: "none",
+                background: theme.palette.background.paper,
+                ...theme.applyStyles("dark", {
                   background: alpha(gray[900], 0.4),
                 }),
               },
@@ -91,7 +99,7 @@ export const surfacesCustomizations = ({ gray }) => ({
     styleOverrides: {
       root: {
         padding: 0,
-        '&:last-child': { paddingBottom: 0 },
+        "&:last-child": { paddingBottom: 0 },
       },
     },
   },

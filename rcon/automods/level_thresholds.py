@@ -187,8 +187,8 @@ class LevelThresholdsAutomod:
             )
             self.red.delete(redis_key)
         else:
-            self.red.setex(
-                redis_key, LEVEL_THRESHOLDS_RESET_SECS, pickle.dumps(watch_status)
+            self.red.set(
+                redis_key, pickle.dumps(watch_status), ex=LEVEL_THRESHOLDS_RESET_SECS
             )
 
     def get_message(

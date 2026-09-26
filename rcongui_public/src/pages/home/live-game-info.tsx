@@ -47,6 +47,7 @@ export default function LiveGameInfo({ game }: { game: PublicInfo }) {
               capFlips={capFlips}
               matchTime={matchTime}
               remainingTime={remainingTime.asSeconds()}
+              morale={game}
             />
             <ToggleGroup type="single" variant="outline" className="justify-start h-12">
               <ToggleGroupItem value={`/`} asChild>

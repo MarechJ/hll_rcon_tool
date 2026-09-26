@@ -129,7 +129,7 @@ const ConsoleAdminsPage = () => {
 
   const handleToggleSelectAll = (e) => {
     if (e.target.checked) {
-      setChecked(new Set(filteredAdmins.map(admin => admin.player_id)));
+      setChecked(new Set(filteredAdmins.map((admin) => admin.player_id)));
     } else {
       setChecked(new Set());
     }
@@ -281,7 +281,7 @@ const ConsoleAdminsPage = () => {
         }}
       >
         <Stack direction={"row"} gap={1} sx={{ mb: 1, p: 0.5 }}>
-          <PlayerAutocompletion player={newAdmin} setPlayer={setNewAdmin}/>
+          <PlayerAutocompletion player={newAdmin} setPlayer={setNewAdmin} />
           <TextField
             autoComplete={"off"}
             value={newAdmin.player_id}
@@ -348,7 +348,7 @@ const ConsoleAdminsPage = () => {
           <Button
             onClick={handleDeleteSelectedItems}
             variant="contained"
-            color="warning"
+            color="error"
             disabled={!checked.size}
             sx={{ minWidth: "fit-content" }}
           >
@@ -379,6 +379,7 @@ const ConsoleAdminsPage = () => {
                       <AccountCircleIcon />
                     </IconButton>
                     <IconButton
+                      color="error"
                       onClick={() => handleDeleteSingleItem(admin.player_id)}
                     >
                       <DeleteIcon />

@@ -8,6 +8,7 @@ from itertools import islice
 from typing import (
     Any,
     TypeVar,
+    cast,
     overload,
 )
 
@@ -31,6 +32,7 @@ from rcon.types import (
     GameEnum,
     GetDetailedPlayer,
     MapInfo,
+    MapInfoWithoutPlayerStats,
     PlayerInfoType,
     PlayerStat,
     PlayerStatsType,
@@ -364,6 +366,16 @@ class MapsHistory(FixedLenList[MapInfo]):
     def __init__(self, key="maps_history", max_len=500):
         super().__init__(key, max_len)
 
+    def get_safe_history(self) -> list[MapInfoWithoutPlayerStats]:
+        """Exclude player_stats from the dataset. Used for public endpoints"""
+        return [
+            cast(
+                MapInfoWithoutPlayerStats,
+                {key: value for key, value in entry.items() if key != "player_stats"},
+            )
+            for entry in self[:]
+        ]
+
     def get_current_map(self) -> MapInfo | None:
         try:
             return self[0]
@@ -383,6 +395,8 @@ class MapsHistory(FixedLenList[MapInfo]):
             player_stats={},
             game_layout={"requested": [], "set": []},
             cap_flips=[],
+            morale_history=[],
+            initial_morale=None,
             match_time=0,
         )
         prev["end"] = ts
@@ -396,6 +410,7 @@ class MapsHistory(FixedLenList[MapInfo]):
         start_timestamp: int | None = None,
         game_layout: GameLayout | None = None,
         match_time: int = 0,
+        initial_morale: int | None = None,
     ):
         ts = start_timestamp or int(datetime.now(tz=UTC).timestamp())
         logger.info("Saving start of new map %s at time %s", new_map, ts)
@@ -408,6 +423,8 @@ class MapsHistory(FixedLenList[MapInfo]):
             player_stats={},
             game_layout=game_layout,
             cap_flips=[],
+            morale_history=[],
+            initial_morale=initial_morale,
             match_time=match_time,
         )
         self.add(new)

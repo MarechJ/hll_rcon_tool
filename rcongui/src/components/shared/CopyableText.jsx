@@ -7,6 +7,7 @@ export default function CopyableText({
   text,
   label,
   size = "1em",
+  iconSize = size,
   position = "end",
   ...props
 }) {
@@ -44,9 +45,11 @@ export default function CopyableText({
         disableRipple
       >
         {isCopied ? (
-          <DoneAllIcon sx={{ width: "0.5em", color: "success.main" }} />
+          <DoneAllIcon
+            sx={{ width: iconSize, height: iconSize, color: "success.main" }}
+          />
         ) : (
-          <ContentCopyIcon sx={{ width: "0.5em" }} />
+          <ContentCopyIcon sx={{ width: iconSize, height: iconSize }} />
         )}
       </IconButton>
     </Tooltip>
@@ -62,8 +65,8 @@ export default function CopyableText({
         ...props.sx,
         fontSize: size,
         "& .copyable-text-icon-button": {
-          width: size,
-          height: size,
+          width: iconSize,
+          height: iconSize,
           color: "text.secondary",
           visibility: "hidden",
         },

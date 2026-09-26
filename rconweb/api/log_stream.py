@@ -3,10 +3,10 @@ from collections.abc import Generator
 from logging import getLogger
 from typing import TypedDict
 
+from api.auth import APITokenAuthMiddleware
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.urls import path
 
-from api.auth import APITokenAuthMiddleware
 from rcon.game_logs import is_action
 from rcon.logs.stream import LogStream
 from rcon.types import AllLogTypes, StructuredLogLineWithMetaData

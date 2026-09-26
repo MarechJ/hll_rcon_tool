@@ -242,3 +242,24 @@ def test_team_kill_message():
 
     assert weapon["name"] == "Weapon"
     assert weapon["value"] == "MG42"
+
+
+def test_handler_passes_thread_id_to_webhook(monkeypatch):
+    created_hooks = []
+
+    monkeypatch.setattr(
+        "rcon.discord_chat.make_hook",
+        lambda url, thread_id=None: created_hooks.append((url, thread_id)),
+    )
+    config = ChatWebhooksUserConfig(
+        hooks=[
+            DiscordWebhook(
+                url=HttpUrl("http://example.com"),
+                thread_id="123456789012345678",
+            )
+        ]
+    )
+
+    DiscordWebhookHandler(chat_wh_config=config)
+
+    assert (HttpUrl("http://example.com/"), "123456789012345678") in created_hooks

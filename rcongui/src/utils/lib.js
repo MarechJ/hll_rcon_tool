@@ -230,7 +230,16 @@ export function getGameDuration(start, end) {
 }
 
 export function isLeader(role) {
-  return ["officer", "tankcommander", "spotter", "armycommander"].includes(role);
+  return [
+    "officer",
+    "squadleader",
+    "tankcommander",
+    "spotter",
+    "armycommander",
+    "artilleryobserver",
+    "mortarobserver",
+    "helicopterlogisticsofficer",
+  ].includes(role);
 }
 
 export function isSteamPlayer(player) {

@@ -609,16 +609,27 @@ class MapResult(TypedDict):
     allied: int
 
 
-class MapInfo(TypedDict):
+class MapMorale(TypedDict):
+    ts: int
+    allied_morale: int
+    axis_morale: int
+
+
+class MapInfoWithoutPlayerStats(TypedDict):
     _schema_version: NotRequired[int]
     name: str
     start: int | None
     end: int | None
     guessed: bool
-    player_stats: dict[str, PlayerStat]
     game_layout: GameLayout
     cap_flips: list[MapScore]
+    morale_history: list[MapMorale]
+    initial_morale: int | None
     match_time: int
+
+
+class MapInfo(MapInfoWithoutPlayerStats):
+    player_stats: dict[str, PlayerStat]
 
 
 class MapInfoISODates(TypedDict):
@@ -640,6 +651,9 @@ class MapsType(TypedDict):
     game_layout: GameLayout
     player_stats: list[PlayerStatsType]
     cap_flips: list[MapScore]
+    morale_history: list[MapMorale]
+    initial_morale: int | None
+    match_time: int
 
 
 class PlayerCommentType(TypedDict):
@@ -1059,6 +1073,10 @@ class PublicInfoType(TypedDict):
     max_player_count: int
     player_count_by_team: PublicInfoPlayerType
     score: PublicInfoScoreType
+    allied_morale: int
+    axis_morale: int
+    initial_morale: int
+    morale_history: list[MapMorale]
     time_remaining: float
     vote_status: VoteMapStatus
     name: PublicInfoNameType

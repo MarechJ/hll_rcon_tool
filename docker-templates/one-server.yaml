@@ -28,6 +28,7 @@ x-backend: &backend
     HLL_DB_URL: postgresql://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}/${HLL_DB_NAME}
     RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
     SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
+    CRCON_USE_PROCESS_SUPERVISOR: ${CRCON_USE_PROCESS_SUPERVISOR:-}
     NB_API_WORKERS: ${NB_API_WORKERS}
     NB_API_THREADS: ${NB_API_THREADS}
     RCONWEB_EXTERNAL_ADDRESS: ${RCONWEB_EXTERNAL_ADDRESS}
@@ -35,13 +36,9 @@ x-backend: &backend
     SESSION_COOKIE_DOMAIN: ${SESSION_COOKIE_DOMAIN}
     CSRF_COOKIE_DOMAIN: ${CSRF_COOKIE_DOMAIN}
   command: web
-  restart: on-failure
+  restart: always
   healthcheck:
-    test:
-      [
-        "CMD-SHELL",
-        "if [ -e /code/rconweb/gunicorn.pid ]; then echo 0; else echo 1; fi",
-      ]
+    test: ["CMD-SHELL", "test -f /code/backend-container-healthy"]
     start_period: 30s
     interval: 15s
     timeout: 30s
@@ -60,7 +57,7 @@ x-backend: &backend
     - ./config:/config/:ro
 x-supervisor: &supervisor
   image: ${BACKEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
-  restart: on-failure
+  restart: always
   command: supervisor
   volumes:
     - ./logs:/logs/

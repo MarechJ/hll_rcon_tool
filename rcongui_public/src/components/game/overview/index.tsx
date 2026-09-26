@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 import { Flag, Swords } from 'lucide-react'
 import plugin from 'dayjs/plugin/duration';
+import { Morale, MoraleState } from '../morale'
 
 type GameOverviewProps = {
   time: plugin.Duration
@@ -26,6 +27,7 @@ type GameOverviewProps = {
   capFlips?: MatchScore[]
   matchTime?: number
   remainingTime?: number
+  morale?: MoraleState
 }
 
 type Score = {
@@ -207,13 +209,15 @@ export default function GameOverview({
   capFlips,
   matchTime,
   remainingTime,
+  morale,
 }: GameOverviewProps) {
   const { t } = useTranslation('game')
-  const theme = useTheme()
+  const { resolvedTheme } = useTheme()
 
-  const getFactionIconSrc = theme.theme === "dark" ? getLightFactionIconSrc : getDarkFactionIconSrc
+  const getFactionIconSrc = resolvedTheme === "dark" ? getLightFactionIconSrc : getDarkFactionIconSrc
 
   const displayArrows = () => {
+    if (mode !== 'offensive' && mode !== 'warfare') return null
     if (score.allies === undefined || score.axis === undefined) return null
 
     return (
@@ -279,6 +283,7 @@ export default function GameOverview({
         </div>
       </div>
       {capFlips && <CapFlipsTimeline capFlips={capFlips} matchTime={matchTime ?? 0} map={map} remainingTime={remainingTime ?? 0} />}
+      {mode === 'conquest' && morale && <Morale morale={morale} />}
     </div>
   )
 }
