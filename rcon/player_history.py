@@ -569,6 +569,7 @@ def remove_flag(
         else:
             exists = (
                 sess.query(PlayerFlag)
+                .join(PlayerFlag.player)
                 .filter(PlayerID.player_id == player_id)
                 .filter(PlayerFlag.flag == flag)
                 .one_or_none()
@@ -577,6 +578,10 @@ def remove_flag(
         if not exists:
             logger.warning("Flag does not exists")
             raise HLLCommandFailedError("Flag does not exists")
+        if exists.managed_by_vip_list:
+            raise HLLCommandFailedError(
+                "This flag is managed by a VIP list. Edit the list or its record."
+            )
         player = exists.player.to_dict()
         old_flag = exists.to_dict()
         sess.delete(exists)

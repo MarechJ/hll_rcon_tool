@@ -7,8 +7,12 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  FormControl,
   FormControlLabel,
+  InputLabel,
+  MenuItem,
   Paper,
+  Select,
   Stack,
   Switch,
   TextField,
@@ -35,6 +39,7 @@ export default function VipListRecordDialog({
   mode,
   initialValues,
   vipList,
+  vipLists = [],
   loading,
   onClose,
   onSubmit,
@@ -49,6 +54,8 @@ export default function VipListRecordDialog({
   const [active, setActive] = useState(true);
   const [expiresAt, setExpiresAt] = useState(null);
   const [playerIdError, setPlayerIdError] = useState("");
+  const [targetListId, setTargetListId] = useState("");
+  const targetDuration = vipLists.find((list) => list.id === targetListId)?.default_expiration_seconds;
 
   useEffect(() => {
     if (!open) return;
@@ -60,10 +67,20 @@ export default function VipListRecordDialog({
     setExpiresAt(
       initialValues?.expiresAt
         ? dayjs(initialValues.expiresAt)
-        : null
+        : editing || !vipList?.default_expiration_seconds
+        ? null
+        : dayjs().add(vipList.default_expiration_seconds, "seconds")
     );
     setPlayerIdError("");
-  }, [initialValues, open]);
+    setTargetListId(vipList?.id ?? "");
+  }, [initialValues, open, vipList?.id, editing]);
+
+  useEffect(() => {
+    if (!open || editing || !Number.isInteger(targetListId)) return;
+    setExpiresAt(targetDuration
+      ? dayjs().add(targetDuration, "seconds")
+      : null);
+  }, [open, editing, targetListId, targetDuration]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -77,11 +94,13 @@ export default function VipListRecordDialog({
       return;
     }
 
+    if (!editing && !Number.isInteger(targetListId)) return;
+
     try {
       await onSubmit({
         playerId: normalizedPlayerId,
-        vipListId: vipList.id,
-        description: description.trim(),
+        vipListId: editing ? vipList.id : targetListId,
+        ...(hasKnownPlayerName ? {} : { description: description.trim() }),
         notes: notes.trim(),
         active,
         expiresAt,
@@ -106,9 +125,28 @@ export default function VipListRecordDialog({
       <DialogContent>
         <Stack spacing={2.5} sx={{ pt: 1 }}>
           <DialogContentText>
-            This record will be stored in “{vipList?.name}”. No gameserver
-            synchronization is performed by this operation.
+            {editing ? `This record is stored in “${vipList?.name}”. ` : ""}
+            No gameserver synchronization is performed by this operation.
           </DialogContentText>
+
+          {!editing && (
+            <FormControl fullWidth required>
+              <InputLabel id="vip-record-target-label">Destination VIP list</InputLabel>
+              <Select
+                labelId="vip-record-target-label"
+                label="Destination VIP list"
+                value={targetListId}
+                onChange={(event) => setTargetListId(Number(event.target.value))}
+                disabled={loading}
+              >
+                {vipLists.map((list) => (
+                  <MenuItem key={list.id} value={list.id}>
+                    {list.name} (ID {list.id})
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
 
           <TextField
             required
@@ -233,7 +271,7 @@ export default function VipListRecordDialog({
         <Button
           type="submit"
           variant="contained"
-          disabled={loading || (!editing && playerId.trim() === "")}
+          disabled={loading || (!editing && (playerId.trim() === "" || !Number.isInteger(targetListId)))}
         >
           {editing ? "Save" : "Add record"}
         </Button>

@@ -6,6 +6,7 @@ export const vipListQueryKeys = {
   applicableLists: [{ queryIdentifier: "get_vip_lists_for_server" }],
   defaultList: [{ queryIdentifier: "get_default_vip_list" }],
   list: [{ queryIdentifier: "get_vip_list" }],
+  playerRecords: [{ queryIdentifier: "get_player_vip_records" }],
   activeRecords: [{ queryIdentifier: "get_active_vip_records" }],
   inactiveRecords: [{ queryIdentifier: "get_inactive_vip_records" }],
 };
@@ -57,6 +58,27 @@ export const vipListQueryOptions = {
       enabled: Number.isInteger(vipListId),
     }),
 
+  playerRecords: (playerId, serverNumber) =>
+    queryOptions({
+      queryKey: [
+        ...vipListQueryKeys.playerRecords,
+        playerId,
+        serverNumber ?? "current",
+      ],
+      queryFn: () =>
+        cmd.GET_PLAYER_VIP_RECORDS({
+          params: {
+            player_id: playerId,
+            ...(Number.isInteger(serverNumber)
+              ? { server_number: serverNumber }
+              : {}),
+          },
+        }),
+      enabled: Boolean(playerId),
+      staleTime: 30000,
+      select: (data) => (Array.isArray(data) ? data : []),
+    }),
+
   activeRecords: (vipListId) =>
     queryOptions({
       queryKey: [...vipListQueryKeys.activeRecords, vipListId],
@@ -88,6 +110,9 @@ export const vipListMutationOptions = {
           name: data.name,
           servers: data.servers,
           sync: data.sync,
+          expired_retention_days: data.expiredRetentionDays,
+          default_expiration_seconds: data.defaultExpirationSeconds,
+          flags: data.flags,
         },
         throwRouteError: false,
       }),
@@ -100,6 +125,9 @@ export const vipListMutationOptions = {
           name: data.name,
           servers: data.servers,
           sync: data.sync,
+          expired_retention_days: data.expiredRetentionDays,
+          default_expiration_seconds: data.defaultExpirationSeconds,
+          flags: data.flags,
         },
         throwRouteError: false,
       }),
@@ -139,6 +167,17 @@ export const vipListMutationOptions = {
         throwRouteError: false,
       }),
   },
+  applyExpiration: {
+    mutationFn: ({ vipListId, expectedExpirationSeconds, includeExpired }) =>
+      cmd.APPLY_VIP_LIST_EXPIRATION({
+        payload: {
+          vip_list_id: vipListId,
+          expected_expiration_seconds: expectedExpirationSeconds,
+          include_expired: Boolean(includeExpired),
+        },
+        throwRouteError: false,
+      }),
+  },
   createRecord: {
     mutationFn: (data) =>
       cmd.ADD_VIP_LIST_RECORD({
@@ -162,7 +201,9 @@ export const vipListMutationOptions = {
         payload: {
           record_id: id,
           vip_list_id: data.vipListId,
-          description: data.description || null,
+          ...(data.description === undefined
+            ? {}
+            : { description: data.description || null }),
           active: data.active,
           expires_at:
             data.expiresAt?.toISOString?.() ??

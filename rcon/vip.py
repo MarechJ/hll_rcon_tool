@@ -5,14 +5,15 @@ CRUD operations.
 """
 
 from collections.abc import Sequence
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from logging import getLogger
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.orm import Session
 
 from rcon.commands import HLLCommandFailedError
 from rcon.models import (
+    PlayerFlag,
     PlayerID,
     VipList,
     VipListDefault,
@@ -178,10 +179,188 @@ def get_vip_list(
     return vip_list
 
 
+def _validate_expired_retention_days(value: int | None) -> int | None:
+    if value is None:
+        return None
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, int)
+        or value < 0
+        or value > 3650
+    ):
+        raise ValueError("Expired VIP retention must be between 0 and 3650 days")
+    return value
+
+
+def _validate_default_expiration_seconds(value: int | None) -> int | None:
+    if value is None:
+        return None
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, int)
+        or value < 1
+        or value > 315360000
+    ):
+        raise ValueError("Default VIP duration must be between 1 second and 10 years")
+    return value
+
+
+def _validate_vip_list_flags(flags: Sequence[str]) -> list[str]:
+    if isinstance(flags, (str, bytes)) or not isinstance(flags, (tuple, list)):
+        raise TypeError("VIP list flags must be an array of strings")
+    normalized = []
+    for item in flags:
+        if not isinstance(item, str) or not item.strip() or len(item.strip()) > 64:
+            raise ValueError("Each VIP list flag must contain 1 to 64 characters")
+        if item.strip() not in normalized:
+            normalized.append(item.strip())
+    if len(normalized) > 20:
+        raise ValueError("A VIP list can have at most 20 flags")
+    return normalized
+
+
+def reconcile_vip_list_flags(sess: Session, player_ids: set[int] | None = None) -> int:
+    """Materialize effective list flags without taking ownership of manual flags."""
+    sess.flush()
+    now = datetime.now(UTC)
+    stmt = (
+        select(VipListRecord.player_id_id, VipList.flags)
+        .join(VipList, VipList.id == VipListRecord.vip_list_id)
+        .where(
+            VipListRecord.active.is_(True),
+            or_(VipListRecord.expires_at.is_(None), VipListRecord.expires_at > now),
+        )
+    )
+    if player_ids is not None:
+        if not player_ids:
+            return 0
+        stmt = stmt.where(VipListRecord.player_id_id.in_(player_ids))
+    desired: dict[int, set[str]] = {}
+    for player_id_id, flags in sess.execute(stmt):
+        desired.setdefault(player_id_id, set()).update(flags or ())
+
+    existing_stmt = select(PlayerFlag)
+    if player_ids is not None:
+        existing_stmt = existing_stmt.where(PlayerFlag.player_id_id.in_(player_ids))
+    else:
+        existing_stmt = existing_stmt.where(
+            or_(
+                PlayerFlag.managed_by_vip_list.is_(True),
+                PlayerFlag.player_id_id.in_(desired),
+            )
+        )
+    existing = {
+        (item.player_id_id, item.flag): item for item in sess.scalars(existing_stmt)
+    }
+    changed = 0
+    for key, flag in existing.items():
+        if flag.managed_by_vip_list and key[1] not in desired.get(key[0], ()):
+            sess.delete(flag)
+            changed += 1
+    for player_id_id, flags in desired.items():
+        for flag in flags:
+            if (player_id_id, flag) not in existing:
+                sess.add(
+                    PlayerFlag(
+                        player_id_id=player_id_id,
+                        flag=flag,
+                        comment="Managed by VIP Lists",
+                        managed_by_vip_list=True,
+                    )
+                )
+                changed += 1
+    return changed
+
+
+def _list_expiration(vip_list: VipList) -> datetime | None:
+    seconds = vip_list.default_expiration_seconds
+    return (
+        datetime.now(UTC) + timedelta(seconds=seconds) if seconds is not None else None
+    )
+
+
+def apply_vip_list_expiration(
+    vip_list_id: int,
+    expected_expiration_seconds: int | None,
+    include_expired: bool = False,
+) -> int:
+    """Apply the configured duration to existing active records.
+
+    Expired records are only reactivated when explicitly requested. Inactive
+    records are never activated.
+    """
+    if not isinstance(include_expired, bool):
+        raise TypeError("include_expired must be a boolean")
+    with enter_session() as sess:
+        vip_list = get_vip_list(sess, vip_list_id, strict=True)
+        assert vip_list is not None
+        if vip_list.default_expiration_seconds != expected_expiration_seconds:
+            raise HLLCommandFailedError("VIP list duration changed; review it again")
+        now = datetime.now(UTC)
+        stmt = select(VipListRecord).where(
+            VipListRecord.vip_list_id == vip_list_id,
+            VipListRecord.active.is_(True),
+        )
+        if not include_expired:
+            stmt = stmt.where(
+                or_(VipListRecord.expires_at.is_(None), VipListRecord.expires_at > now)
+            )
+        records = sess.scalars(stmt).all()
+        expires_at = (
+            now + timedelta(seconds=expected_expiration_seconds)
+            if expected_expiration_seconds is not None
+            else None
+        )
+        changed = 0
+        for record in records:
+            if record.expires_at != expires_at:
+                record.expires_at = expires_at
+                changed += 1
+        if changed:
+            reconcile_vip_list_flags(sess, {record.player_id_id for record in records})
+            sess.commit()
+            _notify_vip_sync(vip_list.servers)
+        logger.info(
+            "Applied default duration of VIP list %s to %s records",
+            vip_list_id,
+            changed,
+        )
+        return changed
+
+
+def cleanup_expired_vip_records(now: datetime | None = None) -> int:
+    """Delete only records whose list explicitly enables expiry cleanup."""
+    now = now or datetime.now(UTC)
+    deleted = 0
+    with enter_session() as sess:
+        lists = sess.scalars(
+            select(VipList).where(VipList.expired_retention_days.is_not(None))
+        ).all()
+        for vip_list in lists:
+            cutoff = now - timedelta(days=vip_list.expired_retention_days)
+            result = sess.execute(
+                delete(VipListRecord).where(
+                    VipListRecord.vip_list_id == vip_list.id,
+                    VipListRecord.expires_at.is_not(None),
+                    VipListRecord.expires_at <= cutoff,
+                )
+            )
+            deleted += result.rowcount or 0
+        flag_changes = reconcile_vip_list_flags(sess)
+        if deleted:
+            logger.info("Deleted %s expired VIP list record(s)", deleted)
+        if flag_changes:
+            logger.info("Reconciled %s VIP list-managed player flag(s)", flag_changes)
+    return deleted
+
+
 def create_vip_list(
     name: str,
     sync: VipListSyncMethod = VipListSyncMethod.IGNORE_UNKNOWN,
     servers: Sequence[int] | None = None,
+    expired_retention_days: int | None = None,
+    default_expiration_seconds: int | None = None,
+    flags: Sequence[str] = (),
 ) -> VipListType:
     """Create an empty VIP list."""
     name = name.strip()
@@ -189,7 +368,17 @@ def create_vip_list(
         raise ValueError("VIP list name must not be empty")
 
     with enter_session() as sess:
-        vip_list = VipList(name=name, sync=sync)
+        vip_list = VipList(
+            name=name,
+            sync=sync,
+            expired_retention_days=_validate_expired_retention_days(
+                expired_retention_days
+            ),
+            default_expiration_seconds=_validate_default_expiration_seconds(
+                default_expiration_seconds
+            ),
+            flags=_validate_vip_list_flags(flags),
+        )
         vip_list.set_server_numbers(servers)
 
         sess.add(vip_list)
@@ -209,6 +398,9 @@ def edit_vip_list(
     name: str | MissingType = MISSING,
     sync: VipListSyncMethod | MissingType = MISSING,
     servers: Sequence[int] | None | MissingType = MISSING,
+    expired_retention_days: int | None | MissingType = MISSING,
+    default_expiration_seconds: int | None | MissingType = MISSING,
+    flags: Sequence[str] | MissingType = MISSING,
 ) -> VipListType:
     """Edit an existing VIP list without synchronizing a gameserver."""
     with enter_session() as sess:
@@ -228,6 +420,19 @@ def edit_vip_list(
 
         if sync is not MISSING:
             vip_list.sync = sync
+
+        if expired_retention_days is not MISSING:
+            vip_list.expired_retention_days = _validate_expired_retention_days(
+                expired_retention_days
+            )
+
+        if default_expiration_seconds is not MISSING:
+            vip_list.default_expiration_seconds = _validate_default_expiration_seconds(
+                default_expiration_seconds
+            )
+
+        if flags is not MISSING:
+            vip_list.flags = _validate_vip_list_flags(flags)
 
         if servers is not MISSING:
             incompatible_default_servers = (
@@ -254,6 +459,7 @@ def edit_vip_list(
 
         if sess.is_modified(vip_list):
             new_server_mask = vip_list.servers
+            reconcile_vip_list_flags(sess)
             sess.commit()
             logger.info("Edited VIP list ID %s", vip_list.id)
             _notify_vip_sync(
@@ -279,6 +485,7 @@ def delete_vip_list(vip_list_id: int) -> bool:
 
         server_mask = vip_list.servers
         sess.delete(vip_list)
+        reconcile_vip_list_flags(sess)
         sess.commit()
         logger.info("Deleted VIP list ID %s", vip_list_id)
         _notify_vip_sync(server_mask)
@@ -399,7 +606,7 @@ def add_record_to_vip_list(
     vip_list_id: int,
     description: str | None = None,
     active: bool = True,
-    expires_at: datetime | None = None,
+    expires_at: datetime | None | MissingType = MISSING,
     notes: str | None = None,
     admin_name: str = "CRCON",
 ) -> VipListRecordType:
@@ -420,6 +627,9 @@ def add_record_to_vip_list(
             strict=True,
         )
         assert vip_list is not None
+
+        if expires_at is MISSING:
+            expires_at = _list_expiration(vip_list)
 
         existing = get_player_vip_list_record(
             sess,
@@ -445,6 +655,7 @@ def add_record_to_vip_list(
             expires_at=expires_at,
         )
         sess.add(record)
+        reconcile_vip_list_flags(sess, {player.id})
         sess.commit()
         _notify_vip_sync(vip_list.servers)
 
@@ -461,7 +672,7 @@ def upsert_vip_list_record(
     player_id: str,
     vip_list_id: int,
     description: str | None = None,
-    expires_at: datetime | None = None,
+    expires_at: datetime | None | MissingType = MISSING,
     notes: str | None = None,
     admin_name: str = "CRCON",
 ) -> VipListRecordType:
@@ -480,6 +691,9 @@ def upsert_vip_list_record(
             strict=True,
         )
         assert vip_list is not None
+
+        if expires_at is MISSING:
+            expires_at = _list_expiration(vip_list)
 
         record = get_player_vip_list_record(
             sess,
@@ -515,6 +729,7 @@ def upsert_vip_list_record(
         changed = created or sess.is_modified(record)
 
         if changed:
+            reconcile_vip_list_flags(sess, {record.player_id_id})
             sess.commit()
             logger.info(
                 "%s player %s on VIP list ID %s",
@@ -583,6 +798,7 @@ def edit_vip_list_record(
 
         if sess.is_modified(record):
             new_server_mask = record.vip_list.servers
+            reconcile_vip_list_flags(sess, {record.player_id_id})
             sess.commit()
             logger.info("Edited VIP list record ID %s", record.id)
             _notify_vip_sync(
@@ -710,6 +926,7 @@ def edit_vip_list_records(
                 record.notes = notes
             record.admin_name = normalized_admin_name
 
+        reconcile_vip_list_flags(sess, {record.player_id_id for record in records})
         sess.commit()
         result = [record.to_dict() for record in records]
         logger.info(
@@ -737,6 +954,7 @@ def delete_vip_list_records(record_ids: Sequence[int]) -> int:
             sess.delete(record)
 
         deleted_count = len(records)
+        reconcile_vip_list_flags(sess, {record.player_id_id for record in records})
         sess.commit()
         logger.info(
             "Bulk deleted VIP list record IDs %s",
@@ -759,6 +977,7 @@ def delete_vip_list_record(record_id: int) -> bool:
 
         server_mask = record.vip_list.servers
         sess.delete(record)
+        reconcile_vip_list_flags(sess, {record.player_id_id})
         sess.commit()
         logger.info("Deleted VIP list record ID %s", record_id)
         _notify_vip_sync(server_mask)
@@ -852,6 +1071,7 @@ def upsert_default_vip_record(
             record.description = description if not player.names else None
             record.expires_at = expires_at
 
+        reconcile_vip_list_flags(sess, {player.id})
         sess.commit()
         result = record.to_dict()
         logger.info(
@@ -889,6 +1109,7 @@ def deactivate_default_vip_record(
 
         record.active = False
         record.admin_name = admin_name.strip() or "Legacy VIP API"
+        reconcile_vip_list_flags(sess, {record.player_id_id})
         sess.commit()
         logger.info(
             "Deactivated player %s in default VIP list ID %s for server %s",
@@ -921,6 +1142,7 @@ def deactivate_all_default_vip_records(
             record.active = False
             record.admin_name = normalized_admin_name
 
+        reconcile_vip_list_flags(sess, {record.player_id_id for record in records})
         sess.commit()
         logger.info(
             "Deactivated %s records in default VIP list ID %s for server %s",

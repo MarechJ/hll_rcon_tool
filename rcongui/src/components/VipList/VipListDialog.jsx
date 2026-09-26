@@ -49,6 +49,9 @@ export default function VipListDialog({
 }) {
   const [name, setName] = useState("");
   const [sync, setSync] = useState("ignore_unknown");
+  const [expiredRetentionDays, setExpiredRetentionDays] = useState(null);
+  const [defaultExpirationSeconds, setDefaultExpirationSeconds] = useState(null);
+  const [flagsText, setFlagsText] = useState("");
   const [serverNumbers, setServerNumbers] = useState(null);
   const [serverError, setServerError] = useState("");
   const [setAsDefault, setSetAsDefault] = useState(false);
@@ -60,6 +63,9 @@ export default function VipListDialog({
 
     setName(initialValues?.name ?? "");
     setSync(initialValues?.sync ?? "ignore_unknown");
+    setExpiredRetentionDays(initialValues?.expiredRetentionDays ?? null);
+    setDefaultExpirationSeconds(initialValues?.defaultExpirationSeconds ?? null);
+    setFlagsText((initialValues?.flags ?? []).join("\n"));
     setServerNumbers(
       Array.isArray(servers)
         ? [...new Set(servers.map(Number))]
@@ -133,6 +139,9 @@ export default function VipListDialog({
       await onSubmit({
         name: name.trim(),
         sync,
+        expiredRetentionDays,
+        defaultExpirationSeconds,
+        flags: [...new Set(flagsText.split("\n").map((flag) => flag.trim()).filter(Boolean))],
         servers: serverNumbers,
         setAsDefault,
       });
@@ -188,6 +197,63 @@ export default function VipListDialog({
           <Alert severity={sync === "remove_unknown" ? "warning" : "info"}>
             {SYNC_DESCRIPTIONS[sync]}
           </Alert>
+
+          <FormControl fullWidth disabled={loading}>
+            <InputLabel id="vip-list-expired-retention-label">
+              Expired records
+            </InputLabel>
+            <Select
+              labelId="vip-list-expired-retention-label"
+              label="Expired records"
+              value={expiredRetentionDays ?? "keep"}
+              onChange={(event) => setExpiredRetentionDays(
+                event.target.value === "keep" ? null : Number(event.target.value)
+              )}
+            >
+              <MenuItem value="keep">Keep for manual review</MenuItem>
+              <MenuItem value={0}>Delete automatically after expiration</MenuItem>
+              <MenuItem value={1}>Delete after 1 day</MenuItem>
+              <MenuItem value={7}>Delete after 7 days</MenuItem>
+              <MenuItem value={30}>Delete after 30 days</MenuItem>
+            </Select>
+          </FormControl>
+          <Typography variant="body2" color="text.secondary">
+            Automatic cleanup runs periodically. Enabling it also deletes existing
+            expired records in this list once their retention time has passed.
+          </Typography>
+
+          <FormControl fullWidth disabled={loading}>
+            <InputLabel id="vip-list-default-duration-label">Default VIP duration</InputLabel>
+            <Select
+              labelId="vip-list-default-duration-label"
+              label="Default VIP duration"
+              value={defaultExpirationSeconds ?? "never"}
+              onChange={(event) => setDefaultExpirationSeconds(
+                event.target.value === "never" ? null : Number(event.target.value)
+              )}
+            >
+              <MenuItem value="never">Never expires</MenuItem>
+              <MenuItem value={7200}>2 hours</MenuItem>
+              <MenuItem value={86400}>1 day</MenuItem>
+              <MenuItem value={604800}>7 days</MenuItem>
+              <MenuItem value={2592000}>30 days</MenuItem>
+              <MenuItem value={31536000}>1 year</MenuItem>
+            </Select>
+          </FormControl>
+          <Typography variant="body2" color="text.secondary">
+            Applies to new records only. Use the separate action on the list page
+            to update existing active records.
+          </Typography>
+
+          <TextField
+            label="Player flags"
+            multiline
+            minRows={2}
+            value={flagsText}
+            onChange={(event) => setFlagsText(event.target.value)}
+            disabled={loading}
+            helperText="One flag per line. Active members receive these global player flags; manual flags are preserved."
+          />
 
           <Paper
             variant="outlined"

@@ -88,7 +88,7 @@ are positive integers.
   "$id": "VipList",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "name", "sync", "servers"],
+  "required": ["id", "name", "sync", "servers", "flags", "expired_retention_days", "default_expiration_seconds"],
   "properties": {
     "id": {"type": "integer", "minimum": 1},
     "name": {"type": "string", "minLength": 1},
@@ -96,6 +96,9 @@ are positive integers.
       "type": "string",
       "enum": ["ignore_unknown", "remove_unknown"]
     },
+    "flags": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 64}, "maxItems": 20, "uniqueItems": true},
+    "expired_retention_days": {"type": ["integer", "null"], "minimum": 0, "maximum": 3650},
+    "default_expiration_seconds": {"type": ["integer", "null"], "minimum": 1, "maximum": 315360000},
     "servers": {
       "oneOf": [
         {"type": "null"},
@@ -115,6 +118,16 @@ are positive integers.
 untouched. An unknown gameserver VIP is eligible for automatic removal only when
 applicable list configuration permits it; use the sync preview before applying
 changes.
+
+`flags` are global player flags for active, non-expired members of this list.
+Existing manually assigned flags remain manual and are never removed by list
+operations. If another list still grants the same flag, it stays. Automatic
+expiration and deletions remove only flags created by list management.
+
+`default_expiration_seconds` is the default lifetime for new list records;
+`null` means indefinite. Callers can override it by explicitly supplying
+`expires_at` (including `null`). Editing the list does not change existing
+records. `expired_retention_days` independently controls cleanup after expiry.
 
 ### `VipListRecord`
 
@@ -320,8 +333,9 @@ GET /api/get_vip_lists_for_server?server_number=2
 
 | Method and path | Permission | JSON request | `result` |
 | --- | --- | --- | --- |
-| `POST /api/create_vip_list` | `api.can_create_vip_lists` | `{"name": string, "sync"?: "ignore_unknown" \| "remove_unknown", "servers"?: integer[] \| null}` | `VipList` |
-| `POST /api/edit_vip_list` | `api.can_change_vip_lists` | `{"vip_list_id": integer, "name"?: string, "sync"?: "ignore_unknown" \| "remove_unknown", "servers"?: integer[] \| null}` | `VipList` |
+| `POST /api/create_vip_list` | `api.can_create_vip_lists` | `{"name": string, "sync"?: "ignore_unknown" \| "remove_unknown", "servers"?: integer[] \| null, "flags"?: string[], "default_expiration_seconds"?: integer \| null, "expired_retention_days"?: integer \| null}` | `VipList` |
+| `POST /api/edit_vip_list` | `api.can_change_vip_lists` | `{"vip_list_id": integer, "name"?: string, "sync"?: "ignore_unknown" \| "remove_unknown", "servers"?: integer[] \| null, "flags"?: string[], "default_expiration_seconds"?: integer \| null, "expired_retention_days"?: integer \| null}` | `VipList` |
+| `POST /api/apply_vip_list_expiration` | `api.can_change_vip_list_records` | `{"vip_list_id": integer, "expected_expiration_seconds": integer \| null, "include_expired"?: boolean}` | Number of changed records |
 | `POST /api/delete_vip_list` | `api.can_delete_vip_lists` | `{"vip_list_id": integer}` | `boolean` |
 
 `servers: null` applies a list to all configured servers. Omitting `servers` while

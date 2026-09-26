@@ -527,12 +527,18 @@ class RconAPI(Rcon):
         name: str,
         sync: VipListSyncMethod = VipListSyncMethod.IGNORE_UNKNOWN,
         servers: Sequence[int] | None = None,
+        expired_retention_days: int | None = None,
+        default_expiration_seconds: int | None = None,
+        flags: Sequence[str] = (),
     ) -> VipListType:
         """Create an empty VIP list without synchronizing the gameserver."""
         return vip.create_vip_list(
             name=name,
             sync=VipListSyncMethod(sync.lower()),
             servers=servers,
+            expired_retention_days=expired_retention_days,
+            default_expiration_seconds=default_expiration_seconds,
+            flags=flags,
         )
 
     def edit_vip_list(
@@ -541,6 +547,9 @@ class RconAPI(Rcon):
         name: str | MissingType = MISSING,
         sync: VipListSyncMethod | MissingType = MISSING,
         servers: Sequence[int] | None | MissingType = MISSING,
+        expired_retention_days: int | None | MissingType = MISSING,
+        default_expiration_seconds: int | None | MissingType = MISSING,
+        flags: Sequence[str] | MissingType = MISSING,
     ) -> VipListType:
         """Edit a VIP list without synchronizing the gameserver."""
         if sync is not MISSING:
@@ -551,6 +560,20 @@ class RconAPI(Rcon):
             name=name,
             sync=sync,
             servers=servers,
+            expired_retention_days=expired_retention_days,
+            default_expiration_seconds=default_expiration_seconds,
+            flags=flags,
+        )
+
+    def apply_vip_list_expiration(
+        self,
+        vip_list_id: int,
+        expected_expiration_seconds: int | None,
+        include_expired: bool = False,
+    ) -> int:
+        """Explicitly apply the list duration to existing active records."""
+        return vip.apply_vip_list_expiration(
+            int(vip_list_id), expected_expiration_seconds, include_expired
         )
 
     def delete_vip_list(self, vip_list_id: int) -> bool:
@@ -636,7 +659,7 @@ class RconAPI(Rcon):
         vip_list_id: int,
         description: str | None = None,
         active: bool = True,
-        expires_at: datetime | None = None,
+        expires_at: datetime | None | MissingType = MISSING,
         notes: str | None = None,
         admin_name: str = "CRCON",
     ) -> VipListRecordType:
@@ -656,7 +679,7 @@ class RconAPI(Rcon):
         player_id: str,
         vip_list_id: int,
         description: str | None = None,
-        expires_at: datetime | None = None,
+        expires_at: datetime | None | MissingType = MISSING,
         notes: str | None = None,
         admin_name: str = "CRCON",
     ) -> VipListRecordType:

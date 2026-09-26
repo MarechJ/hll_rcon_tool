@@ -1,13 +1,15 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
 
 from rcon.commands import HLLCommandFailedError
-from rcon.models import PlayerID, PlayerName, enter_session
+from rcon.models import PlayerFlag, PlayerID, PlayerName, enter_session
+from rcon.player_history import remove_flag
 from rcon.types import VipListSyncMethod
 from rcon.vip import (
     add_record_to_vip_list,
+    apply_vip_list_expiration,
     clear_default_vip_list,
     create_vip_list,
     deactivate_all_default_vip_records,
@@ -29,6 +31,123 @@ from rcon.vip import (
     set_default_vip_list,
     upsert_default_vip_record,
 )
+
+
+def test_list_default_duration_requires_explicit_apply_to_existing(vip_list_ids):
+    player_id = "76561199988877766"
+    listing = create_vip_list(f"Duration {uuid4().hex}")
+    vip_list_ids.append(listing["id"])
+    initial = add_record_to_vip_list(player_id, listing["id"])
+    assert initial["expires_at"] is None
+
+    edit_vip_list(listing["id"], default_expiration_seconds=86400)
+    with enter_session() as sess:
+        assert get_vip_record(sess, initial["id"]).expires_at is None
+
+    assert apply_vip_list_expiration(listing["id"], 86400) == 1
+    with enter_session() as sess:
+        expiration = get_vip_record(sess, initial["id"]).expires_at
+        assert datetime.now(UTC) + timedelta(hours=23) < expiration
+        assert expiration < datetime.now(UTC) + timedelta(hours=25)
+
+    with pytest.raises(HLLCommandFailedError, match="duration changed"):
+        apply_vip_list_expiration(listing["id"], None)
+
+    edit_vip_list_record(
+        initial["id"], expires_at=datetime.now(UTC) - timedelta(days=1)
+    )
+    assert apply_vip_list_expiration(listing["id"], 86400) == 0
+    assert apply_vip_list_expiration(listing["id"], 86400, include_expired=True) == 1
+
+
+def test_list_flags_preserve_manual_flags_and_other_lists(vip_list_ids):
+    player_id = "76561199988877765"
+    first = create_vip_list(f"Flag first {uuid4().hex}", flags=["🔫", "member"])
+    second = create_vip_list(f"Flag second {uuid4().hex}", flags=["🔫"])
+    vip_list_ids.extend([first["id"], second["id"]])
+
+    with enter_session() as sess:
+        player = sess.query(PlayerID).filter_by(player_id=player_id).one_or_none()
+        if player is None:
+            player = PlayerID(player_id=player_id)
+            sess.add(player)
+            sess.flush()
+        sess.add(PlayerFlag(player=player, flag="member", comment="Manual"))
+
+    first_record = add_record_to_vip_list(player_id, first["id"])
+    second_record = add_record_to_vip_list(player_id, second["id"])
+    with enter_session() as sess:
+        player = sess.query(PlayerID).filter_by(player_id=player_id).one()
+        flags = {flag.flag: flag for flag in player.flags}
+        assert flags["member"].managed_by_vip_list is False
+        assert flags["🔫"].managed_by_vip_list is True
+
+    with pytest.raises(HLLCommandFailedError, match="managed by a VIP list"):
+        remove_flag(player_id=player_id, flag="🔫")
+
+    delete_vip_list_record(first_record["id"])
+    with enter_session() as sess:
+        player = sess.query(PlayerID).filter_by(player_id=player_id).one()
+        assert {flag.flag for flag in player.flags} == {"member", "🔫"}
+
+    delete_vip_list_record(second_record["id"])
+    with enter_session() as sess:
+        player = sess.query(PlayerID).filter_by(player_id=player_id).one()
+        assert {flag.flag for flag in player.flags} == {"member"}
+        for flag in player.flags:
+            sess.delete(flag)
+
+
+def test_expired_list_record_loses_managed_flag(vip_list_ids):
+    player_id = "76561199988877764"
+    listing = create_vip_list(f"Expiring flag {uuid4().hex}", flags=["🌱"])
+    vip_list_ids.append(listing["id"])
+    record = add_record_to_vip_list(player_id, listing["id"])
+
+    edit_vip_list_record(
+        record["id"], expires_at=datetime.now(UTC) - timedelta(seconds=1)
+    )
+    with enter_session() as sess:
+        player = sess.query(PlayerID).filter_by(player_id=player_id).one()
+        assert all(flag.flag != "🌱" for flag in player.flags)
+
+
+def test_list_default_duration_applies_only_when_expiration_is_omitted(vip_list_ids):
+    listing = create_vip_list(
+        f"New VIP duration {uuid4().hex}", default_expiration_seconds=7200
+    )
+    vip_list_ids.append(listing["id"])
+    default_record = add_record_to_vip_list("76561199988877763", listing["id"])
+    override_record = add_record_to_vip_list(
+        "76561199988877762", listing["id"], expires_at=None
+    )
+    assert default_record["expires_at"] > datetime.now(UTC) + timedelta(hours=1)
+    assert override_record["expires_at"] is None
+
+
+def test_legacy_default_list_membership_updates_managed_flags(vip_list_ids):
+    player_id = "76561199988877761"
+    listing = create_vip_list(f"Legacy flags {uuid4().hex}", flags=["legacy-member"])
+    vip_list_ids.append(listing["id"])
+    with enter_session() as sess:
+        previous_default = get_default_vip_list(sess, 32)
+        previous_default_id = previous_default.id if previous_default else None
+    set_default_vip_list(32, listing["id"])
+    try:
+        upsert_default_vip_record(player_id, 32)
+        with enter_session() as sess:
+            player = sess.query(PlayerID).filter_by(player_id=player_id).one()
+            assert "legacy-member" in {flag.flag for flag in player.flags}
+
+        deactivate_default_vip_record(player_id, 32)
+        with enter_session() as sess:
+            player = sess.query(PlayerID).filter_by(player_id=player_id).one()
+            assert "legacy-member" not in {flag.flag for flag in player.flags}
+    finally:
+        if previous_default_id is None:
+            clear_default_vip_list(32)
+        else:
+            set_default_vip_list(32, previous_default_id)
 
 
 @pytest.fixture
@@ -520,3 +639,52 @@ def test_default_vip_record_compatibility_helpers(
     )
     assert deactivate_all_default_vip_records(1) == 1
     assert deactivate_all_default_vip_records(1) == 0
+
+
+def test_expired_record_cleanup_respects_each_list_policy(vip_list_ids):
+    from datetime import timedelta
+
+    from rcon.vip import cleanup_expired_vip_records
+
+    now = datetime.now(UTC)
+    keep = create_vip_list(f"Keep {uuid4().hex}")
+    cleanup = create_vip_list(f"Cleanup {uuid4().hex}", expired_retention_days=1)
+    vip_list_ids.extend([keep["id"], cleanup["id"]])
+    assert keep["expired_retention_days"] is None
+    assert cleanup["expired_retention_days"] == 1
+
+    old = add_record_to_vip_list(
+        "0002" + uuid4().hex[4:],
+        cleanup["id"],
+        expires_at=now - timedelta(days=2),
+    )
+    recent = add_record_to_vip_list(
+        "0002" + uuid4().hex[4:],
+        cleanup["id"],
+        expires_at=now - timedelta(hours=1),
+    )
+    retained = add_record_to_vip_list(
+        "0002" + uuid4().hex[4:],
+        keep["id"],
+        expires_at=now - timedelta(days=2),
+    )
+    assert cleanup_expired_vip_records(now=now) == 1
+
+    with enter_session() as sess:
+        assert get_vip_record(sess, old["id"]) is None
+        assert get_vip_record(sess, recent["id"]) is not None
+        assert get_vip_record(sess, retained["id"]) is not None
+
+    edited = edit_vip_list(cleanup["id"], expired_retention_days=0)
+    assert edited["expired_retention_days"] == 0
+    assert cleanup_expired_vip_records(now=now) == 1
+
+    with enter_session() as sess:
+        assert get_vip_record(sess, recent["id"]) is None
+        assert get_vip_record(sess, retained["id"]) is not None
+
+
+@pytest.mark.parametrize("invalid", [-1, 3651, True, "1"])
+def test_expired_record_retention_rejects_invalid_values(vip_list_ids, invalid):
+    with pytest.raises(ValueError, match="retention"):
+        create_vip_list(f"Invalid {uuid4().hex}", expired_retention_days=invalid)

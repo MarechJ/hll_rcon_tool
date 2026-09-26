@@ -91,6 +91,13 @@ class VipSyncCommandHandler:
     def synchronize(self, trigger: str) -> None:
         """Perform one full synchronization without terminating on failure."""
         try:
+            if trigger in ("startup", "periodic"):
+                try:
+                    from rcon.vip import cleanup_expired_vip_records
+
+                    cleanup_expired_vip_records()
+                except Exception:
+                    logger.exception("Expired VIP record cleanup failed")
             Rcon.get_vip_ids.cache_clear()
             result = synchronize_gameserver_vips(
                 server_number=self.server_number,

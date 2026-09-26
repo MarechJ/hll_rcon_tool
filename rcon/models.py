@@ -633,6 +633,7 @@ class PlayerFlag(Base):
     )
     flag: Mapped[str] = mapped_column(nullable=False, index=True)
     comment: Mapped[str] = mapped_column(String, nullable=True)
+    managed_by_vip_list: Mapped[bool] = mapped_column(default=False, nullable=False)
     modified: Mapped[datetime] = mapped_column(
         UTCDateTime, default=lambda: datetime.now(UTC)
     )
@@ -1298,6 +1299,9 @@ class VipList(Base):
         nullable=False,
     )
     servers: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    expired_retention_days: Mapped[int | None] = mapped_column(nullable=True)
+    default_expiration_seconds: Mapped[int | None] = mapped_column(nullable=True)
+    flags: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
 
     records: Mapped[list["VipListRecord"]] = relationship(
         back_populates="vip_list",
@@ -1326,6 +1330,9 @@ class VipList(Base):
             "id": self.id,
             "name": self.name,
             "sync": self.sync,
+            "expired_retention_days": self.expired_retention_days,
+            "default_expiration_seconds": self.default_expiration_seconds,
+            "flags": self.flags or [],
             "servers": sorted(server_numbers) if server_numbers is not None else None,
         }
 

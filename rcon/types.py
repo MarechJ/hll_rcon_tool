@@ -752,6 +752,9 @@ class VipListType(TypedDict):
     id: int
     name: str
     sync: VipListSyncMethod
+    expired_retention_days: int | None
+    default_expiration_seconds: int | None
+    flags: list[str]
     servers: list[int] | None
 
 

@@ -288,7 +288,9 @@ export default function VipListBulkDialog({
             )}
 
             <Alert severity="info">
-              No gameserver synchronization is performed by this operation.
+              {action.startsWith("export_")
+                ? "Export only downloads a file; no records or gameservers are changed."
+                : "After a successful change, affected gameservers are notified for synchronization."}
             </Alert>
           </Stack>
         ) : (
@@ -321,6 +323,7 @@ export default function VipListBulkDialog({
                   <ListItem key={record.id} divider>
                     <ListItemText
                       primary={
+                        record.player_name ||
                         record.description ||
                         `VIP record #${record.id}`
                       }
@@ -338,8 +341,9 @@ export default function VipListBulkDialog({
             </Paper>
 
             <Alert severity="info">
-              No gameserver synchronization is performed. The operation is
-              executed atomically: if one record is invalid, none are changed.
+              {action.startsWith("export_")
+                ? "Export only downloads a file; no records or gameservers are changed."
+                : "The database operation is atomic: if one record is invalid, none are changed. Affected gameservers are notified for synchronization after a successful change."}
             </Alert>
           </Stack>
         )}

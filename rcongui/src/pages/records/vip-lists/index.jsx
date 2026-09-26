@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import {
   Alert,
   Box,
@@ -14,17 +19,20 @@ import {
   DialogTitle,
   Divider,
   IconButton,
-  InputAdornment,
+  FormControl,
+  InputLabel,
   LinearProgress,
+  MenuItem,
   Paper,
+  Select,
   Stack,
-  TextField,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  TableSortLabel,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -33,7 +41,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import StarIcon from "@mui/icons-material/Star";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
-import SearchIcon from "@mui/icons-material/Search";
+import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import dayjs from "dayjs";
 import { toast } from "react-toastify";
 import { useAuth } from "@/hooks/useAuth";
@@ -63,6 +71,13 @@ const formatServers = (servers) => {
 const formatExpiration = (expiresAt) => {
   if (!expiresAt) return "Never";
   return dayjs(expiresAt).format("YYYY-MM-DD HH:mm");
+};
+
+const formatDuration = (seconds) => {
+  if (seconds === null) return "Never expires";
+  if (seconds % 86400 === 0) return `${seconds / 86400} day(s)`;
+  if (seconds % 3600 === 0) return `${seconds / 3600} hour(s)`;
+  return `${seconds} second(s)`;
 };
 
 const getPlayerIdType = (playerId) => {
@@ -159,8 +174,44 @@ function RecordTable({
   selectedRecordIds,
   onToggleRecord,
   onToggleRecords,
+  showList = false,
+  listNames = {},
 }) {
+  const [sorting, setSorting] = useState({ field: "player", direction: "asc" });
   const safeRecords = Array.isArray(records) ? records : [];
+  const sortedRecords = [...safeRecords].sort((left, right) => {
+    const value = (record) => {
+      switch (sorting.field) {
+        case "list":
+          return listNames[record.vip_list_id] ?? "";
+        case "status":
+          return record.is_expired ? "Expired" : record.is_active ? "Active" : "Inactive";
+        case "expiration":
+          return record.expires_at ?? "9999";
+        case "admin":
+          return record.admin_name ?? "";
+        default:
+          return record.player_name || record.description || record.player_id;
+      }
+    };
+    const result = String(value(left)).localeCompare(String(value(right)), undefined, {
+      numeric: true,
+      sensitivity: "base",
+    });
+    return (result || left.id - right.id) * (sorting.direction === "asc" ? 1 : -1);
+  });
+  const sortHeader = (field, title) => (
+    <TableSortLabel
+      active={sorting.field === field}
+      direction={sorting.field === field ? sorting.direction : "asc"}
+      onClick={() => setSorting((current) => ({
+        field,
+        direction: current.field === field && current.direction === "asc" ? "desc" : "asc",
+      }))}
+    >
+      {title}
+    </TableSortLabel>
+  );
   const showActions = Boolean(onEdit || onDelete);
   const selectedSet = new Set(selectedRecordIds);
   const selectedVisibleCount = safeRecords.filter((record) =>
@@ -210,16 +261,19 @@ function RecordTable({
                     />
                   </TableCell>
                 )}
-                <TableCell>Player</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Expiration</TableCell>
-                <TableCell>Added by</TableCell>
+                <TableCell>{sortHeader("player", "Player")}</TableCell>
+                {showList && (
+                  <TableCell>{sortHeader("list", "VIP list")}</TableCell>
+                )}
+                <TableCell>{sortHeader("status", "Status")}</TableCell>
+                <TableCell>{sortHeader("expiration", "Expiration")}</TableCell>
+                <TableCell>{sortHeader("admin", "Added by")}</TableCell>
                 <TableCell>Notes</TableCell>
                 {showActions && <TableCell align="right">Actions</TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
-              {safeRecords.map((record) => {
+              {sortedRecords.map((record) => {
                 const active = record.is_active && !record.is_expired;
                 return (
                   <TableRow
@@ -297,6 +351,11 @@ function RecordTable({
                         </Typography>
                       </Stack>
                     </TableCell>
+                    {showList && (
+                      <TableCell>
+                        {listNames[record.vip_list_id] ?? `List #${record.vip_list_id}`}
+                      </TableCell>
+                    )}
                     <TableCell>
                       <Chip
                         label={
@@ -402,6 +461,8 @@ export default function VipListsPage() {
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const [selectedRecordIds, setSelectedRecordIds] = useState([]);
   const [recordSearch, setRecordSearch] = useState("");
+  const [searchScope, setSearchScope] = useState("selected");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [confirmation, setConfirmation] = useState(null);
 
   const canCreateLists = hasPermission(permissions, "can_create_vip_lists");
@@ -427,15 +488,15 @@ export default function VipListsPage() {
       queryKey: [...vipListQueryKeys.defaultList, serverNumber ?? "current"],
     });
 
-  const refreshRecords = () => {
-    if (!Number.isInteger(selectedListId)) return Promise.resolve();
+  const refreshRecords = (listId = selectedListId) => {
+    if (!Number.isInteger(listId)) return Promise.resolve();
 
     return Promise.all([
       queryClient.invalidateQueries({
-        queryKey: [...vipListQueryKeys.activeRecords, selectedListId],
+        queryKey: [...vipListQueryKeys.activeRecords, listId],
       }),
       queryClient.invalidateQueries({
-        queryKey: [...vipListQueryKeys.inactiveRecords, selectedListId],
+        queryKey: [...vipListQueryKeys.inactiveRecords, listId],
       }),
     ]);
   };
@@ -501,29 +562,38 @@ export default function VipListsPage() {
     onError: mutationError,
   });
 
+  const applyExpiration = useMutation({
+    ...vipListMutationOptions.applyExpiration,
+    onSuccess: async (response) => {
+      toast.success(`Updated ${response?.result ?? response} VIP record(s).`);
+      await refreshRecords();
+    },
+    onError: mutationError,
+  });
+
   const createRecord = useMutation({
     ...vipListMutationOptions.createRecord,
-    onSuccess: async () => {
+    onSuccess: async (_result, data) => {
       toast.success("VIP record added.");
-      await refreshRecords();
+      await refreshRecords(data.vipListId);
     },
     onError: mutationError,
   });
 
   const editRecord = useMutation({
     ...vipListMutationOptions.editRecord,
-    onSuccess: async () => {
+    onSuccess: async (_result, data) => {
       toast.success("VIP record updated.");
-      await refreshRecords();
+      await refreshRecords(data.vipListId);
     },
     onError: mutationError,
   });
 
   const deleteRecord = useMutation({
     ...vipListMutationOptions.deleteRecord,
-    onSuccess: async () => {
+    onSuccess: async (_result, record) => {
       toast.success("VIP record deleted.");
-      await refreshRecords();
+      await refreshRecords(record.vip_list_id ?? selectedListId);
     },
     onError: mutationError,
   });
@@ -583,6 +653,7 @@ export default function VipListsPage() {
       });
     } else {
       await createRecord.mutateAsync(data);
+      setSelectedListId(data.vipListId);
     }
 
     setRecordDialog(null);
@@ -629,6 +700,19 @@ export default function VipListsPage() {
 
   const confirmAction = async () => {
     const pendingConfirmation = confirmation;
+    if (pendingConfirmation?.kind === "apply-expiration") {
+      try {
+        await applyExpiration.mutateAsync({
+          vipListId: pendingConfirmation.item.id,
+          expectedExpirationSeconds: pendingConfirmation.item.default_expiration_seconds,
+          includeExpired: pendingConfirmation.includeExpired ?? false,
+        });
+        setConfirmation(null);
+      } catch {
+        // Keep the preview open so the administrator can review the error.
+      }
+      return;
+    }
     setConfirmation(null);
 
     try {
@@ -655,13 +739,14 @@ export default function VipListsPage() {
     setDefaultList.isPending ||
     clearDefaultList.isPending ||
     deleteList.isPending;
+  const applyExpirationPending = applyExpiration.isPending;
   const recordMutationPending =
     createRecord.isPending ||
     editRecord.isPending ||
     deleteRecord.isPending ||
     bulkEditRecords.isPending ||
     bulkDeleteRecords.isPending;
-  const mutationPending = listMutationPending || recordMutationPending;
+  const mutationPending = listMutationPending || recordMutationPending || applyExpirationPending;
 
   const {
     data: lists = [],
@@ -701,38 +786,59 @@ export default function VipListsPage() {
     error: inactiveError,
   } = useQuery(vipListQueryOptions.inactiveRecords(selectedListId));
 
-  const error = listsError || defaultListError || activeError || inactiveError;
+  const searchingAllLists = searchScope === "all" && recordSearch.trim() !== "";
+  const allListQueries = useQueries({
+    queries: lists.flatMap((list) => [
+      {
+        ...vipListQueryOptions.activeRecords(list.id),
+        enabled: searchingAllLists,
+      },
+      {
+        ...vipListQueryOptions.inactiveRecords(list.id),
+        enabled: searchingAllLists,
+      },
+    ]),
+  });
+  const allListRecords = allListQueries.flatMap((query, index) =>
+    (query.data ?? []).map((record) => ({
+      ...record,
+      vip_list_id: lists[Math.floor(index / 2)].id,
+    }))
+  );
+  const listNames = Object.fromEntries(lists.map((list) => [list.id, list.name]));
+
+  const error =
+    listsError || defaultListError || activeError || inactiveError ||
+    (searchingAllLists && allListQueries.find((query) => query.error)?.error);
 
   const filterRecords = (records) => {
     const search = recordSearch.trim().toLocaleLowerCase();
 
-    if (search === "") return records;
-
-    return records.filter((record) =>
-      [
+    return records.filter((record) => {
+      const active = record.is_active && !record.is_expired;
+      if (statusFilter === "active" && !active) return false;
+      if (statusFilter === "expired" && !record.is_expired) return false;
+      if (statusFilter === "inactive" && (active || record.is_expired)) return false;
+      if (search === "") return true;
+      return [
         record.id,
         record.player_id,
         record.player_name,
         record.description,
         record.notes,
         record.admin_name,
-      ].some((value) =>
-        String(value ?? "")
-          .toLocaleLowerCase()
-          .includes(search)
-      )
-    );
+        listNames[record.vip_list_id],
+      ].some((value) => String(value ?? "").toLocaleLowerCase().includes(search));
+    });
   };
 
-  const filteredActiveRecords = useMemo(
-    () => filterRecords(activeRecords),
-    [activeRecords, recordSearch]
+  const filteredCurrentRecords = useMemo(
+    () => filterRecords([...activeRecords, ...inactiveRecords]),
+    [activeRecords, inactiveRecords, recordSearch, statusFilter, lists]
   );
-
-  const filteredInactiveRecords = useMemo(
-    () => filterRecords(inactiveRecords),
-    [inactiveRecords, recordSearch]
-  );
+  const filteredAllListRecords = searchingAllLists
+    ? filterRecords(allListRecords)
+    : [];
 
   const selectedRecords = useMemo(() => {
     const selectedSet = new Set(selectedRecordIds);
@@ -744,7 +850,6 @@ export default function VipListsPage() {
 
   useEffect(() => {
     setSelectedRecordIds([]);
-    setRecordSearch("");
     setBulkDialogOpen(false);
   }, [selectedListId]);
 
@@ -762,6 +867,8 @@ export default function VipListsPage() {
   const confirmationTitle =
     confirmation?.kind === "list"
       ? "Delete VIP list?"
+      : confirmation?.kind === "apply-expiration"
+      ? "Apply duration to existing VIPs?"
       : confirmation?.kind === "record"
       ? "Delete VIP record?"
       : confirmation?.kind === "set-default"
@@ -778,6 +885,8 @@ export default function VipListsPage() {
   const confirmationText =
     confirmation?.kind === "list"
       ? `This permanently deletes “${confirmation.item.name}” and all records contained in it. No gameserver synchronization is performed.`
+      : confirmation?.kind === "apply-expiration"
+      ? `${activeRecords.length + (confirmation.includeExpired ? inactiveRecords.filter((record) => record.is_active && record.is_expired).length : 0)} record(s) in “${confirmation.item.name}” will ${confirmation.item.default_expiration_seconds === null ? "be set to never expire" : `expire ${formatDuration(confirmation.item.default_expiration_seconds)} after confirmation`}. Inactive records remain unchanged. Affected gameservers will be notified.`
       : confirmation?.kind === "record"
       ? `This permanently deletes VIP record #${confirmation?.item?.id}. No gameserver synchronization is performed.`
       : confirmation?.kind === "set-default"
@@ -916,6 +1025,33 @@ export default function VipListsPage() {
                     label={formatSyncMethod(selectedList.sync)}
                     variant="outlined"
                   />
+                  <Chip
+                    label={selectedList.expired_retention_days === null
+                      ? "Keep expired records"
+                      : selectedList.expired_retention_days === 0
+                      ? "Delete expired automatically"
+                      : `Delete expired after ${selectedList.expired_retention_days} day(s)`}
+                    variant="outlined"
+                  />
+                  <Chip
+                    label={selectedList.default_expiration_seconds === null
+                      ? "New VIPs: never expire"
+                      : `New VIPs: ${formatDuration(selectedList.default_expiration_seconds)}`}
+                    variant="outlined"
+                  />
+                  {(selectedList.flags ?? []).map((flag) => (
+                    <Chip key={flag} label={`Flag: ${flag}`} variant="outlined" />
+                  ))}
+                  {canChangeRecords && (
+                    <Button
+                      disabled={activeLoading || inactiveLoading ||
+                        (activeRecords.length === 0 &&
+                          !inactiveRecords.some((record) => record.is_active && record.is_expired))}
+                      onClick={() => setConfirmation({ kind: "apply-expiration", item: selectedList })}
+                    >
+                      Apply duration to existing
+                    </Button>
+                  )}
                   {canChangeLists &&
                     (selectedListIsDefault ? (
                       <Button
@@ -997,36 +1133,42 @@ export default function VipListsPage() {
             )}
 
             <Paper variant="outlined" sx={{ p: 2 }}>
-              <TextField
-                fullWidth
-                size="small"
-                label="Search VIP records"
-                placeholder="Player name, Steam/EOS ID, description, notes or administrator"
-                value={recordSearch}
-                onChange={(event) => setRecordSearch(event.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon />
-                    </InputAdornment>
-                  ),
-                }}
-                helperText={
-                  recordSearch.trim() === ""
-                    ? `${
-                        activeRecords.length + inactiveRecords.length
-                      } records in this list`
-                    : `${
-                        filteredActiveRecords.length +
-                        filteredInactiveRecords.length
-                      } of ${
-                        activeRecords.length + inactiveRecords.length
-                      } records shown`
-                }
-              />
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems="center">
+                <DebouncedSearchInput
+                  initialValue={recordSearch}
+                  placeholder="Search VIP records"
+                  onChange={setRecordSearch}
+                  sx={{ flex: 1, width: "100%" }}
+                />
+                <FormControl size="small" sx={{ minWidth: 160 }}>
+                  <InputLabel id="vip-search-scope">Search in</InputLabel>
+                  <Select labelId="vip-search-scope" label="Search in" value={searchScope}
+                    onChange={(event) => { setSearchScope(event.target.value); setSelectedRecordIds([]); }}>
+                    <MenuItem value="selected">Current list</MenuItem>
+                    <MenuItem value="all">All lists</MenuItem>
+                  </Select>
+                </FormControl>
+                <FormControl size="small" sx={{ minWidth: 140 }}>
+                  <InputLabel id="vip-record-status">Status</InputLabel>
+                  <Select labelId="vip-record-status" label="Status" value={statusFilter}
+                    onChange={(event) => setStatusFilter(event.target.value)}>
+                    <MenuItem value="all">All</MenuItem>
+                    <MenuItem value="active">Active</MenuItem>
+                    <MenuItem value="inactive">Inactive</MenuItem>
+                    <MenuItem value="expired">Expired</MenuItem>
+                  </Select>
+                </FormControl>
+              </Stack>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                {searchScope === "all"
+                  ? searchingAllLists
+                    ? `${filteredAllListRecords.length} matches across ${lists.length} lists`
+                    : "Enter a search term to search across all lists."
+                  : `${filteredCurrentRecords.length} of ${activeRecords.length + inactiveRecords.length} records shown`}
+              </Typography>
             </Paper>
 
-            {selectedRecordIds.length > 0 && (
+            {searchScope === "selected" && selectedRecordIds.length > 0 && (
               <Paper variant="outlined" sx={{ p: 2 }}>
                 <Stack
                   direction={{ xs: "column", sm: "row" }}
@@ -1060,69 +1202,26 @@ export default function VipListsPage() {
             )}
 
             <RecordTable
-              title="Active records"
-              records={filteredActiveRecords}
-              loading={activeLoading}
-              emptyText={
-                recordSearch.trim() === ""
-                  ? "This list has no active VIP records."
-                  : "No active VIP records match the search."
-              }
-              selectable
+              title={searchScope === "all" ? "Search results across lists" : "VIP records"}
+              records={searchScope === "all" ? filteredAllListRecords : filteredCurrentRecords}
+              loading={searchScope === "all"
+                ? searchingAllLists && allListQueries.some((query) => query.isPending)
+                : activeLoading || inactiveLoading}
+              emptyText={searchScope === "all" && !searchingAllLists
+                ? "Enter a search term to search across all lists."
+                : "No VIP records match the selected filters."}
+              showList={searchScope === "all"}
+              listNames={listNames}
+              selectable={searchScope === "selected"}
               selectedRecordIds={selectedRecordIds}
               onToggleRecord={toggleRecord}
               onToggleRecords={toggleRecords}
-              onEdit={
-                canChangeRecords
-                  ? (record) =>
-                      setRecordDialog({
-                        mode: "edit",
-                        record,
-                      })
-                  : undefined
-              }
-              onDelete={
-                canDeleteRecords
-                  ? (record) =>
-                      setConfirmation({
-                        kind: "record",
-                        item: record,
-                      })
-                  : undefined
-              }
-            />
-
-            <RecordTable
-              title="Inactive and expired records"
-              records={filteredInactiveRecords}
-              loading={inactiveLoading}
-              emptyText={
-                recordSearch.trim() === ""
-                  ? "This list has no inactive or expired records."
-                  : "No inactive or expired VIP records match the search."
-              }
-              selectable
-              selectedRecordIds={selectedRecordIds}
-              onToggleRecord={toggleRecord}
-              onToggleRecords={toggleRecords}
-              onEdit={
-                canChangeRecords
-                  ? (record) =>
-                      setRecordDialog({
-                        mode: "edit",
-                        record,
-                      })
-                  : undefined
-              }
-              onDelete={
-                canDeleteRecords
-                  ? (record) =>
-                      setConfirmation({
-                        kind: "record",
-                        item: record,
-                      })
-                  : undefined
-              }
+              onEdit={canChangeRecords
+                ? (record) => setRecordDialog({ mode: "edit", record })
+                : undefined}
+              onDelete={canDeleteRecords
+                ? (record) => setConfirmation({ kind: "record", item: record })
+                : undefined}
             />
           </Stack>
         </Stack>
@@ -1143,7 +1242,12 @@ export default function VipListsPage() {
       <VipListRecordDialog
         open={Boolean(recordDialog && selectedList)}
         mode={recordDialog?.mode}
-        vipList={selectedList}
+        vipList={
+          recordDialog?.mode === "edit"
+            ? lists.find((list) => list.id === recordDialog.record.vip_list_id) ?? selectedList
+            : selectedList
+        }
+        vipLists={lists}
         initialValues={
           recordDialog?.mode === "edit"
             ? {
@@ -1168,6 +1272,9 @@ export default function VipListsPage() {
             ? {
                 name: listDialog.vipList.name,
                 sync: listDialog.vipList.sync,
+                expiredRetentionDays: listDialog.vipList.expired_retention_days,
+                defaultExpirationSeconds: listDialog.vipList.default_expiration_seconds,
+                flags: listDialog.vipList.flags,
                 servers: listDialog.vipList.servers,
               }
             : undefined
@@ -1191,6 +1298,25 @@ export default function VipListsPage() {
         <DialogTitle>{confirmationTitle}</DialogTitle>
         <DialogContent>
           <DialogContentText>{confirmationText}</DialogContentText>
+          {confirmation?.kind === "apply-expiration" && (
+            <Stack spacing={1} sx={{ mt: 2 }}>
+              <Button
+                variant={confirmation.includeExpired ? "contained" : "outlined"}
+                color="warning"
+                onClick={() => setConfirmation({
+                  ...confirmation,
+                  includeExpired: !confirmation.includeExpired,
+                })}
+              >
+                {confirmation.includeExpired ? "Include expired: yes" : "Include expired: no"}
+              </Button>
+              {confirmation.includeExpired && (
+                <Alert severity="warning">
+                  This also renews expired records that are still marked active.
+                </Alert>
+              )}
+            </Stack>
+          )}
         </DialogContent>
         <DialogActions>
           <Button
@@ -1205,7 +1331,9 @@ export default function VipListsPage() {
             onClick={confirmAction}
             disabled={mutationPending}
           >
-            {confirmation?.kind === "set-default"
+            {confirmation?.kind === "apply-expiration"
+              ? "Apply to active records"
+              : confirmation?.kind === "set-default"
               ? "Set default"
               : confirmation?.kind === "clear-default"
               ? "Remove default"
