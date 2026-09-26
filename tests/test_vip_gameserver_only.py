@@ -1,9 +1,15 @@
-from rcon.commands import ServerCtl
-from rcon.rcon import Rcon
+import pytest
+
+from rcon.commands import HLLServerCtl, HLLVServerCtl, ServerCtl
+from rcon.rcon import HLLRcon, HLLVRcon, Rcon
 
 
+@pytest.mark.parametrize(
+    ("rcon_type", "controller_type"),
+    [(HLLRcon, HLLServerCtl), (HLLVRcon, HLLVServerCtl)],
+)
 def test_add_vip_to_gameserver_calls_raw_rcon_and_invalidates_cache(
-    monkeypatch,
+    monkeypatch, rcon_type, controller_type
 ):
     calls = []
     cache_clears = []
@@ -12,14 +18,14 @@ def test_add_vip_to_gameserver_calls_raw_rcon_and_invalidates_cache(
         calls.append((player_id, description))
         return True
 
-    monkeypatch.setattr(ServerCtl, "add_vip", fake_add_vip)
+    monkeypatch.setattr(controller_type, "add_vip", fake_add_vip)
     monkeypatch.setattr(
         Rcon.get_vip_ids,
         "cache_clear",
         lambda: cache_clears.append(True),
     )
 
-    rcon = object.__new__(Rcon)
+    rcon = object.__new__(rcon_type)
 
     result = rcon.add_vip_to_gameserver(
         player_id="76561198080212634",
