@@ -109,6 +109,7 @@ import { action as consoleAdminSettingsAction } from "./pages/settings/console-a
 
 import VipSettings from "./pages/settings/vip"
 import { loader as vipLoader } from "./pages/settings/vip"
+import VipListsPage from "./pages/records/vip-lists"
 
 import { AuthProvider } from "@/hooks/useAuth";
 import { GlobalState } from "./stores/global-state";
@@ -196,6 +197,12 @@ const router = createBrowserRouter([
                         handle: { crumb: () => <Link to={'/records/vips'}>Vips</Link> },
                         loader: vipLoader,
                         element: <VipSettings />,
+                        errorElement: <RouteError />,
+                    },
+                    {
+                        path: 'vip-lists',
+                        handle: { crumb: () => <Link to={'/records/vip-lists'}>VIP Lists</Link> },
+                        element: <VipListsPage />,
                         errorElement: <RouteError />,
                     },
                     {
