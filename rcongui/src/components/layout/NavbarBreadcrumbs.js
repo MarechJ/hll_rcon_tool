@@ -2,7 +2,7 @@ import { styled } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import Breadcrumbs, { breadcrumbsClasses } from '@mui/material/Breadcrumbs';
 import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useMatches } from 'react-router-dom';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -120,7 +120,7 @@ const findMenuItemPath = (name) => {
   return '/';
 };
 
-const BreadcrumbItem = ({ text, isParent, isLast }) => {
+const BreadcrumbItem = ({ text, isParent, isLast, isPlayerProfile }) => {
   const menu = findMenuByName(text);
   const path = findMenuItemPath(text);
   const hasChildren = menu?.links?.length > 1; // Only consider it has children if there's more than one link
@@ -128,7 +128,7 @@ const BreadcrumbItem = ({ text, isParent, isLast }) => {
   // If it's the last item or doesn't have children, render as a link (except for the last item if it's an ID)
   if (isLast || !hasChildren) {
     const isId = text.length > 16; // Simple check for ID-like text
-    if (isLast && isId) {
+    if (isPlayerProfile || (isLast && isId)) {
       return (
         <Typography 
           variant="body1" 
@@ -182,16 +182,23 @@ const BreadcrumbItem = ({ text, isParent, isLast }) => {
 
 export default function NavbarBreadcrumbs() {
   const location = useLocation();
+  const matches = useMatches();
   const pathSegments = location.pathname.split('/').filter(Boolean);
+  const playerId = pathSegments[0] === 'records' && pathSegments[1] === 'players'
+    ? pathSegments[2]
+    : null;
+  const profile = matches.find((match) => match.data?.profile?.player_id === playerId)?.data?.profile;
+  const playerName = profile?.account?.name ?? profile?.names?.[0]?.name ?? profile?.soldier?.name;
   
   // Build breadcrumbs based on path segments
   const breadcrumbs = pathSegments.map((segment, index) => {
     // Convert path segment to title case for display
-    const text = segment.charAt(0).toUpperCase() + segment.slice(1);
+    const isPlayerProfile = Boolean(playerName && index === 2 && segment === playerId);
+    const text = isPlayerProfile ? playerName : segment.charAt(0).toUpperCase() + segment.slice(1);
     const isParent = index < pathSegments.length - 1;
     const isLast = index === pathSegments.length - 1;
     
-    return { text, isParent, isLast };
+    return { text, isParent, isLast, isPlayerProfile };
   });
 
   return (
