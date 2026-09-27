@@ -19,6 +19,7 @@ from rcon.vip_import import (
     _parse_feed,
     _validate_url,
     create_import,
+    get_imports,
     set_import_record_policy,
     sync_import,
     update_import_settings,
@@ -197,11 +198,22 @@ def test_failed_partner_fetch_suspends_and_recovery_restores_records(monkeypatch
             token="vls_replacement",
             flags=["test-flag"],
             max_duration_seconds=86400,
+            servers=[2],
+            webhook_url="https://discord.com/api/webhooks/123/test-secret",
         )
         with enter_session() as sess:
             updated = sess.get(VipList, imported["id"])
             assert updated.name == "Renamed partner list"
             assert updated.flags == ["test-flag"]
+            assert updated.get_server_numbers() == {2}
+            assert feed[0]["player_id"] not in get_effective_vip_records(sess, 1)
+            assert feed[0]["player_id"] in get_effective_vip_records(sess, 2)
+        assert (
+            next(
+                item for item in get_imports() if item["vip_list_id"] == imported["id"]
+            )["webhook_url"]
+            == "https://discord.com/api/webhooks/123/test-secret"
+        )
         partner_expiry = datetime.now(UTC) + timedelta(hours=2)
         feed[0]["expires_at"] = partner_expiry
         update_import_settings(

@@ -1253,6 +1253,7 @@ export default function VipListsPage() {
             {selectedList?.is_imported && <VipListPartnership
               key={selectedList.id}
               list={selectedList}
+              servers={serverOptions}
               canManageImports={canManageImports}
               actionsContainer={importActionsElement}
               onSynced={() => refreshRecords(selectedList.id)}

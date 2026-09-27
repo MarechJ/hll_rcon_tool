@@ -152,9 +152,11 @@ def create_vip_list_import(request: HttpRequest):
 @permission_required("api.can_manage_vip_list_imports", raise_exception=True)
 @require_http_methods(["GET"])
 def get_vip_list_imports(request: HttpRequest):
-    return api_response(
+    response = api_response(
         command="get_vip_list_imports", result=vip_import.get_imports(), failed=False
     )
+    response["Cache-Control"] = "no-store"
+    return response
 
 
 @csrf_exempt
@@ -174,6 +176,7 @@ def edit_vip_list_import(request: HttpRequest):
             token=data.get("token"),
             flags=data.get("flags"),
             max_duration_seconds=data.get("max_duration_seconds"),
+            **({"servers": data["servers"]} if "servers" in data else {}),
         )
     except (KeyError, TypeError, ValueError) as exc:
         return api_response(

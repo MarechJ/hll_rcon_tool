@@ -21,7 +21,9 @@ from rcon.models import VipList, VipListImport, VipListRecord, enter_session
 from rcon.player_history import _get_set_player
 from rcon.player_id_utils import is_supported_player_id
 from rcon.types import VipListSyncMethod
+from rcon.utils import MISSING, MissingType
 from rcon.vip import (
+    _merge_vip_server_masks,
     _notify_vip_sync,
     _validate_vip_list_flags,
     reconcile_vip_list_flags,
@@ -240,6 +242,11 @@ def get_imports() -> list[dict]:
                 "suspended_at": source.suspended_at,
                 "last_success_at": source.last_success_at,
                 "webhook_configured": source.encrypted_webhook_url is not None,
+                "webhook_url": (
+                    _cipher().decrypt(source.encrypted_webhook_url.encode()).decode()
+                    if source.encrypted_webhook_url is not None
+                    else None
+                ),
             }
             for source in sess.scalars(
                 select(VipListImport).order_by(VipListImport.vip_list_id)
@@ -258,6 +265,7 @@ def update_import_settings(
     token: str | None = None,
     flags: list[str] | None = None,
     max_duration_seconds: int | None = None,
+    servers: list[int] | None | MissingType = MISSING,
 ) -> dict:
     if name is not None and (
         not isinstance(name, str) or not name.strip() or len(name.strip()) > 255
@@ -284,6 +292,20 @@ def update_import_settings(
         raise ValueError("Maximum VIP duration must be between 0 and 10 years")
     if flags is not None:
         flags = _validate_vip_list_flags(flags)
+    if (
+        servers is not MISSING
+        and servers is not None
+        and (
+            not isinstance(servers, list)
+            or any(
+                isinstance(number, bool)
+                or not isinstance(number, int)
+                or not 1 <= number <= 32
+                for number in servers
+            )
+        )
+    ):
+        raise ValueError("Servers must be a list of server numbers from 1 to 32")
     if token is not None:
         if (
             not isinstance(token, str)
@@ -302,6 +324,9 @@ def update_import_settings(
         source = sess.get(VipListImport, vip_list_id)
         if source is None:
             raise ValueError("Imported VIP list not found")
+        old_server_mask = source.vip_list.servers
+        if servers is not MISSING:
+            source.vip_list.set_server_numbers(servers)
         if name is not None:
             source.vip_list.name = name.strip()
         source.approve_new = approve_new
@@ -322,15 +347,22 @@ def update_import_settings(
             source.encrypted_webhook_url = (
                 _cipher().encrypt(webhook_url.encode()).decode()
             )
-        return {
+        result = {
             "vip_list_id": vip_list_id,
             "name": source.vip_list.name,
             "approve_new": source.approve_new,
             "retention_days": source.vip_list.expired_retention_days,
             "max_duration_seconds": source.vip_list.default_expiration_seconds,
             "flags": source.vip_list.flags,
+            "servers": sorted(source.vip_list.get_server_numbers())
+            if source.vip_list.servers is not None
+            else None,
             "webhook_configured": source.encrypted_webhook_url is not None,
         }
+        new_server_mask = source.vip_list.servers
+    if old_server_mask != new_server_mask:
+        _notify_vip_sync(_merge_vip_server_masks(old_server_mask, new_server_mask))
+    return result
 
 
 class _FeedFetchError(ValueError):

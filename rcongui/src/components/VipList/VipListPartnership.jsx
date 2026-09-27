@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Alert, Box, Button, Checkbox, Chip, Dialog, DialogActions, DialogContent,
   DialogContentText, DialogTitle, FormControl, FormControlLabel, InputLabel,
-  MenuItem, Paper, Select, Skeleton, Stack, TextField, Typography, useTheme,
+  MenuItem, Paper, Select, Skeleton, Stack, Switch, TextField, Typography, useTheme,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import SyncIcon from "@mui/icons-material/Sync";
@@ -57,7 +57,7 @@ export function ImportPartnerListButton({ onCreated, serverNumber }) {
   </>;
 }
 
-export function VipListPartnership({ list, canManageShares, canManageImports, onSynced, actionsContainer }) {
+export function VipListPartnership({ list, canManageShares, canManageImports, onSynced, actionsContainer, servers = {} }) {
   const queryClient = useQueryClient();
   const theme = useTheme();
   const [name, setName] = useState("");
@@ -65,7 +65,8 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [changeWebhook, setChangeWebhook] = useState(false);
   const [showFlagPicker, setShowFlagPicker] = useState(false);
-  const [settings, setSettings] = useState({ name: "", approve_new: true, retention_days: null, webhook_url: "", clear_webhook: false, token: "", flags: [], max_duration_seconds: null });
+  const [settings, setSettings] = useState({ name: "", approve_new: true, retention_days: null, webhook_url: "", clear_webhook: false, token: "", flags: [], max_duration_seconds: null, servers: null });
+  const knownServerNumbers = Object.keys(servers).map(Number).filter(Number.isInteger).sort((a, b) => a - b);
   const shares = useQuery({
     queryKey: ["vip-list-shares", list.id],
     queryFn: () => cmd.GET_VIP_LIST_SHARES({ params: { vip_list_id: list.id } }),
@@ -133,7 +134,7 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
   });
   const source = (imports.data ?? []).find((item) => item.vip_list_id === list.id);
   const openSettings = () => {
-    setSettings({ name: list.name, approve_new: source?.approve_new ?? true, retention_days: list.expired_retention_days, webhook_url: "", clear_webhook: false, token: "", flags: [...(list.flags ?? [])], max_duration_seconds: list.default_expiration_seconds });
+    setSettings({ name: list.name, approve_new: source?.approve_new ?? true, retention_days: list.expired_retention_days, webhook_url: "", clear_webhook: false, token: "", flags: [...(list.flags ?? [])], max_duration_seconds: list.default_expiration_seconds, servers: list.servers === null ? null : [...(list.servers ?? [])] });
     setChangeWebhook(false);
     setShowFlagPicker(false);
     setSettingsOpen(true);
@@ -194,6 +195,14 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
       <DialogContent><Stack spacing={2.5} sx={{ pt: 1 }}>
         <DialogContentText>Changes are stored in the CRCON database. Synchronize the partner feed to update its records.</DialogContentText>
         <TextField required autoFocus label="List name" value={settings.name} onChange={(e) => setSettings({ ...settings, name: e.target.value })} disabled={update.isPending} inputProps={{ maxLength: 255 }} />
+        <Paper variant="outlined" sx={{ p: 2 }}>
+          <Stack spacing={1}>
+            <Typography variant="subtitle1">Servers</Typography>
+            <FormControlLabel label="Enable on all servers" control={<Switch checked={settings.servers === null} disabled={update.isPending} onChange={(e) => setSettings({ ...settings, servers: e.target.checked ? null : [...knownServerNumbers] })} />} />
+            {knownServerNumbers.length === 0 && <Typography variant="body2" color="text.secondary">No CRCON servers are currently available for selection.</Typography>}
+            {knownServerNumbers.map((number) => <FormControlLabel key={number} label={servers[number]} control={<Checkbox checked={settings.servers === null || settings.servers.includes(number)} disabled={update.isPending || settings.servers === null} onChange={(e) => setSettings((current) => ({ ...current, servers: e.target.checked ? [...current.servers, number].sort((a, b) => a - b) : current.servers.filter((item) => item !== number) }))} />} />)}
+          </Stack>
+        </Paper>
         <FormControlLabel control={<Checkbox checked={settings.approve_new} onChange={(e) => setSettings({ ...settings, approve_new: e.target.checked })} />} label="Require approval for new entries" />
         <FormControl fullWidth disabled={update.isPending || settings.max_duration_seconds === 0}>
           <InputLabel id="partner-list-expired-retention-label">Expired records</InputLabel>
@@ -231,6 +240,7 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
           {showFlagPicker && <Suspense fallback={<Skeleton variant="rectangular" height={400} />}><Box sx={{ "& em-emoji-picker": { width: "100%" } }}><EmojiPicker set="twitter" theme={theme.palette.mode} dynamicWidth data={emojiData} onEmojiSelect={(emoji) => { setSettings((current) => ({ ...current, flags: current.flags.includes(emoji.native) ? current.flags : [...current.flags, emoji.native] })); setShowFlagPicker(false); }} /></Box></Suspense>}
           <Typography variant="body2" color="text.secondary">Active members receive these global player flags; manual flags are preserved.</Typography>
         </Stack>
+        {source?.webhook_url && !settings.clear_webhook && <TextField label="Current Discord webhook URL" value={source.webhook_url} fullWidth slotProps={{ input: { readOnly: true } }} helperText="Stored webhook; use the option below to replace or remove it." />}
         <FormControlLabel control={<Checkbox checked={changeWebhook} disabled={settings.clear_webhook} onChange={(e) => setChangeWebhook(e.target.checked)} />} label="Set new Discord webhook URL" />
         {changeWebhook && <TextField label="New Discord webhook URL" type="url" autoComplete="off" value={settings.webhook_url} onChange={(e) => setSettings({ ...settings, webhook_url: e.target.value })} required />}
         {source?.webhook_configured && <FormControlLabel control={<Checkbox checked={settings.clear_webhook} disabled={changeWebhook} onChange={(e) => setSettings({ ...settings, clear_webhook: e.target.checked })} />} label="Remove existing webhook" />}

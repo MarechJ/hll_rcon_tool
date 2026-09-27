@@ -44,6 +44,10 @@ It can also replace an imported partner key after validating the new key against
 the feed; leaving the field blank keeps the existing key.
 Local flags and a maximum VIP duration can also be configured there using the
 same flag picker and duration choices as an owned list.
+The import settings can also target specific CRCON gameservers. Changing the
+server selection notifies both previously selected and newly selected servers
+to update their effective VIPs. Authorized import managers can see the current
+Discord webhook URL in settings and replace or remove it there.
 With **Use partner expiration**, the external expiration applies. **Never expire
 while shared** overrides the partner expiration while the entry remains in the
 feed. A positive
