@@ -19,6 +19,7 @@ def _share_info(share: VipListShare) -> dict:
         "expires_at": share.expires_at,
         "revoked_at": share.revoked_at,
         "revoked_by": share.revoked_by,
+        "last_used_at": share.last_used_at,
     }
 
 
@@ -95,6 +96,7 @@ def get_partner_feed(token: str) -> dict | None:
         ):
             return None
         records = get_active_vip_records(sess, share.vip_list_id)
+        share.last_used_at = now
         return {
             "schema_version": 1,
             "list": {"name": share.vip_list.name},

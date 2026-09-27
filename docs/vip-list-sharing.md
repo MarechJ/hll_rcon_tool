@@ -15,6 +15,8 @@ digest and cannot be recovered later. Give the partner the key and the feed URL
 shown in the UI. One partner's key can be revoked without affecting other shares.
 The share settings show when and by which CRCON user a key was revoked. Keys
 revoked before this tracking was added show an unknown user.
+The settings also show when each key last fetched the feed successfully. A
+never-used key shows **Never**; invalid requests do not update this timestamp.
 
 The partner requests `GET /api/get_shared_vip_list` with
 `Authorization: Bearer <share key>`. This endpoint requires no CRCON account and

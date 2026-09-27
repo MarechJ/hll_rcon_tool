@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 
 from rcon.commands import HLLCommandFailedError
-from rcon.models import enter_session
+from rcon.models import VipListShare, enter_session
 from rcon.vip import (
     add_record_to_vip_list,
     create_vip_list,
@@ -90,6 +90,9 @@ def test_share_is_scoped_and_revocable(monkeypatch):
         feed = get_partner_feed(one["token"])
         assert [row["player_id"] for row in feed["records"]] == ["76561199988877765"]
         assert "notes" not in feed["records"][0]
+        with enter_session() as sess:
+            assert sess.get(VipListShare, one["id"]).last_used_at is not None
+            assert sess.get(VipListShare, two["id"]).last_used_at is None
         revoke_share(one["id"])
         assert get_partner_feed(one["token"]) is None
         assert get_partner_feed(two["token"]) is not None

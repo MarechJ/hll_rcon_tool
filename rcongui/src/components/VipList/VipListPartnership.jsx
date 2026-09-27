@@ -138,6 +138,9 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
       </Alert>}
       {(shares.data ?? []).map((share) => <Stack key={share.id} direction="row" spacing={1} alignItems="center" flexWrap="wrap">
         <Typography variant="body2">{share.name}</Typography>
+        <Typography variant="caption" color="text.secondary">
+          Last used: {share.last_used_at ? new Date(share.last_used_at).toLocaleString() : "Never"}
+        </Typography>
         {share.revoked_at ? (
           <Typography variant="caption" color="text.secondary">
             Revoked {new Date(share.revoked_at).toLocaleString()} by {share.revoked_by || "unknown (before tracking)"}
