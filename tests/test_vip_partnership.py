@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 
 from rcon.commands import HLLCommandFailedError
-from rcon.models import VipListShare, enter_session
+from rcon.models import VipList, VipListShare, enter_session
 from rcon.vip import (
     add_record_to_vip_list,
     create_vip_list,
@@ -20,8 +20,9 @@ from rcon.vip_import import (
     create_import,
     set_import_record_policy,
     sync_import,
+    update_import_settings,
 )
-from rcon.vip_sharing import create_share, get_partner_feed, revoke_share
+from rcon.vip_sharing import create_share, get_partner_feed, revoke_share, rotate_share
 
 
 def test_partner_feed_rejects_partial_or_duplicate_data():
@@ -96,6 +97,11 @@ def test_share_is_scoped_and_revocable(monkeypatch):
         revoke_share(one["id"])
         assert get_partner_feed(one["token"]) is None
         assert get_partner_feed(two["token"]) is not None
+        replacement = rotate_share(two["id"], "test-admin")
+        assert get_partner_feed(two["token"]) is None
+        assert get_partner_feed(replacement["token"]) is not None
+        with enter_session() as sess:
+            assert sess.get(VipListShare, two["id"]).revoked_by == "test-admin"
     finally:
         delete_vip_list(first["id"])
         delete_vip_list(second["id"])
@@ -145,7 +151,7 @@ def test_partner_approval_exclusion_and_own_list_survive_removal(monkeypatch):
         delete_vip_list(own["id"])
 
 
-def test_failed_partner_fetch_keeps_existing_records(monkeypatch):
+def test_failed_partner_fetch_suspends_and_recovery_restores_records(monkeypatch):
     monkeypatch.setenv(
         "RCONWEB_API_SECRET", "test-secret-for-vip-import-encryption-123456"
     )
@@ -167,12 +173,30 @@ def test_failed_partner_fetch_keeps_existing_records(monkeypatch):
             raise ValueError("Invalid feed")
 
         monkeypatch.setattr("rcon.vip_import._fetch", fail)
-        with pytest.raises(ValueError, match="Invalid feed"):
+        with pytest.raises(ValueError, match="imported VIPs deactivated"):
             sync_import(imported["id"])
         with enter_session() as sess:
             record = get_player_vip_list_record(
                 sess, feed[0]["player_id"], imported["id"]
             )
-            assert record.active and record.partner_present
+            assert not record.active and record.partner_present
+            assert record.vip_list.partner_import.suspended_at is not None
+        monkeypatch.setattr("rcon.vip_import._fetch", lambda *_: feed)
+        assert sync_import(imported["id"])["changed"] == 1
+        with enter_session() as sess:
+            record = get_player_vip_list_record(
+                sess, feed[0]["player_id"], imported["id"]
+            )
+            assert record.active and record.vip_list.partner_import.suspended_at is None
+        update_import_settings(
+            imported["id"],
+            approve_new=False,
+            retention_days=None,
+            token="vls_replacement",
+            flags=["test-flag"],
+            max_duration_seconds=86400,
+        )
+        with enter_session() as sess:
+            assert sess.get(VipList, imported["id"]).flags == ["test-flag"]
     finally:
         delete_vip_list(imported["id"])

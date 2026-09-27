@@ -81,6 +81,29 @@ def revoke_vip_list_share(request: HttpRequest):
 
 
 @csrf_exempt
+@login_required()
+@permission_required("api.can_manage_vip_list_shares", raise_exception=True)
+@require_http_methods(["POST"])
+def rotate_vip_list_share(request: HttpRequest):
+    try:
+        result = vip_sharing.rotate_share(
+            int(_body(request)["share_id"]), revoked_by=request.user.get_username()
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        return api_response(
+            command="rotate_vip_list_share",
+            failed=True,
+            error=str(exc),
+            status_code=400,
+        )
+    response = api_response(
+        command="rotate_vip_list_share", result=result, failed=False
+    )
+    response["Cache-Control"] = "no-store"
+    return response
+
+
+@csrf_exempt
 @require_http_methods(["GET"])
 def get_shared_vip_list(request: HttpRequest):
     # This credential is deliberately separate from the general CRCON API keys.
@@ -147,6 +170,9 @@ def edit_vip_list_import(request: HttpRequest):
             retention_days=data.get("retention_days"),
             webhook_url=data.get("webhook_url"),
             clear_webhook=data.get("clear_webhook", False),
+            token=data.get("token"),
+            flags=data.get("flags"),
+            max_duration_seconds=data.get("max_duration_seconds"),
         )
     except (KeyError, TypeError, ValueError) as exc:
         return api_response(

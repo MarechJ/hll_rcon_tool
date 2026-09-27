@@ -47,10 +47,11 @@ const SeedVipListRenderer = ({
   const selectedValue = data?.vip_list_id;
   const selectedId =
     selectedValue == null ? null : Number(selectedValue);
+  const editableLists = vipLists.filter((vipList) => !vipList.is_imported);
   const selectedList =
     selectedId === null
       ? null
-      : vipLists.find((vipList) => Number(vipList.id) === selectedId);
+      : editableLists.find((vipList) => Number(vipList.id) === selectedId);
   const invalidSelection = selectedId !== null && !selectedList;
   const loading = listsLoading || defaultLoading;
   const failed = listsFailed || defaultFailed;
@@ -90,7 +91,7 @@ const SeedVipListRenderer = ({
             </MenuItem>
           )}
 
-          {vipLists.map((vipList) => (
+          {editableLists.map((vipList) => (
             <MenuItem key={vipList.id} value={Number(vipList.id)}>
               {vipList.name}
               {Number(defaultList?.id) === Number(vipList.id)
@@ -120,7 +121,7 @@ const SeedVipListRenderer = ({
         </Alert>
       )}
 
-      {!loading && !failed && vipLists.length === 0 && (
+      {!loading && !failed && editableLists.length === 0 && (
         <Alert severity="warning">
           No VIP list applies to this server. Seed VIP rewards cannot be
           granted until a default VIP list is configured.

@@ -100,7 +100,7 @@ class VipSyncCommandHandler:
                             sync_import(source["vip_list_id"], force=False)
                         except Exception:
                             logger.exception(
-                                "Partner VIP list %s synchronization failed; existing records kept",
+                                "Partner VIP list %s synchronization failed; imported VIPs suspended",
                                 source["vip_list_id"],
                             )
                             try:

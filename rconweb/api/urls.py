@@ -202,6 +202,7 @@ endpoints: list[tuple[str, Callable]] = [
     ("create_vip_list_share", vip_sharing.create_vip_list_share),
     ("get_vip_list_shares", vip_sharing.get_vip_list_shares),
     ("revoke_vip_list_share", vip_sharing.revoke_vip_list_share),
+    ("rotate_vip_list_share", vip_sharing.rotate_vip_list_share),
     ("get_shared_vip_list", vip_sharing.get_shared_vip_list),
     ("create_vip_list_import", vip_sharing.create_vip_list_import),
     ("get_vip_list_imports", vip_sharing.get_vip_list_imports),

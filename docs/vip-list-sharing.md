@@ -13,6 +13,9 @@ name under **Share this list**, and create a key. A share icon marks lists with
 active credentials. Copy the key immediately. It is stored as a SHA-256
 digest and cannot be recovered later. Give the partner the key and the feed URL
 shown in the UI. One partner's key can be revoked without affecting other shares.
+**Rotate key** creates a new one-time key for the same partner and immediately
+revokes the old key. Update the partner's import settings with the new key before
+their next synchronization; until then, fetching the feed returns 401.
 The share settings show when and by which CRCON user a key was revoked. Keys
 revoked before this tracking was added show an unknown user.
 The settings also show when each key last fetched the feed successfully. A
@@ -36,12 +39,19 @@ partner imports. The feed URL must resolve to public addresses, use HTTPS on
 port 443, and end in `/api/get_shared_vip_list`.
 The **Settings** action can later change the approval mode, retention period,
 or webhook without losing imported records or local exclusions.
+It can also replace an imported partner key after validating the new key against
+the feed; leaving the field blank keeps the existing key.
+Local flags and a maximum VIP duration in days can also be configured there.
+The local duration is counted from first import and caps any later partner
+expiration; changing it affects existing records on their next sync.
 
 An import starts empty. Select the imported list and click **Synchronize now** to
 load it. By default, newly discovered players await local approval. The alternative
 automatic mode activates them at the first successful synchronization. Partner
 changes to existing entries, expiration, and removal are applied automatically.
-An incomplete, invalid, or unavailable feed never changes existing entries.
+If the feed is invalid or unavailable, imported VIPs become inactive while
+their records, approvals, and exclusions remain available for review. A later
+successful sync restores approved entries still present in the feed.
 
 Imported records are read-only through the normal VIP list editing API. An
 administrator with `can_approve_vip_list_imports` may approve a pending player

@@ -205,6 +205,7 @@ const SHARED_Commands = {
   CREATE_VIP_LIST_SHARE: (params) => requestFactory({ method: "POST", cmd: "create_vip_list_share", ...params }),
   GET_VIP_LIST_SHARES: (params) => requestFactory({ method: "GET", cmd: "get_vip_list_shares", ...params }),
   REVOKE_VIP_LIST_SHARE: (params) => requestFactory({ method: "POST", cmd: "revoke_vip_list_share", ...params }),
+  ROTATE_VIP_LIST_SHARE: (params) => requestFactory({ method: "POST", cmd: "rotate_vip_list_share", ...params }),
   CREATE_VIP_LIST_IMPORT: (params) => requestFactory({ method: "POST", cmd: "create_vip_list_import", ...params }),
   GET_VIP_LIST_IMPORTS: (params) => requestFactory({ method: "GET", cmd: "get_vip_list_imports", ...params }),
   EDIT_VIP_LIST_IMPORT: (params) => requestFactory({ method: "POST", cmd: "edit_vip_list_import", ...params }),

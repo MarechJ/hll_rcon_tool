@@ -139,7 +139,7 @@ export default function VipListRecordDialog({
                 onChange={(event) => setTargetListId(Number(event.target.value))}
                 disabled={loading}
               >
-                {vipLists.map((list) => (
+                {vipLists.filter((list) => !list.is_imported).map((list) => (
                   <MenuItem key={list.id} value={list.id}>
                     {list.name} (ID {list.id})
                   </MenuItem>

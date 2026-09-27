@@ -5,7 +5,7 @@ import dayjs from "dayjs";
 import { ControlledTextInput } from "@/components/form/core/ControlledTextInput";
 import { ControlledSelect } from "@/components/form/core/ControlledSelect";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useWatch } from "react-hook-form";
 import { vipListQueryOptions } from "@/queries/vip-list-query";
 import { useGlobalStore } from "@/stores/global-state";
@@ -21,9 +21,10 @@ export const AddVipFormFields = ({ control, errors, setValue, getValues }) => {
   const expiration = getValues()?.expiration;
   const selectedListId = useWatch({ control, name: "vip_list_id" });
   const serverNumber = useGlobalStore((state) => state.status?.server_number);
-  const { data: lists = [], isLoading, error: listsError } = useQuery(
+  const { data: allLists = [], isLoading, error: listsError } = useQuery(
     vipListQueryOptions.lists()
   );
+  const lists = useMemo(() => allLists.filter((list) => !list.is_imported), [allLists]);
   const { data: defaultList, isLoading: defaultLoading, error: defaultError } = useQuery(
     vipListQueryOptions.defaultList(serverNumber)
   );

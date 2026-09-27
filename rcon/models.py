@@ -1386,6 +1386,7 @@ class VipListImport(Base):
     encrypted_webhook_url: Mapped[str | None]
     approve_new: Mapped[bool] = mapped_column(default=True, nullable=False)
     last_success_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
+    suspended_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
     last_error_notified_at: Mapped[datetime | None] = mapped_column(
         TIMESTAMP(timezone=True)
     )

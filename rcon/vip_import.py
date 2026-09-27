@@ -21,7 +21,11 @@ from rcon.models import VipList, VipListImport, VipListRecord, enter_session
 from rcon.player_history import _get_set_player
 from rcon.player_id_utils import is_supported_player_id
 from rcon.types import VipListSyncMethod
-from rcon.vip import _notify_vip_sync, reconcile_vip_list_flags
+from rcon.vip import (
+    _notify_vip_sync,
+    _validate_vip_list_flags,
+    reconcile_vip_list_flags,
+)
 
 MAX_FEED_BYTES = 2_000_000
 MAX_RECORDS = 5_000
@@ -233,6 +237,7 @@ def get_imports() -> list[dict]:
                 "name": source.vip_list.name,
                 "source_url": source.source_url,
                 "approve_new": source.approve_new,
+                "suspended_at": source.suspended_at,
                 "last_success_at": source.last_success_at,
                 "webhook_configured": source.encrypted_webhook_url is not None,
             }
@@ -249,6 +254,9 @@ def update_import_settings(
     retention_days: int | None,
     webhook_url: str | None = None,
     clear_webhook: bool = False,
+    token: str | None = None,
+    flags: list[str] | None = None,
+    max_duration_seconds: int | None = None,
 ) -> dict:
     if not isinstance(approve_new, bool):
         raise TypeError("Approval setting must be a boolean")
@@ -263,12 +271,40 @@ def update_import_settings(
     if not isinstance(clear_webhook, bool):
         raise TypeError("Clear webhook must be a boolean")
     webhook_url = _validate_webhook(webhook_url)
+    if max_duration_seconds is not None and (
+        isinstance(max_duration_seconds, bool)
+        or not isinstance(max_duration_seconds, int)
+        or not 0 <= max_duration_seconds <= 315360000
+    ):
+        raise ValueError("Maximum VIP duration must be between 0 and 10 years")
+    if flags is not None:
+        flags = _validate_vip_list_flags(flags)
+    if token is not None:
+        if (
+            not isinstance(token, str)
+            or not token.startswith("vls_")
+            or len(token) > 128
+        ):
+            raise ValueError("Invalid partner share token")
+        # Keep the current credential when the replacement is rejected or offline.
+        with enter_session() as sess:
+            source = sess.get(VipListImport, vip_list_id)
+            if source is None:
+                raise ValueError("Imported VIP list not found")
+            source_url = source.source_url
+        _fetch(source_url, token)
     with enter_session() as sess:
         source = sess.get(VipListImport, vip_list_id)
         if source is None:
             raise ValueError("Imported VIP list not found")
         source.approve_new = approve_new
         source.vip_list.expired_retention_days = retention_days
+        source.vip_list.default_expiration_seconds = max_duration_seconds
+        if flags is not None:
+            source.vip_list.flags = flags
+            reconcile_vip_list_flags(sess)
+        if token is not None:
+            source.encrypted_token = _cipher().encrypt(token.encode()).decode()
         if clear_webhook:
             source.encrypted_webhook_url = None
         elif webhook_url:
@@ -279,11 +315,47 @@ def update_import_settings(
             "vip_list_id": vip_list_id,
             "approve_new": source.approve_new,
             "retention_days": source.vip_list.expired_retention_days,
+            "max_duration_seconds": source.vip_list.default_expiration_seconds,
+            "flags": source.vip_list.flags,
             "webhook_configured": source.encrypted_webhook_url is not None,
         }
 
 
+class _FeedFetchError(ValueError):
+    pass
+
+
+def _suspend_import(vip_list_id: int) -> None:
+    affected = set()
+    with enter_session() as sess:
+        if not sess.scalar(
+            text("SELECT pg_try_advisory_xact_lock(764839, :list_id)"),
+            {"list_id": vip_list_id},
+        ):
+            return
+        source = sess.get(VipListImport, vip_list_id)
+        if source is None:
+            return
+        source.suspended_at = datetime.now(UTC)
+        for record in source.vip_list.records:
+            if record.active:
+                record.active = False
+                affected.add(record.player.id)
+        reconcile_vip_list_flags(sess, affected)
+        server_mask = source.vip_list.servers
+    if affected:
+        _notify_vip_sync(server_mask)
+
+
 def sync_import(vip_list_id: int, *, force: bool = True) -> dict:
+    try:
+        return _sync_import_once(vip_list_id, force=force)
+    except _FeedFetchError as exc:
+        _suspend_import(vip_list_id)
+        raise ValueError("Partner feed unavailable; imported VIPs deactivated") from exc
+
+
+def _sync_import_once(vip_list_id: int, *, force: bool = True) -> dict:
     """Fetch and apply a complete feed under a cross-process database lock."""
     counts = {"new": 0, "changed": 0, "deactivated": 0, "pending": 0}
     with enter_session() as sess:
@@ -303,9 +375,17 @@ def sync_import(vip_list_id: int, *, force: bool = True) -> dict:
             and source.last_success_at > now - timedelta(minutes=15)
         ):
             return {**counts, "skipped": "recently synchronized"}
-        token = _cipher().decrypt(source.encrypted_token.encode()).decode()
-        # An invalid or incomplete feed rolls back; nothing is deactivated.
-        rows = _fetch(source.source_url, token)
+        try:
+            token = _cipher().decrypt(source.encrypted_token.encode()).decode()
+            rows = _fetch(source.source_url, token)
+        except (
+            ValueError,
+            TypeError,
+            OSError,
+            InvalidToken,
+            json.JSONDecodeError,
+        ) as exc:
+            raise _FeedFetchError from exc
         incoming = {row["player_id"]: row for row in rows}
         current = {
             record.player.player_id: record
@@ -316,6 +396,16 @@ def sync_import(vip_list_id: int, *, force: bool = True) -> dict:
         affected = set()
         for player_id, row in incoming.items():
             record = current.get(player_id)
+            duration = source.vip_list.default_expiration_seconds
+            local_expiry = (
+                (record.created_at if record is not None else now)
+                + timedelta(seconds=duration)
+                if duration
+                else None
+            )
+            expiry = row["expires_at"]
+            if local_expiry is not None and (expiry is None or local_expiry < expiry):
+                expiry = local_expiry
             if record is None:
                 player = _get_set_player(sess, player_id)
                 record = VipListRecord(
@@ -325,9 +415,9 @@ def sync_import(vip_list_id: int, *, force: bool = True) -> dict:
                     partner_approved=not source.approve_new,
                     partner_present=True,
                     partner_excluded=False,
-                    active=not source.approve_new,
+                    active=not source.approve_new and (expiry is None or expiry > now),
                     description=row["description"] if not player.names else None,
-                    expires_at=row["expires_at"],
+                    expires_at=expiry,
                 )
                 sess.add(record)
                 counts["new"] += 1
@@ -342,11 +432,15 @@ def sync_import(vip_list_id: int, *, force: bool = True) -> dict:
                 )
                 record.partner_present = True
                 record.partner_deactivated_at = None
-                record.expires_at = row["expires_at"]
+                record.expires_at = expiry
                 record.description = (
                     row["description"] if not record.player.names else None
                 )
-                record.active = record.partner_approved and not record.partner_excluded
+                record.active = (
+                    record.partner_approved
+                    and not record.partner_excluded
+                    and (expiry is None or expiry > now)
+                )
                 if old_state != (
                     record.active,
                     record.expires_at,
@@ -363,6 +457,7 @@ def sync_import(vip_list_id: int, *, force: bool = True) -> dict:
                 affected.add(record.player.id)
                 counts["deactivated"] += 1
         source.last_success_at = now
+        source.suspended_at = None
         source.last_error_notified_at = None
         reconcile_vip_list_flags(sess, affected)
         server_mask = source.vip_list.servers
@@ -398,7 +493,8 @@ def notify_import_error(vip_list_id: int) -> None:
     _send_webhook(
         encrypted_webhook,
         f"VIP partner list **{list_name}** could not be synchronized. "
-        "Existing VIP entries were kept. Check the source and credential in CRCON.",
+        "Imported VIPs were deactivated until the feed recovers. "
+        "Check the source and credential in CRCON.",
     )
 
 
@@ -424,6 +520,7 @@ def set_import_record_policy(
             record.partner_present
             and record.partner_approved
             and not record.partner_excluded
+            and record.vip_list.partner_import.suspended_at is None
         )
         reconcile_vip_list_flags(sess, {record.player_id_id})
         server_mask = record.vip_list.servers

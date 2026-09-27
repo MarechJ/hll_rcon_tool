@@ -72,7 +72,7 @@ export default function VipListBulkDialog({
 
   const safeRecords = Array.isArray(records) ? records : [];
   const availableTargetLists = (vipLists ?? []).filter(
-    (item) => item.id !== vipList?.id
+    (item) => item.id !== vipList?.id && !item.is_imported
   );
   const canEditDescriptions = safeRecords.every(
     (record) => !record.player_name

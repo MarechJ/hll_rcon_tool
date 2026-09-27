@@ -80,6 +80,32 @@ def revoke_share(share_id: int, revoked_by: str | None = None) -> bool:
     return True
 
 
+def rotate_share(share_id: int, revoked_by: str) -> dict:
+    """Replace a share credential atomically while retaining its list and name."""
+    token = "vls_" + secrets.token_urlsafe(32)
+    with enter_session() as sess:
+        share = sess.scalar(
+            select(VipListShare).where(VipListShare.id == share_id).with_for_update()
+        )
+        now = datetime.now(UTC)
+        if share is None or share.revoked_at is not None:
+            raise ValueError("Active share not found")
+        if share.expires_at is not None and share.expires_at <= now:
+            raise ValueError("Expired shares cannot be rotated")
+        replacement = VipListShare(
+            vip_list_id=share.vip_list_id,
+            name=share.name,
+            token_hash=hashlib.sha256(token.encode()).hexdigest(),
+            expires_at=share.expires_at,
+        )
+        share.revoked_at = now
+        share.revoked_by = revoked_by
+        sess.add(replacement)
+        sess.flush()
+        info = _share_info(replacement)
+    return {**info, "token": token}
+
+
 def get_partner_feed(token: str) -> dict | None:
     if not isinstance(token, str) or len(token) > 128 or not token.startswith("vls_"):
         return None

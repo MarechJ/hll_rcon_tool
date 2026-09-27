@@ -55,7 +55,7 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
   const [shownToken, setShownToken] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [changeWebhook, setChangeWebhook] = useState(false);
-  const [settings, setSettings] = useState({ approve_new: true, retention_days: null, webhook_url: "", clear_webhook: false });
+  const [settings, setSettings] = useState({ approve_new: true, retention_days: null, webhook_url: "", clear_webhook: false, token: "", flags: "", max_duration_days: "" });
   const shares = useQuery({
     queryKey: ["vip-list-shares", list.id],
     queryFn: () => cmd.GET_VIP_LIST_SHARES({ params: { vip_list_id: list.id } }),
@@ -79,6 +79,15 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
   const revoke = useMutation({
     mutationFn: (shareId) => cmd.REVOKE_VIP_LIST_SHARE({ payload: { share_id: shareId }, throwRouteError: false }),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vip-list-shares", list.id] });
+      queryClient.invalidateQueries({ queryKey: vipListQueryKeys.lists });
+    },
+    onError: (error) => toast.error(error.message),
+  });
+  const rotate = useMutation({
+    mutationFn: (shareId) => cmd.ROTATE_VIP_LIST_SHARE({ payload: { share_id: shareId }, throwRouteError: false }),
+    onSuccess: (response) => {
+      setShownToken(response?.result?.token ?? response?.token);
       queryClient.invalidateQueries({ queryKey: ["vip-list-shares", list.id] });
       queryClient.invalidateQueries({ queryKey: vipListQueryKeys.lists });
     },
@@ -116,11 +125,12 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
       <Typography variant="body2">Source: {source?.source_url ?? "Loading…"}</Typography>
       <Typography variant="body2">New records: {source?.approve_new ? "Approval required" : "Automatic"}</Typography>
       <Typography variant="body2">Last successful sync: {source?.last_success_at ? new Date(source.last_success_at).toLocaleString() : "Never"}</Typography>
+      {source?.suspended_at && <Alert severity="error">Partner feed unavailable since {new Date(source.suspended_at).toLocaleString()}. Imported VIPs are inactive until a successful sync.</Alert>}
       <Typography variant="body2">Discord: {source?.webhook_configured ? "configured" : "off"}</Typography>
       <Box>
         <Button onClick={() => sync.mutate()} disabled={sync.isPending}>Synchronize now</Button>
         <Button onClick={() => {
-          setSettings({ approve_new: source?.approve_new ?? true, retention_days: list.expired_retention_days, webhook_url: "", clear_webhook: false });
+          setSettings({ approve_new: source?.approve_new ?? true, retention_days: list.expired_retention_days, webhook_url: "", clear_webhook: false, token: "", flags: (list.flags ?? []).join(", "), max_duration_days: list.default_expiration_seconds ? list.default_expiration_seconds / 86400 : "" });
           setChangeWebhook(false);
           setSettingsOpen(true);
         }}>Settings</Button>
@@ -148,7 +158,12 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
         ) : share.expires_at && new Date(share.expires_at) <= new Date() ? (
           <Typography variant="caption" color="text.secondary">Expired {new Date(share.expires_at).toLocaleString()}</Typography>
         ) : (
-          <Button type="button" size="small" color="warning" onClick={() => revoke.mutate(share.id)}>Revoke</Button>
+          <>
+            <Button type="button" size="small" disabled={rotate.isPending} onClick={() => {
+              if (window.confirm(`Replace the key for ${share.name}? The current key stops working immediately.`)) rotate.mutate(share.id);
+            }}>Rotate key</Button>
+            <Button type="button" size="small" color="warning" disabled={rotate.isPending} onClick={() => revoke.mutate(share.id)}>Revoke</Button>
+          </>
         )}
       </Stack>)}
     </Stack>}
@@ -158,13 +173,16 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
       <DialogContent><Stack spacing={2} sx={{ pt: 1 }}>
         <FormControlLabel control={<Checkbox checked={settings.approve_new} onChange={(e) => setSettings({ ...settings, approve_new: e.target.checked })} />} label="Require approval for new entries" />
         <TextField label="Delete inactive entries after days" type="number" value={settings.retention_days ?? ""} onChange={(e) => setSettings({ ...settings, retention_days: e.target.value === "" ? null : Number(e.target.value) })} inputProps={{ min: 0, max: 3650 }} />
+        <TextField label="New partner share key (optional)" type="password" autoComplete="new-password" value={settings.token} onChange={(e) => setSettings({ ...settings, token: e.target.value })} helperText="Leave blank to keep the current key. A new key is checked against the partner feed before saving." />
+        <TextField label="Player flags (comma-separated)" value={settings.flags} onChange={(e) => setSettings({ ...settings, flags: e.target.value })} helperText="Applied to active players in this imported list." />
+        <TextField label="Maximum VIP duration (days)" type="number" value={settings.max_duration_days} onChange={(e) => setSettings({ ...settings, max_duration_days: e.target.value })} inputProps={{ min: 0, max: 3650, step: 1 }} helperText="Optional local limit from the first import; the partner's earlier expiry still applies." />
         <FormControlLabel control={<Checkbox checked={changeWebhook} disabled={settings.clear_webhook} onChange={(e) => setChangeWebhook(e.target.checked)} />} label="Set new Discord webhook URL" />
         {changeWebhook && <TextField label="New Discord webhook URL" type="url" autoComplete="off" value={settings.webhook_url} onChange={(e) => setSettings({ ...settings, webhook_url: e.target.value })} required />}
         {source?.webhook_configured && <FormControlLabel control={<Checkbox checked={settings.clear_webhook} disabled={changeWebhook} onChange={(e) => setSettings({ ...settings, clear_webhook: e.target.checked })} />} label="Remove existing webhook" />}
       </Stack></DialogContent>
       <DialogActions>
         <Button onClick={() => setSettingsOpen(false)} disabled={update.isPending}>Cancel</Button>
-        <Button onClick={() => update.mutate({ ...settings, webhook_url: changeWebhook ? settings.webhook_url : undefined })} disabled={update.isPending || (changeWebhook && !settings.webhook_url.trim())}>Save</Button>
+        <Button onClick={() => update.mutate({ ...settings, token: settings.token || undefined, flags: settings.flags.split(",").map((flag) => flag.trim()).filter(Boolean), max_duration_seconds: settings.max_duration_days === "" ? null : Math.round(Number(settings.max_duration_days) * 86400), webhook_url: changeWebhook ? settings.webhook_url : undefined })} disabled={update.isPending || (changeWebhook && !settings.webhook_url.trim())}>Save</Button>
       </DialogActions>
     </Dialog>
   </>;
