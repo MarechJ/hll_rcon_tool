@@ -308,7 +308,7 @@ export function ActionIconButton({
       <span>
         <IconButton
           key={action.name}
-          disabled={!hasPermission(user)}
+          disabled={!hasPermission(user)(action)}
           size="small"
           onClick={handleActionClick(action)}
           sx={{ opacity: action.deprecated ? 0.5 : 1 }}

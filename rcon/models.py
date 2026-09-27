@@ -646,6 +646,7 @@ class PlayerFlag(Base):
             "flag": self.flag,
             "comment": self.comment,
             "modified": self.modified,
+            "managed_by_vip_list": self.managed_by_vip_list,
         }
 
 

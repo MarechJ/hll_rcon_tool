@@ -713,6 +713,7 @@ class PlayerFlagType(TypedDict):
     flag: str
     comment: str | None
     modified: datetime.datetime
+    managed_by_vip_list: bool
 
 
 class PlayerOptinsType(TypedDict):
