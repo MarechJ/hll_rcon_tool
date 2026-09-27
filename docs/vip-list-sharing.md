@@ -25,8 +25,8 @@ return HTTP 401.
 Select **Import partner list**, enter the HTTPS feed URL and key, and optionally
 configure a Discord webhook and an inactive-record retention period. A key is
 encrypted at rest using the CRCON web secret. Keep `RCONWEB_API_SECRET` stable
-and set it to a strong value of at least 32 characters on both backend and
-supervisor containers; imports are rejected if it is unset. Rotating it requires reconnecting
+and set it to the same strong value on both backend and supervisor containers.
+Imports require a configured value of at least 16 characters. Rotating it requires reconnecting
 partner imports. The feed URL must resolve to public addresses, use HTTPS on
 port 443, and end in `/api/get_shared_vip_list`.
 The **Settings** action can later change the approval mode, retention period,

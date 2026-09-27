@@ -30,10 +30,8 @@ logger = logging.getLogger(__name__)
 
 def _cipher() -> Fernet:
     secret = os.getenv("RCONWEB_API_SECRET")
-    if not secret or len(secret) < 32:
-        raise ValueError(
-            "Set a strong RCONWEB_API_SECRET before importing partner lists"
-        )
+    if not secret or len(secret) < 16:
+        raise ValueError("Set RCONWEB_API_SECRET before importing partner lists")
     key = base64.urlsafe_b64encode(hashlib.sha256(secret.encode()).digest())
     return Fernet(key)
 
