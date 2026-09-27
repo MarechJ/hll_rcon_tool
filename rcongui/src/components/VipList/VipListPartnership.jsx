@@ -115,13 +115,19 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
     onError: (error) => toast.error(error.message),
   });
   const update = useMutation({
-    mutationFn: (data) => cmd.EDIT_VIP_LIST_IMPORT({ payload: { vip_list_id: list.id, ...data }, throwRouteError: false }),
-    onSuccess: () => {
+    mutationFn: async (data) => {
+      const response = await cmd.EDIT_VIP_LIST_IMPORT({ payload: { vip_list_id: list.id, ...data }, throwRouteError: false });
+      if ((response?.result ?? response)?.name !== data.name) {
+        throw new Error("The server did not save the new list name. Rebuild and restart the backend.");
+      }
+      return response;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: vipListQueryKeys.lists });
       toast.success("Partner import settings updated.");
       setSettingsOpen(false);
       onSynced?.();
       queryClient.invalidateQueries({ queryKey: ["vip-list-imports"] });
-      queryClient.invalidateQueries({ queryKey: vipListQueryKeys.lists });
     },
     onError: (error) => toast.error(error.message),
   });
