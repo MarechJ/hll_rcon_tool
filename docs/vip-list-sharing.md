@@ -44,8 +44,9 @@ It can also replace an imported partner key after validating the new key against
 the feed; leaving the field blank keeps the existing key.
 Local flags and a maximum VIP duration can also be configured there using the
 same flag picker and duration choices as an owned list.
-With **No local limit**, the partner expiration applies. **Never expires**
-overrides the partner expiration while the entry remains in the feed. A positive
+With **Use partner expiration**, the external expiration applies. **Never expire
+while shared** overrides the partner expiration while the entry remains in the
+feed. A positive
 local duration is counted from first import and caps any later partner
 expiration. Changing this setting affects existing records on their next sync;
 partner removal still deactivates an imported record.
