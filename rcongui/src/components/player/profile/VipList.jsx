@@ -11,6 +11,9 @@ const VipList = ({ playerId, vip, otherVips = [] }) => {
     enabled: canView && records.length > 0,
   });
   const gameserverVips = [vip, ...otherVips].filter(Boolean);
+  const showLegacy = gameserverVips.length > 0 &&
+    (!canView || !isPending) &&
+    !records.some((record) => record.is_active && !record.is_expired);
 
   return (
     <Stack spacing={1}>
@@ -30,15 +33,20 @@ const VipList = ({ playerId, vip, otherVips = [] }) => {
           </Stack>
         );
       })}
-      {gameserverVips.map((entry, index) => (
+      {showLegacy && gameserverVips.map((entry, index) => (
         <Stack key={`${entry.server_number}-${index}`} direction="row" alignItems="center" flexWrap="wrap" gap={1}>
-          <Typography variant="body2">Gameserver #{entry.server_number}</Typography>
-          <Chip size="small" label={entry.expiration && dayjs(entry.expiration).isBefore(dayjs()) ? "Expired" : "VIP"} color="primary" />
+          <Typography variant="body2">Legacy CRCON VIP record #{entry.server_number}</Typography>
+          <Chip size="small" label={entry.expiration && dayjs(entry.expiration).isBefore(dayjs()) ? "Expired" : "Stored"} variant="outlined" />
           <Typography variant="body2" color="text.secondary">
-            {entry.expiration ? `Until ${dayjs(entry.expiration).format("LLL")}` : "Never expires"}
+            {entry.expiration ? `Stored expiration: ${dayjs(entry.expiration).format("LLL")}` : "No stored expiration"}
           </Typography>
         </Stack>
       ))}
+      {showLegacy && (
+        <Typography variant="caption" color="text.secondary">
+          Legacy CRCON dates are stored separately from VIP lists and may be outdated. They are not live gameserver expiration dates.
+        </Typography>
+      )}
       {canView && !isPending && !isError && records.length === 0 && gameserverVips.length === 0 && (
         <Typography>No VIP records found</Typography>
       )}
