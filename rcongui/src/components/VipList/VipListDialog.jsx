@@ -213,30 +213,6 @@ export default function VipListDialog({
           </Alert>
 
           <FormControl fullWidth disabled={loading}>
-            <InputLabel id="vip-list-expired-retention-label">
-              Expired records
-            </InputLabel>
-            <Select
-              labelId="vip-list-expired-retention-label"
-              label="Expired records"
-              value={expiredRetentionDays ?? "keep"}
-              onChange={(event) => setExpiredRetentionDays(
-                event.target.value === "keep" ? null : Number(event.target.value)
-              )}
-            >
-              <MenuItem value="keep">Keep for manual review</MenuItem>
-              <MenuItem value={0}>Delete automatically after expiration</MenuItem>
-              <MenuItem value={1}>Delete after 1 day</MenuItem>
-              <MenuItem value={7}>Delete after 7 days</MenuItem>
-              <MenuItem value={30}>Delete after 30 days</MenuItem>
-            </Select>
-          </FormControl>
-          <Typography variant="body2" color="text.secondary">
-            Automatic cleanup runs periodically. Enabling it also deletes existing
-            expired records in this list once their retention time has passed.
-          </Typography>
-
-          <FormControl fullWidth disabled={loading}>
             <InputLabel id="vip-list-default-duration-label">Default VIP duration</InputLabel>
             <Select
               labelId="vip-list-default-duration-label"
@@ -259,6 +235,30 @@ export default function VipListDialog({
             No default leaves the expiration to each record. Never expires sets
             new records to an unlimited duration and can also be applied to
             existing active records using the separate action.
+          </Typography>
+
+          <FormControl fullWidth disabled={loading}>
+            <InputLabel id="vip-list-expired-retention-label">
+              Expired records
+            </InputLabel>
+            <Select
+              labelId="vip-list-expired-retention-label"
+              label="Expired records"
+              value={expiredRetentionDays ?? "keep"}
+              onChange={(event) => setExpiredRetentionDays(
+                event.target.value === "keep" ? null : Number(event.target.value)
+              )}
+            >
+              <MenuItem value="keep">Keep for manual review</MenuItem>
+              <MenuItem value={0}>Delete automatically after expiration</MenuItem>
+              <MenuItem value={1}>Delete after 1 day</MenuItem>
+              <MenuItem value={7}>Delete after 7 days</MenuItem>
+              <MenuItem value={30}>Delete after 30 days</MenuItem>
+            </Select>
+          </FormControl>
+          <Typography variant="body2" color="text.secondary">
+            Automatic cleanup runs periodically. Enabling it also deletes existing
+            expired records in this list once their retention time has passed.
           </Typography>
 
           <Stack spacing={1}>
