@@ -480,6 +480,7 @@ export default function VipListsPage() {
     serverStatus?.short_name,
   ]);
   const [selectedListId, setSelectedListId] = useState(null);
+  const [importActionsElement, setImportActionsElement] = useState(null);
   const [listSort, setListSort] = useState("name");
   const [listDialog, setListDialog] = useState(null);
   const [shareOnlyList, setShareOnlyList] = useState(null);
@@ -1228,6 +1229,9 @@ export default function VipListsPage() {
                       Manage sharing
                     </Button>
                   )}
+                  {selectedList.is_imported && canManageImports && (
+                    <Box ref={setImportActionsElement} sx={{ display: "flex", alignItems: "center", gap: 1 }} />
+                  )}
                   {canDeleteLists && (
                     <Button
                       color="error"
@@ -1250,6 +1254,7 @@ export default function VipListsPage() {
               key={selectedList.id}
               list={selectedList}
               canManageImports={canManageImports}
+              actionsContainer={importActionsElement}
               onSynced={() => refreshRecords(selectedList.id)}
             />}
 

@@ -190,6 +190,7 @@ def test_failed_partner_fetch_suspends_and_recovery_restores_records(monkeypatch
             assert record.active and record.vip_list.partner_import.suspended_at is None
         update_import_settings(
             imported["id"],
+            name="Renamed partner list",
             approve_new=False,
             retention_days=None,
             token="vls_replacement",
@@ -197,6 +198,8 @@ def test_failed_partner_fetch_suspends_and_recovery_restores_records(monkeypatch
             max_duration_seconds=86400,
         )
         with enter_session() as sess:
-            assert sess.get(VipList, imported["id"]).flags == ["test-flag"]
+            updated = sess.get(VipList, imported["id"])
+            assert updated.name == "Renamed partner list"
+            assert updated.flags == ["test-flag"]
     finally:
         delete_vip_list(imported["id"])

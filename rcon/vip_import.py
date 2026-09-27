@@ -250,6 +250,7 @@ def get_imports() -> list[dict]:
 def update_import_settings(
     vip_list_id: int,
     *,
+    name: str | None = None,
     approve_new: bool,
     retention_days: int | None,
     webhook_url: str | None = None,
@@ -258,6 +259,10 @@ def update_import_settings(
     flags: list[str] | None = None,
     max_duration_seconds: int | None = None,
 ) -> dict:
+    if name is not None and (
+        not isinstance(name, str) or not name.strip() or len(name.strip()) > 255
+    ):
+        raise ValueError("List name must contain 1 to 255 characters")
     if not isinstance(approve_new, bool):
         raise TypeError("Approval setting must be a boolean")
     if retention_days is not None and (
@@ -297,6 +302,8 @@ def update_import_settings(
         source = sess.get(VipListImport, vip_list_id)
         if source is None:
             raise ValueError("Imported VIP list not found")
+        if name is not None:
+            source.vip_list.name = name.strip()
         source.approve_new = approve_new
         source.vip_list.expired_retention_days = retention_days
         source.vip_list.default_expiration_seconds = max_duration_seconds
@@ -313,6 +320,7 @@ def update_import_settings(
             )
         return {
             "vip_list_id": vip_list_id,
+            "name": source.vip_list.name,
             "approve_new": source.approve_new,
             "retention_days": source.vip_list.expired_retention_days,
             "max_duration_seconds": source.vip_list.default_expiration_seconds,

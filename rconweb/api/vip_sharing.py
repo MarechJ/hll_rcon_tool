@@ -166,6 +166,7 @@ def edit_vip_list_import(request: HttpRequest):
         data = _body(request)
         result = vip_import.update_import_settings(
             int(data["vip_list_id"]),
+            name=data.get("name"),
             approve_new=data["approve_new"],
             retention_days=data.get("retention_days"),
             webhook_url=data.get("webhook_url"),

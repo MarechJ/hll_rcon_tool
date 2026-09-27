@@ -1,12 +1,20 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
+import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Alert, Box, Button, Checkbox, Dialog, DialogActions, DialogContent,
-  DialogTitle, FormControlLabel, Paper, Stack, TextField, Typography,
+  Alert, Box, Button, Checkbox, Chip, Dialog, DialogActions, DialogContent,
+  DialogContentText, DialogTitle, FormControl, FormControlLabel, InputLabel,
+  MenuItem, Paper, Select, Skeleton, Stack, TextField, Typography, useTheme,
 } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import SyncIcon from "@mui/icons-material/Sync";
+import emojiData from "@emoji-mart/data/sets/15/twitter.json";
+import Emoji from "@/components/shared/Emoji";
 import { toast } from "react-toastify";
 import { cmd } from "@/utils/fetchUtils";
 import { vipListQueryKeys } from "@/queries/vip-list-query";
+
+const EmojiPicker = lazy(() => import("@emoji-mart/react"));
 
 export function ImportPartnerListButton({ onCreated, serverNumber }) {
   const [open, setOpen] = useState(false);
@@ -37,7 +45,7 @@ export function ImportPartnerListButton({ onCreated, serverNumber }) {
           <TextField label="Discord webhook URL (optional)" type="url" autoComplete="off" value={form.webhook_url} onChange={(e) => setForm({ ...form, webhook_url: e.target.value })} />
           <TextField label="Delete inactive entries after days (optional)" type="number" value={form.retention_days ?? ""} onChange={(e) => setForm({ ...form, retention_days: e.target.value === "" ? null : Number(e.target.value) })} inputProps={{ min: 0, max: 3650 }} />
           <FormControlLabel control={<Checkbox checked={form.approve_new} onChange={(e) => setForm({ ...form, approve_new: e.target.checked })} />} label="Require approval for new partner VIPs" />
-          <Alert severity="info">Partner records are read-only. Failed updates keep the current entries.</Alert>
+          <Alert severity="info">Partner records are read-only. Failed synchronization deactivates imported VIPs until the feed recovers.</Alert>
           <Typography variant="body2">Applies to {Number.isInteger(serverNumber) ? `server #${serverNumber}` : "all servers"}.</Typography>
         </Stack>
       </DialogContent>
@@ -49,13 +57,15 @@ export function ImportPartnerListButton({ onCreated, serverNumber }) {
   </>;
 }
 
-export function VipListPartnership({ list, canManageShares, canManageImports, onSynced }) {
+export function VipListPartnership({ list, canManageShares, canManageImports, onSynced, actionsContainer }) {
   const queryClient = useQueryClient();
+  const theme = useTheme();
   const [name, setName] = useState("");
   const [shownToken, setShownToken] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [changeWebhook, setChangeWebhook] = useState(false);
-  const [settings, setSettings] = useState({ approve_new: true, retention_days: null, webhook_url: "", clear_webhook: false, token: "", flags: "", max_duration_days: "" });
+  const [showFlagPicker, setShowFlagPicker] = useState(false);
+  const [settings, setSettings] = useState({ name: "", approve_new: true, retention_days: null, webhook_url: "", clear_webhook: false, token: "", flags: [], max_duration_seconds: null });
   const shares = useQuery({
     queryKey: ["vip-list-shares", list.id],
     queryFn: () => cmd.GET_VIP_LIST_SHARES({ params: { vip_list_id: list.id } }),
@@ -109,12 +119,23 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
     onSuccess: () => {
       toast.success("Partner import settings updated.");
       setSettingsOpen(false);
+      onSynced?.();
       queryClient.invalidateQueries({ queryKey: ["vip-list-imports"] });
       queryClient.invalidateQueries({ queryKey: vipListQueryKeys.lists });
     },
     onError: (error) => toast.error(error.message),
   });
   const source = (imports.data ?? []).find((item) => item.vip_list_id === list.id);
+  const openSettings = () => {
+    setSettings({ name: list.name, approve_new: source?.approve_new ?? true, retention_days: list.expired_retention_days, webhook_url: "", clear_webhook: false, token: "", flags: [...(list.flags ?? [])], max_duration_seconds: list.default_expiration_seconds });
+    setChangeWebhook(false);
+    setShowFlagPicker(false);
+    setSettingsOpen(true);
+  };
+  const importActions = <>
+    <Button startIcon={<SyncIcon />} onClick={() => sync.mutate()} disabled={sync.isPending}>Synchronize now</Button>
+    <Button startIcon={<EditIcon />} onClick={openSettings}>Settings</Button>
+  </>;
 
   if (list.is_imported && !canManageImports) return <Alert severity="info">This partner list is read-only.</Alert>;
   if (!list.is_imported && !canManageShares) return null;
@@ -127,14 +148,7 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
       <Typography variant="body2">Last successful sync: {source?.last_success_at ? new Date(source.last_success_at).toLocaleString() : "Never"}</Typography>
       {source?.suspended_at && <Alert severity="error">Partner feed unavailable since {new Date(source.suspended_at).toLocaleString()}. Imported VIPs are inactive until a successful sync.</Alert>}
       <Typography variant="body2">Discord: {source?.webhook_configured ? "configured" : "off"}</Typography>
-      <Box>
-        <Button onClick={() => sync.mutate()} disabled={sync.isPending}>Synchronize now</Button>
-        <Button onClick={() => {
-          setSettings({ approve_new: source?.approve_new ?? true, retention_days: list.expired_retention_days, webhook_url: "", clear_webhook: false, token: "", flags: (list.flags ?? []).join(", "), max_duration_days: list.default_expiration_seconds ? list.default_expiration_seconds / 86400 : "" });
-          setChangeWebhook(false);
-          setSettingsOpen(true);
-        }}>Settings</Button>
-      </Box>
+      {!actionsContainer && <Box>{importActions}</Box>}
     </Stack> : <Stack spacing={1}>
       <Typography variant="h6">Share this list</Typography>
       <Typography variant="body2">Each partner gets a separate, read-only key. The key is displayed once.</Typography>
@@ -168,21 +182,56 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
       </Stack>)}
     </Stack>}
   </Paper>
+    {list.is_imported && actionsContainer && createPortal(importActions, actionsContainer)}
     <Dialog open={settingsOpen} onClose={() => !update.isPending && setSettingsOpen(false)} fullWidth maxWidth="sm">
-      <DialogTitle>Partner import settings</DialogTitle>
-      <DialogContent><Stack spacing={2} sx={{ pt: 1 }}>
+      <DialogTitle>Edit partner VIP list</DialogTitle>
+      <DialogContent><Stack spacing={2.5} sx={{ pt: 1 }}>
+        <DialogContentText>Changes are stored in the CRCON database. Synchronize the partner feed to update its records.</DialogContentText>
+        <TextField required autoFocus label="List name" value={settings.name} onChange={(e) => setSettings({ ...settings, name: e.target.value })} disabled={update.isPending} inputProps={{ maxLength: 255 }} />
         <FormControlLabel control={<Checkbox checked={settings.approve_new} onChange={(e) => setSettings({ ...settings, approve_new: e.target.checked })} />} label="Require approval for new entries" />
-        <TextField label="Delete inactive entries after days" type="number" value={settings.retention_days ?? ""} onChange={(e) => setSettings({ ...settings, retention_days: e.target.value === "" ? null : Number(e.target.value) })} inputProps={{ min: 0, max: 3650 }} />
+        <FormControl fullWidth disabled={update.isPending}>
+          <InputLabel id="partner-list-expired-retention-label">Expired records</InputLabel>
+          <Select labelId="partner-list-expired-retention-label" label="Expired records" value={settings.retention_days ?? "keep"} onChange={(e) => setSettings({ ...settings, retention_days: e.target.value === "keep" ? null : Number(e.target.value) })}>
+            <MenuItem value="keep">Keep for manual review</MenuItem>
+            <MenuItem value={0}>Delete automatically after expiration</MenuItem>
+            <MenuItem value={1}>Delete after 1 day</MenuItem>
+            <MenuItem value={7}>Delete after 7 days</MenuItem>
+            <MenuItem value={30}>Delete after 30 days</MenuItem>
+            {settings.retention_days !== null && ![0, 1, 7, 30].includes(settings.retention_days) && <MenuItem value={settings.retention_days}>Delete after {settings.retention_days} days</MenuItem>}
+          </Select>
+        </FormControl>
+        <Typography variant="body2" color="text.secondary">Automatic cleanup runs periodically. Existing expired records are also removed when their retention time has passed.</Typography>
+        <FormControl fullWidth disabled={update.isPending}>
+          <InputLabel id="partner-list-duration-label">Maximum VIP duration</InputLabel>
+          <Select labelId="partner-list-duration-label" label="Maximum VIP duration" value={settings.max_duration_seconds ?? "none"} onChange={(e) => setSettings({ ...settings, max_duration_seconds: e.target.value === "none" ? null : Number(e.target.value) })}>
+            <MenuItem value="none">No local limit</MenuItem>
+            <MenuItem value={0}>No local limit (never expires locally)</MenuItem>
+            <MenuItem value={7200}>2 hours</MenuItem>
+            <MenuItem value={86400}>1 day</MenuItem>
+            <MenuItem value={604800}>7 days</MenuItem>
+            <MenuItem value={2592000}>30 days</MenuItem>
+            <MenuItem value={31536000}>1 year</MenuItem>
+            {settings.max_duration_seconds != null && ![0, 7200, 86400, 604800, 2592000, 31536000].includes(settings.max_duration_seconds) && <MenuItem value={settings.max_duration_seconds}>Current: {settings.max_duration_seconds} seconds</MenuItem>}
+          </Select>
+        </FormControl>
+        <Typography variant="body2" color="text.secondary">The earlier of the partner expiration and this local limit applies. The limit starts at first import.</Typography>
         <TextField label="New partner share key (optional)" type="password" autoComplete="new-password" value={settings.token} onChange={(e) => setSettings({ ...settings, token: e.target.value })} helperText="Leave blank to keep the current key. A new key is checked against the partner feed before saving." />
-        <TextField label="Player flags (comma-separated)" value={settings.flags} onChange={(e) => setSettings({ ...settings, flags: e.target.value })} helperText="Applied to active players in this imported list." />
-        <TextField label="Maximum VIP duration (days)" type="number" value={settings.max_duration_days} onChange={(e) => setSettings({ ...settings, max_duration_days: e.target.value })} inputProps={{ min: 0, max: 3650, step: 1 }} helperText="Optional local limit from the first import; the partner's earlier expiry still applies." />
+        <Stack spacing={1}>
+          <Typography variant="subtitle1">Player flags</Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+            {settings.flags.map((flag) => <Chip key={flag} label={<Emoji emoji={flag} size={24} />} aria-label={`Remove flag ${flag}`} onDelete={update.isPending ? undefined : () => setSettings((current) => ({ ...current, flags: current.flags.filter((item) => item !== flag) }))} />)}
+            <Button type="button" variant="outlined" disabled={update.isPending} onClick={() => setShowFlagPicker((value) => !value)}>{showFlagPicker ? "Close emoji picker" : "Add flag"}</Button>
+          </Box>
+          {showFlagPicker && <Suspense fallback={<Skeleton variant="rectangular" height={400} />}><Box sx={{ "& em-emoji-picker": { width: "100%" } }}><EmojiPicker set="twitter" theme={theme.palette.mode} dynamicWidth data={emojiData} onEmojiSelect={(emoji) => { setSettings((current) => ({ ...current, flags: current.flags.includes(emoji.native) ? current.flags : [...current.flags, emoji.native] })); setShowFlagPicker(false); }} /></Box></Suspense>}
+          <Typography variant="body2" color="text.secondary">Active members receive these global player flags; manual flags are preserved.</Typography>
+        </Stack>
         <FormControlLabel control={<Checkbox checked={changeWebhook} disabled={settings.clear_webhook} onChange={(e) => setChangeWebhook(e.target.checked)} />} label="Set new Discord webhook URL" />
         {changeWebhook && <TextField label="New Discord webhook URL" type="url" autoComplete="off" value={settings.webhook_url} onChange={(e) => setSettings({ ...settings, webhook_url: e.target.value })} required />}
         {source?.webhook_configured && <FormControlLabel control={<Checkbox checked={settings.clear_webhook} disabled={changeWebhook} onChange={(e) => setSettings({ ...settings, clear_webhook: e.target.checked })} />} label="Remove existing webhook" />}
       </Stack></DialogContent>
       <DialogActions>
         <Button onClick={() => setSettingsOpen(false)} disabled={update.isPending}>Cancel</Button>
-        <Button onClick={() => update.mutate({ ...settings, token: settings.token || undefined, flags: settings.flags.split(",").map((flag) => flag.trim()).filter(Boolean), max_duration_seconds: settings.max_duration_days === "" ? null : Math.round(Number(settings.max_duration_days) * 86400), webhook_url: changeWebhook ? settings.webhook_url : undefined })} disabled={update.isPending || (changeWebhook && !settings.webhook_url.trim())}>Save</Button>
+        <Button variant="contained" onClick={() => update.mutate({ ...settings, name: settings.name.trim(), token: settings.token || undefined, webhook_url: changeWebhook ? settings.webhook_url : undefined })} disabled={update.isPending || !settings.name.trim() || (changeWebhook && !settings.webhook_url.trim())}>Save</Button>
       </DialogActions>
     </Dialog>
   </>;

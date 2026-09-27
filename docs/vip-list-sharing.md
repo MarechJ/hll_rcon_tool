@@ -37,11 +37,13 @@ and set it to the same strong value on both backend and supervisor containers.
 Imports require a configured value of at least 16 characters. Rotating it requires reconnecting
 partner imports. The feed URL must resolve to public addresses, use HTTPS on
 port 443, and end in `/api/get_shared_vip_list`.
-The **Settings** action can later change the approval mode, retention period,
-or webhook without losing imported records or local exclusions.
+The **Settings** action in the imported list's header can later change its local
+name, approval mode, retention period, or webhook without losing imported records
+or local exclusions. **Synchronize now** is also in that header.
 It can also replace an imported partner key after validating the new key against
 the feed; leaving the field blank keeps the existing key.
-Local flags and a maximum VIP duration in days can also be configured there.
+Local flags and a maximum VIP duration can also be configured there using the
+same flag picker and duration choices as an owned list.
 The local duration is counted from first import and caps any later partner
 expiration; changing it affects existing records on their next sync.
 
