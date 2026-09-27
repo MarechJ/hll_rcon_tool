@@ -1127,46 +1127,46 @@ export default function VipListsPage() {
                 <Stack
                   spacing={1.5}
                 >
-                  <Stack direction="row" alignItems="center" flexWrap="wrap" gap={1}>
-                  <Box sx={{ flexGrow: 1, minWidth: 180 }}>
+                  <Box sx={{ minWidth: 0 }}>
                     <Typography variant="h5">
                       {`${selectedList.name} (ID ${selectedList.id})`}
                     </Typography>
                     <Typography color="text.secondary">
                       {formatServers(selectedList.servers)}
                     </Typography>
-                  </Box>
-                  {selectedListIsDefault && (
+                    <Stack direction="row" alignItems="center" flexWrap="wrap" gap={1} sx={{ mt: 1 }}>
+                    {selectedListIsDefault && (
+                      <Chip
+                        icon={<StarIcon />}
+                        label={`Default for ${serverLabel}`}
+                        color="warning"
+                        variant="outlined"
+                      />
+                    )}
+                    {selectedList.has_active_shares && (
+                      <Chip icon={<ShareIcon />} label="Shared" color="info" variant="outlined" />
+                    )}
                     <Chip
-                      icon={<StarIcon />}
-                      label={`Default for ${serverLabel}`}
-                      color="warning"
+                      label={selectedList.expired_retention_days === null
+                        ? "Keep expired records"
+                        : selectedList.expired_retention_days === 0
+                        ? "Delete expired automatically"
+                        : `Delete expired after ${selectedList.expired_retention_days} day(s)`}
                       variant="outlined"
                     />
-                  )}
-                  {selectedList.has_active_shares && (
-                    <Chip icon={<ShareIcon />} label="Shared" color="info" variant="outlined" />
-                  )}
-                  <Chip
-                    label={selectedList.expired_retention_days === null
-                      ? "Keep expired records"
-                      : selectedList.expired_retention_days === 0
-                      ? "Delete expired automatically"
-                      : `Delete expired after ${selectedList.expired_retention_days} day(s)`}
-                    variant="outlined"
-                  />
-                  <Chip
-                    label={selectedList.default_expiration_seconds === null
-                      ? "New VIPs: no default duration"
-                      : selectedList.default_expiration_seconds === 0
-                      ? "New VIPs: never expire"
-                      : `New VIPs: ${formatDuration(selectedList.default_expiration_seconds)}`}
-                    variant="outlined"
-                  />
-                  {(selectedList.flags ?? []).map((flag) => (
-                    <Chip key={flag} label={`Flag: ${flag}`} variant="outlined" />
-                  ))}
-                  </Stack>
+                    <Chip
+                      label={selectedList.default_expiration_seconds === null
+                        ? "New VIPs: no default duration"
+                        : selectedList.default_expiration_seconds === 0
+                        ? "New VIPs: never expire"
+                        : `New VIPs: ${formatDuration(selectedList.default_expiration_seconds)}`}
+                      variant="outlined"
+                    />
+                    {(selectedList.flags ?? []).map((flag) => (
+                      <Chip key={flag} label={`Flag: ${flag}`} variant="outlined" />
+                    ))}
+                    </Stack>
+                  </Box>
                   <Stack direction="row" alignItems="center" justifyContent="flex-end" flexWrap="wrap" gap={1}>
                   {canChangeRecords && !selectedList.is_imported && (
                     <Button
