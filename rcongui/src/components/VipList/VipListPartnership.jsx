@@ -195,7 +195,7 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
         <DialogContentText>Changes are stored in the CRCON database. Synchronize the partner feed to update its records.</DialogContentText>
         <TextField required autoFocus label="List name" value={settings.name} onChange={(e) => setSettings({ ...settings, name: e.target.value })} disabled={update.isPending} inputProps={{ maxLength: 255 }} />
         <FormControlLabel control={<Checkbox checked={settings.approve_new} onChange={(e) => setSettings({ ...settings, approve_new: e.target.checked })} />} label="Require approval for new entries" />
-        <FormControl fullWidth disabled={update.isPending}>
+        <FormControl fullWidth disabled={update.isPending || settings.max_duration_seconds === 0}>
           <InputLabel id="partner-list-expired-retention-label">Expired records</InputLabel>
           <Select labelId="partner-list-expired-retention-label" label="Expired records" value={settings.retention_days ?? "keep"} onChange={(e) => setSettings({ ...settings, retention_days: e.target.value === "keep" ? null : Number(e.target.value) })}>
             <MenuItem value="keep">Keep for manual review</MenuItem>
@@ -206,10 +206,10 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
             {settings.retention_days !== null && ![0, 1, 7, 30].includes(settings.retention_days) && <MenuItem value={settings.retention_days}>Delete after {settings.retention_days} days</MenuItem>}
           </Select>
         </FormControl>
-        <Typography variant="body2" color="text.secondary">Automatic cleanup runs periodically. Existing expired records are also removed when their retention time has passed.</Typography>
+        <Typography variant="body2" color="text.secondary">{settings.max_duration_seconds === 0 ? "Automatic deletion is disabled for this list. Removed partner entries stay available for manual review." : "Automatic cleanup runs periodically. Existing expired records are also removed when their retention time has passed."}</Typography>
         <FormControl fullWidth disabled={update.isPending}>
           <InputLabel id="partner-list-duration-label">Imported VIP expiration</InputLabel>
-          <Select labelId="partner-list-duration-label" label="Imported VIP expiration" value={settings.max_duration_seconds ?? "none"} onChange={(e) => setSettings({ ...settings, max_duration_seconds: e.target.value === "none" ? null : Number(e.target.value) })}>
+          <Select labelId="partner-list-duration-label" label="Imported VIP expiration" value={settings.max_duration_seconds ?? "none"} onChange={(e) => setSettings({ ...settings, max_duration_seconds: e.target.value === "none" ? null : Number(e.target.value), retention_days: Number(e.target.value) === 0 ? null : settings.retention_days })}>
             <MenuItem value="none">Use partner expiration</MenuItem>
             <MenuItem value={0}>Never expire while shared</MenuItem>
             <MenuItem value={7200}>2 hours</MenuItem>
@@ -220,7 +220,7 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
             {settings.max_duration_seconds != null && ![0, 7200, 86400, 604800, 2592000, 31536000].includes(settings.max_duration_seconds) && <MenuItem value={settings.max_duration_seconds}>Current: {settings.max_duration_seconds} seconds</MenuItem>}
           </Select>
         </FormControl>
-        <Typography variant="body2" color="text.secondary">Use partner expiration keeps the external date. Never expire ignores that date while the partner shares the player. Other durations are local maximums from first import; the earlier partner expiration still applies. Partner removal deactivates the entry after synchronization.</Typography>
+        <Typography variant="body2" color="text.secondary">Use partner expiration keeps the external date. Never expire ignores that date while the partner shares the player and disables automatic deletion. Other durations are local maximums from first import; the earlier partner expiration still applies. Partner removal still deactivates the entry after synchronization.</Typography>
         <TextField label="New partner share key (optional)" type="password" autoComplete="new-password" value={settings.token} onChange={(e) => setSettings({ ...settings, token: e.target.value })} helperText="Leave blank to keep the current key. A new key is checked against the partner feed before saving." />
         <Stack spacing={1}>
           <Typography variant="subtitle1">Player flags</Typography>

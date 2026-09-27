@@ -207,7 +207,7 @@ def test_failed_partner_fetch_suspends_and_recovery_restores_records(monkeypatch
         update_import_settings(
             imported["id"],
             approve_new=False,
-            retention_days=None,
+            retention_days=7,
             max_duration_seconds=0,
         )
         sync_import(imported["id"])
@@ -216,6 +216,19 @@ def test_failed_partner_fetch_suspends_and_recovery_restores_records(monkeypatch
                 sess, feed[0]["player_id"], imported["id"]
             )
             assert record.expires_at is None and record.active
+            assert record.vip_list.expired_retention_days is None
+            # Existing databases may still contain an old cleanup policy.
+            record.vip_list.expired_retention_days = 0
+            record.partner_deactivated_at = datetime.now(UTC)
+            sess.commit()
+        from rcon.vip import cleanup_expired_vip_records
+
+        cleanup_expired_vip_records(now=datetime.now(UTC) + timedelta(days=1))
+        with enter_session() as sess:
+            assert (
+                get_player_vip_list_record(sess, feed[0]["player_id"], imported["id"])
+                is not None
+            )
         update_import_settings(
             imported["id"],
             approve_new=False,

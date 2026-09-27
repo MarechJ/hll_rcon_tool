@@ -49,7 +49,9 @@ while shared** overrides the partner expiration while the entry remains in the
 feed. A positive
 local duration is counted from first import and caps any later partner
 expiration. Changing this setting affects existing records on their next sync;
-partner removal still deactivates an imported record.
+partner removal still deactivates an imported record. Never expire also disables
+automatic deletion for that import, including entries removed by the partner;
+those remain for manual review or deletion.
 
 An import starts empty. Select the imported list and click **Synchronize now** to
 load it. By default, newly discovered players await local approval. The alternative

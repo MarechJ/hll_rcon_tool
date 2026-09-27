@@ -305,7 +305,11 @@ def update_import_settings(
         if name is not None:
             source.vip_list.name = name.strip()
         source.approve_new = approve_new
-        source.vip_list.expired_retention_days = retention_days
+        # An explicit no-expiry override also disables all automatic cleanup,
+        # including cleanup of records removed from the partner feed.
+        source.vip_list.expired_retention_days = (
+            None if max_duration_seconds == 0 else retention_days
+        )
         source.vip_list.default_expiration_seconds = max_duration_seconds
         if flags is not None:
             source.vip_list.flags = flags

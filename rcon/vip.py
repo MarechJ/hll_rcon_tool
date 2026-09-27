@@ -348,6 +348,11 @@ def cleanup_expired_vip_records(now: datetime | None = None) -> int:
             select(VipList).where(VipList.expired_retention_days.is_not(None))
         ).all()
         for vip_list in lists:
+            if (
+                vip_list.partner_import is not None
+                and vip_list.default_expiration_seconds == 0
+            ):
+                continue
             cutoff = now - timedelta(days=vip_list.expired_retention_days)
             result = sess.execute(
                 delete(VipListRecord).where(
