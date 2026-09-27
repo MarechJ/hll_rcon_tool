@@ -93,6 +93,27 @@ class VipSyncCommandHandler:
         try:
             if trigger in ("startup", "periodic"):
                 try:
+                    from rcon.vip_import import get_imports, sync_import
+
+                    for source in get_imports():
+                        try:
+                            sync_import(source["vip_list_id"], force=False)
+                        except Exception:
+                            logger.exception(
+                                "Partner VIP list %s synchronization failed; existing records kept",
+                                source["vip_list_id"],
+                            )
+                            try:
+                                from rcon.vip_import import notify_import_error
+
+                                notify_import_error(source["vip_list_id"])
+                            except Exception:
+                                logger.exception(
+                                    "Partner VIP error notification failed"
+                                )
+                except Exception:
+                    logger.exception("Unable to enumerate partner VIP lists")
+                try:
                     from rcon.vip import cleanup_expired_vip_records
 
                     cleanup_expired_vip_records()

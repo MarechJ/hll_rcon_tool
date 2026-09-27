@@ -85,6 +85,13 @@ def get_vip_lists(sess: Session) -> Sequence[VipList]:
     return sess.scalars(select(VipList).order_by(VipList.id)).all()
 
 
+def _ensure_editable(vip_list: VipList) -> None:
+    if vip_list.partner_import is not None:
+        raise HLLCommandFailedError(
+            "Imported VIP lists are read-only; use partner approval or exclusion actions"
+        )
+
+
 def get_vip_lists_for_server(
     sess: Session,
     server_number: int | str,
@@ -124,6 +131,7 @@ def set_default_vip_list(
             strict=True,
         )
         assert vip_list is not None
+        _ensure_editable(vip_list)
 
         server_numbers = vip_list.get_server_numbers()
         if server_numbers is not None and server_number not in server_numbers:
@@ -295,6 +303,7 @@ def apply_vip_list_expiration(
     with enter_session() as sess:
         vip_list = get_vip_list(sess, vip_list_id, strict=True)
         assert vip_list is not None
+        _ensure_editable(vip_list)
         if vip_list.default_expiration_seconds != expected_expiration_seconds:
             raise HLLCommandFailedError("VIP list duration changed; review it again")
         if expected_expiration_seconds is None:
@@ -343,8 +352,18 @@ def cleanup_expired_vip_records(now: datetime | None = None) -> int:
             result = sess.execute(
                 delete(VipListRecord).where(
                     VipListRecord.vip_list_id == vip_list.id,
-                    VipListRecord.expires_at.is_not(None),
-                    VipListRecord.expires_at <= cutoff,
+                    VipListRecord.partner_excluded.is_(False),
+                    or_(
+                        (
+                            VipListRecord.expires_at.is_not(None)
+                            & (VipListRecord.expires_at <= cutoff)
+                        ),
+                        (
+                            VipListRecord.partner_deactivated_at.is_not(None)
+                            & (VipListRecord.partner_deactivated_at <= cutoff)
+                            & VipListRecord.partner_excluded.is_(False)
+                        ),
+                    ),
                 )
             )
             deleted += result.rowcount or 0
@@ -412,6 +431,7 @@ def edit_vip_list(
             strict=True,
         )
         assert vip_list is not None
+        _ensure_editable(vip_list)
         old_server_mask = vip_list.servers
 
         if name is not MISSING:
@@ -629,6 +649,7 @@ def add_record_to_vip_list(
             strict=True,
         )
         assert vip_list is not None
+        _ensure_editable(vip_list)
 
         if expires_at is MISSING:
             expires_at = _list_expiration(vip_list)
@@ -693,6 +714,7 @@ def upsert_vip_list_record(
             strict=True,
         )
         assert vip_list is not None
+        _ensure_editable(vip_list)
 
         if expires_at is MISSING:
             expires_at = _list_expiration(vip_list)
@@ -757,6 +779,7 @@ def edit_vip_list_record(
     with enter_session() as sess:
         record = get_vip_record(sess, record_id=record_id, strict=True)
         assert record is not None
+        _ensure_editable(record.vip_list)
         old_server_mask = record.vip_list.servers
 
         if vip_list_id is not MISSING and vip_list_id != record.vip_list_id:
@@ -766,6 +789,7 @@ def edit_vip_list_record(
                 strict=True,
             )
             assert target_list is not None
+            _ensure_editable(target_list)
 
             duplicate = get_player_vip_list_record(
                 sess,
@@ -873,6 +897,8 @@ def edit_vip_list_records(
 
     with enter_session() as sess:
         records = _get_vip_records_for_bulk_operation(sess, record_ids)
+        for record in records:
+            _ensure_editable(record.vip_list)
         old_server_masks = [record.vip_list.servers for record in records]
         normalized_admin_name = admin_name.strip() or "CRCON"
 
@@ -884,6 +910,7 @@ def edit_vip_list_records(
                 strict=True,
             )
             assert target_list is not None
+            _ensure_editable(target_list)
 
             selected_record_ids = {record.id for record in records}
             selected_player_ids = {record.player_id_id for record in records}
@@ -948,6 +975,13 @@ def delete_vip_list_records(record_ids: Sequence[int]) -> int:
     """Atomically delete multiple VIP list records."""
     with enter_session() as sess:
         records = _get_vip_records_for_bulk_operation(sess, record_ids)
+        for record in records:
+            if record.vip_list.partner_import is not None and (
+                record.active or record.partner_present or record.partner_excluded
+            ):
+                raise HLLCommandFailedError(
+                    "Only partner-removed VIP entries without a local exclusion may be deleted"
+                )
         server_mask = _merge_vip_server_masks(
             *(record.vip_list.servers for record in records)
         )
@@ -976,6 +1010,12 @@ def delete_vip_list_record(record_id: int) -> bool:
         )
         if record is None:
             return False
+        if record.vip_list.partner_import is not None and (
+            record.active or record.partner_present or record.partner_excluded
+        ):
+            raise HLLCommandFailedError(
+                "Only partner-removed VIP entries without a local exclusion may be deleted"
+            )
 
         server_mask = record.vip_list.servers
         sess.delete(record)
