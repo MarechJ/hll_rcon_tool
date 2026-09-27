@@ -128,12 +128,14 @@ export function ActionMenu({
         <MenuItem
           key={`vip-record-${record.id}`}
           dense
+          disabled={!vipLists.some((list) => list.id === record.vip_list_id && !list.is_imported)}
           onClick={() => {
             setEditingVipRecord(record);
             handleClose();
           }}
         >
-          Edit VIP record: {vipLists.find((list) => list.id === record.vip_list_id)?.name ?? `list #${record.vip_list_id}`}
+          {vipLists.find((list) => list.id === record.vip_list_id)?.is_imported ? "Partner VIP (read-only): " : "Edit VIP record: "}
+          {vipLists.find((list) => list.id === record.vip_list_id)?.name ?? `list #${record.vip_list_id}`}
         </MenuItem>
       ))}
       {filteredActionList.filter((action) =>
