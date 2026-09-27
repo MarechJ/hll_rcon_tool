@@ -32,18 +32,6 @@ import { VipListPartnership } from "@/components/VipList/VipListPartnership";
 
 const EmojiPicker = lazy(() => import("@emoji-mart/react"));
 
-const SYNC_METHODS = {
-  ignore_unknown: "Ignore unknown VIPs",
-  remove_unknown: "Remove unknown VIPs",
-};
-
-const SYNC_DESCRIPTIONS = {
-  ignore_unknown:
-    "VIPs which exist on the gameserver but not in this list are preserved.",
-  remove_unknown:
-    "During synchronization, VIPs not covered by a configured list may be removed from the gameserver.",
-};
-
 export default function VipListDialog({
   open,
   initialValues,
@@ -60,7 +48,6 @@ export default function VipListDialog({
 }) {
   const theme = useTheme();
   const [name, setName] = useState("");
-  const [sync, setSync] = useState("ignore_unknown");
   const [expiredRetentionDays, setExpiredRetentionDays] = useState(null);
   const [defaultExpirationSeconds, setDefaultExpirationSeconds] = useState(null);
   const [flags, setFlags] = useState([]);
@@ -75,7 +62,6 @@ export default function VipListDialog({
     const servers = initialValues?.servers ?? null;
 
     setName(initialValues?.name ?? "");
-    setSync(initialValues?.sync ?? "ignore_unknown");
     setExpiredRetentionDays(initialValues?.expiredRetentionDays ?? null);
     setDefaultExpirationSeconds(initialValues?.defaultExpirationSeconds ?? null);
     setFlags(initialValues?.flags ?? []);
@@ -152,7 +138,6 @@ export default function VipListDialog({
     try {
       await onSubmit({
         name: name.trim(),
-        sync,
         expiredRetentionDays,
         defaultExpirationSeconds,
         flags,
@@ -189,28 +174,6 @@ export default function VipListDialog({
             disabled={loading}
             inputProps={{ maxLength: 255 }}
           />
-
-          <FormControl required disabled={loading}>
-            <InputLabel id="vip-list-sync-label">
-              Synchronization mode
-            </InputLabel>
-            <Select
-              labelId="vip-list-sync-label"
-              label="Synchronization mode"
-              value={sync}
-              onChange={(event) => setSync(event.target.value)}
-            >
-              {Object.entries(SYNC_METHODS).map(([value, label]) => (
-                <MenuItem key={value} value={value}>
-                  {label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <Alert severity={sync === "remove_unknown" ? "warning" : "info"}>
-            {SYNC_DESCRIPTIONS[sync]}
-          </Alert>
 
           <FormControl fullWidth disabled={loading}>
             <InputLabel id="vip-list-default-duration-label">Default VIP duration</InputLabel>

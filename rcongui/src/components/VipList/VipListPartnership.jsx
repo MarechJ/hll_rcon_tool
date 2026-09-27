@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -6,7 +6,6 @@ import {
   DialogContentText, DialogTitle, FormControl, FormControlLabel, InputLabel,
   MenuItem, Paper, Select, Skeleton, Stack, Switch, TextField, Typography, useTheme,
 } from "@mui/material";
-import EditIcon from "@mui/icons-material/Edit";
 import SyncIcon from "@mui/icons-material/Sync";
 import emojiData from "@emoji-mart/data/sets/15/twitter.json";
 import Emoji from "@/components/shared/Emoji";
@@ -57,7 +56,7 @@ export function ImportPartnerListButton({ onCreated, serverNumber }) {
   </>;
 }
 
-export function VipListPartnership({ list, canManageShares, canManageImports, onSynced, actionsContainer, servers = {} }) {
+export function VipListPartnership({ list, canManageShares, canManageImports, onSynced, actionsContainer, settingsRequest, servers = {} }) {
   const queryClient = useQueryClient();
   const theme = useTheme();
   const [name, setName] = useState("");
@@ -139,9 +138,11 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
     setShowFlagPicker(false);
     setSettingsOpen(true);
   };
+  useEffect(() => {
+    if (settingsRequest) openSettings();
+  }, [settingsRequest]);
   const importActions = <>
     <Button startIcon={<SyncIcon />} onClick={() => sync.mutate()} disabled={sync.isPending}>Synchronize now</Button>
-    <Button startIcon={<EditIcon />} onClick={openSettings}>Settings</Button>
   </>;
 
   if (list.is_imported && !canManageImports) return <Alert severity="info">This partner list is read-only.</Alert>;

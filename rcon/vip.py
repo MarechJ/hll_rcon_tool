@@ -18,6 +18,7 @@ from rcon.models import (
     VipList,
     VipListDefault,
     VipListRecord,
+    VipServerSyncConfig,
     enter_session,
 )
 from rcon.player_history import _get_set_player
@@ -104,6 +105,29 @@ def get_vip_lists_for_server(
         for vip_list in get_vip_lists(sess)
         if vip_list.servers is None or server_number in vip_list.get_server_numbers()
     ]
+
+
+def get_server_vip_sync_mode(
+    sess: Session, server_number: int | str
+) -> VipListSyncMethod:
+    server_number = _normalize_server_number(server_number)
+    config = sess.get(VipServerSyncConfig, server_number)
+    return config.sync if config is not None else VipListSyncMethod.IGNORE_UNKNOWN
+
+
+def set_server_vip_sync_mode(
+    server_number: int | str, sync: VipListSyncMethod | str
+) -> dict:
+    server_number = _normalize_server_number(server_number)
+    sync = VipListSyncMethod(sync)
+    with enter_session() as sess:
+        config = sess.get(VipServerSyncConfig, server_number)
+        if config is None:
+            config = VipServerSyncConfig(server_number=server_number, sync=sync)
+            sess.add(config)
+        else:
+            config.sync = sync
+    return {"server_number": server_number, "sync": sync.value}
 
 
 def get_default_vip_list(

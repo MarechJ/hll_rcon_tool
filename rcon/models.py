@@ -1409,6 +1409,17 @@ class VipListDefault(Base):
     vip_list: Mapped[VipList] = relationship(back_populates="defaults")
 
 
+class VipServerSyncConfig(Base):
+    __tablename__ = "vip_server_sync_config"
+
+    server_number: Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
+    sync: Mapped[VipListSyncMethod] = mapped_column(
+        Enum(VipListSyncMethod, name="viplistsyncmethod", create_type=False),
+        nullable=False,
+        default=VipListSyncMethod.IGNORE_UNKNOWN,
+    )
+
+
 class VipListRecord(Base):
     __tablename__ = "vip_list_record"
     __table_args__ = (

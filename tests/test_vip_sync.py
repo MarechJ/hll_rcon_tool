@@ -32,12 +32,12 @@ def record(
 def plan(
     gameserver_vips,
     records,
-    sync_methods=(VipListSyncMethod.IGNORE_UNKNOWN,),
+    sync_mode=VipListSyncMethod.IGNORE_UNKNOWN,
 ):
     return build_vip_sync_plan(
         gameserver_vips=gameserver_vips,
         records=records,
-        sync_methods=sync_methods,
+        sync_mode=sync_mode,
         timestamp=NOW,
     )
 
@@ -87,45 +87,28 @@ def test_ignore_unknown_keeps_unknown_gameserver_vip():
     result = plan(
         {"unknown": "External VIP"},
         [],
-        (VipListSyncMethod.IGNORE_UNKNOWN,),
+        VipListSyncMethod.IGNORE_UNKNOWN,
     )
 
     assert result.to_remove == frozenset()
     assert result.unknown == frozenset({"unknown"})
 
 
-def test_any_ignore_unknown_list_prevents_unknown_removal():
+def test_server_mode_controls_unknown_removal_with_multiple_lists():
     result = plan(
         {"unknown": "External VIP"},
-        [],
-        (
-            VipListSyncMethod.REMOVE_UNKNOWN,
-            VipListSyncMethod.IGNORE_UNKNOWN,
-        ),
-    )
-
-    assert result.to_remove == frozenset()
-    assert result.unknown == frozenset({"unknown"})
-
-
-def test_all_remove_unknown_lists_remove_unknown_vip():
-    result = plan(
-        {"unknown": "External VIP"},
-        [],
-        (
-            VipListSyncMethod.REMOVE_UNKNOWN,
-            VipListSyncMethod.REMOVE_UNKNOWN,
-        ),
+        [record("managed")],
+        VipListSyncMethod.REMOVE_UNKNOWN,
     )
 
     assert result.to_remove == frozenset({"unknown"})
 
 
-def test_no_applicable_lists_never_removes_unknown_vip():
+def test_default_server_mode_keeps_unknown_without_lists():
     result = plan(
         {"unknown": "External VIP"},
         [],
-        (),
+        VipListSyncMethod.IGNORE_UNKNOWN,
     )
 
     assert result.to_remove == frozenset()

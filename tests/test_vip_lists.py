@@ -25,12 +25,39 @@ from rcon.vip import (
     get_effective_vip_records,
     get_inactive_vip_records,
     get_player_vip_list_record,
+    get_server_vip_sync_mode,
     get_vip_list,
     get_vip_lists_for_server,
     get_vip_record,
     set_default_vip_list,
+    set_server_vip_sync_mode,
     upsert_default_vip_record,
 )
+
+
+def test_gameserver_sync_policy_is_independent_of_list_settings(vip_list_ids):
+    server_number = 32
+    listing = create_vip_list(
+        f"Server policy {uuid4().hex}",
+        sync=VipListSyncMethod.IGNORE_UNKNOWN,
+        servers=[server_number],
+    )
+    vip_list_ids.append(listing["id"])
+    with enter_session() as sess:
+        previous = get_server_vip_sync_mode(sess, server_number)
+    try:
+        assert set_server_vip_sync_mode(server_number, "remove_unknown") == {
+            "server_number": server_number,
+            "sync": "remove_unknown",
+        }
+        with enter_session() as sess:
+            assert get_server_vip_sync_mode(sess, server_number) == (
+                VipListSyncMethod.REMOVE_UNKNOWN
+            )
+        with pytest.raises(ValueError):
+            set_server_vip_sync_mode(server_number, "invalid")
+    finally:
+        set_server_vip_sync_mode(server_number, previous)
 
 
 def test_list_default_duration_requires_explicit_apply_to_existing(vip_list_ids):

@@ -768,6 +768,28 @@ class RconAPI(Rcon):
         )
         return _serialize_vip_sync_result(result)
 
+    def get_server_vip_sync_mode(
+        self, server_number: int | None = None
+    ) -> dict[str, Any]:
+        """Get the unknown VIP policy for one gameserver."""
+        if server_number is None:
+            server_number = server_info_for_rcon(self).number
+        if server_number is None:
+            raise ValueError("Server number is not configured")
+        with enter_session() as sess:
+            sync = vip.get_server_vip_sync_mode(sess, server_number)
+        return {"server_number": int(server_number), "sync": sync.value}
+
+    def set_server_vip_sync_mode(
+        self, sync: VipListSyncMethod, server_number: int | None = None
+    ) -> dict[str, Any]:
+        """Set the unknown VIP policy for one gameserver."""
+        if server_number is None:
+            server_number = server_info_for_rcon(self).number
+        if server_number is None:
+            raise ValueError("Server number is not configured")
+        return vip.set_server_vip_sync_mode(server_number, sync)
+
     def synchronize_vip_lists(
         self,
         server_number: int | None = None,
