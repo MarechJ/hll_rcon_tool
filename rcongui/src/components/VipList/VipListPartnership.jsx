@@ -33,8 +33,8 @@ export function ImportPartnerListButton({ onCreated, serverNumber }) {
         <Stack spacing={2} sx={{ pt: 1 }}>
           <TextField label="Local list name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
           <TextField label="Partner feed URL" value={form.source_url} onChange={(e) => setForm({ ...form, source_url: e.target.value })} helperText="HTTPS URL ending in /api/get_shared_vip_list" required />
-          <TextField label="Partner share key" type="password" value={form.token} onChange={(e) => setForm({ ...form, token: e.target.value })} required />
-          <TextField label="Discord webhook URL (optional)" type="password" value={form.webhook_url} onChange={(e) => setForm({ ...form, webhook_url: e.target.value })} />
+          <TextField label="Partner share key" type="password" autoComplete="new-password" value={form.token} onChange={(e) => setForm({ ...form, token: e.target.value })} required />
+          <TextField label="Discord webhook URL (optional)" type="url" autoComplete="off" value={form.webhook_url} onChange={(e) => setForm({ ...form, webhook_url: e.target.value })} />
           <TextField label="Delete inactive entries after days (optional)" type="number" value={form.retention_days ?? ""} onChange={(e) => setForm({ ...form, retention_days: e.target.value === "" ? null : Number(e.target.value) })} inputProps={{ min: 0, max: 3650 }} />
           <FormControlLabel control={<Checkbox checked={form.approve_new} onChange={(e) => setForm({ ...form, approve_new: e.target.checked })} />} label="Require approval for new partner VIPs" />
           <Alert severity="info">Partner records are read-only. Failed updates keep the current entries.</Alert>
@@ -54,6 +54,7 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
   const [name, setName] = useState("");
   const [shownToken, setShownToken] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [changeWebhook, setChangeWebhook] = useState(false);
   const [settings, setSettings] = useState({ approve_new: true, retention_days: null, webhook_url: "", clear_webhook: false });
   const shares = useQuery({
     queryKey: ["vip-list-shares", list.id],
@@ -116,6 +117,7 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
         <Button onClick={() => sync.mutate()} disabled={sync.isPending}>Synchronize now</Button>
         <Button onClick={() => {
           setSettings({ approve_new: source?.approve_new ?? true, retention_days: list.expired_retention_days, webhook_url: "", clear_webhook: false });
+          setChangeWebhook(false);
           setSettingsOpen(true);
         }}>Settings</Button>
       </Box>
@@ -141,12 +143,13 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
       <DialogContent><Stack spacing={2} sx={{ pt: 1 }}>
         <FormControlLabel control={<Checkbox checked={settings.approve_new} onChange={(e) => setSettings({ ...settings, approve_new: e.target.checked })} />} label="Require approval for new entries" />
         <TextField label="Delete inactive entries after days" type="number" value={settings.retention_days ?? ""} onChange={(e) => setSettings({ ...settings, retention_days: e.target.value === "" ? null : Number(e.target.value) })} inputProps={{ min: 0, max: 3650 }} />
-        <TextField label="New Discord webhook URL (optional)" type="password" value={settings.webhook_url} onChange={(e) => setSettings({ ...settings, webhook_url: e.target.value })} helperText="Leave blank to keep the existing webhook" />
-        {source?.webhook_configured && <FormControlLabel control={<Checkbox checked={settings.clear_webhook} onChange={(e) => setSettings({ ...settings, clear_webhook: e.target.checked })} />} label="Remove existing webhook" />}
+        <FormControlLabel control={<Checkbox checked={changeWebhook} disabled={settings.clear_webhook} onChange={(e) => setChangeWebhook(e.target.checked)} />} label="Set new Discord webhook URL" />
+        {changeWebhook && <TextField label="New Discord webhook URL" type="url" autoComplete="off" value={settings.webhook_url} onChange={(e) => setSettings({ ...settings, webhook_url: e.target.value })} required />}
+        {source?.webhook_configured && <FormControlLabel control={<Checkbox checked={settings.clear_webhook} disabled={changeWebhook} onChange={(e) => setSettings({ ...settings, clear_webhook: e.target.checked })} />} label="Remove existing webhook" />}
       </Stack></DialogContent>
       <DialogActions>
         <Button onClick={() => setSettingsOpen(false)} disabled={update.isPending}>Cancel</Button>
-        <Button onClick={() => update.mutate(settings)} disabled={update.isPending}>Save</Button>
+        <Button onClick={() => update.mutate({ ...settings, webhook_url: changeWebhook ? settings.webhook_url : undefined })} disabled={update.isPending || (changeWebhook && !settings.webhook_url.trim())}>Save</Button>
       </DialogActions>
     </Dialog>
   </>;
