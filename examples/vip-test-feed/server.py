@@ -4,7 +4,7 @@ import argparse
 import hmac
 import json
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -14,21 +14,21 @@ PLAYER_ID = re.compile(r"^(?:\d{17}|[0-9a-fA-F]{32})$")
 
 def build_feed(config):
     if not isinstance(config, dict) or not isinstance(config.get("players"), list):
-        raise ValueError("players must be a list")
+        raise TypeError("players must be a list")
     if not isinstance(config.get("list_name"), str):
-        raise ValueError("list_name must be a string")
+        raise TypeError("list_name must be a string")
     if not isinstance(config.get("sharing_enabled"), bool):
-        raise ValueError("sharing_enabled must be a boolean")
+        raise TypeError("sharing_enabled must be a boolean")
     key = config.get("share_key")
     if not isinstance(key, str) or len(key) < 32:
         raise ValueError("share_key must have at least 32 characters")
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     seen = set()
     records = []
     for player in config["players"]:
         if not isinstance(player, dict):
-            raise ValueError("each player must be an object")
+            raise TypeError("each player must be an object")
         player_id = player.get("player_id")
         if not isinstance(player_id, str) or not PLAYER_ID.fullmatch(player_id):
             raise ValueError("invalid player_id")
@@ -36,25 +36,41 @@ def build_feed(config):
             raise ValueError("duplicate player_id")
         seen.add(player_id)
         if not isinstance(player.get("enabled"), bool):
-            raise ValueError("enabled must be a boolean")
+            raise TypeError("enabled must be a boolean")
         description = player.get("description")
-        if description is not None and (not isinstance(description, str) or len(description) > 255):
+        if description is not None and (
+            not isinstance(description, str) or len(description) > 255
+        ):
             raise ValueError("invalid description")
         expiry = player.get("expires_at")
         if expiry is not None:
             if not isinstance(expiry, str):
                 raise ValueError("expires_at must be an ISO 8601 string or null")
-            parsed = datetime.fromisoformat(expiry.replace("Z", "+00:00"))
+            parsed = datetime.fromisoformat(expiry)
             if parsed.tzinfo is None:
                 raise ValueError("expires_at needs a timezone")
             if parsed <= now:
                 continue
         if player["enabled"]:
-            records.append({"player_id": player_id, "description": description, "expires_at": expiry})
-    return key, config["sharing_enabled"], {
-        "failed": False,
-        "result": {"schema_version": 1, "list": {"name": config["list_name"]}, "records": records},
-    }
+            records.append(
+                {
+                    "player_id": player_id,
+                    "description": description,
+                    "expires_at": expiry,
+                }
+            )
+    return (
+        key,
+        config["sharing_enabled"],
+        {
+            "failed": False,
+            "result": {
+                "schema_version": 1,
+                "list": {"name": config["list_name"]},
+                "records": records,
+            },
+        },
+    )
 
 
 def handler_for(config_path):
@@ -64,13 +80,19 @@ def handler_for(config_path):
                 self.respond(404, {"error": "Not found"})
                 return
             try:
-                key, sharing_enabled, feed = build_feed(json.loads(config_path.read_text()))
+                key, sharing_enabled, feed = build_feed(
+                    json.loads(config_path.read_text())
+                )
             except (OSError, ValueError, TypeError) as exc:
                 self.log_error("Invalid test feed configuration: %s", exc)
                 self.respond(503, {"error": "Invalid feed configuration"})
                 return
             scheme, _, token = self.headers.get("Authorization", "").partition(" ")
-            if not sharing_enabled or scheme.lower() != "bearer" or not hmac.compare_digest(token, key):
+            if (
+                not sharing_enabled
+                or scheme.lower() != "bearer"
+                or not hmac.compare_digest(token, key)
+            ):
                 self.respond(401, {"error": "Invalid share credential"})
                 return
             self.respond(200, feed)

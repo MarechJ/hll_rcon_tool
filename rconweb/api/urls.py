@@ -14,8 +14,8 @@ from . import (
     scoreboards,
     services,
     user_settings,
-    vip_sharing,
     views,
+    vip_sharing,
     vips,
 )
 from .auth import api_response
@@ -208,7 +208,10 @@ endpoints: list[tuple[str, Callable]] = [
     ("get_vip_list_imports", vip_sharing.get_vip_list_imports),
     ("edit_vip_list_import", vip_sharing.edit_vip_list_import),
     ("synchronize_vip_list_import", vip_sharing.synchronize_vip_list_import),
-    ("set_vip_list_import_record_policy", vip_sharing.set_vip_list_import_record_policy),
+    (
+        "set_vip_list_import_record_policy",
+        vip_sharing.set_vip_list_import_record_policy,
+    ),
 ] + [(name, func) for name, func in views.commands]
 
 # Expose endpoints though Django
