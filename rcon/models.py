@@ -1368,6 +1368,7 @@ class VipListShare(Base):
     )
     expires_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
     revoked_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
+    revoked_by: Mapped[str | None] = mapped_column(String(150))
     vip_list: Mapped[VipList] = relationship(back_populates="shares")
 
 

@@ -136,9 +136,17 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
         Copy this key now: <Box component="code" sx={{ overflowWrap: "anywhere" }}>{shownToken}</Box>
         <Typography variant="body2">Feed URL: {`${window.location.origin}/api/get_shared_vip_list`}</Typography>
       </Alert>}
-      {(shares.data ?? []).map((share) => <Stack key={share.id} direction="row" spacing={1} alignItems="center">
-        <Typography variant="body2">{share.name} {share.revoked_at ? "(revoked)" : ""}</Typography>
-        {!share.revoked_at && <Button type="button" size="small" color="warning" onClick={() => revoke.mutate(share.id)}>Revoke</Button>}
+      {(shares.data ?? []).map((share) => <Stack key={share.id} direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+        <Typography variant="body2">{share.name}</Typography>
+        {share.revoked_at ? (
+          <Typography variant="caption" color="text.secondary">
+            Revoked {new Date(share.revoked_at).toLocaleString()} by {share.revoked_by || "unknown (before tracking)"}
+          </Typography>
+        ) : share.expires_at && new Date(share.expires_at) <= new Date() ? (
+          <Typography variant="caption" color="text.secondary">Expired {new Date(share.expires_at).toLocaleString()}</Typography>
+        ) : (
+          <Button type="button" size="small" color="warning" onClick={() => revoke.mutate(share.id)}>Revoke</Button>
+        )}
       </Stack>)}
     </Stack>}
   </Paper>

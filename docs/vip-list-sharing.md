@@ -13,6 +13,8 @@ name under **Share this list**, and create a key. A share icon marks lists with
 active credentials. Copy the key immediately. It is stored as a SHA-256
 digest and cannot be recovered later. Give the partner the key and the feed URL
 shown in the UI. One partner's key can be revoked without affecting other shares.
+The share settings show when and by which CRCON user a key was revoked. Keys
+revoked before this tracking was added show an unknown user.
 
 The partner requests `GET /api/get_shared_vip_list` with
 `Authorization: Bearer <share key>`. This endpoint requires no CRCON account and

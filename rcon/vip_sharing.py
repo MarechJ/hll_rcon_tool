@@ -18,6 +18,7 @@ def _share_info(share: VipListShare) -> dict:
         "created_at": share.created_at,
         "expires_at": share.expires_at,
         "revoked_at": share.revoked_at,
+        "revoked_by": share.revoked_by,
     }
 
 
@@ -67,13 +68,14 @@ def list_shares(vip_list_id: int) -> list[dict]:
         ]
 
 
-def revoke_share(share_id: int) -> bool:
+def revoke_share(share_id: int, revoked_by: str | None = None) -> bool:
     with enter_session() as sess:
         share = sess.get(VipListShare, share_id)
         if share is None:
             raise ValueError("Share not found")
         if share.revoked_at is None:
             share.revoked_at = datetime.now(UTC)
+            share.revoked_by = revoked_by
     return True
 
 

@@ -67,7 +67,9 @@ def get_vip_list_shares(request: HttpRequest):
 @require_http_methods(["POST"])
 def revoke_vip_list_share(request: HttpRequest):
     try:
-        result = vip_sharing.revoke_share(int(_body(request)["share_id"]))
+        result = vip_sharing.revoke_share(
+            int(_body(request)["share_id"]), revoked_by=request.user.get_username()
+        )
     except (KeyError, TypeError, ValueError) as exc:
         return api_response(
             command="revoke_vip_list_share",
