@@ -1,50 +1,50 @@
-import { Stack, Typography, Chip, Divider } from "@mui/material";
+import { Chip, Stack, Typography } from "@mui/material";
+import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import WarningIcon from "@mui/icons-material/Warning";
+import { usePlayerVipRecords } from "@/hooks/usePlayerVipRecords";
+import { vipListQueryOptions } from "@/queries/vip-list-query";
 
-const VipList = ({ vip, otherVips }) => {
-  if (!vip && otherVips.length === 0) {
-    return <Typography>No VIP records found</Typography>;
-  }
+const VipList = ({ playerId, vip, otherVips = [] }) => {
+  const { records, canView, isPending, isError } = usePlayerVipRecords(playerId);
+  const { data: lists = [] } = useQuery({
+    ...vipListQueryOptions.lists(),
+    enabled: canView && records.length > 0,
+  });
+  const gameserverVips = [vip, ...otherVips].filter(Boolean);
 
   return (
     <Stack spacing={1}>
-      {vip && <VipEntry vip={vip} />}
-      {otherVips.length > 0 && (
-        <>
-          {vip && <Divider variant="middle" sx={{ my: 4 }} />}
-          {otherVips.map((vip) => (
-            <VipEntry key={vip.server_number} vip={vip} />
-          ))}
-        </>
+      {canView && isPending && <Typography>Loading VIP list records…</Typography>}
+      {canView && isError && <Typography>VIP list records unavailable</Typography>}
+      {records.map((record) => {
+        const status = record.is_expired ? "Expired" : record.is_active ? "Active" : "Inactive";
+        return (
+          <Stack key={record.id} direction="row" alignItems="center" flexWrap="wrap" gap={1}>
+            <Typography variant="body2">
+              {lists.find((list) => list.id === record.vip_list_id)?.name ?? `VIP list #${record.vip_list_id}`}
+            </Typography>
+            <Chip size="small" label={status} color={status === "Active" ? "success" : "default"} />
+            <Typography variant="body2" color="text.secondary">
+              {record.expires_at ? `Until ${dayjs(record.expires_at).format("LLL")}` : "Never expires"}
+            </Typography>
+          </Stack>
+        );
+      })}
+      {gameserverVips.map((entry, index) => (
+        <Stack key={`${entry.server_number}-${index}`} direction="row" alignItems="center" flexWrap="wrap" gap={1}>
+          <Typography variant="body2">Gameserver #{entry.server_number}</Typography>
+          <Chip size="small" label={entry.expiration && dayjs(entry.expiration).isBefore(dayjs()) ? "Expired" : "VIP"} color="primary" />
+          <Typography variant="body2" color="text.secondary">
+            {entry.expiration ? `Until ${dayjs(entry.expiration).format("LLL")}` : "Never expires"}
+          </Typography>
+        </Stack>
+      ))}
+      {canView && !isPending && !isError && records.length === 0 && gameserverVips.length === 0 && (
+        <Typography>No VIP records found</Typography>
       )}
-    </Stack>
-  );
-};
-
-const VipEntry = ({ vip }) => {
-  // vip.expiration is null if the VIP expiration is set indefinitely
-  const expiration = dayjs(vip.expiration);
-  const isActive = expiration === null ? true : expiration.isAfter(dayjs());
-  // When the VIP is not created by CRCON, there is player.vip = true but no vip record entry exists
-  const isNotCreatedByCrcon = vip.not_created_by_crcon;
-
-  return (
-    <Stack direction="row" alignItems="center" spacing={1}>
-      <Typography variant="body2" component="span">
-        Server #{vip.server_number}
-      </Typography>
-      <div>
-        <Chip
-          label={isActive ? "VIP" : "Expired"}
-          color={isActive ? "primary" : "error"}
-          variant={isActive ? "filled" : "outlined"}
-          icon={isNotCreatedByCrcon ? <WarningIcon /> : null}
-        />
-      </div>
-      <Typography variant="body2" component="span">
-        {isActive ? "until" : "from"} {dayjs(vip.expiration).format("LLL")}
-      </Typography>
+      {!canView && gameserverVips.length === 0 && (
+        <Typography>VIP list records are not available with your permissions</Typography>
+      )}
     </Stack>
   );
 };
