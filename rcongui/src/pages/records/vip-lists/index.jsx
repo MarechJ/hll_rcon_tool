@@ -42,6 +42,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import StarIcon from "@mui/icons-material/Star";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
+import ShareIcon from "@mui/icons-material/Share";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import dayjs from "dayjs";
 import { toast } from "react-toastify";
@@ -481,6 +482,7 @@ export default function VipListsPage() {
   const [selectedListId, setSelectedListId] = useState(null);
   const [listSort, setListSort] = useState("name");
   const [listDialog, setListDialog] = useState(null);
+  const [shareOnlyList, setShareOnlyList] = useState(null);
   const [recordDialog, setRecordDialog] = useState(null);
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const [selectedRecordIds, setSelectedRecordIds] = useState([]);
@@ -1079,6 +1081,11 @@ export default function VipListsPage() {
                         />
                       )}
                       {vipList.is_imported && <Chip label="Partner" size="small" variant="outlined" />}
+                      {vipList.has_active_shares && (
+                        <Tooltip title="Shared with partners">
+                          <ShareIcon fontSize="small" aria-label="Shared with partners" color="info" />
+                        </Tooltip>
+                      )}
                     </Stack>
                     <Typography variant="caption">
                       {formatServers(vipList.servers)}
@@ -1112,6 +1119,9 @@ export default function VipListsPage() {
                       color="warning"
                       variant="outlined"
                     />
+                  )}
+                  {selectedList.has_active_shares && (
+                    <Chip icon={<ShareIcon />} label="Shared" color="info" variant="outlined" />
                   )}
                   <Chip
                     label={formatSyncMethod(selectedList.sync)}
@@ -1213,6 +1223,11 @@ export default function VipListsPage() {
                       Edit list
                     </Button>
                   )}
+                  {canManageShares && !canChangeLists && !selectedList.is_imported && (
+                    <Button startIcon={<ShareIcon />} onClick={() => setShareOnlyList(selectedList)}>
+                      Manage sharing
+                    </Button>
+                  )}
                   {canDeleteLists && (
                     <Button
                       color="error"
@@ -1231,10 +1246,9 @@ export default function VipListsPage() {
               </Paper>
             )}
 
-            {selectedList && <VipListPartnership
+            {selectedList?.is_imported && <VipListPartnership
               key={selectedList.id}
               list={selectedList}
-              canManageShares={canManageShares}
               canManageImports={canManageImports}
               onSynced={() => refreshRecords(selectedList.id)}
             />}
@@ -1414,9 +1428,19 @@ export default function VipListsPage() {
         serverNumber={serverNumber}
         servers={serverOptions}
         allowDefaultSelection={listDialog?.mode === "create" && canChangeLists}
+        shareList={listDialog?.mode === "edit" ? listDialog.vipList : null}
+        canManageShares={canManageShares}
         onClose={() => setListDialog(null)}
         onSubmit={submitList}
       />
+
+      <Dialog open={Boolean(shareOnlyList)} onClose={() => setShareOnlyList(null)} fullWidth maxWidth="sm">
+        <DialogTitle>Share VIP list</DialogTitle>
+        <DialogContent>
+          {shareOnlyList && <VipListPartnership key={shareOnlyList.id} list={shareOnlyList} canManageShares canManageImports={false} />}
+        </DialogContent>
+        <DialogActions><Button onClick={() => setShareOnlyList(null)}>Close</Button></DialogActions>
+      </Dialog>
 
       <Dialog
         open={Boolean(confirmation)}

@@ -28,6 +28,7 @@ import {
 import Grid from "@mui/material/Grid2";
 import emojiData from "@emoji-mart/data/sets/15/twitter.json";
 import Emoji from "@/components/shared/Emoji";
+import { VipListPartnership } from "@/components/VipList/VipListPartnership";
 
 const EmojiPicker = lazy(() => import("@emoji-mart/react"));
 
@@ -52,6 +53,8 @@ export default function VipListDialog({
   serverNumber,
   servers = {},
   allowDefaultSelection = false,
+  shareList = null,
+  canManageShares = false,
   onClose,
   onSubmit,
 }) {
@@ -376,6 +379,14 @@ export default function VipListDialog({
                 records and the gameserver are not changed.
               </Alert>
             </>
+          )}
+          {shareList && canManageShares && (
+            <VipListPartnership
+              key={shareList.id}
+              list={shareList}
+              canManageShares={canManageShares}
+              canManageImports={false}
+            />
           )}
         </Stack>
       </DialogContent>

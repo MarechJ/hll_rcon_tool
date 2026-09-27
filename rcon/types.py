@@ -757,6 +757,7 @@ class VipListType(TypedDict):
     flags: list[str]
     servers: list[int] | None
     is_imported: bool
+    has_active_shares: bool
 
 
 class VipListRecordType(TypedDict):

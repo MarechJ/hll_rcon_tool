@@ -72,12 +72,16 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
       setShownToken(response?.result?.token ?? response?.token);
       setName("");
       queryClient.invalidateQueries({ queryKey: ["vip-list-shares", list.id] });
+      queryClient.invalidateQueries({ queryKey: vipListQueryKeys.lists });
     },
     onError: (error) => toast.error(error.message),
   });
   const revoke = useMutation({
     mutationFn: (shareId) => cmd.REVOKE_VIP_LIST_SHARE({ payload: { share_id: shareId }, throwRouteError: false }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["vip-list-shares", list.id] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vip-list-shares", list.id] });
+      queryClient.invalidateQueries({ queryKey: vipListQueryKeys.lists });
+    },
     onError: (error) => toast.error(error.message),
   });
   const sync = useMutation({
@@ -126,7 +130,7 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
       <Typography variant="body2">Each partner gets a separate, read-only key. The key is displayed once.</Typography>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
         <TextField size="small" label="Partner name" value={name} onChange={(e) => setName(e.target.value)} />
-        <Button onClick={() => createShare.mutate()} disabled={!name.trim() || createShare.isPending}>Create key</Button>
+        <Button type="button" onClick={() => createShare.mutate()} disabled={!name.trim() || createShare.isPending}>Create key</Button>
       </Stack>
       {shownToken && <Alert severity="warning" onClose={() => setShownToken(null)}>
         Copy this key now: <Box component="code" sx={{ overflowWrap: "anywhere" }}>{shownToken}</Box>
@@ -134,7 +138,7 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
       </Alert>}
       {(shares.data ?? []).map((share) => <Stack key={share.id} direction="row" spacing={1} alignItems="center">
         <Typography variant="body2">{share.name} {share.revoked_at ? "(revoked)" : ""}</Typography>
-        {!share.revoked_at && <Button size="small" color="warning" onClick={() => revoke.mutate(share.id)}>Revoke</Button>}
+        {!share.revoked_at && <Button type="button" size="small" color="warning" onClick={() => revoke.mutate(share.id)}>Revoke</Button>}
       </Stack>)}
     </Stack>}
   </Paper>

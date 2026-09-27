@@ -1344,6 +1344,11 @@ class VipList(Base):
             "flags": self.flags or [],
             "servers": sorted(server_numbers) if server_numbers is not None else None,
             "is_imported": self.partner_import is not None,
+            "has_active_shares": any(
+                share.revoked_at is None
+                and (share.expires_at is None or share.expires_at > datetime.now(UTC))
+                for share in self.shares
+            ),
         }
 
 

@@ -8,8 +8,9 @@ access while at least one applicable active list still grants it.
 
 ## Share a list
 
-In **VIP Lists**, select a locally owned list, enter a partner name under **Share
-this list**, and create a key. Copy the key immediately. It is stored as a SHA-256
+In **VIP Lists**, select a locally owned list, open **Edit list**, enter a partner
+name under **Share this list**, and create a key. A share icon marks lists with
+active credentials. Copy the key immediately. It is stored as a SHA-256
 digest and cannot be recovered later. Give the partner the key and the feed URL
 shown in the UI. One partner's key can be revoked without affecting other shares.
 
