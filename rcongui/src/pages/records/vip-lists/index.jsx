@@ -1125,9 +1125,12 @@ export default function VipListsPage() {
             {selectedList && (
               <Paper variant="outlined" sx={{ p: 2 }}>
                 <Stack
-                  spacing={1.5}
+                  direction={{ xs: "column", lg: "row" }}
+                  alignItems="flex-start"
+                  justifyContent="space-between"
+                  gap={2}
                 >
-                  <Box sx={{ minWidth: 0 }}>
+                  <Box sx={{ minWidth: 0, flex: 1 }}>
                     <Typography variant="h5">
                       {`${selectedList.name} (ID ${selectedList.id})`}
                     </Typography>
@@ -1167,7 +1170,7 @@ export default function VipListsPage() {
                     ))}
                     </Stack>
                   </Box>
-                  <Stack direction="row" alignItems="center" justifyContent="flex-end" flexWrap="wrap" gap={1}>
+                  <Stack direction="row" alignItems="center" justifyContent={{ xs: "flex-start", lg: "flex-end" }} flexWrap="wrap" gap={1}>
                   {canChangeRecords && !selectedList.is_imported && (
                     <Button
                       disabled={selectedList.default_expiration_seconds === null || activeLoading || inactiveLoading ||
