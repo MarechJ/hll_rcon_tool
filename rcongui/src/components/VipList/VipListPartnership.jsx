@@ -211,7 +211,7 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
           <InputLabel id="partner-list-duration-label">Maximum VIP duration</InputLabel>
           <Select labelId="partner-list-duration-label" label="Maximum VIP duration" value={settings.max_duration_seconds ?? "none"} onChange={(e) => setSettings({ ...settings, max_duration_seconds: e.target.value === "none" ? null : Number(e.target.value) })}>
             <MenuItem value="none">No local limit</MenuItem>
-            <MenuItem value={0}>No local limit (never expires locally)</MenuItem>
+            <MenuItem value={0}>Never expires (override partner expiration)</MenuItem>
             <MenuItem value={7200}>2 hours</MenuItem>
             <MenuItem value={86400}>1 day</MenuItem>
             <MenuItem value={604800}>7 days</MenuItem>
@@ -220,7 +220,7 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
             {settings.max_duration_seconds != null && ![0, 7200, 86400, 604800, 2592000, 31536000].includes(settings.max_duration_seconds) && <MenuItem value={settings.max_duration_seconds}>Current: {settings.max_duration_seconds} seconds</MenuItem>}
           </Select>
         </FormControl>
-        <Typography variant="body2" color="text.secondary">The earlier of the partner expiration and this local limit applies. The limit starts at first import.</Typography>
+        <Typography variant="body2" color="text.secondary">No local limit uses the partner expiration. Never expires overrides it. Other durations cap it from first import. Partner removal still deactivates the entry after synchronization.</Typography>
         <TextField label="New partner share key (optional)" type="password" autoComplete="new-password" value={settings.token} onChange={(e) => setSettings({ ...settings, token: e.target.value })} helperText="Leave blank to keep the current key. A new key is checked against the partner feed before saving." />
         <Stack spacing={1}>
           <Typography variant="subtitle1">Player flags</Typography>

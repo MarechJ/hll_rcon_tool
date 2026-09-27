@@ -44,8 +44,11 @@ It can also replace an imported partner key after validating the new key against
 the feed; leaving the field blank keeps the existing key.
 Local flags and a maximum VIP duration can also be configured there using the
 same flag picker and duration choices as an owned list.
-The local duration is counted from first import and caps any later partner
-expiration; changing it affects existing records on their next sync.
+With **No local limit**, the partner expiration applies. **Never expires**
+overrides the partner expiration while the entry remains in the feed. A positive
+local duration is counted from first import and caps any later partner
+expiration. Changing this setting affects existing records on their next sync;
+partner removal still deactivates an imported record.
 
 An import starts empty. Select the imported list and click **Synchronize now** to
 load it. By default, newly discovered players await local approval. The alternative

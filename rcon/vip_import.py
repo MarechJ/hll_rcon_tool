@@ -411,7 +411,9 @@ def _sync_import_once(vip_list_id: int, *, force: bool = True) -> dict:
                 if duration
                 else None
             )
-            expiry = row["expires_at"]
+            # Zero explicitly overrides the partner's expiry. None preserves it;
+            # positive values cap it at a local duration from first import.
+            expiry = None if duration == 0 else row["expires_at"]
             if local_expiry is not None and (expiry is None or local_expiry < expiry):
                 expiry = local_expiry
             if record is None:

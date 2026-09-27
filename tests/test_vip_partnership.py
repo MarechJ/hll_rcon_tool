@@ -1,5 +1,6 @@
 """Partner imports must never override a locally owned VIP entry."""
 
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
@@ -201,5 +202,31 @@ def test_failed_partner_fetch_suspends_and_recovery_restores_records(monkeypatch
             updated = sess.get(VipList, imported["id"])
             assert updated.name == "Renamed partner list"
             assert updated.flags == ["test-flag"]
+        partner_expiry = datetime.now(UTC) + timedelta(hours=2)
+        feed[0]["expires_at"] = partner_expiry
+        update_import_settings(
+            imported["id"],
+            approve_new=False,
+            retention_days=None,
+            max_duration_seconds=0,
+        )
+        sync_import(imported["id"])
+        with enter_session() as sess:
+            record = get_player_vip_list_record(
+                sess, feed[0]["player_id"], imported["id"]
+            )
+            assert record.expires_at is None and record.active
+        update_import_settings(
+            imported["id"],
+            approve_new=False,
+            retention_days=None,
+            max_duration_seconds=None,
+        )
+        sync_import(imported["id"])
+        with enter_session() as sess:
+            record = get_player_vip_list_record(
+                sess, feed[0]["player_id"], imported["id"]
+            )
+            assert record.expires_at == partner_expiry
     finally:
         delete_vip_list(imported["id"])
