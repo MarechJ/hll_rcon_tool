@@ -13,25 +13,17 @@ const FlagList = ({ player }) => {
       />
       {player?.flags?.map(({ flag, comment, managed_by_vip_list }) => (
         <Stack direction="row" alignItems="center" spacing={1} key={flag}>
-          {managed_by_vip_list ? (
-            <Tooltip title="Managed by VIP Lists · Change this in the list settings">
-              <Icon sx={{ fontSize: "1em" }}>
-                <Emoji emoji={flag} />
-              </Icon>
-            </Tooltip>
-          ) : (
-            <ActionIconButton
-              action={Actions.RemoveFlag}
-              recipients={[player]}
-              params={{ flag }}
-              icon={
-                <Icon sx={{ fontSize: "1em" }}>
-                  <Emoji emoji={flag} />
-                </Icon>
-              }
-              label={comment}
-            />
-          )}
+          <Tooltip
+            title={
+              managed_by_vip_list
+                ? "Managed by VIP Lists · Change this in the list settings"
+                : comment || "Player flag"
+            }
+          >
+            <Icon sx={{ fontSize: "1em" }}>
+              <Emoji emoji={flag} />
+            </Icon>
+          </Tooltip>
         </Stack>
       ))}
     </Stack>
