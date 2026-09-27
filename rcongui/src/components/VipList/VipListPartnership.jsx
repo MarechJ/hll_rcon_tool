@@ -195,27 +195,7 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
       <DialogContent><Stack spacing={2.5} sx={{ pt: 1 }}>
         <DialogContentText>Changes are stored in the CRCON database. Synchronize the partner feed to update its records.</DialogContentText>
         <TextField required autoFocus label="List name" value={settings.name} onChange={(e) => setSettings({ ...settings, name: e.target.value })} disabled={update.isPending} inputProps={{ maxLength: 255 }} />
-        <Paper variant="outlined" sx={{ p: 2 }}>
-          <Stack spacing={1}>
-            <Typography variant="subtitle1">Servers</Typography>
-            <FormControlLabel label="Enable on all servers" control={<Switch checked={settings.servers === null} disabled={update.isPending} onChange={(e) => setSettings({ ...settings, servers: e.target.checked ? null : [...knownServerNumbers] })} />} />
-            {knownServerNumbers.length === 0 && <Typography variant="body2" color="text.secondary">No CRCON servers are currently available for selection.</Typography>}
-            {knownServerNumbers.map((number) => <FormControlLabel key={number} label={servers[number]} control={<Checkbox checked={settings.servers === null || settings.servers.includes(number)} disabled={update.isPending || settings.servers === null} onChange={(e) => setSettings((current) => ({ ...current, servers: e.target.checked ? [...current.servers, number].sort((a, b) => a - b) : current.servers.filter((item) => item !== number) }))} />} />)}
-          </Stack>
-        </Paper>
         <FormControlLabel control={<Checkbox checked={settings.approve_new} onChange={(e) => setSettings({ ...settings, approve_new: e.target.checked })} />} label="Require approval for new entries" />
-        <FormControl fullWidth disabled={update.isPending || settings.max_duration_seconds === 0}>
-          <InputLabel id="partner-list-expired-retention-label">Expired records</InputLabel>
-          <Select labelId="partner-list-expired-retention-label" label="Expired records" value={settings.retention_days ?? "keep"} onChange={(e) => setSettings({ ...settings, retention_days: e.target.value === "keep" ? null : Number(e.target.value) })}>
-            <MenuItem value="keep">Keep for manual review</MenuItem>
-            <MenuItem value={0}>Delete automatically after expiration</MenuItem>
-            <MenuItem value={1}>Delete after 1 day</MenuItem>
-            <MenuItem value={7}>Delete after 7 days</MenuItem>
-            <MenuItem value={30}>Delete after 30 days</MenuItem>
-            {settings.retention_days !== null && ![0, 1, 7, 30].includes(settings.retention_days) && <MenuItem value={settings.retention_days}>Delete after {settings.retention_days} days</MenuItem>}
-          </Select>
-        </FormControl>
-        <Typography variant="body2" color="text.secondary">{settings.max_duration_seconds === 0 ? "Automatic deletion is disabled for this list. Removed partner entries stay available for manual review." : "Automatic cleanup runs periodically. Existing expired records are also removed when their retention time has passed."}</Typography>
         <FormControl fullWidth disabled={update.isPending}>
           <InputLabel id="partner-list-duration-label">Imported VIP expiration</InputLabel>
           <Select labelId="partner-list-duration-label" label="Imported VIP expiration" value={settings.max_duration_seconds ?? "none"} onChange={(e) => setSettings({ ...settings, max_duration_seconds: e.target.value === "none" ? null : Number(e.target.value), retention_days: Number(e.target.value) === 0 ? null : settings.retention_days })}>
@@ -230,6 +210,18 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
           </Select>
         </FormControl>
         <Typography variant="body2" color="text.secondary">Use partner expiration keeps the external date. Never expire ignores that date while the partner shares the player and disables automatic deletion. Other durations are local maximums from first import; the earlier partner expiration still applies. Partner removal still deactivates the entry after synchronization.</Typography>
+        <FormControl fullWidth disabled={update.isPending || settings.max_duration_seconds === 0}>
+          <InputLabel id="partner-list-expired-retention-label">Expired records</InputLabel>
+          <Select labelId="partner-list-expired-retention-label" label="Expired records" value={settings.retention_days ?? "keep"} onChange={(e) => setSettings({ ...settings, retention_days: e.target.value === "keep" ? null : Number(e.target.value) })}>
+            <MenuItem value="keep">Keep for manual review</MenuItem>
+            <MenuItem value={0}>Delete automatically after expiration</MenuItem>
+            <MenuItem value={1}>Delete after 1 day</MenuItem>
+            <MenuItem value={7}>Delete after 7 days</MenuItem>
+            <MenuItem value={30}>Delete after 30 days</MenuItem>
+            {settings.retention_days !== null && ![0, 1, 7, 30].includes(settings.retention_days) && <MenuItem value={settings.retention_days}>Delete after {settings.retention_days} days</MenuItem>}
+          </Select>
+        </FormControl>
+        <Typography variant="body2" color="text.secondary">{settings.max_duration_seconds === 0 ? "Automatic deletion is disabled for this list. Removed partner entries stay available for manual review." : "Automatic cleanup runs periodically. Existing expired records are also removed when their retention time has passed."}</Typography>
         <TextField label="New partner share key (optional)" type="password" autoComplete="new-password" value={settings.token} onChange={(e) => setSettings({ ...settings, token: e.target.value })} helperText="Leave blank to keep the current key. A new key is checked against the partner feed before saving." />
         <Stack spacing={1}>
           <Typography variant="subtitle1">Player flags</Typography>
@@ -244,6 +236,14 @@ export function VipListPartnership({ list, canManageShares, canManageImports, on
         <FormControlLabel control={<Checkbox checked={changeWebhook} disabled={settings.clear_webhook} onChange={(e) => setChangeWebhook(e.target.checked)} />} label="Set new Discord webhook URL" />
         {changeWebhook && <TextField label="New Discord webhook URL" type="url" autoComplete="off" value={settings.webhook_url} onChange={(e) => setSettings({ ...settings, webhook_url: e.target.value })} required />}
         {source?.webhook_configured && <FormControlLabel control={<Checkbox checked={settings.clear_webhook} disabled={changeWebhook} onChange={(e) => setSettings({ ...settings, clear_webhook: e.target.checked })} />} label="Remove existing webhook" />}
+        <Paper variant="outlined" sx={{ p: 2 }}>
+          <Stack spacing={1}>
+            <Typography variant="subtitle1">Servers</Typography>
+            <FormControlLabel label="Enable on all servers" control={<Switch checked={settings.servers === null} disabled={update.isPending} onChange={(e) => setSettings({ ...settings, servers: e.target.checked ? null : [...knownServerNumbers] })} />} />
+            {knownServerNumbers.length === 0 && <Typography variant="body2" color="text.secondary">No CRCON servers are currently available for selection.</Typography>}
+            {knownServerNumbers.map((number) => <FormControlLabel key={number} label={servers[number]} control={<Checkbox checked={settings.servers === null || settings.servers.includes(number)} disabled={update.isPending || settings.servers === null} onChange={(e) => setSettings((current) => ({ ...current, servers: e.target.checked ? [...current.servers, number].sort((a, b) => a - b) : current.servers.filter((item) => item !== number) }))} />} />)}
+          </Stack>
+        </Paper>
       </Stack></DialogContent>
       <DialogActions>
         <Button onClick={() => setSettingsOpen(false)} disabled={update.isPending}>Cancel</Button>
