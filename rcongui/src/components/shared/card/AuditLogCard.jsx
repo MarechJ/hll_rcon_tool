@@ -72,9 +72,15 @@ export const AuditLogCard = ({ auditLog, ...props }) => {
                 .format("MMM D, YYYY h:mm:ss A")
             )}
             <Typography variant="h6">Arguments</Typography>
-            <CodeBlock text={auditLog.command_arguments} />
+            <CodeBlock
+              text={auditLog.command_arguments}
+              sx={{ "& pre": { whiteSpace: "pre", wordBreak: "normal" } }}
+            />
             <Typography variant="h6">Result</Typography>
-            <CodeBlock text={auditLog.command_result} />
+            <CodeBlock
+              text={auditLog.command_result}
+              sx={{ "& pre": { whiteSpace: "pre", wordBreak: "normal" } }}
+            />
           </Stack>
         ) : (
           <Typography>Select an audit log to view details</Typography>

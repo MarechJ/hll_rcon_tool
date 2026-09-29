@@ -302,7 +302,12 @@ const AuditLogsPage = () => {
       >
         <Stack
           direction="column"
-          sx={{ width: "100%", order: { xs: 2, lg: 1 } }}
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            overflowX: "auto",
+            order: { xs: 2, lg: 1 },
+          }}
         >
           <TableToolbar>
             <TablePageSizeSelect
@@ -344,13 +349,19 @@ const AuditLogsPage = () => {
         <Box
           sx={{
             order: { xs: 1, lg: 2 },
-            maxWidth: 700,
-            width: (theme) => (theme.breakpoints.down("lg") ? "100%" : "auto"),
+            width: { xs: "100%", lg: 520, xl: 640 },
+            maxWidth: "100%",
+            flexShrink: 0,
           }}
         >
           <AuditLogCard
             auditLog={selectedAuditLog}
-            sx={{ position: "sticky", top: 0 }}
+            sx={{
+              position: "sticky",
+              top: 0,
+              maxHeight: { lg: "calc(100vh - 24px)" },
+              overflowY: "auto",
+            }}
           />
         </Box>
       </Stack>

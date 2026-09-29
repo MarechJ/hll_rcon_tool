@@ -21,7 +21,16 @@ export const auditLogsColumns = [
   },
   {
     header: "Action",
-    accessorKey: "command",
+    cell: ({ row }) => {
+      const { listName, listId } = auditDetails(row.original);
+      const list = listName ?? (listId != null ? `#${listId}` : null);
+      return (
+        <>
+          {row.original.command}
+          {list && <span style={{ opacity: 0.7 }}> · {list}</span>}
+        </>
+      );
+    },
   },
   {
     header: "Status",
@@ -30,13 +39,6 @@ export const auditLogsColumns = [
       return (
         <span title={error ?? undefined}>{failed ? "Failed" : "Success"}</span>
       );
-    },
-  },
-  {
-    header: "VIP list",
-    cell: ({ row }) => {
-      const { listName, listId } = auditDetails(row.original);
-      return listName ?? (listId != null ? `#${listId}` : "");
     },
   },
   {
