@@ -48,6 +48,7 @@ class LogLineWebhookUserConfig(BaseUserConfig):
 
             hook = DiscordMentionWebhook(
                 url=raw_webhook.get("url"),
+                thread_id=raw_webhook.get("thread_id"),
                 user_mentions=raw_webhook.get("user_mentions", []),
                 role_mentions=raw_webhook.get("role_mentions", []),
             )

@@ -3,8 +3,8 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
-import MilitaryTechIcon from '@mui/icons-material/MilitaryTech';
-import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
+import MilitaryTechIcon from "@mui/icons-material/MilitaryTech";
+import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import {
   Badge,
   Box,
@@ -37,8 +37,10 @@ export function ActionMenu({
   const { openDialog } = useActionDialog();
   const { openWithId } = usePlayerSidebar();
   const open = Boolean(anchorEl);
-  const { openModal: openAccountModal, modal: accountModal } = useEditAccountModal(recipients.player_id, recipients.account)
-  const { openModal: openSoldierModal, modal: soldierModal } = useEditSoldierModal(recipients.player_id, recipients.soldier)
+  const { openModal: openAccountModal, modal: accountModal } =
+    useEditAccountModal(recipients.player_id, recipients.account);
+  const { openModal: openSoldierModal, modal: soldierModal } =
+    useEditSoldierModal(recipients.player_id, recipients.soldier);
   const handleClose = () => {
     setAnchorEl(null);
   };
@@ -204,7 +206,11 @@ export function ActionBar({ actions, recipients = [] }) {
       }}
     >
       {actions.map((action) => (
-        <ActionIconButton key={action.name} action={action} recipients={recipients} />
+        <ActionIconButton
+          key={action.name}
+          action={action}
+          recipients={recipients}
+        />
       ))}
     </Card>
   );

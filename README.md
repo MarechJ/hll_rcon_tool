@@ -2,10 +2,9 @@
 
 An extended RCON tool for [Hell Let Loose](https://www.hellletloose.com/), meant to replace the official tool and go WAY beyond.
 
-![Website](https://img.shields.io/website?down_color=red&up_color=orange&up_message=hllrcon.app&url=https%3A%2F%2Fhllrcon.app)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 ![Contributors](https://img.shields.io/github/contributors-anon/marechj/hll_rcon_tool)
-![Discord](https://img.shields.io/discord/685692524442026020?color=%237289da&label=discord)  
+![Discord](https://img.shields.io/discord/685692524442026020?color=%237289da&label=discord)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/marechj/hll_rcon_tool)
 ![Docker Cloud Automated build](https://img.shields.io/docker/automated/cericmathey/hll_rcon_tool)
 ![Docker Cloud Build Status](https://img.shields.io/docker/image-size/cericmathey/hll_rcon_tool)

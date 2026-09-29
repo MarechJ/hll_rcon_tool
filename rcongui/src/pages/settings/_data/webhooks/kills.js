@@ -9,7 +9,9 @@ const killWebhooksNotes = `
     */
     "hooks": [
         {
-            "url": "https://discord.com/api/webhooks/.../..."
+            "url": "https://discord.com/api/webhooks/.../...",
+            /* Optional Discord thread or forum post ID to send messages to */
+            "thread_id": "123456789012345678"
         }
     ],
     "send_kills": false,

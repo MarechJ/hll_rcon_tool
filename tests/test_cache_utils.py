@@ -17,7 +17,7 @@ class MockRedis:
     def get(self, key):
         raise redis.exceptions.RedisError
 
-    def setex(self, _1, _2, _3):
+    def set(self, _1, _2, ex):
         pass
 
 

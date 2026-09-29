@@ -41,7 +41,7 @@ def fake_state(team, squad_name):
         del state[f"{team}{squad_name}"]
 
 
-def fake_setex(k, _, v):
+def fake_set(k, v, ex):
     redis_store[k] = v
 
 
@@ -59,7 +59,7 @@ def fake_delete(ks: str):
 
 def mod_with_config(c: AutoModLevelUserConfig) -> LevelThresholdsAutomod:
     mod = LevelThresholdsAutomod(c, Mock())
-    mod.red.setex = fake_setex
+    mod.red.set = fake_set
     mod.red.delete = fake_delete
     mod.red.get = fake_get
     mod.red.exists = fake_exists

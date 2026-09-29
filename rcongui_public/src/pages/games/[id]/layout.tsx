@@ -21,6 +21,8 @@ const GameDetailLayout = ({ game }: { game: ScoreboardMapStats }) => {
   const { t } = useTranslation('navigation')
   const pathname = useLocation().pathname;
   const duration = getGameDuration(game.start, game.end)
+  const moraleHistory = game.morale_history ?? []
+  const latestMorale = moraleHistory[moraleHistory.length - 1]
 
   const gameOverviewProps = {
     map: game.map,
@@ -34,6 +36,11 @@ const GameDetailLayout = ({ game }: { game: ScoreboardMapStats }) => {
       axis: game.result?.axis,
     },
     capFlips: game?.cap_flips,
+    morale: latestMorale ? {
+      allied_morale: latestMorale.allied_morale,
+      axis_morale: latestMorale.axis_morale,
+      initial_morale: game.initial_morale ?? null,
+    } : undefined,
     matchTime: game?.match_time,
     remainingTime: game.match_time ? game.match_time - duration.asSeconds() : 0
   }

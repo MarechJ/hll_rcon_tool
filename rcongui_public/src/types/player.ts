@@ -1,4 +1,4 @@
-import { MatchScore } from './api'
+import { MatchMorale, MatchScore } from './api'
 import {Weapon, WeaponType} from './weapon'
 
 type Team = {
@@ -88,6 +88,8 @@ export interface Result {
   player_stats?: Player[] | null
   match_time: number
   cap_flips: MatchScore[]
+  morale_history: MatchMorale[]
+  initial_morale: number | null
 }
 
 // Base player interface with common properties

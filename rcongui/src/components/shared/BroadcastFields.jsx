@@ -1,23 +1,9 @@
 import { parseBroadcastMessages } from "@/utils/lib";
-import {
-  Box,
-  Button,
-  IconButton,
-  Stack,
-  styled,
-  TextField,
-} from "@mui/material";
+import { Box, Button, IconButton, Stack, TextField } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 
-const StyledTextField = styled(TextField)((theme) => ({
-  "& .MuiOutlinedInput-root, & .MuiOutlinedInput-notchedOutline": {
-    borderRadius: 0,
-  },
-}));
-
 export function BroadcastFields({ messages, disabled, onChange, ...props }) {
-
   const handleAddRow = () => {
     onChange([...messages, { time_sec: "", message: "" }]);
   };
@@ -27,12 +13,14 @@ export function BroadcastFields({ messages, disabled, onChange, ...props }) {
   };
 
   const handleRowChange = (lineIndex, key) => (event) => {
-    onChange(messages.map((line, i) =>
-      lineIndex === i ? { ...line, [key]: event.target.value } : line
-    ));
+    onChange(
+      messages.map((line, i) =>
+        lineIndex === i ? { ...line, [key]: event.target.value } : line
+      )
+    );
   };
 
-  const textAreaValue = parseBroadcastMessages(messages)
+  const textAreaValue = parseBroadcastMessages(messages);
 
   return (
     <Box {...props}>
@@ -45,8 +33,8 @@ export function BroadcastFields({ messages, disabled, onChange, ...props }) {
         hidden
       />
       {messages.map(({ time_sec, message }, index) => (
-        <Stack key={"line" + index} direction={"row"}>
-          <StyledTextField
+        <Stack key={"line" + index} direction="row" gap={1} sx={{ mb: 1 }}>
+          <TextField
             required
             value={time_sec}
             name={"broadcast-time"}
@@ -62,7 +50,7 @@ export function BroadcastFields({ messages, disabled, onChange, ...props }) {
             }}
             disabled={disabled}
           />
-          <StyledTextField
+          <TextField
             required
             fullWidth
             value={message}
@@ -79,7 +67,15 @@ export function BroadcastFields({ messages, disabled, onChange, ...props }) {
         </Stack>
       ))}
       {!disabled && (
-        <Box sx={{ p: 1, borderWidth: 1, borderStyle: "solid", borderColor: (theme) => theme.palette.divider }}>
+        <Box
+          sx={(theme) => ({
+            p: 1,
+            mt: 0.5,
+            border: `1px solid ${theme.palette.divider}`,
+            borderRadius: 1,
+            bgcolor: "background.paper",
+          })}
+        >
           <Button onClick={handleAddRow} startIcon={<AddIcon />}>
             Add Message
           </Button>

@@ -65,7 +65,6 @@ export class FlagDialog extends Component {
             <Grid size={12}>
               <Suspense>
                 <EmojiPicker
-                  style={{ border: "1px solid red" }}
                   perLine={8}
                   data={data}
                   onEmojiSelect={(emoji) =>

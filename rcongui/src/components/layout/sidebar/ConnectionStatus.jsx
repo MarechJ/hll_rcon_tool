@@ -2,11 +2,12 @@ import { useGlobalStore } from "@/stores/global-state";
 import { ListItem, ListItemText, Stack, Tooltip } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faServer, faDesktop } from "@fortawesome/free-solid-svg-icons";
-import { HIGHLIGHT } from "./utils";
+import { useTheme } from "@mui/material/styles";
 
 const ConnectionStatus = () => {
   const backendConnected = useGlobalStore((state) => state.serverState);
   const gameConnected = useGlobalStore((state) => state.status);
+  const theme = useTheme();
 
   return (
     <>
@@ -47,7 +48,7 @@ const ConnectionStatus = () => {
                     icon={faServer}
                     color={
                       !gameConnected || !backendConnected
-                        ? HIGHLIGHT.danger
+                        ? theme.palette.error.main
                         : ""
                     }
                   />
@@ -77,7 +78,7 @@ const ConnectionStatus = () => {
                 >
                   <FontAwesomeIcon
                     icon={faDesktop}
-                    color={!backendConnected ? HIGHLIGHT.danger : ""}
+                    color={!backendConnected ? theme.palette.error.main : ""}
                   />
                   <div>{backendConnected ? "Online" : "Offline"}</div>
                 </Stack>

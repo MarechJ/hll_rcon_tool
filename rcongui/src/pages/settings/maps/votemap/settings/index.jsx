@@ -15,7 +15,6 @@ import {
   CircularProgress,
   Divider,
   FormControl,
-  IconButton,
   InputLabel,
   MenuItem,
   Select,
@@ -167,18 +166,14 @@ function VotemapSettingsPage() {
   const handleRemoveVoteBanFlag = (index) => {
     setWorkingConfig((prev) => ({
       ...prev,
-      vote_ban_flags: prev.vote_ban_flags.filter(
-        (_, i) => i !== index
-      ),
+      vote_ban_flags: prev.vote_ban_flags.filter((_, i) => i !== index),
     }));
   };
 
   const handleRemoveAllowOnlyFlag = (index) => {
     setWorkingConfig((prev) => ({
       ...prev,
-      vote_ban_flags: prev.vote_ban_flags.filter(
-        (_, i) => i !== index
-      ),
+      vote_ban_flags: prev.vote_ban_flags.filter((_, i) => i !== index),
     }));
   };
 
@@ -189,13 +184,13 @@ function VotemapSettingsPage() {
         break;
       case "update_player_choice_flag":
         handleRemovePlayerChoiceFlag(index);
-        break
+        break;
       case "update_vote_ban_flag":
         handleRemoveVoteBanFlag(index);
-        break
+        break;
       case "update_allow_flag_only":
         handleRemoveAllowOnlyFlag(index);
-        break
+        break;
       default:
         break;
     }
@@ -288,8 +283,8 @@ function VotemapSettingsPage() {
           handlePlayerChoiceFlagChange(emojiPickerIndex, emoji.native);
           break;
         case "update_vote_ban_flag":
-            handleVoteBanFlagChange(emojiPickerIndex, emoji.native);
-            break;
+          handleVoteBanFlagChange(emojiPickerIndex, emoji.native);
+          break;
         case "update_allow_flag_only":
           handleAllowOnlyFlagChange(emojiPickerIndex, emoji.native);
           break;
@@ -436,7 +431,7 @@ function VotemapSettingsPage() {
           <Typography variant="subtitle1">Vote Count Flags</Typography>
           <Typography variant="caption">
             Players with a listed flag have their vote counted n times (use
-            highest value if multiple flags and if VIP;  0 ≤ n ≤ 100).
+            highest value if multiple flags and if VIP; 0 ≤ n ≤ 100).
           </Typography>
           <Stack
             direction="row"
@@ -465,8 +460,10 @@ function VotemapSettingsPage() {
                 />
               </Stack>
             ))}
-            <IconButton
+            <Button
               variant="outlined"
+              aria-label="Add vote flag"
+              sx={{ minWidth: 36, px: 0.75 }}
               onClick={() =>
                 handleOpenEmojiPicker(
                   workingConfig.vote_flags.length,
@@ -475,7 +472,7 @@ function VotemapSettingsPage() {
               }
             >
               <AddCircleIcon />
-            </IconButton>
+            </Button>
           </Stack>
 
           <Divider flexItem orientation={"horizontal"} />
@@ -483,7 +480,8 @@ function VotemapSettingsPage() {
           {/* Vote Ban Flags Section */}
           <Typography variant="subtitle1">Vote Whitelist Flags</Typography>
           <Typography variant="caption">
-            Only players having one of these flags are allowed to use votemap. When no flags provided, everyone is allowed.
+            Only players having one of these flags are allowed to use votemap.
+            When no flags provided, everyone is allowed.
           </Typography>
           <Stack direction="row" flexWrap={"wrap"} gap={1} alignItems="center">
             {(workingConfig.allow_flag_only || []).map((item, idx) => (
@@ -498,8 +496,10 @@ function VotemapSettingsPage() {
                 <Emoji emoji={item ?? "❓"} />
               </Button>
             ))}
-            <IconButton
+            <Button
               variant="outlined"
+              aria-label="Add vote whitelist flag"
+              sx={{ minWidth: 36, px: 0.75 }}
               onClick={() =>
                 handleOpenEmojiPicker(
                   workingConfig.allow_flag_only.length,
@@ -508,7 +508,7 @@ function VotemapSettingsPage() {
               }
             >
               <AddCircleIcon />
-            </IconButton>
+            </Button>
           </Stack>
 
           {/* Vote Ban Flags Section */}
@@ -529,8 +529,10 @@ function VotemapSettingsPage() {
                 <Emoji emoji={item ?? "❓"} />
               </Button>
             ))}
-            <IconButton
+            <Button
               variant="outlined"
+              aria-label="Add vote ban flag"
+              sx={{ minWidth: 36, px: 0.75 }}
               onClick={() =>
                 handleOpenEmojiPicker(
                   workingConfig.vote_ban_flags.length,
@@ -539,13 +541,15 @@ function VotemapSettingsPage() {
               }
             >
               <AddCircleIcon />
-            </IconButton>
+            </Button>
           </Stack>
 
           <Divider flexItem orientation={"horizontal"} />
 
           {/* Player Choice Flags Section */}
-          <Typography variant="subtitle1">Player Choice Whitelist Flags</Typography>
+          <Typography variant="subtitle1">
+            Player Choice Whitelist Flags
+          </Typography>
           <Typography variant="caption">
             Players having one of these flags are allowed to run `!vm add`
             commands. When no flags provided, everyone is allowed.
@@ -563,8 +567,10 @@ function VotemapSettingsPage() {
                 <Emoji emoji={item ?? "❓"} />
               </Button>
             ))}
-            <IconButton
+            <Button
               variant="outlined"
+              aria-label="Add player-choice flag"
+              sx={{ minWidth: 36, px: 0.75 }}
               onClick={() =>
                 handleOpenEmojiPicker(
                   workingConfig.player_choice_flags.length,
@@ -573,7 +579,7 @@ function VotemapSettingsPage() {
               }
             >
               <AddCircleIcon />
-            </IconButton>
+            </Button>
           </Stack>
           {/* Emoji Picker Dialog */}
           {emojiPickerOpen && (

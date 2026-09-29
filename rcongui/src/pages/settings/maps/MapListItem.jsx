@@ -50,20 +50,16 @@ export function MapChangeListItem({ mapLayer, onClick, icon, title }) {
       renderActions={(mapLayer) => (
         <Tooltip title={title ?? "Set as current map"}>
           <span>
-            <IconButton
-              sx={{
-                borderRadius: 0,
-                bgcolor: "primary.main",
-                color: "primary.contrastText",
-                "&:hover": {
-                  bgcolor: "primary.dark",
-                },
-              }}
+            <Button
+              variant="contained"
+              color="primary"
               size="small"
+              aria-label={title ?? "Set as current map"}
+              sx={{ minWidth: 30, px: 0.75 }}
               onClick={() => onClick(mapLayer)}
             >
               {icon ?? <PlayArrowIcon />}
-            </IconButton>
+            </Button>
           </span>
         </Tooltip>
       )}
@@ -113,7 +109,9 @@ export function MapVotemapListItem({ mapLayer, voters, votesCount, onClick }) {
           alignItems={"center"}
         >
           <Stack>
-            <Typography fontSize={"0.75rem"} color="text.secondary">Votes</Typography>
+            <Typography fontSize={"0.75rem"} color="text.secondary">
+              Votes
+            </Typography>
             <Typography textAlign={"center"} fontWeight={500}>
               {votesCount}
             </Typography>
@@ -175,11 +173,13 @@ export function MapVotemapResultListItem({ mapLayer, votesCount }) {
       mapLayer={mapLayer}
       renderActions={() => (
         <Stack>
-        <Typography fontSize={"0.75rem"} color="text.secondary">Votes</Typography>
-        <Typography textAlign={"center"} fontWeight={500}>
-          {votesCount}
-        </Typography>
-      </Stack>
+          <Typography fontSize={"0.75rem"} color="text.secondary">
+            Votes
+          </Typography>
+          <Typography textAlign={"center"} fontWeight={500}>
+            {votesCount}
+          </Typography>
+        </Stack>
       )}
     />
   );

@@ -191,7 +191,14 @@ const GameLogsPage = () => {
   return (
     <Stack direction={{ xs: "column", lg: "row" }} spacing={1} sx={{ mt: 2 }}>
       <GameLogsForm fields={fields} onSubmit={handleSubmit} />
-      <Stack sx={{ flexGrow: 1 }}>
+      <Stack
+        sx={{
+          width: "100%",
+          minWidth: 0,
+          overflow: "hidden",
+          flex: "1 1 0",
+        }}
+      >
         <TableToolbar>
           <DebouncedSearchInput
             placeholder={"Search logs"}
@@ -207,11 +214,7 @@ const GameLogsPage = () => {
             size="small"
             variant="contained"
             color="primary"
-            sx={{
-              "&.MuiIconButton-root": {
-                borderRadius: 0,
-              },
-            }}
+            sx={{ "&.MuiIconButton-root": { borderRadius: 0 } }}
             onClick={handleDownload}
           >
             <DownloadIcon />
@@ -261,15 +264,15 @@ const GameLogsForm = ({ fields, onSubmit }) => {
       game: server.game ?? "hll",
     }));
 
-    options.sort((a, b) => a.label.localeCompare(b.label))
+    options.sort((a, b) => a.label.localeCompare(b.label));
 
     return options;
   }, [allServers]);
 
-    const games = {
-      hll: "HLL: WW2",
-      hllv: "HLL: VIETNAM",
-    }
+  const games = {
+    hll: "HLL: WW2",
+    hllv: "HLL: VIETNAM",
+  };
 
   const handleInputChange = (e) => {
     const { name, value, checked } = e.target;
@@ -319,7 +322,13 @@ const GameLogsForm = ({ fields, onSubmit }) => {
   return (
     <Grid
       container
-      sx={{ width: "100%", maxWidth: { lg: "400px" }, flexGrow: 1 }}
+      sx={{
+        width: { xs: "100%", lg: 360 },
+        minWidth: { lg: 320 },
+        maxWidth: { lg: 360 },
+        flexGrow: 0,
+        flexShrink: 0,
+      }}
     >
       <Grid size={12}>
         <Form onSubmit={onSubmit}>
@@ -366,9 +375,12 @@ const GameLogsForm = ({ fields, onSubmit }) => {
                     <Box key={option.name} component="li" {...optionProps}>
                       {logActions[option.name]} {option.name}
                     </Box>
-                  )
+                  );
                 }}
-                value={actionOptions.find((o) => o.name === formFields.action) || null}
+                value={
+                  actionOptions.find((o) => o.name === formFields.action) ||
+                  null
+                }
                 onChange={handleActionChange}
                 inputValue={actionInputValue}
                 onInputChange={(event, newValue) => {
@@ -404,21 +416,24 @@ const GameLogsForm = ({ fields, onSubmit }) => {
                 <MenuItem value={0}>All servers</MenuItem>
                 {serverOptions.map((option) => (
                   <MenuItem key={option.value} value={option.value}>
-                  <ListItemAvatar>
-                    <Avatar alt={option.label ?? "<server_name>"} src={`/icons/games/${option.game}_logo.webp`} />
-                  </ListItemAvatar>
-                  <ListItemText
-                    sx={{
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                    primary={option.label}
-                    secondary={
-                      `[${option.value ?? "<server_number>"}] - ${games[option.game] ?? "<unknown_game>"}`
-                    }
-                  />
-                </MenuItem>
+                    <ListItemAvatar>
+                      <Avatar
+                        alt={option.label ?? "<server_name>"}
+                        src={`/icons/games/${option.game}_logo.webp`}
+                      />
+                    </ListItemAvatar>
+                    <ListItemText
+                      sx={{
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                      primary={option.label}
+                      secondary={`[${option.value ?? "<server_number>"}] - ${
+                        games[option.game] ?? "<unknown_game>"
+                      }`}
+                    />
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>

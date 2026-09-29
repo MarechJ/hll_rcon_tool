@@ -11,8 +11,8 @@ type FactionIndicatorProps = {
 } & React.HTMLAttributes<HTMLSpanElement>
 
 export function FactionIndicator({ faction, status, className, ...props }: FactionIndicatorProps) {
-  const theme = useTheme()
-  const getFactionIconSrc = theme.theme === 'dark' ? getLightFactionIconSrc : getDarkFactionIconSrc
+  const { resolvedTheme } = useTheme()
+  const getFactionIconSrc = resolvedTheme === 'dark' ? getLightFactionIconSrc : getDarkFactionIconSrc
   return (
     <Avatar size="sm" className={cn('overflow-visible', className)} {...props}>
       {faction && (<AvatarImage

@@ -52,8 +52,10 @@ export const getMapLayerImageSrc = (mapLayer) =>
   `/maps/icons/${mapLayer?.image_name ?? "unknown.webp"}`;
 export const getTacMapImageSrc = (mapLayer) =>
   `/tac-maps/${mapLayer.map.id}.webp`;
+// Only Warfare/Offensive has the pre-round 5-sector objective layout; Skirmish and
+// Conquest don't return Sector_* parameters for SetSectorLayout.
 export const isNotSupportedGameMode = (mapLayer) =>
-  unifiedGamemodeName(mapLayer.game_mode) === "skirmish";
+  ["skirmish", "conquest"].includes(unifiedGamemodeName(mapLayer.game_mode));
 
 export const getSelectedObjectives = (states, objectiveNames, orientation) => {
   const grid = orientation === "vertical" ? states : zip(...states);

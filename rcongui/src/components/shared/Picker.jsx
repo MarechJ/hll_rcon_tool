@@ -2,10 +2,9 @@ import { styled } from "@mui/material/styles";
 import Popper from "@mui/material/Popper";
 import ClickAwayListener from "@mui/material/ClickAwayListener";
 import Autocomplete, { autocompleteClasses } from "@mui/material/Autocomplete";
-import ButtonBase from "@mui/material/ButtonBase";
 import InputBase from "@mui/material/InputBase";
 import Box from "@mui/material/Box";
-import {Fragment, useState} from "react";
+import { Fragment, useState } from "react";
 
 const StyledAutocompletePopper = styled("div")(({ theme }) => ({
   [`& .${autocompleteClasses.paper}`]: {
@@ -15,7 +14,7 @@ const StyledAutocompletePopper = styled("div")(({ theme }) => ({
     fontSize: 12,
   },
   [`& .${autocompleteClasses.listbox}`]: {
-    backgroundColor: "#fff",
+    backgroundColor: theme.palette.background.paper,
     padding: 0,
     [`& .${autocompleteClasses.option}`]: {
       minHeight: "auto",
@@ -24,7 +23,7 @@ const StyledAutocompletePopper = styled("div")(({ theme }) => ({
       textOverflow: "ellipsis",
       whiteSpace: "nowrap",
       padding: 8,
-      borderBottom: `1px solid  ${" #eaecef"}`,
+      borderBottom: `1px solid ${theme.palette.divider}`,
       '&[aria-selected="true"]': {
         backgroundColor: "transparent",
       },
@@ -32,13 +31,7 @@ const StyledAutocompletePopper = styled("div")(({ theme }) => ({
         {
           backgroundColor: theme.palette.action.hover,
         },
-      ...theme.applyStyles("dark", {
-        borderBottom: `1px solid  ${"#30363d"}`,
-      }),
     },
-    ...theme.applyStyles("dark", {
-      backgroundColor: "#1c2128",
-    }),
   },
   [`&.${autocompleteClasses.popperDisablePortal}`]: {
     position: "relative",
@@ -51,18 +44,14 @@ function PopperComponent(props) {
 }
 
 const StyledPopper = styled(Popper)(({ theme }) => ({
-  border: `1px solid ${"#e1e4e8"}`,
-  boxShadow: `0 8px 24px ${"rgba(149, 157, 165, 0.2)"}`,
+  overflow: "hidden",
+  border: `1px solid ${theme.palette.divider}`,
+  boxShadow: theme.shadows[4],
   backgroundColor: theme.palette.background.paper,
   borderRadius: 0,
   width: 300,
   zIndex: theme.zIndex.modal,
   fontSize: 12,
-  ...theme.applyStyles("dark", {
-    border: `1px solid ${"#30363d"}`,
-    boxShadow: `0 8px 24px ${"rgb(1, 4, 9)"}`,
-    color: "#c9d1d9",
-  }),
 }));
 
 const StyledInput = styled(InputBase)(({ theme }) => ({
@@ -70,47 +59,18 @@ const StyledInput = styled(InputBase)(({ theme }) => ({
   width: "100%",
   borderBottom: `1px solid ${theme.palette.divider}`,
   "& input": {
-    borderRadius: 4,
-    backgroundColor: "#fff",
+    borderRadius: theme.shape.borderRadius,
+    color: theme.palette.text.primary,
+    backgroundColor: theme.palette.background.default,
     border: `1px solid ${theme.palette.divider}`,
     padding: 8,
     transition: theme.transitions.create(["border-color", "box-shadow"]),
     fontSize: 14,
     "&:focus": {
-      boxShadow: `0px 0px 0px 3px ${"rgba(3, 102, 214, 0.3)"}`,
-      borderColor: "#0366d6",
-      ...theme.applyStyles("dark", {
-        boxShadow: `0px 0px 0px 3px ${"rgb(12, 45, 107)"}`,
-        borderColor: "#388bfd",
-      }),
+      boxShadow: `0 0 0 3px ${theme.palette.action.selected}`,
+      borderColor: theme.palette.primary.main,
     },
-    ...theme.applyStyles("dark", {
-      backgroundColor: theme.palette.background.paper,
-      border: `1px solid ${theme.palette.divider}`,
-    }),
   },
-  ...theme.applyStyles("dark", {
-    borderBottom: `1px solid ${theme.palette.divider}`,
-  }),
-}));
-
-const Button = styled(ButtonBase)(({ theme }) => ({
-  fontSize: 12,
-  width: "100%",
-  height: "100%",
-  textAlign: "left",
-  fontWeight: 600,
-  "&:hover,&:focus": {
-    ...theme.applyStyles("dark", {}),
-  },
-  "& span": {
-    width: "100%",
-  },
-  "& svg": {
-    width: 16,
-    height: 16,
-  },
-  ...theme.applyStyles("dark", {}),
 }));
 
 export function Picker({
@@ -155,12 +115,9 @@ export function Picker({
           <div>
             <Box
               sx={(t) => ({
-                borderBottom: `1px solid ${"#30363d"}`,
+                borderBottom: `1px solid ${t.palette.divider}`,
                 padding: "8px 10px",
                 fontWeight: 600,
-                ...t.applyStyles("light", {
-                  borderBottom: `1px solid ${"#eaecef"}`,
-                }),
               })}
             >
               {description}

@@ -1,0 +1,58 @@
+# Used only for Dockerfile-frontend builds
+
+# Backend-only
+rcon/
+rconweb/
+alembic/
+alembic.ini
+pyproject.toml
+uv.lock
+.python-version
+/entrypoint.sh
+manage.py
+
+# Docs / repo metadata
+*.md
+images
+.github
+.gitattributes
+.gitignore
+
+# Docker configuration files
+Dockerfile*
+*.dockerignore
+
+# Compose loads these
+*.env
+.env.*
+
+# Don't need in image
+tests
+
+# Python cruft
+__pycache__
+**/__pycache__
+*.pyc
+.mypy_cache
+.pytest_cache
+.ruff_cache
+.venv
+venv
+
+db_data/
+logs/
+servicediscovery/
+redis_data/
+docker-templates/
+*.yml
+*.yaml
+*.log
+*.pyc
+events/
+*.tar
+*.gz
+db_data_bu/
+config/
+
+**/dist/
+**/node_modules/

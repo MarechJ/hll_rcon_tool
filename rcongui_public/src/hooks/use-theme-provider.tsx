@@ -7,11 +7,16 @@ enum ThemeColor {
 }
 
 type Theme = 'light' | 'dark' | 'system'
+type ResolvedTheme = 'light' | 'dark'
 
 interface ThemeContextProps {
   theme: Theme
+  resolvedTheme: ResolvedTheme
   setTheme: (theme: Theme) => void
 }
+
+const getSystemTheme = (): ResolvedTheme =>
+  window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 
 const ThemeContext = createContext<ThemeContextProps | undefined>(undefined)
 
@@ -31,17 +36,31 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     return savedTheme || defaultTheme
   })
 
+  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() =>
+    theme === 'system' ? getSystemTheme() : theme
+  )
+
   // Apply the theme to the document
   useEffect(() => {
     const root = document.documentElement
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
 
-    // Determine theme to apply
-    const appliedTheme = theme === 'system' ? (systemPrefersDark ? 'dark' : 'light') : theme
+    const applyTheme = () => {
+      const appliedTheme = theme === 'system' ? getSystemTheme() : theme
+      root.classList.remove('light', 'dark')
+      root.classList.add(appliedTheme)
+      setResolvedTheme(appliedTheme)
+    }
 
-    // Remove any existing theme classes and apply the new one
-    root.classList.remove('light', 'dark')
-    root.classList.add(appliedTheme)
+    applyTheme()
+
+    // keep it in sync if the OS theme changes while "system" is selected
+    if (theme === 'system') {
+      const mql = window.matchMedia('(prefers-color-scheme: dark)')
+      mql.addEventListener('change', applyTheme)
+      return () => mql.removeEventListener('change', applyTheme)
+    }
+
+    return undefined
   }, [theme])
 
   // Function to update the theme and persist it
@@ -51,9 +70,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   }
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme }}>
       <Helmet>
-        <meta name="theme-color" content={theme === 'dark' ? ThemeColor.DARK : ThemeColor.LIGHT} />
+        <meta name="theme-color" content={resolvedTheme === 'dark' ? ThemeColor.DARK : ThemeColor.LIGHT} />
       </Helmet>
       {children}
     </ThemeContext.Provider>

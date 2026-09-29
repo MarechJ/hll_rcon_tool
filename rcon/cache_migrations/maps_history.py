@@ -38,7 +38,7 @@ from rcon.types import MapInfo
 logger = logging.getLogger(__name__)
 
 
-MAPS_HISTORY_SCHEMA_VERSION = 1
+MAPS_HISTORY_SCHEMA_VERSION = 2
 MAPS_HISTORY_SCHEMA_KEY_SUFFIX = "schema_version"
 MAPS_HISTORY_MIGRATION_LOCK_SUFFIX = "migration_lock"
 MAPS_HISTORY_BACKUP_SUFFIX = "backup_previous"
@@ -118,8 +118,17 @@ def _migrate_to_v1(value: Mapping[str, Any]) -> dict[str, Any]:
     return item
 
 
+def _migrate_to_v2(value: Mapping[str, Any]) -> dict[str, Any]:
+    item = dict(value)
+    item.setdefault("initial_morale", None)
+    item.setdefault("morale_history", [])
+    item["_schema_version"] = 2
+    return item
+
+
 MAP_INFO_MIGRATIONS = {
     1: _migrate_to_v1,
+    2: _migrate_to_v2,
 }
 
 

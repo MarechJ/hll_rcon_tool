@@ -1,9 +1,4 @@
-import {
-  Stack,
-  Checkbox,
-  FormControlLabel,
-  Typography,
-} from "@mui/material";
+import { Stack, Checkbox, FormControlLabel, Typography } from "@mui/material";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import { useState, useEffect, useMemo } from "react";
 import { unifiedGamemodeName } from "./objectives/helpers";
@@ -97,16 +92,16 @@ export const MapFilter = ({ maps, onFilterChange }) => {
       flexWrap={"wrap"}
       gap={1}
       direction={"row"}
-      sx={{ 
-        py: 1, 
+      sx={{
+        py: 1,
         gap: 1,
         // Card-like styles
         borderRadius: 1,
         boxShadow: 1,
-        border: '1px solid',
-        borderColor: 'divider',
+        border: "1px solid",
+        borderColor: "divider",
         p: 2,
-        mb: 2
+        mb: 2,
       }}
     >
       <DebouncedSearchInput
@@ -139,7 +134,10 @@ export const MapFilter = ({ maps, onFilterChange }) => {
                   />
                 }
                 label={unifiedGamemodeName(mode)}
-                sx={{ textTransform: "uppercase", '& .MuiFormControlLabel-label': { fontSize: 10 } }}
+                sx={{
+                  textTransform: "uppercase",
+                  "& .MuiFormControlLabel-label": { fontSize: 10 },
+                }}
               />
             ))}
           </Stack>
@@ -168,7 +166,10 @@ export const MapFilter = ({ maps, onFilterChange }) => {
                   />
                 }
                 label={weather}
-                sx={{ textTransform: "uppercase", '& .MuiFormControlLabel-label': { fontSize: 10 } }}
+                sx={{
+                  textTransform: "uppercase",
+                  "& .MuiFormControlLabel-label": { fontSize: 10 },
+                }}
               />
             ))}
           </Stack>

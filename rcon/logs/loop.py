@@ -185,7 +185,7 @@ def send_log_line_webhook_message(
 
     mentions = webhook.user_mentions + webhook.role_mentions
 
-    wh = make_hook(webhook.url)
+    wh = make_hook(webhook.url, thread_id=webhook.thread_id)
     if not wh:
         logger.error("Error creating discord webhook for: %s", webhook.url)
         return
@@ -448,6 +448,18 @@ class LogLoop:
                     ts=sec_from_start,
                 )
             )
+            # Sample Conquest morale only when recording a score, using the
+            # same clock and transition guards as cap flips.
+            if layer.game_mode == GameMode.CONQUEST:
+                if current_map.get("initial_morale") is None:
+                    current_map["initial_morale"] = gs["initial_morale"]
+                current_map.setdefault("morale_history", []).append(
+                    {
+                        "allied_morale": gs["allied_morale"],
+                        "axis_morale": gs["axis_morale"],
+                        "ts": sec_from_start,
+                    }
+                )
 
     def record_player_stats(
         self, current_map: MapInfo, sec_from_start: int, dp: GetDetailedPlayers

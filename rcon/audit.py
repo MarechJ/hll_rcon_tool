@@ -32,10 +32,10 @@ def _heartbeat_key(uniqueid):
 
 def heartbeat(username, player_id, timeout=120):
     red = _red()
-    return red.setex(
+    return red.set(
         _heartbeat_key(username),
-        timeout,
         json.dumps({"username": username, "player_id": player_id}),
+        ex=timeout,
     )
 
 

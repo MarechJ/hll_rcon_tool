@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
+
 from rconweb.settings import SECRET_KEY
 
 from .models import DjangoAPIKey, SteamPlayer

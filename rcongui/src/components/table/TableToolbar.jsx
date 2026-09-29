@@ -5,14 +5,14 @@ export const TableToolbar = ({ children, ...props }) => (
     direction="row"
     flexWrap={"wrap"}
     alignItems={"center"}
-    sx={{
-    borderBottom: "none",
+    sx={(theme) => ({
+      borderBottom: "none",
       borderRadius: 0,
       borderWidth: "1px",
       borderStyle: "solid",
-      borderColor: (theme) => theme.palette.divider,
+      borderColor: theme.palette.divider,
       ...(props?.sx ?? {}),
-    }}
+    })}
   >
     {children}
   </Stack>

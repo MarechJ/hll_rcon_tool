@@ -209,7 +209,7 @@ def get_live_game_stats(request):
 @require_http_methods(["GET"])
 def get_map_history(request):
     data = _get_data(request)
-    res = MapsHistory()[:]
+    res = MapsHistory().get_safe_history()
     if data.get("pretty"):
         res = [
             {

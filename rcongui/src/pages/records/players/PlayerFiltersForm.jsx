@@ -1,5 +1,6 @@
 import {
   Button,
+  Box,
   TextField,
   FormControlLabel,
   Switch,
@@ -82,8 +83,16 @@ export default function PlayerFiltersForm({ fields }) {
   };
 
   return (
-    <Form method="GET">
-      <Stack spacing={2} sx={{ width: { xs: "100%", lg: "300px" } }}>
+    <Box
+      component={Form}
+      method="GET"
+      sx={{
+        width: { xs: "100%", lg: 300 },
+        minWidth: { lg: 300 },
+        flexShrink: 0,
+      }}
+    >
+      <Stack spacing={2} sx={{ width: "100%" }}>
         <TextField
           value={formFields.player_name}
           onChange={handleInputChange}
@@ -103,9 +112,7 @@ export default function PlayerFiltersForm({ fields }) {
         <Autocomplete
           options={countryOptions}
           getOptionLabel={(option) => option.name}
-          value={
-            countryOptions.find((c) => c.code === selectedCountry) || null
-          }
+          value={countryOptions.find((c) => c.code === selectedCountry) || null}
           onChange={(event, newValue) => {
             setSelectedCountry(newValue?.code || "");
           }}
@@ -134,7 +141,7 @@ export default function PlayerFiltersForm({ fields }) {
           sx={{
             width: "100%",
             border: (theme) => `1px solid ${theme.palette.divider}`,
-            borderRadius: "4px",
+            borderRadius: 1,
             p: 1,
           }}
           direction="row"
@@ -161,11 +168,7 @@ export default function PlayerFiltersForm({ fields }) {
               />
             ))}
             {selectedEmoji.length === 0 && (
-              <Typography
-                sx={{ pl: 1 }}
-                variant="body"
-                color="text.secondary"
-              >
+              <Typography sx={{ pl: 1 }} variant="body" color="text.secondary">
                 Filter by flags
               </Typography>
             )}
@@ -290,7 +293,7 @@ export default function PlayerFiltersForm({ fields }) {
 
       <Stack direction="column" spacing={1} sx={{ mt: 2 }}>
         <Button
-          variant="contained"
+          variant="outlined"
           color="secondary"
           sx={{ mt: 2 }}
           onClick={handleReset}
@@ -309,7 +312,6 @@ export default function PlayerFiltersForm({ fields }) {
           Search
         </Button>
       </Stack>
-    </Form>
+    </Box>
   );
 }
-

@@ -11,7 +11,7 @@ import { useGameListTableStore } from "@/stores/table-config";
 export function GameListTable({ table, maxPages, page }) {
   const [tableConfigDrawerOpen, setTableConfigDrawerOpen] = useState(false);
   const tableConfig = useGameListTableStore();
-  const setConfig = useGameListTableStore(state => state.setConfig);
+  const setConfig = useGameListTableStore((state) => state.setConfig);
 
   const handleTableConfigClick = () => {
     // toggle config drawer

@@ -1,10 +1,14 @@
 # Compose files are templated now
 compose.yaml
+compose.override.yaml
 db_data/
 .env
 dev.env
 broadcasts.txt
 config/nginx.conf
+config/logrotate.conf
+config/supervisord.conf
+config/supervisord_[0-9]*.conf
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

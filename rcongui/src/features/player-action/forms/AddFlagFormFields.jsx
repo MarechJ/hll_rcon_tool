@@ -1,10 +1,4 @@
-import {
-  Box,
-  Skeleton,
-  Stack,
-  Typography,
-  useTheme,
-} from "@mui/material";
+import { Box, Skeleton, Stack, Typography, useTheme } from "@mui/material";
 import { ControlledTextInput } from "@/components/form/core/ControlledTextInput";
 import { lazy, Suspense } from "react";
 import { Controller } from "react-hook-form";
@@ -49,11 +43,21 @@ export const AddFlagFormFields = ({ control, errors, setValue }) => {
                         : theme.palette.grey[500],
                   }}
                 >
-                  {field.value ? <Emoji emoji={field.value} size={24} /> : "Flag"}
+                  {field.value ? (
+                    <Emoji emoji={field.value} size={24} />
+                  ) : (
+                    "Flag"
+                  )}
                 </Box>
                 <Typography
                   variant="caption"
-                  sx={{ color: (theme) => hasFlagError ? theme.palette.error.main : theme.palette.grey[400], px: 1 }}
+                  sx={{
+                    color: (theme) =>
+                      hasFlagError
+                        ? theme.palette.error.main
+                        : theme.palette.grey[400],
+                    px: 1,
+                  }}
                 >
                   {hasFlagError ? flagError.message : "Emoji"}
                 </Typography>

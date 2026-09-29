@@ -184,7 +184,7 @@ def is_first_run_done(r: Redis) -> bool:
 
 
 def set_first_run_done(r: Redis):
-    r.setex(first_run_done_key, 4 * 60, "1")
+    r.set(first_run_done_key, "1", ex=4 * 60)
 
 
 def punish_squads(rcon: Rcon, r: Redis):

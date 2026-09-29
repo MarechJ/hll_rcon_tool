@@ -1,0 +1,48 @@
+# Used only for Dockerfile builds
+
+# Frontend-only
+rcongui
+rcongui_public
+assets
+
+# Docs / repo metadata
+*.md
+images
+.github
+.gitattributes
+.gitignore
+
+# Docker configuration files
+Dockerfile*
+*.dockerignore
+
+# Compose loads these
+*.env
+.env.*
+
+# Don't need in image
+tests
+
+# Python cruft
+__pycache__
+**/__pycache__
+*.pyc
+.mypy_cache
+.pytest_cache
+.ruff_cache
+.venv
+venv
+
+db_data/
+logs/
+servicediscovery/
+redis_data/
+docker-templates/
+*.yml
+*.yaml
+*.log
+events/
+*.tar
+*.gz
+db_data_bu/
+config/

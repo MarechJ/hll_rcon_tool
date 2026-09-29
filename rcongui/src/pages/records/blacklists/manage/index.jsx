@@ -19,7 +19,7 @@ import BlacklistListCreateDialog, {
   BlacklistListCreateButton,
 } from "@/components/Blacklist/BlacklistListCreateDialog";
 import { Link } from "react-router-dom";
-import {Fragment, useEffect, useState} from "react";
+import { Fragment, useEffect, useState } from "react";
 
 const BlacklistLists = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -27,8 +27,7 @@ const BlacklistLists = () => {
   const [servers, setServers] = useState({});
   const [selectedBlacklist, setSelectedBlacklist] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editDialogInitialValues, setEditDialogInitialValues] =
-    useState();
+  const [editDialogInitialValues, setEditDialogInitialValues] = useState();
 
   function handleCloseDeleteDialog() {
     setSelectedBlacklist(null);
@@ -145,15 +144,10 @@ const BlacklistLists = () => {
   return (
     <Fragment>
       <Grid container spacing={3} direction="column" justifyContent="center">
-        <Grid>
-          {isLoading ? <LinearProgress color="secondary" /> : ""}
-        </Grid>
+        <Grid>{isLoading ? <LinearProgress color="secondary" /> : ""}</Grid>
         <Grid container spacing={5} direction="column" alignItems="center">
           {blacklists.map((blacklist) => (
-            <Grid
-              key={blacklist.id}
-              style={{ width: "100%", maxWidth: 1600 }}
-            >
+            <Grid key={blacklist.id} style={{ width: "100%", maxWidth: 1600 }}>
               <BlacklistListTile
                 servers={servers}
                 blacklist={blacklist}
@@ -214,7 +208,7 @@ const BlacklistLists = () => {
           <Button onClick={handleCloseDeleteDialog} color="primary">
             Cancel
           </Button>
-          <Button onClick={handleBlacklistDelete} color="secondary" autoFocus>
+          <Button onClick={handleBlacklistDelete} color="error" autoFocus>
             Delete
           </Button>
         </DialogActions>
