@@ -1,4 +1,3 @@
-import CopyableText from "@/components/shared/CopyableText";
 import { TextButton } from "@/components/table/styles";
 import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
 import dayjs from "dayjs";
@@ -61,13 +60,6 @@ export const auditLogsColumns = [
       }
 
       return player;
-    },
-  },
-  {
-    header: "Player ID",
-    cell: ({ row }) => {
-      const { playerId } = auditDetails(row.original);
-      return playerId ? <CopyableText text={playerId} /> : "";
     },
   },
 ];
