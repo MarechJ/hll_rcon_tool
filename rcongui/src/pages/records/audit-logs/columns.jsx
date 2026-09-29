@@ -2,13 +2,14 @@ import CopyableText from "@/components/shared/CopyableText";
 import { TextButton } from "@/components/table/styles";
 import { usePlayerSidebar } from "@/hooks/usePlayerSidebar";
 import dayjs from "dayjs";
+import { auditDetails } from "./parse";
 
 export const auditLogsColumns = [
   {
     header: "Time",
     accessorKey: "creation_time",
     cell: ({ row }) => {
-      return dayjs(row.original.creation_time).format("lll");
+      return dayjs(row.original.creation_time).format("MMM D, YYYY h:mm:ss A");
     },
     meta: {
       variant: "action",
@@ -23,18 +24,27 @@ export const auditLogsColumns = [
     accessorKey: "command",
   },
   {
+    header: "Status",
+    cell: ({ row }) => {
+      const { failed, error } = auditDetails(row.original);
+      return (
+        <span title={error ?? undefined}>{failed ? "Failed" : "Success"}</span>
+      );
+    },
+  },
+  {
+    header: "VIP list",
+    cell: ({ row }) => {
+      const { listName, listId } = auditDetails(row.original);
+      return listName ?? (listId != null ? `#${listId}` : "");
+    },
+  },
+  {
     header: "Player",
     cell: ({ row }) => {
       const { openWithId } = usePlayerSidebar();
-      let args, player, playerId;
-      try {
-        args = JSON.parse(row.original.command_arguments);
-        player = args.player_name ?? args.description;
-        playerId = args.player_id;
-      } catch (e) {
-        return "";
-      }
-      
+      const { playerName: player, playerId } = auditDetails(row.original);
+
       if (playerId) {
         return (
           <TextButton
@@ -43,7 +53,7 @@ export const auditLogsColumns = [
               openWithId(playerId);
             }}
           >
-            {player}
+            {player ?? playerId}
           </TextButton>
         );
       }
@@ -54,14 +64,8 @@ export const auditLogsColumns = [
   {
     header: "Player ID",
     cell: ({ row }) => {
-      let args, playerId;
-      try {
-        args = JSON.parse(row.original.command_arguments);
-        playerId = args.player_id;
-      } catch (e) {
-        return "";
-      }
-      return <CopyableText text={playerId} />;
+      const { playerId } = auditDetails(row.original);
+      return playerId ? <CopyableText text={playerId} /> : "";
     },
   },
 ];
