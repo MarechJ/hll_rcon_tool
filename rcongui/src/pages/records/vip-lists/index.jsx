@@ -22,9 +22,11 @@ import {
   FormControl,
   InputLabel,
   LinearProgress,
+  Menu,
   MenuItem,
   Paper,
   Select,
+  TextField,
   Stack,
   Table,
   TableBody,
@@ -41,6 +43,8 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import StarIcon from "@mui/icons-material/Star";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
+import ShareIcon from "@mui/icons-material/Share";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import dayjs from "dayjs";
 import { toast } from "react-toastify";
@@ -49,6 +53,8 @@ import { useGlobalStore } from "@/stores/global-state";
 import VipListDialog from "@/components/VipList/VipListDialog";
 import VipListBulkDialog from "@/components/VipList/VipListBulkDialog";
 import VipListRecordDialog from "@/components/VipList/VipListRecordDialog";
+import { ImportPartnerListButton, VipListPartnership } from "@/components/VipList/VipListPartnership";
+import { cmd } from "@/utils/fetchUtils";
 import VipManagementTabs from "@/components/VipManagementTabs";
 import { PlayerDrawerLink } from "@/components/shared/PlayerDrawerLink";
 import {
@@ -56,12 +62,6 @@ import {
   vipListQueryKeys,
   vipListQueryOptions,
 } from "@/queries/vip-list-query";
-
-const formatSyncMethod = (value) =>
-  String(value ?? "")
-    .replaceAll("_", " ")
-    .toLowerCase()
-    .replace(/^./, (character) => character.toUpperCase());
 
 const formatServers = (servers) => {
   if (servers === null) return "All servers";
@@ -136,7 +136,6 @@ const exportVipRecords = (format, vipList, records) => {
           vip_list: {
             id: vipList.id,
             name: vipList.name,
-            sync: vipList.sync,
             servers: vipList.servers,
           },
           records: exportedRecords,
@@ -177,6 +176,10 @@ function RecordTable({
   onToggleRecords,
   showList = false,
   listNames = {},
+  isImported = false,
+  onPartnerPolicy,
+  onCopy,
+  importedListIds = [],
 }) {
   const [sorting, setSorting] = useState({ field: "player", direction: "asc" });
   const safeRecords = Array.isArray(records) ? records : [];
@@ -213,7 +216,7 @@ function RecordTable({
       {title}
     </TableSortLabel>
   );
-  const showActions = Boolean(onEdit || onDelete);
+  const showActions = Boolean(onEdit || onDelete || onPartnerPolicy || onCopy);
   const selectedSet = new Set(selectedRecordIds);
   const selectedVisibleCount = safeRecords.filter((record) =>
     selectedSet.has(record.id)
@@ -360,7 +363,13 @@ function RecordTable({
                     <TableCell>
                       <Chip
                         label={
-                          active
+                          isImported && record.partner_excluded
+                            ? "Excluded"
+                            : isImported && !record.partner_present
+                            ? "Removed by partner"
+                            : isImported && !record.partner_approved
+                            ? "Awaiting approval"
+                            : active
                             ? "Active"
                             : !record.is_active
                             ? "Inactive"
@@ -383,7 +392,14 @@ function RecordTable({
                     <TableCell>{record.notes || "—"}</TableCell>
                     {showActions && (
                       <TableCell align="right">
-                        {onEdit && (
+                        {isImported && onPartnerPolicy && record.partner_present && <>
+                          {!record.partner_approved && <Button size="small" onClick={() => onPartnerPolicy(record, { approved: true })}>Approve</Button>}
+                          <Button size="small" onClick={() => onPartnerPolicy(record, { excluded: !record.partner_excluded })}>
+                            {record.partner_excluded ? "Remove exclusion" : "Exclude"}
+                          </Button>
+                        </>}
+                        {isImported && onCopy && <Button size="small" onClick={() => onCopy(record)}>Copy to own list</Button>}
+                        {onEdit && !importedListIds.includes(record.vip_list_id) && (
                           <Tooltip title="Edit record">
                             <IconButton
                               size="small"
@@ -393,7 +409,7 @@ function RecordTable({
                             </IconButton>
                           </Tooltip>
                         )}
-                        {onDelete && (
+                        {onDelete && (!importedListIds.includes(record.vip_list_id) || (!record.partner_present && !record.partner_excluded)) && (
                           <Tooltip title="Delete record">
                             <IconButton
                               size="small"
@@ -459,8 +475,12 @@ export default function VipListsPage() {
     serverStatus?.short_name,
   ]);
   const [selectedListId, setSelectedListId] = useState(null);
+  const [importActionsElement, setImportActionsElement] = useState(null);
   const [listSort, setListSort] = useState("name");
   const [listDialog, setListDialog] = useState(null);
+  const [listMenu, setListMenu] = useState(null);
+  const [importSettingsRequest, setImportSettingsRequest] = useState(null);
+  const [shareOnlyList, setShareOnlyList] = useState(null);
   const [recordDialog, setRecordDialog] = useState(null);
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const [selectedRecordIds, setSelectedRecordIds] = useState([]);
@@ -468,6 +488,8 @@ export default function VipListsPage() {
   const [searchScope, setSearchScope] = useState("selected");
   const [statusFilter, setStatusFilter] = useState("all");
   const [confirmation, setConfirmation] = useState(null);
+  const [copyRecord, setCopyRecord] = useState(null);
+  const [copyTarget, setCopyTarget] = useState("");
 
   const canCreateLists = hasPermission(permissions, "can_create_vip_lists");
   const canChangeLists = hasPermission(permissions, "can_change_vip_lists");
@@ -481,6 +503,9 @@ export default function VipListsPage() {
     permissions,
     "can_delete_vip_list_records"
   );
+  const canManageShares = hasPermission(permissions, "can_manage_vip_list_shares");
+  const canManageImports = hasPermission(permissions, "can_manage_vip_list_imports");
+  const canApproveImports = hasPermission(permissions, "can_approve_vip_list_imports");
 
   const refreshLists = () =>
     queryClient.invalidateQueries({
@@ -598,6 +623,30 @@ export default function VipListsPage() {
     onSuccess: async (_result, record) => {
       toast.success("VIP record deleted.");
       await refreshRecords(record.vip_list_id ?? selectedListId);
+    },
+    onError: mutationError,
+  });
+
+  const partnerPolicy = useMutation({
+    mutationFn: ({ record, policy }) => cmd.SET_VIP_LIST_IMPORT_RECORD_POLICY({
+      payload: { record_id: record.id, ...policy }, throwRouteError: false,
+    }),
+    onSuccess: () => refreshRecords(),
+    onError: mutationError,
+  });
+  const copyPartnerRecord = useMutation({
+    mutationFn: () => cmd.ADD_VIP_LIST_RECORD({
+      payload: {
+        player_id: copyRecord.player_id,
+        vip_list_id: Number(copyTarget),
+        description: copyRecord.description,
+      }, throwRouteError: false,
+    }),
+    onSuccess: async () => {
+      toast.success("VIP copied to your own list.");
+      await refreshRecords(Number(copyTarget));
+      setCopyRecord(null);
+      setCopyTarget("");
     },
     onError: mutationError,
   });
@@ -961,6 +1010,10 @@ export default function VipListsPage() {
             Create list
           </Button>
         )}
+        {canManageImports && <ImportPartnerListButton serverNumber={serverNumber} onCreated={async (created) => {
+          await refreshLists();
+          if (created?.id) setSelectedListId(created.id);
+        }} />}
       </Stack>
 
       {mutationPending && <LinearProgress />}
@@ -996,12 +1049,14 @@ export default function VipListsPage() {
             </Stack>
             <Stack spacing={0.5}>
               {sortedLists.map((vipList) => (
+                <Box key={vipList.id} sx={{ display: "flex", alignItems: "center", minWidth: 0 }}>
                 <Button
-                  key={vipList.id}
                   variant={selectedListId === vipList.id ? "contained" : "text"}
                   color={selectedListId === vipList.id ? "primary" : "inherit"}
                   onClick={() => setSelectedListId(vipList.id)}
                   sx={{
+                    flex: 1,
+                    minWidth: 0,
                     justifyContent: "flex-start",
                     textAlign: "left",
                     textTransform: "none",
@@ -1025,64 +1080,98 @@ export default function VipListsPage() {
                           size="small"
                         />
                       )}
+                      {vipList.is_imported && <Chip label="Partner" size="small" variant="outlined" />}
+                      {vipList.has_active_shares && (
+                        <Tooltip title="Shared with partners">
+                          <ShareIcon fontSize="small" aria-label="Shared with partners" color="info" />
+                        </Tooltip>
+                      )}
                     </Stack>
                     <Typography variant="caption">
                       {formatServers(vipList.servers)}
                     </Typography>
                   </Stack>
                 </Button>
+                {((vipList.is_imported ? canManageImports : canChangeLists) || canDeleteLists) && (
+                  <IconButton size="small" aria-label={`Actions for ${vipList.name}`} onClick={(event) => setListMenu({ anchor: event.currentTarget, vipList })}>
+                    <MoreVertIcon />
+                  </IconButton>
+                )}
+                </Box>
               ))}
             </Stack>
+            <Menu anchorEl={listMenu?.anchor} open={Boolean(listMenu)} onClose={() => setListMenu(null)}>
+              {(listMenu?.vipList?.is_imported ? canManageImports : canChangeLists) && (
+                <MenuItem onClick={() => {
+                  const vipList = listMenu.vipList;
+                  setListMenu(null);
+                  setSelectedListId(vipList.id);
+                  if (vipList.is_imported) {
+                    setImportSettingsRequest({ listId: vipList.id, nonce: Date.now() });
+                  } else {
+                    setListDialog({ mode: "edit", vipList });
+                  }
+                }}><EditIcon fontSize="small" sx={{ mr: 1 }} />Settings</MenuItem>
+              )}
+              {canDeleteLists && <MenuItem sx={{ color: "error.main" }} onClick={() => {
+                const vipList = listMenu.vipList;
+                setListMenu(null);
+                setConfirmation({ kind: "list", item: vipList });
+              }}><DeleteIcon fontSize="small" sx={{ mr: 1 }} />Delete list</MenuItem>}
+            </Menu>
           </Paper>
 
           <Stack spacing={2} sx={{ minWidth: 0, flex: 1 }}>
             {selectedList && (
               <Paper variant="outlined" sx={{ p: 2 }}>
                 <Stack
-                  direction={{ xs: "column", sm: "row" }}
-                  spacing={1}
-                  alignItems={{ xs: "flex-start", sm: "center" }}
+                  direction={{ xs: "column", lg: "row" }}
+                  alignItems="flex-start"
+                  justifyContent="space-between"
+                  gap={2}
                 >
-                  <Box sx={{ flexGrow: 1 }}>
+                  <Box sx={{ minWidth: 0, flex: 1 }}>
                     <Typography variant="h5">
                       {`${selectedList.name} (ID ${selectedList.id})`}
                     </Typography>
                     <Typography color="text.secondary">
                       {formatServers(selectedList.servers)}
                     </Typography>
-                  </Box>
-                  {selectedListIsDefault && (
+                    <Stack direction="row" alignItems="center" flexWrap="wrap" gap={1} sx={{ mt: 1 }}>
+                    {selectedListIsDefault && (
+                      <Chip
+                        icon={<StarIcon />}
+                        label={`Default for ${serverLabel}`}
+                        color="warning"
+                        variant="outlined"
+                      />
+                    )}
+                    {selectedList.has_active_shares && (
+                      <Chip icon={<ShareIcon />} label="Shared" color="info" variant="outlined" />
+                    )}
                     <Chip
-                      icon={<StarIcon />}
-                      label={`Default for ${serverLabel}`}
-                      color="warning"
+                      label={selectedList.expired_retention_days === null
+                        ? "Keep expired records"
+                        : selectedList.expired_retention_days === 0
+                        ? "Delete expired automatically"
+                        : `Delete expired after ${selectedList.expired_retention_days} day(s)`}
                       variant="outlined"
                     />
-                  )}
-                  <Chip
-                    label={formatSyncMethod(selectedList.sync)}
-                    variant="outlined"
-                  />
-                  <Chip
-                    label={selectedList.expired_retention_days === null
-                      ? "Keep expired records"
-                      : selectedList.expired_retention_days === 0
-                      ? "Delete expired automatically"
-                      : `Delete expired after ${selectedList.expired_retention_days} day(s)`}
-                    variant="outlined"
-                  />
-                  <Chip
-                    label={selectedList.default_expiration_seconds === null
-                      ? "New VIPs: no default duration"
-                      : selectedList.default_expiration_seconds === 0
-                      ? "New VIPs: never expire"
-                      : `New VIPs: ${formatDuration(selectedList.default_expiration_seconds)}`}
-                    variant="outlined"
-                  />
-                  {(selectedList.flags ?? []).map((flag) => (
-                    <Chip key={flag} label={`Flag: ${flag}`} variant="outlined" />
-                  ))}
-                  {canChangeRecords && (
+                    <Chip
+                      label={selectedList.default_expiration_seconds === null
+                        ? "New VIPs: no default duration"
+                        : selectedList.default_expiration_seconds === 0
+                        ? "New VIPs: never expire"
+                        : `New VIPs: ${formatDuration(selectedList.default_expiration_seconds)}`}
+                      variant="outlined"
+                    />
+                    {(selectedList.flags ?? []).map((flag) => (
+                      <Chip key={flag} label={`Flag: ${flag}`} variant="outlined" />
+                    ))}
+                    </Stack>
+                  </Box>
+                  <Stack direction="row" alignItems="center" justifyContent={{ xs: "flex-start", lg: "flex-end" }} flexWrap="wrap" gap={1}>
+                  {canChangeRecords && !selectedList.is_imported && (
                     <Button
                       disabled={selectedList.default_expiration_seconds === null || activeLoading || inactiveLoading ||
                         (activeRecords.length === 0 &&
@@ -1097,7 +1186,7 @@ export default function VipListsPage() {
                       Apply duration to existing
                     </Button>
                   )}
-                  {canChangeLists &&
+                  {canChangeLists && !selectedList.is_imported &&
                     (selectedListIsDefault ? (
                       <Button
                         color="warning"
@@ -1137,7 +1226,7 @@ export default function VipListsPage() {
                         </span>
                       </Tooltip>
                     ))}
-                  {canAddRecords && (
+                  {canAddRecords && !selectedList.is_imported && (
                     <Button
                       variant="contained"
                       startIcon={<AddIcon />}
@@ -1146,36 +1235,28 @@ export default function VipListsPage() {
                       Add record
                     </Button>
                   )}
-                  {canChangeLists && (
-                    <Button
-                      startIcon={<EditIcon />}
-                      onClick={() =>
-                        setListDialog({
-                          mode: "edit",
-                          vipList: selectedList,
-                        })
-                      }
-                    >
-                      Edit list
+                  {canManageShares && !canChangeLists && !selectedList.is_imported && (
+                    <Button startIcon={<ShareIcon />} onClick={() => setShareOnlyList(selectedList)}>
+                      Manage sharing
                     </Button>
                   )}
-                  {canDeleteLists && (
-                    <Button
-                      color="error"
-                      startIcon={<DeleteIcon />}
-                      onClick={() =>
-                        setConfirmation({
-                          kind: "list",
-                          item: selectedList,
-                        })
-                      }
-                    >
-                      Delete list
-                    </Button>
+                  {selectedList.is_imported && canManageImports && (
+                    <Box ref={setImportActionsElement} sx={{ display: "flex", alignItems: "center", gap: 1 }} />
                   )}
+                  </Stack>
                 </Stack>
               </Paper>
             )}
+
+            {selectedList?.is_imported && <VipListPartnership
+              key={selectedList.id}
+              list={selectedList}
+              servers={serverOptions}
+              canManageImports={canManageImports}
+              actionsContainer={importActionsElement}
+              settingsRequest={importSettingsRequest?.listId === selectedList.id ? importSettingsRequest.nonce : null}
+              onSynced={() => refreshRecords(selectedList.id)}
+            />}
 
             <Paper variant="outlined" sx={{ p: 2 }}>
               <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems="center">
@@ -1213,7 +1294,7 @@ export default function VipListsPage() {
               </Typography>
             </Paper>
 
-            {searchScope === "selected" && selectedRecordIds.length > 0 && (
+            {searchScope === "selected" && !selectedList?.is_imported && selectedRecordIds.length > 0 && (
               <Paper variant="outlined" sx={{ p: 2 }}>
                 <Stack
                   direction={{ xs: "column", sm: "row" }}
@@ -1257,7 +1338,13 @@ export default function VipListsPage() {
                 : "No VIP records match the selected filters."}
               showList={searchScope === "all"}
               listNames={listNames}
-              selectable={searchScope === "selected"}
+              selectable={searchScope === "selected" && !selectedList?.is_imported}
+              isImported={searchScope === "selected" && selectedList?.is_imported}
+              importedListIds={lists.filter((list) => list.is_imported).map((list) => list.id)}
+              onPartnerPolicy={searchScope === "selected" && selectedList?.is_imported && canApproveImports
+                ? (record, policy) => partnerPolicy.mutate({ record, policy }) : undefined}
+              onCopy={searchScope === "selected" && selectedList?.is_imported && canAddRecords
+                ? (record) => setCopyRecord(record) : undefined}
               selectedRecordIds={selectedRecordIds}
               onToggleRecord={toggleRecord}
               onToggleRecords={toggleRecords}
@@ -1283,6 +1370,20 @@ export default function VipListsPage() {
         onClose={() => setBulkDialogOpen(false)}
         onSubmit={submitBulkOperation}
       />
+
+      <Dialog open={Boolean(copyRecord)} onClose={() => setCopyRecord(null)} fullWidth maxWidth="xs">
+        <DialogTitle>Copy partner VIP to your own list</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mb: 2 }}>{copyRecord?.player_name || copyRecord?.description || copyRecord?.player_id}</Typography>
+          <TextField select fullWidth label="Destination list" value={copyTarget} onChange={(event) => setCopyTarget(event.target.value)}>
+            {lists.filter((list) => !list.is_imported).map((list) => <MenuItem key={list.id} value={list.id}>{list.name}</MenuItem>)}
+          </TextField>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCopyRecord(null)}>Cancel</Button>
+          <Button onClick={() => copyPartnerRecord.mutate()} disabled={!copyTarget || copyPartnerRecord.isPending}>Copy and activate</Button>
+        </DialogActions>
+      </Dialog>
 
       <VipListRecordDialog
         open={Boolean(recordDialog && selectedList)}
@@ -1316,7 +1417,6 @@ export default function VipListsPage() {
           listDialog?.mode === "edit"
             ? {
                 name: listDialog.vipList.name,
-                sync: listDialog.vipList.sync,
                 expiredRetentionDays: listDialog.vipList.expired_retention_days,
                 defaultExpirationSeconds: listDialog.vipList.default_expiration_seconds,
                 flags: listDialog.vipList.flags,
@@ -1325,16 +1425,26 @@ export default function VipListsPage() {
             : undefined
         }
         title={
-          listDialog?.mode === "edit" ? "Edit VIP list" : "Create VIP list"
+          listDialog?.mode === "edit" ? "VIP list settings" : "Create VIP list"
         }
         submitLabel={listDialog?.mode === "edit" ? "Save" : "Create list"}
         loading={listMutationPending}
         serverNumber={serverNumber}
         servers={serverOptions}
         allowDefaultSelection={listDialog?.mode === "create" && canChangeLists}
+        shareList={listDialog?.mode === "edit" ? listDialog.vipList : null}
+        canManageShares={canManageShares}
         onClose={() => setListDialog(null)}
         onSubmit={submitList}
       />
+
+      <Dialog open={Boolean(shareOnlyList)} onClose={() => setShareOnlyList(null)} fullWidth maxWidth="sm">
+        <DialogTitle>Share VIP list</DialogTitle>
+        <DialogContent>
+          {shareOnlyList && <VipListPartnership key={shareOnlyList.id} list={shareOnlyList} canManageShares canManageImports={false} />}
+        </DialogContent>
+        <DialogActions><Button onClick={() => setShareOnlyList(null)}>Close</Button></DialogActions>
+      </Dialog>
 
       <Dialog
         open={Boolean(confirmation)}

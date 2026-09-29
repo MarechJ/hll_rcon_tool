@@ -15,6 +15,7 @@ from . import (
     services,
     user_settings,
     views,
+    vip_sharing,
     vips,
 )
 from .auth import api_response
@@ -198,6 +199,19 @@ endpoints: list[tuple[str, Callable]] = [
     ("get_all_discord_webhooks_config", user_settings.get_all_discord_webhooks_config),
     ("get_all_standard_message_config", user_settings.get_all_standard_message_config),
     ("reconnect_gameserver", views.restart_gunicorn),
+    ("create_vip_list_share", vip_sharing.create_vip_list_share),
+    ("get_vip_list_shares", vip_sharing.get_vip_list_shares),
+    ("revoke_vip_list_share", vip_sharing.revoke_vip_list_share),
+    ("rotate_vip_list_share", vip_sharing.rotate_vip_list_share),
+    ("get_shared_vip_list", vip_sharing.get_shared_vip_list),
+    ("create_vip_list_import", vip_sharing.create_vip_list_import),
+    ("get_vip_list_imports", vip_sharing.get_vip_list_imports),
+    ("edit_vip_list_import", vip_sharing.edit_vip_list_import),
+    ("synchronize_vip_list_import", vip_sharing.synchronize_vip_list_import),
+    (
+        "set_vip_list_import_record_policy",
+        vip_sharing.set_vip_list_import_record_policy,
+    ),
 ] + [(name, func) for name, func in views.commands]
 
 # Expose endpoints though Django

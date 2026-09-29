@@ -646,6 +646,7 @@ class PlayerFlag(Base):
             "flag": self.flag,
             "comment": self.comment,
             "modified": self.modified,
+            "managed_by_vip_list": self.managed_by_vip_list,
         }
 
 
@@ -1313,6 +1314,15 @@ class VipList(Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
+    shares: Mapped[list["VipListShare"]] = relationship(
+        back_populates="vip_list", cascade="all, delete-orphan", passive_deletes=True
+    )
+    partner_import: Mapped["VipListImport | None"] = relationship(
+        back_populates="vip_list",
+        uselist=False,
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
 
     def get_server_numbers(self) -> set[int] | None:
         if self.servers is None:
@@ -1334,7 +1344,54 @@ class VipList(Base):
             "default_expiration_seconds": self.default_expiration_seconds,
             "flags": self.flags or [],
             "servers": sorted(server_numbers) if server_numbers is not None else None,
+            "is_imported": self.partner_import is not None,
+            "has_active_shares": any(
+                share.revoked_at is None
+                and (share.expires_at is None or share.expires_at > datetime.now(UTC))
+                for share in self.shares
+            ),
         }
+
+
+class VipListShare(Base):
+    """One revocable, read-only credential for a single VIP list."""
+
+    __tablename__ = "vip_list_share"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    vip_list_id: Mapped[int] = mapped_column(
+        ForeignKey("vip_list.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    name: Mapped[str] = mapped_column(String(128), nullable=False)
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+    expires_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
+    revoked_by: Mapped[str | None] = mapped_column(String(150))
+    last_used_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
+    vip_list: Mapped[VipList] = relationship(back_populates="shares")
+
+
+class VipListImport(Base):
+    """Remote source for a read-only, locally scoped VIP list."""
+
+    __tablename__ = "vip_list_import"
+
+    vip_list_id: Mapped[int] = mapped_column(
+        ForeignKey("vip_list.id", ondelete="CASCADE"), primary_key=True
+    )
+    source_url: Mapped[str] = mapped_column(String(2048), nullable=False)
+    encrypted_token: Mapped[str] = mapped_column(nullable=False)
+    encrypted_webhook_url: Mapped[str | None]
+    approve_new: Mapped[bool] = mapped_column(default=True, nullable=False)
+    last_success_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
+    suspended_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
+    last_error_notified_at: Mapped[datetime | None] = mapped_column(
+        TIMESTAMP(timezone=True)
+    )
+    vip_list: Mapped[VipList] = relationship(back_populates="partner_import")
 
 
 class VipListDefault(Base):
@@ -1351,6 +1408,17 @@ class VipListDefault(Base):
     )
 
     vip_list: Mapped[VipList] = relationship(back_populates="defaults")
+
+
+class VipServerSyncConfig(Base):
+    __tablename__ = "vip_server_sync_config"
+
+    server_number: Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
+    sync: Mapped[VipListSyncMethod] = mapped_column(
+        Enum(VipListSyncMethod, name="viplistsyncmethod", create_type=False),
+        nullable=False,
+        default=VipListSyncMethod.IGNORE_UNKNOWN,
+    )
 
 
 class VipListRecord(Base):
@@ -1371,6 +1439,12 @@ class VipListRecord(Base):
         nullable=False,
     )
     active: Mapped[bool] = mapped_column(default=True, nullable=False)
+    partner_approved: Mapped[bool] = mapped_column(default=True, nullable=False)
+    partner_excluded: Mapped[bool] = mapped_column(default=False, nullable=False)
+    partner_present: Mapped[bool] = mapped_column(default=True, nullable=False)
+    partner_deactivated_at: Mapped[datetime | None] = mapped_column(
+        TIMESTAMP(timezone=True)
+    )
     description: Mapped[str | None]
     notes: Mapped[str | None]
     expires_at: Mapped[datetime | None] = mapped_column(
@@ -1410,6 +1484,10 @@ class VipListRecord(Base):
             "expires_at": self.expires_at,
             "description": self.description if player_name is None else None,
             "notes": self.notes,
+            "partner_approved": self.partner_approved,
+            "partner_excluded": self.partner_excluded,
+            "partner_present": self.partner_present,
+            "partner_deactivated_at": self.partner_deactivated_at,
         }
 
 

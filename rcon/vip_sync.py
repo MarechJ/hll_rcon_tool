@@ -80,7 +80,7 @@ def get_gameserver_description(record: VipSyncRecord) -> str:
 def build_vip_sync_plan(
     gameserver_vips: Mapping[str, str],
     records: Iterable[VipSyncRecord],
-    sync_methods: Iterable[VipListSyncMethod],
+    sync_mode: VipListSyncMethod,
     timestamp: datetime,
 ) -> VipSyncPlan:
     """Calculate VIP additions, updates and removals without side effects."""
@@ -89,10 +89,7 @@ def build_vip_sync_plan(
     for record in records:
         records_by_player[record.player_id].append(record)
 
-    sync_methods = tuple(sync_methods)
-    remove_unknown = bool(sync_methods) and all(
-        method == VipListSyncMethod.REMOVE_UNKNOWN for method in sync_methods
-    )
+    remove_unknown = sync_mode == VipListSyncMethod.REMOVE_UNKNOWN
 
     to_add: list[VipSyncAdd] = []
     to_remove: set[str] = set()

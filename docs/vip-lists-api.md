@@ -114,10 +114,11 @@ are positive integers.
 }
 ```
 
-`ignore_unknown` leaves gameserver VIPs that are not managed by an applicable list
-untouched. An unknown gameserver VIP is eligible for automatic removal only when
-applicable list configuration permits it; use the sync preview before applying
-changes.
+The per-gameserver `ignore_unknown` policy leaves VIPs that are not managed by
+any applicable list untouched. `remove_unknown` removes them on synchronization;
+use the sync preview before changing the policy or applying changes. The
+list-level `sync` field in older API responses and requests is retained for
+compatibility and does not control this policy.
 
 `flags` are global player flags for active, non-expired members of this list.
 Existing manually assigned flags remain manual and are never removed by list
@@ -463,12 +464,19 @@ instead when the record should remain available for auditing or later reactivati
 | --- | --- | --- | --- |
 | `GET /api/get_vip_sync_plan` | `api.can_view_vip_ids` | `server_number?: integer` | `VipSyncResult` with `execution.dry_run: true` |
 | `GET /api/get_vip_sync_status` | `api.can_view_vip_ids` | `server_number?: integer` | `VipSyncStatus` |
+| `GET /api/get_server_vip_sync_mode` | `api.can_view_vip_ids` | `server_number?: integer` | `{server_number, sync}` |
+| `POST /api/set_server_vip_sync_mode` | `api.can_change_vip_lists` | `{"sync": "ignore_unknown" \| "remove_unknown", "server_number"?: integer}` | `{server_number, sync}` |
 | `POST /api/synchronize_vip_lists` | `api.can_change_vip_lists` | `{"server_number"?: integer}` | `VipSyncResult` with `execution.dry_run: false` |
 | `POST /api/remove_unknown_vip_from_gameserver` | `api.can_change_vip_lists` | `{"player_id": string, "server_number"?: integer}` | `RemoveUnknownVipResult` |
 
 Always inspect `get_vip_sync_plan` before triggering a manual synchronization from
 an external tool. A synchronization can add and remove gameserver VIPs according
 to all lists applicable to the selected server.
+The unknown VIP policy is configured per gameserver. Existing list-level `sync`
+fields are retained for API compatibility but no longer control synchronization.
+The database migration copies the previous effective policy to each server:
+`remove_unknown` only where all previously applicable lists requested it.
+If there were no applicable lists, the default remains `ignore_unknown`.
 
 `remove_unknown_vip_from_gameserver` performs a fresh dry-run immediately before
 the removal. It rejects the operation if the player is managed by the database or

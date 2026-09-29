@@ -7,7 +7,11 @@ import {
   Chip,
   CircularProgress,
   Divider,
+  FormControl,
+  InputLabel,
+  MenuItem,
   Paper,
+  Select,
   Stack,
   Typography,
 } from "@mui/material";
@@ -18,6 +22,7 @@ import ConfirmButton from "@/components/shared/ConfirmButton";
 import UnknownVipList from "./UnknownVipList";
 import VipSyncStatus from "./VipSyncStatus";
 import { queryClient } from "@/queryClient";
+import { cmd } from "@/utils/fetchUtils";
 import {
   vipMutationOptions,
   vipQueryKeys,
@@ -66,6 +71,26 @@ const VipSyncPanel = () => {
   const canPreview = hasPermission(permissions, "can_view_vip_ids");
   const canSynchronize = hasPermission(permissions, "can_change_vip_lists");
   const [lastExecution, setLastExecution] = useState(null);
+  const {
+    data: serverSyncMode,
+    error: serverSyncModeError,
+  } = useQuery({
+    queryKey: ["server-vip-sync-mode"],
+    queryFn: () => cmd.GET_SERVER_VIP_SYNC_MODE({ throwRouteError: false }),
+    enabled: canPreview,
+  });
+  const {
+    mutate: saveServerSyncMode,
+    isPending: savingServerSyncMode,
+    error: saveServerSyncModeError,
+  } = useMutation({
+    mutationFn: (sync) => cmd.SET_SERVER_VIP_SYNC_MODE({ payload: { sync }, throwRouteError: false }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["server-vip-sync-mode"] });
+      setLastExecution(null);
+      loadPreview();
+    },
+  });
 
   const {
     data: preview,
@@ -183,6 +208,23 @@ const VipSyncPanel = () => {
             />
           </Stack>
         </Stack>
+
+        {canPreview && <Stack spacing={1}>
+          <FormControl size="small" sx={{ maxWidth: 360 }} disabled={!canSynchronize || savingServerSyncMode || !serverSyncMode}>
+            <InputLabel id="server-vip-sync-mode-label">Unknown gameserver VIPs</InputLabel>
+            <Select labelId="server-vip-sync-mode-label" label="Unknown gameserver VIPs" value={serverSyncMode?.sync ?? "ignore_unknown"} onChange={(event) => {
+              const sync = event.target.value;
+              if (sync === "remove_unknown" && !window.confirm("Remove VIPs not present in any configured list from this gameserver during synchronization?")) return;
+              saveServerSyncMode(sync);
+            }}>
+              <MenuItem value="ignore_unknown">Keep unknown VIPs</MenuItem>
+              <MenuItem value="remove_unknown">Remove unknown VIPs</MenuItem>
+            </Select>
+          </FormControl>
+          <Typography variant="body2" color="text.secondary">This setting applies to this gameserver after combining all its VIP lists. Changing it updates the next synchronization preview.</Typography>
+          {serverSyncModeError && <Alert severity="error">{getErrorMessage(serverSyncModeError, "Could not load gameserver VIP synchronization settings.")}</Alert>}
+          {saveServerSyncModeError && <Alert severity="error">{getErrorMessage(saveServerSyncModeError, "Could not save gameserver VIP synchronization settings.")}</Alert>}
+        </Stack>}
 
         {!canSynchronize && (
           <Alert severity="info">

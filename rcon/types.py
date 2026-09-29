@@ -713,6 +713,7 @@ class PlayerFlagType(TypedDict):
     flag: str
     comment: str | None
     modified: datetime.datetime
+    managed_by_vip_list: bool
 
 
 class PlayerOptinsType(TypedDict):
@@ -756,6 +757,8 @@ class VipListType(TypedDict):
     default_expiration_seconds: int | None
     flags: list[str]
     servers: list[int] | None
+    is_imported: bool
+    has_active_shares: bool
 
 
 class VipListRecordType(TypedDict):
@@ -770,6 +773,10 @@ class VipListRecordType(TypedDict):
     expires_at: datetime.datetime | None
     description: str | None
     notes: str | None
+    partner_approved: bool
+    partner_excluded: bool
+    partner_present: bool
+    partner_deactivated_at: datetime.datetime | None
 
 
 class PlayerSoldierType(TypedDict):

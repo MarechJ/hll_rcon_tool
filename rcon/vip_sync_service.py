@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from rcon.models import VipListRecord, enter_session
 from rcon.types import VipIdType, VipListSyncMethod
-from rcon.vip import get_vip_lists_for_server
+from rcon.vip import get_server_vip_sync_mode, get_vip_lists_for_server
 from rcon.vip_sync import VipSyncPlan, VipSyncRecord, build_vip_sync_plan
 
 
@@ -42,7 +42,7 @@ def database_record_to_sync_record(record: VipListRecord) -> VipSyncRecord:
 def load_database_sync_state(
     sess: Session,
     server_number: int,
-) -> tuple[list[VipSyncRecord], list[VipListSyncMethod]]:
+) -> tuple[list[VipSyncRecord], VipListSyncMethod]:
     """Load all VIP records and sync modes applicable to one server."""
     vip_lists = get_vip_lists_for_server(
         sess,
@@ -54,9 +54,7 @@ def load_database_sync_state(
         for vip_list in vip_lists
         for record in vip_list.records
     ]
-    sync_methods = [vip_list.sync for vip_list in vip_lists]
-
-    return records, sync_methods
+    return records, get_server_vip_sync_mode(sess, server_number)
 
 
 def read_gameserver_vips(
@@ -74,15 +72,15 @@ def build_database_vip_sync_plan(
     """Build a synchronization plan from database state without RCON writes."""
     timestamp = timestamp or datetime.now(tz=UTC)
     records: list[VipSyncRecord] | None = None
-    sync_methods: list[VipListSyncMethod] | None = None
+    sync_mode: VipListSyncMethod | None = None
 
     with enter_session() as sess:
-        records, sync_methods = load_database_sync_state(
+        records, sync_mode = load_database_sync_state(
             sess,
             server_number=server_number,
         )
 
-    if records is None or sync_methods is None:
+    if records is None or sync_mode is None:
         raise VipSyncDatabaseUnavailableError(
             "VIP List tables are unavailable; apply database migrations first."
         )
@@ -90,7 +88,7 @@ def build_database_vip_sync_plan(
     return build_vip_sync_plan(
         gameserver_vips=gameserver_vips,
         records=records,
-        sync_methods=sync_methods,
+        sync_mode=sync_mode,
         timestamp=timestamp,
     )
 
