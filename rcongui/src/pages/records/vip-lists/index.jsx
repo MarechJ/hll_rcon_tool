@@ -525,7 +525,6 @@ export default function VipListsPage() {
   const [exporting, setExporting] = useState(false);
   const [selectedRecordIds, setSelectedRecordIds] = useState([]);
   const [recordSearch, setRecordSearch] = useState("");
-  const [searchScope, setSearchScope] = useState("selected");
   const [statusFilter, setStatusFilter] = useState("all");
   const [confirmation, setConfirmation] = useState(null);
   const [copyRecord, setCopyRecord] = useState(null);
@@ -770,14 +769,14 @@ export default function VipListsPage() {
     );
   };
 
-  const exportVipLists = async (all = false) => {
-    if (!all && !selectedList) return;
+  const exportVipLists = async (all = false, vipList = selectedList) => {
+    if (!all && !vipList) return;
 
     setExporting(true);
     try {
       await downloadVipExport(
         all ? "download_all_vip_lists" : "download_vip_list",
-        all ? {} : { vip_list_id: selectedList.id }
+        all ? {} : { vip_list_id: vipList.id }
       );
       toast.success(all ? "All VIP lists exported." : "VIP list exported.");
     } catch (error) {
@@ -889,12 +888,15 @@ export default function VipListsPage() {
 
   useEffect(() => {
     if (
+      selectedListId !== "all" &&
       lists.length > 0 &&
       !lists.some((vipList) => vipList.id === selectedListId)
     ) {
       setSelectedListId(sortedLists[0].id);
     }
   }, [lists, sortedLists, selectedListId]);
+
+  const viewingAllLists = selectedListId === "all";
 
   const selectedList = useMemo(
     () => lists.find((vipList) => vipList.id === selectedListId) ?? null,
@@ -905,38 +907,51 @@ export default function VipListsPage() {
     data: activeRecords = [],
     isLoading: activeLoading,
     error: activeError,
-  } = useQuery(vipListQueryOptions.activeRecords(selectedListId));
+  } = useQuery({
+    ...vipListQueryOptions.activeRecords(selectedListId),
+    enabled: Number.isInteger(selectedListId),
+  });
 
   const {
     data: inactiveRecords = [],
     isLoading: inactiveLoading,
     error: inactiveError,
-  } = useQuery(vipListQueryOptions.inactiveRecords(selectedListId));
+  } = useQuery({
+    ...vipListQueryOptions.inactiveRecords(selectedListId),
+    enabled: Number.isInteger(selectedListId),
+  });
 
-  const searchingAllLists = searchScope === "all" && recordSearch.trim() !== "";
   const allListQueries = useQueries({
     queries: lists.flatMap((list) => [
       {
         ...vipListQueryOptions.activeRecords(list.id),
-        enabled: searchingAllLists,
+        enabled: viewingAllLists,
       },
       {
         ...vipListQueryOptions.inactiveRecords(list.id),
-        enabled: searchingAllLists,
+        enabled: viewingAllLists,
       },
     ]),
   });
+
   const allListRecords = allListQueries.flatMap((query, index) =>
     (query.data ?? []).map((record) => ({
       ...record,
       vip_list_id: lists[Math.floor(index / 2)].id,
     }))
   );
-  const listNames = Object.fromEntries(lists.map((list) => [list.id, list.name]));
+
+  const listNames = Object.fromEntries(
+    lists.map((list) => [list.id, list.name])
+  );
 
   const error =
-    listsError || defaultListError || activeError || inactiveError ||
-    (searchingAllLists && allListQueries.find((query) => query.error)?.error);
+    listsError ||
+    defaultListError ||
+    activeError ||
+    inactiveError ||
+    (viewingAllLists &&
+      allListQueries.find((query) => query.error)?.error);
 
   const filterRecords = (records) => {
     const search = recordSearch.trim().toLocaleLowerCase();
@@ -944,7 +959,11 @@ export default function VipListsPage() {
     return records.filter((record) => {
       const active = record.is_active && !record.is_expired;
       if (statusFilter === "active" && !active) return false;
-      if (statusFilter === "expired" && (record.is_active === false || !record.is_expired)) return false;
+      if (
+        statusFilter === "expired" &&
+        (record.is_active === false || !record.is_expired)
+      )
+        return false;
       if (statusFilter === "inactive" && record.is_active) return false;
       if (search === "") return true;
       return [
@@ -955,7 +974,9 @@ export default function VipListsPage() {
         record.notes,
         record.admin_name,
         listNames[record.vip_list_id],
-      ].some((value) => String(value ?? "").toLocaleLowerCase().includes(search));
+      ].some((value) =>
+        String(value ?? "").toLocaleLowerCase().includes(search)
+      );
     });
   };
 
@@ -963,7 +984,8 @@ export default function VipListsPage() {
     () => filterRecords([...activeRecords, ...inactiveRecords]),
     [activeRecords, inactiveRecords, recordSearch, statusFilter, lists]
   );
-  const filteredAllListRecords = searchingAllLists
+
+  const filteredAllListRecords = viewingAllLists
     ? filterRecords(allListRecords)
     : [];
 
@@ -976,6 +998,7 @@ export default function VipListsPage() {
   }, [activeRecords, inactiveRecords, selectedRecordIds]);
 
   useEffect(() => {
+    setRecordSearch("");
     setSelectedRecordIds([]);
     setBulkDialogOpen(false);
   }, [selectedListId]);
@@ -1071,13 +1094,6 @@ export default function VipListsPage() {
           await refreshLists();
           if (created?.id) setSelectedListId(created.id);
         }} />}
-        <Button
-          startIcon={<DownloadIcon />}
-          disabled={exporting || lists.length === 0}
-          onClick={() => exportVipLists(true)}
-        >
-          Export all
-        </Button>
       </Stack>
 
       {mutationPending && <LinearProgress />}
@@ -1112,6 +1128,24 @@ export default function VipListsPage() {
               </Select>
             </Stack>
             <Stack spacing={0.5}>
+              <Button
+                variant={viewingAllLists ? "contained" : "text"}
+                color={viewingAllLists ? "primary" : "inherit"}
+                onClick={() => setSelectedListId("all")}
+                sx={{
+                  justifyContent: "flex-start",
+                  textAlign: "left",
+                  textTransform: "none",
+                }}
+              >
+                <Stack alignItems="flex-start">
+                  <Typography variant="body2">All lists</Typography>
+                  <Typography variant="caption">
+                    {`${lists.length} list${lists.length === 1 ? "" : "s"}`}
+                  </Typography>
+                </Stack>
+              </Button>
+
               {sortedLists.map((vipList) => (
                 <Box key={vipList.id} sx={{ display: "flex", alignItems: "center", minWidth: 0 }}>
                 <Button
@@ -1156,11 +1190,13 @@ export default function VipListsPage() {
                     </Typography>
                   </Stack>
                 </Button>
-                {((vipList.is_imported ? canManageImports : canChangeLists) || canDeleteLists) && (
-                  <IconButton size="small" aria-label={`Actions for ${vipList.name}`} onClick={(event) => setListMenu({ anchor: event.currentTarget, vipList })}>
-                    <MoreVertIcon />
-                  </IconButton>
-                )}
+                <IconButton
+                  size="small"
+                  aria-label={`Actions for ${vipList.name}`}
+                  onClick={(event) => setListMenu({ anchor: event.currentTarget, vipList })}
+                >
+                  <MoreVertIcon />
+                </IconButton>
                 </Box>
               ))}
             </Stack>
@@ -1177,6 +1213,29 @@ export default function VipListsPage() {
                   }
                 }}><EditIcon fontSize="small" sx={{ mr: 1 }} />Settings</MenuItem>
               )}
+              {canChangeRecords && !listMenu?.vipList?.is_imported && (
+                <MenuItem onClick={() => {
+                  const vipList = listMenu.vipList;
+                  setListMenu(null);
+                  setSelectedListId(vipList.id);
+                  setFileImportOpen(true);
+                }}>
+                  Import file
+                </MenuItem>
+              )}
+              {listMenu?.vipList && (
+                <MenuItem
+                  disabled={exporting}
+                  onClick={() => {
+                    const vipList = listMenu.vipList;
+                    setListMenu(null);
+                    exportVipLists(false, vipList);
+                  }}
+                >
+                  <DownloadIcon fontSize="small" sx={{ mr: 1 }} />
+                  Export list
+                </MenuItem>
+              )}
               {canDeleteLists && <MenuItem sx={{ color: "error.main" }} onClick={() => {
                 const vipList = listMenu.vipList;
                 setListMenu(null);
@@ -1186,6 +1245,31 @@ export default function VipListsPage() {
           </Paper>
 
           <Stack spacing={2} sx={{ minWidth: 0, flex: 1 }}>
+            {viewingAllLists && (
+              <Paper variant="outlined" sx={{ p: 2 }}>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  alignItems={{ xs: "flex-start", sm: "center" }}
+                  justifyContent="space-between"
+                  gap={2}
+                >
+                  <Box>
+                    <Typography variant="h5">All lists</Typography>
+                    <Typography color="text.secondary">
+                      Search and export records across all VIP lists.
+                    </Typography>
+                  </Box>
+                  <Button
+                    startIcon={<DownloadIcon />}
+                    disabled={exporting || lists.length === 0}
+                    onClick={() => exportVipLists(true)}
+                  >
+                    Export all
+                  </Button>
+                </Stack>
+              </Paper>
+            )}
+
             {selectedList && (
               <Paper variant="outlined" sx={{ p: 2 }}>
                 <Stack
@@ -1290,18 +1374,6 @@ export default function VipListsPage() {
                         </span>
                       </Tooltip>
                     ))}
-                  <Button
-                    startIcon={<DownloadIcon />}
-                    disabled={exporting}
-                    onClick={() => exportVipLists(false)}
-                  >
-                    Export list
-                  </Button>
-                  {canChangeRecords && !selectedList.is_imported && (
-                    <Button onClick={() => setFileImportOpen(true)}>
-                      Import file
-                    </Button>
-                  )}
                   {canAddRecords && !selectedList.is_imported && (
                     <Button
                       variant="contained"
@@ -1342,14 +1414,6 @@ export default function VipListsPage() {
                   onChange={setRecordSearch}
                   sx={{ flex: 1, width: "100%" }}
                 />
-                <FormControl size="small" sx={{ minWidth: 160 }}>
-                  <InputLabel id="vip-search-scope">Search in</InputLabel>
-                  <Select labelId="vip-search-scope" label="Search in" value={searchScope}
-                    onChange={(event) => { setSearchScope(event.target.value); setSelectedRecordIds([]); }}>
-                    <MenuItem value="selected">Current list</MenuItem>
-                    <MenuItem value="all">All lists</MenuItem>
-                  </Select>
-                </FormControl>
                 <FormControl size="small" sx={{ minWidth: 140 }}>
                   <InputLabel id="vip-record-status">Status</InputLabel>
                   <Select labelId="vip-record-status" label="Status" value={statusFilter}
@@ -1362,15 +1426,13 @@ export default function VipListsPage() {
                 </FormControl>
               </Stack>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                {searchScope === "all"
-                  ? searchingAllLists
-                    ? `${filteredAllListRecords.length} matches across ${lists.length} lists`
-                    : "Enter a search term to search across all lists."
+                {viewingAllLists
+                  ? `${filteredAllListRecords.length} matches across ${lists.length} lists`
                   : `${filteredCurrentRecords.length} of ${activeRecords.length + inactiveRecords.length} records shown`}
               </Typography>
             </Paper>
 
-            {searchScope === "selected" && !selectedList?.is_imported && selectedRecordIds.length > 0 && (
+            {!viewingAllLists && !selectedList?.is_imported && selectedRecordIds.length > 0 && (
               <Paper variant="outlined" sx={{ p: 2 }}>
                 <Stack
                   direction={{ xs: "column", sm: "row" }}
@@ -1404,30 +1466,28 @@ export default function VipListsPage() {
             )}
 
             <RecordTable
-              title={searchScope === "all" ? "Search results across lists" : "VIP records"}
-              records={searchScope === "all" ? filteredAllListRecords : filteredCurrentRecords}
-              loading={searchScope === "all"
-                ? searchingAllLists && allListQueries.some((query) => query.isPending)
+              title={viewingAllLists ? "VIP records across all lists" : "VIP records"}
+              records={viewingAllLists ? filteredAllListRecords : filteredCurrentRecords}
+              loading={viewingAllLists
+                ? allListQueries.some((query) => query.isPending)
                 : activeLoading || inactiveLoading}
-              emptyText={searchScope === "all" && !searchingAllLists
-                ? "Enter a search term to search across all lists."
-                : "No VIP records match the selected filters."}
-              showList={searchScope === "all"}
+              emptyText="No VIP records match the selected filters."
+              showList={viewingAllLists}
               listNames={listNames}
-              selectable={searchScope === "selected" && !selectedList?.is_imported}
-              isImported={searchScope === "selected" && selectedList?.is_imported}
+              selectable={!viewingAllLists && !selectedList?.is_imported}
+              isImported={!viewingAllLists && selectedList?.is_imported}
               importedListIds={lists.filter((list) => list.is_imported).map((list) => list.id)}
-              onPartnerPolicy={searchScope === "selected" && selectedList?.is_imported && canApproveImports
+              onPartnerPolicy={!viewingAllLists && selectedList?.is_imported && canApproveImports
                 ? (record, policy) => partnerPolicy.mutate({ record, policy }) : undefined}
-              onCopy={searchScope === "selected" && selectedList?.is_imported && canAddRecords
+              onCopy={!viewingAllLists && selectedList?.is_imported && canAddRecords
                 ? (record) => setCopyRecord(record) : undefined}
               selectedRecordIds={selectedRecordIds}
               onToggleRecord={toggleRecord}
               onToggleRecords={toggleRecords}
-              onEdit={canChangeRecords
+              onEdit={!viewingAllLists && canChangeRecords
                 ? (record) => setRecordDialog({ mode: "edit", record })
                 : undefined}
-              onDelete={canDeleteRecords
+              onDelete={!viewingAllLists && canDeleteRecords
                 ? (record) => setConfirmation({ kind: "record", item: record })
                 : undefined}
             />
