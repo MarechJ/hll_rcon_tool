@@ -472,10 +472,8 @@ def record_player_game_observation(
             if game == GameEnum.HLL_VIETNAM and player.steam_id:
                 resolve_steam_id = player.steam_id
         else:
-            if observed_at < observation.first_seen:
-                observation.first_seen = observed_at
-            if observed_at > observation.last_seen:
-                observation.last_seen = observed_at
+            observation.first_seen = min(observation.first_seen, observed_at)
+            observation.last_seen = max(observation.last_seen, observed_at)
 
         sess.commit()
 

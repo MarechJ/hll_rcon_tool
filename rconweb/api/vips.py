@@ -10,6 +10,7 @@ from django import forms
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
+from rcon.commands import HLLCommandFailedError
 from rcon.discord import send_to_discord_audit
 from rcon.steam_utils import is_steam_id_64
 from rcon.utils import INDEFINITE_VIP_DATE
@@ -446,7 +447,7 @@ def download_vip_list(request):
 
     try:
         vip_list = rcon_api.get_vip_list(vip_list_id)
-    except Exception as exc:
+    except HLLCommandFailedError as exc:
         logger.warning(
             "Unable to export VIP list ID %s: %s",
             vip_list_id,

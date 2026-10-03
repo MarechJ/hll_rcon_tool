@@ -25,13 +25,11 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
-from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
     Session,
     mapped_column,
-    object_session,
     relationship,
     sessionmaker,
 )
@@ -70,7 +68,6 @@ from rcon.types import (
     PlayerStatsType,
     PlayerTeamAssociation,
     PlayerTeamConfidence,
-    PlayerVIPType,
     ServerCountType,
     SteamBansType,
     SteamInfoType,

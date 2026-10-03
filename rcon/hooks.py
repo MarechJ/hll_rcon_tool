@@ -33,10 +33,9 @@ from rcon.maps import (
 )
 from rcon.message_variables import format_message_string, populate_message_variables
 from rcon.models import GameLayout, PlayerID, PlayerSoldier, enter_session
-from rcon.user_config.utils import server_info_for_rcon
 from rcon.player_history import (
-    record_player_game_observation,
     get_player,
+    record_player_game_observation,
     save_end_player_session,
     save_player,
     save_start_player_session,
@@ -67,6 +66,7 @@ from rcon.user_config.rcon_chat_commands import (
 )
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
+from rcon.user_config.utils import server_info_for_rcon
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.webhooks import CameraWebhooksUserConfig
 from rcon.utils import DefaultStringFormat, MapsHistory, guess_map_from_log
