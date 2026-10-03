@@ -67,7 +67,21 @@ class PlayerWatch:
             player = get_player(sess, self.player_id)
             if not player:
                 return None
-            return player.to_dict()
+
+            profile = player.to_dict()
+
+            from rcon.vip import get_player_legacy_vip_statuses
+
+            vips = get_player_legacy_vip_statuses(
+                sess,
+                player.player_id,
+            )
+            profile["vips"] = vips
+            profile["is_vip"] = any(
+                vip["server_number"] == player.server_number
+                for vip in vips
+            )
+            return profile
 
     def is_watched(self) -> bool:
         watch = self.get_watch()

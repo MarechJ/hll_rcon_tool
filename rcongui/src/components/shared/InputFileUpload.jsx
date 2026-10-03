@@ -14,7 +14,15 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
-export function InputFileUpload({ text, icon, color, variant, ...props }) {
+export function InputFileUpload({
+  text,
+  icon,
+  color,
+  variant,
+  accept,
+  onChange,
+  ...props
+}) {
   return (
     <Button
       component="label"
@@ -28,6 +36,8 @@ export function InputFileUpload({ text, icon, color, variant, ...props }) {
       {text ?? "Upload file"}
       <VisuallyHiddenInput
         type="file"
+        accept={accept}
+        onChange={onChange}
       />
     </Button>
   );

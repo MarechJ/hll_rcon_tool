@@ -189,13 +189,13 @@ class PlayerID(Base):
     stats: Mapped["PlayerStats"] = relationship(back_populates="player")
     blacklists: Mapped[list["BlacklistRecord"]] = relationship(back_populates="player")
 
-    vips: Mapped[list["PlayerVIP"]] = relationship(
-        back_populates="player",
-        cascade="all, delete-orphan",
-        lazy="dynamic",
-    )
     vip_list_records: Mapped[list["VipListRecord"]] = relationship(
         back_populates="player"
+    )
+    game_observations: Mapped[list["PlayerIdentityGame"]] = relationship(
+        back_populates="player",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
     optins: Mapped[list["PlayerOptins"]] = relationship(back_populates="player")
     account: Mapped["PlayerAccount"] = relationship(back_populates="player")
@@ -204,18 +204,6 @@ class PlayerID(Base):
     @property
     def server_number(self) -> int:
         return int(os.getenv("SERVER_NUMBER"))  # type: ignore
-
-    @hybrid_property
-    def vip(self) -> Optional["PlayerVIP"]:
-        return (
-            object_session(self)
-            .query(PlayerVIP)  # type: ignore
-            .filter(
-                PlayerVIP.player_id_id == self.id,
-                PlayerVIP.server_number == self.server_number,
-            )
-            .one_or_none()
-        )
 
     def get_penalty_count(self) -> PenaltyCountType:
         counts = defaultdict(int)
@@ -264,8 +252,9 @@ class PlayerID(Base):
                 or any(server == this_server for server in b["blacklist"]["servers"])
             ]
         )
-        vips = [v.to_dict() for v in self.vips]
-        is_vip = any(vip["server_number"] == this_server for vip in vips)
+        # VIP status is populated by the service layer from VIP Lists.
+        vips = []
+        is_vip = False
         return {
             "id": self.id,
             PLAYER_ID: self.player_id,
@@ -1261,32 +1250,39 @@ class PlayerAtCount(Base):
         }
 
 
-class PlayerVIP(Base):
-    __tablename__: str = "player_vip"
+class PlayerIdentityGame(Base):
+    """Record games in which a concrete PlayerID identity was observed."""
+
+    __tablename__ = "player_identity_game"
     __table_args__ = (
         UniqueConstraint(
-            "playersteamid_id", "server_number", name="unique_player_server_vip"
+            "player_id_id",
+            "game",
+            name="unique_player_identity_game",
         ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    expiration: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True), nullable=False
-    )
-    # Not making this unique (even though it should be) to avoid breaking existing CRCONs
-    server_number: Mapped[int] = mapped_column()
-
     player_id_id: Mapped[int] = mapped_column(
-        "playersteamid_id", ForeignKey("steam_id_64.id"), nullable=False, index=True
+        ForeignKey("steam_id_64.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    game: Mapped[str] = mapped_column(String(16), nullable=False)
+    first_seen: Mapped[datetime] = mapped_column(
+        UTCDateTime,
+        default=lambda: datetime.now(UTC),
+        nullable=False,
+    )
+    last_seen: Mapped[datetime] = mapped_column(
+        UTCDateTime,
+        default=lambda: datetime.now(UTC),
+        nullable=False,
     )
 
-    player: Mapped[PlayerID] = relationship(back_populates="vips")
-
-    def to_dict(self) -> PlayerVIPType:
-        return {
-            "server_number": self.server_number,
-            "expiration": self.expiration,
-        }
+    player: Mapped[PlayerID] = relationship(
+        back_populates="game_observations"
+    )
 
 
 class VipList(Base):
@@ -1305,6 +1301,11 @@ class VipList(Base):
     flags: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
 
     records: Mapped[list["VipListRecord"]] = relationship(
+        back_populates="vip_list",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    pending_records: Mapped[list["VipListPendingRecord"]] = relationship(
         back_populates="vip_list",
         cascade="all, delete-orphan",
         passive_deletes=True,
@@ -1421,6 +1422,47 @@ class VipServerSyncConfig(Base):
     )
 
 
+class VipListPendingRecord(Base):
+    """VIP record waiting for a target-game player identity."""
+
+    __tablename__ = "vip_list_pending_record"
+    __table_args__ = (
+        UniqueConstraint(
+            "steam_id",
+            "vip_list_id",
+            name="unique_pending_vip_steam_id_vip_list",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    vip_list_id: Mapped[int] = mapped_column(
+        ForeignKey("vip_list.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    steam_id: Mapped[str] = mapped_column(String(17), nullable=False, index=True)
+    admin_name: Mapped[str] = mapped_column(nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        default=lambda: datetime.now(tz=UTC),
+        nullable=False,
+    )
+    last_checked_at: Mapped[datetime | None] = mapped_column(
+        TIMESTAMP(timezone=True)
+    )
+    resolution_error: Mapped[str | None]
+    description: Mapped[str | None]
+    notes: Mapped[str | None]
+    expires_at: Mapped[datetime | None] = mapped_column(
+        TIMESTAMP(timezone=True),
+        nullable=True,
+    )
+
+    vip_list: Mapped[VipList] = relationship(
+        back_populates="pending_records"
+    )
+
+
 class VipListRecord(Base):
     __tablename__ = "vip_list_record"
     __table_args__ = (
@@ -1476,6 +1518,7 @@ class VipListRecord(Base):
             "id": self.id,
             "vip_list_id": self.vip_list_id,
             "player_id": self.player.player_id,
+            "steam_id": self.player.steam_id,
             "player_name": player_name,
             "admin_name": self.admin_name,
             "created_at": self.created_at,

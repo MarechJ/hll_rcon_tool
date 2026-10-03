@@ -45,6 +45,7 @@ import StarIcon from "@mui/icons-material/Star";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
 import ShareIcon from "@mui/icons-material/Share";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import DownloadIcon from "@mui/icons-material/Download";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import dayjs from "dayjs";
 import { toast } from "react-toastify";
@@ -52,6 +53,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useGlobalStore } from "@/stores/global-state";
 import VipListDialog from "@/components/VipList/VipListDialog";
 import VipListBulkDialog from "@/components/VipList/VipListBulkDialog";
+import VipListFileImportDialog from "@/components/VipList/VipListFileImportDialog";
 import VipListRecordDialog from "@/components/VipList/VipListRecordDialog";
 import { ImportPartnerListButton, VipListPartnership } from "@/components/VipList/VipListPartnership";
 import { cmd } from "@/utils/fetchUtils";
@@ -85,6 +87,42 @@ const getPlayerIdType = (playerId) => {
   if (/^\d{17}$/.test(playerId)) return "steam64";
   if (/^[0-9a-fA-F]{32}$/.test(playerId)) return "eos";
   return "unknown";
+};
+
+const downloadVipExport = async (command, params = {}) => {
+  const query = new URLSearchParams(params);
+  const response = await fetch(
+    `${process.env.REACT_APP_API_URL}${command}${query.size ? `?${query}` : ""}`,
+    {
+      method: "GET",
+      credentials: "include",
+    }
+  );
+
+  if (!response.ok) {
+    let message = "The VIP export failed.";
+    try {
+      const data = await response.json();
+      message = data?.error || data?.message || message;
+    } catch {
+      // Keep the generic error for non-JSON responses.
+    }
+    throw new Error(message);
+  }
+
+  const blob = await response.blob();
+  const disposition = response.headers.get("Content-Disposition") ?? "";
+  const filenameMatch = disposition.match(/filename="?([^";]+)"?/i);
+  const filename = filenameMatch?.[1] ?? "vip-lists.csv";
+
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
 };
 
 const downloadTextFile = (filename, content, type) => {
@@ -483,6 +521,8 @@ export default function VipListsPage() {
   const [shareOnlyList, setShareOnlyList] = useState(null);
   const [recordDialog, setRecordDialog] = useState(null);
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+  const [fileImportOpen, setFileImportOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [selectedRecordIds, setSelectedRecordIds] = useState([]);
   const [recordSearch, setRecordSearch] = useState("");
   const [searchScope, setSearchScope] = useState("selected");
@@ -728,6 +768,23 @@ export default function VipListsPage() {
         ? [...new Set([...current, ...recordIds])]
         : current.filter((id) => !recordIds.includes(id))
     );
+  };
+
+  const exportVipLists = async (all = false) => {
+    if (!all && !selectedList) return;
+
+    setExporting(true);
+    try {
+      await downloadVipExport(
+        all ? "download_all_vip_lists" : "download_vip_list",
+        all ? {} : { vip_list_id: selectedList.id }
+      );
+      toast.success(all ? "All VIP lists exported." : "VIP list exported.");
+    } catch (error) {
+      toast.error(error?.message ?? "The VIP export failed.");
+    } finally {
+      setExporting(false);
+    }
   };
 
   const submitBulkOperation = async (operation) => {
@@ -1014,6 +1071,13 @@ export default function VipListsPage() {
           await refreshLists();
           if (created?.id) setSelectedListId(created.id);
         }} />}
+        <Button
+          startIcon={<DownloadIcon />}
+          disabled={exporting || lists.length === 0}
+          onClick={() => exportVipLists(true)}
+        >
+          Export all
+        </Button>
       </Stack>
 
       {mutationPending && <LinearProgress />}
@@ -1226,6 +1290,18 @@ export default function VipListsPage() {
                         </span>
                       </Tooltip>
                     ))}
+                  <Button
+                    startIcon={<DownloadIcon />}
+                    disabled={exporting}
+                    onClick={() => exportVipLists(false)}
+                  >
+                    Export list
+                  </Button>
+                  {canChangeRecords && !selectedList.is_imported && (
+                    <Button onClick={() => setFileImportOpen(true)}>
+                      Import file
+                    </Button>
+                  )}
                   {canAddRecords && !selectedList.is_imported && (
                     <Button
                       variant="contained"
@@ -1358,6 +1434,16 @@ export default function VipListsPage() {
           </Stack>
         </Stack>
       )}
+
+      <VipListFileImportDialog
+        open={fileImportOpen && Boolean(selectedList)}
+        vipList={selectedList}
+        onClose={() => setFileImportOpen(false)}
+        onImported={async () => {
+          toast.success("VIP list imported.");
+          await refreshRecords(selectedList?.id);
+        }}
+      />
 
       <VipListBulkDialog
         open={bulkDialogOpen && selectedRecords.length > 0}
