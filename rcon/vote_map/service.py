@@ -1112,8 +1112,21 @@ class VoteMap:
     def _get_player(self, player_id: str) -> PlayerProfileType:
         with enter_session() as db_session:
             try:
-                player = db_session.query(PlayerID).filter_by(player_id=player_id).one()
-                player = player.to_dict()
+                player_model = (
+                    db_session.query(PlayerID).filter_by(player_id=player_id).one()
+                )
+                player = player_model.to_dict()
+
+                from rcon.vip import get_player_legacy_vip_statuses
+
+                vips = get_player_legacy_vip_statuses(
+                    db_session,
+                    player_model.player_id,
+                )
+                player["vips"] = vips
+                player["is_vip"] = any(
+                    vip["server_number"] == player_model.server_number for vip in vips
+                )
             except NoResultFound as e:
                 raise PlayerNotFound(f"Player {player_id=} not found.") from e
             except MultipleResultsFound as e:
