@@ -23,7 +23,7 @@ from rcon.discord_chat import get_handler
 from rcon.logs.loop import LogLoop, load_generic_hooks
 from rcon.logs.recorder import LogRecorder
 from rcon.logs.stream import LogStream
-from rcon.models import PlayerID, enter_session, install_unaccent
+from rcon.models import PlayerID, VipListRecord, enter_session, install_unaccent
 from rcon.player_stats import live_stats_loop
 from rcon.rcon import get_rcon
 from rcon.steam_utils import enrich_db_users
@@ -551,6 +551,56 @@ def reset_user_settings(server: int, game=GameEnum.HLL_WW2.value):
     print("Done")
 
 
+def _vip_record_merge_key(record: VipListRecord) -> tuple:
+    """Rank duplicate VIP List records when player IDs are merged."""
+    return (
+        record.active,
+        record.expires_at is None,
+        record.expires_at or datetime.min.replace(tzinfo=UTC),
+        record.created_at,
+        -record.id,
+    )
+
+
+def _merge_duplicate_vip_list_records(
+    session,
+    keep: int,
+    duplicate_ids: list[int],
+) -> None:
+    """Move VIP List records to KEEP without violating the per-list uniqueness."""
+    player_ids = [keep, *duplicate_ids]
+
+    records = session.scalars(
+        select(VipListRecord)
+        .where(VipListRecord.player_id_id.in_(player_ids))
+        .order_by(VipListRecord.vip_list_id, VipListRecord.id)
+    ).all()
+
+    records_by_list: dict[int, list[VipListRecord]] = {}
+    for record in records:
+        records_by_list.setdefault(record.vip_list_id, []).append(record)
+
+    winners: list[VipListRecord] = []
+
+    for records_for_list in records_by_list.values():
+        winner = max(records_for_list, key=_vip_record_merge_key)
+        winners.append(winner)
+
+        for record in records_for_list:
+            if record is not winner:
+                session.delete(record)
+
+    # Free conflicting (player_id_id, vip_list_id) combinations before
+    # moving the surviving records to the canonical player ID.
+    session.flush()
+
+    for winner in winners:
+        if winner.player_id_id != keep:
+            winner.player_id_id = keep
+
+    session.flush()
+
+
 def _merge_duplicate_player_ids(existing_ids: set[str] | None = None):
     logger.info("Merging duplicate player ID records")
     players = {}
@@ -638,11 +688,10 @@ def _merge_duplicate_player_ids(existing_ids: set[str] | None = None):
                 ),
                 {"keep": keep, "ids": ids},
             )
-            session.execute(
-                text(
-                    "UPDATE player_vip SET playersteamid_id = :keep WHERE playersteamid_id = ANY(:ids)"
-                ),
-                {"keep": keep, "ids": ids},
+            _merge_duplicate_vip_list_records(
+                session,
+                keep,
+                ids,
             )
             session.execute(
                 text(

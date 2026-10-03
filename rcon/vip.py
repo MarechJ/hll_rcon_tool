@@ -13,22 +13,54 @@ from sqlalchemy.orm import Session
 
 from rcon.commands import HLLCommandFailedError
 from rcon.models import (
+    PlayerAccount,
     PlayerFlag,
     PlayerID,
+    PlayerIdentityGame,
+    PlayerSoldier,
     VipList,
     VipListDefault,
+    VipListPendingRecord,
     VipListRecord,
     VipServerSyncConfig,
     enter_session,
 )
 from rcon.player_history import _get_set_player
 from rcon.player_id_utils import is_supported_player_id
-from rcon.types import VipListRecordType, VipListSyncMethod, VipListType
+from rcon.types import (
+    GameEnum,
+    VipListRecordType,
+    VipListSyncMethod,
+    VipListType,
+)
 from rcon.utils import MISSING, MissingType
 
 logger = getLogger(__name__)
 
 ALL_VIP_SERVERS_MASK = 2**32 - 1
+
+
+def _get_or_create_import_player(
+    sess: Session,
+    player_id: str,
+) -> PlayerID:
+    """Get or create a player without committing the import transaction."""
+    player = sess.scalar(
+        select(PlayerID).where(PlayerID.player_id == player_id)
+    )
+    if player is not None:
+        return player
+
+    logger.info("Adding player %s during VIP list import", player_id)
+    player = PlayerID(player_id=player_id)
+    sess.add(player)
+    sess.add(PlayerAccount(player=player))
+    sess.add(PlayerSoldier(player=player))
+
+    # Assign the PlayerID primary key while keeping creation part of the
+    # surrounding VIP import transaction.
+    sess.flush()
+    return player
 
 
 def _merge_vip_server_masks(*server_masks: int | None) -> int:
@@ -652,6 +684,43 @@ def get_inactive_vip_records(
     return sess.scalars(stmt).all()
 
 
+def _resolve_manual_vip_player(
+    sess: Session,
+    player_id: str,
+    target_game: GameEnum,
+) -> PlayerID:
+    """Resolve one manually entered VIP identity for the target game."""
+    identity = _resolve_vip_identity(
+        sess,
+        player_id,
+        target_game=target_game,
+    )
+
+    status = identity["resolution_status"]
+    if status == "pending":
+        raise HLLCommandFailedError(
+            f"Player {player_id} has no known {target_game.value} identity yet"
+        )
+    if status == "conflict":
+        raise HLLCommandFailedError(
+            identity["resolution_error"]
+            or f"Player {player_id} has an ambiguous {target_game.value} identity"
+        )
+
+    player = identity["player"]
+    if player is None:
+        player = _get_set_player(
+            sess,
+            identity["resolved_player_id"],
+            steam_id=identity["steam_id"],
+        )
+
+    if player is None:
+        raise RuntimeError("Unable to create PlayerID database record")
+
+    return player
+
+
 def add_record_to_vip_list(
     player_id: str,
     vip_list_id: int,
@@ -660,6 +729,7 @@ def add_record_to_vip_list(
     expires_at: datetime | None | MissingType = MISSING,
     notes: str | None = None,
     admin_name: str = "CRCON",
+    target_game: GameEnum = GameEnum.HLL_WW2,
 ) -> VipListRecordType:
     """Add one player to a VIP list."""
     player_id = player_id.strip()
@@ -683,19 +753,22 @@ def add_record_to_vip_list(
         if expires_at is MISSING:
             expires_at = _list_expiration(vip_list)
 
+        player = _resolve_manual_vip_player(
+            sess,
+            player_id,
+            target_game,
+        )
+
         existing = get_player_vip_list_record(
             sess,
-            player_id=player_id,
+            player_id=player.player_id,
             vip_list_id=vip_list_id,
         )
         if existing is not None:
             raise HLLCommandFailedError(
-                f"Player {player_id} already has a record on VIP list {vip_list_id}"
+                f"Player {player.player_id} already has a record on "
+                f"VIP list {vip_list_id}"
             )
-
-        player = _get_set_player(sess, player_id)
-        if player is None:
-            raise RuntimeError("Unable to create PlayerID database record")
 
         record = VipListRecord(
             player=player,
@@ -727,6 +800,7 @@ def upsert_vip_list_record(
     expires_at: datetime | None | MissingType = MISSING,
     notes: str | None = None,
     admin_name: str = "CRCON",
+    target_game: GameEnum = GameEnum.HLL_WW2,
 ) -> VipListRecordType:
     """Create or reactivate one player record on a specific VIP list."""
     player_id = player_id.strip()
@@ -748,18 +822,20 @@ def upsert_vip_list_record(
         if expires_at is MISSING:
             expires_at = _list_expiration(vip_list)
 
+        player = _resolve_manual_vip_player(
+            sess,
+            player_id,
+            target_game,
+        )
+
         record = get_player_vip_list_record(
             sess,
-            player_id=player_id,
+            player_id=player.player_id,
             vip_list_id=vip_list.id,
         )
         created = record is None
 
         if created:
-            player = _get_set_player(sess, player_id)
-            if player is None:
-                raise RuntimeError("Unable to create PlayerID database record")
-
             record = VipListRecord(
                 player=player,
                 vip_list=vip_list,
@@ -864,6 +940,979 @@ def edit_vip_list_record(
             )
 
         return record.to_dict()
+
+
+
+def get_vip_list_records(
+    sess: Session,
+    vip_list_id: int,
+) -> list[VipListRecord]:
+    """Return all records belonging to one VIP list."""
+    return list(
+        sess.scalars(
+            select(VipListRecord)
+            .where(VipListRecord.vip_list_id == int(vip_list_id))
+            .order_by(VipListRecord.id)
+        ).all()
+    )
+
+
+def get_all_vip_records(
+    sess: Session,
+) -> Sequence[VipListRecord]:
+    """Return all VIP list records across all configured lists."""
+    return sess.scalars(
+        select(VipListRecord).order_by(
+            VipListRecord.vip_list_id,
+            VipListRecord.id,
+        )
+    ).all()
+
+
+def _normalize_vip_list_import(
+    entries: Sequence[dict],
+    mode: str,
+) -> tuple[str, dict[str, dict]]:
+    """Normalize and validate a VIP list import request."""
+    normalized_mode = mode.strip().lower()
+    if normalized_mode not in {"merge", "replace"}:
+        raise ValueError("VIP list import mode must be 'merge' or 'replace'")
+
+    normalized_entries: dict[str, dict] = {}
+    for entry in entries:
+        player_id = str(entry["player_id"]).strip()
+        if not is_supported_player_id(player_id):
+            raise ValueError(
+                f"Unsupported player ID in VIP list import: {player_id}"
+            )
+        if player_id in normalized_entries:
+            raise ValueError(
+                f"Duplicate player ID in VIP list import: {player_id}"
+            )
+
+        steam_id = entry.get("steam_id")
+        if steam_id is not None:
+            steam_id = str(steam_id).strip() or None
+            if steam_id is not None and (
+                len(steam_id) != 17 or not steam_id.isdigit()
+            ):
+                raise ValueError(
+                    f"Invalid Steam ID in VIP list import: {steam_id}"
+                )
+
+        normalized_entries[player_id] = {
+            "player_id": player_id,
+            "steam_id": steam_id,
+            "description": entry.get("description"),
+            "expires_at": entry.get("expires_at", MISSING),
+            "notes": entry.get("notes"),
+        }
+
+    if normalized_mode == "replace" and not normalized_entries:
+        raise ValueError(
+            "Cannot replace a VIP list with an empty import"
+        )
+
+    return normalized_mode, normalized_entries
+
+
+def _is_steam_id(value: str | None) -> bool:
+    """Return whether a value is a Steam64 ID."""
+    return value is not None and len(value) == 17 and value.isdigit()
+
+
+def _find_players_for_steam_id(
+    sess: Session,
+    steam_id: str,
+) -> list[PlayerID]:
+    """Return all PlayerID rows associated with a Steam64 ID."""
+    return (
+        sess.scalars(
+            select(PlayerID)
+            .where(
+                or_(
+                    PlayerID.player_id == steam_id,
+                    PlayerID.steam_id == steam_id,
+                )
+            )
+            .order_by(PlayerID.id)
+        )
+        .unique()
+        .all()
+    )
+
+
+def _player_was_observed_in_game(
+    sess: Session,
+    player: PlayerID,
+    game: GameEnum,
+) -> bool:
+    """Return whether this concrete player identity was observed in a game."""
+    return (
+        sess.query(PlayerIdentityGame.id)
+        .filter(
+            PlayerIdentityGame.player_id_id == player.id,
+            PlayerIdentityGame.game == game.value,
+        )
+        .first()
+        is not None
+    )
+
+
+def _find_hllv_players_for_steam_id(
+    sess: Session,
+    steam_id: str,
+) -> list[PlayerID]:
+    """Return observed HLL Vietnam identities associated with a Steam64 ID."""
+    return [
+        player
+        for player in _find_players_for_steam_id(sess, steam_id)
+        if _player_was_observed_in_game(
+            sess,
+            player,
+            GameEnum.HLL_VIETNAM,
+        )
+    ]
+
+
+def resolve_pending_vip_records(
+    steam_id: str | None = None,
+    *,
+    notify: bool = True,
+) -> dict[str, int]:
+    """Resolve pending HLL Vietnam VIP identities from known Steam mappings."""
+    if steam_id is not None:
+        steam_id = str(steam_id).strip()
+        if not _is_steam_id(steam_id):
+            raise ValueError(f"Invalid Steam ID: {steam_id}")
+
+    checked = 0
+    resolved = 0
+    pending = 0
+    conflicts = 0
+    affected_player_ids: set[int] = set()
+    changed_server_masks: list[int | None] = []
+    now = datetime.now(UTC)
+
+    with enter_session() as sess:
+        pending_list_ids_stmt = (
+            select(VipListPendingRecord.vip_list_id)
+            .distinct()
+            .order_by(VipListPendingRecord.vip_list_id)
+        )
+        if steam_id is not None:
+            pending_list_ids_stmt = pending_list_ids_stmt.where(
+                VipListPendingRecord.steam_id == steam_id
+            )
+
+        pending_list_ids = list(sess.scalars(pending_list_ids_stmt).all())
+
+        # Use the VipList row as the shared serialization point with imports.
+        # SKIP LOCKED keeps another list operation from blocking this resolver.
+        locked_list_ids = set(
+            sess.scalars(
+                select(VipList.id)
+                .where(VipList.id.in_(pending_list_ids))
+                .order_by(VipList.id)
+                .with_for_update(skip_locked=True)
+            ).all()
+        )
+
+        stmt = (
+            select(VipListPendingRecord)
+            .where(VipListPendingRecord.vip_list_id.in_(locked_list_ids))
+            .order_by(VipListPendingRecord.id)
+            .with_for_update(skip_locked=True)
+        )
+        if steam_id is not None:
+            stmt = stmt.where(VipListPendingRecord.steam_id == steam_id)
+
+        pending_records = sess.scalars(stmt).all()
+
+        for pending_record in pending_records:
+            checked += 1
+            pending_record.last_checked_at = now
+
+            candidates = _find_hllv_players_for_steam_id(
+                sess,
+                pending_record.steam_id,
+            )
+
+            if not candidates:
+                pending_record.resolution_error = None
+                pending += 1
+                continue
+
+            if len(candidates) > 1:
+                candidate_ids = ", ".join(
+                    candidate.player_id for candidate in candidates
+                )
+                pending_record.resolution_error = (
+                    f"Ambiguous Steam ID {pending_record.steam_id}: "
+                    f"matches {candidate_ids}"
+                )
+                conflicts += 1
+                continue
+
+            player = candidates[0]
+            vip_list = pending_record.vip_list
+
+            record = sess.scalar(
+                select(VipListRecord).where(
+                    VipListRecord.vip_list_id == pending_record.vip_list_id,
+                    VipListRecord.player_id_id == player.id,
+                )
+            )
+
+            if record is None:
+                record = VipListRecord(
+                    player=player,
+                    vip_list=vip_list,
+                    admin_name=pending_record.admin_name,
+                    active=True,
+                    description=pending_record.description,
+                    notes=pending_record.notes,
+                    expires_at=pending_record.expires_at,
+                )
+                sess.add(record)
+            else:
+                record.active = True
+                record.admin_name = pending_record.admin_name
+                record.description = pending_record.description
+                record.notes = pending_record.notes
+                record.expires_at = pending_record.expires_at
+
+            affected_player_ids.add(player.id)
+            changed_server_masks.append(vip_list.servers)
+
+            sess.delete(pending_record)
+            resolved += 1
+
+        if affected_player_ids:
+            sess.flush()
+            reconcile_vip_list_flags(sess, affected_player_ids)
+
+        sess.commit()
+
+    if notify and changed_server_masks:
+        _notify_vip_sync(_merge_vip_server_masks(*changed_server_masks))
+
+    result = {
+        "checked": checked,
+        "resolved": resolved,
+        "pending": pending,
+        "conflicts": conflicts,
+    }
+
+    if checked:
+        logger.info(
+            "Pending VIP identity resolution completed: "
+            "%s checked, %s resolved, %s pending, %s conflicts",
+            checked,
+            resolved,
+            pending,
+            conflicts,
+        )
+
+    return result
+
+
+def _resolve_vip_identity(
+    sess: Session,
+    player_id: str,
+    *,
+    steam_id: str | None = None,
+    target_game: GameEnum = GameEnum.HLL_WW2,
+) -> dict:
+    """Resolve one player identity for a target game without creating records."""
+    player_id = player_id.strip()
+
+    if not is_supported_player_id(player_id):
+        raise ValueError(f"Unsupported player ID: {player_id}")
+
+    if steam_id is not None:
+        steam_id = str(steam_id).strip() or None
+        if steam_id is not None and not _is_steam_id(steam_id):
+            raise ValueError(f"Invalid Steam ID: {steam_id}")
+
+    player: PlayerID | None = None
+    resolved_player_id = player_id
+    resolution_status = "resolved"
+    resolution_error: str | None = None
+
+    if target_game == GameEnum.HLL_WW2:
+        if steam_id is not None:
+            candidates = _find_players_for_steam_id(sess, steam_id)
+            steam_player = next(
+                (
+                    candidate
+                    for candidate in candidates
+                    if candidate.player_id == steam_id
+                ),
+                None,
+            )
+
+            resolved_player_id = steam_id
+            player = steam_player
+
+            if len(candidates) > 1 and steam_player is None:
+                resolution_status = "conflict"
+                candidate_ids = ", ".join(
+                    candidate.player_id for candidate in candidates
+                )
+                resolution_error = (
+                    f"Ambiguous Steam ID {steam_id}: matches {candidate_ids}"
+                )
+        else:
+            player = sess.scalar(
+                select(PlayerID).where(PlayerID.player_id == player_id)
+            )
+
+    elif target_game == GameEnum.HLL_VIETNAM:
+        if not _is_steam_id(player_id):
+            player = sess.scalar(
+                select(PlayerID).where(PlayerID.player_id == player_id)
+            )
+
+            # A network ID is only accepted directly for HLL Vietnam when CRCON
+            # actually observed that identity on an HLL Vietnam server.
+            if player is None or not _player_was_observed_in_game(
+                sess,
+                player,
+                GameEnum.HLL_VIETNAM,
+            ):
+                raise ValueError(
+                    f"Network ID {player_id} is not a known HLL Vietnam identity "
+                    "and cannot be resolved without a Steam ID"
+                )
+        else:
+            lookup_steam_id = steam_id or player_id
+            hllv_candidates = _find_hllv_players_for_steam_id(
+                sess,
+                lookup_steam_id,
+            )
+
+            if len(hllv_candidates) == 1:
+                player = hllv_candidates[0]
+                resolved_player_id = player.player_id
+            elif len(hllv_candidates) == 0:
+                resolution_status = "pending"
+                resolved_player_id = lookup_steam_id
+            else:
+                resolution_status = "conflict"
+                resolved_player_id = lookup_steam_id
+                candidate_ids = ", ".join(
+                    candidate.player_id for candidate in hllv_candidates
+                )
+                resolution_error = (
+                    f"Ambiguous Steam ID {lookup_steam_id}: "
+                    f"matches {candidate_ids}"
+                )
+
+            steam_id = lookup_steam_id
+
+    else:
+        raise ValueError(
+            f"Unsupported target game for VIP identity resolution: {target_game}"
+        )
+
+    return {
+        "player_id": player_id,
+        "steam_id": steam_id,
+        "player": player,
+        "resolved_player_id": resolved_player_id,
+        "resolution_status": resolution_status,
+        "resolution_error": resolution_error,
+    }
+
+
+def _resolve_vip_import_identities(
+    sess: Session,
+    normalized_entries: dict[str, dict],
+    target_game: GameEnum,
+) -> dict[int | str, dict]:
+    """Resolve imported identities for the target game."""
+    resolved_entries: dict[int | str, dict] = {}
+
+    for imported_player_id, entry in normalized_entries.items():
+        identity = _resolve_vip_identity(
+            sess,
+            imported_player_id,
+            steam_id=entry.get("steam_id"),
+            target_game=target_game,
+        )
+
+        resolved = dict(entry)
+        resolved.update(identity)
+
+        resolution_status = resolved["resolution_status"]
+        steam_id = resolved["steam_id"]
+        player = resolved["player"]
+        resolved_player_id = resolved["resolved_player_id"]
+
+        if resolution_status == "resolved" and player is not None:
+            key: int | str = player.id
+        elif resolution_status in {"pending", "conflict"}:
+            key = f"{resolution_status}:{steam_id or resolved_player_id}"
+        else:
+            key = resolved_player_id
+
+        if key in resolved_entries:
+            raise ValueError(
+                "Duplicate player identity in VIP list import after resolution: "
+                f"{resolved_player_id}"
+            )
+
+        resolved_entries[key] = resolved
+
+    return resolved_entries
+
+
+def preview_vip_list_import(
+    vip_list_id: int,
+    entries: Sequence[dict],
+    mode: str = "merge",
+    target_game: GameEnum = GameEnum.HLL_WW2,
+) -> dict:
+    """Preview importing records into one editable VIP list."""
+    normalized_mode, normalized_entries = _normalize_vip_list_import(
+        entries,
+        mode,
+    )
+
+    with enter_session() as sess:
+        vip_list = get_vip_list(
+            sess,
+            vip_list_id=int(vip_list_id),
+            strict=True,
+        )
+        assert vip_list is not None
+        _ensure_editable(vip_list)
+
+        resolved_entries = _resolve_vip_import_identities(
+            sess,
+            normalized_entries,
+            target_game,
+        )
+
+        existing_records = list(
+            sess.scalars(
+                select(VipListRecord)
+                .where(VipListRecord.vip_list_id == vip_list.id)
+                .order_by(VipListRecord.id)
+            ).all()
+        )
+        existing_by_player_id = {
+            record.player_id_id: record for record in existing_records
+        }
+
+        existing_pending = list(
+            sess.scalars(
+                select(VipListPendingRecord)
+                .where(VipListPendingRecord.vip_list_id == vip_list.id)
+                .order_by(VipListPendingRecord.id)
+            ).all()
+        )
+        existing_pending_by_steam_id = {
+            record.steam_id: record for record in existing_pending
+        }
+
+        ready = 0
+        pending = 0
+        conflicts = 0
+
+        created = 0
+        updated = 0
+        unchanged = 0
+        deactivated = 0
+
+        pending_created = 0
+        pending_updated = 0
+        pending_unchanged = 0
+        pending_removed = 0
+
+        imported_player_ids: set[int] = set()
+        imported_logical_ids: set[str] = set()
+        imported_pending_steam_ids: set[str] = set()
+        resolved_pending_steam_ids: set[str] = set()
+
+        for identity_key, entry in resolved_entries.items():
+            status = entry["resolution_status"]
+            steam_id = entry.get("steam_id")
+            resolved_player_id = entry["resolved_player_id"]
+
+            if steam_id:
+                imported_logical_ids.add(steam_id)
+            imported_logical_ids.add(resolved_player_id)
+
+            imported_expires_at = entry["expires_at"]
+            expires_at = imported_expires_at
+            if expires_at is MISSING:
+                expires_at = _list_expiration(vip_list)
+
+            if status in {"pending", "conflict"}:
+                if not steam_id:
+                    raise RuntimeError(
+                        "Pending VIP import identity has no Steam ID"
+                    )
+
+                if status == "pending":
+                    pending += 1
+                else:
+                    conflicts += 1
+
+                imported_pending_steam_ids.add(steam_id)
+                pending_record = existing_pending_by_steam_id.get(steam_id)
+
+                if (
+                    pending_record is not None
+                    and imported_expires_at is MISSING
+                ):
+                    expires_at = pending_record.expires_at
+
+                if pending_record is None:
+                    pending_created += 1
+                else:
+                    changed = (
+                        pending_record.expires_at != expires_at
+                        or pending_record.description != entry["description"]
+                        or pending_record.notes != entry["notes"]
+                        or pending_record.resolution_error
+                        != entry["resolution_error"]
+                    )
+
+                    if changed:
+                        pending_updated += 1
+                    else:
+                        pending_unchanged += 1
+
+                continue
+
+            ready += 1
+
+            record = (
+                existing_by_player_id.get(identity_key)
+                if isinstance(identity_key, int)
+                else None
+            )
+
+            player = entry["player"]
+
+            if player is not None:
+                imported_player_ids.add(player.id)
+
+            old_pending = (
+                existing_pending_by_steam_id.get(steam_id)
+                if steam_id
+                else None
+            )
+
+            if old_pending is not None:
+                resolved_pending_steam_ids.add(steam_id)
+                pending_removed += 1
+
+                if imported_expires_at is MISSING:
+                    expires_at = old_pending.expires_at
+
+            if record is None and player is not None:
+                record = existing_by_player_id.get(player.id)
+
+            if record is None:
+                created += 1
+                continue
+
+            # An omitted expires_at keeps the existing record expiration.
+            # The list default is only applied when creating a new record.
+            if imported_expires_at is MISSING and old_pending is None:
+                expires_at = record.expires_at
+
+            description = entry["description"]
+
+            if (
+                not record.active
+                or record.expires_at != expires_at
+                or record.description != description
+                or record.notes != entry["notes"]
+            ):
+                updated += 1
+            else:
+                unchanged += 1
+
+        if normalized_mode == "replace":
+            for record in existing_records:
+                if not record.active:
+                    continue
+
+                if record.player_id_id in imported_player_ids:
+                    continue
+
+                player_logical_ids = {record.player.player_id}
+                if record.player.steam_id:
+                    player_logical_ids.add(record.player.steam_id)
+
+                if player_logical_ids & imported_logical_ids:
+                    continue
+
+                deactivated += 1
+
+            for pending_record in existing_pending:
+                steam_id = pending_record.steam_id
+
+                if steam_id in imported_pending_steam_ids:
+                    continue
+
+                if steam_id in imported_logical_ids:
+                    continue
+
+                if steam_id in resolved_pending_steam_ids:
+                    continue
+
+                pending_removed += 1
+
+        return {
+            "vip_list_id": vip_list.id,
+            "mode": normalized_mode,
+            "total": len(normalized_entries),
+            "ready": ready,
+            "pending": pending,
+            "conflicts": conflicts,
+            "created": created,
+            "updated": updated,
+            "unchanged": unchanged,
+            "deactivated": deactivated,
+            "pending_created": pending_created,
+            "pending_updated": pending_updated,
+            "pending_unchanged": pending_unchanged,
+            "pending_removed": pending_removed,
+        }
+
+def import_vip_list_records(
+    vip_list_id: int,
+    entries: Sequence[dict],
+    mode: str = "merge",
+    admin_name: str = "CRCON",
+    target_game: GameEnum = GameEnum.HLL_WW2,
+) -> dict:
+    """Atomically import records into one editable VIP list."""
+    normalized_mode, normalized_entries = _normalize_vip_list_import(
+        entries,
+        mode,
+    )
+    normalized_admin_name = admin_name.strip() or "CRCON"
+
+    with enter_session() as sess:
+        # Serialize writes for one VIP list. This also protects identities
+        # whose pending row does not exist yet and therefore cannot be locked
+        # individually.
+        vip_list = sess.scalar(
+            select(VipList)
+            .where(VipList.id == int(vip_list_id))
+            .with_for_update()
+        )
+        if vip_list is None:
+            raise ValueError(f"VIP list ID {vip_list_id} does not exist")
+        _ensure_editable(vip_list)
+
+        resolved_entries = _resolve_vip_import_identities(
+            sess,
+            normalized_entries,
+            target_game,
+        )
+
+        existing_records = list(
+            sess.scalars(
+                select(VipListRecord)
+                .where(VipListRecord.vip_list_id == vip_list.id)
+                .order_by(VipListRecord.id)
+            ).all()
+        )
+        existing_by_player_id = {
+            record.player_id_id: record for record in existing_records
+        }
+
+        existing_pending = list(
+            sess.scalars(
+                select(VipListPendingRecord)
+                .where(VipListPendingRecord.vip_list_id == vip_list.id)
+                .order_by(VipListPendingRecord.id)
+            ).all()
+        )
+        existing_pending_by_steam_id = {
+            record.steam_id: record for record in existing_pending
+        }
+
+        ready = 0
+        pending = 0
+        conflicts = 0
+
+        created = 0
+        updated = 0
+        unchanged = 0
+        deactivated = 0
+
+        pending_created = 0
+        pending_updated = 0
+        pending_unchanged = 0
+        pending_removed = 0
+
+        affected_player_ids: set[int] = set()
+        imported_player_ids: set[int] = set()
+        imported_logical_ids: set[str] = set()
+        imported_pending_steam_ids: set[str] = set()
+        removed_pending_steam_ids: set[str] = set()
+
+        for identity_key, entry in resolved_entries.items():
+            status = entry["resolution_status"]
+            steam_id = entry.get("steam_id")
+            resolved_player_id = entry["resolved_player_id"]
+
+            if steam_id:
+                imported_logical_ids.add(steam_id)
+            imported_logical_ids.add(resolved_player_id)
+
+            imported_expires_at = entry["expires_at"]
+            expires_at = imported_expires_at
+            if expires_at is MISSING:
+                expires_at = _list_expiration(vip_list)
+
+            if status in {"pending", "conflict"}:
+                if not steam_id:
+                    raise RuntimeError(
+                        "Pending VIP import identity has no Steam ID"
+                    )
+
+                if status == "pending":
+                    pending += 1
+                else:
+                    conflicts += 1
+
+                imported_pending_steam_ids.add(steam_id)
+                pending_record = existing_pending_by_steam_id.get(steam_id)
+
+                # Keep the originally calculated list expiration while an
+                # identity remains pending. An omitted expires_at must not
+                # extend the VIP on every repeated import.
+                if (
+                    pending_record is not None
+                    and imported_expires_at is MISSING
+                ):
+                    expires_at = pending_record.expires_at
+
+                if pending_record is None:
+                    pending_record = VipListPendingRecord(
+                        vip_list=vip_list,
+                        steam_id=steam_id,
+                        admin_name=normalized_admin_name,
+                        description=entry["description"],
+                        notes=entry["notes"],
+                        expires_at=expires_at,
+                        resolution_error=entry["resolution_error"],
+                    )
+                    sess.add(pending_record)
+                    existing_pending_by_steam_id[steam_id] = pending_record
+                    pending_created += 1
+                else:
+                    changed = (
+                        pending_record.expires_at != expires_at
+                        or pending_record.description != entry["description"]
+                        or pending_record.notes != entry["notes"]
+                        or pending_record.resolution_error
+                        != entry["resolution_error"]
+                    )
+
+                    if changed:
+                        pending_record.expires_at = expires_at
+                        pending_record.description = entry["description"]
+                        pending_record.notes = entry["notes"]
+                        pending_record.resolution_error = (
+                            entry["resolution_error"]
+                        )
+                        pending_record.admin_name = normalized_admin_name
+                        pending_record.last_checked_at = datetime.now(tz=UTC)
+                        pending_updated += 1
+                    else:
+                        pending_unchanged += 1
+
+                continue
+
+            ready += 1
+
+            record = (
+                existing_by_player_id.get(identity_key)
+                if isinstance(identity_key, int)
+                else None
+            )
+
+            player = entry["player"]
+            if player is None:
+                player = _get_or_create_import_player(
+                    sess,
+                    resolved_player_id,
+                )
+                if player is None:
+                    raise RuntimeError(
+                        "Unable to create PlayerID database record for "
+                        f"{resolved_player_id}"
+                    )
+                entry["player"] = player
+
+            imported_player_ids.add(player.id)
+
+            old_pending = None
+            if steam_id:
+                old_pending = existing_pending_by_steam_id.pop(
+                    steam_id,
+                    None,
+                )
+
+                # When a pending identity becomes resolvable, preserve its
+                # original expiration unless the import explicitly supplies
+                # a new expires_at value.
+                if (
+                    old_pending is not None
+                    and imported_expires_at is MISSING
+                ):
+                    expires_at = old_pending.expires_at
+
+                if old_pending is not None:
+                    sess.delete(old_pending)
+                    removed_pending_steam_ids.add(steam_id)
+                    pending_removed += 1
+
+            if record is None:
+                record = existing_by_player_id.get(player.id)
+
+            if record is None:
+                record = VipListRecord(
+                    player=player,
+                    vip_list=vip_list,
+                    admin_name=normalized_admin_name,
+                    active=True,
+                    description=entry["description"],
+                    notes=entry["notes"],
+                    expires_at=expires_at,
+                )
+                sess.add(record)
+                existing_by_player_id[player.id] = record
+                affected_player_ids.add(player.id)
+                created += 1
+                continue
+
+            # An omitted expires_at keeps the existing record expiration.
+            # The list default is only applied when creating a new record.
+            if imported_expires_at is MISSING and old_pending is None:
+                expires_at = record.expires_at
+
+            description = entry["description"]
+
+            changed = (
+                not record.active
+                or record.expires_at != expires_at
+                or record.description != description
+                or record.notes != entry["notes"]
+            )
+
+            if changed:
+                record.active = True
+                record.expires_at = expires_at
+                record.description = description
+                record.notes = entry["notes"]
+                record.admin_name = normalized_admin_name
+                affected_player_ids.add(record.player_id_id)
+                updated += 1
+            else:
+                unchanged += 1
+
+        if normalized_mode == "replace":
+            for record in existing_records:
+                if not record.active:
+                    continue
+
+                if record.player_id_id in imported_player_ids:
+                    continue
+
+                player_logical_ids = {record.player.player_id}
+                if record.player.steam_id:
+                    player_logical_ids.add(record.player.steam_id)
+
+                if player_logical_ids & imported_logical_ids:
+                    continue
+
+                record.active = False
+                record.admin_name = normalized_admin_name
+                affected_player_ids.add(record.player_id_id)
+                deactivated += 1
+
+            for pending_record in existing_pending:
+                if pending_record.steam_id in imported_pending_steam_ids:
+                    continue
+
+                # A pending identity may have resolved during this import.
+                if pending_record.steam_id in imported_logical_ids:
+                    continue
+
+                if pending_record.steam_id in removed_pending_steam_ids:
+                    continue
+
+                sess.delete(pending_record)
+                removed_pending_steam_ids.add(pending_record.steam_id)
+                pending_removed += 1
+
+        if affected_player_ids:
+            sess.flush()
+            reconcile_vip_list_flags(sess, affected_player_ids)
+
+        sess.commit()
+
+        result = {
+            "vip_list_id": vip_list.id,
+            "mode": normalized_mode,
+            "total": len(normalized_entries),
+            "ready": ready,
+            "pending": pending,
+            "conflicts": conflicts,
+            "created": created,
+            "updated": updated,
+            "unchanged": unchanged,
+            "deactivated": deactivated,
+            "pending_created": pending_created,
+            "pending_updated": pending_updated,
+            "pending_unchanged": pending_unchanged,
+            "pending_removed": pending_removed,
+        }
+
+        if (
+            created
+            or updated
+            or deactivated
+            or pending_created
+            or pending_updated
+            or pending_removed
+        ):
+            logger.info(
+                "Imported %s VIP record(s) into list ID %s: "
+                "%s ready, %s pending, %s conflicts, "
+                "%s created, %s updated, %s unchanged, "
+                "%s deactivated, %s pending created, "
+                "%s pending updated, %s pending removed",
+                len(normalized_entries),
+                vip_list.id,
+                ready,
+                pending,
+                conflicts,
+                created,
+                updated,
+                unchanged,
+                deactivated,
+                pending_created,
+                pending_updated,
+                pending_removed,
+            )
+
+        if created or updated or deactivated:
+            _notify_vip_sync(vip_list.servers)
+
+        return result
 
 
 def _normalize_vip_record_ids(record_ids: Sequence[int]) -> list[int]:
@@ -1053,6 +2102,70 @@ def delete_vip_list_record(record_id: int) -> bool:
         logger.info("Deleted VIP list record ID %s", record_id)
         _notify_vip_sync(server_mask)
         return True
+
+
+def get_player_legacy_vip_statuses(
+    sess: Session,
+    player_id: str,
+    timestamp: datetime | None = None,
+) -> list[dict]:
+    """Build legacy per-server VIP status from VIP List records.
+
+    Only active, non-expired records for the requested player are considered.
+    If multiple applicable lists grant VIP on the same server, the same
+    expiration/creation priority as get_effective_vip_records() is used.
+    """
+    timestamp = timestamp or datetime.now(tz=UTC)
+
+    records = sess.scalars(
+        select(VipListRecord)
+        .join(VipListRecord.player)
+        .where(
+            PlayerID.player_id == player_id,
+            VipListRecord.active.is_(True),
+            or_(
+                VipListRecord.expires_at.is_(None),
+                VipListRecord.expires_at > timestamp,
+            ),
+        )
+    ).all()
+
+    configured_server_numbers = set(
+        sess.scalars(select(VipListDefault.server_number)).all()
+    )
+
+    effective: dict[int, VipListRecord] = {}
+
+    for record in records:
+        vip_list = record.vip_list
+        server_numbers = (
+            configured_server_numbers
+            if vip_list.servers is None
+            else vip_list.get_server_numbers()
+        )
+
+        for server_number in server_numbers:
+            current = effective.get(server_number)
+            if current is None:
+                effective[server_number] = record
+                continue
+
+            if current.expires_at == record.expires_at:
+                if record.created_at > current.created_at:
+                    effective[server_number] = record
+            elif record.expires_at is None or (
+                current.expires_at is not None
+                and record.expires_at > current.expires_at
+            ):
+                effective[server_number] = record
+
+    return [
+        {
+            "server_number": server_number,
+            "expiration": record.expires_at,
+        }
+        for server_number, record in sorted(effective.items())
+    ]
 
 
 def get_effective_vip_records(

@@ -114,6 +114,12 @@ class VipSyncCommandHandler:
                 except Exception:
                     logger.exception("Unable to enumerate partner VIP lists")
                 try:
+                    from rcon.vip import resolve_pending_vip_records
+
+                    resolve_pending_vip_records(notify=False)
+                except Exception:
+                    logger.exception("Pending VIP identity resolution failed")
+                try:
                     from rcon.vip import cleanup_expired_vip_records
 
                     cleanup_expired_vip_records()

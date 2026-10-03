@@ -629,6 +629,58 @@ class RconAPI(Rcon):
                 )
             ]
 
+    def get_vip_list_records(
+        self,
+        vip_list_id: int,
+    ) -> list[VipListRecordType]:
+        """Return all records belonging to one VIP list."""
+        with enter_session() as sess:
+            return [
+                record.to_dict()
+                for record in vip.get_vip_list_records(
+                    sess,
+                    vip_list_id=int(vip_list_id),
+                )
+            ]
+
+    def get_all_vip_records(self) -> list[VipListRecordType]:
+        """Return all VIP list records across all configured lists."""
+        with enter_session() as sess:
+            return [
+                record.to_dict()
+                for record in vip.get_all_vip_records(sess)
+            ]
+
+    def preview_vip_list_import(
+        self,
+        vip_list_id: int,
+        entries: Sequence[dict],
+        mode: str = "merge",
+    ) -> dict[str, Any]:
+        """Preview importing records into one editable VIP list."""
+        return vip.preview_vip_list_import(
+            vip_list_id=int(vip_list_id),
+            entries=entries,
+            mode=mode,
+            target_game=server_info_for_rcon(self).game,
+        )
+
+    def import_vip_list_records(
+        self,
+        vip_list_id: int,
+        entries: Sequence[dict],
+        mode: str = "merge",
+        admin_name: str = "CRCON",
+    ) -> dict[str, Any]:
+        """Atomically import records into one editable VIP list."""
+        return vip.import_vip_list_records(
+            vip_list_id=int(vip_list_id),
+            entries=entries,
+            mode=mode,
+            admin_name=admin_name,
+            target_game=server_info_for_rcon(self).game,
+        )
+
     def get_active_vip_records(
         self,
         vip_list_id: int,
@@ -676,6 +728,7 @@ class RconAPI(Rcon):
             expires_at=expires_at,
             notes=notes,
             admin_name=admin_name,
+            target_game=server_info_for_rcon(self).game,
         )
 
     def upsert_vip_list_record(
@@ -695,6 +748,7 @@ class RconAPI(Rcon):
             expires_at=expires_at,
             notes=notes,
             admin_name=admin_name,
+            target_game=server_info_for_rcon(self).game,
         )
 
     def edit_vip_list_record(

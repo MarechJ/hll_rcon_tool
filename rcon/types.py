@@ -741,7 +741,7 @@ class UserConfigType(TypedDict):
 
 class PlayerVIPType(TypedDict):
     server_number: int
-    expiration: datetime.datetime
+    expiration: datetime.datetime | None
 
 
 class VipListSyncMethod(str, enum.Enum):
@@ -765,6 +765,7 @@ class VipListRecordType(TypedDict):
     id: int
     vip_list_id: int
     player_id: str
+    steam_id: str | None
     player_name: str | None
     admin_name: str
     created_at: datetime.datetime

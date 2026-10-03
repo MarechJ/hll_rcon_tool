@@ -33,7 +33,9 @@ from rcon.maps import (
 )
 from rcon.message_variables import format_message_string, populate_message_variables
 from rcon.models import GameLayout, PlayerID, PlayerSoldier, enter_session
+from rcon.user_config.utils import server_info_for_rcon
 from rcon.player_history import (
+    record_player_game_observation,
     get_player,
     save_end_player_session,
     save_player,
@@ -574,11 +576,17 @@ def handle_on_connect(
         logger.warning("Unable to update soldier info for %s\n%s", player_id, str(e))
         player_info = None
 
+    player_timestamp = int(struct_log["timestamp_ms"]) / 1000
     save_player(
         struct_log["player_name_1"],
         player_id,
-        timestamp=int(struct_log["timestamp_ms"]) / 1000,
+        timestamp=player_timestamp,
         steam_id=player_info["steam_id"] if player_info else None,
+    )
+    record_player_game_observation(
+        player_id,
+        server_info_for_rcon(rcon).game,
+        timestamp=player_timestamp,
     )
 
     if player_info:
