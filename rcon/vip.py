@@ -45,9 +45,7 @@ def _get_or_create_import_player(
     player_id: str,
 ) -> PlayerID:
     """Get or create a player without committing the import transaction."""
-    player = sess.scalar(
-        select(PlayerID).where(PlayerID.player_id == player_id)
-    )
+    player = sess.scalar(select(PlayerID).where(PlayerID.player_id == player_id))
     if player is not None:
         return player
 
@@ -942,7 +940,6 @@ def edit_vip_list_record(
         return record.to_dict()
 
 
-
 def get_vip_list_records(
     sess: Session,
     vip_list_id: int,
@@ -982,23 +979,15 @@ def _normalize_vip_list_import(
     for entry in entries:
         player_id = str(entry["player_id"]).strip()
         if not is_supported_player_id(player_id):
-            raise ValueError(
-                f"Unsupported player ID in VIP list import: {player_id}"
-            )
+            raise ValueError(f"Unsupported player ID in VIP list import: {player_id}")
         if player_id in normalized_entries:
-            raise ValueError(
-                f"Duplicate player ID in VIP list import: {player_id}"
-            )
+            raise ValueError(f"Duplicate player ID in VIP list import: {player_id}")
 
         steam_id = entry.get("steam_id")
         if steam_id is not None:
             steam_id = str(steam_id).strip() or None
-            if steam_id is not None and (
-                len(steam_id) != 17 or not steam_id.isdigit()
-            ):
-                raise ValueError(
-                    f"Invalid Steam ID in VIP list import: {steam_id}"
-                )
+            if steam_id is not None and (len(steam_id) != 17 or not steam_id.isdigit()):
+                raise ValueError(f"Invalid Steam ID in VIP list import: {steam_id}")
 
         normalized_entries[player_id] = {
             "player_id": player_id,
@@ -1009,9 +998,7 @@ def _normalize_vip_list_import(
         }
 
     if normalized_mode == "replace" and not normalized_entries:
-        raise ValueError(
-            "Cannot replace a VIP list with an empty import"
-        )
+        raise ValueError("Cannot replace a VIP list with an empty import")
 
     return normalized_mode, normalized_entries
 
@@ -1305,8 +1292,7 @@ def _resolve_vip_identity(
                     candidate.player_id for candidate in hllv_candidates
                 )
                 resolution_error = (
-                    f"Ambiguous Steam ID {lookup_steam_id}: "
-                    f"matches {candidate_ids}"
+                    f"Ambiguous Steam ID {lookup_steam_id}: matches {candidate_ids}"
                 )
 
             steam_id = lookup_steam_id
@@ -1452,9 +1438,7 @@ def preview_vip_list_import(
 
             if status in {"pending", "conflict"}:
                 if not steam_id:
-                    raise RuntimeError(
-                        "Pending VIP import identity has no Steam ID"
-                    )
+                    raise RuntimeError("Pending VIP import identity has no Steam ID")
 
                 if status == "pending":
                     pending += 1
@@ -1464,10 +1448,7 @@ def preview_vip_list_import(
                 imported_pending_steam_ids.add(steam_id)
                 pending_record = existing_pending_by_steam_id.get(steam_id)
 
-                if (
-                    pending_record is not None
-                    and imported_expires_at is MISSING
-                ):
+                if pending_record is not None and imported_expires_at is MISSING:
                     expires_at = pending_record.expires_at
 
                 if pending_record is None:
@@ -1477,8 +1458,7 @@ def preview_vip_list_import(
                         pending_record.expires_at != expires_at
                         or pending_record.description != entry["description"]
                         or pending_record.notes != entry["notes"]
-                        or pending_record.resolution_error
-                        != entry["resolution_error"]
+                        or pending_record.resolution_error != entry["resolution_error"]
                     )
 
                     if changed:
@@ -1502,9 +1482,7 @@ def preview_vip_list_import(
                 imported_player_ids.add(player.id)
 
             old_pending = (
-                existing_pending_by_steam_id.get(steam_id)
-                if steam_id
-                else None
+                existing_pending_by_steam_id.get(steam_id) if steam_id else None
             )
 
             if old_pending is not None:
@@ -1586,6 +1564,7 @@ def preview_vip_list_import(
             "pending_removed": pending_removed,
         }
 
+
 def import_vip_list_records(
     vip_list_id: int,
     entries: Sequence[dict],
@@ -1605,9 +1584,7 @@ def import_vip_list_records(
         # whose pending row does not exist yet and therefore cannot be locked
         # individually.
         vip_list = sess.scalar(
-            select(VipList)
-            .where(VipList.id == int(vip_list_id))
-            .with_for_update()
+            select(VipList).where(VipList.id == int(vip_list_id)).with_for_update()
         )
         if vip_list is None:
             raise ValueError(f"VIP list ID {vip_list_id} does not exist")
@@ -1677,9 +1654,7 @@ def import_vip_list_records(
 
             if status in {"pending", "conflict"}:
                 if not steam_id:
-                    raise RuntimeError(
-                        "Pending VIP import identity has no Steam ID"
-                    )
+                    raise RuntimeError("Pending VIP import identity has no Steam ID")
 
                 if status == "pending":
                     pending += 1
@@ -1692,10 +1667,7 @@ def import_vip_list_records(
                 # Keep the originally calculated list expiration while an
                 # identity remains pending. An omitted expires_at must not
                 # extend the VIP on every repeated import.
-                if (
-                    pending_record is not None
-                    and imported_expires_at is MISSING
-                ):
+                if pending_record is not None and imported_expires_at is MISSING:
                     expires_at = pending_record.expires_at
 
                 if pending_record is None:
@@ -1716,17 +1688,14 @@ def import_vip_list_records(
                         pending_record.expires_at != expires_at
                         or pending_record.description != entry["description"]
                         or pending_record.notes != entry["notes"]
-                        or pending_record.resolution_error
-                        != entry["resolution_error"]
+                        or pending_record.resolution_error != entry["resolution_error"]
                     )
 
                     if changed:
                         pending_record.expires_at = expires_at
                         pending_record.description = entry["description"]
                         pending_record.notes = entry["notes"]
-                        pending_record.resolution_error = (
-                            entry["resolution_error"]
-                        )
+                        pending_record.resolution_error = entry["resolution_error"]
                         pending_record.admin_name = normalized_admin_name
                         pending_record.last_checked_at = datetime.now(tz=UTC)
                         pending_updated += 1
@@ -1768,10 +1737,7 @@ def import_vip_list_records(
                 # When a pending identity becomes resolvable, preserve its
                 # original expiration unless the import explicitly supplies
                 # a new expires_at value.
-                if (
-                    old_pending is not None
-                    and imported_expires_at is MISSING
-                ):
+                if old_pending is not None and imported_expires_at is MISSING:
                     expires_at = old_pending.expires_at
 
                 if old_pending is not None:

@@ -1277,9 +1277,7 @@ class PlayerIdentityGame(Base):
         nullable=False,
     )
 
-    player: Mapped[PlayerID] = relationship(
-        back_populates="game_observations"
-    )
+    player: Mapped[PlayerID] = relationship(back_populates="game_observations")
 
 
 class VipList(Base):
@@ -1444,9 +1442,7 @@ class VipListPendingRecord(Base):
         default=lambda: datetime.now(tz=UTC),
         nullable=False,
     )
-    last_checked_at: Mapped[datetime | None] = mapped_column(
-        TIMESTAMP(timezone=True)
-    )
+    last_checked_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
     resolution_error: Mapped[str | None]
     description: Mapped[str | None]
     notes: Mapped[str | None]
@@ -1455,9 +1451,7 @@ class VipListPendingRecord(Base):
         nullable=True,
     )
 
-    vip_list: Mapped[VipList] = relationship(
-        back_populates="pending_records"
-    )
+    vip_list: Mapped[VipList] = relationship(back_populates="pending_records")
 
 
 class VipListRecord(Base):

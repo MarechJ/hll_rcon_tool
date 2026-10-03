@@ -78,8 +78,7 @@ class PlayerWatch:
             )
             profile["vips"] = vips
             profile["is_vip"] = any(
-                vip["server_number"] == player.server_number
-                for vip in vips
+                vip["server_number"] == player.server_number for vip in vips
             )
             return profile
 

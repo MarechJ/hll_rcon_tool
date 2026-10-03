@@ -172,9 +172,7 @@ def _parse_vip_list_csv_import(content: str) -> list[dict]:
     for line_number, row in enumerate(reader, start=2):
         player_id = (row.get("player_id") or "").strip()
         if not player_id:
-            raise ValueError(
-                f"Missing player_id in VIP list CSV line {line_number}"
-            )
+            raise ValueError(f"Missing player_id in VIP list CSV line {line_number}")
 
         entry = {
             "player_id": player_id,
@@ -190,9 +188,7 @@ def _parse_vip_list_csv_import(content: str) -> list[dict]:
         if has_expires_at:
             expires_at = (row.get("expires_at") or "").strip()
             entry["expires_at"] = (
-                datetime.datetime.fromisoformat(expires_at)
-                if expires_at
-                else None
+                datetime.datetime.fromisoformat(expires_at) if expires_at else None
             )
 
         entries.append(entry)
@@ -261,10 +257,7 @@ VIP_LIST_EXPORT_FIELDS = (
 
 
 def _vip_list_export_response(records, lists, filename):
-    list_names = {
-        vip_list["id"]: vip_list["name"]
-        for vip_list in lists
-    }
+    list_names = {vip_list["id"]: vip_list["name"] for vip_list in lists}
 
     output = io.StringIO()
     writer = csv.DictWriter(

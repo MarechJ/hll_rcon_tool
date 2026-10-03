@@ -646,10 +646,7 @@ class RconAPI(Rcon):
     def get_all_vip_records(self) -> list[VipListRecordType]:
         """Return all VIP list records across all configured lists."""
         with enter_session() as sess:
-            return [
-                record.to_dict()
-                for record in vip.get_all_vip_records(sess)
-            ]
+            return [record.to_dict() for record in vip.get_all_vip_records(sess)]
 
     def preview_vip_list_import(
         self,

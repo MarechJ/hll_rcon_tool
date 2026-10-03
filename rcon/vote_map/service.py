@@ -1125,8 +1125,7 @@ class VoteMap:
                 )
                 player["vips"] = vips
                 player["is_vip"] = any(
-                    vip["server_number"] == player_model.server_number
-                    for vip in vips
+                    vip["server_number"] == player_model.server_number for vip in vips
                 )
             except NoResultFound as e:
                 raise PlayerNotFound(f"Player {player_id=} not found.") from e
