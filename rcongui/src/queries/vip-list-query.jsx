@@ -9,6 +9,7 @@ export const vipListQueryKeys = {
   playerRecords: [{ queryIdentifier: "get_player_vip_records" }],
   activeRecords: [{ queryIdentifier: "get_active_vip_records" }],
   inactiveRecords: [{ queryIdentifier: "get_inactive_vip_records" }],
+  pendingRecords: [{ queryIdentifier: "get_pending_vip_records" }],
 };
 
 export const vipListQueryOptions = {
@@ -95,6 +96,17 @@ export const vipListQueryOptions = {
       queryKey: [...vipListQueryKeys.inactiveRecords, vipListId],
       queryFn: () =>
         cmd.GET_INACTIVE_VIP_RECORDS({
+          params: { vip_list_id: vipListId },
+        }),
+      enabled: Number.isInteger(vipListId),
+      select: (data) => (Array.isArray(data) ? data : []),
+    }),
+
+  pendingRecords: (vipListId) =>
+    queryOptions({
+      queryKey: [...vipListQueryKeys.pendingRecords, vipListId],
+      queryFn: () =>
+        cmd.GET_PENDING_VIP_RECORDS({
           params: { vip_list_id: vipListId },
         }),
       enabled: Number.isInteger(vipListId),
@@ -218,6 +230,13 @@ export const vipListMutationOptions = {
   deleteRecord: {
     mutationFn: (record) =>
       cmd.DELETE_VIP_LIST_RECORD({
+        payload: { record_id: record.id },
+        throwRouteError: false,
+      }),
+  },
+  deletePendingRecord: {
+    mutationFn: (record) =>
+      cmd.DELETE_PENDING_VIP_RECORD({
         payload: { record_id: record.id },
         throwRouteError: false,
       }),

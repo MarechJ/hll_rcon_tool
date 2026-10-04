@@ -227,7 +227,13 @@ function RecordTable({
         case "list":
           return listNames[record.vip_list_id] ?? "";
         case "status":
-          return !record.is_active ? "Inactive" : record.is_expired ? "Expired" : "Active";
+          return record.record_type === "pending"
+            ? "Pending"
+            : !record.is_active
+            ? "Inactive"
+            : record.is_expired
+            ? "Expired"
+            : "Active";
         case "expiration":
           return record.expires_at ?? "9999";
         case "admin":
@@ -240,7 +246,12 @@ function RecordTable({
       numeric: true,
       sensitivity: "base",
     });
-    return (result || left.id - right.id) * (sorting.direction === "asc" ? 1 : -1);
+    const idResult =
+      left.id - right.id ||
+      String(left.record_type ?? "record").localeCompare(
+        String(right.record_type ?? "record")
+      );
+    return (result || idResult) * (sorting.direction === "asc" ? 1 : -1);
   });
   const sortHeader = (field, title) => (
     <TableSortLabel
@@ -256,11 +267,15 @@ function RecordTable({
   );
   const showActions = Boolean(onEdit || onDelete || onPartnerPolicy || onCopy);
   const selectedSet = new Set(selectedRecordIds);
-  const selectedVisibleCount = safeRecords.filter((record) =>
+  const selectableRecords = safeRecords.filter(
+    (record) => record.record_type !== "pending"
+  );
+  const selectedVisibleCount = selectableRecords.filter((record) =>
     selectedSet.has(record.id)
   ).length;
   const allVisibleSelected =
-    safeRecords.length > 0 && selectedVisibleCount === safeRecords.length;
+    selectableRecords.length > 0 &&
+    selectedVisibleCount === selectableRecords.length;
   const someVisibleSelected = selectedVisibleCount > 0 && !allVisibleSelected;
 
   return (
@@ -295,7 +310,7 @@ function RecordTable({
                       checked={allVisibleSelected}
                       indeterminate={someVisibleSelected}
                       onChange={(event) =>
-                        onToggleRecords(safeRecords, event.target.checked)
+                        onToggleRecords(selectableRecords, event.target.checked)
                       }
                       inputProps={{
                         "aria-label": `Select all records in ${title}`,
@@ -316,17 +331,20 @@ function RecordTable({
             </TableHead>
             <TableBody>
               {sortedRecords.map((record) => {
-                const active = record.is_active && !record.is_expired;
+                const pending = record.record_type === "pending";
+                const active = !pending && record.is_active && !record.is_expired;
+                const rowKey = pending ? `pending-${record.id}` : `record-${record.id}`;
                 return (
                   <TableRow
-                    key={record.id}
+                    key={rowKey}
                     hover
-                    selected={selectedSet.has(record.id)}
+                    selected={!pending && selectedSet.has(record.id)}
                   >
                     {selectable && (
                       <TableCell padding="checkbox">
                         <Checkbox
-                          checked={selectedSet.has(record.id)}
+                          checked={!pending && selectedSet.has(record.id)}
+                          disabled={pending}
                           onChange={(event) =>
                             onToggleRecord(record.id, event.target.checked)
                           }
@@ -401,7 +419,9 @@ function RecordTable({
                     <TableCell>
                       <Chip
                         label={
-                          isImported && record.partner_excluded
+                          pending
+                            ? "Pending"
+                            : isImported && record.partner_excluded
                             ? "Excluded"
                             : isImported && !record.partner_present
                             ? "Removed by partner"
@@ -416,7 +436,9 @@ function RecordTable({
                             : "Inactive"
                         }
                         color={
-                          active
+                          pending
+                            ? "warning"
+                            : active
                             ? "success"
                             : record.is_active && record.is_expired
                             ? "warning"
@@ -430,14 +452,14 @@ function RecordTable({
                     <TableCell>{record.notes || "—"}</TableCell>
                     {showActions && (
                       <TableCell align="right">
-                        {isImported && onPartnerPolicy && record.partner_present && <>
+                        {!pending && isImported && onPartnerPolicy && record.partner_present && <>
                           {!record.partner_approved && <Button size="small" onClick={() => onPartnerPolicy(record, { approved: true })}>Approve</Button>}
                           <Button size="small" onClick={() => onPartnerPolicy(record, { excluded: !record.partner_excluded })}>
                             {record.partner_excluded ? "Remove exclusion" : "Exclude"}
                           </Button>
                         </>}
-                        {isImported && onCopy && <Button size="small" onClick={() => onCopy(record)}>Copy to own list</Button>}
-                        {onEdit && !importedListIds.includes(record.vip_list_id) && (
+                        {!pending && isImported && onCopy && <Button size="small" onClick={() => onCopy(record)}>Copy to own list</Button>}
+                        {!pending && onEdit && !importedListIds.includes(record.vip_list_id) && (
                           <Tooltip title="Edit record">
                             <IconButton
                               size="small"
@@ -447,7 +469,7 @@ function RecordTable({
                             </IconButton>
                           </Tooltip>
                         )}
-                        {onDelete && (!importedListIds.includes(record.vip_list_id) || (!record.partner_present && !record.partner_excluded)) && (
+                        {onDelete && (pending || !importedListIds.includes(record.vip_list_id) || (!record.partner_present && !record.partner_excluded)) && (
                           <Tooltip title="Delete record">
                             <IconButton
                               size="small"
@@ -566,6 +588,9 @@ export default function VipListsPage() {
       queryClient.invalidateQueries({
         queryKey: [...vipListQueryKeys.inactiveRecords, listId],
       }),
+      queryClient.invalidateQueries({
+        queryKey: [...vipListQueryKeys.pendingRecords, listId],
+      }),
     ]);
   };
 
@@ -661,6 +686,15 @@ export default function VipListsPage() {
     ...vipListMutationOptions.deleteRecord,
     onSuccess: async (_result, record) => {
       toast.success("VIP record deleted.");
+      await refreshRecords(record.vip_list_id ?? selectedListId);
+    },
+    onError: mutationError,
+  });
+
+  const deletePendingRecord = useMutation({
+    ...vipListMutationOptions.deletePendingRecord,
+    onSuccess: async (_result, record) => {
+      toast.success("Pending VIP record deleted.");
       await refreshRecords(record.vip_list_id ?? selectedListId);
     },
     onError: mutationError,
@@ -830,6 +864,8 @@ export default function VipListsPage() {
         await deleteList.mutateAsync(pendingConfirmation.item);
       } else if (pendingConfirmation?.kind === "record") {
         await deleteRecord.mutateAsync(pendingConfirmation.item);
+      } else if (pendingConfirmation?.kind === "pending-record") {
+        await deletePendingRecord.mutateAsync(pendingConfirmation.item);
       } else if (pendingConfirmation?.kind === "set-default") {
         await setDefaultList.mutateAsync({
           vipListId: pendingConfirmation.item.id,
@@ -854,6 +890,7 @@ export default function VipListsPage() {
     createRecord.isPending ||
     editRecord.isPending ||
     deleteRecord.isPending ||
+    deletePendingRecord.isPending ||
     bulkEditRecords.isPending ||
     bulkDeleteRecords.isPending;
   const mutationPending = listMutationPending || recordMutationPending || applyExpirationPending;
@@ -921,6 +958,15 @@ export default function VipListsPage() {
     enabled: Number.isInteger(selectedListId),
   });
 
+  const {
+    data: pendingRecords = [],
+    isLoading: pendingLoading,
+    error: pendingError,
+  } = useQuery({
+    ...vipListQueryOptions.pendingRecords(selectedListId),
+    enabled: Number.isInteger(selectedListId),
+  });
+
   const allListQueries = useQueries({
     queries: lists.flatMap((list) => [
       {
@@ -931,13 +977,17 @@ export default function VipListsPage() {
         ...vipListQueryOptions.inactiveRecords(list.id),
         enabled: viewingAllLists,
       },
+      {
+        ...vipListQueryOptions.pendingRecords(list.id),
+        enabled: viewingAllLists,
+      },
     ]),
   });
 
   const allListRecords = allListQueries.flatMap((query, index) =>
     (query.data ?? []).map((record) => ({
       ...record,
-      vip_list_id: lists[Math.floor(index / 2)].id,
+      vip_list_id: lists[Math.floor(index / 3)].id,
     }))
   );
 
@@ -950,6 +1000,7 @@ export default function VipListsPage() {
     defaultListError ||
     activeError ||
     inactiveError ||
+    pendingError ||
     (viewingAllLists &&
       allListQueries.find((query) => query.error)?.error);
 
@@ -957,14 +1008,21 @@ export default function VipListsPage() {
     const search = recordSearch.trim().toLocaleLowerCase();
 
     return records.filter((record) => {
-      const active = record.is_active && !record.is_expired;
+      const pending = record.record_type === "pending";
+      const active = !pending && record.is_active && !record.is_expired;
+
+      if (statusFilter === "pending" && !pending) return false;
       if (statusFilter === "active" && !active) return false;
       if (
         statusFilter === "expired" &&
-        (record.is_active === false || !record.is_expired)
+        (pending || record.is_active === false || !record.is_expired)
       )
         return false;
-      if (statusFilter === "inactive" && record.is_active) return false;
+      if (
+        statusFilter === "inactive" &&
+        (pending || record.is_active)
+      )
+        return false;
       if (search === "") return true;
       return [
         record.id,
@@ -981,8 +1039,15 @@ export default function VipListsPage() {
   };
 
   const filteredCurrentRecords = useMemo(
-    () => filterRecords([...activeRecords, ...inactiveRecords]),
-    [activeRecords, inactiveRecords, recordSearch, statusFilter, lists]
+    () => filterRecords([...activeRecords, ...inactiveRecords, ...pendingRecords]),
+    [
+      activeRecords,
+      inactiveRecords,
+      pendingRecords,
+      recordSearch,
+      statusFilter,
+      lists,
+    ]
   );
 
   const filteredAllListRecords = viewingAllLists
@@ -1013,7 +1078,9 @@ export default function VipListsPage() {
     : "the current server";
 
   const confirmationIsDelete =
-    confirmation?.kind === "list" || confirmation?.kind === "record";
+    confirmation?.kind === "list" ||
+    confirmation?.kind === "record" ||
+    confirmation?.kind === "pending-record";
   const durationRecordCount = activeRecords.length + inactiveRecords.filter(
     (record) =>
       (record.is_active ? confirmation?.includeExpired && record.is_expired :
@@ -1026,6 +1093,8 @@ export default function VipListsPage() {
       ? "Apply duration to existing VIPs?"
       : confirmation?.kind === "record"
       ? "Delete VIP record?"
+      : confirmation?.kind === "pending-record"
+      ? "Delete pending VIP record?"
       : confirmation?.kind === "set-default"
       ? `Set default for ${
           Number.isInteger(confirmation?.serverNumber)
@@ -1044,6 +1113,8 @@ export default function VipListsPage() {
       ? `${durationRecordCount} record(s) in “${confirmation.item.name}” will ${confirmation.item.default_expiration_seconds === 0 ? "be set to never expire" : `expire ${formatDuration(confirmation.item.default_expiration_seconds)} after confirmation`}. Record activation states remain unchanged. Affected gameservers will be notified.`
       : confirmation?.kind === "record"
       ? `This permanently deletes VIP record #${confirmation?.item?.id}. No gameserver synchronization is performed.`
+      : confirmation?.kind === "pending-record"
+      ? `This permanently deletes the unresolved VIP entry for Steam ID ${confirmation?.item?.steam_id ?? confirmation?.item?.player_id}. No gameserver synchronization is performed.`
       : confirmation?.kind === "set-default"
       ? `“${
           confirmation?.item?.name
@@ -1420,6 +1491,7 @@ export default function VipListsPage() {
                     onChange={(event) => setStatusFilter(event.target.value)}>
                     <MenuItem value="all">All</MenuItem>
                     <MenuItem value="active">Active</MenuItem>
+                    <MenuItem value="pending">Pending</MenuItem>
                     <MenuItem value="inactive">Inactive</MenuItem>
                     <MenuItem value="expired">Expired</MenuItem>
                   </Select>
@@ -1428,7 +1500,7 @@ export default function VipListsPage() {
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                 {viewingAllLists
                   ? `${filteredAllListRecords.length} matches across ${lists.length} lists`
-                  : `${filteredCurrentRecords.length} of ${activeRecords.length + inactiveRecords.length} records shown`}
+                  : `${filteredCurrentRecords.length} of ${activeRecords.length + inactiveRecords.length + pendingRecords.length} records shown`}
               </Typography>
             </Paper>
 
@@ -1470,7 +1542,7 @@ export default function VipListsPage() {
               records={viewingAllLists ? filteredAllListRecords : filteredCurrentRecords}
               loading={viewingAllLists
                 ? allListQueries.some((query) => query.isPending)
-                : activeLoading || inactiveLoading}
+                : activeLoading || inactiveLoading || pendingLoading}
               emptyText="No VIP records match the selected filters."
               showList={viewingAllLists}
               listNames={listNames}
@@ -1488,7 +1560,11 @@ export default function VipListsPage() {
                 ? (record) => setRecordDialog({ mode: "edit", record })
                 : undefined}
               onDelete={!viewingAllLists && canDeleteRecords
-                ? (record) => setConfirmation({ kind: "record", item: record })
+                ? (record) =>
+                    setConfirmation({
+                      kind: record.record_type === "pending" ? "pending-record" : "record",
+                      item: record,
+                    })
                 : undefined}
             />
           </Stack>

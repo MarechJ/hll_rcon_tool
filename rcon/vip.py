@@ -29,6 +29,7 @@ from rcon.player_history import _get_set_player
 from rcon.player_id_utils import is_supported_player_id
 from rcon.types import (
     GameEnum,
+    VipListPendingRecordType,
     VipListRecordType,
     VipListSyncMethod,
     VipListType,
@@ -728,7 +729,7 @@ def add_record_to_vip_list(
     notes: str | None = None,
     admin_name: str = "CRCON",
     target_game: GameEnum = GameEnum.HLL_WW2,
-) -> VipListRecordType:
+) -> VipListRecordType | VipListPendingRecordType:
     """Add one player to a VIP list."""
     player_id = player_id.strip()
     if not is_supported_player_id(player_id):
@@ -751,11 +752,79 @@ def add_record_to_vip_list(
         if expires_at is MISSING:
             expires_at = _list_expiration(vip_list)
 
-        player = _resolve_manual_vip_player(
-            sess,
-            player_id,
-            target_game,
-        )
+        # A Steam64 added manually to an HLL Vietnam list may not have a
+        # known HLLV network identity yet. Keep it pending until CRCON
+        # observes an unambiguous HLLV identity for that Steam account.
+        if target_game == GameEnum.HLL_VIETNAM and _is_steam_id(player_id):
+            identity = _resolve_vip_identity(
+                sess,
+                player_id,
+                target_game=target_game,
+            )
+
+            if identity["resolution_status"] == "conflict":
+                raise HLLCommandFailedError(
+                    identity["resolution_error"]
+                    or f"Player {player_id} has multiple HLL Vietnam identities"
+                )
+
+            if identity["resolution_status"] == "pending":
+                existing_record = sess.scalar(
+                    select(VipListRecord)
+                    .join(PlayerID, PlayerID.id == VipListRecord.player_id_id)
+                    .where(
+                        VipListRecord.vip_list_id == vip_list.id,
+                        PlayerID.steam_id == player_id,
+                    )
+                )
+                if existing_record is not None:
+                    raise HLLCommandFailedError(
+                        f"Steam ID {player_id} already has a resolved record on "
+                        f"VIP list {vip_list_id}"
+                    )
+
+                existing_pending = sess.scalar(
+                    select(VipListPendingRecord).where(
+                        VipListPendingRecord.vip_list_id == vip_list.id,
+                        VipListPendingRecord.steam_id == player_id,
+                    )
+                )
+                if existing_pending is not None:
+                    raise HLLCommandFailedError(
+                        f"Steam ID {player_id} already has a pending record on "
+                        f"VIP list {vip_list_id}"
+                    )
+
+                pending = VipListPendingRecord(
+                    vip_list=vip_list,
+                    steam_id=player_id,
+                    admin_name=admin_name.strip() or "CRCON",
+                    description=description,
+                    notes=notes,
+                    expires_at=expires_at,
+                )
+                sess.add(pending)
+                sess.commit()
+
+                logger.info(
+                    "Added Steam ID %s as pending to HLL Vietnam VIP list ID %s",
+                    player_id,
+                    vip_list_id,
+                )
+
+                return pending_vip_record_to_dict(pending)
+
+            player = identity["player"]
+            if player is None:
+                raise HLLCommandFailedError(
+                    f"Unable to resolve HLL Vietnam identity for {player_id}"
+                )
+        else:
+            player = _resolve_manual_vip_player(
+                sess,
+                player_id,
+                target_game,
+            )
 
         existing = get_player_vip_list_record(
             sess,
@@ -952,6 +1021,48 @@ def get_vip_list_records(
             .order_by(VipListRecord.id)
         ).all()
     )
+
+
+def get_pending_vip_records(
+    sess: Session,
+    vip_list_id: int,
+) -> Sequence[VipListPendingRecord]:
+    """Return unresolved HLL Vietnam identities from one VIP list."""
+    return sess.scalars(
+        select(VipListPendingRecord)
+        .where(VipListPendingRecord.vip_list_id == int(vip_list_id))
+        .order_by(VipListPendingRecord.id)
+    ).all()
+
+
+def pending_vip_record_to_dict(
+    record: VipListPendingRecord,
+) -> VipListPendingRecordType:
+    """Serialize one unresolved VIP identity for the VIP list UI."""
+    return {
+        "id": record.id,
+        "vip_list_id": record.vip_list_id,
+        "player_id": record.steam_id,
+        "steam_id": record.steam_id,
+        "player_name": None,
+        "admin_name": record.admin_name,
+        "created_at": record.created_at,
+        "is_active": True,
+        "is_expired": bool(
+            record.expires_at is not None
+            and record.expires_at <= datetime.now(UTC)
+        ),
+        "expires_at": record.expires_at,
+        "description": record.description,
+        "notes": record.notes,
+        "partner_approved": False,
+        "partner_excluded": False,
+        "partner_present": False,
+        "partner_deactivated_at": None,
+        "record_type": "pending",
+        "resolution_status": "pending",
+        "resolution_error": record.resolution_error,
+    }
 
 
 def get_all_vip_records(
@@ -1261,16 +1372,28 @@ def _resolve_vip_identity(
                 select(PlayerID).where(PlayerID.player_id == player_id)
             )
 
-            # A network ID is only accepted directly for HLL Vietnam when CRCON
-            # actually observed that identity on an HLL Vietnam server.
-            if player is None or not _player_was_observed_in_game(
-                sess,
-                player,
-                GameEnum.HLL_VIETNAM,
-            ):
+            # A network ID is accepted when CRCON observed it on an HLL
+            # Vietnam server or when the caller supplies the exact Steam64
+            # mapping already stored for this concrete identity. Importing an
+            # existing mapping does not count as a game observation.
+            observed_in_hllv = (
+                player is not None
+                and _player_was_observed_in_game(
+                    sess,
+                    player,
+                    GameEnum.HLL_VIETNAM,
+                )
+            )
+            mapped_to_supplied_steam_id = (
+                player is not None
+                and steam_id is not None
+                and player.steam_id == steam_id
+            )
+
+            if not observed_in_hllv and not mapped_to_supplied_steam_id:
                 raise ValueError(
                     f"Network ID {player_id} is not a known HLL Vietnam identity "
-                    "and cannot be resolved without a Steam ID"
+                    "and cannot be resolved without a matching Steam ID"
                 )
         else:
             lookup_steam_id = steam_id or player_id
@@ -2042,6 +2165,27 @@ def delete_vip_list_records(record_ids: Sequence[int]) -> int:
         )
         _notify_vip_sync(server_mask)
         return deleted_count
+
+
+def delete_pending_vip_record(record_id: int) -> bool:
+    """Delete one unresolved VIP list record without gameserver synchronization."""
+    with enter_session() as sess:
+        record = sess.get(VipListPendingRecord, int(record_id))
+        if record is None:
+            return False
+
+        vip_list_id = record.vip_list_id
+        steam_id = record.steam_id
+        sess.delete(record)
+        sess.commit()
+
+        logger.info(
+            "Deleted pending VIP list record ID %s from list %s for Steam ID %s",
+            record_id,
+            vip_list_id,
+            steam_id,
+        )
+        return True
 
 
 def delete_vip_list_record(record_id: int) -> bool:

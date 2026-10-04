@@ -780,6 +780,28 @@ class VipListRecordType(TypedDict):
     partner_deactivated_at: datetime.datetime | None
 
 
+class VipListPendingRecordType(TypedDict):
+    id: int
+    vip_list_id: int
+    player_id: str
+    steam_id: str
+    player_name: None
+    admin_name: str
+    created_at: datetime.datetime
+    is_active: bool
+    is_expired: bool
+    expires_at: datetime.datetime | None
+    description: str | None
+    notes: str | None
+    partner_approved: bool
+    partner_excluded: bool
+    partner_present: bool
+    partner_deactivated_at: None
+    record_type: str
+    resolution_status: str
+    resolution_error: str | None
+
+
 class PlayerSoldierType(TypedDict):
     eos_id: str | None
     name: str | None

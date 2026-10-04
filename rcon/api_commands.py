@@ -45,6 +45,7 @@ from rcon.types import (
     PlayerFlagType,
     PlayerProfileTypeEnriched,
     ServerInfo,
+    VipListPendingRecordType,
     VipListRecordType,
     VipListSyncMethod,
     VipListType,
@@ -643,6 +644,20 @@ class RconAPI(Rcon):
                 )
             ]
 
+    def get_pending_vip_records(
+        self,
+        vip_list_id: int,
+    ) -> list[VipListPendingRecordType]:
+        """Return unresolved HLL Vietnam identities from one VIP list."""
+        with enter_session() as sess:
+            return [
+                vip.pending_vip_record_to_dict(record)
+                for record in vip.get_pending_vip_records(
+                    sess,
+                    vip_list_id=int(vip_list_id),
+                )
+            ]
+
     def get_all_vip_records(self) -> list[VipListRecordType]:
         """Return all VIP list records across all configured lists."""
         with enter_session() as sess:
@@ -715,7 +730,7 @@ class RconAPI(Rcon):
         expires_at: datetime | None | MissingType = MISSING,
         notes: str | None = None,
         admin_name: str = "CRCON",
-    ) -> VipListRecordType:
+    ) -> VipListRecordType | VipListPendingRecordType:
         """Add a player to a VIP list without synchronizing the gameserver."""
         return vip.add_record_to_vip_list(
             player_id=player_id,
@@ -799,6 +814,10 @@ class RconAPI(Rcon):
     def delete_vip_list_record(self, record_id: int) -> bool:
         """Delete one VIP list record."""
         return vip.delete_vip_list_record(record_id=int(record_id))
+
+    def delete_pending_vip_record(self, record_id: int) -> bool:
+        """Delete one unresolved VIP list record."""
+        return vip.delete_pending_vip_record(record_id=int(record_id))
 
     def get_vip_sync_plan(
         self,

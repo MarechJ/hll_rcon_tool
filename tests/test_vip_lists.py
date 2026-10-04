@@ -4,9 +4,16 @@ from uuid import uuid4
 import pytest
 
 from rcon.commands import HLLCommandFailedError
-from rcon.models import PlayerFlag, PlayerID, PlayerName, enter_session
+from rcon.models import (
+    PlayerFlag,
+    PlayerID,
+    PlayerIdentityGame,
+    PlayerName,
+    VipListPendingRecord,
+    enter_session,
+)
 from rcon.player_history import remove_flag
-from rcon.types import VipListSyncMethod
+from rcon.types import GameEnum, VipListSyncMethod
 from rcon.vip import (
     add_record_to_vip_list,
     apply_vip_list_expiration,
@@ -29,6 +36,8 @@ from rcon.vip import (
     get_vip_list,
     get_vip_lists_for_server,
     get_vip_record,
+    import_vip_list_records,
+    resolve_pending_vip_records,
     set_default_vip_list,
     set_server_vip_sync_mode,
     upsert_default_vip_record,
@@ -766,3 +775,264 @@ def test_expired_record_cleanup_respects_each_list_policy(vip_list_ids):
 def test_expired_record_retention_rejects_invalid_values(vip_list_ids, invalid):
     with pytest.raises(ValueError, match="retention"):
         create_vip_list(f"Invalid {uuid4().hex}", expired_retention_days=invalid)
+
+
+def _unique_test_steam_id() -> str:
+    """Return a unique, valid 17-digit Steam64 ID for persistent test databases."""
+    account_id = int(uuid4().hex[:8], 16)
+    return str(76561197960265728 + account_id)
+
+
+def test_hllv_manual_steam_id_creates_pending_record(vip_list_ids):
+    steam_id = _unique_test_steam_id()
+    listing = create_vip_list(f"HLLV pending {uuid4().hex}")
+    vip_list_ids.append(listing["id"])
+
+    result = add_record_to_vip_list(
+        steam_id,
+        listing["id"],
+        description="Pending HLLV player",
+        admin_name="Test admin",
+        target_game=GameEnum.HLL_VIETNAM,
+    )
+
+    assert result["record_type"] == "pending"
+    assert result["resolution_status"] == "pending"
+    assert result["player_id"] == steam_id
+    assert result["steam_id"] == steam_id
+
+    with enter_session() as sess:
+        pending = (
+            sess.query(VipListPendingRecord)
+            .filter(
+                VipListPendingRecord.vip_list_id == listing["id"],
+                VipListPendingRecord.steam_id == steam_id,
+            )
+            .one_or_none()
+        )
+        assert pending is not None
+        assert pending.description == "Pending HLLV player"
+        assert pending.admin_name == "Test admin"
+
+        assert (
+            get_player_vip_list_record(
+                sess,
+                player_id=steam_id,
+                vip_list_id=listing["id"],
+            )
+            is None
+        )
+
+
+def test_hllv_manual_steam_id_uses_observed_network_identity(vip_list_ids):
+    steam_id = _unique_test_steam_id()
+    network_id = uuid4().hex
+    listing = create_vip_list(f"HLLV resolved {uuid4().hex}")
+    vip_list_ids.append(listing["id"])
+
+    with enter_session() as sess:
+        player = PlayerID(
+            player_id=network_id,
+            steam_id=steam_id,
+        )
+        sess.add(player)
+        sess.flush()
+        sess.add(
+            PlayerIdentityGame(
+                player_id_id=player.id,
+                game=GameEnum.HLL_VIETNAM.value,
+            )
+        )
+        sess.commit()
+
+    result = add_record_to_vip_list(
+        steam_id,
+        listing["id"],
+        target_game=GameEnum.HLL_VIETNAM,
+    )
+
+    assert result["player_id"] == network_id
+    assert result["steam_id"] == steam_id
+    assert "record_type" not in result
+
+    with enter_session() as sess:
+        assert (
+            get_player_vip_list_record(
+                sess,
+                player_id=network_id,
+                vip_list_id=listing["id"],
+            )
+            is not None
+        )
+
+        pending = (
+            sess.query(VipListPendingRecord)
+            .filter(
+                VipListPendingRecord.vip_list_id == listing["id"],
+                VipListPendingRecord.steam_id == steam_id,
+            )
+            .one_or_none()
+        )
+        assert pending is None
+
+
+def test_hllv_pending_record_resolves_after_identity_observation(vip_list_ids):
+    steam_id = _unique_test_steam_id()
+    network_id = uuid4().hex
+    listing = create_vip_list(f"HLLV resolve pending {uuid4().hex}")
+    vip_list_ids.append(listing["id"])
+
+    pending_result = add_record_to_vip_list(
+        steam_id,
+        listing["id"],
+        description="Resolve me",
+        notes="Keep these notes",
+        admin_name="Pending admin",
+        target_game=GameEnum.HLL_VIETNAM,
+    )
+    assert pending_result["record_type"] == "pending"
+
+    with enter_session() as sess:
+        player = PlayerID(
+            player_id=network_id,
+            steam_id=steam_id,
+        )
+        sess.add(player)
+        sess.flush()
+        sess.add(
+            PlayerIdentityGame(
+                player_id_id=player.id,
+                game=GameEnum.HLL_VIETNAM.value,
+            )
+        )
+        sess.commit()
+
+    result = resolve_pending_vip_records(
+        steam_id,
+        notify=False,
+    )
+
+    assert result == {
+        "checked": 1,
+        "resolved": 1,
+        "pending": 0,
+        "conflicts": 0,
+    }
+
+    with enter_session() as sess:
+        pending = (
+            sess.query(VipListPendingRecord)
+            .filter(
+                VipListPendingRecord.vip_list_id == listing["id"],
+                VipListPendingRecord.steam_id == steam_id,
+            )
+            .one_or_none()
+        )
+        assert pending is None
+
+        record = get_player_vip_list_record(
+            sess,
+            player_id=network_id,
+            vip_list_id=listing["id"],
+        )
+        assert record is not None
+        assert record.player.player_id == network_id
+        assert record.player.steam_id == steam_id
+        assert record.active is True
+        assert record.description == "Resolve me"
+        assert record.notes == "Keep these notes"
+        assert record.admin_name == "Pending admin"
+
+
+def test_hllv_import_accepts_network_id_with_matching_steam_mapping(vip_list_ids):
+    steam_id = _unique_test_steam_id()
+    network_id = uuid4().hex
+    listing = create_vip_list(f"HLLV import mapping {uuid4().hex}")
+    vip_list_ids.append(listing["id"])
+
+    with enter_session() as sess:
+        player = PlayerID(
+            player_id=network_id,
+            steam_id=steam_id,
+        )
+        sess.add(player)
+        sess.commit()
+
+    result = import_vip_list_records(
+        listing["id"],
+        [
+            {
+                "player_id": network_id,
+                "steam_id": steam_id,
+                "description": "Roundtrip import",
+            }
+        ],
+        mode="merge",
+        target_game=GameEnum.HLL_VIETNAM,
+    )
+
+    assert result["ready"] == 1
+    assert result["pending"] == 0
+    assert result["conflicts"] == 0
+
+    with enter_session() as sess:
+        record = get_player_vip_list_record(
+            sess,
+            player_id=network_id,
+            vip_list_id=listing["id"],
+        )
+        assert record is not None
+        assert record.player.steam_id == steam_id
+
+        observation = (
+            sess.query(PlayerIdentityGame)
+            .filter(
+                PlayerIdentityGame.player_id_id == record.player.id,
+                PlayerIdentityGame.game == GameEnum.HLL_VIETNAM.value,
+            )
+            .one_or_none()
+        )
+        assert observation is None
+
+
+def test_hllv_import_rejects_network_id_with_mismatched_steam_mapping(
+    vip_list_ids,
+):
+    steam_id = _unique_test_steam_id()
+    wrong_steam_id = _unique_test_steam_id()
+    network_id = uuid4().hex
+    listing = create_vip_list(f"HLLV import mismatch {uuid4().hex}")
+    vip_list_ids.append(listing["id"])
+
+    with enter_session() as sess:
+        sess.add(
+            PlayerID(
+                player_id=network_id,
+                steam_id=steam_id,
+            )
+        )
+        sess.commit()
+
+    with pytest.raises(ValueError, match="matching Steam ID"):
+        import_vip_list_records(
+            listing["id"],
+            [
+                {
+                    "player_id": network_id,
+                    "steam_id": wrong_steam_id,
+                    "description": "Must fail",
+                }
+            ],
+            mode="merge",
+            target_game=GameEnum.HLL_VIETNAM,
+        )
+
+    with enter_session() as sess:
+        assert (
+            get_player_vip_list_record(
+                sess,
+                player_id=network_id,
+                vip_list_id=listing["id"],
+            )
+            is None
+        )
