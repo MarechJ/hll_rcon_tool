@@ -1049,8 +1049,7 @@ def pending_vip_record_to_dict(
         "created_at": record.created_at,
         "is_active": True,
         "is_expired": bool(
-            record.expires_at is not None
-            and record.expires_at <= datetime.now(UTC)
+            record.expires_at is not None and record.expires_at <= datetime.now(UTC)
         ),
         "expires_at": record.expires_at,
         "description": record.description,
@@ -1171,8 +1170,7 @@ def _find_hllv_players_for_steam_id(
     return [
         player
         for player in _find_players_for_steam_id(sess, steam_id)
-        if is_network_player_id(player.player_id)
-        and player.steam_id == steam_id
+        if is_network_player_id(player.player_id) and player.steam_id == steam_id
     ]
 
 
@@ -1379,13 +1377,10 @@ def _resolve_vip_identity(
             # Vietnam server or when the caller supplies the exact Steam64
             # mapping already stored for this concrete identity. Importing an
             # existing mapping does not count as a game observation.
-            observed_in_hllv = (
-                player is not None
-                and _player_was_observed_in_game(
-                    sess,
-                    player,
-                    GameEnum.HLL_VIETNAM,
-                )
+            observed_in_hllv = player is not None and _player_was_observed_in_game(
+                sess,
+                player,
+                GameEnum.HLL_VIETNAM,
             )
             mapped_to_supplied_steam_id = (
                 player is not None
