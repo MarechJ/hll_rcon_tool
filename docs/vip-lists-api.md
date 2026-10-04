@@ -10,8 +10,11 @@ No existing VIP API endpoint was removed.
 
 The legacy endpoints remain available and now operate through the current server's
 default VIP list. New integrations should use the VIP Lists endpoints because they
-can address a specific list, preserve per-list metadata and support multi-server
-synchronization.
+can address a specific list, preserve per-list metadata, support multi-server
+synchronization and handle game-specific player identities.
+
+The legacy API compatibility endpoints no longer depend on the legacy `player_vip`
+database table. After migration, their storage is provided by VIP Lists.
 
 | Legacy endpoint | Status | New behavior or recommended replacement |
 | --- | --- | --- |
@@ -33,7 +36,9 @@ with a CRCON browser session or an API key that has the permission listed below.
 
 - The base path is `/api/<command>`.
 - Query endpoints use `GET`; parameters are supplied as query parameters.
-- Mutating endpoints use `POST` with `Content-Type: application/json`.
+- Mutating command endpoints use `POST` with `Content-Type: application/json`.
+- VIP list file import endpoints use `multipart/form-data`; successful download
+  endpoints return CSV rather than the normal JSON response envelope.
 - `server_number` may be omitted where documented. The current CRCON instance's
   configured server number is then used.
 - Datetimes are ISO 8601 strings with a timezone, for example
@@ -43,8 +48,10 @@ with a CRCON browser session or an API key that has the permission listed below.
 
 ### Response envelope
 
-All endpoints documented below return the normal CRCON response envelope. The
-endpoint-specific schemas in this document describe the value of `result`.
+JSON command endpoints documented below return the normal CRCON response envelope.
+The endpoint-specific schemas in this document describe the value of `result`.
+Successful VIP list CSV download endpoints are an exception and return a file
+response directly.
 
 ```json
 {
@@ -144,6 +151,7 @@ records. `expired_retention_days` independently controls cleanup after expiry.
     "id",
     "vip_list_id",
     "player_id",
+    "steam_id",
     "player_name",
     "admin_name",
     "created_at",
@@ -157,6 +165,7 @@ records. `expired_retention_days` independently controls cleanup after expiry.
     "id": {"type": "integer", "minimum": 1},
     "vip_list_id": {"type": "integer", "minimum": 1},
     "player_id": {"type": "string"},
+    "steam_id": {"type": ["string", "null"]},
     "player_name": {"type": ["string", "null"]},
     "admin_name": {"type": "string"},
     "created_at": {"type": "string", "format": "date-time"},
@@ -171,6 +180,66 @@ records. `expired_retention_days` independently controls cleanup after expiry.
 
 Only one record for a player may exist in a given list. `is_expired` is computed
 from `expires_at`; it is not accepted as an input field.
+
+
+### `VipListPendingRecord`
+
+An unresolved HLL Vietnam identity is represented as a pending record until a
+usable network ID can be determined.
+
+```json
+{
+  "$id": "VipListPendingRecord",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "vip_list_id",
+    "player_id",
+    "steam_id",
+    "player_name",
+    "admin_name",
+    "created_at",
+    "is_active",
+    "is_expired",
+    "expires_at",
+    "description",
+    "notes",
+    "partner_approved",
+    "partner_excluded",
+    "partner_present",
+    "partner_deactivated_at",
+    "record_type",
+    "resolution_status",
+    "resolution_error"
+  ],
+  "properties": {
+    "id": {"type": "integer", "minimum": 1},
+    "vip_list_id": {"type": "integer", "minimum": 1},
+    "player_id": {"type": "string"},
+    "steam_id": {"type": "string"},
+    "player_name": {"type": "null"},
+    "admin_name": {"type": "string"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "is_active": {"type": "boolean"},
+    "is_expired": {"type": "boolean"},
+    "expires_at": {"type": ["string", "null"], "format": "date-time"},
+    "description": {"type": ["string", "null"]},
+    "notes": {"type": ["string", "null"]},
+    "partner_approved": {"type": "boolean"},
+    "partner_excluded": {"type": "boolean"},
+    "partner_present": {"type": "boolean"},
+    "partner_deactivated_at": {"type": "null"},
+    "record_type": {"const": "pending"},
+    "resolution_status": {"const": "pending"},
+    "resolution_error": {"type": ["string", "null"]}
+  }
+}
+```
+
+For pending records, both `player_id` and `steam_id` contain the unresolved
+Steam64 identity. Pending records are not synchronized to the gameserver.
+`player_name` is `null` until the identity has been resolved.
 
 ### `VipSyncPlan`
 
@@ -375,17 +444,24 @@ All record query endpoints require `api.can_view_vip_lists`.
 | `GET /api/get_vip_list_record` | `record_id: integer` | `VipListRecord` |
 | `GET /api/get_player_vip_list_record` | `player_id: string`, `vip_list_id: integer` | `VipListRecord \| null` |
 | `GET /api/get_player_vip_records` | `player_id: string`, `include_expired?: boolean` (default `true`), `include_inactive?: boolean` (default `true`), `server_number?: integer` | `VipListRecord[]` |
+| `GET /api/get_vip_list_records` | `vip_list_id: integer` | `VipListRecord[]` |
+| `GET /api/get_pending_vip_records` | `vip_list_id: integer` | `VipListPendingRecord[]` |
+| `GET /api/get_all_vip_records` | None | `VipListRecord[]` |
 | `GET /api/get_active_vip_records` | `vip_list_id: integer` | `VipListRecord[]` |
 | `GET /api/get_inactive_vip_records` | `vip_list_id: integer` | `VipListRecord[]` |
 
 When `server_number` is supplied to `get_player_vip_records`, only records from
 lists applicable to that server are returned.
 
+`get_all_vip_records` returns normal resolved records across all configured lists.
+Pending records are queried separately with `get_pending_vip_records`; they are not
+included in `get_all_vip_records`.
+
 ### Create and upsert records
 
 | Method and path | Permission | JSON request | `result` |
 | --- | --- | --- | --- |
-| `POST /api/add_vip_list_record` | `api.can_add_vip_list_records` | `AddVipListRecordRequest` | `VipListRecord` |
+| `POST /api/add_vip_list_record` | `api.can_add_vip_list_records` | `AddVipListRecordRequest` | `VipListRecord \| VipListPendingRecord` |
 | `POST /api/upsert_vip_list_record` | `api.can_change_vip_lists` | `UpsertVipListRecordRequest` | `VipListRecord` |
 
 ```json
@@ -423,6 +499,33 @@ Example Seed VIP-style upsert:
 }
 ```
 
+
+### HLL and HLL Vietnam player identities
+
+VIP Lists resolve player identities according to the game configured for the
+current CRCON instance.
+
+For HLL, normal VIP list records use the player's Steam64 ID.
+
+For HLL Vietnam, normal VIP list records use the 32-character network ID. Steam64
+is retained as the cross-game identity mapping where available.
+
+When a Steam64 ID is added to an HLL Vietnam list:
+
+- exactly one known network ID mapped to that Steam64 ID creates a normal
+  `VipListRecord` using the network ID;
+- no usable network ID creates a `VipListPendingRecord`;
+- more than one matching network identity is treated as a conflict rather than
+  selecting an identity automatically.
+
+Pending records are not synchronized to the gameserver. When CRCON later learns
+an unambiguous HLL Vietnam network ID for the Steam64 identity, the pending record
+can be resolved into a normal VIP record while preserving its list assignment,
+expiration and metadata.
+
+Clients must therefore not assume that `add_vip_list_record` always returns a
+normal `VipListRecord` on an HLL Vietnam CRCON instance.
+
 ### Edit and delete records
 
 | Method and path | Permission | JSON request | `result` |
@@ -430,6 +533,7 @@ Example Seed VIP-style upsert:
 | `POST /api/edit_vip_list_record` | `api.can_change_vip_list_records` | `EditVipListRecordRequest` | `VipListRecord` |
 | `POST /api/edit_vip_list_records` | `api.can_change_vip_list_records` | `BulkEditVipListRecordsRequest` | `VipListRecord[]` |
 | `POST /api/delete_vip_list_record` | `api.can_delete_vip_list_records` | `{"record_id": integer}` | `boolean` |
+| `POST /api/delete_pending_vip_record` | `api.can_delete_vip_list_records` | `{"record_id": integer}` | `boolean` |
 | `POST /api/delete_vip_list_records` | `api.can_delete_vip_list_records` | `{"record_ids": integer[]}` | Number of deleted records |
 
 ```json
@@ -455,8 +559,9 @@ Example Seed VIP-style upsert:
 both edit operations, an omitted field is unchanged while an explicit `null` clears
 a nullable field. Bulk edits are atomic.
 
-Deleting a record permanently removes it from the database. Set `active: false`
-instead when the record should remain available for auditing or later reactivation.
+Deleting a normal or pending record permanently removes it from the database.
+For a normal record, set `active: false` instead when it should remain available
+for auditing or later reactivation.
 
 ### Synchronization
 
@@ -495,6 +600,99 @@ is no longer classified as unknown. After removal, it returns a refreshed plan:
 }
 ```
 
+
+## VIP list import and export
+
+VIP Lists support JSON import commands as well as file-oriented import and export
+routes.
+
+### JSON import commands
+
+| Method and path | Permission | Request | `result` |
+| --- | --- | --- | --- |
+| `POST /api/preview_vip_list_import` | `api.can_change_vip_list_records` | `vip_list_id`, `entries`, optional `mode` | Import preview |
+| `POST /api/import_vip_list_records` | `api.can_change_vip_list_records` | `vip_list_id`, `entries`, optional `mode`, optional `admin_name` | Import result |
+
+`mode` defaults to `merge`. Preview performs the same identity resolution as the
+real import but does not apply the calculated changes.
+
+Imported identities are classified as:
+
+- `ready`: the identity can be represented by a normal `VipListRecord`;
+- `pending`: a valid Steam64 identity has no usable HLL Vietnam network ID yet;
+- `conflict`: the identity cannot be resolved unambiguously;
+- `skipped`: a legacy identity cannot be safely mapped to the target game.
+
+For legacy HLL data imported into an HLL Vietnam list, Steam64 identities with one
+known network mapping resolve directly. Steam64 identities without a known mapping
+become pending. Legacy 32-character IDs without a usable Steam64 mapping are
+skipped rather than being assumed to be valid HLL Vietnam network identities.
+
+A preview result contains both identity-resolution counters and the changes that
+would be performed:
+
+```json
+{
+  "vip_list_id": 3,
+  "mode": "merge",
+  "total": 10,
+  "ready": 4,
+  "pending": 3,
+  "conflicts": 1,
+  "skipped": 2,
+  "created": 4,
+  "updated": 0,
+  "unchanged": 0,
+  "deactivated": 0,
+  "pending_created": 3,
+  "pending_updated": 0,
+  "pending_unchanged": 0,
+  "pending_removed": 0
+}
+```
+
+In `replace` mode, active records not represented by imported identities may be
+deactivated and pending records no longer represented by the import may be removed.
+External integrations should preview a replace import before executing it.
+
+### File import and CSV export
+
+| Method and path | Permission | Input | Result |
+| --- | --- | --- | --- |
+| `POST /api/preview_vip_list_import_file` | `api.can_change_vip_list_records` | `multipart/form-data`: `vip_list_id`, optional `mode`, exactly one file | Import preview |
+| `POST /api/import_vip_list_file` | `api.can_change_vip_list_records` | `multipart/form-data`: `vip_list_id`, optional `mode`, exactly one file | Import result |
+| `GET /api/download_vip_list` | `api.can_view_vip_lists` | `vip_list_id: integer` | CSV file |
+| `GET /api/download_all_vip_lists` | `api.can_view_vip_lists` | None | CSV file |
+
+Uploaded files must be UTF-8. The parser accepts VIP Lists CSV exports and the
+legacy CRCON VIP text format.
+
+CSV exports use these fields:
+
+```text
+list_id
+list_name
+record_id
+player_id
+steam_id
+player_name
+active
+expired
+expires_at
+description
+notes
+admin_name
+created_at
+```
+
+`player_id` is the concrete game identity. For HLL Vietnam it is normally the
+32-character network ID, while `steam_id` preserves the Steam64 mapping for
+cross-game identity resolution and export/import round trips.
+
+`download_all_vip_lists` exports the normal records returned by
+`get_all_vip_records`. Pending records are therefore not included in the normal
+all-lists CSV export.
+
 ## Migration guidance for external integrations
 
 Existing integrations do not have to migrate immediately. Their legacy calls are
@@ -504,18 +702,26 @@ New or updated integrations should:
 
 1. Call `get_vip_lists_for_server` and select a list that applies to the target
    server.
-2. Use `upsert_vip_list_record` for idempotent rewards and renewals.
-3. Store both `vip_list_id` and the returned record `id`.
-4. Use `edit_vip_list_record` with `active: false` to revoke a managed grant while
+2. Use `upsert_vip_list_record` for idempotent rewards and renewals when a resolved
+   game identity is available.
+3. Use `add_vip_list_record` when an HLL Vietnam Steam64 identity may need to enter
+   the pending-resolution workflow.
+4. Store both `vip_list_id` and the returned record `id`, and inspect the returned
+   record type for HLL Vietnam additions.
+5. Use `edit_vip_list_record` with `active: false` to revoke a managed grant while
    retaining its history.
-5. Preview synchronization with `get_vip_sync_plan` before manually calling
+6. Preview synchronization with `get_vip_sync_plan` before manually calling
    `synchronize_vip_lists`.
-6. Treat an indefinite expiration as `expires_at: null`.
+7. Preview `replace` imports before executing them.
+8. Treat an indefinite expiration as `expires_at: null`.
 
 The effective VIP set for a server is calculated across all applicable lists. A
 player remains a gameserver VIP while at least one active, unexpired applicable
 record still grants VIP access. Removing or deactivating a record in one list must
 therefore not be assumed to remove a grant supplied by another list.
+
+Pending HLL Vietnam records are not part of the effective gameserver VIP set until
+their identity has been resolved.
 
 ## Common validation errors
 
@@ -528,6 +734,9 @@ Typical HTTP 400 errors include:
 - selecting a default list that does not apply to the server;
 - creating a duplicate player record in the same list;
 - a bulk edit without any editable field;
+- an ambiguous HLL Vietnam identity mapping;
+- an HLL Vietnam network ID that conflicts with the supplied Steam64 mapping;
+- invalid or unsafe legacy import identity data;
 - attempting to remove a gameserver VIP that is not currently unknown.
 
 Consumers should display the envelope's `error` value and avoid retrying validation
