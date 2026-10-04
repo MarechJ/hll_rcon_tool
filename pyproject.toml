@@ -27,7 +27,7 @@ dependencies = [
     "psycopg2-binary>=2.9.13",
     "pydantic==2.13.5",
     "python-dateutil==2.9.0.post0",
-    "pytz>=2026.3.post1",
+    "pytz>=2026.4",
     "redis==8.1.0",
     "requests==2.34.2",
     "rq==2.12.0",
@@ -53,7 +53,7 @@ discord-webhook = { git = "https://github.com/cemathey/python-discord-webhook", 
 dev = [
     "cachetools==7.2.0",
     "pytest==9.1.1",
-    "ruff==0.16.7",
+    "ruff==0.16.9",
     "fakeredis==2.38.0",
     "pre-commit>=4.6.2",
 ]
