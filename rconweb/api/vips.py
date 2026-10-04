@@ -233,6 +233,7 @@ def _parse_vip_list_legacy_import(content: str) -> list[dict]:
                 "description": description,
                 "expires_at": expires_at,
                 "notes": None,
+                "legacy_import": True,
             }
         )
 

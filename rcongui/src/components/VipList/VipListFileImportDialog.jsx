@@ -183,7 +183,8 @@ export default function VipListFileImportDialog({
 
               <Typography>
                 {preview.total} record(s) processed: {preview.ready} ready,{" "}
-                {preview.pending} pending, {preview.conflicts} conflict(s).
+                {preview.pending} pending, {preview.conflicts} conflict(s),{" "}
+                {preview.skipped ?? 0} skipped.
               </Typography>
 
               <Typography color="text.secondary">
@@ -218,6 +219,13 @@ export default function VipListFileImportDialog({
                 <Alert severity="info">
                   {preview.pending} record(s) require identity resolution and
                   will remain pending until they can be matched safely.
+                </Alert>
+              )}
+
+              {(preview.skipped ?? 0) > 0 && (
+                <Alert severity="warning">
+                  {preview.skipped} legacy record(s) were skipped because no
+                  usable Steam64 mapping is available for their player ID.
                 </Alert>
               )}
             </Stack>

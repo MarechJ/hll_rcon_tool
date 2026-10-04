@@ -46,6 +46,7 @@ import StarBorderIcon from "@mui/icons-material/StarBorder";
 import ShareIcon from "@mui/icons-material/Share";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import DownloadIcon from "@mui/icons-material/Download";
+import UploadIcon from "@mui/icons-material/Upload";
 import { DebouncedSearchInput } from "@/components/shared/DebouncedSearchInput";
 import dayjs from "dayjs";
 import { toast } from "react-toastify";
@@ -1064,6 +1065,7 @@ export default function VipListsPage() {
 
   useEffect(() => {
     setRecordSearch("");
+    setStatusFilter("all");
     setSelectedRecordIds([]);
     setBulkDialogOpen(false);
   }, [selectedListId]);
@@ -1291,6 +1293,7 @@ export default function VipListsPage() {
                   setSelectedListId(vipList.id);
                   setFileImportOpen(true);
                 }}>
+                  <UploadIcon fontSize="small" sx={{ mr: 1 }} />
                   Import file
                 </MenuItem>
               )}

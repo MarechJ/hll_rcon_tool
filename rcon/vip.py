@@ -26,7 +26,7 @@ from rcon.models import (
     enter_session,
 )
 from rcon.player_history import _get_set_player
-from rcon.player_id_utils import is_supported_player_id
+from rcon.player_id_utils import is_network_player_id, is_supported_player_id
 from rcon.types import (
     GameEnum,
     VipListPendingRecordType,
@@ -1106,6 +1106,7 @@ def _normalize_vip_list_import(
             "description": entry.get("description"),
             "expires_at": entry.get("expires_at", MISSING),
             "notes": entry.get("notes"),
+            "legacy_import": bool(entry.get("legacy_import", False)),
         }
 
     if normalized_mode == "replace" and not normalized_entries:
@@ -1161,15 +1162,17 @@ def _find_hllv_players_for_steam_id(
     sess: Session,
     steam_id: str,
 ) -> list[PlayerID]:
-    """Return observed HLL Vietnam identities associated with a Steam64 ID."""
+    """Return network identities with an exact Steam64 mapping.
+
+    An existing unambiguous network ID <-> Steam64 mapping is sufficient for
+    HLL Vietnam VIP identity resolution. Game observations are tracked
+    separately and are not required for resolving an existing mapping.
+    """
     return [
         player
         for player in _find_players_for_steam_id(sess, steam_id)
-        if _player_was_observed_in_game(
-            sess,
-            player,
-            GameEnum.HLL_VIETNAM,
-        )
+        if is_network_player_id(player.player_id)
+        and player.steam_id == steam_id
     ]
 
 
@@ -1444,12 +1447,30 @@ def _resolve_vip_import_identities(
     resolved_entries: dict[int | str, dict] = {}
 
     for imported_player_id, entry in normalized_entries.items():
-        identity = _resolve_vip_identity(
-            sess,
-            imported_player_id,
-            steam_id=entry.get("steam_id"),
-            target_game=target_game,
-        )
+        try:
+            identity = _resolve_vip_identity(
+                sess,
+                imported_player_id,
+                steam_id=entry.get("steam_id"),
+                target_game=target_game,
+            )
+        except ValueError as exc:
+            if (
+                target_game == GameEnum.HLL_VIETNAM
+                and entry.get("legacy_import")
+                and not _is_steam_id(imported_player_id)
+                and entry.get("steam_id") is None
+            ):
+                identity = {
+                    "player_id": imported_player_id,
+                    "steam_id": None,
+                    "player": None,
+                    "resolved_player_id": imported_player_id,
+                    "resolution_status": "skipped",
+                    "resolution_error": str(exc),
+                }
+            else:
+                raise
 
         resolved = dict(entry)
         resolved.update(identity)
@@ -1529,6 +1550,7 @@ def preview_vip_list_import(
         ready = 0
         pending = 0
         conflicts = 0
+        skipped = 0
 
         created = 0
         updated = 0
@@ -1549,6 +1571,10 @@ def preview_vip_list_import(
             status = entry["resolution_status"]
             steam_id = entry.get("steam_id")
             resolved_player_id = entry["resolved_player_id"]
+
+            if status == "skipped":
+                skipped += 1
+                continue
 
             if steam_id:
                 imported_logical_ids.add(steam_id)
@@ -1677,6 +1703,7 @@ def preview_vip_list_import(
             "ready": ready,
             "pending": pending,
             "conflicts": conflicts,
+            "skipped": skipped,
             "created": created,
             "updated": updated,
             "unchanged": unchanged,
@@ -1744,6 +1771,7 @@ def import_vip_list_records(
         ready = 0
         pending = 0
         conflicts = 0
+        skipped = 0
 
         created = 0
         updated = 0
@@ -1765,6 +1793,10 @@ def import_vip_list_records(
             status = entry["resolution_status"]
             steam_id = entry.get("steam_id")
             resolved_player_id = entry["resolved_player_id"]
+
+            if status == "skipped":
+                skipped += 1
+                continue
 
             if steam_id:
                 imported_logical_ids.add(steam_id)
@@ -1960,6 +1992,7 @@ def import_vip_list_records(
             "ready": ready,
             "pending": pending,
             "conflicts": conflicts,
+            "skipped": skipped,
             "created": created,
             "updated": updated,
             "unchanged": unchanged,
