@@ -53,6 +53,7 @@ class RawRewardType(TypedDict):
     forward: bool
     player_name_format_not_current_vip: str
     cumulative: bool
+    vip_list_id: int | None
     timeframe: RawRewardTimeFrameType
 
 
@@ -143,11 +144,31 @@ class RewardTimeFrame(pydantic.BaseModel):
 
 
 class Reward(pydantic.BaseModel):
-    forward: bool = Field(default=False)
+    forward: bool = Field(
+        default=False,
+        description=(
+            "Deprecated compatibility field. VIP list server assignments "
+            "control where Seed VIP rewards are synchronized."
+        ),
+    )
     player_name_format_not_current_vip: str = Field(
         default=PLAYER_NAME_FORMAT_NOT_CURRENT_VIP
     )
-    cumulative: bool = Field(default=True)
+    cumulative: bool = Field(
+        default=True,
+        description=(
+            "Deprecated compatibility field. Players with an existing "
+            "effective VIP are skipped and are never extended or overwritten."
+        ),
+    )
+    vip_list_id: int | None = Field(
+        default=None,
+        ge=1,
+        description=(
+            "Optional Seed VIP target list. Null uses the current server's "
+            "default VIP list."
+        ),
+    )
     timeframe: RewardTimeFrame = Field(default_factory=RewardTimeFrame)
 
 
@@ -234,6 +255,7 @@ class SeedVIPUserConfig(BaseUserConfig):
                 "player_name_format_not_current_vip"
             ),
             cumulative=raw_reward.get("cumulative"),
+            vip_list_id=raw_reward.get("vip_list_id"),
             timeframe=validated_reward_time_frame,
         )
 

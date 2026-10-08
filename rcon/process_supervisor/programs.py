@@ -69,6 +69,12 @@ def run_seed_vip() -> None:
         sys.exit(1)
 
 
+def run_vip_list_sync() -> None:
+    from rcon.vip_sync_handler import VipSyncCommandHandler
+
+    VipSyncCommandHandler().run()
+
+
 def run_log_event_loop() -> None:
     from rcon.cache_utils import invalidates
     from rcon.discord_chat import get_handler

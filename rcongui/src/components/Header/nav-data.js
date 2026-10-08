@@ -111,8 +111,8 @@ export const navMenus = [
         icon: <PeopleIcon />,
       },
       {
-        name: "Vips",
-        to: "/records/vips",
+        name: "VIP Management",
+        to: "/records/vip-lists",
         icon: <GradeIcon />,
       },
       {

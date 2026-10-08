@@ -1,0 +1,13 @@
+{
+  "list_name": "Partner test feed",
+  "share_key": "REPLACE_WITH_A_RANDOM_SECRET_OF_AT_LEAST_32_CHARACTERS",
+  "sharing_enabled": true,
+  "players": [
+    {
+      "player_id": "76561199988877765",
+      "description": "Replace this with a real test player ID",
+      "expires_at": null,
+      "enabled": false
+    }
+  ]
+}

@@ -109,19 +109,17 @@ export default function PlayerProfilePage() {
             />
             <Divider />
             <PlayerProfileSummary
+              playerId={profile.player_id}
               country={profile.country}
               firstSeen={profile.created}
               lastSeen={profile?.names[0]?.last_seen}
               sessionCount={profile.sessions_count}
               flags={profile.flags}
               totalPlaytime={profile.total_playtime_seconds}
-              vip={profile.vips.find(
-                (vip) => vip.server_number === profile.server_number
-              )}
+              vip={playerVip}
               otherVips={profile.vips.filter(
                 (vip) =>
-                  vip.server_number !==
-                  (thisOnlinePlayer?.vip?.server_number ?? -1)
+                  vip.server_number !== (playerVip?.server_number ?? -1)
               )}
               names={profile.names}
               watchlist={profile.watchlist}

@@ -22,6 +22,7 @@ const PlayerProfileSummary = ({
   lastSeen,
   vip,
   otherVips,
+  playerId,
   sessionCount,
   flags,
   totalPlaytime,
@@ -38,7 +39,13 @@ const PlayerProfileSummary = ({
         >
           <FlagIcon /> Flags
         </Typography>
-        <FlagList flags={flags} />
+        <FlagList
+          player={{
+            player_id: playerId,
+            name: names?.[0]?.name ?? playerId,
+            flags,
+          }}
+        />
       </Box>
 
       <Divider />
@@ -69,7 +76,7 @@ const PlayerProfileSummary = ({
         >
           <WorkspacePremiumIcon /> VIP Status
         </Typography>
-        <VipList vip={vip} otherVips={otherVips} />
+        <VipList playerId={playerId} vip={vip} otherVips={otherVips} />
       </Box>
 
       <Divider />
