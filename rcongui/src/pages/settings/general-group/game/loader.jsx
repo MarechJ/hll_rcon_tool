@@ -18,6 +18,11 @@ const HLL_TIMERS = {
             max: 60,
             default: 30,
         },
+        conquest: {
+            min: 30,
+            max: 180,
+            default: 90,
+        },
     },
     warmup: {
         warfare: {
@@ -26,6 +31,11 @@ const HLL_TIMERS = {
             default: 3,
         },
         skirmish: {
+            min: 1,
+            max: 10,
+            default: 3,
+        },
+        conquest: {
             min: 1,
             max: 10,
             default: 3,
