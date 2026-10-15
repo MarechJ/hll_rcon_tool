@@ -21,7 +21,7 @@ dependencies = [
     "hllrcon>=2.0.0.6",
     "httpx==0.28.1",
     "humanize==4.16.0",
-    "orjson==3.12.0",
+    "orjson==3.13.0",
     "psutil==7.2.2",
     "psycopg[binary]>=3.3.6",
     "pydantic==2.13.5",
