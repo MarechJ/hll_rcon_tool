@@ -28,6 +28,7 @@ Dockerfile*
 
 # Don't need in image
 tests
+postgres_upgrade.sh
 
 # Python cruft
 __pycache__
