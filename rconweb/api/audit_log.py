@@ -6,13 +6,44 @@ from functools import wraps
 from django.views.decorators.csrf import csrf_exempt
 from sqlalchemy import and_, func, or_, select
 
-from rcon.models import AuditLog, enter_session
+from rcon.models import AuditLog, PlayerFlag, VipList, VipListRecord, enter_session
 
 from .auth import api_response, login_required
 from .decorators import permission_required, require_http_methods
 from .utils import _get_data
 
 logger = logging.getLogger("rconweb")
+
+
+def _audit_before(command, data):
+    """Keep target identity and previous values even after a delete or edit."""
+    if not isinstance(data, dict):
+        return None
+    try:
+        with enter_session() as sess:
+            if command in {"edit_vip_list", "delete_vip_list"}:
+                target = sess.get(VipList, int(data["vip_list_id"]))
+                if target:
+                    return target.to_dict()
+            if command in {"edit_vip_list_record", "delete_vip_list_record"}:
+                target = sess.get(VipListRecord, int(data["record_id"]))
+                if target:
+                    return {**target.to_dict(), "vip_list_name": target.vip_list.name}
+            if command == "unflag_player":
+                target = sess.get(PlayerFlag, int(data["flag_id"]))
+                if target:
+                    return {
+                        "player_id": target.player.player_id,
+                        "player_name": (
+                            target.player.names[0].name if target.player.names else None
+                        ),
+                        "flag": target.flag,
+                    }
+    except (KeyError, TypeError, ValueError):
+        return None
+    except Exception:
+        logger.exception("Unable to capture audit target for %s", command)
+    return None
 
 
 def _to_list(value):
@@ -27,6 +58,12 @@ def record_audit(func):
         name = request.path.split("/")[-1]
         data = _get_data(request)
         user = request.user.username
+        before = _audit_before(name, data)
+        audit_arguments = (
+            {**data, "audit_before": before}
+            if before and isinstance(data, dict)
+            else data
+        )
 
         try:
             raw = func(request, **kwargs)
@@ -40,7 +77,7 @@ def record_audit(func):
                     AuditLog(
                         username=user,
                         command=name,
-                        command_arguments=json.dumps(data),
+                        command_arguments=json.dumps(audit_arguments, default=str),
                         command_result=result,
                     )
                 )

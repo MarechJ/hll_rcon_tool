@@ -4,6 +4,7 @@ import { BadgeList } from "./BadgeList";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import PlayerSearchField from "@/components/form/custom/PlayerSearchField";
+import { vipListQueryKeys } from "@/queries/vip-list-query";
 
 const ACTION_STATUS = {
   default: "default",
@@ -111,6 +112,17 @@ export const ActionForm = ({ state: actionState, actionHandlers }) => {
             queryClient.invalidateQueries({
               queryKey: ["player", "profile", player_id],
             });
+            if (action.name === "Add VIP") {
+              queryClient.invalidateQueries({
+                queryKey: [...vipListQueryKeys.playerRecords, player_id],
+              });
+              queryClient.invalidateQueries({
+                queryKey: [...vipListQueryKeys.activeRecords, Number(data.vip_list_id)],
+              });
+              queryClient.invalidateQueries({
+                queryKey: [...vipListQueryKeys.inactiveRecords, Number(data.vip_list_id)],
+              });
+            }
           } else {
             allSuccess = false;
             idsToStatus[player_id] = ACTION_STATUS.error;

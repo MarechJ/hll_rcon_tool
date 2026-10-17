@@ -18,6 +18,7 @@ import {
   TextField,
   IconButton,
   Divider,
+  Drawer,
 } from "@mui/material";
 import { useState } from "react";
 import { auditLogsColumns } from "./columns";
@@ -33,6 +34,7 @@ import { TableToolbar } from "@/components/table/TableToolbar";
 import NavPagination from "@/pages/stats/games/nav-pagination";
 import { TablePageSizeSelect } from "@/components/table/TablePageSizeSelect";
 import DownloadIcon from "@mui/icons-material/Download";
+import CloseIcon from "@mui/icons-material/Close";
 import downloadLogs from "./download";
 
 /**
@@ -155,17 +157,6 @@ const AuditLogsPage = () => {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    enableRowSelection: true,
-    enableMultiRowSelection: false,
-    onRowSelectionChange: (updater) => {
-      // TODO:
-      // This may cause a bug when paginating???
-      const newSelection =
-        typeof updater === "function" ? updater({}) : updater;
-      const selectedId = Object.keys(newSelection)[0];
-      const selectedLog = audit_logs[selectedId];
-      setSelectedAuditLog(selectedLog);
-    },
   });
 
   const handleInputChange = (e) => {
@@ -294,16 +285,8 @@ const AuditLogsPage = () => {
         </Stack>
       </Form>
 
-      <Stack
-        component="section"
-        id="audit-logs-section"
-        spacing={1}
-        direction={{ xs: "column", lg: "row" }}
-      >
-        <Stack
-          direction="column"
-          sx={{ width: "100%", order: { xs: 2, lg: 1 } }}
-        >
+      <Box component="section" id="audit-logs-section" sx={{ width: "100%" }}>
+        <Stack direction="column" sx={{ width: "100%", overflowX: "auto" }}>
           <TableToolbar>
             <TablePageSizeSelect
               pageSize={page_size}
@@ -330,10 +313,13 @@ const AuditLogsPage = () => {
             table={table}
             columns={auditLogsColumns}
             rowProps={(row) => ({
-              onClick: row.getToggleSelectedHandler(),
+              onClick: () => setSelectedAuditLog(row.original),
               sx: {
                 cursor: "pointer",
-                bgcolor: row.getIsSelected() ? "action.selected" : "inherit",
+                bgcolor:
+                  selectedAuditLog?.id === row.original.id
+                    ? "action.selected"
+                    : "inherit",
                 "&:hover": {
                   bgcolor: "action.hover",
                 },
@@ -341,19 +327,27 @@ const AuditLogsPage = () => {
             })}
           />
         </Stack>
-        <Box
-          sx={{
-            order: { xs: 1, lg: 2 },
-            maxWidth: 700,
-            width: (theme) => (theme.breakpoints.down("lg") ? "100%" : "auto"),
+        <Drawer
+          anchor="right"
+          open={Boolean(selectedAuditLog)}
+          onClose={() => setSelectedAuditLog(null)}
+          slotProps={{
+            paper: { sx: { width: { xs: "90vw", sm: 640 }, maxWidth: "100%" } },
           }}
         >
+          <IconButton
+            aria-label="Close audit details"
+            onClick={() => setSelectedAuditLog(null)}
+            sx={{ alignSelf: "flex-end", m: 1 }}
+          >
+            <CloseIcon />
+          </IconButton>
           <AuditLogCard
             auditLog={selectedAuditLog}
-            sx={{ position: "sticky", top: 0 }}
+            sx={{ boxShadow: "none" }}
           />
-        </Box>
-      </Stack>
+        </Drawer>
+      </Box>
     </Stack>
   );
 };
