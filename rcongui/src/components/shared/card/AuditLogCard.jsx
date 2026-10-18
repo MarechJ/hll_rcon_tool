@@ -8,6 +8,7 @@ import {
 } from "@mui/material";
 import dayjs from "dayjs";
 import { CodeBlock } from "@/components/shared/CodeBlock";
+import { auditDetails } from "@/pages/records/audit-logs/parse";
 
 /**
  * @typedef {Object} AuditLog
@@ -31,11 +32,14 @@ import { CodeBlock } from "@/components/shared/CodeBlock";
  * @returns {JSX.Element} The AuditLogCard component
  */
 export const AuditLogCard = ({ auditLog, ...props }) => {
-
   const prettyLine = (label, value) => {
     return (
       <Typography>
-        {label}: <Box component="span" sx={{ fontWeight: "bold", bgColor: "background.paper" }}>
+        {label}:{" "}
+        <Box
+          component="span"
+          sx={{ fontWeight: "bold", bgColor: "background.paper" }}
+        >
           {value}
         </Box>
       </Typography>
@@ -50,13 +54,33 @@ export const AuditLogCard = ({ auditLog, ...props }) => {
           <Stack spacing={1}>
             {prettyLine("ID", auditLog.id)}
             {prettyLine("Action", auditLog.command)}
+            {prettyLine(
+              "Status",
+              auditDetails(auditLog).failed ? "Failed" : "Success"
+            )}
+            {auditDetails(auditLog).error &&
+              prettyLine("Error", auditDetails(auditLog).error)}
             {prettyLine("User", auditLog.username)}
-            {prettyLine("Time", dayjs(auditLog.creation_time).format("lll"))}
-            {prettyLine("UTC Time", dayjs(auditLog.creation_time).utc().format("lll"))}
+            {prettyLine(
+              "Time",
+              dayjs(auditLog.creation_time).format("MMM D, YYYY h:mm:ss A")
+            )}
+            {prettyLine(
+              "UTC Time",
+              dayjs(auditLog.creation_time)
+                .utc()
+                .format("MMM D, YYYY h:mm:ss A")
+            )}
             <Typography variant="h6">Arguments</Typography>
-            <CodeBlock text={auditLog.command_arguments} />
+            <CodeBlock
+              text={auditLog.command_arguments}
+              sx={{ "& pre": { whiteSpace: "pre", wordBreak: "normal" } }}
+            />
             <Typography variant="h6">Result</Typography>
-            <CodeBlock text={auditLog.command_result} />
+            <CodeBlock
+              text={auditLog.command_result}
+              sx={{ "& pre": { whiteSpace: "pre", wordBreak: "normal" } }}
+            />
           </Stack>
         ) : (
           <Typography>Select an audit log to view details</Typography>

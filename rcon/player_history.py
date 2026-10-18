@@ -17,6 +17,7 @@ from rcon.models import (
     PlayerComment,
     PlayerFlag,
     PlayerID,
+    PlayerIdentityGame,
     PlayerName,
     PlayersAction,
     PlayerSession,
@@ -26,6 +27,7 @@ from rcon.models import (
     enter_session,
 )
 from rcon.types import (
+    GameEnum,
     PlayerActionState,
     PlayerActionType,
     PlayerCommentType,
@@ -53,6 +55,50 @@ def get_player(sess: Session, player_id: str) -> PlayerID | None:
     return sess.query(PlayerID).filter(PlayerID.player_id == player_id).one_or_none()
 
 
+def _get_player_legacy_vip_statuses(
+    sess: Session,
+    player_id: str,
+):
+    """Load legacy-shaped VIP statuses without creating a module import cycle."""
+    from rcon.vip import get_player_legacy_vip_statuses
+
+    return get_player_legacy_vip_statuses(sess, player_id)
+
+
+def _apply_vip_list_status(
+    sess: Session,
+    player: PlayerID,
+    profile: PlayerProfileType,
+) -> PlayerProfileType:
+    """Replace legacy player_vip status with VIP List derived status."""
+    vips = _get_player_legacy_vip_statuses(sess, player.player_id)
+    profile["vips"] = vips
+    profile["is_vip"] = any(
+        vip["server_number"] == int(get_server_number()) for vip in vips
+    )
+    return profile
+
+
+def _player_history_profile(
+    sess: Session,
+    player: PlayerID,
+    profile: PlayerProfileType,
+) -> dict:
+    """Build a player-history profile with VIP List derived status."""
+    profile = _apply_vip_list_status(sess, player, profile)
+
+    current_server = int(get_server_number())
+    profile["vip_expiration"] = next(
+        (
+            vip["expiration"]
+            for vip in profile["vips"]
+            if vip["server_number"] == current_server
+        ),
+        None,
+    )
+    return profile
+
+
 def get_player_profile(player_id: str, nb_sessions: int):
     nb_sessions = int(nb_sessions)
 
@@ -62,7 +108,8 @@ def get_player_profile(player_id: str, nb_sessions: int):
         )
         if player is None:
             return
-        return player.to_dict(limit_sessions=nb_sessions)
+        profile = player.to_dict(limit_sessions=nb_sessions)
+        return _apply_vip_list_status(sess, player, profile)
 
 
 def get_player_soldier_info_by_ids(sess, player_ids):
@@ -83,7 +130,8 @@ def get_player_profile_by_id(id, nb_sessions):
         player = sess.query(PlayerID).filter(PlayerID.id == id).one_or_none()
         if player is None:
             return
-        return player.to_dict(limit_sessions=nb_sessions)
+        profile = player.to_dict(limit_sessions=nb_sessions)
+        return _apply_vip_list_status(sess, player, profile)
 
 
 def _get_profiles(sess, player_ids):
@@ -111,7 +159,14 @@ def get_profiles(player_ids, nb_sessions=1):
     with enter_session() as sess:
         players = _get_profiles(sess, player_ids)
 
-        return [p.to_dict(limit_sessions=nb_sessions) for p in players]
+        return [
+            _apply_vip_list_status(
+                sess,
+                player,
+                player.to_dict(limit_sessions=nb_sessions),
+            )
+            for player in players
+        ]
 
 
 def _get_set_player(
@@ -307,7 +362,11 @@ def get_players_by_appearance(
             "total": total,
             "players": [
                 {
-                    **p[0].to_dict(limit_sessions=0),
+                    **_player_history_profile(
+                        sess,
+                        p[0],
+                        p[0].to_dict(limit_sessions=0),
+                    ),
                     "names_by_match": sorted(
                         (n.name for n in p[0].names), key=cmp_to_key(sort_name_match)
                     ),
@@ -317,7 +376,6 @@ def get_players_by_appearance(
                     "last_seen_timestamp_ms": (
                         int(p[2].timestamp() * 1000) if p[2] else None
                     ),
-                    "vip_expiration": p[0].vip.expiration if p[0].vip else None,
                 }
                 for p in players
             ],
@@ -363,6 +421,69 @@ def _save_player_alias(sess, player: PlayerID, player_name: str, timestamp=None)
     return name
 
 
+def record_player_game_observation(
+    player_id: str,
+    game: GameEnum,
+    timestamp: float | None = None,
+) -> None:
+    """Record that a concrete player identity was observed in a game."""
+    observed_at = (
+        datetime.datetime.fromtimestamp(timestamp, tz=UTC)
+        if timestamp is not None
+        else datetime.datetime.now(tz=UTC)
+    )
+    resolve_steam_id = None
+
+    with enter_session() as sess:
+        # Serialize first-observation writes for one player. Without this lock,
+        # concurrent connect events can both observe a missing game row and
+        # race on unique_player_identity_game during INSERT.
+        player = (
+            sess.query(PlayerID)
+            .filter(PlayerID.player_id == player_id)
+            .with_for_update()
+            .one_or_none()
+        )
+        if player is None:
+            logger.error(
+                "Can't record game observation for %s, player not found",
+                player_id,
+            )
+            return
+
+        observation = (
+            sess.query(PlayerIdentityGame)
+            .filter(
+                PlayerIdentityGame.player_id_id == player.id,
+                PlayerIdentityGame.game == game.value,
+            )
+            .one_or_none()
+        )
+
+        if observation is None:
+            observation = PlayerIdentityGame(
+                player=player,
+                game=game.value,
+                first_seen=observed_at,
+                last_seen=observed_at,
+            )
+            sess.add(observation)
+
+            if game == GameEnum.HLL_VIETNAM and player.steam_id:
+                resolve_steam_id = player.steam_id
+        else:
+            observation.first_seen = min(observation.first_seen, observed_at)
+            observation.last_seen = max(observation.last_seen, observed_at)
+
+        sess.commit()
+
+    if resolve_steam_id:
+        # Import lazily to avoid player_history <-> vip circular imports.
+        from rcon.vip import resolve_pending_vip_records
+
+        resolve_pending_vip_records(resolve_steam_id)
+
+
 def save_player(
     player_name: str,
     player_id: str,
@@ -371,6 +492,8 @@ def save_player(
     steam_id: str | None = None,
 ) -> None:
     """Create a PlayerID record if non existent and save the player name alias"""
+    steam_mapping_changed = False
+
     with enter_session() as sess:
         player = _save_player_id(sess, player_id)
         _save_player_alias(
@@ -379,9 +502,18 @@ def save_player(
             player_name,
             timestamp or datetime.datetime.now(tz=UTC).timestamp(),
         )
-        if steam_id:
+        if steam_id and player.steam_id != steam_id:
             player.steam_id = steam_id
+            steam_mapping_changed = True
+
+        if steam_mapping_changed:
             sess.commit()
+
+    if steam_mapping_changed:
+        # Import lazily to avoid player_history <-> vip circular imports.
+        from rcon.vip import resolve_pending_vip_records
+
+        resolve_pending_vip_records(steam_id)
 
 
 def save_player_action(
@@ -550,7 +682,7 @@ def add_flag_to_player(
         new = PlayerFlag(flag=flag, comment=comment, player=player)
         sess.add(new)
         sess.commit()
-        res = player.to_dict()
+        res = _apply_vip_list_status(sess, player, player.to_dict())
         return res, new.to_dict()
 
 
@@ -569,6 +701,7 @@ def remove_flag(
         else:
             exists = (
                 sess.query(PlayerFlag)
+                .join(PlayerFlag.player)
                 .filter(PlayerID.player_id == player_id)
                 .filter(PlayerFlag.flag == flag)
                 .one_or_none()
@@ -577,7 +710,15 @@ def remove_flag(
         if not exists:
             logger.warning("Flag does not exists")
             raise HLLCommandFailedError("Flag does not exists")
-        player = exists.player.to_dict()
+        if exists.managed_by_vip_list:
+            raise HLLCommandFailedError(
+                "This flag is managed by a VIP list. Edit the list or its record."
+            )
+        player = _apply_vip_list_status(
+            sess,
+            exists.player,
+            exists.player.to_dict(),
+        )
         old_flag = exists.to_dict()
         sess.delete(exists)
         sess.commit()

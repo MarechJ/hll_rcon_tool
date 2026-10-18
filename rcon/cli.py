@@ -23,7 +23,7 @@ from rcon.discord_chat import get_handler
 from rcon.logs.loop import LogLoop, load_generic_hooks
 from rcon.logs.recorder import LogRecorder
 from rcon.logs.stream import LogStream
-from rcon.models import PlayerID, enter_session, install_unaccent
+from rcon.models import PlayerID, VipListRecord, enter_session, install_unaccent
 from rcon.player_stats import live_stats_loop
 from rcon.rcon import get_rcon
 from rcon.steam_utils import enrich_db_users
@@ -35,7 +35,10 @@ from rcon.user_config.webhooks import (
     BaseUserConfig,
     BaseWebhookUserConfig,
 )
-from rcon.utils import ApiKey
+from rcon.utils import ApiKey, get_server_number
+from rcon.vip_sync_handler import VipSyncCommandHandler
+from rcon.vip_sync_runner import synchronize_gameserver_vips
+from rcon.vip_sync_service import VipSyncDatabaseUnavailableError
 from rcon.vote_map import VoteMap
 
 logger = logging.getLogger(__name__)
@@ -118,6 +121,66 @@ def run_expiring_vips():
     rcon.expiring_vips.service.run()
 
 
+@cli.command(name="vip-list-sync")
+@click.option(
+    "--apply",
+    "apply_changes",
+    is_flag=True,
+    help="Apply the synchronization plan to the gameserver.",
+)
+@click.option(
+    "--server-number",
+    type=click.IntRange(min=1, max=32),
+    default=None,
+    help="CRCON server number. Defaults to SERVER_NUMBER.",
+)
+def run_vip_list_sync(
+    apply_changes: bool,
+    server_number: int | None,
+):
+    """Plan or apply VIP List synchronization.
+
+    The command is a dry-run unless --apply is explicitly supplied.
+    """
+    if server_number is None:
+        server_number = int(get_server_number())
+
+    try:
+        result = synchronize_gameserver_vips(
+            server_number=server_number,
+            dry_run=not apply_changes,
+        )
+    except VipSyncDatabaseUnavailableError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    summary = {
+        "server_number": server_number,
+        "dry_run": result.execution.dry_run,
+        "planned_additions": len(result.plan.to_add),
+        "planned_removals": len(result.plan.to_remove),
+        "added": sorted(result.execution.added),
+        "removed": sorted(result.execution.removed),
+        "skipped_additions": len(result.execution.skipped_additions),
+        "skipped_removals": len(result.execution.skipped_removals),
+        "failures": [
+            {
+                "action": failure.action,
+                "player_id": failure.player_id,
+                "error": failure.error,
+            }
+            for failure in result.execution.failures
+        ],
+    }
+
+    click.echo(json.dumps(summary, sort_keys=True))
+
+    if not result.execution.successful:
+        raise click.ClickException(
+            f"VIP synchronization completed with "
+            f"{len(result.execution.failures)} failure(s)"
+        )
+
+
 @cli.command(name="seed_vip")
 def run_seed_vip():
     try:
@@ -144,6 +207,11 @@ def run_automod():
 @cli.command(name="blacklists")
 def run_blacklists():
     BlacklistCommandHandler().run()
+
+
+@cli.command(name="vip-list-sync-handler")
+def run_vip_list_sync_handler():
+    VipSyncCommandHandler().run()
 
 
 @cli.command(name="log_recorder")
@@ -483,6 +551,56 @@ def reset_user_settings(server: int, game=GameEnum.HLL_WW2.value):
     print("Done")
 
 
+def _vip_record_merge_key(record: VipListRecord) -> tuple:
+    """Rank duplicate VIP List records when player IDs are merged."""
+    return (
+        record.active,
+        record.expires_at is None,
+        record.expires_at or datetime.min.replace(tzinfo=UTC),
+        record.created_at,
+        -record.id,
+    )
+
+
+def _merge_duplicate_vip_list_records(
+    session,
+    keep: int,
+    duplicate_ids: list[int],
+) -> None:
+    """Move VIP List records to KEEP without violating the per-list uniqueness."""
+    player_ids = [keep, *duplicate_ids]
+
+    records = session.scalars(
+        select(VipListRecord)
+        .where(VipListRecord.player_id_id.in_(player_ids))
+        .order_by(VipListRecord.vip_list_id, VipListRecord.id)
+    ).all()
+
+    records_by_list: dict[int, list[VipListRecord]] = {}
+    for record in records:
+        records_by_list.setdefault(record.vip_list_id, []).append(record)
+
+    winners: list[VipListRecord] = []
+
+    for records_for_list in records_by_list.values():
+        winner = max(records_for_list, key=_vip_record_merge_key)
+        winners.append(winner)
+
+        for record in records_for_list:
+            if record is not winner:
+                session.delete(record)
+
+    # Free conflicting (player_id_id, vip_list_id) combinations before
+    # moving the surviving records to the canonical player ID.
+    session.flush()
+
+    for winner in winners:
+        if winner.player_id_id != keep:
+            winner.player_id_id = keep
+
+    session.flush()
+
+
 def _merge_duplicate_player_ids(existing_ids: set[str] | None = None):
     logger.info("Merging duplicate player ID records")
     players = {}
@@ -570,11 +688,10 @@ def _merge_duplicate_player_ids(existing_ids: set[str] | None = None):
                 ),
                 {"keep": keep, "ids": ids},
             )
-            session.execute(
-                text(
-                    "UPDATE player_vip SET playersteamid_id = :keep WHERE playersteamid_id = ANY(:ids)"
-                ),
-                {"keep": keep, "ids": ids},
+            _merge_duplicate_vip_list_records(
+                session,
+                keep,
+                ids,
             )
             session.execute(
                 text(

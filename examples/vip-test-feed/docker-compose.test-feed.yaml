@@ -1,0 +1,11 @@
+name: vip-partner-test
+services:
+  feed:
+    image: python:3.12-alpine
+    command: ["python", "-B", "/app/server.py", "--config", "/app/config.json", "--host", "0.0.0.0"]
+    restart: unless-stopped
+    read_only: true
+    volumes:
+      - ./:/app:ro
+    ports:
+      - "127.0.0.1:8765:8765"

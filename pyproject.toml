@@ -10,6 +10,7 @@ dependencies = [
     "channels-redis==4.3.0",
     "click==8.5.0",
     "colorlog>=6.12.0",
+    "cryptography==50.0.0",
     "daphne>=4.2.3",
     "discord-py==2.7.1",
     # discord-webhook[async]
