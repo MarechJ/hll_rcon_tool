@@ -11,13 +11,17 @@ export const getMaxValue = (key) => {
     case "vip_slots_num":
       return 100;
     case "match_warfare_timer":
+    case "match_conquest_timer":
       return 180;
     case "match_offensive_timer":
       return 60;
     case "match_skirmish_timer":
+    case "match_domination_timer":
       return 60;
     case "warmup_skirmish_timer":
     case "warmup_warfare_timer":
+    case "warmup_domination_timer":
+    case "warmup_conquest_timer":
       return 10;
     case "players":
     case "autobalance_threshold":
@@ -30,13 +34,17 @@ export const getMaxValue = (key) => {
 export const getMinValue = (key) => {
   switch (key) {
     case "match_warfare_timer":
+    case "match_conquest_timer":
       return 30;
     case "match_offensive_timer":
       return 10;
     case "match_skirmish_timer":
+    case "match_domination_timer":
       return 10;
     case "warmup_warfare_timer":
     case "warmup_skirmish_timer":
+    case "warmup_domination_timer":
+    case "warmup_conquest_timer":
       return 1;
     default:
       return 0;
@@ -90,9 +98,14 @@ export const getHelpText = (key) => {
     case "match_offensive_timer":
       return "Default is 30 minutes";
     case "match_skirmish_timer":
+    case "match_domination_timer":
       return "Default is 30 minutes";
+    case "match_conquest_timer":
+      return "Default is 90 minutes";
     case "warmup_warfare_timer":
     case "warmup_skirmish_timer":
+    case "warmup_domination_timer":
+    case "warmup_conquest_timer":
       return "Default is 3 minutes";
     case "votekick_thresholds":
       return "Set the number of votes required to kick a player based on the number of players in the team. The first field defines the minimum number of players in the team, and the second field defines the number of votes required. Reasonable values are [0, 1], [10, 5], [25, 12], [50, 20].";

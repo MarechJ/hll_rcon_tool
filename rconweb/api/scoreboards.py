@@ -66,7 +66,7 @@ def get_scoreboard_maps(request):
 
     page_size = min(int(data.get("limit", 100)), 1000)
     page = max(1, int(data.get("page", 1)))
-    server_number = data.get("server_number", os.getenv("SERVER_NUMBER"))
+    server_number = int(data.get("server_number", os.getenv("SERVER_NUMBER")))
 
     with enter_session() as sess:
         query = (
