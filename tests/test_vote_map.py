@@ -16,8 +16,8 @@ from rcon.maps import (
     Team,
     parse_layer,
 )
-from rcon.models import PlayerVIPType
 from rcon.player_history import PlayerProfileType
+from rcon.types import PlayerVIPType
 from rcon.user_config.vote_map import DefaultMethods
 from rcon.vote_map import (
     InvalidVoteError,

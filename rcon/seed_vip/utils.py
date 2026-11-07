@@ -197,50 +197,114 @@ def message_players(
         )
 
 
+def resolve_reward_vip_list(
+    rcon: RconAPI,
+    config: SeedVIPUserConfig,
+) -> dict | None:
+    """Resolve the configured Seed VIP target with default-list fallback."""
+    applicable_lists = rcon.get_vip_lists_for_server()
+    applicable_by_id = {int(vip_list["id"]): vip_list for vip_list in applicable_lists}
+    selected_list_id = config.reward.vip_list_id
+
+    if selected_list_id is not None:
+        selected = applicable_by_id.get(int(selected_list_id))
+        if selected is not None:
+            return selected
+
+        logger.warning(
+            "Configured Seed VIP list ID %s does not exist or does not apply "
+            "to this server; falling back to the default VIP list",
+            selected_list_id,
+        )
+
+    default_list = rcon.get_default_vip_list()
+    if default_list is None:
+        logger.error(
+            "Unable to grant Seed VIP rewards: no applicable default VIP "
+            "list is configured"
+        )
+        return None
+
+    if int(default_list["id"]) not in applicable_by_id:
+        logger.error(
+            "Unable to grant Seed VIP rewards: default VIP list ID %s "
+            "does not apply to this server",
+            default_list["id"],
+        )
+        return None
+
+    return default_list
+
+
 def reward_players(
     rcon: RconAPI,
     config: SeedVIPUserConfig,
+    vip_list_id: int,
     to_add_vip_steam_ids: set[str],
     current_vips: dict[str, VipPlayer],
     players_lookup: dict[str, str],
     expiration_timestamps: defaultdict[str, datetime],
-):
+) -> set[str]:
+    """Grant rewards through the targeted VIP-list API.
+
+    Returns only player IDs whose reward was successfully written, or which
+    would be written during a dry-run.
+    """
     logger.info(f"Rewarding players with VIP {config.dry_run=}")
+    logger.info(f"Target VIP list ID={vip_list_id}")
     logger.info(f"Total={len(to_add_vip_steam_ids)} {to_add_vip_steam_ids=}")
     logger.info(f"Total={len(current_vips)=} {current_vips=}")
+
+    rewarded_player_ids: set[str] = set()
+
     for player_id in to_add_vip_steam_ids:
         player = current_vips.get(player_id)
         expiration_date = expiration_timestamps[player_id]
 
-        if has_indefinite_vip(player):
+        if player is not None:
             logger.info(
-                f"{config.dry_run=} Skipping! pre-existing indefinite VIP for {player_id=} {player=} {expiration_date=}"
+                "Skipping Seed VIP reward for existing effective VIP: %s",
+                player_id,
             )
             continue
 
-        vip_name = (
-            player.player.name
-            if player
-            else format_vip_reward_name(
-                players_lookup.get(player_id, "No player name found"),
-                format_str=config.reward.player_name_format_not_current_vip,
-            )
+        vip_name = format_vip_reward_name(
+            players_lookup.get(player_id, "No player name found"),
+            format_str=config.reward.player_name_format_not_current_vip,
         )
 
-        if not config.dry_run:
-            logger.info(
-                f"{config.dry_run=} adding VIP to {player_id=} {player=} {vip_name=} {expiration_date=}",
-            )
-            rcon.add_vip(
-                player_id=player_id,
-                description=vip_name,
-                expiration=expiration_date.isoformat(),
-            )
+        logger.info(
+            "%s Seed VIP reward for player_id=%s vip_list_id=%s expiration=%s",
+            "Simulating" if config.dry_run else "Writing",
+            player_id,
+            vip_list_id,
+            expiration_date,
+        )
 
-        else:
-            logger.info(
-                f"{config.dry_run=} adding VIP to {player_id=} {player=} {vip_name=} {expiration_date=}",
+        if config.dry_run:
+            rewarded_player_ids.add(player_id)
+            continue
+
+        try:
+            rcon.upsert_vip_list_record(
+                player_id=player_id,
+                vip_list_id=vip_list_id,
+                description=vip_name,
+                expires_at=expiration_date,
+                notes="Granted by Seed VIP Reward",
+                admin_name="Seed VIP Reward",
             )
+        except Exception:
+            logger.exception(
+                "Failed to grant Seed VIP reward to player %s on VIP list ID %s",
+                player_id,
+                vip_list_id,
+            )
+            continue
+
+        rewarded_player_ids.add(player_id)
+
+    return rewarded_player_ids
 
 
 def get_next_player_bucket(

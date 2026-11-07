@@ -21,6 +21,12 @@ import PersonIcon from "@mui/icons-material/Person";
 import { useMemo, useState } from "react";
 import { useEditAccountModal } from "@/hooks/useEditAccountModal";
 import { useEditSoldierModal } from "@/hooks/useEditSoldierModal";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
+import { usePlayerVipRecords } from "@/hooks/usePlayerVipRecords";
+import { vipListMutationOptions, vipListQueryKeys, vipListQueryOptions } from "@/queries/vip-list-query";
+import VipListRecordDialog from "@/components/VipList/VipListRecordDialog";
+import { Actions } from "./actions";
 
 /**
  * Displays a menu of actions that the user can perform on a player.
@@ -37,6 +43,32 @@ export function ActionMenu({
   const { openDialog } = useActionDialog();
   const { openWithId } = usePlayerSidebar();
   const open = Boolean(anchorEl);
+  const [editingVipRecord, setEditingVipRecord] = useState(null);
+  const queryClient = useQueryClient();
+  const singlePlayer = !Array.isArray(recipients);
+  const { records: vipRecords, canView: canViewVipLists, isPending: vipRecordsPending, isError: vipRecordsError } = usePlayerVipRecords(
+    singlePlayer ? recipients.player_id : null, open || Boolean(editingVipRecord)
+  );
+  const canEditVipRecords = Boolean(
+    user?.is_superuser || user?.permissions?.some((entry) => entry.permission === "can_change_vip_list_records")
+  );
+  const { data: vipLists = [] } = useQuery({
+    ...vipListQueryOptions.lists(),
+    enabled: canViewVipLists && vipRecords.length > 0,
+  });
+  const updateVipRecord = useMutation({
+    ...vipListMutationOptions.editRecord,
+    onSuccess: async (_result, data) => {
+      setEditingVipRecord(null);
+      toast.success("VIP record updated.");
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: [...vipListQueryKeys.playerRecords, recipients.player_id] }),
+        queryClient.invalidateQueries({ queryKey: [...vipListQueryKeys.activeRecords, data.vipListId] }),
+        queryClient.invalidateQueries({ queryKey: [...vipListQueryKeys.inactiveRecords, data.vipListId] }),
+      ]);
+    },
+    onError: (error) => toast.error(error?.message ?? "The VIP record could not be updated."),
+  });
   const { openModal: openAccountModal, modal: accountModal } =
     useEditAccountModal(recipients.player_id, recipients.account);
   const { openModal: openSoldierModal, modal: soldierModal } =
@@ -61,6 +93,7 @@ export function ActionMenu({
   );
 
   return (
+    <>
     <Menu
       id="long-menu"
       anchorEl={anchorEl}
@@ -91,7 +124,23 @@ export function ActionMenu({
         </>
       )}
       {withProfile && !Array.isArray(recipients) && <Divider />}
-      {filteredActionList.map((action) => (
+      {singlePlayer && canEditVipRecords && vipRecords.map((record) => (
+        <MenuItem
+          key={`vip-record-${record.id}`}
+          dense
+          disabled={!vipLists.some((list) => list.id === record.vip_list_id && !list.is_imported)}
+          onClick={() => {
+            setEditingVipRecord(record);
+            handleClose();
+          }}
+        >
+          {vipLists.find((list) => list.id === record.vip_list_id)?.is_imported ? "Partner VIP (read-only): " : "Edit VIP record: "}
+          {vipLists.find((list) => list.id === record.vip_list_id)?.name ?? `list #${record.vip_list_id}`}
+        </MenuItem>
+      ))}
+      {filteredActionList.filter((action) =>
+        action !== Actions.AddVIP || !singlePlayer || !canViewVipLists || (!vipRecordsPending && !vipRecordsError)
+      ).map((action) => (
         <MenuItem
           key={action.name}
           onClick={(event) => handleActionClick(action, event)}
@@ -104,7 +153,9 @@ export function ActionMenu({
             variant="inherit"
             sx={{ textDecoration: action.deprecated ? "line-through" : "" }}
           >
-            {action.name[0].toUpperCase() + action.name.slice(1)}
+            {action === Actions.AddVIP && singlePlayer && vipRecords.length > 0
+              ? "Add VIP to another list"
+              : action.name[0].toUpperCase() + action.name.slice(1)}
           </Typography>
         </MenuItem>
       ))}
@@ -114,6 +165,26 @@ export function ActionMenu({
       {accountModal}
       {soldierModal}
     </Menu>
+    {editingVipRecord && (
+      <VipListRecordDialog
+        open
+        mode="edit"
+        vipList={vipLists.find((list) => list.id === editingVipRecord.vip_list_id) ??
+          { id: editingVipRecord.vip_list_id, name: `#${editingVipRecord.vip_list_id}` }}
+        initialValues={{
+          playerId: editingVipRecord.player_id,
+          playerName: editingVipRecord.player_name,
+          description: editingVipRecord.description,
+          notes: editingVipRecord.notes,
+          active: editingVipRecord.is_active,
+          expiresAt: editingVipRecord.expires_at,
+        }}
+        loading={updateVipRecord.isPending}
+        onClose={() => setEditingVipRecord(null)}
+        onSubmit={(data) => updateVipRecord.mutateAsync({ id: editingVipRecord.id, ...data })}
+      />
+    )}
+    </>
   );
 }
 
@@ -237,7 +308,7 @@ export function ActionIconButton({
       <span>
         <IconButton
           key={action.name}
-          disabled={!hasPermission(user)}
+          disabled={!hasPermission(user)(action)}
           size="small"
           onClick={handleActionClick(action)}
           sx={{ opacity: action.deprecated ? 0.5 : 1 }}

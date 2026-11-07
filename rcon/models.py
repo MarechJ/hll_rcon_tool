@@ -12,6 +12,7 @@ import pydantic
 from sqlalchemy import (
     JSON,
     TIMESTAMP,
+    BigInteger,
     Engine,
     Enum,
     ForeignKey,
@@ -24,13 +25,11 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
-from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
     Session,
     mapped_column,
-    object_session,
     relationship,
     sessionmaker,
 )
@@ -69,13 +68,15 @@ from rcon.types import (
     PlayerStatsType,
     PlayerTeamAssociation,
     PlayerTeamConfidence,
-    PlayerVIPType,
     ServerCountType,
     SteamBansType,
     SteamInfoType,
     SteamPlayerSummaryType,
     StructuredLogLineWithMetaData,
     UnitHistoryEntry,
+    VipListRecordType,
+    VipListSyncMethod,
+    VipListType,
     WatchListType,
 )
 from rcon.tz_unaware_column import UTCDateTime
@@ -185,10 +186,13 @@ class PlayerID(Base):
     stats: Mapped["PlayerStats"] = relationship(back_populates="player")
     blacklists: Mapped[list["BlacklistRecord"]] = relationship(back_populates="player")
 
-    vips: Mapped[list["PlayerVIP"]] = relationship(
+    vip_list_records: Mapped[list["VipListRecord"]] = relationship(
+        back_populates="player"
+    )
+    game_observations: Mapped[list["PlayerIdentityGame"]] = relationship(
         back_populates="player",
         cascade="all, delete-orphan",
-        lazy="dynamic",
+        passive_deletes=True,
     )
     optins: Mapped[list["PlayerOptins"]] = relationship(back_populates="player")
     account: Mapped["PlayerAccount"] = relationship(back_populates="player")
@@ -197,18 +201,6 @@ class PlayerID(Base):
     @property
     def server_number(self) -> int:
         return int(os.getenv("SERVER_NUMBER"))  # type: ignore
-
-    @hybrid_property
-    def vip(self) -> Optional["PlayerVIP"]:
-        return (
-            object_session(self)
-            .query(PlayerVIP)  # type: ignore
-            .filter(
-                PlayerVIP.player_id_id == self.id,
-                PlayerVIP.server_number == self.server_number,
-            )
-            .one_or_none()
-        )
 
     def get_penalty_count(self) -> PenaltyCountType:
         counts = defaultdict(int)
@@ -257,8 +249,9 @@ class PlayerID(Base):
                 or any(server == this_server for server in b["blacklist"]["servers"])
             ]
         )
-        vips = [v.to_dict() for v in self.vips]
-        is_vip = any(vip["server_number"] == this_server for vip in vips)
+        # VIP status is populated by the service layer from VIP Lists.
+        vips = []
+        is_vip = False
         return {
             "id": self.id,
             PLAYER_ID: self.player_id,
@@ -626,6 +619,7 @@ class PlayerFlag(Base):
     )
     flag: Mapped[str] = mapped_column(nullable=False, index=True)
     comment: Mapped[str] = mapped_column(String, nullable=True)
+    managed_by_vip_list: Mapped[bool] = mapped_column(default=False, nullable=False)
     modified: Mapped[datetime] = mapped_column(
         UTCDateTime, default=lambda: datetime.now(UTC)
     )
@@ -638,6 +632,7 @@ class PlayerFlag(Base):
             "flag": self.flag,
             "comment": self.comment,
             "modified": self.modified,
+            "managed_by_vip_list": self.managed_by_vip_list,
         }
 
 
@@ -1252,31 +1247,281 @@ class PlayerAtCount(Base):
         }
 
 
-class PlayerVIP(Base):
-    __tablename__: str = "player_vip"
+class PlayerIdentityGame(Base):
+    """Record games in which a concrete PlayerID identity was observed."""
+
+    __tablename__ = "player_identity_game"
     __table_args__ = (
         UniqueConstraint(
-            "playersteamid_id", "server_number", name="unique_player_server_vip"
+            "player_id_id",
+            "game",
+            name="unique_player_identity_game",
         ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    expiration: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True), nullable=False
+    player_id_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
-    # Not making this unique (even though it should be) to avoid breaking existing CRCONs
-    server_number: Mapped[int] = mapped_column()
+    game: Mapped[str] = mapped_column(String(16), nullable=False)
+    first_seen: Mapped[datetime] = mapped_column(
+        UTCDateTime,
+        default=lambda: datetime.now(UTC),
+        nullable=False,
+    )
+    last_seen: Mapped[datetime] = mapped_column(
+        UTCDateTime,
+        default=lambda: datetime.now(UTC),
+        nullable=False,
+    )
+
+    player: Mapped[PlayerID] = relationship(back_populates="game_observations")
+
+
+class VipList(Base):
+    __tablename__ = "vip_list"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(nullable=False)
+    sync: Mapped[VipListSyncMethod] = mapped_column(
+        Enum(VipListSyncMethod, name="viplistsyncmethod"),
+        default=VipListSyncMethod.IGNORE_UNKNOWN,
+        nullable=False,
+    )
+    servers: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    expired_retention_days: Mapped[int | None] = mapped_column(nullable=True)
+    default_expiration_seconds: Mapped[int | None] = mapped_column(nullable=True)
+    flags: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+
+    records: Mapped[list["VipListRecord"]] = relationship(
+        back_populates="vip_list",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    pending_records: Mapped[list["VipListPendingRecord"]] = relationship(
+        back_populates="vip_list",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    defaults: Mapped[list["VipListDefault"]] = relationship(
+        back_populates="vip_list",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    shares: Mapped[list["VipListShare"]] = relationship(
+        back_populates="vip_list", cascade="all, delete-orphan", passive_deletes=True
+    )
+    partner_import: Mapped["VipListImport | None"] = relationship(
+        back_populates="vip_list",
+        uselist=False,
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+    def get_server_numbers(self) -> set[int] | None:
+        if self.servers is None:
+            return None
+        return mask_to_server_numbers(self.servers)
+
+    def set_server_numbers(self, server_numbers: Sequence[int] | None) -> None:
+        self.servers = (
+            None if server_numbers is None else server_numbers_to_mask(*server_numbers)
+        )
+
+    def to_dict(self) -> VipListType:
+        server_numbers = self.get_server_numbers()
+        return {
+            "id": self.id,
+            "name": self.name,
+            "sync": self.sync,
+            "expired_retention_days": self.expired_retention_days,
+            "default_expiration_seconds": self.default_expiration_seconds,
+            "flags": self.flags or [],
+            "servers": sorted(server_numbers) if server_numbers is not None else None,
+            "is_imported": self.partner_import is not None,
+            "has_active_shares": any(
+                share.revoked_at is None
+                and (share.expires_at is None or share.expires_at > datetime.now(UTC))
+                for share in self.shares
+            ),
+        }
+
+
+class VipListShare(Base):
+    """One revocable, read-only credential for a single VIP list."""
+
+    __tablename__ = "vip_list_share"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    vip_list_id: Mapped[int] = mapped_column(
+        ForeignKey("vip_list.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    name: Mapped[str] = mapped_column(String(128), nullable=False)
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+    expires_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
+    revoked_by: Mapped[str | None] = mapped_column(String(150))
+    last_used_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
+    vip_list: Mapped[VipList] = relationship(back_populates="shares")
+
+
+class VipListImport(Base):
+    """Remote source for a read-only, locally scoped VIP list."""
+
+    __tablename__ = "vip_list_import"
+
+    vip_list_id: Mapped[int] = mapped_column(
+        ForeignKey("vip_list.id", ondelete="CASCADE"), primary_key=True
+    )
+    source_url: Mapped[str] = mapped_column(String(2048), nullable=False)
+    encrypted_token: Mapped[str] = mapped_column(nullable=False)
+    encrypted_webhook_url: Mapped[str | None]
+    approve_new: Mapped[bool] = mapped_column(default=True, nullable=False)
+    last_success_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
+    suspended_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
+    last_error_notified_at: Mapped[datetime | None] = mapped_column(
+        TIMESTAMP(timezone=True)
+    )
+    vip_list: Mapped[VipList] = relationship(back_populates="partner_import")
+
+
+class VipListDefault(Base):
+    __tablename__ = "vip_list_default"
+
+    server_number: Mapped[int] = mapped_column(
+        primary_key=True,
+        autoincrement=False,
+    )
+    vip_list_id: Mapped[int] = mapped_column(
+        ForeignKey("vip_list.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    vip_list: Mapped[VipList] = relationship(back_populates="defaults")
+
+
+class VipServerSyncConfig(Base):
+    __tablename__ = "vip_server_sync_config"
+
+    server_number: Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
+    sync: Mapped[VipListSyncMethod] = mapped_column(
+        Enum(VipListSyncMethod, name="viplistsyncmethod", create_type=False),
+        nullable=False,
+        default=VipListSyncMethod.IGNORE_UNKNOWN,
+    )
+
+
+class VipListPendingRecord(Base):
+    """VIP record waiting for a target-game player identity."""
+
+    __tablename__ = "vip_list_pending_record"
+    __table_args__ = (
+        UniqueConstraint(
+            "steam_id",
+            "vip_list_id",
+            name="unique_pending_vip_steam_id_vip_list",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    vip_list_id: Mapped[int] = mapped_column(
+        ForeignKey("vip_list.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    steam_id: Mapped[str] = mapped_column(String(17), nullable=False, index=True)
+    admin_name: Mapped[str] = mapped_column(nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        default=lambda: datetime.now(tz=UTC),
+        nullable=False,
+    )
+    last_checked_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
+    resolution_error: Mapped[str | None]
+    description: Mapped[str | None]
+    notes: Mapped[str | None]
+    expires_at: Mapped[datetime | None] = mapped_column(
+        TIMESTAMP(timezone=True),
+        nullable=True,
+    )
+
+    vip_list: Mapped[VipList] = relationship(back_populates="pending_records")
+
+
+class VipListRecord(Base):
+    __tablename__ = "vip_list_record"
+    __table_args__ = (
+        UniqueConstraint(
+            "player_id_id",
+            "vip_list_id",
+            name="unique_vip_player_id_vip_list",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    admin_name: Mapped[str] = mapped_column(nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        default=lambda: datetime.now(tz=UTC),
+        nullable=False,
+    )
+    active: Mapped[bool] = mapped_column(default=True, nullable=False)
+    partner_approved: Mapped[bool] = mapped_column(default=True, nullable=False)
+    partner_excluded: Mapped[bool] = mapped_column(default=False, nullable=False)
+    partner_present: Mapped[bool] = mapped_column(default=True, nullable=False)
+    partner_deactivated_at: Mapped[datetime | None] = mapped_column(
+        TIMESTAMP(timezone=True)
+    )
+    description: Mapped[str | None]
+    notes: Mapped[str | None]
+    expires_at: Mapped[datetime | None] = mapped_column(
+        TIMESTAMP(timezone=True),
+        nullable=True,
+    )
 
     player_id_id: Mapped[int] = mapped_column(
-        "playersteamid_id", ForeignKey("steam_id_64.id"), nullable=False, index=True
+        ForeignKey("steam_id_64.id"),
+        nullable=False,
+        index=True,
+    )
+    vip_list_id: Mapped[int] = mapped_column(
+        ForeignKey("vip_list.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
 
-    player: Mapped[PlayerID] = relationship(back_populates="vips")
+    player: Mapped[PlayerID] = relationship(back_populates="vip_list_records")
+    vip_list: Mapped[VipList] = relationship(back_populates="records")
 
-    def to_dict(self) -> PlayerVIPType:
+    def is_expired(self) -> bool:
+        return self.expires_at is not None and self.expires_at <= datetime.now(tz=UTC)
+
+    def to_dict(self) -> VipListRecordType:
+        player_name = self.player.names[0].name if self.player.names else None
+
         return {
-            "server_number": self.server_number,
-            "expiration": self.expiration,
+            "id": self.id,
+            "vip_list_id": self.vip_list_id,
+            "player_id": self.player.player_id,
+            "steam_id": self.player.steam_id,
+            "player_name": player_name,
+            "admin_name": self.admin_name,
+            "created_at": self.created_at,
+            "is_active": self.active,
+            "is_expired": self.is_expired(),
+            "expires_at": self.expires_at,
+            "description": self.description if player_name is None else None,
+            "notes": self.notes,
+            "partner_approved": self.partner_approved,
+            "partner_excluded": self.partner_excluded,
+            "partner_present": self.partner_present,
+            "partner_deactivated_at": self.partner_deactivated_at,
         }
 
 
