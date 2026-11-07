@@ -26,7 +26,7 @@ dependencies = [
     "psycopg[binary]>=3.3.6",
     "pydantic==2.13.5",
     "python-dateutil==3.0.0",
-    "pytz>=2026.5",
+    "pytz>=2026.6",
     "redis==8.1.0",
     "requests==2.34.2",
     "rq==2.12.0",
