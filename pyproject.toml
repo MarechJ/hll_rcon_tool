@@ -24,7 +24,7 @@ dependencies = [
     "orjson==3.13.0",
     "psutil==7.2.2",
     "psycopg[binary]>=3.3.6",
-    "pydantic==2.13.5",
+    "pydantic==2.14.3",
     "python-dateutil==3.0.0",
     "pytz>=2026.6",
     "redis==8.1.0",
