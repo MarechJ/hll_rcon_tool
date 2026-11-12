@@ -75,6 +75,18 @@ def test_run_program_seed_vip_failure_exits(monkeypatch):
     assert exc.value.code == 1
 
 
+def test_run_program_vip_list_sync(monkeypatch):
+    handler = mock.Mock()
+    monkeypatch.setattr(
+        "rcon.vip_sync_handler.VipSyncCommandHandler",
+        mock.Mock(return_value=handler),
+    )
+
+    run_program("vip_list_sync", [])
+
+    handler.run.assert_called_once_with()
+
+
 def test_run_program_log_event_loop(monkeypatch):
     loop = mock.Mock()
     monkeypatch.setattr(
@@ -253,6 +265,7 @@ def test_all_registered_programs_have_dispatch_tests():
         "broadcasts",
         "expiring_vips",
         "seed_vip",
+        "vip_list_sync",
         "log_event_loop",
         "log_stream",
         "log_recorder",

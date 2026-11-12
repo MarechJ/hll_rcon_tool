@@ -31,34 +31,43 @@ export const RemoveFlagFormFields = ({ contextData, action, recipients }) => {
             {index !== 0 && <Divider flexItem variant="inset" />}
             <ListItem
               secondaryAction={
-                <IconButton
-                  color="error"
-                  edge="end"
-                  aria-label="delete"
-                  title="Remove Flag"
-                  onClick={async () => {
-                    const result = await cmd.UNFLAG_PLAYER({
-                      payload: { flag_id: flag.id },
-                    });
-                    if (!result.failed) {
-                      const queryKey = action.context
-                        .find((context) => context.type === "profile")
-                        ?.getQuery(recipients).queryKey;
-                      if (queryKey) {
-                        queryClient.invalidateQueries({ queryKey });
+                !flag.managed_by_vip_list && (
+                  <IconButton
+                    color="error"
+                    edge="end"
+                    aria-label="delete"
+                    title="Remove Flag"
+                    onClick={async () => {
+                      const result = await cmd.UNFLAG_PLAYER({
+                        payload: { flag_id: flag.id },
+                      });
+                      if (!result.failed) {
+                        const queryKey = action.context
+                          .find((context) => context.type === "profile")
+                          ?.getQuery(recipients).queryKey;
+                        if (queryKey) {
+                          queryClient.invalidateQueries({ queryKey });
+                        }
+                        setFlags(flags.filter((f) => f.id !== flag.id));
                       }
-                      setFlags(flags.filter((f) => f.id !== flag.id));
-                    }
-                  }}
-                >
-                  <DeleteIcon />
-                </IconButton>
+                    }}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                )
               }
             >
               <ListItemAvatar>
                 {<Emoji emoji={flag.flag} size={24} />}
               </ListItemAvatar>
-              <ListItemText primary={flag.comment} secondary={flag.modified} />
+              <ListItemText
+                primary={flag.comment}
+                secondary={
+                  flag.managed_by_vip_list
+                    ? "Managed by VIP Lists · Change this in the list settings"
+                    : flag.modified
+                }
+              />
             </ListItem>
           </Fragment>
         ))}

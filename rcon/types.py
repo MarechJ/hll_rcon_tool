@@ -713,6 +713,7 @@ class PlayerFlagType(TypedDict):
     flag: str
     comment: str | None
     modified: datetime.datetime
+    managed_by_vip_list: bool
 
 
 class PlayerOptinsType(TypedDict):
@@ -740,7 +741,65 @@ class UserConfigType(TypedDict):
 
 class PlayerVIPType(TypedDict):
     server_number: int
-    expiration: datetime.datetime
+    expiration: datetime.datetime | None
+
+
+class VipListSyncMethod(str, enum.Enum):
+    IGNORE_UNKNOWN = "ignore_unknown"
+    REMOVE_UNKNOWN = "remove_unknown"
+
+
+class VipListType(TypedDict):
+    id: int
+    name: str
+    sync: VipListSyncMethod
+    expired_retention_days: int | None
+    default_expiration_seconds: int | None
+    flags: list[str]
+    servers: list[int] | None
+    is_imported: bool
+    has_active_shares: bool
+
+
+class VipListRecordType(TypedDict):
+    id: int
+    vip_list_id: int
+    player_id: str
+    steam_id: str | None
+    player_name: str | None
+    admin_name: str
+    created_at: datetime.datetime
+    is_active: bool
+    is_expired: bool
+    expires_at: datetime.datetime | None
+    description: str | None
+    notes: str | None
+    partner_approved: bool
+    partner_excluded: bool
+    partner_present: bool
+    partner_deactivated_at: datetime.datetime | None
+
+
+class VipListPendingRecordType(TypedDict):
+    id: int
+    vip_list_id: int
+    player_id: str
+    steam_id: str
+    player_name: None
+    admin_name: str
+    created_at: datetime.datetime
+    is_active: bool
+    is_expired: bool
+    expires_at: datetime.datetime | None
+    description: str | None
+    notes: str | None
+    partner_approved: bool
+    partner_excluded: bool
+    partner_present: bool
+    partner_deactivated_at: None
+    record_type: str
+    resolution_status: str
+    resolution_error: str | None
 
 
 class PlayerSoldierType(TypedDict):

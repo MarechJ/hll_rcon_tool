@@ -286,6 +286,7 @@ const PlayerDetails = ({ player, onClose }) => {
         </Box>
         <TabPanel value="profile">
           <PlayerProfileSummary
+            playerId={profile.player_id}
             country={player.country}
             firstSeen={profile.created ?? player.created}
             lastSeen={profile?.names[0]?.last_seen}

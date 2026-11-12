@@ -35,6 +35,7 @@ from rcon.message_variables import format_message_string, populate_message_varia
 from rcon.models import GameLayout, PlayerID, PlayerSoldier, enter_session
 from rcon.player_history import (
     get_player,
+    record_player_game_observation,
     save_end_player_session,
     save_player,
     save_start_player_session,
@@ -65,6 +66,7 @@ from rcon.user_config.rcon_chat_commands import (
 )
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
+from rcon.user_config.utils import server_info_for_rcon
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.webhooks import CameraWebhooksUserConfig
 from rcon.utils import DefaultStringFormat, MapsHistory, guess_map_from_log
@@ -574,11 +576,17 @@ def handle_on_connect(
         logger.warning("Unable to update soldier info for %s\n%s", player_id, str(e))
         player_info = None
 
+    player_timestamp = int(struct_log["timestamp_ms"]) / 1000
     save_player(
         struct_log["player_name_1"],
         player_id,
-        timestamp=int(struct_log["timestamp_ms"]) / 1000,
+        timestamp=player_timestamp,
         steam_id=player_info["steam_id"] if player_info else None,
+    )
+    record_player_game_observation(
+        player_id,
+        server_info_for_rcon(rcon).game,
+        timestamp=player_timestamp,
     )
 
     if player_info:

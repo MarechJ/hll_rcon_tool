@@ -65,12 +65,14 @@ Your VIP currently expires: {vip_expiration}",
 The server is now live and the regular rules apply."
     },
     "reward": {
-      /* Whether to send the VIP command to the other connected game servers hosted in the same CRCON */
+      /* Deprecated compatibility field. Server assignments of the selected VIP list control synchronization. */
       "forward": false,
       /* The description when adding VIP to a player who does not have VIP */
       "player_name_format_not_current_vip": "{player_name} - CRCON Seed VIP",
-      /* When true, it will add their VIP reward if they have VIP, false will overwrite */
+      /* Deprecated compatibility field. Existing effective VIPs are always skipped and never extended or overwritten. */
       "cumulative": true,
+      /* Optional VIP List ID used for Seed VIP rewards. Null uses the current server's default VIP list. */
+      "vip_list_id": null,
       /* The VIP time to give to the player, it is the sum of all of the fields */
       "timeframe": {
         "minutes": 0,

@@ -41,20 +41,23 @@ const executeAction = (command) => async (payload) => {
   if ("player" in payload) {
     payload.name = payload.player;
   }
-  // v10.x.x 'add_vip' change param from 'name' to 'description'
   if (command === "add_admin") {
     payload.description = payload.player_name;
   }
-  if (command === "add_vip") {
-    if ("prefix" in payload && "suffix" in payload) {
-      payload.description =
-        (payload.prefix ?? "") + payload.player_name + (payload.suffix ?? "");
-    } else {
-      payload.description = payload.player_name;
-    }
-  }
   return await execute(command, payload);
 };
+
+const addVipListRecord = (payload) =>
+  execute("add_vip_list_record", {
+    player_id: payload.player_id,
+    vip_list_id: Number(payload.vip_list_id),
+    description: payload.player_name ?? null,
+    notes: payload.notes?.trim() || null,
+    active: true,
+    expires_at: payload.expiration
+      ? new Date(payload.expiration).toISOString()
+      : null,
+  });
 
 // Define each action
 export const messageAction = {
@@ -87,11 +90,11 @@ export const removeWatchAction = {
 
 export const vipAction = {
   name: "Add VIP",
-  description: "Add or Update VIP.",
+  description: "Add a VIP record to the selected list. Synchronization runs separately.",
   component: AddVipFormFields,
   icon: StarIcon,
-  execute: executeAction("add_vip"),
-  permission: ["can_add_vip"],
+  execute: addVipListRecord,
+  permission: ["can_add_vip_list_records", "can_view_vip_lists"],
 };
 
 export const removeVipAction = {
@@ -290,7 +293,6 @@ export const generatePlayerActions = (
         watchAction,
         removeWatchAction,
         vipAction,
-        removeVipAction,
         blacklistAction,
         tempBanAction,
         permaBanAction,
@@ -303,7 +305,6 @@ export const generatePlayerActions = (
         watchAction,
         removeWatchAction,
         vipAction,
-        removeVipAction,
         blacklistAction,
         tempBanAction,
         permaBanAction,
