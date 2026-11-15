@@ -205,7 +205,7 @@ def message_players(
                     message=formatted_message
                 )
             except Exception:
-                pass
+                logger.info("Seed_vip - Couldn't send message to player %s : \"%s\" (%s)", player_id, formatted_message, e)
 
 
 def reward_players(
