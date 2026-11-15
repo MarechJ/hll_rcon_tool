@@ -191,10 +191,21 @@ def message_players(
         for player_id, formatted_message in zip(player_ids, messages):
             logger.info(f"{config.dry_run=} messaging {player_id}: {formatted_message}")
     else:
-        rcon.bulk_message_players(
-            player_ids=player_ids,
-            messages=messages,
-        )
+        # NOTE : This may be broken on server's side
+        # rcon.bulk_message_players(
+        #     player_ids=player_ids,
+        #     messages=messages,
+        # )
+
+        # Fallback iteration
+        for player_id, formatted_message in zip(player_ids, messages):
+            try:
+                rcon.message_player(
+                    player_id=player_id,
+                    message=formatted_message
+                )
+            except Exception:
+                pass
 
 
 def reward_players(
