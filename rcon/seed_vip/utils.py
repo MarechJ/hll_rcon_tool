@@ -204,7 +204,7 @@ def message_players(
                     player_id=player_id,
                     message=formatted_message
                 )
-            except Exception:
+            except Exception as e:
                 logger.info("Seed_vip - Couldn't send message to player %s : \"%s\" (%s)", player_id, formatted_message, e)
 
 
