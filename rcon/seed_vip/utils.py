@@ -200,10 +200,7 @@ def message_players(
         # Fallback iteration
         for player_id, formatted_message in zip(player_ids, messages):
             try:
-                rcon.message_player(
-                    player_id=player_id,
-                    message=formatted_message
-                )
+                rcon.message_player(player_id=player_id, message=formatted_message)
             except Exception as e: # noqa: BLE001
                 logger.info("Seed_vip - Couldn't send message to player %s : \"%s\" (%s)", player_id, formatted_message, e)
 
